@@ -15,9 +15,30 @@ const DRAFT_TTL = 24 * 60 * 60 * 1000;
 /**
  * モードの入口。遊び方が2つ以上なら絵で選ぶ。途中でやめた回があれば「つづきから／はじめから」。
  */
-export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: string }) {
+export function ModeEntry({
+  modeId,
+  variantId,
+  onlyVariants,
+  levelRange,
+  onPickVariant,
+}: {
+  modeId: ModeId;
+  variantId?: string;
+  /** 新しい単元（legacy）から開いたとき: 使う遊び方だけ */
+  onlyVariants?: readonly string[];
+  /** 新しい単元（legacy）から開いたとき: 使う段階の範囲（遊び方の範囲と重なる部分だけ） */
+  levelRange?: readonly [number, number];
+  /** 遊び方を選んだとき（省略時は #/play/<mode>/<variant> へ移る） */
+  onPickVariant?: (variantId: string) => void;
+}) {
   const app = useApp();
-  const mode = MODE_BY_ID[modeId];
+  const base = MODE_BY_ID[modeId];
+  const mode = {
+    ...base,
+    variants: base.variants
+      .filter((v) => !onlyVariants || onlyVariants.includes(v.id))
+      .map((v) => (levelRange ? { ...v, levelRange: clampRange(v.levelRange, levelRange) } : v)),
+  };
   const profileId = app.profile?.id;
   const [progress, setProgress] = useState<Partial<Record<SkillId, SkillProgress>> | null>(null);
   const [draft, setDraft] = useState<DraftRecord | null | undefined>(undefined);
@@ -34,8 +55,9 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
     });
   }, [profileId]);
 
+  // 単元から開いたとき（onlyVariants あり）は、v1 の解放条件で止めない（使う遊び方は単元が決める）
   const available = mode.variants.filter(
-    (v) => !v.available || (progress && v.available(progress)),
+    (v) => !v.available || onlyVariants !== undefined || (progress && v.available(progress)),
   );
   const variant: VariantDef | undefined =
     available.length === 1 ? available[0] : available.find((v) => v.id === variantId);
@@ -70,7 +92,10 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
         <VariantPicker
           variants={available}
           onPick={(v) => {
-            navigate({ name: 'mode', modeId, variantId: v.id }, { say: v.titleVoice });
+            if (onPickVariant) {
+              void audio.play(v.titleVoice);
+              onPickVariant(v.id);
+            } else navigate({ name: 'mode', modeId, variantId: v.id }, { say: v.titleVoice });
           }}
         />
       </div>
@@ -143,6 +168,17 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
       resume={resume ?? null}
     />
   );
+}
+
+/** 遊び方の段階の範囲と、単元の段階の範囲の重なり（重ならなければ単元の範囲） */
+function clampRange(
+  own: readonly [number, number] | undefined,
+  unit: readonly [number, number],
+): [number, number] {
+  if (!own) return [unit[0], unit[1]];
+  const lo = Math.max(own[0], unit[0]);
+  const hi = Math.min(own[1], unit[1]);
+  return lo <= hi ? [lo, hi] : [unit[0], unit[1]];
 }
 
 function VariantPicker({

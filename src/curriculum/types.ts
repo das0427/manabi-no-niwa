@@ -3,6 +3,7 @@
  * 教材パック（src/packs/<packId>/）はこの型のデータと生成器だけを持ち、UI を持たない。
  */
 import type { NumberAnswer } from '../core/answer/number';
+import type { ModeId } from '../core/types';
 import type { Rng } from '../core/util/rng';
 import type { Figure } from '../engines/figure/types';
 
@@ -121,8 +122,19 @@ export interface GenerateContext {
   index: number;
 }
 
+/**
+ * 初期版（v1）のモードをそのまま使う単元（curriculum-matrix 4.1）。進度は v1 の同じスキルの記録を読む（変換しない）。
+ * variants: 使う遊び方（省略時は全部）。levelRange: 使う段階の範囲（v1 のスキルの段階番号）。
+ */
+export interface LegacyRef {
+  modeId: ModeId;
+  variants?: string[];
+  levelRange?: [number, number];
+}
+
 export type ItemSource =
   | { kind: 'items'; items: Item[] }
+  | { kind: 'legacy'; legacy: LegacyRef; items?: undefined }
   | {
       kind: 'generator';
       generate(ctx: GenerateContext): Item;
@@ -163,6 +175,8 @@ export interface UnitSpec {
   gradeIsAppProposal?: boolean;
   /** 'YYYY-MM-DD' */
   revised: string;
+  /** 既定で子供画面に出さない（保護者が開く） */
+  hiddenByDefault?: boolean;
 }
 
 export interface PackContent {
@@ -182,5 +196,9 @@ export interface UnitMeta {
   prereq: string[];
   priority: Priority;
   status: UnitStatus;
-  engine: EngineId;
+  engine: EngineId | 'legacy';
+  /** v1 のモードを使う単元 */
+  legacy?: LegacyRef;
+  /** 既定で子供画面に出さない（保護者が開く。5歳の式・カタカナの書き等: 統括の判断7） */
+  hiddenByDefault?: boolean;
 }

@@ -40,6 +40,8 @@ export function buildRound(unit: UnitSpec, opt: RoundOptions): Item[] {
     }
     return out;
   }
+  // v1 のモードの単元は UnitRunner では出題しない（ModeRunner が受け持つ）
+  if (src.kind === 'legacy') return [];
   // 手作り: その段階の問題（無ければ近い段階）から、未出→最近出した の順に
   const rng = createRng(hashSeed(opt.seed, 'items'));
   const pool = poolFor(src.items, opt.level);

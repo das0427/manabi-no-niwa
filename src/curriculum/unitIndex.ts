@@ -27,12 +27,17 @@ export function visibleUnits(filter: { subject?: SubjectId; stage?: StageId } = 
 
 /** パックの単元定義から索引の行を作る（生成スクリプトとテストで使う） */
 export function metaOf(packId: string, u: UnitSpec): UnitMeta {
-  // 主なエンジン: 最初の問題のエンジン（生成器は seed 1・段階0 の1問目）
+  // 主なエンジン: 最初の問題のエンジン（生成器は seed 1・段階0 の1問目）。v1 のモードは 'legacy'
+  const src = u.source;
   const firstItem =
-    u.source.kind === 'items'
-      ? u.source.items[0]
-      : u.source.generate({ level: 0, rng: createRng(1), index: 0 });
+    src.kind === 'items'
+      ? src.items[0]
+      : src.kind === 'generator'
+        ? src.generate({ level: 0, rng: createRng(1), index: 0 })
+        : undefined;
   return {
+    ...(src.kind === 'legacy' ? { legacy: src.legacy } : {}),
+    ...(u.hiddenByDefault ? { hiddenByDefault: true } : {}),
     id: u.id,
     pack: packId,
     title: u.title,
@@ -43,7 +48,7 @@ export function metaOf(packId: string, u: UnitSpec): UnitMeta {
     prereq: u.prereq,
     priority: u.priority,
     status: u.status,
-    engine: firstItem?.engine ?? 'choice',
+    engine: src.kind === 'legacy' ? 'legacy' : (firstItem?.engine ?? 'choice'),
   };
 }
 

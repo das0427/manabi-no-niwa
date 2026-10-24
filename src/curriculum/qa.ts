@@ -4,6 +4,7 @@
  */
 import { createRng, hashSeed } from '../core/util/rng';
 import { engineOf } from '../engines/registry';
+import { MODE_BY_ID } from '../modes/registry';
 import { findBareKanji } from '../text/rich';
 import type { Item, UnitKind, UnitSpec } from './types';
 
@@ -78,6 +79,26 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     err('単元IDと stage・subject が一致しない');
   if (unit.objectives.length < 1 || unit.objectives.length > 8) err('到達項目は1〜8個');
   if (unit.levels.length < 1) err('段階が無い');
+
+  // v1 のモードの単元: 中身は v1 のモードとそのテストが受け持つ。参照の正しさだけを見る
+  if (unit.source.kind === 'legacy') {
+    const lg = unit.source.legacy;
+    const mode = MODE_BY_ID[lg.modeId];
+    if (!mode) err(`v1 のモード ${lg.modeId} が無い`);
+    for (const v of lg.variants ?? [])
+      if (mode && !mode.variants.some((x) => x.id === v))
+        err(`v1 の遊び方 ${lg.modeId}/${v} が無い`);
+    if (lg.levelRange && lg.levelRange[0] > lg.levelRange[1]) err('段階の範囲が逆');
+    return {
+      unitId: unit.id,
+      errors,
+      distinct: 0,
+      q: 1,
+      objectives: unit.objectives.map((o) => ({ id: o.id, distinct: 0, alt: 0, ok: true })),
+      c: [unit.objectives.length, unit.objectives.length],
+      genericWrongShare: 0,
+    };
+  }
   if (unit.intro.length < 1 && unit.kind !== 'record') err('導入（おてほん）が無い');
   const needMis = unit.kind === 'calc' || unit.kind === 'concept' ? 3 : 2;
   if (

@@ -53,8 +53,10 @@ function seg(c: [number, number], v: Pt, len: number, name: string, dashed = fal
 
 function gridLines(w: number, h: number): string {
   let s = '';
-  for (let x = 0; x <= w; x++) s += `<line x1="${x * C}" y1="0" x2="${x * C}" y2="${h * C}" stroke="var(--ink)" stroke-opacity="0.15" stroke-width="1"/>`;
-  for (let y = 0; y <= h; y++) s += `<line x1="0" y1="${y * C}" x2="${w * C}" y2="${y * C}" stroke="var(--ink)" stroke-opacity="0.15" stroke-width="1"/>`;
+  for (let x = 0; x <= w; x++)
+    s += `<line x1="${x * C}" y1="0" x2="${x * C}" y2="${h * C}" stroke="var(--ink)" stroke-opacity="0.15" stroke-width="1"/>`;
+  for (let y = 0; y <= h; y++)
+    s += `<line x1="0" y1="${y * C}" x2="${w * C}" y2="${y * C}" stroke="var(--ink)" stroke-opacity="0.15" stroke-width="1"/>`;
   return s;
 }
 
@@ -100,7 +102,9 @@ function find(obj: 'findPerp' | 'findPar', level: number, rng: Rng, alt: boolean
       alt
         ? `直線アは 横に ${Math.abs(base[0])}ます 進むと、たてに ${Math.abs(base[1])}ます 進むよ。`
         : '三角じょうぎの 直角の かどを あてて たしかめよう。',
-      perp ? 'アを 回して 直角に なる 向きの 直線を さがそう。' : 'アと 同じ かたむきの 直線を さがそう。',
+      perp
+        ? 'アを 回して 直角に なる 向きの 直線を さがそう。'
+        : 'アと 同じ かたむきの 直線を さがそう。',
     ],
     explain: `直線${ans}が アに ${word}です。${perp ? '交わって いなくても、のばすと 直角に 交わります。' : 'はばが どこも 同じで、のばしても 交わりません。'}`,
     identity: `${obj}:${base.join(',')}:${order.join('')}${alt ? ':grid' : ''}`,
@@ -109,7 +113,10 @@ function find(obj: 'findPerp' | 'findPar', level: number, rng: Rng, alt: boolean
     options: names.map((nm, i) =>
       nm === ans
         ? { label: `直線${nm}`, correct: true }
-        : { label: `直線${nm}`, misconception: order[i] === 1 ? 'perp-par-swap' : perp ? 'looks-90' : 'looks-par' },
+        : {
+            label: `直線${nm}`,
+            misconception: order[i] === 1 ? 'perp-par-swap' : perp ? 'looks-90' : 'looks-par',
+          },
     ),
   };
 }
@@ -139,7 +146,9 @@ function draw(obj: 'drawPerp' | 'drawPar', level: number, rng: Rng, alt: boolean
       level,
       prompt: `●の 点を 通って、直線に ${word}な 直線を ひこう。（点を 2つ タップ）`,
       hints: [
-        obj === 'drawPerp' ? '垂直な 直線は、もとの 直線と 直角に 交わるよ。' : '平行な 直線は、もとの 直線と 同じ かたむきだよ。',
+        obj === 'drawPerp'
+          ? '垂直な 直線は、もとの 直線と 直角に 交わるよ。'
+          : '平行な 直線は、もとの 直線と 同じ かたむきだよ。',
         `もとの 直線は 横に ${v[0]}ます、たてに ${Math.abs(v[1])}ます${v[1] < 0 ? '（上へ）' : v[1] > 0 ? '（下へ）' : ''} 進む かたむき。`,
         obj === 'drawPerp'
           ? `●から、横に ${Math.abs(d[0])}ます、たてに ${Math.abs(d[1])}ます 進んだ 点と 結ぼう。向きに 気を つけてね。`
@@ -178,7 +187,8 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `prop-alt:width:${wcm}:${pos}`,
       objective: 'prop',
       level,
-      prompt: '直線アと 直線イは 平行です。点線は どれも アと イに 垂直です。？の 長さは 何cmですか。',
+      prompt:
+        '直線アと 直線イは 平行です。点線は どれも アと イに 垂直です。？の 長さは 何cmですか。',
       figure: svg(370, 180, body, '平行な 2本の 直線と はば'),
       hints: [
         '平行な 2本の 直線の はばは、どこで はかっても 同じだよ。',
@@ -189,7 +199,11 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
       identity: `prop:width:${wcm}:${pos}`,
       alt: true,
       fields: [{ label: 'cm', answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, [[wcm + 1, 'width-change'], [wcm * 2, 'width-change'], [wcm - 1, 'width-change']]),
+      wrongAnswers: wrongList(answers, [
+        [wcm + 1, 'width-change'],
+        [wcm * 2, 'width-change'],
+        [wcm - 1, 'width-change'],
+      ]),
     };
   }
   // 平行な 2本に 1本の 直線が 交わる。角ウを 示し、同じ位置の 角エ（等しい）か、となりの 角（180 − ウ）を 問う
@@ -220,7 +234,9 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
     figure: svg(370, 200, body, '平行な 2本の 直線に 交わる 直線'),
     hints: [
       '平行な 直線は、ほかの 直線と 同じ 角度で 交わるよ。',
-      ask === 0 ? '角エは、下の 交わる 点で 角ウと 同じ 位置に あるね。' : '一直線の 角は 180°だよ。角エは 角ウと 同じ 位置の 角の となりに あるね。',
+      ask === 0
+        ? '角エは、下の 交わる 点で 角ウと 同じ 位置に あるね。'
+        : '一直線の 角は 180°だよ。角エは 角ウと 同じ 位置の 角の となりに あるね。',
       ask === 0 ? `角ウと 同じ 位置の 角だから…` : `180 − ${deg}を 計算しよう。`,
     ],
     explain:
@@ -230,7 +246,10 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
     identity: `prop:angle:${deg}:${ask}`,
     alt: false,
     fields: [{ label: '度', answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, [[ask === 0 ? 180 - deg : deg, 'angle-pos'], [90, 'angle-pos']]),
+    wrongAnswers: wrongList(answers, [
+      [ask === 0 ? 180 - deg : deg, 'angle-pos'],
+      [90, 'angle-pos'],
+    ]),
   };
 }
 
@@ -277,15 +296,18 @@ export const parallelPerp: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'perp-par-swap',
-      explain: '垂直と 平行を とりちがえたのかな。直角に 交わるのが 垂直、どこまで のばしても 交わらないのが 平行だよ。',
+      explain:
+        '垂直と 平行を とりちがえたのかな。直角に 交わるのが 垂直、どこまで のばしても 交わらないのが 平行だよ。',
     },
     {
       id: 'looks-90',
-      explain: '直角に 見えても、少し ずれて いるかも。三角じょうぎの 直角や 方がんの ますで たしかめよう。',
+      explain:
+        '直角に 見えても、少し ずれて いるかも。三角じょうぎの 直角や 方がんの ますで たしかめよう。',
     },
     {
       id: 'looks-par',
-      explain: '同じ 向きに 見えても、少し かたむきが ちがうかも。のばすと 交わって しまう 直線は 平行では ないよ。',
+      explain:
+        '同じ 向きに 見えても、少し かたむきが ちがうかも。のばすと 交わって しまう 直線は 平行では ないよ。',
     },
     {
       id: 'not-through',
@@ -309,14 +331,24 @@ export const parallelPerp: UnitSpec = finishUnit({
   intro: [
     {
       text: '2本の 直線が 直角に 交わるとき、この 2本の 直線は 垂直で あると いいます。',
-      figure: svg(200, 160, `<line x1="20" y1="100" x2="180" y2="100" ${STROKE}/><line x1="100" y1="20" x2="100" y2="150" ${STROKE}/><rect x="100" y="86" width="14" height="14" fill="none" stroke="var(--ink)" stroke-width="2"/>`, '垂直な 2本の 直線'),
+      figure: svg(
+        200,
+        160,
+        `<line x1="20" y1="100" x2="180" y2="100" ${STROKE}/><line x1="100" y1="20" x2="100" y2="150" ${STROKE}/><rect x="100" y="86" width="14" height="14" fill="none" stroke="var(--ink)" stroke-width="2"/>`,
+        '垂直な 2本の 直線',
+      ),
     },
     {
       text: '交わって いなくても、のばして 直角に 交われば 垂直です。',
     },
     {
       text: '1本の 直線に 垂直な 2本の 直線は 平行で あると いいます。平行な 直線は どこまで のばしても 交わらず、はばは どこも 同じです。',
-      figure: svg(220, 140, `<line x1="10" y1="30" x2="210" y2="30" ${STROKE}/><line x1="10" y1="110" x2="210" y2="110" ${STROKE}/><line x1="60" y1="10" x2="60" y2="130" ${STROKE} stroke-dasharray="6 5"/><line x1="160" y1="10" x2="160" y2="130" ${STROKE} stroke-dasharray="6 5"/>`, '平行な 2本の 直線'),
+      figure: svg(
+        220,
+        140,
+        `<line x1="10" y1="30" x2="210" y2="30" ${STROKE}/><line x1="10" y1="110" x2="210" y2="110" ${STROKE}/><line x1="60" y1="10" x2="60" y2="130" ${STROKE} stroke-dasharray="6 5"/><line x1="160" y1="10" x2="160" y2="130" ${STROKE} stroke-dasharray="6 5"/>`,
+        '平行な 2本の 直線',
+      ),
     },
     {
       text: '方がんでは、横に 2ます・たてに 1ます 進む 直線に 垂直なのは、横に 1ます・たてに 2ます（向きは 反対）進む 直線です。',

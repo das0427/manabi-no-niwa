@@ -78,7 +78,9 @@ function hexominoes(): Cell[][] {
       if (seen.size !== 6) return;
       const mx = Math.min(...cur.map((c) => c[0]));
       const my = Math.min(...cur.map((c) => c[1]));
-      const norm = cur.map(([x, y]) => [x - mx, y - my] as Cell).sort((a, b) => a[1] - b[1] || a[0] - b[0]);
+      const norm = cur
+        .map(([x, y]) => [x - mx, y - my] as Cell)
+        .sort((a, b) => a[1] - b[1] || a[0] - b[0]);
       const w = Math.max(...norm.map((c) => c[0])) + 1;
       const h = Math.max(...norm.map((c) => c[1])) + 1;
       if (w > 5 || h > 3) return;
@@ -156,7 +158,10 @@ function net(level: number, rng: Rng, alt: boolean): ChoiceItem {
     explain: `組み立てると、${k + 1}の 面と ${opp + 1}の 面が 向かい合います。ほかの 面は ${k + 1}の 面と となり合います。`,
     identity: `net:${netKey(cells)}:${k}`,
     alt: false,
-    options: opts(`${opp + 1}の 面`, ws.map((i) => [`${i + 1}の 面`, 'adjacent-face'])),
+    options: opts(
+      `${opp + 1}の 面`,
+      ws.map((i) => [`${i + 1}の 面`, 'adjacent-face']),
+    ),
   };
 }
 
@@ -203,7 +208,8 @@ function boxFig(d: Dims, labels: boolean, dimText: boolean, dot?: number): Figur
   const [a, b, c] = d;
   const ox = b * k * 0.6;
   const oy = b * k * 0.45;
-  const P = (v: V3) => [44 + v[0] * a * k + v[1] * ox, 14 + oy + (1 - v[2]) * c * k - v[1] * oy] as [number, number];
+  const P = (v: V3) =>
+    [44 + v[0] * a * k + v[1] * ox, 14 + oy + (1 - v[2]) * c * k - v[1] * oy] as [number, number];
   let body = '';
   for (const [i, j] of EDGES) {
     const hidden = (i === 7 || j === 7) && !(VERT[i]![1] === 0 && VERT[j]![1] === 0);
@@ -226,7 +232,8 @@ function boxFig(d: Dims, labels: boolean, dimText: boolean, dot?: number): Figur
     // 高さ: 前の 面の 左の 辺の 左がわ
     const p0 = P(VERT[0]!);
     body += svgText(p0[0] - 6, (p0[1] + p3[1]) / 2, `${c}cm`, 13, 'end');
-  }  if (dot !== undefined) {
+  }
+  if (dot !== undefined) {
     const p = P(VERT[dot]!);
     body += `<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="var(--ink)"/>`;
     const o = P(VERT[3]!);
@@ -285,8 +292,16 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
       figure: boxFig(d, false, false),
       hints: [
         '見えない ところ（点線）も わすれずに 数えよう。',
-        ask === 0 ? '前と 後ろ、上と 下、右と 左…' : ask === 1 ? '同じ 向きの 辺が 4本ずつ、3つの 向きが あるよ。' : '上の 面に いくつ、下の 面に いくつ？',
-        ask === 0 ? '2まいずつ 3組だね。' : ask === 1 ? '4本ずつ 3組だね。' : '上に 4つ、下に 4つ。',
+        ask === 0
+          ? '前と 後ろ、上と 下、右と 左…'
+          : ask === 1
+            ? '同じ 向きの 辺が 4本ずつ、3つの 向きが あるよ。'
+            : '上の 面に いくつ、下の 面に いくつ？',
+        ask === 0
+          ? '2まいずつ 3組だね。'
+          : ask === 1
+            ? '4本ずつ 3組だね。'
+            : '上に 4つ、下に 4つ。',
       ],
       explain: `${name}には 面が 6つ、辺が 12、頂点が 8つ あります。`,
       identity: `count:${name}:${what}`,
@@ -310,7 +325,11 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `この ${name}で、長さが ${len}cmの 辺は 何本 ありますか。`,
     figure: boxFig(d, false, true),
-    hints: ['同じ 向きの 辺は、長さが 同じだよ。', '1つの 向きに 辺は 4本ずつ あるね。', `長さが ${len}cmの 向きは いくつ あるかな。`],
+    hints: [
+      '同じ 向きの 辺は、長さが 同じだよ。',
+      '1つの 向きに 辺は 4本ずつ あるね。',
+      `長さが ${len}cmの 向きは いくつ あるかな。`,
+    ],
     explain: `${name}では 同じ 向きの 辺 4本の 長さが 等しいので、${len}cmの 辺は ${ans}本です。`,
     identity: `count:len:${[...d].sort().join('x')}:${len}`,
     alt: false,
@@ -340,7 +359,10 @@ function relation(level: number, rng: Rng, alt: boolean): Item {
     const dir = dirOf(e);
     const par = EDGES.filter((x) => x !== e && dirOf(x) === dir);
     const notPar = EDGES.filter((x) => dirOf(x) !== dir);
-    const opt = [...par.map((x) => ({ label: edgeName(x), correct: true as const })), { label: edgeName(pick(rng, notPar)), misconception: 'perp-par-swap' }];
+    const opt = [
+      ...par.map((x) => ({ label: edgeName(x), correct: true as const })),
+      { label: edgeName(pick(rng, notPar)), misconception: 'perp-par-swap' },
+    ];
     const item: ChoiceItem = {
       engine: 'choice',
       id: `relation-alt:${edgeName(e)}:${opt[3]!.label}`,
@@ -349,7 +371,11 @@ function relation(level: number, rng: Rng, alt: boolean): Item {
       prompt: `${edgeName(e)}に 平行な 辺を ぜんぶ えらぼう。`,
       figure: fig,
       multi: true,
-      hints: ['平行な 辺は、同じ 向きの 辺だよ。', `直方体では、1本の 辺に 平行な 辺は 3本 あるよ。`, '見えない 辺（点線）も わすれずに。'],
+      hints: [
+        '平行な 辺は、同じ 向きの 辺だよ。',
+        `直方体では、1本の 辺に 平行な 辺は 3本 あるよ。`,
+        '見えない 辺（点線）も わすれずに。',
+      ],
       explain: `${edgeName(e)}に 平行な 辺は ${par.map(edgeName).join('、')}の 3本です。`,
       identity: `relation-par:${edgeName(e)}:${opt[3]!.label}`,
       alt: true,
@@ -370,11 +396,18 @@ function relation(level: number, rng: Rng, alt: boolean): Item {
       level,
       prompt: `${faceName(f)}に 平行な 面は どれ？`,
       figure: fig,
-      hints: ['平行な 面は、向かい合って いる 面だよ。', `${faceName(f)}と 辺で くっついて いる 面は、垂直に 交わるよ。`, '見取図の 点線の 辺も 使って、反対がわの 面を さがそう。'],
+      hints: [
+        '平行な 面は、向かい合って いる 面だよ。',
+        `${faceName(f)}と 辺で くっついて いる 面は、垂直に 交わるよ。`,
+        '見取図の 点線の 辺も 使って、反対がわの 面を さがそう。',
+      ],
       explain: `${faceName(f)}に 平行な 面は、向かい合う ${faceName(FACES[oppI]!)}です。ほかの 面は ${faceName(f)}に 垂直です。`,
       identity: `relation:face:${fi}`,
       alt: false,
-      options: opts(faceName(FACES[oppI]!), rng.sample(others, 3).map((x) => [faceName(x), 'adjacent-face'])),
+      options: opts(
+        faceName(FACES[oppI]!),
+        rng.sample(others, 3).map((x) => [faceName(x), 'adjacent-face']),
+      ),
     };
     return item;
   }
@@ -389,9 +422,13 @@ function relation(level: number, rng: Rng, alt: boolean): Item {
     prompt: `${edgeName(e)}に ${kind === 1 ? '平行' : '垂直'}な 辺は 何本 ありますか。`,
     figure: fig,
     hints: [
-      kind === 1 ? '平行な 辺は、同じ 向きの 辺だよ。' : `垂直な 辺は、${edgeName(e)}の 両はしで 直角に 交わる 辺だよ。`,
+      kind === 1
+        ? '平行な 辺は、同じ 向きの 辺だよ。'
+        : `垂直な 辺は、${edgeName(e)}の 両はしで 直角に 交わる 辺だよ。`,
       '見えない 辺（点線）も 数えよう。',
-      kind === 1 ? '同じ 向きの 辺は ぜんぶで 4本。その うち 1本は 自分だね。' : '両はしの 頂点で、それぞれ 2本ずつ。',
+      kind === 1
+        ? '同じ 向きの 辺は ぜんぶで 4本。その うち 1本は 自分だね。'
+        : '両はしの 頂点で、それぞれ 2本ずつ。',
     ],
     explain: `${edgeName(e)}に ${kind === 1 ? '平行な 辺は 3本' : '垂直な 辺は 4本'}です。`,
     identity: `relation:edge:${edgeName(e)}:${kind}`,
@@ -420,7 +457,8 @@ function position(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `position-alt:${d.join('x')}:${vi}`,
       objective: 'position',
       level,
-      prompt: '○の 頂点を もとに すると、●の 頂点の 位置は（横 何cm、たて 何cm、高さ 何cm）と 表せますか。',
+      prompt:
+        '○の 頂点を もとに すると、●の 頂点の 位置は（横 何cm、たて 何cm、高さ 何cm）と 表せますか。',
       figure: boxFig(d, false, true, vi),
       hints: [
         '空間の 位置は、横・たて・高さの 3つの 長さで 表せるよ。',
@@ -451,8 +489,10 @@ function position(level: number, rng: Rng, alt: boolean): NumberItem {
   const k = rng.int(0, 2);
   const C = 30;
   let body = '';
-  for (let x = 0; x <= W; x++) body += `<line x1="${20 + x * C}" y1="10" x2="${20 + x * C}" y2="${10 + H * C}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
-  for (let y = 0; y <= H; y++) body += `<line x1="20" y1="${10 + y * C}" x2="${20 + W * C}" y2="${10 + y * C}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
+  for (let x = 0; x <= W; x++)
+    body += `<line x1="${20 + x * C}" y1="10" x2="${20 + x * C}" y2="${10 + H * C}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
+  for (let y = 0; y <= H; y++)
+    body += `<line x1="20" y1="${10 + y * C}" x2="${20 + W * C}" y2="${10 + y * C}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
   body += `<circle cx="20" cy="${10 + H * C}" r="6" fill="var(--white)" ${STROKE}/>`;
   const names = ['ア', 'イ', 'ウ'];
   pts.forEach((p, i) => {
@@ -539,7 +579,8 @@ export const cuboid: UnitSpec = finishUnit({
     },
     {
       id: 'face-edge-vertex',
-      explain: '面・辺・頂点を とりちがえたのかな。平らな ところが 面、面と 面の さかいの 線が 辺、かどの 点が 頂点だよ。',
+      explain:
+        '面・辺・頂点を とりちがえたのかな。平らな ところが 面、面と 面の さかいの 線が 辺、かどの 点が 頂点だよ。',
     },
     {
       id: 'edge-count',
@@ -547,15 +588,18 @@ export const cuboid: UnitSpec = finishUnit({
     },
     {
       id: 'adjacent-face',
-      explain: 'となり合う 面を えらんだのかな。となり合う 面どうしは 垂直。平行なのは 向かい合う 面だよ。',
+      explain:
+        'となり合う 面を えらんだのかな。となり合う 面どうしは 垂直。平行なのは 向かい合う 面だよ。',
     },
     {
       id: 'perp-par-swap',
-      explain: '垂直と 平行を とりちがえたのかな。同じ 向きの 辺が 平行、直角に 交わる 辺が 垂直だよ。',
+      explain:
+        '垂直と 平行を とりちがえたのかな。同じ 向きの 辺が 平行、直角に 交わる 辺が 垂直だよ。',
     },
     {
       id: 'net-overlap',
-      explain: '組み立てると 面が 重なって しまう 形だよ。頭の 中で 1まいずつ おって、6つの 面が みんな ちがう 向きに なるか たしかめよう。',
+      explain:
+        '組み立てると 面が 重なって しまう 形だよ。頭の 中で 1まいずつ おって、6つの 面が みんな ちがう 向きに なるか たしかめよう。',
     },
     {
       id: 'xy-swap',
@@ -563,7 +607,8 @@ export const cuboid: UnitSpec = finishUnit({
     },
     {
       id: 'count-from-one',
-      explain: 'ますの 数ではなく 点の 数を 数えたのかな。○の 点は 0。そこから 何ます 進むかを 数えよう。',
+      explain:
+        'ますの 数ではなく 点の 数を 数えたのかな。○の 点は 0。そこから 何ます 進むかを 数えよう。',
     },
   ],
   levels: [
@@ -603,6 +648,7 @@ export const cuboid: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateCuboid(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 B(2) 立体図形（直方体・立方体、見取図・展開図、面や辺の平行・垂直）、B(3) ものの位置の表し方',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 B(2) 立体図形（直方体・立方体、見取図・展開図、面や辺の平行・垂直）、B(3) ものの位置の表し方',
   revised: REVISED,
 });

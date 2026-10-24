@@ -101,7 +101,9 @@ describe('内容レビューの修正（g2-ja）', () => {
   });
 
   it('read-story: 日記は お母さんと つり（家族の役わりに性別の決めつけがない）', () => {
-    const s = JSON.stringify(itemsOf('g2.ja.read-story').filter((i) => i.id.startsWith('g2s-nikki')));
+    const s = JSON.stringify(
+      itemsOf('g2.ja.read-story').filter((i) => i.id.startsWith('g2s-nikki')),
+    );
     expect(s).not.toContain('お父《とう》さんと 川');
   });
 });

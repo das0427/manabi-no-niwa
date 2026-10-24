@@ -39,18 +39,84 @@ interface Sen {
 }
 
 const SENS: Sen[] = [
-  { id: 'inu', nm: '小《ちい》さな', noun: '犬《いぬ》', pt: 'が', am: '元気《げんき》に', verb: '走《はし》る' },
+  {
+    id: 'inu',
+    nm: '小《ちい》さな',
+    noun: '犬《いぬ》',
+    pt: 'が',
+    am: '元気《げんき》に',
+    verb: '走《はし》る',
+  },
   { id: 'kumo', nm: '白《しろ》い', noun: '雲《くも》', pt: 'が', am: 'ゆっくり', verb: 'うごく' },
-  { id: 'boushi', subj: '弟《おとうと》が', nm: '赤《あか》い', noun: 'ぼうし', pt: 'を', am: 'そっと', verb: 'かぶる' },
+  {
+    id: 'boushi',
+    subj: '弟《おとうと》が',
+    nm: '赤《あか》い',
+    noun: 'ぼうし',
+    pt: 'を',
+    am: 'そっと',
+    verb: 'かぶる',
+  },
   { id: 'neko', nm: '黒《くろ》い', noun: 'ねこ', pt: 'が', am: 'しずかに', verb: 'ねむる' },
-  { id: 'tori', nm: '大《おお》きな', noun: '鳥《とり》', pt: 'が', am: '高《たか》く', verb: 'とぶ' },
-  { id: 'sakana', nm: '青《あお》い', noun: '魚《さかな》', pt: 'が', am: 'すいすい', verb: '泳《およ》ぐ' },
-  { id: 'hon', subj: '妹《いもうと》が', nm: '新《あたら》しい', noun: '本《ほん》', pt: 'を', am: '楽《たの》しそうに', verb: '読《よ》む' },
+  {
+    id: 'tori',
+    nm: '大《おお》きな',
+    noun: '鳥《とり》',
+    pt: 'が',
+    am: '高《たか》く',
+    verb: 'とぶ',
+  },
+  {
+    id: 'sakana',
+    nm: '青《あお》い',
+    noun: '魚《さかな》',
+    pt: 'が',
+    am: 'すいすい',
+    verb: '泳《およ》ぐ',
+  },
+  {
+    id: 'hon',
+    subj: '妹《いもうと》が',
+    nm: '新《あたら》しい',
+    noun: '本《ほん》',
+    pt: 'を',
+    am: '楽《たの》しそうに',
+    verb: '読《よ》む',
+  },
   { id: 'kaze', nm: 'つめたい', noun: '風《かぜ》', pt: 'が', am: 'ぴゅうぴゅう', verb: 'ふく' },
-  { id: 'tsuki', nm: 'まるい', noun: '月《つき》', pt: 'が', am: '明《あか》るく', verb: '光《ひか》る' },
-  { id: 'densha', nm: '長《なが》い', noun: '電車《でんしゃ》', pt: 'が', am: 'ガタゴト', verb: '走《はし》る' },
-  { id: 'ha', nm: '黄色《きいろ》い', noun: '葉《は》', pt: 'が', am: 'ひらひら', verb: '落《お》ちる' },
-  { id: 'nimotsu', subj: '兄《あに》が', nm: '重《おも》い', noun: '荷物《にもつ》', pt: 'を', am: 'しっかり', verb: '持《も》つ' },
+  {
+    id: 'tsuki',
+    nm: 'まるい',
+    noun: '月《つき》',
+    pt: 'が',
+    am: '明《あか》るく',
+    verb: '光《ひか》る',
+  },
+  {
+    id: 'densha',
+    nm: '長《なが》い',
+    noun: '電車《でんしゃ》',
+    pt: 'が',
+    am: 'ガタゴト',
+    verb: '走《はし》る',
+  },
+  {
+    id: 'ha',
+    nm: '黄色《きいろ》い',
+    noun: '葉《は》',
+    pt: 'が',
+    am: 'ひらひら',
+    verb: '落《お》ちる',
+  },
+  {
+    id: 'nimotsu',
+    subj: '兄《あに》が',
+    nm: '重《おも》い',
+    noun: '荷物《にもつ》',
+    pt: 'を',
+    am: 'しっかり',
+    verb: '持《も》つ',
+  },
 ];
 
 const sentence = (s: Sen) =>
@@ -113,7 +179,11 @@ const SORT_SETS: { id: string; donna: string[]; doyouni: string[] }[] = [
   },
   {
     id: 'b',
-    donna: ['**ふかい** 池《いけ》', '**かわいい** 子犬《こいぬ》', '**大切《たいせつ》な** 手紙《てがみ》'],
+    donna: [
+      '**ふかい** 池《いけ》',
+      '**かわいい** 子犬《こいぬ》',
+      '**大切《たいせつ》な** 手紙《てがみ》',
+    ],
     doyouni: ['**すらすら** 読《よ》む', '**さっと** にげる', '**大《おお》きく** 手《て》を ふる'],
   },
   {
@@ -132,8 +202,16 @@ function sortItem(x: (typeof SORT_SETS)[number]): SortItem {
     prompt: '太字《ふとじ》の 言葉《ことば》を、「どんな」と「どのように」に 分《わ》けよう。',
     boxes: [{ label: 'どんな（ものの ようす）' }, { label: 'どのように（動《うご》きの ようす）' }],
     cards: [
-      ...x.donna.map((label) => ({ label, box: 0, wrongBoxes: [{ box: 1, misconception: 'm-kind' }] })),
-      ...x.doyouni.map((label) => ({ label, box: 1, wrongBoxes: [{ box: 0, misconception: 'm-kind' }] })),
+      ...x.donna.map((label) => ({
+        label,
+        box: 0,
+        wrongBoxes: [{ box: 1, misconception: 'm-kind' }],
+      })),
+      ...x.doyouni.map((label) => ({
+        label,
+        box: 1,
+        wrongBoxes: [{ box: 0, misconception: 'm-kind' }],
+      })),
     ],
     hints: [
       '太字《ふとじ》の 言葉《ことば》が、後《うし》ろの どの 言葉《ことば》を くわしく して いるか 見《み》よう。',
@@ -416,7 +494,8 @@ function matchItem(m: MatchSet): MatchItem {
     id: `target:match:${m.id}`,
     objective: 'target',
     level: 1,
-    prompt: '上《うえ》の 言葉《ことば》が くわしく して いる 言葉《ことば》を、線《せん》で むすぼう。',
+    prompt:
+      '上《うえ》の 言葉《ことば》が くわしく して いる 言葉《ことば》を、線《せん》で むすぼう。',
     figure: { kind: 'text', text: m.text, size: 'm' },
     left: m.left.map((label) => ({ label })),
     right: m.right.map((label) => ({ label })),
@@ -443,15 +522,78 @@ interface Fill1 {
   kind: 'donna' | 'doyouni';
 }
 const FILLS: Fill1[] = [
-  { id: 'yuki', text: '空《そら》から {{}} 雪《ゆき》が ふって きた。', ans: '白《しろ》い', wrong: '白《しろ》く', target: '雪《ゆき》', kind: 'donna' },
-  { id: 'shippo', text: '犬《いぬ》が しっぽを {{}} ふる。', ans: '元気《げんき》に', wrong: '元気《げんき》な', target: 'ふる', kind: 'doyouni' },
-  { id: 'michi', text: 'ぼくは {{}} 道《みち》を 歩《ある》いた。', ans: 'せまい', wrong: 'せまく', target: '道《みち》', kind: 'donna' },
-  { id: 'ocha', text: 'お茶《ちゃ》を {{}} 飲《の》む。', ans: 'しずかに', wrong: 'しずかな', target: '飲《の》む', kind: 'doyouni' },
-  { id: 'koinu', text: 'きのう、{{}} 子犬《こいぬ》が 生《う》まれた。', ans: 'かわいい', wrong: 'かわいく', target: '子犬《こいぬ》', kind: 'donna' },
-  { id: 'tokei', text: '時計《とけい》の はりが {{}} 進《すす》む。', ans: '正《ただ》しく', wrong: '正《ただ》しい', target: '進《すす》む', kind: 'doyouni' },
-  { id: 'ike', text: '池《いけ》の 水《みず》が {{}} 光《ひか》る。', ans: 'きらきら', wrong: 'きらきらした', target: '光《ひか》る', kind: 'doyouni' },
-  { id: 'kaban', text: '妹《いもうと》は {{}} かばんを 買《か》って もらった。', ans: '青《あお》い', wrong: '青《あお》く', target: 'かばん', kind: 'donna' },
-  { id: 'uma', text: '馬《うま》が 草原《そうげん》を {{}} 走《はし》る。', ans: '速《はや》く', wrong: '速《はや》い', target: '走《はし》る', kind: 'doyouni' },
+  {
+    id: 'yuki',
+    text: '空《そら》から {{}} 雪《ゆき》が ふって きた。',
+    ans: '白《しろ》い',
+    wrong: '白《しろ》く',
+    target: '雪《ゆき》',
+    kind: 'donna',
+  },
+  {
+    id: 'shippo',
+    text: '犬《いぬ》が しっぽを {{}} ふる。',
+    ans: '元気《げんき》に',
+    wrong: '元気《げんき》な',
+    target: 'ふる',
+    kind: 'doyouni',
+  },
+  {
+    id: 'michi',
+    text: 'ぼくは {{}} 道《みち》を 歩《ある》いた。',
+    ans: 'せまい',
+    wrong: 'せまく',
+    target: '道《みち》',
+    kind: 'donna',
+  },
+  {
+    id: 'ocha',
+    text: 'お茶《ちゃ》を {{}} 飲《の》む。',
+    ans: 'しずかに',
+    wrong: 'しずかな',
+    target: '飲《の》む',
+    kind: 'doyouni',
+  },
+  {
+    id: 'koinu',
+    text: 'きのう、{{}} 子犬《こいぬ》が 生《う》まれた。',
+    ans: 'かわいい',
+    wrong: 'かわいく',
+    target: '子犬《こいぬ》',
+    kind: 'donna',
+  },
+  {
+    id: 'tokei',
+    text: '時計《とけい》の はりが {{}} 進《すす》む。',
+    ans: '正《ただ》しく',
+    wrong: '正《ただ》しい',
+    target: '進《すす》む',
+    kind: 'doyouni',
+  },
+  {
+    id: 'ike',
+    text: '池《いけ》の 水《みず》が {{}} 光《ひか》る。',
+    ans: 'きらきら',
+    wrong: 'きらきらした',
+    target: '光《ひか》る',
+    kind: 'doyouni',
+  },
+  {
+    id: 'kaban',
+    text: '妹《いもうと》は {{}} かばんを 買《か》って もらった。',
+    ans: '青《あお》い',
+    wrong: '青《あお》く',
+    target: 'かばん',
+    kind: 'donna',
+  },
+  {
+    id: 'uma',
+    text: '馬《うま》が 草原《そうげん》を {{}} 走《はし》る。',
+    ans: '速《はや》く',
+    wrong: '速《はや》い',
+    target: '走《はし》る',
+    kind: 'doyouni',
+  },
 ];
 
 function fillItem(f: Fill1): FillItem {
@@ -659,7 +801,11 @@ export const modifiers: UnitSpec = {
   intro: [
     {
       text: '「犬《いぬ》が 走《はし》る。」に 言葉《ことば》を 足《た》すと、「小《ちい》さな 犬《いぬ》が 元気《げんき》に 走《はし》る。」と くわしく なります。',
-      figure: { kind: 'text', text: '**小《ちい》さな** 犬《いぬ》が **元気《げんき》に** 走《はし》る。', size: 'l' },
+      figure: {
+        kind: 'text',
+        text: '**小《ちい》さな** 犬《いぬ》が **元気《げんき》に** 走《はし》る。',
+        size: 'l',
+      },
     },
     {
       text: '「小《ちい》さな」は「どんな 犬《いぬ》？」に 答《こた》えて、「犬《いぬ》」を くわしく します。「元気《げんき》に」は「どのように 走《はし》る？」に 答《こた》えて、「走《はし》る」を くわしく します。',

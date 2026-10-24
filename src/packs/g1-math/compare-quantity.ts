@@ -196,12 +196,8 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
         (_, i) =>
           `<rect x="${44 + i * size * U}" y="${y}" width="${size * U}" height="30" fill="${fill}" ${INK}/>`,
       ).join('');
-    const top = bigIsA
-      ? row(16, a, 2, 'var(--sun)')
-      : row(16, b, 1, 'var(--sky)');
-    const bottom = bigIsA
-      ? row(76, b, 1, 'var(--sky)')
-      : row(76, a, 2, 'var(--sun)');
+    const top = bigIsA ? row(16, a, 2, 'var(--sun)') : row(16, b, 1, 'var(--sky)');
+    const bottom = bigIsA ? row(76, b, 1, 'var(--sky)') : row(76, a, 2, 'var(--sun)');
     const fig = svg(
       60 + 10 * U,
       130,
@@ -229,12 +225,8 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
       alt: true,
       options: [
         // あ・い の順に固定して並べ、正答の印だけを入れかえる
-        bigIsA
-          ? { label: 'あ', correct: true }
-          : { label: 'あ', misconception: 'mis-unit-size' },
-        bigIsA
-          ? { label: 'い', misconception: 'mis-unit-size' }
-          : { label: 'い', correct: true },
+        bigIsA ? { label: 'あ', correct: true } : { label: 'あ', misconception: 'mis-unit-size' },
+        bigIsA ? { label: 'い', misconception: 'mis-unit-size' } : { label: 'い', correct: true },
         { label: 'おなじ', misconception: 'mis-same' },
       ],
       fixedOrder: true,

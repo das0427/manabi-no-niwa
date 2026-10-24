@@ -99,7 +99,11 @@ const HYOU: Hyou[] = [
     b: '西《にし》町《まち》',
     rows: [
       ['天気《てんき》', '晴《は》れ', '雨《あめ》'],
-      ['いちばん 高《たか》い 気温《きおん》', '二十五度《にじゅうごど》', '二十五度《にじゅうごど》'],
+      [
+        'いちばん 高《たか》い 気温《きおん》',
+        '二十五度《にじゅうごど》',
+        '二十五度《にじゅうごど》',
+      ],
       ['風《かぜ》', '強《つよ》い', '弱《よわ》い'],
     ],
     ask: 'same',
@@ -143,7 +147,11 @@ const HYOU: Hyou[] = [
     a: 'バス',
     b: '電車《でんしゃ》',
     rows: [
-      ['駅《えき》まで かかる 時間《じかん》', '三十分《さんじゅっぷん》', '二十分《にじゅっぷん》'],
+      [
+        '駅《えき》まで かかる 時間《じかん》',
+        '三十分《さんじゅっぷん》',
+        '二十分《にじゅっぷん》',
+      ],
       ['りょう金《きん》', '二百円《にひゃくえん》', '二百円《にひゃくえん》'],
       ['乗《の》りかえ', 'なし', '一回《いっかい》'],
     ],
@@ -186,7 +194,15 @@ function hyouItem(h: Hyou): ChoiceItem {
 }
 
 /** 別例: 表ではなく文章で書かれた2つを比べる */
-const HIKAKU_ALT: { id: string; text: string; ask: 'same' | 'diff'; ok: string; mix: string; out: string; e: string }[] = [
+const HIKAKU_ALT: {
+  id: string;
+  text: string;
+  ask: 'same' | 'diff';
+  ok: string;
+  mix: string;
+  out: string;
+  e: string;
+}[] = [
   {
     id: 'kabuto',
     text: 'カブトムシと クワガタは、どちらも こん虫《ちゅう》です。カブトムシの おすには 頭《あたま》に 長《なが》い つのが あり、クワガタの おすには 大《おお》きな あごが あります。',
@@ -398,7 +414,8 @@ function kantenAlt(k: (typeof KANTEN_ALT)[number]): ChoiceItem {
     level: 1,
     alt: true,
     layout: 'column',
-    prompt: '下《した》のように 二《ふた》つに 分《わ》けました。どんな 観点《かんてん》で 分《わ》けたのでしょう。',
+    prompt:
+      '下《した》のように 二《ふた》つに 分《わ》けました。どんな 観点《かんてん》で 分《わ》けたのでしょう。',
     figure: {
       kind: 'table',
       header: ['グループA', 'グループB'],
@@ -474,7 +491,8 @@ const INYOU: Inyou[] = [
     p1: '秋《あき》に なると、イチョウの 葉《は》が 黄色《きいろ》く なるのは なぜか 調《しら》べました。',
     p2: '『木《き》の 一年《いちねん》』には、「寒《さむ》く なると、葉《は》の 緑色《みどりいろ》の もとが へり、かくれて いた 黄色《きいろ》が 見《み》えて くる」と 書《か》かれて います。',
     p3: 'わたしは、緑《みどり》の 葉《は》の 中《なか》に 黄色《きいろ》が かくれて いたなんて、おもしろいと 思《おも》いました。',
-    quote: '寒《さむ》く なると、葉《は》の 緑色《みどりいろ》の もとが へり、かくれて いた 黄色《きいろ》が 見《み》えて くる',
+    quote:
+      '寒《さむ》く なると、葉《は》の 緑色《みどりいろ》の もとが へり、かくれて いた 黄色《きいろ》が 見《み》えて くる',
     own: '緑《みどり》の 葉《は》に 黄色《きいろ》が かくれて いたのは おもしろい',
     intro: 'イチョウの 葉《は》が 黄色《きいろ》く なるのは なぜか 調《しら》べた',
     ask: 'own',
@@ -485,7 +503,8 @@ const INYOU: Inyou[] = [
     p1: '家《いえ》で かって いる カメが、冬《ふゆ》に なると 動《うご》かなく なるので 調《しら》べました。',
     p2: '『カメの そだて方《かた》』には、「カメは、寒《さむ》く なると、土《つち》の 中《なか》や 水《みず》の そこで じっと して 冬《ふゆ》を こす」と 書《か》かれて います。',
     p3: 'わたしは、冬《ふゆ》の 間《あいだ》は カメを むりに 起《お》こさないように しようと 思《おも》いました。',
-    quote: 'カメは、寒《さむ》く なると、土《つち》の 中《なか》や 水《みず》の そこで じっと して 冬《ふゆ》を こす',
+    quote:
+      'カメは、寒《さむ》く なると、土《つち》の 中《なか》や 水《みず》の そこで じっと して 冬《ふゆ》を こす',
     own: '冬《ふゆ》の 間《あいだ》は カメを むりに 起《お》こさないように しよう',
     intro: '家《いえ》の カメが 冬《ふゆ》に 動《うご》かなく なるので 調《しら》べた',
     ask: 'quote',
@@ -595,7 +614,8 @@ function inyouSort(s: (typeof INYOU_SORT)[number]): SortItem {
     objective: 'inyou',
     level: 2,
     alt: true,
-    prompt: 'ほうこくの 文《ぶん》を、「本《ほん》から うつした 部分《ぶぶん》」と「自分《じぶん》の 言葉《ことば》で 書《か》いた 部分《ぶぶん》」に 分《わ》けよう。',
+    prompt:
+      'ほうこくの 文《ぶん》を、「本《ほん》から うつした 部分《ぶぶん》」と「自分《じぶん》の 言葉《ことば》で 書《か》いた 部分《ぶぶん》」に 分《わ》けよう。',
     boxes: [
       { label: '本《ほん》から うつした 部分《ぶぶん》' },
       { label: '自分《じぶん》の 言葉《ことば》で 書《か》いた 部分《ぶぶん》' },
@@ -641,8 +661,20 @@ const ITEM_NAMES = [
 
 /** 正しい出典を選ぶ */
 const SRC_FULL: Src[] = [
-  { id: 'konchu', name: 'はじめての こん虫《ちゅう》', author: '森《もり》 ゆうき', pub: 'そよかぜ社《しゃ》', year: 2022 },
-  { id: 'gomi', name: 'ごみの ゆくえ', author: '川口《かわぐち》 けん', pub: 'まちかど社《しゃ》', year: 2022 },
+  {
+    id: 'konchu',
+    name: 'はじめての こん虫《ちゅう》',
+    author: '森《もり》 ゆうき',
+    pub: 'そよかぜ社《しゃ》',
+    year: 2022,
+  },
+  {
+    id: 'gomi',
+    name: 'ごみの ゆくえ',
+    author: '川口《かわぐち》 けん',
+    pub: 'まちかど社《しゃ》',
+    year: 2022,
+  },
 ];
 
 function srcFullItem(s: Src): ChoiceItem {
@@ -652,7 +684,8 @@ function srcFullItem(s: Src): ChoiceItem {
     objective: 'shutten',
     level: 3,
     layout: 'column',
-    prompt: '本《ほん》から 引用《いんよう》しました。出典《しゅってん》の 書《か》き方《かた》で 正《ただ》しい ものは どれ？',
+    prompt:
+      '本《ほん》から 引用《いんよう》しました。出典《しゅってん》の 書《か》き方《かた》で 正《ただ》しい ものは どれ？',
     figure: {
       kind: 'table',
       header: [...ITEM_NAMES],
@@ -675,8 +708,26 @@ function srcFullItem(s: Src): ChoiceItem {
 
 /** 足りない項目を選ぶ。missing: ぬけている項目の番号 */
 const SRC_MISSING: [Src, number][] = [
-  [{ id: 'kumo', name: '雲《くも》の ずかん', author: '空野《そらの》 ゆう', pub: 'あさひ社《しゃ》', year: 2021 }, 3],
-  [{ id: 'cha', name: 'お茶《ちゃ》の れきし', author: '竹中《たけなか》 みのる', pub: 'ひかり社《しゃ》', year: 2020 }, 2],
+  [
+    {
+      id: 'kumo',
+      name: '雲《くも》の ずかん',
+      author: '空野《そらの》 ゆう',
+      pub: 'あさひ社《しゃ》',
+      year: 2021,
+    },
+    3,
+  ],
+  [
+    {
+      id: 'cha',
+      name: 'お茶《ちゃ》の れきし',
+      author: '竹中《たけなか》 みのる',
+      pub: 'ひかり社《しゃ》',
+      year: 2020,
+    },
+    2,
+  ],
 ];
 
 function srcMissingItem([s, miss]: (typeof SRC_MISSING)[number]): ChoiceItem {
@@ -709,8 +760,26 @@ function srcMissingItem([s, miss]: (typeof SRC_MISSING)[number]): ChoiceItem {
 
 /** 項目を読み取る。ask: 問う項目の番号 */
 const SRC_READ: [Src, number][] = [
-  [{ id: 'machi', name: '町《まち》の 歩《ある》き方《かた》', author: '川上《かわかみ》 さとし', pub: 'こみち社《しゃ》', year: 2021 }, 1],
-  [{ id: 'umi', name: '海《うみ》の 生《い》き物《もの》 たんけん', author: '青木《あおき》 なぎさ', pub: 'なみま社《しゃ》', year: 2022 }, 2],
+  [
+    {
+      id: 'machi',
+      name: '町《まち》の 歩《ある》き方《かた》',
+      author: '川上《かわかみ》 さとし',
+      pub: 'こみち社《しゃ》',
+      year: 2021,
+    },
+    1,
+  ],
+  [
+    {
+      id: 'umi',
+      name: '海《うみ》の 生《い》き物《もの》 たんけん',
+      author: '青木《あおき》 なぎさ',
+      pub: 'なみま社《しゃ》',
+      year: 2022,
+    },
+    2,
+  ],
 ];
 
 function srcReadItem([s, ask]: (typeof SRC_READ)[number]): ChoiceItem {
@@ -739,9 +808,27 @@ function srcReadItem([s, ask]: (typeof SRC_READ)[number]): ChoiceItem {
 
 /** 別例: 出典の部分と項目名を線で結ぶ */
 const SRC_MATCH: Src[] = [
-  { id: 'hachi', name: 'はちの くらし', author: '野原《のはら》 みつ', pub: '花《はな》ばたけ社《しゃ》', year: 2023 },
-  { id: 'kaeru', name: 'カエルの くらし', author: '池田《いけだ》 しずく', pub: 'みずべ社《しゃ》', year: 2020 },
-  { id: 'satou', name: 'さとうの ふしぎ', author: '白石《しらいし》 あまね', pub: 'こなゆき社《しゃ》', year: 2024 },
+  {
+    id: 'hachi',
+    name: 'はちの くらし',
+    author: '野原《のはら》 みつ',
+    pub: '花《はな》ばたけ社《しゃ》',
+    year: 2023,
+  },
+  {
+    id: 'kaeru',
+    name: 'カエルの くらし',
+    author: '池田《いけだ》 しずく',
+    pub: 'みずべ社《しゃ》',
+    year: 2020,
+  },
+  {
+    id: 'satou',
+    name: 'さとうの ふしぎ',
+    author: '白石《しらいし》 あまね',
+    pub: 'こなゆき社《しゃ》',
+    year: 2024,
+  },
 ];
 
 function srcMatch(s: Src): MatchItem {
@@ -799,9 +886,17 @@ export const infoCompare: UnitSpec = {
   icon: 'notebook',
   prereq: ['g3.ja.read-paragraphs'],
   objectives: [
-    { id: 'hikaku', title: '二《ふた》つの 物《もの》を くらべて、共通点《きょうつうてん》と ちがう 点《てん》を 見《み》つける' },
+    {
+      id: 'hikaku',
+      title:
+        '二《ふた》つの 物《もの》を くらべて、共通点《きょうつうてん》と ちがう 点《てん》を 見《み》つける',
+    },
     { id: 'bunrui', title: '観点《かんてん》を 決《き》めて 分《わ》ける' },
-    { id: 'inyou', title: '本《ほん》から うつした 部分《ぶぶん》と 自分《じぶん》の 考《かんが》えを 分《わ》ける' },
+    {
+      id: 'inyou',
+      title:
+        '本《ほん》から うつした 部分《ぶぶん》と 自分《じぶん》の 考《かんが》えを 分《わ》ける',
+    },
     { id: 'shutten', title: '出典《しゅってん》の 書《か》き方《かた》を 知《し》る' },
   ],
   misconceptions: [

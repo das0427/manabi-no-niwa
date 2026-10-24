@@ -32,7 +32,11 @@ function tape(level: number, rng: Rng, alt: boolean): MeasureItem {
       objective: 'tape',
       level,
       prompt: `テープの 長《なが》さは 何《なん》cmですか。テープの 左《ひだり》はしは ${from}cmの めもりに あります。`,
-      hints: ['テープの 左《ひだり》はしが 0の めもりでは ないね。', `右《みぎ》はしの めもりを 読《よ》んで、${from}cmを ひこう。`, '右《みぎ》はしの めもり − 左《ひだり》はしの めもり。'],
+      hints: [
+        'テープの 左《ひだり》はしが 0の めもりでは ないね。',
+        `右《みぎ》はしの めもりを 読《よ》んで、${from}cmを ひこう。`,
+        '右《みぎ》はしの めもり − 左《ひだり》はしの めもり。',
+      ],
       explain: `右《みぎ》はしの めもりは ${from + w}cm。左《ひだり》はしが ${from}cmなので、${from + w} − ${from} ＝ ${w}で ${w}cmです。`,
       identity: `tape-from:${from}:${w}`,
       alt: true,
@@ -51,7 +55,11 @@ function tape(level: number, rng: Rng, alt: boolean): MeasureItem {
     objective: 'tape',
     level,
     prompt: 'まきじゃくで ロープの 長《なが》さを はかりました。何《なん》m何《なん》cmですか。',
-    hints: ['まきじゃくの 数字《すうじ》は cmだよ。100cmで 1m。', `右《みぎ》はしは ${Math.floor(v / 10) * 10}cmの めもりを すぎた ところ。`, `${Math.floor(v / 10) * 10}cmから 小《ちい》さい めもり いくつ分《ぶん》かな。そのあと 100cmを 1mに なおそう。`],
+    hints: [
+      'まきじゃくの 数字《すうじ》は cmだよ。100cmで 1m。',
+      `右《みぎ》はしは ${Math.floor(v / 10) * 10}cmの めもりを すぎた ところ。`,
+      `${Math.floor(v / 10) * 10}cmから 小《ちい》さい めもり いくつ分《ぶん》かな。そのあと 100cmを 1mに なおそう。`,
+    ],
     explain: `めもりは ${v}cm。100cm ＝ 1mなので、${v}cm ＝ 1m${v - 100}cmです。`,
     identity: `tape:${v}`,
     alt: false,
@@ -71,7 +79,11 @@ function tape(level: number, rng: Rng, alt: boolean): MeasureItem {
 
 function convert(level: number, rng: Rng, alt: boolean): NumberItem {
   const k = rng.int(1, 9);
-  const m = pickOne(rng, [rng.int(1, 9) * 100, rng.int(1, 9) * 10 + rng.int(0, 1) * 100 * rng.int(1, 9), rng.int(1, 999)]);
+  const m = pickOne(rng, [
+    rng.int(1, 9) * 100,
+    rng.int(1, 9) * 10 + rng.int(0, 1) * 100 * rng.int(1, 9),
+    rng.int(1, 999),
+  ]);
   const total = k * 1000 + m;
   const toM = alt ? false : rng.next() < 0.5;
   if (alt) {
@@ -82,7 +94,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'convert',
       level,
       prompt: `おじいさんの 家《いえ》まで ${total}m あります。これは 何《なん》km何《なん》mですか。`,
-      hints: ['1kmは 1000m だよ。', `${total}mの 中《なか》に 1000mは いくつ あるかな。`, `${k * 1000}mで ${k}km。のこりは 何《なん》m？`],
+      hints: [
+        '1kmは 1000m だよ。',
+        `${total}mの 中《なか》に 1000mは いくつ あるかな。`,
+        `${k * 1000}mで ${k}km。のこりは 何《なん》m？`,
+      ],
       explain: `1km ＝ 1000m。${total}m ＝ ${k * 1000}m ＋ ${m}m ＝ ${k}km${m}mです。`,
       identity: `m-km:${total}`,
       alt: true,
@@ -104,7 +120,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         level,
         prompt: '□に あてはまる 数《かず》は？',
         figure: { kind: 'text', text: `${k}km${m}m ＝ {{}}m`, size: 'xl' },
-        hints: ['1kmは 1000m だよ。', `${k}kmは ${k * 1000}m。`, `${k * 1000}mと ${m}mを あわせよう。`],
+        hints: [
+          '1kmは 1000m だよ。',
+          `${k}kmは ${k * 1000}m。`,
+          `${k * 1000}mと ${m}mを あわせよう。`,
+        ],
         explain: `1km ＝ 1000m なので ${k}km ＝ ${k * 1000}m。${k * 1000} ＋ ${m} ＝ ${total}で ${total}mです。`,
         identity: `km-m:${k}:${m}`,
         alt: false,
@@ -121,7 +141,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         level,
         prompt: '□に あてはまる 数《かず》は？',
         figure: { kind: 'text', text: `${total}m ＝ {{}}km{{}}m`, size: 'xl' },
-        hints: ['1000mで 1km だよ。', `${total}mの 中《なか》に 1000mは いくつ あるかな。`, `${k * 1000}mで ${k}km。のこりは？`],
+        hints: [
+          '1000mで 1km だよ。',
+          `${total}mの 中《なか》に 1000mは いくつ あるかな。`,
+          `${k * 1000}mで ${k}km。のこりは？`,
+        ],
         explain: `${total}m ＝ ${k * 1000}m ＋ ${m}m ＝ ${k}km${m}mです。`,
         identity: `m-km:${total}`,
         alt: false,
@@ -163,7 +187,8 @@ function path(level: number, rng: Rng, alt: boolean): NumberItem {
           { label: 'm', answer: { kind: 'int' as const, value: total % 1000 } },
         ]
       : [{ label: 'm', answer: { kind: 'int' as const, value: total } }];
-  const asFields = (v: number) => (total >= 1000 ? `${Math.floor(v / 1000)}|${v % 1000}` : String(v));
+  const asFields = (v: number) =>
+    total >= 1000 ? `${Math.floor(v / 1000)}|${v % 1000}` : String(v);
   const story = `家《いえ》（●）から 曲《ま》がり角《かど》まで ${a}m、曲《ま》がり角《かど》から 学校《がっこう》（■）まで ${b}mの 道《みち》を 歩《ある》きます。家《いえ》から 学校《がっこう》まで まっすぐに はかった 長《なが》さ（点線《てんせん》）は ${dist}mです。`;
   if (alt)
     return {
@@ -173,7 +198,11 @@ function path(level: number, rng: Rng, alt: boolean): NumberItem {
       level,
       prompt: `${story}\n道《みち》のりと きょりの ちがいは 何《なん》mですか。`,
       figure: routeFig(rng.int(0, 3)),
-      hints: ['道《みち》に そって はかった 長《なが》さが 道《みち》のり、まっすぐ はかった 長《なが》さが きょり。', `道《みち》のりは ${a} ＋ ${b}。`, `道《みち》のりから きょりの ${dist}mを ひこう。`],
+      hints: [
+        '道《みち》に そって はかった 長《なが》さが 道《みち》のり、まっすぐ はかった 長《なが》さが きょり。',
+        `道《みち》のりは ${a} ＋ ${b}。`,
+        `道《みち》のりから きょりの ${dist}mを ひこう。`,
+      ],
       explain: `道《みち》のりは ${a} ＋ ${b} ＝ ${total}m、きょりは ${dist}m。ちがいは ${total} − ${dist} ＝ ${total - dist}mです。`,
       identity: `path-diff:${a}:${b}:${dist}`,
       alt: true,
@@ -190,7 +219,11 @@ function path(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${story}\n家《いえ》から 学校《がっこう》までの 道《みち》のりは ${total >= 1000 ? '何《なん》km何《なん》m' : '何《なん》m'}ですか。`,
     figure: routeFig(rng.int(0, 3)),
-    hints: ['道《みち》のりは、道《みち》に そって はかった 長《なが》さ。', `${a}mと ${b}mを あわせよう。`, total >= 1000 ? '1000mで 1km。' : `${a} ＋ ${b} を 計算《けいさん》しよう。`],
+    hints: [
+      '道《みち》のりは、道《みち》に そって はかった 長《なが》さ。',
+      `${a}mと ${b}mを あわせよう。`,
+      total >= 1000 ? '1000mで 1km。' : `${a} ＋ ${b} を 計算《けいさん》しよう。`,
+    ],
     explain: `道《みち》のりは ${a} ＋ ${b} ＝ ${total}m${total >= 1000 ? `、${kmText(total)}` : ''}です。まっすぐの ${dist}mは きょりです。`,
     identity: `path:${a}:${b}:${dist}`,
     alt: false,
@@ -212,12 +245,22 @@ const UNIT_ITEMS: { id: string; text: string; n: number; u: 'mm' | 'cm' | 'm' | 
   { id: 'marathon', text: 'マラソンの コースの 長《なが》さ', n: 42, u: 'km' },
   { id: 'desk', text: 'つくえの よこの 長《なが》さ', n: 65, u: 'cm' },
   { id: 'ant', text: 'ありの 体《からだ》の 長《なが》さ', n: 5, u: 'mm' },
-  { id: 'train', text: '電車《でんしゃ》で となりの 町《まち》まで 行《い》く 道《みち》のり', n: 12, u: 'km' },
+  {
+    id: 'train',
+    text: '電車《でんしゃ》で となりの 町《まち》まで 行《い》く 道《みち》のり',
+    n: 12,
+    u: 'km',
+  },
   { id: 'tree', text: '校庭《こうてい》の 木《き》の 高《たか》さ', n: 8, u: 'm' },
   { id: 'eraser', text: 'けしゴムの あつさ', n: 12, u: 'mm' },
   { id: 'book', text: '教科書《きょうかしょ》の たての 長《なが》さ', n: 26, u: 'cm' },
   { id: 'bridge', text: '大《おお》きな 川《かわ》に かかる はしの 長《なが》さ', n: 300, u: 'm' },
-  { id: 'river', text: '川《かわ》の 上流《じょうりゅう》から 海《うみ》までの 長《なが》さ', n: 90, u: 'km' },
+  {
+    id: 'river',
+    text: '川《かわ》の 上流《じょうりゅう》から 海《うみ》までの 長《なが》さ',
+    n: 90,
+    u: 'km',
+  },
   { id: 'shoe', text: 'くつの 長《なが》さ', n: 20, u: 'cm' },
   { id: 'coin', text: '1円玉《いちえんだま》の 直径《ちょっけい》', n: 20, u: 'mm' },
 ];
@@ -238,12 +281,20 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
       objective: 'unit',
       level,
       prompt: f.q,
-      hints: ['長《なが》さの たんいの かんけいを 思《おも》い出《だ》そう。', '1km ＝ 1000m、1m ＝ 100cm、1cm ＝ 10mm。', 'km の k は「1000」の いみだよ。'],
+      hints: [
+        '長《なが》さの たんいの かんけいを 思《おも》い出《だ》そう。',
+        '1km ＝ 1000m、1m ＝ 100cm、1cm ＝ 10mm。',
+        'km の k は「1000」の いみだよ。',
+      ],
       explain: `1km ＝ 1000m、1m ＝ 100cm、1cm ＝ 10mm。答《こた》えは ${f.a}です。`,
       identity: `fact:${f.id}`,
       alt: true,
       fields: [{ answer: { kind: 'int', value: f.a } }],
-      wrongAnswers: wrongList(String(f.a), 1, f.w.map(([v, m]) => [v, m] as [number, string])),
+      wrongAnswers: wrongList(
+        String(f.a),
+        1,
+        f.w.map(([v, m]) => [v, m] as [number, string]),
+      ),
     };
   }
   const it = pickOne(rng, UNIT_ITEMS);
@@ -254,12 +305,18 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
     objective: 'unit',
     level,
     prompt: `${it.text}は ${it.n} □です。□に あてはまる たんいは どれ？`,
-    hints: ['1mm・1cm・1m・1kmの 長《なが》さを 思《おも》いうかべよう。', '1mは 両手《りょうて》を 広《ひろ》げた くらい、1kmは 歩《ある》いて 15分《ふん》くらい。', `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`],
+    hints: [
+      '1mm・1cm・1m・1kmの 長《なが》さを 思《おも》いうかべよう。',
+      '1mは 両手《りょうて》を 広《ひろ》げた くらい、1kmは 歩《ある》いて 15分《ふん》くらい。',
+      `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`,
+    ],
     explain: `${it.text}は ${it.n}${it.u}くらいです。`,
     identity: `unit:${it.id}`,
     alt: false,
     fixedOrder: true,
-    options: order.map((u) => (u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' })),
+    options: order.map((u) =>
+      u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' },
+    ),
   };
 }
 
@@ -306,19 +363,23 @@ export const lengthKm: UnitSpec = {
   misconceptions: [
     {
       id: 'field-swap',
-      explain: '大《おお》きい たんいと 小《ちい》さい たんいの 数《かず》を 入《い》れかえたのかな。左《ひだり》の ところが 大《おお》きい たんいだよ。',
+      explain:
+        '大《おお》きい たんいと 小《ちい》さい たんいの 数《かず》を 入《い》れかえたのかな。左《ひだり》の ところが 大《おお》きい たんいだよ。',
     },
     {
       id: 'meter-forget',
-      explain: '100cmを こえた ことを わすれたのかな。100cmで 1m。まきじゃくの めもりが 100を こえたら 1mと 何《なん》cmと 読《よ》もう。',
+      explain:
+        '100cmを こえた ことを わすれたのかな。100cmで 1m。まきじゃくの めもりが 100を こえたら 1mと 何《なん》cmと 読《よ》もう。',
     },
     {
       id: 'from-end',
-      explain: '右《みぎ》はしの めもりを そのまま 読《よ》んだのかな。左《ひだり》はしが 0で ない ときは、右《みぎ》はしの めもりから 左《ひだり》はしの めもりを ひこう。',
+      explain:
+        '右《みぎ》はしの めもりを そのまま 読《よ》んだのかな。左《ひだり》はしが 0で ない ときは、右《みぎ》はしの めもりから 左《ひだり》はしの めもりを ひこう。',
     },
     {
       id: 'km-place',
-      explain: 'kmと mの 数《かず》を ならべて 書《か》いたのかな。1km ＝ 1000m。1km30m は 1000m と 30m で 1030m だよ。',
+      explain:
+        'kmと mの 数《かず》を ならべて 書《か》いたのかな。1km ＝ 1000m。1km30m は 1000m と 30m で 1030m だよ。',
       figure: { kind: 'text', text: '1km30m ＝ 1030m', size: 'l' },
     },
     {
@@ -327,11 +388,13 @@ export const lengthKm: UnitSpec = {
     },
     {
       id: 'path-vs-distance',
-      explain: '道《みち》のりと きょりを とりちがえたのかな。道《みち》に そって はかった 長《なが》さが 道《みち》のり、まっすぐに はかった 長《なが》さが きょりだよ。',
+      explain:
+        '道《みち》のりと きょりを とりちがえたのかな。道《みち》に そって はかった 長《なが》さが 道《みち》のり、まっすぐに はかった 長《なが》さが きょりだよ。',
     },
     {
       id: 'unit-sense',
-      explain: 'その たんいだと 長《なが》すぎるか 短《みじか》すぎるかな。1mm・1cm・1m・1kmの 長《なが》さを 思《おも》いうかべて、くらべよう。',
+      explain:
+        'その たんいだと 長《なが》すぎるか 短《みじか》すぎるかな。1mm・1cm・1m・1kmの 長《なが》さを 思《おも》いうかべて、くらべよう。',
     },
   ],
   levels: [
@@ -343,7 +406,15 @@ export const lengthKm: UnitSpec = {
   intro: [
     {
       text: '長《なが》い ものや まるい ものは、まきじゃくで はかります。めもりは cmで、100cmで 1mです。',
-      figure: { kind: 'numberline', min: 100, max: 200, step: 10, minorStep: 1, labelEvery: 1, marks: [{ at: 137, label: '1m37cm', tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 100,
+        max: 200,
+        step: 10,
+        minorStep: 1,
+        labelEvery: 1,
+        marks: [{ at: 137, label: '1m37cm', tone: 'focus' }],
+      },
     },
     {
       text: '1000mを 1キロメートルと いい、1kmと 書《か》きます。1km ＝ 1000m。',

@@ -29,15 +29,26 @@ function columnFig(a: D, b: D, op: '＋' | '−'): Figure {
   const sb = S(b).split('.');
   const I = Math.max(sa[0]!.length, sb[0]!.length);
   const row = (s: string[]) => [
-    ...s[0]!.padStart(I, ' ').split('').map((c) => (c === ' ' ? '' : c)),
+    ...s[0]!
+      .padStart(I, ' ')
+      .split('')
+      .map((c) => (c === ' ' ? '' : c)),
     s[1] !== undefined ? '.' : '',
-    ...(s[1] ?? '').padEnd(P, ' ').split('').map((c) => (c === ' ' ? '' : c)),
+    ...(s[1] ?? '')
+      .padEnd(P, ' ')
+      .split('')
+      .map((c) => (c === ' ' ? '' : c)),
   ];
   const fracNames = ['[[1/10]]の位', '[[1/100]]の位', '[[1/1000]]の位'];
   const intNames = ['一の位', '十の位', '百の位'];
   return {
     kind: 'table',
-    header: ['', ...Array.from({ length: I }, (_, i) => intNames[I - 1 - i]!), '', ...fracNames.slice(0, P)],
+    header: [
+      '',
+      ...Array.from({ length: I }, (_, i) => intNames[I - 1 - i]!),
+      '',
+      ...fracNames.slice(0, P),
+    ],
     rows: [
       ['', ...row(sa)],
       [op, ...row(sb)],
@@ -57,7 +68,14 @@ function calcWrongs(a: D, b: D, op: 'add' | 'sub') {
   const rb = Number(S(b).replace('.', ''));
   const right = op === 'add' ? ra + rb : Math.abs(ra - rb);
   // 整数の部分だけ ひいて、小数の部分を そのまま おろした（5 − 2.36 → 3.36）
-  const intOnly = op === 'sub' && a.p === 0 ? dec((A / 10 ** P - Math.floor(b.v / 10 ** b.p)) * 10 ** P + (b.v % 10 ** b.p) * 10 ** (P - b.p), P) : null;
+  const intOnly =
+    op === 'sub' && a.p === 0
+      ? dec(
+          (A / 10 ** P - Math.floor(b.v / 10 ** b.p)) * 10 ** P +
+            (b.v % 10 ** b.p) * 10 ** (P - b.p),
+          P,
+        )
+      : null;
   return {
     ans,
     P,
@@ -68,7 +86,10 @@ function calcWrongs(a: D, b: D, op: 'add' | 'sub') {
       [String(ans), 'point-drop'],
       [dec(ans, P + 1), 'point-drop'],
       // くり上がり・くり下がりを わすれた（1/10 の位で）
-      [op === 'add' && (A % 10 ** P) + (B % 10 ** P) >= 10 ** P ? dec(ans - 10 ** P, P) : null, 'carry'],
+      [
+        op === 'add' && (A % 10 ** P) + (B % 10 ** P) >= 10 ** P ? dec(ans - 10 ** P, P) : null,
+        'carry',
+      ],
       [op === 'sub' && A % 10 ** P < B % 10 ** P ? dec(ans + 10 ** P, P) : null, 'carry'],
     ]),
   };
@@ -118,7 +139,9 @@ function calc(obj: 'add' | 'sub' | 'align', level: number, rng: Rng, alt: boolea
     prompt: alt ? '筆算で 計算しよう。' : '計算しよう。',
     figure: alt ? columnFig(a, b, sym) : expr(`${S(a)} ${sym} ${S(b)} ＝ {{}}`),
     hints: [
-      a.p !== b.p ? '小数点の 位置を たてに そろえて 書こう。' : '小数点を そろえて、整数と 同じように 計算しよう。',
+      a.p !== b.p
+        ? '小数点の 位置を たてに そろえて 書こう。'
+        : '小数点を そろえて、整数と 同じように 計算しよう。',
       `${S(a)}は 0.${'0'.repeat(P - 1)}1が ${at(a, P)}こ、${S(b)}は ${at(b, P)}こ。`,
       `${at(a, P)} ${sym} ${at(b, P)}を 計算して、0.${'0'.repeat(P - 1)}1が いくつ分か 考えよう。`,
     ],
@@ -154,7 +177,13 @@ function units(level: number, rng: Rng, alt: boolean): Item {
       explain: `1めもりは ${dec(1, p)}なので、${dec(base, p)}より ${dec(k, p)} 大きい ${dec(base + k, p)}です。`,
       identity: `units-line:${dec(base, p)}:${k}`,
       alt: true,
-      line: { min: dec(base, p), max: dec(base + 10, p), minor: dec(1, p), majorEvery: 5, labels: [] },
+      line: {
+        min: dec(base, p),
+        max: dec(base + 10, p),
+        minor: dec(1, p),
+        majorEvery: 5,
+        labels: [],
+      },
       marks: [
         { at: dec(base, p), label: dec(base, p) },
         { at: dec(base + 10, p), label: dec(base + 10, p) },
@@ -221,12 +250,16 @@ function units(level: number, rng: Rng, alt: boolean): Item {
     };
   }
   // 1 が □こ、0.1 が □こ、0.01 が □こ
-  const digits = String(v).padStart(p + 1, '0').split('').map(Number);
+  const digits = String(v)
+    .padStart(p + 1, '0')
+    .split('')
+    .map(Number);
   const names = ['1', '0.1', '0.01', '0.001'];
   const intPart = Math.floor(v / 10 ** p);
-  const parts = [`1を ${intPart}こ`, ...digits.slice(-p).map((dgt, i) => `${names[i + 1]}を ${dgt}こ`)].filter(
-    (t) => !/を 0こ$/.test(t),
-  );
+  const parts = [
+    `1を ${intPart}こ`,
+    ...digits.slice(-p).map((dgt, i) => `${names[i + 1]}を ${dgt}こ`),
+  ].filter((t) => !/を 0こ$/.test(t));
   const answers = [decAns(v, p)];
   return {
     engine: 'number',
@@ -258,14 +291,56 @@ interface Scene {
   text: (a: string, b: string) => string;
 }
 const SCENES: Scene[] = [
-  { id: 'juice', op: 'add', unit: 'L', text: (a, b) => `ジュースが ${a}L、お茶が ${b}L あります。あわせて 何Lですか。` },
-  { id: 'water', op: 'add', unit: 'L', text: (a, b) => `水そうに 水が ${a}L 入って います。そこへ ${b}L 入れると、何Lに なりますか。` },
-  { id: 'bag', op: 'add', unit: 'kg', text: (a, b) => `${a}kgの かばんに、${b}kgの 本を 入れました。全体の 重さは 何kgですか。` },
-  { id: 'road', op: 'add', unit: 'km', text: (a, b) => `家から 学校まで ${a}km、学校から 公園まで ${b}kmです。家から 学校を 通って 公園まで 何kmですか。` },
-  { id: 'ribbon', op: 'sub', unit: 'm', text: (a, b) => `リボンが ${a}m あります。${b}m 使うと、のこりは 何mですか。` },
-  { id: 'sugar', op: 'sub', unit: 'kg', text: (a, b) => `さとうが ${a}kg あります。${b}kg 使うと、のこりは 何kgですか。` },
-  { id: 'tape', op: 'sub', unit: 'm', text: (a, b) => `赤い テープは ${a}m、青い テープは ${b}mです。ちがいは 何mですか。` },
-  { id: 'jump', op: 'sub', unit: 'm', text: (a, b) => `はばとびで、はるさんは ${a}m、そうたさんは ${b}m とびました。はるさんの ほうが 何m 長く とびましたか。` },
+  {
+    id: 'juice',
+    op: 'add',
+    unit: 'L',
+    text: (a, b) => `ジュースが ${a}L、お茶が ${b}L あります。あわせて 何Lですか。`,
+  },
+  {
+    id: 'water',
+    op: 'add',
+    unit: 'L',
+    text: (a, b) => `水そうに 水が ${a}L 入って います。そこへ ${b}L 入れると、何Lに なりますか。`,
+  },
+  {
+    id: 'bag',
+    op: 'add',
+    unit: 'kg',
+    text: (a, b) => `${a}kgの かばんに、${b}kgの 本を 入れました。全体の 重さは 何kgですか。`,
+  },
+  {
+    id: 'road',
+    op: 'add',
+    unit: 'km',
+    text: (a, b) =>
+      `家から 学校まで ${a}km、学校から 公園まで ${b}kmです。家から 学校を 通って 公園まで 何kmですか。`,
+  },
+  {
+    id: 'ribbon',
+    op: 'sub',
+    unit: 'm',
+    text: (a, b) => `リボンが ${a}m あります。${b}m 使うと、のこりは 何mですか。`,
+  },
+  {
+    id: 'sugar',
+    op: 'sub',
+    unit: 'kg',
+    text: (a, b) => `さとうが ${a}kg あります。${b}kg 使うと、のこりは 何kgですか。`,
+  },
+  {
+    id: 'tape',
+    op: 'sub',
+    unit: 'm',
+    text: (a, b) => `赤い テープは ${a}m、青い テープは ${b}mです。ちがいは 何mですか。`,
+  },
+  {
+    id: 'jump',
+    op: 'sub',
+    unit: 'm',
+    text: (a, b) =>
+      `はばとびで、はるさんは ${a}m、そうたさんは ${b}m とびました。はるさんの ほうが 何m 長く とびましたか。`,
+  },
 ];
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -304,7 +379,9 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
         }
       : undefined,
     hints: [
-      sc.op === 'add' ? 'あわせた 量を 求めるので たし算だね。' : 'のこりや ちがいを 求めるので ひき算だね。',
+      sc.op === 'add'
+        ? 'あわせた 量を 求めるので たし算だね。'
+        : 'のこりや ちがいを 求めるので ひき算だね。',
       `式は ${S(a)} ${sym} ${S(b)}。小数点を そろえよう。`,
       `0.${'0'.repeat(w.P - 1)}1の いくつ分で 考えると ${at(a, w.P)} ${sym} ${at(b, w.P)}。`,
     ],
@@ -367,19 +444,23 @@ export const decimalAddSub: UnitSpec = finishUnit({
     },
     {
       id: 'int-only',
-      explain: '整数の 部分だけ ひいて、小数の 部分を そのまま 書いたのかな。5は 5.00と 考えて、小数の 位も ひこう。',
+      explain:
+        '整数の 部分だけ ひいて、小数の 部分を そのまま 書いたのかな。5は 5.00と 考えて、小数の 位も ひこう。',
     },
     {
       id: 'point-drop',
-      explain: '小数点を 打つ 場所が ずれたのかな（または わすれたのかな）。上の 数の 小数点に そろえて 答えにも 小数点を 打とう。',
+      explain:
+        '小数点を 打つ 場所が ずれたのかな（または わすれたのかな）。上の 数の 小数点に そろえて 答えにも 小数点を 打とう。',
     },
     {
       id: 'carry',
-      explain: 'くり上がり・くり下がりを わすれたのかな。0.1が 10こで 1、0.01が 10こで 0.1に なるよ。',
+      explain:
+        'くり上がり・くり下がりを わすれたのかな。0.1が 10こで 1、0.01が 10こで 0.1に なるよ。',
     },
     {
       id: 'unit-tenth',
-      explain: '0.1と 0.01（0.001）の 大きさを とりちがえたのかな。0.01が 10こで 0.1、100こで 1だよ。',
+      explain:
+        '0.1と 0.01（0.001）の 大きさを とりちがえたのかな。0.01が 10こで 0.1、100こで 1だよ。',
     },
     {
       id: 'unit-zero',
@@ -387,7 +468,8 @@ export const decimalAddSub: UnitSpec = finishUnit({
     },
     {
       id: 'scale-one',
-      explain: '1めもりの 大きさを たしかめよう。はしから はしまでを いくつに 分けて いるかを 見るよ。',
+      explain:
+        '1めもりの 大きさを たしかめよう。はしから はしまでを いくつに 分けて いるかを 見るよ。',
     },
   ],
   levels: [
@@ -399,7 +481,14 @@ export const decimalAddSub: UnitSpec = finishUnit({
   intro: [
     {
       text: '0.1を 10に 分けた 1つ分を 0.01と 書き、「れい点 れい一」と 読みます。0.01の 位を [[1/100]]の位と いいます。',
-      figure: { kind: 'numberline', min: 0, max: 0.1, step: 0.01, labelEvery: 10, marks: [{ at: 0.01, label: '0.01', tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 0.1,
+        step: 0.01,
+        labelEvery: 10,
+        marks: [{ at: 0.01, label: '0.01', tone: 'focus' }],
+      },
     },
     {
       text: '2.35は 1が 2こ、0.1が 3こ、0.01が 5こ。0.01が 235こ 集まった数とも いえます。',
@@ -419,6 +508,7 @@ export const decimalAddSub: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateDecimalAddSub(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(5) 小数の仕組みとその計算（1/100の位以下、加法・減法）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(5) 小数の仕組みとその計算（1/100の位以下、加法・減法）',
   revised: REVISED,
 });

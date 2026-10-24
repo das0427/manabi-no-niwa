@@ -105,7 +105,12 @@ describe('内容レビューの修正（g1-ja）', () => {
     for (const it of itemsOf('g1.ja.read-story')) {
       expect(it.id).not.toContain('omusubi');
       if (it.engine === 'reading') {
-        for (const s of [it.prompt, ...it.hints, it.explain, ...it.options.map((o) => o.label ?? '')])
+        for (const s of [
+          it.prompt,
+          ...it.hints,
+          it.explain,
+          ...it.options.map((o) => o.label ?? ''),
+        ])
           expect(s, it.id).not.toContain('《');
       }
     }
@@ -117,7 +122,12 @@ describe('内容レビューの修正（g1-ja）', () => {
     const unit = unitOf('g1.ja.read-info');
     for (const it of itemsOf('g1.ja.read-info')) {
       if (it.engine === 'reading') {
-        for (const s of [it.prompt, ...it.hints, it.explain, ...it.options.map((o) => o.label ?? '')])
+        for (const s of [
+          it.prompt,
+          ...it.hints,
+          it.explain,
+          ...it.options.map((o) => o.label ?? ''),
+        ])
           expect(s, it.id).not.toContain('《');
         expect(JSON.stringify(it.passage)).not.toContain('七月《しちがつ》五日');
       } else if (it.engine === 'order') {
@@ -129,7 +139,9 @@ describe('内容レビューの修正（g1-ja）', () => {
   });
 
   it('sentence-build: 家事の 役わりに 性別の かたよりが ない（おとうさん＝ごはん、おかあさん＝くるま）', () => {
-    const ids = itemsOf('g1.ja.sentence-build').map((i) => JSON.stringify(i)).join('');
+    const ids = itemsOf('g1.ja.sentence-build')
+      .map((i) => JSON.stringify(i))
+      .join('');
     expect(ids).not.toContain('おかあさんが ごはんを つくる');
     expect(ids).not.toContain('おとうさんが くるまを あらう');
   });
@@ -137,7 +149,8 @@ describe('内容レビューの修正（g1-ja）', () => {
   it('listen: かずを こたえる 問題の せんたくしは 1つ・2つ・3つ の じゅん', () => {
     for (const id of ['two-count-bring', 'two-count-do']) {
       const it = itemsOf('g1.ja.listen').find((i) => i.id === id)!;
-      if (it.engine === 'listen') expect(it.options.map((o) => o.label)).toEqual(['1つ', '2つ', '3つ']);
+      if (it.engine === 'listen')
+        expect(it.options.map((o) => o.label)).toEqual(['1つ', '2つ', '3つ']);
     }
   });
 });

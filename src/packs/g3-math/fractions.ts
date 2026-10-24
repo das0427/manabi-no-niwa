@@ -28,7 +28,11 @@ const frac = (num: number, den: number) => ({ kind: 'fraction' as const, num, de
 /** 1を n等分した テープの k こ分に ● の印（色だけで区別しない） */
 const tape = (k: number, n: number): Figure => ({
   kind: 'tape',
-  parts: Array.from({ length: n }, (_, i) => (i < k ? { length: 1, label: '●', tone: 'focus' as const } : { length: 1, tone: 'muted' as const })),
+  parts: Array.from({ length: n }, (_, i) =>
+    i < k
+      ? { length: 1, label: '●', tone: 'focus' as const }
+      : { length: 1, tone: 'muted' as const },
+  ),
   total: '1m',
 });
 
@@ -42,7 +46,11 @@ function unit(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'unit',
       level,
       prompt: `${F(k, n)}は、${F(1, n)}の 何《なん》こ分《ぶん》ですか。`,
-      hints: ['分子《ぶんし》は、分母《ぶんぼ》の 数《かず》に 分《わ》けた 1つ分《ぶん》が いくつ あるかを あらわすよ。', `${F(1, n)}は 1を ${n}こに 分《わ》けた 1つ分《ぶん》。`, `${F(k, n)}の 分子《ぶんし》を 見《み》よう。`],
+      hints: [
+        '分子《ぶんし》は、分母《ぶんぼ》の 数《かず》に 分《わ》けた 1つ分《ぶん》が いくつ あるかを あらわすよ。',
+        `${F(1, n)}は 1を ${n}こに 分《わ》けた 1つ分《ぶん》。`,
+        `${F(k, n)}の 分子《ぶんし》を 見《み》よう。`,
+      ],
       explain: `${F(k, n)}は ${F(1, n)}の ${k}こ分《ぶん》です。`,
       identity: `unit-r:${k}/${n}`,
       alt: false,
@@ -58,7 +66,11 @@ function unit(level: number, rng: Rng, alt: boolean): NumberItem {
       ? `1mの テープを ${n}こに 等分《とうぶん》しました。●の ところの 長《なが》さは 何《なん》mですか。分数《ぶんすう》で 答《こた》えよう。`
       : `${F(1, n)}の ${k}こ分《ぶん》は いくつですか。分数《ぶんすう》で 答《こた》えよう。`,
     figure: alt ? tape(k, n) : undefined,
-    hints: [`${F(1, n)}は 1を ${n}こに 分《わ》けた 1つ分《ぶん》。`, `分母《ぶんぼ》は ${n}の まま。`, `${F(1, n)}が ${k}こ。分子《ぶんし》は いくつに なるかな。`],
+    hints: [
+      `${F(1, n)}は 1を ${n}こに 分《わ》けた 1つ分《ぶん》。`,
+      `分母《ぶんぼ》は ${n}の まま。`,
+      `${F(1, n)}が ${k}こ。分子《ぶんし》は いくつに なるかな。`,
+    ],
     explain: `${F(1, n)}の ${k}こ分《ぶん》は ${F(k, n)}${k === n ? '。これは 1と おなじ 大《おお》きさ' : ''}です。`,
     identity: `unit:${k}/${n}`,
     alt,
@@ -90,7 +102,11 @@ function figureItem(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceI
       objective: 'figure',
       level,
       prompt: `${F(k, n)}mを あらわして いる 図《ず》は どれ？（●の ところ）`,
-      hints: ['1mを いくつに 分《わ》けて いるかな。', '同《おな》じ 長《なが》さに 分《わ》けて いるかも たしかめよう。', `${n}こに 等分《とうぶん》した ${k}こ分《ぶん》を さがそう。`],
+      hints: [
+        '1mを いくつに 分《わ》けて いるかな。',
+        '同《おな》じ 長《なが》さに 分《わ》けて いるかも たしかめよう。',
+        `${n}こに 等分《とうぶん》した ${k}こ分《ぶん》を さがそう。`,
+      ],
       explain: `1mを ${n}こに 等分《とうぶん》した ${k}こ分《ぶん》が ${F(k, n)}mです。`,
       identity: `figure:${k}/${n}`,
       alt: true,
@@ -108,9 +124,14 @@ function figureItem(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceI
     id: `figure:${k}/${n}`,
     objective: 'figure',
     level,
-    prompt: '1mの テープを 等分《とうぶん》しました。●の ところは 何《なん》mですか。分数《ぶんすう》で 答《こた》えよう。',
+    prompt:
+      '1mの テープを 等分《とうぶん》しました。●の ところは 何《なん》mですか。分数《ぶんすう》で 答《こた》えよう。',
     figure: tape(k, n),
-    hints: ['1mを いくつに 等分《とうぶん》して いるかな。それが 分母《ぶんぼ》。', `${n}こに 分《わ》けて いるね。`, '●は いくつ あるかな。それが 分子《ぶんし》。'],
+    hints: [
+      '1mを いくつに 等分《とうぶん》して いるかな。それが 分母《ぶんぼ》。',
+      `${n}こに 分《わ》けて いるね。`,
+      '●は いくつ あるかな。それが 分子《ぶんし》。',
+    ],
     explain: `1mを ${n}こに 等分《とうぶん》した ${k}こ分《ぶん》なので ${F(k, n)}mです。`,
     identity: `figure:${k}/${n}`,
     alt: false,
@@ -133,7 +154,11 @@ function line(level: number, rng: Rng, alt: boolean): NumberlineItem {
     line: { min: 0, max: 1, minor: `1/${n}`, majorEvery: n },
     misconceptions: { minorAsOne: 'minor-as-one', neighborTick: 'neighbor-tick' },
   };
-  const hints = ['0と 1の あいだを いくつに 分《わ》けて いるかな。', `${n}こに 分《わ》けて いるので、1めもりは ${F(1, n)}。`, `0から ${F(1, n)}が いくつ分《ぶん》 すすんだかな。`];
+  const hints = [
+    '0と 1の あいだを いくつに 分《わ》けて いるかな。',
+    `${n}こに 分《わ》けて いるので、1めもりは ${F(1, n)}。`,
+    `0から ${F(1, n)}が いくつ分《ぶん》 すすんだかな。`,
+  ];
   const explain = `1めもりは ${F(1, n)}。0から ${k}めもりで ${F(k, n)}です。`;
   if (alt)
     return {
@@ -170,7 +195,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       objective: 'compare',
       level,
       prompt: `□に あてはまる しるしは どれ？\n${F(k, n)} □ 1`,
-      hints: ['1は、分母《ぶんぼ》と 分子《ぶんし》が おなじ 分数《ぶんすう》で あらわせるよ。', `1 ＝ ${F(n, n)}。`, `${F(k, n)} と ${F(n, n)} の 分子《ぶんし》を くらべよう。`],
+      hints: [
+        '1は、分母《ぶんぼ》と 分子《ぶんし》が おなじ 分数《ぶんすう》で あらわせるよ。',
+        `1 ＝ ${F(n, n)}。`,
+        `${F(k, n)} と ${F(n, n)} の 分子《ぶんし》を くらべよう。`,
+      ],
       explain: `1 ＝ ${F(n, n)}。${F(k, n)} ${rel} 1 です。`,
       identity: `vs1:${k}/${n}`,
       alt: true,
@@ -191,7 +220,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       objective: 'compare',
       level,
       prompt: 'いちばん 大《おお》きい 分数《ぶんすう》は どれ？',
-      hints: ['1を いくつに 分《わ》けた 1つ分《ぶん》かを 考《かんが》えよう。', 'たくさんに 分《わ》けるほど、1つ分《ぶん》は 小《ちい》さく なるよ。', '分母《ぶんぼ》が いちばん 小《ちい》さいのは どれかな。'],
+      hints: [
+        '1を いくつに 分《わ》けた 1つ分《ぶん》かを 考《かんが》えよう。',
+        'たくさんに 分《わ》けるほど、1つ分《ぶん》は 小《ちい》さく なるよ。',
+        '分母《ぶんぼ》が いちばん 小《ちい》さいのは どれかな。',
+      ],
       explain: `分子《ぶんし》が 1の 分数《ぶんすう》は、分母《ぶんぼ》が 小《ちい》さいほど 大《おお》きい。いちばん 大《おお》きいのは ${F(1, ds[0]!)}です。`,
       identity: `cmp-unit:${ds.join('-')}`,
       alt: false,
@@ -203,14 +236,23 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     };
   }
   const n = rng.int(4, 10);
-  const ks = rng.sample(Array.from({ length: n - 1 }, (_, i) => i + 1), 3).sort((a, b) => a - b);
+  const ks = rng
+    .sample(
+      Array.from({ length: n - 1 }, (_, i) => i + 1),
+      3,
+    )
+    .sort((a, b) => a - b);
   return {
     engine: 'choice',
     id: `compare:same:${n}:${ks.join('-')}`,
     objective: 'compare',
     level,
     prompt: 'いちばん 大《おお》きい 分数《ぶんすう》は どれ？',
-    hints: ['分母《ぶんぼ》が おなじ だね。', `どれも ${F(1, n)}の いくつ分《ぶん》かで くらべよう。`, '分子《ぶんし》が いちばん 大《おお》きいのは どれかな。'],
+    hints: [
+      '分母《ぶんぼ》が おなじ だね。',
+      `どれも ${F(1, n)}の いくつ分《ぶん》かで くらべよう。`,
+      '分子《ぶんし》が いちばん 大《おお》きいのは どれかな。',
+    ],
     explain: `分母《ぶんぼ》が おなじ ときは、分子《ぶんし》が 大《おお》きいほど 大《おお》きい。いちばん 大《おお》きいのは ${F(ks[2]!, n)}です。`,
     identity: `cmp-same:${n}:${ks.join('-')}`,
     alt: false,
@@ -246,10 +288,14 @@ function addSub(obj: 'add' | 'sub', level: number, rng: Rng, alt: boolean): Numb
     objective: obj,
     level,
     prompt: alt ? scene : '計算《けいさん》しよう。分数《ぶんすう》で 答《こた》えよう。',
-    figure: alt ? undefined : { kind: 'text', text: `${left} ${op} ${F(b, n)} ＝ {{}}`, size: 'xl' },
+    figure: alt
+      ? undefined
+      : { kind: 'text', text: `${left} ${op} ${F(b, n)} ＝ {{}}`, size: 'xl' },
     hints: [
       `${F(1, n)}の いくつ分《ぶん》かで 考《かんが》えよう。`,
-      fromOne ? `1は ${F(n, n)}。${F(1, n)}が ${n}こ。` : `${F(a, n)}は ${F(1, n)}が ${a}こ、${F(b, n)}は ${b}こ。`,
+      fromOne
+        ? `1は ${F(n, n)}。${F(1, n)}が ${n}こ。`
+        : `${F(a, n)}は ${F(1, n)}が ${a}こ、${F(b, n)}は ${b}こ。`,
       `${F(1, n)}が ${a} ${op} ${b} こ分《ぶん》。分母《ぶんぼ》は ${n}の まま。`,
     ],
     explain: `${F(1, n)}が ${a} ${op} ${b} ＝ ${ans}こ分《ぶん》で ${F(ans, n)}${ans === n ? '（＝1）' : ''}。${left} ${op} ${F(b, n)} ＝ ${ans === n ? '1' : F(ans, n)}です。`,
@@ -275,7 +321,11 @@ function decimal(level: number, rng: Rng, alt: boolean): NumberItem | Numberline
       objective: 'decimal',
       level,
       prompt: `数直線《すうちょくせん》の 上《うえ》には 0.1、0.2、…が あります。↓の ところの 数《かず》を 分数《ぶんすう》で 答《こた》えよう。`,
-      hints: ['0と 1の あいだを 10こに 分《わ》けて いるよ。', `1めもりは 0.1、分数《ぶんすう》で ${F(1, 10)}。`, '0から いくつ めもり すすんだかな。'],
+      hints: [
+        '0と 1の あいだを 10こに 分《わ》けて いるよ。',
+        `1めもりは 0.1、分数《ぶんすう》で ${F(1, 10)}。`,
+        '0から いくつ めもり すすんだかな。',
+      ],
       explain: `1めもりは ${F(1, 10)}（＝0.1）。${k}めもりで ${F(k, 10)}（＝0.${k}）です。`,
       identity: `dec-line:${k}`,
       alt: true,
@@ -292,7 +342,11 @@ function decimal(level: number, rng: Rng, alt: boolean): NumberItem | Numberline
         objective: 'decimal',
         level,
         prompt: `${F(k, 10)}を 小数《しょうすう》で あらわそう。`,
-        hints: [`${F(1, 10)}は 1を 10こに 分《わ》けた 1つ分《ぶん》。`, `${F(1, 10)} ＝ 0.1 だよ。`, `${F(k, 10)}は 0.1が ${k}こ分《ぶん》。`],
+        hints: [
+          `${F(1, 10)}は 1を 10こに 分《わ》けた 1つ分《ぶん》。`,
+          `${F(1, 10)} ＝ 0.1 だよ。`,
+          `${F(k, 10)}は 0.1が ${k}こ分《ぶん》。`,
+        ],
         explain: `${F(1, 10)} ＝ 0.1。${F(k, 10)}は 0.1が ${k}こで 0.${k}です。`,
         identity: `to-dec:${k}`,
         alt: false,
@@ -309,7 +363,11 @@ function decimal(level: number, rng: Rng, alt: boolean): NumberItem | Numberline
         objective: 'decimal',
         level,
         prompt: `0.${k}を 分数《ぶんすう》で あらわそう。`,
-        hints: ['0.1は 1を 10こに 分《わ》けた 1つ分《ぶん》。', `0.1 ＝ ${F(1, 10)}。`, `0.${k}は 0.1が ${k}こ分《ぶん》。`],
+        hints: [
+          '0.1は 1を 10こに 分《わ》けた 1つ分《ぶん》。',
+          `0.1 ＝ ${F(1, 10)}。`,
+          `0.${k}は 0.1が ${k}こ分《ぶん》。`,
+        ],
         explain: `0.1 ＝ ${F(1, 10)}。0.${k}は ${F(1, 10)}が ${k}こで ${F(k, 10)}です。`,
         identity: `from-dec:${k}`,
         alt: false,
@@ -378,23 +436,28 @@ export const fractions: UnitSpec = {
     },
     {
       id: 'den-as-count',
-      explain: '分母《ぶんぼ》の 数《かず》を 答《こた》えたのかな。分母《ぶんぼ》は 何《なん》こに 分《わ》けたか、分子《ぶんし》は その いくつ分《ぶん》かを あらわすよ。',
+      explain:
+        '分母《ぶんぼ》の 数《かず》を 答《こた》えたのかな。分母《ぶんぼ》は 何《なん》こに 分《わ》けたか、分子《ぶんし》は その いくつ分《ぶん》かを あらわすよ。',
     },
     {
       id: 'num-den-swap',
-      explain: '分母《ぶんぼ》と 分子《ぶんし》を 入《い》れかえたのかな。分《わ》けた 数《かず》が 下《した》（分母《ぶんぼ》）、いくつ分《ぶん》が 上《うえ》（分子《ぶんし》）だよ。',
+      explain:
+        '分母《ぶんぼ》と 分子《ぶんし》を 入《い》れかえたのかな。分《わ》けた 数《かず》が 下《した》（分母《ぶんぼ》）、いくつ分《ぶん》が 上《うえ》（分子《ぶんし》）だよ。',
     },
     {
       id: 'part-to-part',
-      explain: 'ぬって いない ところと くらべたのかな。分母《ぶんぼ》は 全部《ぜんぶ》で いくつに 分《わ》けたかの 数《かず》だよ。',
+      explain:
+        'ぬって いない ところと くらべたのかな。分母《ぶんぼ》は 全部《ぜんぶ》で いくつに 分《わ》けたかの 数《かず》だよ。',
     },
     {
       id: 'not-equal',
-      explain: '同《おな》じ 大《おお》きさに 分《わ》けて いない 図《ず》を えらんだのかな。分数《ぶんすう》は 等分《とうぶん》した 大《おお》きさで あらわすよ。',
+      explain:
+        '同《おな》じ 大《おお》きさに 分《わ》けて いない 図《ず》を えらんだのかな。分数《ぶんすう》は 等分《とうぶん》した 大《おお》きさで あらわすよ。',
     },
     {
       id: 'minor-as-one',
-      explain: '1めもりを 1と 数《かぞ》えたのかな。0と 1の あいだを いくつに 分《わ》けて いるかを 見《み》よう。',
+      explain:
+        '1めもりを 1と 数《かぞ》えたのかな。0と 1の あいだを いくつに 分《わ》けて いるかを 見《み》よう。',
     },
     {
       id: 'neighbor-tick',
@@ -406,7 +469,8 @@ export const fractions: UnitSpec = {
     },
     {
       id: 'frac-compare',
-      explain: '分母《ぶんぼ》が おなじ ときは、分子《ぶんし》が 大《おお》きい ほうが 大《おお》きいよ。',
+      explain:
+        '分母《ぶんぼ》が おなじ ときは、分子《ぶんし》が 大《おお》きい ほうが 大《おお》きいよ。',
     },
     {
       id: 'frac-vs-one',
@@ -459,6 +523,7 @@ export const fractions: UnitSpec = {
     generate: ({ level, rng, index }) => generateFractions(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(6) 分数の意味と表し方（等分した大きさ、単位分数のいくつ分、簡単な場合の分数の加法・減法＝同分母・和が1まで）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(6) 分数の意味と表し方（等分した大きさ、単位分数のいくつ分、簡単な場合の分数の加法・減法＝同分母・和が1まで）',
   revised: '2026-10-24',
 };

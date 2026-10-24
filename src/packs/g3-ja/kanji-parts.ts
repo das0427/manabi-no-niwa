@@ -886,7 +886,10 @@ export const kanjiParts: UnitSpec = {
   objectives: [
     { id: 'find', title: '字《じ》の 部分《ぶぶん》（へん・かんむり など）を 見《み》つける' },
     { id: 'build', title: '部分《ぶぶん》を 組《く》み立《た》てて 字《じ》を 作《つく》る' },
-    { id: 'meaning', title: '同《おな》じ 部首《ぶしゅ》の 字《じ》の 意味《いみ》の なかまが わかる' },
+    {
+      id: 'meaning',
+      title: '同《おな》じ 部首《ぶしゅ》の 字《じ》の 意味《いみ》の なかまが わかる',
+    },
   ],
   misconceptions: [
     {

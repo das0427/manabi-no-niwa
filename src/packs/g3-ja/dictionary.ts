@@ -637,7 +637,10 @@ export const dictionary: UnitSpec = {
   objectives: [
     { id: 'gojuon', title: 'ことばを 五十音《ごじゅうおん》の じゅんに ならべる' },
     { id: 'sounds', title: 'にごる 音《おん》・のばす 音《おん》の ならび方《かた》が わかる' },
-    { id: 'midashi', title: '言《い》い切《き》りの 形《かたち》（見出《みだ》し語《ご》）で 引《ひ》く' },
+    {
+      id: 'midashi',
+      title: '言《い》い切《き》りの 形《かたち》（見出《みだ》し語《ご》）で 引《ひ》く',
+    },
   ],
   misconceptions: [
     {

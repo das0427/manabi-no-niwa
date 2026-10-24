@@ -19,7 +19,8 @@ const H2: Record<Cat, string> = {
   rule: '「〜ない」「〜ます」「〜ば」に かえて、かわらない ところと かわる ところを 分《わ》けて みよう。',
   shii: '「〜しい」で 終《お》わる ことばには、とくべつな きまりが あるよ。',
   exception: 'この ことばは、きまりの とおりに ならない「れい外《がい》」の ことばだよ。',
-  adverb: '形《かたち》が かわらない ことば（「かならず」「すこし」など）は、さいごの 一字《いちじ》を 送《おく》る ことが 多《おお》いよ。',
+  adverb:
+    '形《かたち》が かわらない ことば（「かならず」「すこし」など）は、さいごの 一字《いちじ》を 送《おく》る ことが 多《おお》いよ。',
 };
 
 // ---- 1. 語で 正しい 送りがなを 選ぶ ----
@@ -268,7 +269,15 @@ function wordItem(w: Word): ChoiceItem {
 }
 
 /** 別例: 文の中の □ に入る形を選ぶ */
-const IN_SENTENCE: { id: string; text: string; ok: string; wrong: Wrong[]; cat: Cat; h3: string; e: string }[] = [
+const IN_SENTENCE: {
+  id: string;
+  text: string;
+  ok: string;
+  wrong: Wrong[];
+  cat: Cat;
+  h3: string;
+  e: string;
+}[] = [
   {
     id: 'tanoshiku',
     text: '友《とも》だちと 公園《こうえん》で {{}} あそんだ。',
@@ -784,7 +793,10 @@ export const okurigana: UnitSpec = {
   objectives: [
     { id: 'choose', title: '正《ただ》しい 送《おく》りがなを えらぶ' },
     { id: 'inflect', title: '形《かたち》が かわる 部分《ぶぶん》を 送《おく》る' },
-    { id: 'find-error', title: '文《ぶん》の 中《なか》の 送《おく》りがなの まちがいを 見《み》つける' },
+    {
+      id: 'find-error',
+      title: '文《ぶん》の 中《なか》の 送《おく》りがなの まちがいを 見《み》つける',
+    },
   ],
   misconceptions: [
     {
@@ -829,7 +841,11 @@ export const okurigana: UnitSpec = {
     },
     {
       text: '「書《か》かない・書《か》きます・書《か》けば」のように、形《かたち》が かわる ところから 送《おく》ります。かわらない「か」は 漢字《かんじ》の 中《なか》です。',
-      figure: { kind: 'text', text: '書《か》く → 書《か》かない・書《か》きます・書《か》けば', size: 'm' },
+      figure: {
+        kind: 'text',
+        text: '書《か》く → 書《か》かない・書《か》きます・書《か》けば',
+        size: 'm',
+      },
     },
     {
       text: '「〜しい」で 終《お》わる ことばは「し」から 送《おく》ります（新《あたら》しい・美《うつく》しい）。「明《あか》るい」「少《すく》ない」「冷《つめ》たい」のような れい外《がい》も あります。',

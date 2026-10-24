@@ -20,7 +20,8 @@ function tt(t: ClockTime, ampm = false): string {
   const h = ampm ? t.h % 12 : t.h % 12 === 0 ? 12 : t.h % 12;
   return `${pre}${h}時《じ》${t.m === 0 ? '' : FUN(t.m)}`;
 }
-const dur = (min: number) => (min >= 60 ? `${Math.floor(min / 60)}時間《じかん》${min % 60 ? FUN(min % 60) : ''}` : FUN(min));
+const dur = (min: number) =>
+  min >= 60 ? `${Math.floor(min / 60)}時間《じかん》${min % 60 ? FUN(min % 60) : ''}` : FUN(min);
 const addMin = (t: ClockTime, d: number): ClockTime => {
   const v = (((t.h * 60 + t.m + d) % 1440) + 1440) % 1440;
   return { h: Math.floor(v / 60), m: v % 60 };
@@ -33,10 +34,25 @@ const SEC_UNITS = [
   { id: 'jump', text: 'なわとびで 10回《かい》 とぶ 時間《じかん》', n: 8, u: '秒《びょう》' },
   { id: 'lesson', text: '1回《かい》の じゅぎょうの 時間《じかん》', n: 45, u: '分《ふん》' },
   { id: 'sleep', text: 'よる ねて いる 時間《じかん》', n: 9, u: '時間《じかん》' },
-  { id: 'blink', text: '目《め》を 10回《かい》 ぱちぱち する 時間《じかん》', n: 5, u: '秒《びょう》' },
-  { id: 'walk', text: '家《いえ》から 学校《がっこう》まで 歩《ある》く 時間《じかん》', n: 15, u: '分《ふん》' },
+  {
+    id: 'blink',
+    text: '目《め》を 10回《かい》 ぱちぱち する 時間《じかん》',
+    n: 5,
+    u: '秒《びょう》',
+  },
+  {
+    id: 'walk',
+    text: '家《いえ》から 学校《がっこう》まで 歩《ある》く 時間《じかん》',
+    n: 15,
+    u: '分《ふん》',
+  },
   { id: 'cup', text: 'コップの 水《みず》を のむ 時間《じかん》', n: 10, u: '秒《びょう》' },
-  { id: 'trip', text: 'バスで 遠《とお》くの 町《まち》まで 行《い》く 時間《じかん》', n: 2, u: '時間《じかん》' },
+  {
+    id: 'trip',
+    text: 'バスで 遠《とお》くの 町《まち》まで 行《い》く 時間《じかん》',
+    n: 2,
+    u: '時間《じかん》',
+  },
 ] as const;
 
 function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
@@ -49,12 +65,18 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
       objective: 'seconds',
       level,
       prompt: `${it.text}は およそ ${it.n} □です。□に あてはまる たんいは どれ？`,
-      hints: ['1秒《びょう》・1分《ぷん》・1時間《じかん》の 長《なが》さを 思《おも》いうかべよう。', '「いち、に、さん」と ゆっくり 言《い》う 1つ分《ぶん》が 1秒《びょう》くらい。60秒《びょう》で 1分《ぷん》。', `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`],
+      hints: [
+        '1秒《びょう》・1分《ぷん》・1時間《じかん》の 長《なが》さを 思《おも》いうかべよう。',
+        '「いち、に、さん」と ゆっくり 言《い》う 1つ分《ぶん》が 1秒《びょう》くらい。60秒《びょう》で 1分《ぷん》。',
+        `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`,
+      ],
       explain: `${it.text}は およそ ${it.n}${it.u}です。`,
       identity: `unit:${it.id}`,
       alt: true,
       fixedOrder: true,
-      options: order.map((u) => (u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' })),
+      options: order.map((u) =>
+        u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' },
+      ),
     };
   }
   const toSec = rng.next() < 0.5;
@@ -68,8 +90,16 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         objective: 'seconds',
         level,
         prompt: '□に あてはまる 数《かず》は？',
-        figure: { kind: 'text', text: `${m}分《ぷん》${s}秒《びょう》 ＝ {{}}秒《びょう》`, size: 'xl' },
-        hints: ['1分《ぷん》は 60秒《びょう》 だよ。', `${m}分《ぷん》は ${m * 60}秒《びょう》。`, `${m * 60}秒《びょう》と ${s}秒《びょう》を あわせよう。`],
+        figure: {
+          kind: 'text',
+          text: `${m}分《ぷん》${s}秒《びょう》 ＝ {{}}秒《びょう》`,
+          size: 'xl',
+        },
+        hints: [
+          '1分《ぷん》は 60秒《びょう》 だよ。',
+          `${m}分《ぷん》は ${m * 60}秒《びょう》。`,
+          `${m * 60}秒《びょう》と ${s}秒《びょう》を あわせよう。`,
+        ],
         explain: `1分《ぷん》 ＝ 60秒《びょう》なので ${m}分《ぷん》 ＝ ${m * 60}秒《びょう》。${m * 60} ＋ ${s} ＝ ${v}で ${v}秒《びょう》です。`,
         identity: `ms-s:${m}:${s}`,
         alt: false,
@@ -85,8 +115,16 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         objective: 'seconds',
         level,
         prompt: '□に あてはまる 数《かず》は？',
-        figure: { kind: 'text', text: `${v}秒《びょう》 ＝ {{}}分《ふん》{{}}秒《びょう》`, size: 'xl' },
-        hints: ['60秒《びょう》で 1分《ぷん》 だよ。', `${v}秒《びょう》の 中《なか》に 60秒《びょう》は いくつ あるかな。`, `${m * 60}秒《びょう》で ${m}分《ふん》。のこりは？`],
+        figure: {
+          kind: 'text',
+          text: `${v}秒《びょう》 ＝ {{}}分《ふん》{{}}秒《びょう》`,
+          size: 'xl',
+        },
+        hints: [
+          '60秒《びょう》で 1分《ぷん》 だよ。',
+          `${v}秒《びょう》の 中《なか》に 60秒《びょう》は いくつ あるかな。`,
+          `${m * 60}秒《びょう》で ${m}分《ふん》。のこりは？`,
+        ],
         explain: `${v}秒《びょう》 ＝ ${m * 60}秒《びょう》 ＋ ${s}秒《びょう》 ＝ ${m}分《ふん》${s}秒《びょう》です。`,
         identity: `s-ms:${v}`,
         alt: false,
@@ -119,7 +157,11 @@ function endItem(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem 
       level,
       prompt: `${tt(t)}に 駅《えき》に つきました。家《いえ》を 出《で》たのは その ${FUN(back)}前《まえ》です。家《いえ》を 出《で》た じこくは？`,
       figure: { kind: 'clock', h, m, minuteNumbers: true },
-      hints: ['ながい はりを ぎゃくに まわして 考《かんが》えよう。', `${tt(t)}から ${FUN(m)} もどると ${h}時《じ》ちょうど。`, `${h}時《じ》から あと ${FUN(back - m)} もどると？`],
+      hints: [
+        'ながい はりを ぎゃくに まわして 考《かんが》えよう。',
+        `${tt(t)}から ${FUN(m)} もどると ${h}時《じ》ちょうど。`,
+        `${h}時《じ》から あと ${FUN(back - m)} もどると？`,
+      ],
       explain: `${tt(t)}から ${FUN(m)} もどって ${h}時《じ》。あと ${FUN(back - m)} もどって ${tt({ h: eh, m: e.m })}です。`,
       identity: `before:${h}:${m}-${back}`,
       alt: true,
@@ -199,8 +241,23 @@ function noon(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
       objective: 'noon',
       level,
       prompt: `午前《ごぜん》${s}時《じ》から 午後《ごご》${e}時《じ》まで 図書館《としょかん》に いました。何時間《なんじかん》 いましたか。`,
-      figure: { kind: 'numberline', min: 0, max: 24, step: 6, minorStep: 1, labelEvery: 6, marks: [{ at: s, tone: 'focus' }, { at: 12 + e, tone: 'focus' }] },
-      hints: ['正午《しょうご》（ひるの 12時《じ》）で 区切《くぎ》ろう。', `午前《ごぜん》${s}時《じ》から 正午《しょうご》まで ${12 - s}時間《じかん》。`, `正午《しょうご》から 午後《ごご》${e}時《じ》までは ${e}時間《じかん》。あわせると？`],
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 24,
+        step: 6,
+        minorStep: 1,
+        labelEvery: 6,
+        marks: [
+          { at: s, tone: 'focus' },
+          { at: 12 + e, tone: 'focus' },
+        ],
+      },
+      hints: [
+        '正午《しょうご》（ひるの 12時《じ》）で 区切《くぎ》ろう。',
+        `午前《ごぜん》${s}時《じ》から 正午《しょうご》まで ${12 - s}時間《じかん》。`,
+        `正午《しょうご》から 午後《ごご》${e}時《じ》までは ${e}時間《じかん》。あわせると？`,
+      ],
       explain: `${12 - s}時間《じかん》と ${e}時間《じかん》で ${hours}時間《じかん》です。`,
       identity: `noon-h:${s}-${e}`,
       alt: true,
@@ -237,7 +294,8 @@ function noon(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
     task: { kind: 'elapsed', start, end, ask: 'duration', unit: 'hm' },
     minuteNumbers: true,
     misconceptions: { base100: 'base100' },
-    wrongAnswers: ignore !== d && ignore > 0 ? [{ minutes: ignore, misconception: 'ampm-ignore' }] : [],
+    wrongAnswers:
+      ignore !== d && ignore > 0 ? [{ minutes: ignore, misconception: 'ampm-ignore' }] : [],
   };
 }
 
@@ -284,28 +342,34 @@ export const time: UnitSpec = {
   misconceptions: [
     {
       id: 'base100',
-      explain: '1時間《じかん》を 100分《ぷん》、1分《ぷん》を 100秒《びょう》と 考《かんが》えたのかな。1時間《じかん》 ＝ 60分《ぷん》、1分《ぷん》 ＝ 60秒《びょう》だよ。',
+      explain:
+        '1時間《じかん》を 100分《ぷん》、1分《ぷん》を 100秒《びょう》と 考《かんが》えたのかな。1時間《じかん》 ＝ 60分《ぷん》、1分《ぷん》 ＝ 60秒《びょう》だよ。',
       figure: { kind: 'text', text: '9時50分 → 10時25分 は 35分（75分 では ない）', size: 'm' },
     },
     {
       id: 'no-carry-hour',
-      explain: '60分《ぷん》で 1時間《じかん》 すすむのを わすれたのかな。ちょうどの じこくで 区切《くぎ》ると わかりやすいよ。',
+      explain:
+        '60分《ぷん》で 1時間《じかん》 すすむのを わすれたのかな。ちょうどの じこくで 区切《くぎ》ると わかりやすいよ。',
     },
     {
       id: 'no-borrow-hour',
-      explain: 'もどる ときに「時《じ》」が 1 へるのを わすれたのかな。ちょうどの じこくを こえて もどると、時《じ》が へるよ。',
+      explain:
+        'もどる ときに「時《じ》」が 1 へるのを わすれたのかな。ちょうどの じこくを こえて もどると、時《じ》が へるよ。',
     },
     {
       id: 'direction',
-      explain: '「前《まえ》」と「後《あと》」を 反対《はんたい》に したのかな。前《まえ》は はりを ぎゃくに まわすよ。',
+      explain:
+        '「前《まえ》」と「後《あと》」を 反対《はんたい》に したのかな。前《まえ》は はりを ぎゃくに まわすよ。',
     },
     {
       id: 'ampm-ignore',
-      explain: '午前《ごぜん》と 午後《ごご》の ちがいを わすれたのかな。正午《しょうご》で 区切《くぎ》って、午前《ごぜん》の ぶんと 午後《ごご》の ぶんを あわせよう。',
+      explain:
+        '午前《ごぜん》と 午後《ごご》の ちがいを わすれたのかな。正午《しょうご》で 区切《くぎ》って、午前《ごぜん》の ぶんと 午後《ごご》の ぶんを あわせよう。',
     },
     {
       id: 'unit-sense',
-      explain: 'その たんいだと 長《なが》すぎるか 短《みじか》すぎるかな。1秒《びょう》・1分《ぷん》・1時間《じかん》の 長《なが》さを 思《おも》いうかべよう。',
+      explain:
+        'その たんいだと 長《なが》すぎるか 短《みじか》すぎるかな。1秒《びょう》・1分《ぷん》・1時間《じかん》の 長《なが》さを 思《おも》いうかべよう。',
     },
   ],
   levels: [
@@ -325,7 +389,15 @@ export const time: UnitSpec = {
     },
     {
       text: '午前《ごぜん》と 午後《ごご》を またぐ ときは、正午《しょうご》（ひるの 12時《じ》）で 区切《くぎ》って 考《かんが》えます。',
-      figure: { kind: 'numberline', min: 0, max: 24, step: 6, minorStep: 1, labelEvery: 6, marks: [{ at: 12, tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 24,
+        step: 6,
+        minorStep: 1,
+        labelEvery: 6,
+        marks: [{ at: 12, tone: 'focus' }],
+      },
     },
   ],
   source: {
@@ -333,6 +405,7 @@ export const time: UnitSpec = {
     generate: ({ level, rng, index }) => generateTime(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 C(2) 時間の単位（秒）、日常生活に必要な時刻や時間を求める',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 C(2) 時間の単位（秒）、日常生活に必要な時刻や時間を求める',
   revised: '2026-10-24',
 };

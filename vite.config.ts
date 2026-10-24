@@ -3,7 +3,13 @@ import react from '@vitejs/plugin-react';
 import { packChunkName, precachePlugin } from './scripts/vite-plugin-precache.ts';
 
 /** パックが値として import してよい本体のモジュール（check-packs でも検査） */
-const PACK_RUNTIME = ['/src/core/util/rng.ts', '/src/text/kanji-grades.ts', '/src/text/rich.ts'];
+const PACK_RUNTIME = [
+  '/src/core/util/rng.ts',
+  '/src/text/kanji-grades.ts',
+  '/src/text/rich.ts',
+  // 数の答えの判定（他を import しない純粋関数。算数のパックが誤答例の確かめに使う）
+  '/src/core/answer/number.ts',
+];
 function packRuntimeName(id: string): string | null {
   const p = id.replace(/\\/g, '/').split('?')[0] ?? '';
   return PACK_RUNTIME.some((m) => p.endsWith(m)) ? 'pack-runtime' : null;
@@ -52,5 +58,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.ts'],
     setupFiles: ['src/test/setup.ts'],
+    // 教材の自動検査（seed 1000 × 段階）は重く、並列実行では 5 秒を超えることがある
+    testTimeout: 30000,
   },
 });

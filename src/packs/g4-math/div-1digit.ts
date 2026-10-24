@@ -16,7 +16,10 @@ type Obj = 'tens' | 'two' | 'three' | 'zero' | 'check' | 'story';
 const PLACE = ['一', '十', '百', '千'];
 
 /** 筆算の手順（上の位から）。各段: その位までの数・たてた商・あまり */
-export function divSteps(a: number, d: number): { cur: number; q: number; r: number; place: number }[] {
+export function divSteps(
+  a: number,
+  d: number,
+): { cur: number; q: number; r: number; place: number }[] {
   const s = String(a);
   const out: { cur: number; q: number; r: number; place: number }[] = [];
   let rem = 0;
@@ -235,13 +238,15 @@ const SCENES: Scene[] = [
   {
     id: 'card',
     type: 'tobun',
-    text: (a, d) => `カードが ${a}まい あります。${d}人で 同じ数ずつ 分けると、1人 何まいに なって、何まい あまりますか。`,
+    text: (a, d) =>
+      `カードが ${a}まい あります。${d}人で 同じ数ずつ 分けると、1人 何まいに なって、何まい あまりますか。`,
     labels: ['1人', 'あまり'],
   },
   {
     id: 'bead',
     type: 'tobun',
-    text: (a, d) => `ビーズが ${a}こ あります。${d}つの ふくろに 同じ数ずつ 入れると、1ふくろ 何こに なって、何こ あまりますか。`,
+    text: (a, d) =>
+      `ビーズが ${a}こ あります。${d}つの ふくろに 同じ数ずつ 入れると、1ふくろ 何こに なって、何こ あまりますか。`,
     labels: ['1ふくろ', 'あまり'],
   },
   {
@@ -253,31 +258,36 @@ const SCENES: Scene[] = [
   {
     id: 'candy',
     type: 'hogan',
-    text: (a, d) => `あめが ${a}こ あります。1人に ${d}こずつ 配ると、何人に 配れて、何こ あまりますか。`,
+    text: (a, d) =>
+      `あめが ${a}こ あります。1人に ${d}こずつ 配ると、何人に 配れて、何こ あまりますか。`,
     labels: ['人数', 'あまり'],
   },
   {
     id: 'boat',
     type: 'up',
-    text: (a, d) => `${a}人が ボートに 乗ります。1そうに ${d}人まで 乗れます。全員が 乗るには、ボートは 少なくとも 何そう いりますか。`,
+    text: (a, d) =>
+      `${a}人が ボートに 乗ります。1そうに ${d}人まで 乗れます。全員が 乗るには、ボートは 少なくとも 何そう いりますか。`,
     labels: ['', ''],
   },
   {
     id: 'shelf',
     type: 'up',
-    text: (a, d) => `本が ${a}さつ あります。1だんに ${d}さつずつ 立てると、全部 立てるのに 何だん いりますか。`,
+    text: (a, d) =>
+      `本が ${a}さつ あります。1だんに ${d}さつずつ 立てると、全部 立てるのに 何だん いりますか。`,
     labels: ['', ''],
   },
   {
     id: 'pack',
     type: 'down',
-    text: (a, d) => `おかしが ${a}こ あります。${d}こずつ 箱に つめると、${d}こ入りの 箱は 何箱 できますか。`,
+    text: (a, d) =>
+      `おかしが ${a}こ あります。${d}こずつ 箱に つめると、${d}こ入りの 箱は 何箱 できますか。`,
     labels: ['', ''],
   },
   {
     id: 'flower',
     type: 'down',
-    text: (a, d) => `花が ${a}本 あります。${d}本ずつ たばに すると、${d}本の たばは 何たば できますか。`,
+    text: (a, d) =>
+      `花が ${a}本 あります。${d}本ずつ たばに すると、${d}本の たばは 何たば できますか。`,
     labels: ['', ''],
   },
 ];
@@ -342,7 +352,13 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
   const answers = [{ kind: 'int' as const, value: ans }];
   return {
     ...common,
-    hints: [hint1, `式は ${a} ÷ ${d} ＝ ${q} あまり ${r}。`, sc.type === 'up' ? `あまりの ${r}にも もう1つ いるね。` : `あまりの ${r}では ${d}に たりないね。`],
+    hints: [
+      hint1,
+      `式は ${a} ÷ ${d} ＝ ${q} あまり ${r}。`,
+      sc.type === 'up'
+        ? `あまりの ${r}にも もう1つ いるね。`
+        : `あまりの ${r}では ${d}に たりないね。`,
+    ],
     explain:
       sc.type === 'up'
         ? `${a} ÷ ${d} ＝ ${q} あまり ${r}。あまりの ${r}の ためにも もう1つ いるので、${q} ＋ 1 ＝ ${ans}${UNIT_WORD[sc.id]}です。`
@@ -407,7 +423,8 @@ export const div1digit: UnitSpec = finishUnit({
     },
     {
       id: 'remainder-big',
-      explain: 'あまりが わる数と 同じか 大きく なって いないかな。あまりは いつも わる数より 小さく なるように 商を 1 大きく しよう。',
+      explain:
+        'あまりが わる数と 同じか 大きく なって いないかな。あまりは いつも わる数より 小さく なるように 商を 1 大きく しよう。',
     },
     {
       id: 'forget-remainder',
@@ -420,7 +437,8 @@ export const div1digit: UnitSpec = finishUnit({
     },
     {
       id: 'tens-drop-zero',
-      explain: '10や 100の まとまりで 考えた あと、0を つけわすれたのかな（または つけすぎたのかな）。まとまりが いくつ分かを 思い出そう。',
+      explain:
+        '10や 100の まとまりで 考えた あと、0を つけわすれたのかな（または つけすぎたのかな）。まとまりが いくつ分かを 思い出そう。',
     },
     {
       id: 'check-forget-r',
@@ -469,6 +487,7 @@ export const div1digit: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateDiv1(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(3) 整数の除法（除数が1位数の場合の筆算、商が0になる場合、確かめ）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(3) 整数の除法（除数が1位数の場合の筆算、商が0になる場合、確かめ）',
   revised: REVISED,
 });

@@ -33,7 +33,9 @@ export function wrongList(
     const t = String(v);
     const parts = t.split('|');
     if (parts.length !== answers.length) continue;
-    if (parts.some((p) => p === '' || p.startsWith('-') || p.includes('NaN') || !parseNumberInput(p)))
+    if (
+      parts.some((p) => p === '' || p.startsWith('-') || p.includes('NaN') || !parseNumberInput(p))
+    )
       continue;
     // どれかの欄が誤り（値の違い）であること
     if (!parts.some((p, i) => judgeNumber(answers[i]!, p).result === 'wrong')) continue;
@@ -114,7 +116,11 @@ export function gcd(a: number, b: number): number {
 }
 
 /** 分数の表示（RichText）。帯分数にできるときは mixed で帯分数に */
-export function fracText(num: number, den: number, form: 'improper' | 'mixed' = 'improper'): string {
+export function fracText(
+  num: number,
+  den: number,
+  form: 'improper' | 'mixed' = 'improper',
+): string {
   if (num % den === 0) return String(num / den);
   if (form === 'mixed' && num > den) return `[[${Math.floor(num / den)} ${num % den}/${den}]]`;
   return `[[${num}/${den}]]`;
@@ -128,7 +134,8 @@ export function fracInput(num: number, den: number, form: 'improper' | 'mixed'):
 }
 
 /** SVG の線の共通の属性 */
-export const STROKE = 'stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"';
+export const STROKE =
+  'stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"';
 
 /** SVG の文字（カタカナ・数字だけ。漢字は書かない） */
 export const svgText = (x: number, y: number, s: string, size = 16, anchor = 'middle') =>
@@ -154,7 +161,7 @@ const PLACE_NAMES = [
 ];
 export const placeLabel = (p: number) => `${PLACE_NAMES[p]}の 位《くらい》`;
 
-export const KATA =['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク'] as const;
+export const KATA = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク'] as const;
 
 /** 単元の文と、生成する問題の文に《よみ》を付ける */
 export function finishUnit(u: UnitSpec): UnitSpec {

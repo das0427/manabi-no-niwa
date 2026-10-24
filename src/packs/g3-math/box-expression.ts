@@ -22,14 +22,62 @@ interface Scene {
 }
 /** 場面（はじめの数が分からない） */
 const SCENES: Scene[] = [
-  { id: 'marbles', kind: 'add', unit: 'こ', text: (a, c) => `おはじきを 何《なん》こか 持《も》って いました。${a}こ もらったので、${c}こに なりました。` },
-  { id: 'bus', kind: 'add', unit: '人《にん》', text: (a, c) => `バスに 何《なん》人《にん》か 乗《の》って いました。${a}人《にん》 乗《の》って きたので、${c}人《にん》に なりました。` },
-  { id: 'cookies', kind: 'sub', unit: 'まい', text: (a, c) => `クッキーが 何《なん》まいか ありました。${a}まい 食《た》べたので、のこりは ${c}まいに なりました。` },
-  { id: 'money', kind: 'sub', unit: '円《えん》', text: (a, c) => `お金《かね》を 何《なん》円《えん》か 持《も》って いました。${a}円《えん》の ノートを 買《か》ったので、のこりは ${c}円《えん》に なりました。` },
-  { id: 'bags', kind: 'mult', unit: 'こ', text: (a, c) => `1ふくろに 同《おな》じ 数《かず》ずつ みかんが 入《はい》って います。${a}ふくろで ${c}こ ありました。` },
-  { id: 'rows', kind: 'mult', unit: 'きゃく', text: (a, c) => `いすを 1れつに 同《おな》じ 数《かず》ずつ、${a}れつ ならべたら ${c}きゃく に なりました。` },
-  { id: 'share', kind: 'div', unit: 'まい', text: (a, c) => `シールを 何《なん》まいか ${a}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けたら、1人分《ひとりぶん》は ${c}まいに なりました。` },
-  { id: 'cut', kind: 'div', unit: 'cm', text: (a, c) => `何《なん》cmかの テープを ${a}本《ほん》に 等分《とうぶん》したら、1本《ぽん》は ${c}cmに なりました。` },
+  {
+    id: 'marbles',
+    kind: 'add',
+    unit: 'こ',
+    text: (a, c) =>
+      `おはじきを 何《なん》こか 持《も》って いました。${a}こ もらったので、${c}こに なりました。`,
+  },
+  {
+    id: 'bus',
+    kind: 'add',
+    unit: '人《にん》',
+    text: (a, c) =>
+      `バスに 何《なん》人《にん》か 乗《の》って いました。${a}人《にん》 乗《の》って きたので、${c}人《にん》に なりました。`,
+  },
+  {
+    id: 'cookies',
+    kind: 'sub',
+    unit: 'まい',
+    text: (a, c) =>
+      `クッキーが 何《なん》まいか ありました。${a}まい 食《た》べたので、のこりは ${c}まいに なりました。`,
+  },
+  {
+    id: 'money',
+    kind: 'sub',
+    unit: '円《えん》',
+    text: (a, c) =>
+      `お金《かね》を 何《なん》円《えん》か 持《も》って いました。${a}円《えん》の ノートを 買《か》ったので、のこりは ${c}円《えん》に なりました。`,
+  },
+  {
+    id: 'bags',
+    kind: 'mult',
+    unit: 'こ',
+    text: (a, c) =>
+      `1ふくろに 同《おな》じ 数《かず》ずつ みかんが 入《はい》って います。${a}ふくろで ${c}こ ありました。`,
+  },
+  {
+    id: 'rows',
+    kind: 'mult',
+    unit: 'きゃく',
+    text: (a, c) =>
+      `いすを 1れつに 同《おな》じ 数《かず》ずつ、${a}れつ ならべたら ${c}きゃく に なりました。`,
+  },
+  {
+    id: 'share',
+    kind: 'div',
+    unit: 'まい',
+    text: (a, c) =>
+      `シールを 何《なん》まいか ${a}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けたら、1人分《ひとりぶん》は ${c}まいに なりました。`,
+  },
+  {
+    id: 'cut',
+    kind: 'div',
+    unit: 'cm',
+    text: (a, c) =>
+      `何《なん》cmかの テープを ${a}本《ほん》に 等分《とうぶん》したら、1本《ぽん》は ${c}cmに なりました。`,
+  },
 ];
 
 const SIGN: Record<Kind, string> = { add: '＋', sub: '−', mult: '×', div: '÷' };
@@ -54,7 +102,13 @@ function pickNums(rng: Rng, kind: Kind): { x: number; a: number; c: number } {
 /** 場面の式（□を使う）: add □＋a＝c、sub □−a＝c、mult □×a＝c、div □÷a＝c */
 const expr = (k: Kind, a: number, c: number) => `□ ${SIGN[k]} ${a} ＝ ${c}`;
 const inverse = (k: Kind, a: number, c: number) =>
-  k === 'add' ? `${c} − ${a}` : k === 'sub' ? `${c} ＋ ${a}` : k === 'mult' ? `${c} ÷ ${a}` : `${c} × ${a}`;
+  k === 'add'
+    ? `${c} − ${a}`
+    : k === 'sub'
+      ? `${c} ＋ ${a}`
+      : k === 'mult'
+        ? `${c} ÷ ${a}`
+        : `${c} × ${a}`;
 
 function wrongsFor(k: Kind, a: number, c: number): [number | null, string][] {
   switch (k) {
@@ -77,9 +131,23 @@ function wrongsFor(k: Kind, a: number, c: number): [number | null, string][] {
 
 const tapeFig = (k: Kind, a: number, c: number): Figure | undefined =>
   k === 'add'
-    ? { kind: 'tape', parts: [{ length: Math.max(c - a, 1), label: '□', tone: 'a' }, { length: a, label: String(a), tone: 'b' }], total: String(c) }
+    ? {
+        kind: 'tape',
+        parts: [
+          { length: Math.max(c - a, 1), label: '□', tone: 'a' },
+          { length: a, label: String(a), tone: 'b' },
+        ],
+        total: String(c),
+      }
     : k === 'sub'
-      ? { kind: 'tape', parts: [{ length: a, label: String(a), tone: 'b' }, { length: c, label: String(c), tone: 'a' }], total: '□' }
+      ? {
+          kind: 'tape',
+          parts: [
+            { length: a, label: String(a), tone: 'b' },
+            { length: c, label: String(c), tone: 'a' },
+          ],
+          total: '□',
+        }
       : undefined;
 
 function make(level: number, rng: Rng, alt: boolean): ChoiceItem {
@@ -92,7 +160,13 @@ function make(level: number, rng: Rng, alt: boolean): ChoiceItem {
     objective: 'make',
     level,
     prompt: `${sc.text(a, c)}\n分《わ》からない 数《かず》を □として、お話《はなし》の とおりに 式《しき》に 書《か》くと どれ？`,
-    figure: alt ? tapeFig(sc.kind, a, c) ?? { kind: 'text', text: `□ → ${SIGN[sc.kind]} ${a} → ${c}`, size: 'l' } : undefined,
+    figure: alt
+      ? (tapeFig(sc.kind, a, c) ?? {
+          kind: 'text',
+          text: `□ → ${SIGN[sc.kind]} ${a} → ${c}`,
+          size: 'l',
+        })
+      : undefined,
     hints: [
       'お話《はなし》の じゅんに、はじめ → どう なった → おわり と 考《かんが》えよう。',
       `分《わ》からない 数《かず》が □。そこから「${sc.kind === 'add' ? 'ふえた' : sc.kind === 'sub' ? 'へった' : sc.kind === 'mult' ? 'いくつ分《ぶん》' : '分《わ》けた'}」ね。`,
@@ -122,17 +196,30 @@ function solve(obj: 'add' | 'sub' | 'mult', level: number, rng: Rng, alt: boolea
     id: `${obj}${alt ? '-alt' : ''}:${key}`,
     objective: obj,
     level,
-    prompt: alt ? '図《ず》を 見《み》て、□に あてはまる 数《かず》を もとめよう。' : '□に あてはまる 数《かず》は？',
+    prompt: alt
+      ? '図《ず》を 見《み》て、□に あてはまる 数《かず》を もとめよう。'
+      : '□に あてはまる 数《かず》は？',
     figure: alt
       ? {
           kind: 'column',
-          items: [tapeFig(k, a, c) ?? { kind: 'text', text: `${a}こずつ □ → ${c}`, size: 'm' }, { kind: 'text', text: text.replace('{{}}', '□'), size: 'l' }],
+          items: [
+            tapeFig(k, a, c) ?? { kind: 'text', text: `${a}こずつ □ → ${c}`, size: 'm' },
+            { kind: 'text', text: text.replace('{{}}', '□'), size: 'l' },
+          ],
         }
       : { kind: 'text', text, size: 'xl' },
     hints: [
-      k === 'add' ? '□は、ぜんたいから 分《わ》かって いる ぶんを ひいた 数《かず》。' : k === 'sub' ? '□は、のこりと へった ぶんを あわせた 数《かず》。' : k === 'mult' ? '九九《くく》で 考《かんが》えよう。' : '□を 同《おな》じ 数《かず》ずつ 分《わ》けたら 1つ分《ぶん》が わかって いるね。',
+      k === 'add'
+        ? '□は、ぜんたいから 分《わ》かって いる ぶんを ひいた 数《かず》。'
+        : k === 'sub'
+          ? '□は、のこりと へった ぶんを あわせた 数《かず》。'
+          : k === 'mult'
+            ? '九九《くく》で 考《かんが》えよう。'
+            : '□を 同《おな》じ 数《かず》ずつ 分《わ》けたら 1つ分《ぶん》が わかって いるね。',
       `□は ${inverse(k, a, c)} で もとめられるよ。`,
-      k === 'mult' ? `${a}の だんで、答《こた》えが ${c}に なるのは？` : `${inverse(k, a, c)} を 計算《けいさん》しよう。`,
+      k === 'mult'
+        ? `${a}の だんで、答《こた》えが ${c}に なるのは？`
+        : `${inverse(k, a, c)} を 計算《けいさん》しよう。`,
     ],
     explain: `□ ＝ ${inverse(k, a, c)} ＝ ${x}。たしかめ: ${text.replace('{{}}', String(x))}。`,
     identity: key,
@@ -207,24 +294,29 @@ export const boxExpression: UnitSpec = {
   misconceptions: [
     {
       id: 'add-all',
-      explain: '出《で》て きた 数《かず》を たしたのかな。□ ＋ 7 ＝ 15 なら、□は 15から 7を ひいた 数《かず》だよ。',
+      explain:
+        '出《で》て きた 数《かず》を たしたのかな。□ ＋ 7 ＝ 15 なら、□は 15から 7を ひいた 数《かず》だよ。',
       figure: { kind: 'text', text: '□ ＋ 7 ＝ 15 → □ ＝ 15 − 7', size: 'l' },
     },
     {
       id: 'wrong-inverse',
-      explain: 'もとめ方《かた》が 反対《はんたい》かな。□ − 8 ＝ 5 は、□から 8 へって 5。□は 5に 8を たした 数《かず》だよ。テープ図《ず》で たしかめよう。',
+      explain:
+        'もとめ方《かた》が 反対《はんたい》かな。□ − 8 ＝ 5 は、□から 8 へって 5。□は 5に 8を たした 数《かず》だよ。テープ図《ず》で たしかめよう。',
     },
     {
       id: 'mult-inverse',
-      explain: 'かけ算《ざん》と わり算《ざん》を とりちがえたのかな。□ × 4 ＝ 28 の □は 28 ÷ 4。□ ÷ 3 ＝ 4 の □は 4 × 3。',
+      explain:
+        'かけ算《ざん》と わり算《ざん》を とりちがえたのかな。□ × 4 ＝ 28 の □は 28 ÷ 4。□ ÷ 3 ＝ 4 の □は 4 × 3。',
     },
     {
       id: 'op-swap',
-      explain: 'ふえたのか へったのか、お話《はなし》を もう一度《いちど》 読《よ》もう。ふえたら ＋、へったら − を つかうよ。',
+      explain:
+        'ふえたのか へったのか、お話《はなし》を もう一度《いちど》 読《よ》もう。ふえたら ＋、へったら − を つかうよ。',
     },
     {
       id: 'order-expr',
-      explain: '□の ところを まちがえたのかな。分《わ》からない はじめの 数《かず》を □に して、お話《はなし》の じゅんに 式《しき》を 書《か》こう。',
+      explain:
+        '□の ところを まちがえたのかな。分《わ》からない はじめの 数《かず》を □に して、お話《はなし》の じゅんに 式《しき》を 書《か》こう。',
     },
   ],
   levels: [
@@ -236,7 +328,14 @@ export const boxExpression: UnitSpec = {
   intro: [
     {
       text: 'あめを 何《なん》こか 持《も》って いて、7こ もらったら 15こに なりました。分《わ》からない はじめの 数《かず》を □に して、□ ＋ 7 ＝ 15 と 書《か》けます。',
-      figure: { kind: 'tape', parts: [{ length: 8, label: '□', tone: 'a' }, { length: 7, label: '7', tone: 'b' }], total: '15' },
+      figure: {
+        kind: 'tape',
+        parts: [
+          { length: 8, label: '□', tone: 'a' },
+          { length: 7, label: '7', tone: 'b' },
+        ],
+        total: '15',
+      },
     },
     {
       text: '□は、ぜんたいの 15から 7を ひいて もとめます。15 − 7 ＝ 8。',
@@ -252,6 +351,7 @@ export const boxExpression: UnitSpec = {
     generate: ({ level, rng, index }) => generateBoxExpression(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(7) 数量の関係を表す式（未知の数量を□などを用いて表し、その数量を求める）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(7) 数量の関係を表す式（未知の数量を□などを用いて表し、その数量を求める）',
   revised: '2026-10-24',
 };

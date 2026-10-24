@@ -116,14 +116,55 @@ interface Scene {
   ask: string;
 }
 const SCENES: Scene[] = [
-  { id: 'town', text: (n) => `ある 町《まち》の 人口《じんこう》は ${n}人《にん》です。`, unit: '人《にん》', ask: '何人' },
-  { id: 'zoo', text: (n) => `動物園《どうぶつえん》に 1年間《ねんかん》に 来《き》た 人《ひと》は ${n}人《にん》でした。`, unit: '人《にん》', ask: '何人' },
-  { id: 'ball', text: (n) => `野球場《やきゅうじょう》に 来《き》た 人《ひと》は ${n}人《にん》でした。`, unit: '人《にん》', ask: '何人' },
-  { id: 'library', text: (n) => `図書館《としょかん》に ある 本《ほん》は ${n}さつです。`, unit: 'さつ', ask: 'なんさつ' },
-  { id: 'river', text: (n) => `ある 川《かわ》の 長《なが》さは ${n}mです。`, unit: 'm', ask: 'なんm' },
-  { id: 'shop', text: (n) => `お店《みせ》の 1か月《げつ》の 売《う》り上《あ》げは ${n}円《えん》でした。`, unit: '円《えん》', ask: '何円' },
-  { id: 'school', text: (n) => `ある 市《し》の 小学生《しょうがくせい》は ${n}人《にん》です。`, unit: '人《にん》', ask: '何人' },
-  { id: 'bird', text: (n) => `池《いけ》に 来《き》た 鳥《とり》を 数《かぞ》えたら ${n}わ でした。`, unit: 'わ', ask: 'なんわ' },
+  {
+    id: 'town',
+    text: (n) => `ある 町《まち》の 人口《じんこう》は ${n}人《にん》です。`,
+    unit: '人《にん》',
+    ask: '何人',
+  },
+  {
+    id: 'zoo',
+    text: (n) =>
+      `動物園《どうぶつえん》に 1年間《ねんかん》に 来《き》た 人《ひと》は ${n}人《にん》でした。`,
+    unit: '人《にん》',
+    ask: '何人',
+  },
+  {
+    id: 'ball',
+    text: (n) => `野球場《やきゅうじょう》に 来《き》た 人《ひと》は ${n}人《にん》でした。`,
+    unit: '人《にん》',
+    ask: '何人',
+  },
+  {
+    id: 'library',
+    text: (n) => `図書館《としょかん》に ある 本《ほん》は ${n}さつです。`,
+    unit: 'さつ',
+    ask: 'なんさつ',
+  },
+  {
+    id: 'river',
+    text: (n) => `ある 川《かわ》の 長《なが》さは ${n}mです。`,
+    unit: 'm',
+    ask: 'なんm',
+  },
+  {
+    id: 'shop',
+    text: (n) => `お店《みせ》の 1か月《げつ》の 売《う》り上《あ》げは ${n}円《えん》でした。`,
+    unit: '円《えん》',
+    ask: '何円',
+  },
+  {
+    id: 'school',
+    text: (n) => `ある 市《し》の 小学生《しょうがくせい》は ${n}人《にん》です。`,
+    unit: '人《にん》',
+    ask: '何人',
+  },
+  {
+    id: 'bird',
+    text: (n) => `池《いけ》に 来《き》た 鳥《とり》を 数《かぞ》えたら ${n}わ でした。`,
+    unit: 'わ',
+    ask: 'なんわ',
+  },
 ];
 
 /** 上から何けたの がい数（四捨五入）。alt: 場面の文 */
@@ -241,7 +282,11 @@ function method(level: number, rng: Rng, alt: boolean): Item {
       options: (['round', 'up', 'down'] as Method[]).map((m) =>
         m === sc.method
           ? { label: METHOD_NAME[m], correct: true }
-          : { label: METHOD_NAME[m], misconception: m === 'round' || sc.method === 'round' ? 'method-scene' : 'method-swap' },
+          : {
+              label: METHOD_NAME[m],
+              misconception:
+                m === 'round' || sc.method === 'round' ? 'method-scene' : 'method-swap',
+            },
       ),
     };
     return item;
@@ -362,14 +407,51 @@ interface EScene {
   text: (a: number, b: number, c: number) => string;
 }
 const E_SCENES: EScene[] = [
-  { id: 'note', op: 'mul', text: (a, b) => `1さつ ${a}円《えん》の ノートを ${b}さつ 買《か》います。` },
-  { id: 'trip', op: 'mul', text: (a, b) => `1人《にん》 ${a}円《えん》の 入館料《にゅうかんりょう》で、${b}人《にん》が 入《はい》ります。` },
-  { id: 'flower', op: 'mul', text: (a, b) => `1たば ${a}円《えん》の 花《はな》を ${b}たば 買《か》います。` },
-  { id: 'bus', op: 'mul', text: (a, b) => `1台《だい》 ${a}円《えん》の 道具《どうぐ》を ${b}台 そろえます。` },
-  { id: 'lunch', op: 'add', text: (a, b, c) => `${a}円《えん》の べんとうと、${b}円の サラダと、${c}円の ジュースを 買《か》います。` },
-  { id: 'stationery', op: 'add', text: (a, b, c) => `${a}円《えん》の 絵《え》の具《ぐ》と、${b}円の ふでと、${c}円の パレットを 買《か》います。` },
-  { id: 'book', op: 'add', text: (a, b, c) => `${a}円《えん》の 本《ほん》と、${b}円の ノートと、${c}円の ペンを 買《か》います。` },
-  { id: 'toy', op: 'add', text: (a, b, c) => `${a}円《えん》の ボールと、${b}円の なわとびと、${c}円の ぼうしを 買《か》います。` },
+  {
+    id: 'note',
+    op: 'mul',
+    text: (a, b) => `1さつ ${a}円《えん》の ノートを ${b}さつ 買《か》います。`,
+  },
+  {
+    id: 'trip',
+    op: 'mul',
+    text: (a, b) =>
+      `1人《にん》 ${a}円《えん》の 入館料《にゅうかんりょう》で、${b}人《にん》が 入《はい》ります。`,
+  },
+  {
+    id: 'flower',
+    op: 'mul',
+    text: (a, b) => `1たば ${a}円《えん》の 花《はな》を ${b}たば 買《か》います。`,
+  },
+  {
+    id: 'bus',
+    op: 'mul',
+    text: (a, b) => `1台《だい》 ${a}円《えん》の 道具《どうぐ》を ${b}台 そろえます。`,
+  },
+  {
+    id: 'lunch',
+    op: 'add',
+    text: (a, b, c) =>
+      `${a}円《えん》の べんとうと、${b}円の サラダと、${c}円の ジュースを 買《か》います。`,
+  },
+  {
+    id: 'stationery',
+    op: 'add',
+    text: (a, b, c) =>
+      `${a}円《えん》の 絵《え》の具《ぐ》と、${b}円の ふでと、${c}円の パレットを 買《か》います。`,
+  },
+  {
+    id: 'book',
+    op: 'add',
+    text: (a, b, c) =>
+      `${a}円《えん》の 本《ほん》と、${b}円の ノートと、${c}円の ペンを 買《か》います。`,
+  },
+  {
+    id: 'toy',
+    op: 'add',
+    text: (a, b, c) =>
+      `${a}円《えん》の ボールと、${b}円の なわとびと、${c}円の ぼうしを 買《か》います。`,
+  },
 ];
 
 const top1 = (n: number) => roundTo(n, 10 ** (len(n) - 1));
@@ -505,7 +587,12 @@ function estimate(level: number, rng: Rng, alt: boolean): Item {
             : null,
         'cut-only',
       ],
-      [kind === 'mul' || kind === 'div' ? null : roundTo(a, 1000) + (kind === 'add' ? 1 : -1) * roundTo(b, 1000), 'wrong-place'],
+      [
+        kind === 'mul' || kind === 'div'
+          ? null
+          : roundTo(a, 1000) + (kind === 'add' ? 1 : -1) * roundTo(b, 1000),
+        'wrong-place',
+      ],
     ]),
   };
   return item;
@@ -567,7 +654,8 @@ export const rounding: UnitSpec = finishUnit({
     },
     {
       id: 'drop-zeros',
-      explain: 'がい数《すう》に した 位《くらい》より 下《した》の 0を 書《か》きわすれたのかな。下の 位は 0に して、数の 大《おお》きさは そのままに するよ。',
+      explain:
+        'がい数《すう》に した 位《くらい》より 下《した》の 0を 書《か》きわすれたのかな。下の 位は 0に して、数の 大《おお》きさは そのままに するよ。',
     },
     {
       id: 'from-bottom',

@@ -54,7 +54,7 @@ function concat(a: number, b: number): number {
 }
 /** 一の位だけ かけて、ほかの位は そのまま書いた答え */
 function onesOnly(a: number, b: number): number {
-  return Math.floor(a / 10) * 10 + ((a % 10) * b);
+  return Math.floor(a / 10) * 10 + (a % 10) * b;
 }
 
 function steps(a: number, b: number): string[] {
@@ -102,7 +102,9 @@ const blocks = (a: number, b: number): Figure => {
   return {
     kind: 'row',
     items: Array.from({ length: b }, () =>
-      hundreds ? ({ kind: 'blocks', hundreds: t, ones: 0 } as Figure) : ({ kind: 'blocks', tens: t, ones: 0 } as Figure),
+      hundreds
+        ? ({ kind: 'blocks', hundreds: t, ones: 0 } as Figure)
+        : ({ kind: 'blocks', tens: t, ones: 0 } as Figure),
     ),
     gap: 6,
   };
@@ -155,7 +157,8 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
       id: `${obj}-alt:${a}x${b}`,
       objective: obj,
       level,
-      prompt: '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
+      prompt:
+        '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
       figure: { kind: 'text', text: `${a} × ${b} ＝ {{}}`, size: 'xl' },
       hints,
       explain,
@@ -190,14 +193,62 @@ interface Scene {
 }
 /** 文章題の場面（1つ分×いくつ分 5、何倍 3） */
 const SCENES: Scene[] = [
-  { id: 'notebook', unit: '円《えん》', times: false, text: (a, b) => `1さつ ${a}円《えん》の ノートを ${b}さつ 買《か》います。代金《だいきん》は 何《なん》円《えん》ですか。` },
-  { id: 'boxes', unit: 'こ', times: false, text: (a, b) => `1はこに ${a}こ 入《はい》った あめが ${b}はこ あります。あめは 全部《ぜんぶ》で 何《なん》こですか。` },
-  { id: 'seats', unit: '人《にん》', times: false, text: (a, b) => `1台《だい》の バスに ${a}人《にん》ずつ 乗《の》ります。${b}台《だい》では 何《なん》人《にん》 乗《の》れますか。` },
-  { id: 'pages', unit: 'ページ', times: false, text: (a, b) => `毎日《まいにち》 ${a}ページずつ 本《ほん》を 読《よ》みます。${b}日《にち》で 何《なん》ページ 読《よ》めますか。` },
-  { id: 'ribbon', unit: 'cm', times: false, text: (a, b) => `1本《ぽん》 ${a}cmの リボンを ${b}本《ほん》 つなぎます（つなぎめの 長《なが》さは 考《かんが》えない）。全部《ぜんぶ》で 何《なん》cmですか。` },
-  { id: 'tape', unit: 'cm', times: true, text: (a, b) => `赤《あか》い テープの 長《なが》さは ${a}cmです。青《あお》い テープの 長《なが》さは、赤《あか》い テープの ${b}倍《ばい》です。青《あお》い テープは 何《なん》cmですか。` },
-  { id: 'weight', unit: 'g', times: true, text: (a, b) => `子《こ》ねこの 体重《たいじゅう》は ${a}gです。親《おや》ねこの 体重《たいじゅう》は その ${b}倍《ばい》です。親《おや》ねこは 何《なん》gですか。` },
-  { id: 'savings', unit: '円《えん》', times: true, text: (a, b) => `妹《いもうと》の ちょ金《きん》は ${a}円《えん》です。姉《あね》の ちょ金《きん》は 妹《いもうと》の ${b}倍《ばい》です。姉《あね》は 何《なん》円《えん》ですか。` },
+  {
+    id: 'notebook',
+    unit: '円《えん》',
+    times: false,
+    text: (a, b) =>
+      `1さつ ${a}円《えん》の ノートを ${b}さつ 買《か》います。代金《だいきん》は 何《なん》円《えん》ですか。`,
+  },
+  {
+    id: 'boxes',
+    unit: 'こ',
+    times: false,
+    text: (a, b) =>
+      `1はこに ${a}こ 入《はい》った あめが ${b}はこ あります。あめは 全部《ぜんぶ》で 何《なん》こですか。`,
+  },
+  {
+    id: 'seats',
+    unit: '人《にん》',
+    times: false,
+    text: (a, b) =>
+      `1台《だい》の バスに ${a}人《にん》ずつ 乗《の》ります。${b}台《だい》では 何《なん》人《にん》 乗《の》れますか。`,
+  },
+  {
+    id: 'pages',
+    unit: 'ページ',
+    times: false,
+    text: (a, b) =>
+      `毎日《まいにち》 ${a}ページずつ 本《ほん》を 読《よ》みます。${b}日《にち》で 何《なん》ページ 読《よ》めますか。`,
+  },
+  {
+    id: 'ribbon',
+    unit: 'cm',
+    times: false,
+    text: (a, b) =>
+      `1本《ぽん》 ${a}cmの リボンを ${b}本《ほん》 つなぎます（つなぎめの 長《なが》さは 考《かんが》えない）。全部《ぜんぶ》で 何《なん》cmですか。`,
+  },
+  {
+    id: 'tape',
+    unit: 'cm',
+    times: true,
+    text: (a, b) =>
+      `赤《あか》い テープの 長《なが》さは ${a}cmです。青《あお》い テープの 長《なが》さは、赤《あか》い テープの ${b}倍《ばい》です。青《あお》い テープは 何《なん》cmですか。`,
+  },
+  {
+    id: 'weight',
+    unit: 'g',
+    times: true,
+    text: (a, b) =>
+      `子《こ》ねこの 体重《たいじゅう》は ${a}gです。親《おや》ねこの 体重《たいじゅう》は その ${b}倍《ばい》です。親《おや》ねこは 何《なん》gですか。`,
+  },
+  {
+    id: 'savings',
+    unit: '円《えん》',
+    times: true,
+    text: (a, b) =>
+      `妹《いもうと》の ちょ金《きん》は ${a}円《えん》です。姉《あね》の ちょ金《きん》は 妹《いもうと》の ${b}倍《ばい》です。姉《あね》は 何《なん》円《えん》ですか。`,
+  },
 ];
 
 function word(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -213,12 +264,18 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
     figure: alt
       ? {
           kind: 'tape',
-          parts: Array.from({ length: b }, (_, i) => ({ length: a, label: i === 0 ? String(a) : '', tone: i === 0 ? ('a' as const) : ('plain' as const) })),
+          parts: Array.from({ length: b }, (_, i) => ({
+            length: a,
+            label: i === 0 ? String(a) : '',
+            tone: i === 0 ? ('a' as const) : ('plain' as const),
+          })),
           total: '？',
         }
       : undefined,
     hints: [
-      sc.times ? '「〜の □倍《ばい》」は、もとの 長《なが》さを □こ あつめた 大《おお》きさ だね。' : '1つ分《ぶん》の 数《かず》と、いくつ分《ぶん》かを 見《み》つけよう。',
+      sc.times
+        ? '「〜の □倍《ばい》」は、もとの 長《なが》さを □こ あつめた 大《おお》きさ だね。'
+        : '1つ分《ぶん》の 数《かず》と、いくつ分《ぶん》かを 見《み》つけよう。',
       `式《しき》は ${a} × ${b}。`,
       `${steps(a, b)[0]!.replace(/（.*$/, '')}。つづきも 筆算《ひっさん》で。`,
     ],
@@ -269,28 +326,38 @@ export const mult1digit: UnitSpec = {
   misconceptions: [
     {
       id: 'carry-forget',
-      explain: 'くり上《あ》がった 数《かず》を たすのを わすれたのかな。くり上《あ》がりは 小《ちい》さく メモして、つぎの くらいの 答《こた》えに たそう。',
-      figure: { kind: 'text', text: '36 × 4: 6×4＝24（2 くり上げ）、3×4＝12、12＋2＝14 → 144', size: 'm' },
+      explain:
+        'くり上《あ》がった 数《かず》を たすのを わすれたのかな。くり上《あ》がりは 小《ちい》さく メモして、つぎの くらいの 答《こた》えに たそう。',
+      figure: {
+        kind: 'text',
+        text: '36 × 4: 6×4＝24（2 くり上げ）、3×4＝12、12＋2＝14 → 144',
+        size: 'm',
+      },
     },
     {
       id: 'carry-mult',
-      explain: 'くり上《あ》がった 数《かず》を 先《さき》に たしてから かけたのかな。かけ算《ざん》を してから、くり上《あ》がりを たすよ。',
+      explain:
+        'くり上《あ》がった 数《かず》を 先《さき》に たしてから かけたのかな。かけ算《ざん》を してから、くり上《あ》がりを たすよ。',
     },
     {
       id: 'concat',
-      explain: 'くらいごとの かけ算《ざん》の 答《こた》えを そのまま ならべたのかな。10を こえたら、1つ 上《うえ》の くらいに くり上《あ》げよう。',
+      explain:
+        'くらいごとの かけ算《ざん》の 答《こた》えを そのまま ならべたのかな。10を こえたら、1つ 上《うえ》の くらいに くり上《あ》げよう。',
     },
     {
       id: 'ones-only',
-      explain: '一《いち》のくらいだけ かけたのかな。かける数《かず》は、かけられる数《かず》の どの くらいにも かけるよ。',
+      explain:
+        '一《いち》のくらいだけ かけたのかな。かける数《かず》は、かけられる数《かず》の どの くらいにも かけるよ。',
     },
     {
       id: 'zero-drop',
-      explain: '0の 数《かず》が あって いないのかな。40 × 3 は 10が 4 × 3 ＝ 12こ で 120。10の まとまりで 考《かんが》えよう。',
+      explain:
+        '0の 数《かず》が あって いないのかな。40 × 3 は 10が 4 × 3 ＝ 12こ で 120。10の まとまりで 考《かんが》えよう。',
     },
     {
       id: 'wrong-op',
-      explain: 'たし算《ざん》を したのかな。おなじ 数《かず》が いくつ分《ぶん》 あるときは かけ算《ざん》だよ。',
+      explain:
+        'たし算《ざん》を したのかな。おなじ 数《かず》が いくつ分《ぶん》 あるときは かけ算《ざん》だよ。',
     },
   ],
   levels: [
@@ -318,6 +385,7 @@ export const mult1digit: UnitSpec = {
     generate: ({ level, rng, index }) => generateMult1digit(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（2位数や3位数に1位数をかける乗法の計算と筆算）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（2位数や3位数に1位数をかける乗法の計算と筆算）',
   revised: '2026-10-24',
 };

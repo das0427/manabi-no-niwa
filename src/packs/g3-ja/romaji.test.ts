@@ -45,8 +45,7 @@ describe('g3.ja.romaji の内容', () => {
       if (it.engine !== 'choice' || !it.id.startsWith('cap:choose:')) continue;
       const kana = it.id.slice('cap:choose:'.length);
       for (const o of it.options) {
-        const ok =
-          judgeRomaji(kana, o.label!).result === 'correct' && /^[A-ZĀĪŪĒŌ]/.test(o.label!);
+        const ok = judgeRomaji(kana, o.label!).result === 'correct' && /^[A-ZĀĪŪĒŌ]/.test(o.label!);
         expect(ok, `${it.id} ${o.label}`).toBe(!!o.correct);
       }
     }

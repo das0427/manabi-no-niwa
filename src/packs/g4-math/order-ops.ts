@@ -12,12 +12,21 @@ import { expr, finishUnit, opts, pick, pickObj, REVISED, wrongList } from './uti
 type Obj = 'muldiv' | 'paren' | 'mixed' | 'rules' | 'oneexpr';
 type Tok = number | '+' | '-' | '×' | '÷' | '(' | ')';
 
-const SYM: Record<string, string> = { '+': '＋', '-': '−', '×': '×', '÷': '÷', '(': '（', ')': '）' };
+const SYM: Record<string, string> = {
+  '+': '＋',
+  '-': '−',
+  '×': '×',
+  '÷': '÷',
+  '(': '（',
+  ')': '）',
+};
 
 function tokens(tpl: string, vals: Record<string, number>): Tok[] {
   return tpl
     .split(' ')
-    .flatMap((t) => (t.startsWith('(') ? ['(', t.slice(1)] : t.endsWith(')') ? [t.slice(0, -1), ')'] : [t]))
+    .flatMap((t) =>
+      t.startsWith('(') ? ['(', t.slice(1)] : t.endsWith(')') ? [t.slice(0, -1), ')'] : [t],
+    )
     .map((t) => (t in vals ? vals[t]! : (t as Tok)));
 }
 
@@ -83,12 +92,42 @@ function evalTok(ts: Tok[], mode: 'std' | 'ltr' | 'nop'): number | null {
 }
 
 const TPL: Record<'muldiv' | 'paren' | 'mixed', string[]> = {
-  muldiv: ['a + b × c', 'a - b × c', 'a × b + c', 'a × b - c', 'a + b ÷ c', 'a - b ÷ c', 'a ÷ b + c', 'a ÷ b - c'],
-  paren: ['(a + b) × c', '(a - b) × c', 'a × (b + c)', 'a × (b - c)', '(a + b) ÷ c', '(a - b) ÷ c', 'a ÷ (b + c)', 'a - (b + c)', 'a - (b - c)'],
-  mixed: ['a + b × c - d', 'a × b - c ÷ d', '(a + b) × c - d', 'a - (b + c) ÷ d', 'a × (b - c) + d', 'a + b ÷ c × d', 'a - b × c + d'],
+  muldiv: [
+    'a + b × c',
+    'a - b × c',
+    'a × b + c',
+    'a × b - c',
+    'a + b ÷ c',
+    'a - b ÷ c',
+    'a ÷ b + c',
+    'a ÷ b - c',
+  ],
+  paren: [
+    '(a + b) × c',
+    '(a - b) × c',
+    'a × (b + c)',
+    'a × (b - c)',
+    '(a + b) ÷ c',
+    '(a - b) ÷ c',
+    'a ÷ (b + c)',
+    'a - (b + c)',
+    'a - (b - c)',
+  ],
+  mixed: [
+    'a + b × c - d',
+    'a × b - c ÷ d',
+    '(a + b) × c - d',
+    'a - (b + c) ÷ d',
+    'a × (b - c) + d',
+    'a + b ÷ c × d',
+    'a - b × c + d',
+  ],
 };
 
-function makeExpr(obj: 'muldiv' | 'paren' | 'mixed', rng: Rng): { ts: Tok[]; v: number; tpl: string } {
+function makeExpr(
+  obj: 'muldiv' | 'paren' | 'mixed',
+  rng: Rng,
+): { ts: Tok[]; v: number; tpl: string } {
   for (;;) {
     const tpl = pick(rng, TPL[obj]);
     const vals = { a: rng.int(2, 60), b: rng.int(2, 20), c: rng.int(2, 12), d: rng.int(2, 12) };
@@ -119,7 +158,12 @@ function firstStep(ts: Tok[]): string {
   return `まず ${showExpr(part)} ＝ ${evalTok(part, 'std')}。`;
 }
 
-function calc(obj: 'muldiv' | 'paren' | 'mixed', level: number, rng: Rng, alt: boolean): NumberItem {
+function calc(
+  obj: 'muldiv' | 'paren' | 'mixed',
+  level: number,
+  rng: Rng,
+  alt: boolean,
+): NumberItem {
   const { ts, v } = makeExpr(obj, rng);
   const e = showExpr(ts);
   const answers = [{ kind: 'int' as const, value: v }];
@@ -128,7 +172,9 @@ function calc(obj: 'muldiv' | 'paren' | 'mixed', level: number, rng: Rng, alt: b
     id: `${obj}${alt ? '-alt' : ''}:${e}`,
     objective: obj,
     level,
-    prompt: alt ? 'どこから 計算するか 考えて、答えを 求めよう。（計算する 順に 番号を つけると わかりやすいよ）' : '計算しよう。',
+    prompt: alt
+      ? 'どこから 計算するか 考えて、答えを 求めよう。（計算する 順に 番号を つけると わかりやすいよ）'
+      : '計算しよう。',
     figure: expr(`${e} ＝ {{}}`),
     hints: [ORDER_HINT, firstStep(ts), 'のこりを 左から 計算しよう。'],
     explain: `${firstStep(ts)}${ORDER_HINT} ${e} ＝ ${v}`,
@@ -150,8 +196,16 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
     const b = rng.int(2, 9);
     const c = rng.int(2, 9);
     const forms = [
-      { e: `（${a} ＋ ${b}）× ${c} ＝ ${a} × ${c} ＋ □ × ${c}`, ans: b, w: [[c, 'distrib-partial']] },
-      { e: `${a} × ${c} − ${b} × ${c} ＝ （${a} − ${b}）× □`, ans: c, w: [[a - b, 'distrib-partial']] },
+      {
+        e: `（${a} ＋ ${b}）× ${c} ＝ ${a} × ${c} ＋ □ × ${c}`,
+        ans: b,
+        w: [[c, 'distrib-partial']],
+      },
+      {
+        e: `${a} × ${c} − ${b} × ${c} ＝ （${a} − ${b}）× □`,
+        ans: c,
+        w: [[a - b, 'distrib-partial']],
+      },
       { e: `${a} × ${b} × ${c} ＝ ${a} × （${b} × □）`, ans: c, w: [[b * c, 'assoc-add']] },
     ] as const;
     const f = forms[kind]!;
@@ -164,27 +218,69 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
       prompt: '計算の きまりを 使います。□に あてはまる 数を 書こう。',
       figure: expr(f.e),
       hints: [
-        kind === 2 ? 'かけ算だけの 式は、どこから 計算しても 答えは 同じだよ。' : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □ の きまりだよ。',
+        kind === 2
+          ? 'かけ算だけの 式は、どこから 計算しても 答えは 同じだよ。'
+          : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □ の きまりだよ。',
         '左と 右で、同じ 数が どこに あるか くらべよう。',
-        kind === 0 ? `（ ）の 中の ${b}にも ${c}を かけるよ。` : kind === 1 ? `どちらにも かけて いる 数は？` : `${b}と かけて いた 数は？`,
+        kind === 0
+          ? `（ ）の 中の ${b}にも ${c}を かけるよ。`
+          : kind === 1
+            ? `どちらにも かけて いる 数は？`
+            : `${b}と かけて いた 数は？`,
       ],
       explain: `□は ${f.ans}。${kind === 2 ? 'かけ算では、計算する 順を かえても 答えは 同じです。' : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □、（○ − △）× □ ＝ ○ × □ − △ × □ です。'}`,
       identity: `rules-blank:${f.e}`,
       alt: true,
       fields: [{ answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, f.w.map(([v, m]) => [v, m] as [number, string])),
+      wrongAnswers: wrongList(
+        answers,
+        f.w.map(([v, m]) => [v, m] as [number, string]),
+      ),
     };
   }
   const kind = rng.int(0, 5);
   const a = rng.int(3, 99);
   const b = rng.int(2, 9);
   const forms = [
-    { e: `25 × ${a} × 4`, v: 100 * a, how: `25 × 4 ＝ 100を 先に 計算して、100 × ${a}`, w: [[100 + a, 'assoc-add']] },
-    { e: `${a} × 8 × 125`, v: 1000 * a, how: `8 × 125 ＝ 1000を 先に 計算して、${a} × 1000`, w: [[1000 + a, 'assoc-add']] },
-    { e: `${a} × 99`, v: 99 * a, how: `${a} × 99 ＝ ${a} × 100 − ${a} × 1`, w: [[100 * a - 1, 'distrib-partial'], [100 * a - 99, 'distrib-partial']] },
-    { e: `${a} × 102`, v: 102 * a, how: `${a} × 102 ＝ ${a} × 100 ＋ ${a} × 2`, w: [[100 * a + 2, 'distrib-partial']] },
-    { e: `${a} × ${b} ＋ ${a} × ${10 - b}`, v: 10 * a, how: `${a} × （${b} ＋ ${10 - b}）＝ ${a} × 10`, w: [[(a * b + a) * (10 - b), 'left-to-right']] },
-    { e: `${a} × ${10 + b} − ${a} × ${b}`, v: 10 * a, how: `${a} × （${10 + b} − ${b}）＝ ${a} × 10`, w: [[a * (10 + b) - a, 'left-to-right']] },
+    {
+      e: `25 × ${a} × 4`,
+      v: 100 * a,
+      how: `25 × 4 ＝ 100を 先に 計算して、100 × ${a}`,
+      w: [[100 + a, 'assoc-add']],
+    },
+    {
+      e: `${a} × 8 × 125`,
+      v: 1000 * a,
+      how: `8 × 125 ＝ 1000を 先に 計算して、${a} × 1000`,
+      w: [[1000 + a, 'assoc-add']],
+    },
+    {
+      e: `${a} × 99`,
+      v: 99 * a,
+      how: `${a} × 99 ＝ ${a} × 100 − ${a} × 1`,
+      w: [
+        [100 * a - 1, 'distrib-partial'],
+        [100 * a - 99, 'distrib-partial'],
+      ],
+    },
+    {
+      e: `${a} × 102`,
+      v: 102 * a,
+      how: `${a} × 102 ＝ ${a} × 100 ＋ ${a} × 2`,
+      w: [[100 * a + 2, 'distrib-partial']],
+    },
+    {
+      e: `${a} × ${b} ＋ ${a} × ${10 - b}`,
+      v: 10 * a,
+      how: `${a} × （${b} ＋ ${10 - b}）＝ ${a} × 10`,
+      w: [[(a * b + a) * (10 - b), 'left-to-right']],
+    },
+    {
+      e: `${a} × ${10 + b} − ${a} × ${b}`,
+      v: 10 * a,
+      how: `${a} × （${10 + b} − ${b}）＝ ${a} × 10`,
+      w: [[a * (10 + b) - a, 'left-to-right']],
+    },
   ];
   const f = forms[kind]!;
   const answers = [{ kind: 'int' as const, value: f.v }];
@@ -196,7 +292,9 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt: '計算の きまりを 使って、くふうして 計算しよう。',
     figure: expr(`${f.e} ＝ {{}}`),
     hints: [
-      kind <= 1 ? 'かけ算だけの 式は、かける 順を かえても よいよ。100や 1000に なる 組を さがそう。' : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □ の きまりを 使おう。',
+      kind <= 1
+        ? 'かけ算だけの 式は、かける 順を かえても よいよ。100や 1000に なる 組を さがそう。'
+        : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □ の きまりを 使おう。',
       f.how.split('、')[0]!,
       f.how,
     ],
@@ -204,13 +302,22 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
     identity: `rules:${f.e}`,
     alt: false,
     fields: [{ answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, f.w.map(([v, m]) => [v, m] as [number, string])),
+    wrongAnswers: wrongList(
+      answers,
+      f.w.map(([v, m]) => [v, m] as [number, string]),
+    ),
   };
 }
 
 interface Scene {
   id: string;
-  make: (rng: Rng) => { text: string; right: string; wrong: [string, string][]; v: number; wv: (number | null)[] };
+  make: (rng: Rng) => {
+    text: string;
+    right: string;
+    wrong: [string, string][];
+    v: number;
+    wv: (number | null)[];
+  };
 }
 const SCENES: Scene[] = [
   {
@@ -222,7 +329,11 @@ const SCENES: Scene[] = [
       return {
         text: `1こ ${p}円の パンを ${n}こと、${q}円の ジュースを 1本 買いました。代金は 何円ですか。`,
         right: `${p} × ${n} ＋ ${q}`,
-        wrong: [[`（${p} ＋ ${q}）× ${n}`, 'paren-needed'], [`${p} ＋ ${n} × ${q}`, 'scene-order'], [`${p} × （${n} ＋ ${q}）`, 'paren-needed']],
+        wrong: [
+          [`（${p} ＋ ${q}）× ${n}`, 'paren-needed'],
+          [`${p} ＋ ${n} × ${q}`, 'scene-order'],
+          [`${p} × （${n} ＋ ${q}）`, 'paren-needed'],
+        ],
         v: p * n + q,
         wv: [(p + q) * n, p + n * q],
       };
@@ -237,7 +348,11 @@ const SCENES: Scene[] = [
       return {
         text: `${pay}円 出して、1さつ ${p}円の ノートを ${n}さつ 買いました。おつりは 何円ですか。`,
         right: `${pay} − ${p} × ${n}`,
-        wrong: [[`（${pay} − ${p}）× ${n}`, 'paren-needed'], [`${p} × ${n} − ${pay}`, 'scene-order'], [`${pay} − ${p} ＋ ${n}`, 'scene-order']],
+        wrong: [
+          [`（${pay} − ${p}）× ${n}`, 'paren-needed'],
+          [`${p} × ${n} − ${pay}`, 'scene-order'],
+          [`${pay} − ${p} ＋ ${n}`, 'scene-order'],
+        ],
         v: pay - p * n,
         wv: [(pay - p) * n],
       };
@@ -253,7 +368,11 @@ const SCENES: Scene[] = [
       return {
         text: `あめが 赤い ふくろに ${a}こ、青い ふくろに ${b}こ あります。ぜんぶを ${n}人で 同じ数ずつ 分けると、1人 何こですか。`,
         right: `（${a} ＋ ${b}）÷ ${n}`,
-        wrong: [[`${a} ＋ ${b} ÷ ${n}`, 'paren-needed'], [`${n} ÷ （${a} ＋ ${b}）`, 'scene-order'], [`${a} × ${b} ÷ ${n}`, 'scene-order']],
+        wrong: [
+          [`${a} ＋ ${b} ÷ ${n}`, 'paren-needed'],
+          [`${n} ÷ （${a} ＋ ${b}）`, 'scene-order'],
+          [`${a} × ${b} ÷ ${n}`, 'scene-order'],
+        ],
         v: total / n,
         wv: [],
       };
@@ -268,7 +387,11 @@ const SCENES: Scene[] = [
       return {
         text: `${p}円の おにぎりと ${q}円の お茶を 1組に して、${n}組 買いました。代金は 何円ですか。`,
         right: `（${p} ＋ ${q}）× ${n}`,
-        wrong: [[`${p} ＋ ${q} × ${n}`, 'paren-needed'], [`${p} × ${n} ＋ ${q}`, 'scene-order'], [`${p} ＋ ${q} ＋ ${n}`, 'scene-order']],
+        wrong: [
+          [`${p} ＋ ${q} × ${n}`, 'paren-needed'],
+          [`${p} × ${n} ＋ ${q}`, 'scene-order'],
+          [`${p} ＋ ${q} ＋ ${n}`, 'scene-order'],
+        ],
         v: (p + q) * n,
         wv: [p + q * n, p * n + q],
       };
@@ -283,7 +406,11 @@ const SCENES: Scene[] = [
       return {
         text: `色紙が ${t}まい あります。きのう ${a}まい、きょう ${b}まい 使いました。のこりは 何まいですか。（1つの 式で）`,
         right: `${t} − （${a} ＋ ${b}）`,
-        wrong: [[`${t} − ${a} ＋ ${b}`, 'paren-sign'], [`（${t} − ${a}）＋ ${b}`, 'paren-sign'], [`${a} ＋ ${b} − ${t}`, 'scene-order']],
+        wrong: [
+          [`${t} − ${a} ＋ ${b}`, 'paren-sign'],
+          [`（${t} − ${a}）＋ ${b}`, 'paren-sign'],
+          [`${a} ＋ ${b} − ${t}`, 'scene-order'],
+        ],
         v: t - a - b,
         wv: [t - a + b],
       };
@@ -299,7 +426,11 @@ const SCENES: Scene[] = [
       return {
         text: `くりが ${t}こ あります。${a}こ 食べて、のこりを ${n}人で 同じ数ずつ 分けました。1人 何こですか。`,
         right: `（${t} − ${a}）÷ ${n}`,
-        wrong: [[`${t} − ${a} ÷ ${n}`, 'paren-needed'], [`${t} ÷ ${n} − ${a}`, 'scene-order'], [`（${t} ＋ ${a}）÷ ${n}`, 'scene-order']],
+        wrong: [
+          [`${t} − ${a} ÷ ${n}`, 'paren-needed'],
+          [`${t} ÷ ${n} − ${a}`, 'scene-order'],
+          [`（${t} ＋ ${a}）÷ ${n}`, 'scene-order'],
+        ],
         v: each,
         wv: [],
       };
@@ -315,7 +446,11 @@ const SCENES: Scene[] = [
       return {
         text: `1本 ${p}円の えんぴつを ${n}本と、1さつ ${q}円の ノートを ${m}さつ 買いました。代金は 何円ですか。`,
         right: `${p} × ${n} ＋ ${q} × ${m}`,
-        wrong: [[`（${p} ＋ ${q}）× （${n} ＋ ${m}）`, 'scene-order'], [`${p} × （${n} ＋ ${q}）× ${m}`, 'paren-needed'], [`（${p} × ${n} ＋ ${q}）× ${m}`, 'paren-needed']],
+        wrong: [
+          [`（${p} ＋ ${q}）× （${n} ＋ ${m}）`, 'scene-order'],
+          [`${p} × （${n} ＋ ${q}）× ${m}`, 'paren-needed'],
+          [`（${p} × ${n} ＋ ${q}）× ${m}`, 'paren-needed'],
+        ],
         v: p * n + q * m,
         wv: [(p + q) * (n + m), (p * n + q) * m],
       };
@@ -330,7 +465,11 @@ const SCENES: Scene[] = [
       return {
         text: `1こ ${p}円の ケーキが、1こに つき ${d}円 安く なって います。${n}こ 買うと 代金は 何円ですか。`,
         right: `（${p} − ${d}）× ${n}`,
-        wrong: [[`${p} − ${d} × ${n}`, 'paren-needed'], [`${p} × ${n} − ${d}`, 'scene-order'], [`（${p} ＋ ${d}）× ${n}`, 'scene-order']],
+        wrong: [
+          [`${p} − ${d} × ${n}`, 'paren-needed'],
+          [`${p} × ${n} − ${d}`, 'scene-order'],
+          [`（${p} ＋ ${d}）× ${n}`, 'scene-order'],
+        ],
         v: (p - d) * n,
         wv: [p - d * n, p * n - d],
       };
@@ -358,7 +497,10 @@ function oneexpr(level: number, rng: Rng, alt: boolean): Item {
       identity: `oneexpr-calc:${sc.id}:${m.right}`,
       alt: true,
       fields: [{ answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, m.wv.map((v) => [v, 'paren-needed'] as [number | null, string])),
+      wrongAnswers: wrongList(
+        answers,
+        m.wv.map((v) => [v, 'paren-needed'] as [number | null, string]),
+      ),
     };
     return item;
   }
@@ -376,7 +518,10 @@ function oneexpr(level: number, rng: Rng, alt: boolean): Item {
     explain: `${m.right} ＝ ${m.v}。${m.right.includes('（') ? '先に まとめる 部分を （ ）で 表します。' : 'かけ算は たし算・ひき算より 先に 計算するので （ ）は いりません。'}`,
     identity: `oneexpr:${sc.id}:${m.right}`,
     alt: false,
-    options: opts(m.right, m.wrong.map(([l, mm]) => [l, mm])),
+    options: opts(
+      m.right,
+      m.wrong.map(([l, mm]) => [l, mm]),
+    ),
   };
   return item;
 }
@@ -387,7 +532,10 @@ function tokensFromText(s: string): Tok[] {
   for (const m of s.matchAll(/\d+|[＋−×÷（）]/g)) {
     const t = m[0];
     if (/\d/.test(t)) out.push(Number(t));
-    else out.push(({ '＋': '+', '−': '-', '×': '×', '÷': '÷', '（': '(', '）': ')' } as const)[t as '＋']);
+    else
+      out.push(
+        ({ '＋': '+', '−': '-', '×': '×', '÷': '÷', '（': '(', '）': ')' } as const)[t as '＋'],
+      );
   }
   return out;
 }
@@ -436,7 +584,8 @@ export const orderOps: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'left-to-right',
-      explain: '左から じゅんに 計算したのかな。かけ算・わり算は、たし算・ひき算より 先に 計算するよ。',
+      explain:
+        '左から じゅんに 計算したのかな。かけ算・わり算は、たし算・ひき算より 先に 計算するよ。',
     },
     {
       id: 'paren-ignore',
@@ -449,15 +598,18 @@ export const orderOps: UnitSpec = finishUnit({
     },
     {
       id: 'paren-sign',
-      explain: '使った 分を まとめて ひくときは （ ）で まとめるよ。（ ）を 外すと、ひく 数と たす 数が 入れかわって しまうね。',
+      explain:
+        '使った 分を まとめて ひくときは （ ）で まとめるよ。（ ）を 外すと、ひく 数と たす 数が 入れかわって しまうね。',
     },
     {
       id: 'scene-order',
-      explain: '場面と 式の 数の 組み合わせが 合って いないかも。何を 何こ 買ったのか、何から 何を ひくのかを 文から 読み取ろう。',
+      explain:
+        '場面と 式の 数の 組み合わせが 合って いないかも。何を 何こ 買ったのか、何から 何を ひくのかを 文から 読み取ろう。',
     },
     {
       id: 'assoc-add',
-      explain: 'かけ算の 式の とちゅうを たし算に して しまったのかな。かける 順を かえても、ぜんぶ かけ算の ままだよ。',
+      explain:
+        'かけ算の 式の とちゅうを たし算に して しまったのかな。かける 順を かえても、ぜんぶ かけ算の ままだよ。',
     },
     {
       id: 'distrib-partial',
@@ -494,6 +646,7 @@ export const orderOps: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateOrderOps(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(6) 式の表し方と読み方（四則の混合した式、（ ）を用いた式、計算に関して成り立つ性質）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(6) 式の表し方と読み方（四則の混合した式、（ ）を用いた式、計算に関して成り立つ性質）',
   revised: REVISED,
 });

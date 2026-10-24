@@ -38,97 +38,177 @@ const SCENES: Scene[] = [
   {
     id: 'price',
     text: (k) => `1さつ ${k}円の ノートを 買います。`,
-    x: 'ノートの 数', y: '代金', ux: 'さつ', uy: '円',
+    x: 'ノートの 数',
+    y: '代金',
+    ux: 'さつ',
+    uy: '円',
     ks: [60, 80, 90, 120, 150],
     f: (x, k) => k * x,
     formula: (k) => `${k} × □ ＝ △`,
-    wrongF: (k) => [[`${k} ＋ □ ＝ △`, 'add-vs-mult'], [`${k} × △ ＝ □`, 'swap-vars'], [`□ ÷ ${k} ＝ △`, 'add-vs-mult']],
+    wrongF: (k) => [
+      [`${k} ＋ □ ＝ △`, 'add-vs-mult'],
+      [`${k} × △ ＝ □`, 'swap-vars'],
+      [`□ ÷ ${k} ＝ △`, 'add-vs-mult'],
+    ],
     rule: (k) => `△は □の ${k}倍`,
-    wrongRule: (k) => [[`△は □より ${k} 大きい`, 'add-vs-mult'], [`□と △を たすと ${k}`, 'sum-vs-diff']],
+    wrongRule: (k) => [
+      [`△は □より ${k} 大きい`, 'add-vs-mult'],
+      [`□と △を たすと ${k}`, 'sum-vs-diff'],
+    ],
     xmax: 12,
   },
   {
     id: 'age',
     text: (k) => `兄は 弟より ${k}才 年上です。`,
-    x: '弟の 年れい', y: '兄の 年れい', ux: '才', uy: '才',
+    x: '弟の 年れい',
+    y: '兄の 年れい',
+    ux: '才',
+    uy: '才',
     ks: [2, 3, 4, 5, 6],
     f: (x, k) => x + k,
     formula: (k) => `□ ＋ ${k} ＝ △`,
-    wrongF: (k) => [[`□ × ${k} ＝ △`, 'add-vs-mult'], [`□ − ${k} ＝ △`, 'swap-vars'], [`□ ＋ △ ＝ ${k}`, 'sum-vs-diff']],
+    wrongF: (k) => [
+      [`□ × ${k} ＝ △`, 'add-vs-mult'],
+      [`□ − ${k} ＝ △`, 'swap-vars'],
+      [`□ ＋ △ ＝ ${k}`, 'sum-vs-diff'],
+    ],
     rule: (k) => `△は いつも □より ${k} 大きい`,
-    wrongRule: (k) => [[`△は □の ${k}倍`, 'add-vs-mult'], [`□と △を たすと いつも ${k}`, 'sum-vs-diff']],
+    wrongRule: (k) => [
+      [`△は □の ${k}倍`, 'add-vs-mult'],
+      [`□と △を たすと いつも ${k}`, 'sum-vs-diff'],
+    ],
     xmax: 12,
   },
   {
     id: 'rope',
     text: (k) => `まわりの 長さが ${2 * k}cmの 長方形を つくります。`,
-    x: 'たての 長さ', y: '横の 長さ', ux: 'cm', uy: 'cm',
+    x: 'たての 長さ',
+    y: '横の 長さ',
+    ux: 'cm',
+    uy: 'cm',
     ks: [10, 12, 14, 16, 18],
     f: (x, k) => k - x,
     formula: (k) => `□ ＋ △ ＝ ${k}`,
-    wrongF: (k) => [[`□ ＋ △ ＝ ${2 * k}`, 'half-perimeter'], [`□ × △ ＝ ${k}`, 'add-vs-mult'], [`△ − □ ＝ ${k}`, 'sum-vs-diff']],
+    wrongF: (k) => [
+      [`□ ＋ △ ＝ ${2 * k}`, 'half-perimeter'],
+      [`□ × △ ＝ ${k}`, 'add-vs-mult'],
+      [`△ − □ ＝ ${k}`, 'sum-vs-diff'],
+    ],
     rule: (k) => `□と △を たすと いつも ${k}`,
-    wrongRule: (k) => [[`□と △を たすと いつも ${2 * k}`, 'half-perimeter'], [`△は いつも □より ${k} 大きい`, 'sum-vs-diff']],
+    wrongRule: (k) => [
+      [`□と △を たすと いつも ${2 * k}`, 'half-perimeter'],
+      [`△は いつも □より ${k} 大きい`, 'sum-vs-diff'],
+    ],
     xmax: 9,
   },
   {
     id: 'stairs',
     text: () => '1辺 1cmの 正方形を ならべて、だんの 形を つくります。',
-    x: 'だんの 数', y: 'まわりの 長さ', ux: 'だん', uy: 'cm',
+    x: 'だんの 数',
+    y: 'まわりの 長さ',
+    ux: 'だん',
+    uy: 'cm',
     ks: [4],
     f: (x) => 4 * x,
     formula: () => '□ × 4 ＝ △',
-    wrongF: () => [['□ ＋ 4 ＝ △', 'add-vs-mult'], ['△ × 4 ＝ □', 'swap-vars'], ['□ × 3 ＝ △', 'first-pair']],
+    wrongF: () => [
+      ['□ ＋ 4 ＝ △', 'add-vs-mult'],
+      ['△ × 4 ＝ □', 'swap-vars'],
+      ['□ × 3 ＝ △', 'first-pair'],
+    ],
     rule: () => '△は □の 4倍',
-    wrongRule: () => [['△は □より 4 大きい', 'add-vs-mult'], ['□と △を たすと 4', 'sum-vs-diff']],
+    wrongRule: () => [
+      ['△は □より 4 大きい', 'add-vs-mult'],
+      ['□と △を たすと 4', 'sum-vs-diff'],
+    ],
     xmax: 12,
   },
   {
     id: 'water',
     text: (k) => `からの 水そうに 水を 入れると、1分間に ${k}cmずつ 水の 深さが ふえます。`,
-    x: '入れた 時間', y: '水の 深さ', ux: '分', uy: 'cm',
+    x: '入れた 時間',
+    y: '水の 深さ',
+    ux: '分',
+    uy: 'cm',
     ks: [2, 3, 4, 5],
     f: (x, k) => k * x,
     formula: (k) => `${k} × □ ＝ △`,
-    wrongF: (k) => [[`${k} ＋ □ ＝ △`, 'add-vs-mult'], [`${k} × △ ＝ □`, 'swap-vars'], [`□ − ${k} ＝ △`, 'add-vs-mult']],
+    wrongF: (k) => [
+      [`${k} ＋ □ ＝ △`, 'add-vs-mult'],
+      [`${k} × △ ＝ □`, 'swap-vars'],
+      [`□ − ${k} ＝ △`, 'add-vs-mult'],
+    ],
     rule: (k) => `△は □の ${k}倍`,
-    wrongRule: (k) => [[`△は □より ${k} 大きい`, 'add-vs-mult'], [`□と △の ちがいは いつも ${k}`, 'sum-vs-diff']],
+    wrongRule: (k) => [
+      [`△は □より ${k} 大きい`, 'add-vs-mult'],
+      [`□と △の ちがいは いつも ${k}`, 'sum-vs-diff'],
+    ],
     xmax: 10,
   },
   {
     id: 'candle',
     text: (k) => `長さ ${k}cmの ろうそくが、火を つけると 1分間に 1cmずつ 短く なります。`,
-    x: 'もやした 時間', y: 'のこりの 長さ', ux: '分', uy: 'cm',
+    x: 'もやした 時間',
+    y: 'のこりの 長さ',
+    ux: '分',
+    uy: 'cm',
     ks: [15, 18, 20, 24],
     f: (x, k) => k - x,
     formula: (k) => `${k} − □ ＝ △`,
-    wrongF: (k) => [[`${k} ＋ □ ＝ △`, 'sum-vs-diff'], [`□ − ${k} ＝ △`, 'swap-vars'], [`${k} × □ ＝ △`, 'add-vs-mult']],
+    wrongF: (k) => [
+      [`${k} ＋ □ ＝ △`, 'sum-vs-diff'],
+      [`□ − ${k} ＝ △`, 'swap-vars'],
+      [`${k} × □ ＝ △`, 'add-vs-mult'],
+    ],
     rule: (k) => `□と △を たすと いつも ${k}`,
-    wrongRule: (k) => [[`△は □より ${k} 大きい`, 'sum-vs-diff'], [`△は □の ${k}倍`, 'add-vs-mult']],
+    wrongRule: (k) => [
+      [`△は □より ${k} 大きい`, 'sum-vs-diff'],
+      [`△は □の ${k}倍`, 'add-vs-mult'],
+    ],
     xmax: 12,
   },
   {
     id: 'matchSq',
     text: () => 'ぼうを 使って、正方形を 横に 1列に つなげて ならべます。',
-    x: '正方形の 数', y: 'ぼうの 数', ux: 'こ', uy: '本',
+    x: '正方形の 数',
+    y: 'ぼうの 数',
+    ux: 'こ',
+    uy: '本',
     ks: [3],
     f: (x) => 3 * x + 1,
     formula: () => '1 ＋ 3 × □ ＝ △',
-    wrongF: () => [['4 × □ ＝ △', 'first-pair'], ['3 ＋ □ ＝ △', 'add-vs-mult'], ['1 ＋ 3 × △ ＝ □', 'swap-vars']],
+    wrongF: () => [
+      ['4 × □ ＝ △', 'first-pair'],
+      ['3 ＋ □ ＝ △', 'add-vs-mult'],
+      ['1 ＋ 3 × △ ＝ □', 'swap-vars'],
+    ],
     rule: () => '□が 1 ふえると、△は 3 ふえる',
-    wrongRule: () => [['□が 1 ふえると、△は 4 ふえる', 'first-pair'], ['△は いつも □より 3 大きい', 'add-vs-mult']],
+    wrongRule: () => [
+      ['□が 1 ふえると、△は 4 ふえる', 'first-pair'],
+      ['△は いつも □より 3 大きい', 'add-vs-mult'],
+    ],
     xmax: 12,
   },
   {
     id: 'matchTri',
     text: () => 'ぼうを 使って、正三角形を 横に 1列に つなげて ならべます。',
-    x: '三角形の 数', y: 'ぼうの 数', ux: 'こ', uy: '本',
+    x: '三角形の 数',
+    y: 'ぼうの 数',
+    ux: 'こ',
+    uy: '本',
     ks: [2],
     f: (x) => 2 * x + 1,
     formula: () => '1 ＋ 2 × □ ＝ △',
-    wrongF: () => [['3 × □ ＝ △', 'first-pair'], ['2 ＋ □ ＝ △', 'add-vs-mult'], ['1 ＋ 2 × △ ＝ □', 'swap-vars']],
+    wrongF: () => [
+      ['3 × □ ＝ △', 'first-pair'],
+      ['2 ＋ □ ＝ △', 'add-vs-mult'],
+      ['1 ＋ 2 × △ ＝ □', 'swap-vars'],
+    ],
     rule: () => '□が 1 ふえると、△は 2 ふえる',
-    wrongRule: () => [['□が 1 ふえると、△は 3 ふえる', 'first-pair'], ['△は いつも □より 1 大きい', 'add-vs-mult']],
+    wrongRule: () => [
+      ['□が 1 ふえると、△は 3 ふえる', 'first-pair'],
+      ['△は いつも □より 1 大きい', 'add-vs-mult'],
+    ],
     xmax: 12,
   },
 ];
@@ -138,7 +218,12 @@ function tableFig(sc: Scene, k: number, xs: number[], hide: number[]): Figure {
   return {
     kind: 'table',
     header: [`□ ${sc.x}（${sc.ux}）`, ...xs.map(String)],
-    rows: [[`△ ${sc.y}（${sc.uy}）`, ...xs.map((x, i) => (hide.includes(i) ? '？' : String(sc.f(x, k))))]],
+    rows: [
+      [
+        `△ ${sc.y}（${sc.uy}）`,
+        ...xs.map((x, i) => (hide.includes(i) ? '？' : String(sc.f(x, k)))),
+      ],
+    ],
   };
 }
 
@@ -164,7 +249,11 @@ function table(level: number, rng: Rng, alt: boolean): Item {
       objective: 'table',
       level,
       prompt: `${sc.text(k)} ${sc.x}（□）と ${sc.y}（△）の 関係を 折れ線グラフに しました。□が ${xs[i]}の とき、△は いくつですか。`,
-      hints: ['横の じくで □の 数を さがそう。', `□が ${xs[i]}の ところの 点の 高さを 読もう。`, `たての じくの 1めもりは ${step}だよ。`],
+      hints: [
+        '横の じくで □の 数を さがそう。',
+        `□が ${xs[i]}の ところの 点の 高さを 読もう。`,
+        `たての じくの 1めもりは ${step}だよ。`,
+      ],
       explain: `□が ${xs[i]}の とき、△は ${ys[i]}です。`,
       identity: `table-graph:${sc.id}:${k}:${xs[0]}:${i}`,
       alt: true,
@@ -233,12 +322,19 @@ function rule(level: number, rng: Rng, alt: boolean): Item {
       level,
       prompt: `${sc.text(k)} □が 1 ふえると、△は いくつ ${d >= 0 ? 'ふえ' : 'へり'}ますか。`,
       figure: fig,
-      hints: ['表を 横に 見よう。', `□が ${xs[0]}から ${xs[1]}に なると、△は ${sc.f(xs[0]!, k)}から ${sc.f(xs[1]!, k)}。`, 'その ちがいを 計算しよう。'],
+      hints: [
+        '表を 横に 見よう。',
+        `□が ${xs[0]}から ${xs[1]}に なると、△は ${sc.f(xs[0]!, k)}から ${sc.f(xs[1]!, k)}。`,
+        'その ちがいを 計算しよう。',
+      ],
       explain: `□が 1 ふえると、△は ${Math.abs(d)} ${d >= 0 ? 'ふえます' : 'へります'}。`,
       identity: `rule-step:${sc.id}:${k}:${xs[0]}`,
       alt: true,
       fields: [{ answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, [[sc.f(xs[0]!, k), 'first-pair'], [Math.abs(d) + 1, 'step-miss']]),
+      wrongAnswers: wrongList(answers, [
+        [sc.f(xs[0]!, k), 'first-pair'],
+        [Math.abs(d) + 1, 'step-miss'],
+      ]),
     };
     return item;
   }
@@ -249,11 +345,18 @@ function rule(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: `${sc.text(k)} □と △の 関係で 正しい ものは どれ？`,
     figure: fig,
-    hints: ['表を たてに 見て、□と △を くらべよう。', 'たしたり、ひいたり、わったり して、いつも 同じに なる ものを さがそう。', `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}の とき、どれが 合うかな。ほかの 列でも たしかめよう。`],
+    hints: [
+      '表を たてに 見て、□と △を くらべよう。',
+      'たしたり、ひいたり、わったり して、いつも 同じに なる ものを さがそう。',
+      `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}の とき、どれが 合うかな。ほかの 列でも たしかめよう。`,
+    ],
     explain: `${sc.rule(k)}。どの 列でも なりたちます。`,
     identity: `rule:${sc.id}:${k}:${xs[0]}`,
     alt: false,
-    options: opts(sc.rule(k), sc.wrongRule(k).map(([l, m]) => [l, m])),
+    options: opts(
+      sc.rule(k),
+      sc.wrongRule(k).map(([l, m]) => [l, m]),
+    ),
   };
   return item;
 }
@@ -276,12 +379,19 @@ function formula(level: number, rng: Rng, alt: boolean): Item {
       level,
       prompt: `${sc.text(k)} □と △の 関係を 式に 表します。あいて いる ところに 入る 数を 書こう。`,
       figure: { kind: 'column', gap: 1, items: [fig, { kind: 'text', text: shown, size: 'xl' }] },
-      hints: ['表の 1つの 列の 数を、式に あてはめて みよう。', `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}。`, 'ほかの 列でも 同じ 数に なるか たしかめよう。'],
+      hints: [
+        '表の 1つの 列の 数を、式に あてはめて みよう。',
+        `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}。`,
+        'ほかの 列でも 同じ 数に なるか たしかめよう。',
+      ],
       explain: `式は ${f}です。`,
       identity: `formula-blank:${sc.id}:${k}:${xs[0]}`,
       alt: true,
       fields: [{ answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, [[sc.f(xs[0]!, k), 'first-pair'], [target * 2, 'half-perimeter']]),
+      wrongAnswers: wrongList(answers, [
+        [sc.f(xs[0]!, k), 'first-pair'],
+        [target * 2, 'half-perimeter'],
+      ]),
     };
     return item;
   }
@@ -292,11 +402,18 @@ function formula(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: `${sc.text(k)} □を ${sc.x}、△を ${sc.y}と します。□と △の 関係を 表す 式は どれ？`,
     figure: fig,
-    hints: ['表の 数を 式に あてはめて、正しく なるか たしかめよう。', `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}で なりたつか。`, `□が ${xs[1]}、△が ${sc.f(xs[1]!, k)}でも なりたつか 見よう。`],
+    hints: [
+      '表の 数を 式に あてはめて、正しく なるか たしかめよう。',
+      `□が ${xs[0]}、△が ${sc.f(xs[0]!, k)}で なりたつか。`,
+      `□が ${xs[1]}、△が ${sc.f(xs[1]!, k)}でも なりたつか 見よう。`,
+    ],
     explain: `${sc.formula(k)}。表の どの 列を あてはめても なりたちます。`,
     identity: `formula:${sc.id}:${k}:${xs[0]}`,
     alt: false,
-    options: opts(sc.formula(k), sc.wrongF(k).map(([l, m]) => [l, m])),
+    options: opts(
+      sc.formula(k),
+      sc.wrongF(k).map(([l, m]) => [l, m]),
+    ),
   };
   return item;
 }
@@ -317,12 +434,27 @@ function apply(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt: alt
       ? `${sc.text(k)} 式は ${sc.formula(k)}（□: ${sc.x}、△: ${sc.y}）です。△が ${y}${sc.uy}の とき、□は いくつですか。`
       : `${sc.text(k)} 式は ${sc.formula(k)}（□: ${sc.x}、△: ${sc.y}）です。□が ${x}${sc.ux}の とき、△は いくつですか。`,
-    hints: ['式の □や △に 数を あてはめよう。', alt ? `${sc.formula(k).replace('△', String(y))}` : `${sc.formula(k).replace('□', String(x))}`, alt ? '□に 入る 数を、反対の 計算で 求めよう。' : 'のこりの 計算を しよう。'],
-    explain: alt ? `${sc.formula(k).replace('□', String(x)).replace('△', String(y))}。□は ${x}${sc.ux}です。` : `${sc.formula(k).replace('□', String(x)).replace('△', String(y))}。△は ${y}${sc.uy}です。`,
+    hints: [
+      '式の □や △に 数を あてはめよう。',
+      alt ? `${sc.formula(k).replace('△', String(y))}` : `${sc.formula(k).replace('□', String(x))}`,
+      alt ? '□に 入る 数を、反対の 計算で 求めよう。' : 'のこりの 計算を しよう。',
+    ],
+    explain: alt
+      ? `${sc.formula(k).replace('□', String(x)).replace('△', String(y))}。□は ${x}${sc.ux}です。`
+      : `${sc.formula(k).replace('□', String(x)).replace('△', String(y))}。△は ${y}${sc.uy}です。`,
     identity: `apply${alt ? '-inv' : ''}:${sc.id}:${k}:${x}`,
     alt,
     fields: [{ label: alt ? sc.ux : sc.uy, answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, alt ? [[y, 'swap-vars']] : [[x, 'swap-vars'], [x + k, 'add-vs-mult'], [x * k, 'add-vs-mult']]),
+    wrongAnswers: wrongList(
+      answers,
+      alt
+        ? [[y, 'swap-vars']]
+        : [
+            [x, 'swap-vars'],
+            [x + k, 'add-vs-mult'],
+            [x * k, 'add-vs-mult'],
+          ],
+    ),
   };
 }
 
@@ -368,7 +500,8 @@ export const changeRelations: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'add-vs-mult',
-      explain: '「何倍」と「いくつ 大きい」を まちがえたのかな。表の ほかの 列でも なりたつか たしかめよう。',
+      explain:
+        '「何倍」と「いくつ 大きい」を まちがえたのかな。表の ほかの 列でも なりたつか たしかめよう。',
     },
     {
       id: 'swap-vars',
@@ -376,19 +509,23 @@ export const changeRelations: UnitSpec = finishUnit({
     },
     {
       id: 'sum-vs-diff',
-      explain: 'たすと 同じに なるのか、ひくと 同じに なるのかを まちがえたのかな。表の 数で 計算して たしかめよう。',
+      explain:
+        'たすと 同じに なるのか、ひくと 同じに なるのかを まちがえたのかな。表の 数で 計算して たしかめよう。',
     },
     {
       id: 'first-pair',
-      explain: '最初の 1列だけで きめたのかな。きまりは 表の どの 列でも なりたつ ものだよ。2列目・3列目でも たしかめよう。',
+      explain:
+        '最初の 1列だけで きめたのかな。きまりは 表の どの 列でも なりたつ ものだよ。2列目・3列目でも たしかめよう。',
     },
     {
       id: 'half-perimeter',
-      explain: 'まわりの 長さは たて 2本と 横 2本。たてと 横を 1本ずつ たすと、まわりの 長さの 半分だね。',
+      explain:
+        'まわりの 長さは たて 2本と 横 2本。たてと 横を 1本ずつ たすと、まわりの 長さの 半分だね。',
     },
     {
       id: 'step-miss',
-      explain: '1 ふえる ごとに いくつ 変わるかを たしかめよう。となりの 列との ちがいを 計算すると わかるよ。',
+      explain:
+        '1 ふえる ごとに いくつ 変わるかを たしかめよう。となりの 列との ちがいを 計算すると わかるよ。',
     },
     {
       id: 'scale-one',
@@ -429,6 +566,7 @@ export const changeRelations: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateChangeRelations(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 C(1) 伴って変わる二つの数量（表・式・折れ線グラフ）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 C(1) 伴って変わる二つの数量（表・式・折れ線グラフ）',
   revised: REVISED,
 });

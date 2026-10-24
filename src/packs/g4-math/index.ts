@@ -20,7 +20,26 @@ import { twoWayTable } from './two-way-table';
 
 const pack: PackContent = {
   packId: 'g4-math',
-  units: [okuCho, rounding, div1digit, div2digit, decimalAddSub, decimalInt, fractionKinds, fractionSame, orderOps, parallelPerp, quadrilaterals, cuboid, area, angle, changeRelations, ratioIntro, lineGraph, twoWayTable],
+  units: [
+    okuCho,
+    rounding,
+    div1digit,
+    div2digit,
+    decimalAddSub,
+    decimalInt,
+    fractionKinds,
+    fractionSame,
+    orderOps,
+    parallelPerp,
+    quadrilaterals,
+    cuboid,
+    area,
+    angle,
+    changeRelations,
+    ratioIntro,
+    lineGraph,
+    twoWayTable,
+  ],
 };
 
 export default pack;

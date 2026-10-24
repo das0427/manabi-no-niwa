@@ -28,7 +28,15 @@ function groupKanji(g: number, groupIdx: number): string {
   const o = g % 10;
   const cho = groupIdx === 3;
   let s = '';
-  if (th) s += th === 1 ? '千《せん》' : th === 3 ? `${dk(3)}千《ぜん》` : th === 8 ? `${dk(8, 'はっ')}千《せん》` : `${dk(th)}千《せん》`;
+  if (th)
+    s +=
+      th === 1
+        ? '千《せん》'
+        : th === 3
+          ? `${dk(3)}千《ぜん》`
+          : th === 8
+            ? `${dk(8, 'はっ')}千《せん》`
+            : `${dk(th)}千《せん》`;
   if (h)
     s +=
       h === 1
@@ -88,7 +96,10 @@ function sparseNumber(rng: Rng, digits: number): number {
   const top = rng.int(1, 9);
   let n = top * 10 ** (digits - 1);
   // 上から2〜8けた目のうち 1〜3か所に 0 でない数字（同じ位を2回選ばない）
-  const pos = rng.sample([1, 2, 3, 4, 5, 6, 7].filter((k) => k < digits), rng.int(1, 3));
+  const pos = rng.sample(
+    [1, 2, 3, 4, 5, 6, 7].filter((k) => k < digits),
+    rng.int(1, 3),
+  );
   for (const k of pos) n += rng.int(1, 9) * 10 ** (digits - 1 - k);
   return n;
 }
@@ -266,12 +277,18 @@ const UNITS = [
 ];
 
 /** 値 r（small の単位で）を欄に。1万以上なら big と small の2欄 */
-function unitFields(r: number, u: { small: string; big: string }): { fields: NumberField[]; text: string } {
+function unitFields(
+  r: number,
+  u: { small: string; big: string },
+): { fields: NumberField[]; text: string } {
   if (r >= 10000) {
     const b = Math.floor(r / 10000);
     const s = r % 10000;
     if (s === 0)
-      return { fields: [{ label: u.big, answer: { kind: 'int', value: b } }], text: `${b}${u.big}` };
+      return {
+        fields: [{ label: u.big, answer: { kind: 'int', value: b } }],
+        text: `${b}${u.big}`,
+      };
     return {
       fields: [
         { label: u.big, answer: { kind: 'int', value: b } },
@@ -280,7 +297,10 @@ function unitFields(r: number, u: { small: string; big: string }): { fields: Num
       text: `${b}${u.big}${s}${u.small}`,
     };
   }
-  return { fields: [{ label: u.small, answer: { kind: 'int', value: r } }], text: `${r}${u.small}` };
+  return {
+    fields: [{ label: u.small, answer: { kind: 'int', value: r } }],
+    text: `${r}${u.small}`,
+  };
 }
 
 /** 答えの欄の形に合わせた誤答の文字列 */
@@ -298,10 +318,22 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
   let m = rng.int(1, 99) * (rng.next() < 0.5 ? 1 : 10) * (op === 'd10' ? 10 : 1);
   if (op === 'd10' && m > 9990) m = 9990;
   const r = op === 'x10' ? m * 10 : op === 'x100' ? m * 100 : m / 10;
-  const opDid = op === 'x10' ? '10倍《ばい》した' : op === 'x100' ? '100倍《ばい》した' : '10で わった';
-  const opDo = op === 'x10' ? '10倍《ばい》すると' : op === 'x100' ? '100倍《ばい》すると' : '10で わると';
-  const shift = op === 'd10' ? '右《みぎ》に 1けた' : op === 'x10' ? '左《ひだり》に 1けた' : '左《ひだり》に 2けた';
-  const back = op === 'd10' ? '左《ひだり》に 1けた' : op === 'x10' ? '右《みぎ》に 1けた' : '右《みぎ》に 2けた';
+  const opDid =
+    op === 'x10' ? '10倍《ばい》した' : op === 'x100' ? '100倍《ばい》した' : '10で わった';
+  const opDo =
+    op === 'x10' ? '10倍《ばい》すると' : op === 'x100' ? '100倍《ばい》すると' : '10で わると';
+  const shift =
+    op === 'd10'
+      ? '右《みぎ》に 1けた'
+      : op === 'x10'
+        ? '左《ひだり》に 1けた'
+        : '左《ひだり》に 2けた';
+  const back =
+    op === 'd10'
+      ? '左《ひだり》に 1けた'
+      : op === 'x10'
+        ? '右《みぎ》に 1けた'
+        : '右《みぎ》に 2けた';
   const base = unitFields(m, u);
   const res = unitFields(r, u);
   // alt: 結果から元の数を求める（逆向き）
@@ -313,11 +345,17 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
   const cands: [string | null, string][] = alt
     ? [
         [asFields(op === 'd10' ? r / 10 : r * 10, nf, bigOnly), 'times-reverse'],
-        [asFields(op === 'x10' ? r / 100 : op === 'x100' ? r / 10 : r * 100, nf, bigOnly), 'zero-count'],
+        [
+          asFields(op === 'x10' ? r / 100 : op === 'x100' ? r / 10 : r * 100, nf, bigOnly),
+          'zero-count',
+        ],
       ]
     : [
         [asFields(op === 'd10' ? m * 10 : m / 10, nf, bigOnly), 'times-reverse'],
-        [asFields(op === 'x10' ? m * 100 : op === 'x100' ? m * 10 : m / 100, nf, bigOnly), 'zero-count'],
+        [
+          asFields(op === 'x10' ? m * 100 : op === 'x100' ? m * 10 : m / 100, nf, bigOnly),
+          'zero-count',
+        ],
       ];
   return {
     engine: 'number',
@@ -402,11 +440,13 @@ export const okuCho: UnitSpec = {
     },
     {
       id: 'place-name',
-      explain: 'となりの 位《くらい》を 見《み》たのかな。一《いち》の 位《くらい》から 指《ゆび》で 1つずつ 数《かぞ》えて みよう。',
+      explain:
+        'となりの 位《くらい》を 見《み》たのかな。一《いち》の 位《くらい》から 指《ゆび》で 1つずつ 数《かぞ》えて みよう。',
     },
     {
       id: 'place-from-left',
-      explain: '左《ひだり》から 数《かぞ》えたのかな。位《くらい》は 右《みぎ》の 一《いち》の 位《くらい》から 数《かぞ》えるよ。',
+      explain:
+        '左《ひだり》から 数《かぞ》えたのかな。位《くらい》は 右《みぎ》の 一《いち》の 位《くらい》から 数《かぞ》えるよ。',
     },
     {
       id: 'times-reverse',
@@ -415,7 +455,8 @@ export const okuCho: UnitSpec = {
     },
     {
       id: 'scale-one',
-      explain: '1めもりを 1と 考《かんが》えたのかな。0から はしまでを いくつに 分《わ》けて いるか 見《み》て、1めもりの 大《おお》きさを 考《かんが》えよう。',
+      explain:
+        '1めもりを 1と 考《かんが》えたのかな。0から はしまでを いくつに 分《わ》けて いるか 見《み》て、1めもりの 大《おお》きさを 考《かんが》えよう。',
     },
   ],
   levels: [
@@ -446,6 +487,7 @@ export const okuCho: UnitSpec = {
     generate: ({ level, rng, index }) => generateOkuCho(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(1) 整数の表し方（億・兆の単位、十進位取り記数法）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(1) 整数の表し方（億・兆の単位、十進位取り記数法）',
   revised: REVISED,
 };

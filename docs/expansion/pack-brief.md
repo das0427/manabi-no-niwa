@@ -15,7 +15,7 @@ curriculum-matrix.md の自分の担当の単元を、**子供が実際に学べ
 ## 置き場所と形
 - `src/packs/<packId>/index.ts` が `PackContent = { packId, units: UnitSpec[] }` を default export。単元は1ファイル1単元（`<単元名>.ts`）。
 - テスト `src/packs/<packId>/<packId>.test.ts`: 全単元に `checkUnit` を呼び、`errors` が空であること。`status: 'ready'` と書いた単元は `isReady` が true であること（見本のテストをそのまま写してよい）。
-- **パックは他のパックを import しない**。共有のコード（生成の部品など）が要るときは統括に提案する。編集してよいのは `src/packs/<自分のpackId>/**` と、新しい絵を描くときの `src/illust/content/<packId>.tsx`（下記）だけ。
+- **パックは他のパックを import しない**。本体のモジュールを値で import してよいのは core/util/rng・text/kanji-grades・text/rich・core/answer/number だけ（pack-runtime。型の import は自由）。共有のコード（生成の部品など）が要るときは統括に提案する。編集してよいのは `src/packs/<自分のpackId>/**` と、新しい絵を描くときの `src/illust/content/<packId>.tsx`（下記）だけ。
 - 単元の `domain` は `src/curriculum/subjects.ts` の領域ID（算数 A-number / B-shape / C-measure / D-data、国語 kotoba / kanji / yomu / kaku、など）。幼児は自由（例 'play'）。
 
 ## 書き方の規則（すべて自動検査か統括のレビューで確かめる）

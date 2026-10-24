@@ -22,11 +22,51 @@ interface Scene {
   unit: string;
 }
 const SCENES: Scene[] = [
-  { id: 'injury', title: 'けがの 記録（れいの データ）', rowName: '場所', colName: 'けがの 種類', rows: ['教室', 'ろうか', '運動場', '体育館'], cols: ['すりきず', '切りきず', '打ぼく'], unit: '人' },
-  { id: 'play', title: 'すきな 遊び（れいの データ）', rowName: '学年', colName: '遊び', rows: ['3年', '4年'], cols: ['おにごっこ', 'なわとび', 'ボール'], unit: '人' },
-  { id: 'forget', title: 'わすれ物の 記録（れいの データ）', rowName: '曜日', colName: 'わすれ物', rows: ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'], cols: ['教科書', 'ノート', 'ハンカチ'], unit: 'こ' },
-  { id: 'commute', title: '通学の しかた（れいの データ）', rowName: '組', colName: '通学の しかた', rows: ['1組', '2組', '3組'], cols: ['歩き', '自転車', 'バス'], unit: '人' },
-  { id: 'lunch', title: 'きゅう食の のこし（れいの データ）', rowName: '組', colName: 'しゅるい', rows: ['1組', '2組'], cols: ['ごはん', 'おかず', 'しる'], unit: '人' },
+  {
+    id: 'injury',
+    title: 'けがの 記録（れいの データ）',
+    rowName: '場所',
+    colName: 'けがの 種類',
+    rows: ['教室', 'ろうか', '運動場', '体育館'],
+    cols: ['すりきず', '切りきず', '打ぼく'],
+    unit: '人',
+  },
+  {
+    id: 'play',
+    title: 'すきな 遊び（れいの データ）',
+    rowName: '学年',
+    colName: '遊び',
+    rows: ['3年', '4年'],
+    cols: ['おにごっこ', 'なわとび', 'ボール'],
+    unit: '人',
+  },
+  {
+    id: 'forget',
+    title: 'わすれ物の 記録（れいの データ）',
+    rowName: '曜日',
+    colName: 'わすれ物',
+    rows: ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'],
+    cols: ['教科書', 'ノート', 'ハンカチ'],
+    unit: 'こ',
+  },
+  {
+    id: 'commute',
+    title: '通学の しかた（れいの データ）',
+    rowName: '組',
+    colName: '通学の しかた',
+    rows: ['1組', '2組', '3組'],
+    cols: ['歩き', '自転車', 'バス'],
+    unit: '人',
+  },
+  {
+    id: 'lunch',
+    title: 'きゅう食の のこし（れいの データ）',
+    rowName: '組',
+    colName: 'しゅるい',
+    rows: ['1組', '2組'],
+    cols: ['ごはん', 'おかず', 'しる'],
+    unit: '人',
+  },
 ];
 
 function grid(rng: Rng, sc: Scene): number[][] {
@@ -52,7 +92,11 @@ function tableFig(sc: Scene, g: number[][], hide: [number, number][], totals = t
     i < R ? sc.rows[i]! : '合計',
     ...Array.from({ length: totals ? C + 1 : C }, (_, j) => cell(i, j)),
   ]);
-  return { kind: 'table', header: [`${sc.rowName}＼${sc.colName}`, ...sc.cols, ...(totals ? ['合計'] : [])], rows };
+  return {
+    kind: 'table',
+    header: [`${sc.rowName}＼${sc.colName}`, ...sc.cols, ...(totals ? ['合計'] : [])],
+    rows,
+  };
 }
 
 /** 記録を 数える（2×2: 犬と ねこ。alt: けがの 記録から 1つの ますを 数える） */
@@ -60,7 +104,10 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
   if (alt) {
     const sc = SCENES[0]!;
     const n = rng.int(9, 12);
-    const recs = Array.from({ length: n }, () => [rng.int(0, sc.rows.length - 1), rng.int(0, sc.cols.length - 1)] as [number, number]);
+    const recs = Array.from(
+      { length: n },
+      () => [rng.int(0, sc.rows.length - 1), rng.int(0, sc.cols.length - 1)] as [number, number],
+    );
     const [ri, cj] = pick(rng, recs);
     const ans = recs.filter(([a, b]) => a === ri && b === cj).length;
     const answers = [{ kind: 'int' as const, value: ans }];
@@ -70,8 +117,16 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'tally',
       level,
       prompt: `けがの 記録です（れいの データ）。${sc.rows[ri]}で ${sc.cols[cj]}を した 人は 何人ですか。`,
-      figure: { kind: 'table', header: ['番号', '場所', 'けがの 種類'], rows: recs.map(([a, b], i) => [String(i + 1), sc.rows[a]!, sc.cols[b]!]) },
-      hints: ['場所と けがの 種類の 2つが どちらも 合う 記録を さがそう。', `まず 場所が ${sc.rows[ri]}の 記録に しるしを つけよう。`, `その 中で ${sc.cols[cj]}の ものを 数えよう。`],
+      figure: {
+        kind: 'table',
+        header: ['番号', '場所', 'けがの 種類'],
+        rows: recs.map(([a, b], i) => [String(i + 1), sc.rows[a]!, sc.cols[b]!]),
+      },
+      hints: [
+        '場所と けがの 種類の 2つが どちらも 合う 記録を さがそう。',
+        `まず 場所が ${sc.rows[ri]}の 記録に しるしを つけよう。`,
+        `その 中で ${sc.cols[cj]}の ものを 数えよう。`,
+      ],
       explain: `${sc.rows[ri]}で ${sc.cols[cj]}の 記録は ${ans}こ。${ans}人です。`,
       identity: `tally-rec:${recs.map((r) => r.join('')).join('.')}:${ri}${cj}`,
       alt: true,
@@ -93,8 +148,13 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `tally:${recs.map((r) => r.join('')).join('.')}`,
     objective: 'tally',
     level,
-    prompt: '犬と ねこを かって いるかを 調べました（○: かって いる、×: かって いない）。落ちや 重なりが ないように 数えよう。',
-    figure: { kind: 'table', header: ['番号', '犬', 'ねこ'], rows: recs.map(([a, b], i) => [String(i + 1), mark(a), mark(b)]) },
+    prompt:
+      '犬と ねこを かって いるかを 調べました（○: かって いる、×: かって いない）。落ちや 重なりが ないように 数えよう。',
+    figure: {
+      kind: 'table',
+      header: ['番号', '犬', 'ねこ'],
+      rows: recs.map(([a, b], i) => [String(i + 1), mark(a), mark(b)]),
+    },
     hints: [
       '犬と ねこの ○×の 組み合わせは 4通り あるよ。',
       '1人ずつ、どの 組み合わせか 調べて しるしを つけよう。',
@@ -127,7 +187,9 @@ function read(level: number, rng: Rng, alt: boolean): Item {
     const best = flat.find((x) => x.v === mx)!;
     const name = (x: { i: number; j: number }) => `${sc.rows[x.i]}の ${sc.cols[x.j]}`;
     // 合計が いちばん 多い 行・列の 中の ほかの ます（合計と ますの 混同）
-    const rowBest = sc.rows.map((_, i) => rowSum(g, i)).indexOf(Math.max(...sc.rows.map((_, i) => rowSum(g, i))));
+    const rowBest = sc.rows
+      .map((_, i) => rowSum(g, i))
+      .indexOf(Math.max(...sc.rows.map((_, i) => rowSum(g, i))));
     const others = rng.shuffle(flat.filter((x) => x.v !== mx));
     const pref = others.find((x) => x.i === rowBest);
     const ws = [...(pref ? [pref] : []), ...others.filter((x) => x !== pref)].slice(0, 3);
@@ -138,11 +200,18 @@ function read(level: number, rng: Rng, alt: boolean): Item {
       level,
       prompt: `${sc.title}。${sc.rowName}と ${sc.colName}の 組み合わせで、いちばん 多いのは どれ？`,
       figure: tableFig(sc, g, []),
-      hints: ['合計の 列や 行では なく、中の ますを くらべよう。', 'いちばん 大きい 数の ますを さがそう。', 'その ますの 行と 列の 見出しを 読もう。'],
+      hints: [
+        '合計の 列や 行では なく、中の ますを くらべよう。',
+        'いちばん 大きい 数の ますを さがそう。',
+        'その ますの 行と 列の 見出しを 読もう。',
+      ],
       explain: `${name(best)}が ${mx}${sc.unit}で いちばん 多いです。`,
       identity: `read-max:${sc.id}:${gkey(g)}`,
       alt: true,
-      options: opts(name(best), ws.map((x) => [name(x), x.i === rowBest ? 'total-as-cell' : 'row-col-swap'])),
+      options: opts(
+        name(best),
+        ws.map((x) => [name(x), x.i === rowBest ? 'total-as-cell' : 'row-col-swap']),
+      ),
     };
     return item;
   }
@@ -157,7 +226,11 @@ function read(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: `${sc.title}。${sc.rows[i]}で ${sc.cols[j]}の ${sc.unit === '人' ? '人数' : '数'}は いくつですか。`,
     figure: tableFig(sc, g, []),
-    hints: [`${sc.rowName}は 横の 行、${sc.colName}は たての 列で 見るよ。`, `「${sc.rows[i]}」の 行を 横に たどろう。`, `「${sc.cols[j]}」の 列と 交わる ますを 読もう。`],
+    hints: [
+      `${sc.rowName}は 横の 行、${sc.colName}は たての 列で 見るよ。`,
+      `「${sc.rows[i]}」の 行を 横に たどろう。`,
+      `「${sc.cols[j]}」の 列と 交わる ますを 読もう。`,
+    ],
     explain: `${sc.rows[i]}の 行と ${sc.cols[j]}の 列が 交わる ますは ${ans}${sc.unit}です。`,
     identity: `read:${sc.id}:${gkey(g)}:${i}${j}`,
     alt: false,
@@ -186,7 +259,11 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       level,
       prompt: `${sc.title}。表の 右下の ？（全体の 合計）は いくつですか。`,
       figure: tableFig(sc, g, [[R, C]]),
-      hints: ['全体の 合計は、合計の 列を たても 横の 合計の 行を たしても 同じに なるよ。', `合計の 列（${sc.rows.map((_, i) => rowSum(g, i)).join('、')}）を たそう。`, '合計の 行を たして、同じに なるか たしかめよう。'],
+      hints: [
+        '全体の 合計は、合計の 列を たても 横の 合計の 行を たしても 同じに なるよ。',
+        `合計の 列（${sc.rows.map((_, i) => rowSum(g, i)).join('、')}）を たそう。`,
+        '合計の 行を たして、同じに なるか たしかめよう。',
+      ],
       explain: `${sc.rows.map((_, i) => rowSum(g, i)).join(' ＋ ')} ＝ ${all(g)}。合計の 行（${sc.cols.map((_, j) => colSum(g, j)).join(' ＋ ')}）でも ${all(g)}です。`,
       identity: `total-all:${sc.id}:${gkey(g)}`,
       alt: true,
@@ -207,7 +284,13 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${sc.title}。表の ？に 入る 数は いくつですか。`,
     figure: tableFig(sc, g, hide),
-    hints: [byRow ? '横の 行の 数を ぜんぶ たすと 合計に なるよ。' : 'たての 列の 数を ぜんぶ たすと 合計に なるよ。', `たす 数は ${parts.join('、')}。`, `${parts.join(' ＋ ')}を 計算しよう。`],
+    hints: [
+      byRow
+        ? '横の 行の 数を ぜんぶ たすと 合計に なるよ。'
+        : 'たての 列の 数を ぜんぶ たすと 合計に なるよ。',
+      `たす 数は ${parts.join('、')}。`,
+      `${parts.join(' ＋ ')}を 計算しよう。`,
+    ],
     explain: `${parts.join(' ＋ ')} ＝ ${ans}です。`,
     identity: `total:${sc.id}:${gkey(g)}:${byRow ? 'r' : 'c'}${k}`,
     alt: false,
@@ -222,7 +305,15 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
 /** 空欄を 求める（合計から ひく。alt: 2×2 の 表） */
 function fill(level: number, rng: Rng, alt: boolean): NumberItem {
   if (alt) {
-    const sc: Scene = { id: 'pet', title: '犬と ねこを かって いるか（れいの データ）', rowName: '犬', colName: 'ねこ', rows: ['かって いる', 'かって いない'], cols: ['かって いる', 'かって いない'], unit: '人' };
+    const sc: Scene = {
+      id: 'pet',
+      title: '犬と ねこを かって いるか（れいの データ）',
+      rowName: '犬',
+      colName: 'ねこ',
+      rows: ['かって いる', 'かって いない'],
+      cols: ['かって いる', 'かって いない'],
+      unit: '人',
+    };
     const g = [
       [rng.int(1, 6), rng.int(1, 9)],
       [rng.int(1, 9), rng.int(1, 9)],
@@ -239,8 +330,15 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'fill',
       level,
       prompt: `${sc.title}。表の ？に 入る 数は いくつですか。`,
-      figure: tableFig(sc, g, [[i, j], [i, 2]]),
-      hints: ['？の ますの たての 列を 見よう。列の 合計が わかって いるね。', `列の 合計は ${colSum(g, j)}、もう1つの ますは ${other}。`, `${colSum(g, j)} − ${other}を 計算しよう。`],
+      figure: tableFig(sc, g, [
+        [i, j],
+        [i, 2],
+      ]),
+      hints: [
+        '？の ますの たての 列を 見よう。列の 合計が わかって いるね。',
+        `列の 合計は ${colSum(g, j)}、もう1つの ますは ${other}。`,
+        `${colSum(g, j)} − ${other}を 計算しよう。`,
+      ],
       explain: `${colSum(g, j)} − ${other} ＝ ${ans}。？は ${ans}です。`,
       identity: `fill-2x2:${gkey(g)}:${i}${j}`,
       alt: true,
@@ -266,7 +364,11 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${sc.title}。表の ？に 入る 数は いくつですか。`,
     figure: tableFig(sc, g, [[i, j]]),
-    hints: ['？の ますの 行の 合計を 見よう。', `${sc.rows[i]}の 合計は ${rowSum(g, i)}。ほかの ますは ${others.join('、')}。`, `${rowSum(g, i)} − （${others.join(' ＋ ')}）を 計算しよう。`],
+    hints: [
+      '？の ますの 行の 合計を 見よう。',
+      `${sc.rows[i]}の 合計は ${rowSum(g, i)}。ほかの ますは ${others.join('、')}。`,
+      `${rowSum(g, i)} − （${others.join(' ＋ ')}）を 計算しよう。`,
+    ],
     explain: `${rowSum(g, i)} − （${others.join(' ＋ ')}）＝ ${ans}。？は ${ans}です。`,
     identity: `fill:${sc.id}:${gkey(g)}:${i}${j}`,
     alt: false,
@@ -321,19 +423,23 @@ export const twoWayTable: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'one-aspect',
-      explain: '1つの ことがらだけで 数えたのかな。2つの ことがらが どちらも 合う ものだけを 数えよう。',
+      explain:
+        '1つの ことがらだけで 数えたのかな。2つの ことがらが どちらも 合う ものだけを 数えよう。',
     },
     {
       id: 'row-col-swap',
-      explain: '行と 列を 入れかえて 読んだのかな。横の 行の 見出しと たての 列の 見出しを 指で たどって たしかめよう。',
+      explain:
+        '行と 列を 入れかえて 読んだのかな。横の 行の 見出しと たての 列の 見出しを 指で たどって たしかめよう。',
     },
     {
       id: 'double-count',
-      explain: '同じ ものを 2回 数えたのかな。数えた 記録に しるしを つけて、落ちや 重なりが ないように しよう。',
+      explain:
+        '同じ ものを 2回 数えたのかな。数えた 記録に しるしを つけて、落ちや 重なりが ないように しよう。',
     },
     {
       id: 'total-as-cell',
-      explain: '合計の ますを 読んだのかな。合計は いちばん 右の 列と いちばん 下の 行だよ。中の ますと 区別しよう。',
+      explain:
+        '合計の ますを 読んだのかな。合計は いちばん 右の 列と いちばん 下の 行だよ。中の ますと 区別しよう。',
     },
     {
       id: 'drop-row',
@@ -352,7 +458,16 @@ export const twoWayTable: UnitSpec = finishUnit({
   intro: [
     {
       text: 'けがの 記録を、場所と けがの 種類の 2つの ことがらで 整理すると、どこで どんな けがが 多いか わかります。',
-      figure: tableFig(SCENES[0]!, [[2, 1, 0], [1, 0, 2], [5, 2, 3], [1, 0, 4]], []),
+      figure: tableFig(
+        SCENES[0]!,
+        [
+          [2, 1, 0],
+          [1, 0, 2],
+          [5, 2, 3],
+          [1, 0, 4],
+        ],
+        [],
+      ),
     },
     {
       text: '1つずつ しるしを つけながら 数えると、落ちや 重なりが なく 数えられます。',
@@ -366,6 +481,7 @@ export const twoWayTable: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateTwoWayTable(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 D(1) データの分類整理（二つの観点から分類整理する表）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 D(1) データの分類整理（二つの観点から分類整理する表）',
   revised: REVISED,
 });

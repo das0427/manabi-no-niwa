@@ -9,11 +9,7 @@
  *   setsuzoku … つなぎ言葉の はたらきに 合わせて 選ぶ（fill。別例: 短い文章の 読解）
  * 同一性キー: 文（本文）× 問い。
  */
-import type {
-  ReadingItem,
-  ReadingLoc,
-  ReadingPassage,
-} from '../../engines/reading/reading';
+import type { ReadingItem, ReadingLoc, ReadingPassage } from '../../engines/reading/reading';
 import type { ChoiceItem, FillItem, Item, UnitSpec } from '../../curriculum/types';
 import { opts, REVISED, type Wrong } from './util';
 
@@ -178,16 +174,66 @@ interface Ksd {
 }
 
 const KSD: Ksd[] = [
-  { id: 'ishi', text: '（自分《じぶん》の 手《て》の 上《うえ》の 石《いし》を 見《み》せて）「{{}}は、川原《かわら》で ひろった 石《いし》だよ。」', set: SET_THING, k: 0 },
-  { id: 'nooto', text: '（友《とも》だちが 持《も》って いる ノートを ゆびさして）「{{}}、どこで 買《か》ったの。」', set: SET_THING, k: 1 },
-  { id: 'yama', text: '（遠《とお》くの 山《やま》を ゆびさして）「{{}}が、きのう のぼった 山《やま》だよ。」', set: SET_THING, k: 2 },
-  { id: 'boushi', text: '（たくさん ならんだ ぼうしの 前《まえ》で）「{{}}が きみの ぼうしなの。」', set: SET_THING, k: 3 },
-  { id: 'denwa', text: '（電話《でんわ》で、相手《あいて》が いる 場所《ばしょ》を たずねて）「今《いま》、{{}}に いるの。」', set: SET_PLACE, k: 3 },
-  { id: 'koko', text: '（自分《じぶん》が 立《た》って いる 場所《ばしょ》を さして）「{{}}で まって いてね。」', set: SET_PLACE, k: 0 },
-  { id: 'mushi', text: '（相手《あいて》の 足《あし》もとを 見《み》て）「{{}}に 小《ちい》さな 虫《むし》が いるよ。」', set: SET_PLACE, k: 1 },
-  { id: 'ki', text: '（遠《とお》くの 大《おお》きな 木《き》を ゆびさして）「{{}}まで 走《はし》ろう。」', set: SET_PLACE, k: 2 },
-  { id: 'tori', text: '（二人《ふたり》から 遠《とお》く はなれた 空《そら》の 鳥《とり》を 見《み》て）「{{}} 鳥《とり》は、何《なん》と いう 名前《なまえ》かな。」', set: SET_NOUN, k: 2 },
-  { id: 'kasa', text: '（相手《あいて》が さして いる かさを 見《み》て）「{{}} かさ、すてきな 色《いろ》だね。」', set: SET_NOUN, k: 1 },
+  {
+    id: 'ishi',
+    text: '（自分《じぶん》の 手《て》の 上《うえ》の 石《いし》を 見《み》せて）「{{}}は、川原《かわら》で ひろった 石《いし》だよ。」',
+    set: SET_THING,
+    k: 0,
+  },
+  {
+    id: 'nooto',
+    text: '（友《とも》だちが 持《も》って いる ノートを ゆびさして）「{{}}、どこで 買《か》ったの。」',
+    set: SET_THING,
+    k: 1,
+  },
+  {
+    id: 'yama',
+    text: '（遠《とお》くの 山《やま》を ゆびさして）「{{}}が、きのう のぼった 山《やま》だよ。」',
+    set: SET_THING,
+    k: 2,
+  },
+  {
+    id: 'boushi',
+    text: '（たくさん ならんだ ぼうしの 前《まえ》で）「{{}}が きみの ぼうしなの。」',
+    set: SET_THING,
+    k: 3,
+  },
+  {
+    id: 'denwa',
+    text: '（電話《でんわ》で、相手《あいて》が いる 場所《ばしょ》を たずねて）「今《いま》、{{}}に いるの。」',
+    set: SET_PLACE,
+    k: 3,
+  },
+  {
+    id: 'koko',
+    text: '（自分《じぶん》が 立《た》って いる 場所《ばしょ》を さして）「{{}}で まって いてね。」',
+    set: SET_PLACE,
+    k: 0,
+  },
+  {
+    id: 'mushi',
+    text: '（相手《あいて》の 足《あし》もとを 見《み》て）「{{}}に 小《ちい》さな 虫《むし》が いるよ。」',
+    set: SET_PLACE,
+    k: 1,
+  },
+  {
+    id: 'ki',
+    text: '（遠《とお》くの 大《おお》きな 木《き》を ゆびさして）「{{}}まで 走《はし》ろう。」',
+    set: SET_PLACE,
+    k: 2,
+  },
+  {
+    id: 'tori',
+    text: '（二人《ふたり》から 遠《とお》く はなれた 空《そら》の 鳥《とり》を 見《み》て）「{{}} 鳥《とり》は、何《なん》と いう 名前《なまえ》かな。」',
+    set: SET_NOUN,
+    k: 2,
+  },
+  {
+    id: 'kasa',
+    text: '（相手《あいて》が さして いる かさを 見《み》て）「{{}} かさ、すてきな 色《いろ》だね。」',
+    set: SET_NOUN,
+    k: 1,
+  },
 ];
 
 function ksdItem(x: Ksd): FillItem {
@@ -203,7 +249,9 @@ function ksdItem(x: Ksd): FillItem {
     blanks: [
       {
         answers: [ans],
-        wrong: x.set.filter((_, i) => i !== x.k).map((value) => ({ value, misconception: 'rc-kosoado' })),
+        wrong: x.set
+          .filter((_, i) => i !== x.k)
+          .map((value) => ({ value, misconception: 'rc-kosoado' })),
       },
     ],
     hints: [
@@ -461,7 +509,10 @@ const ENPITSU: ReadingPassage = {
       'ゆいは、算数《さんすう》の 時間《じかん》に 青《あお》い えんぴつを なくしました。',
       'それは、おじいちゃんに もらった 大切《たいせつ》な えんぴつでした。',
     ],
-    ['ゆいは つくえの 中《なか》を さがしました。', '（ ア ）、えんぴつは 見《み》つかりませんでした。'],
+    [
+      'ゆいは つくえの 中《なか》を さがしました。',
+      '（ ア ）、えんぴつは 見《み》つかりませんでした。',
+    ],
     [
       'すると、となりの けんたが 言《い》いました。',
       '「ろうかに 青《あお》い えんぴつが 落《お》ちて いたよ。あれは ゆいさんのじゃない？」',

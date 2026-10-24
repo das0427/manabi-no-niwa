@@ -7,9 +7,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "mode-hiragana",
-    "prereq": [
-      "p5.ja.kana-read-all"
-    ],
+    "prereq": ["p5.ja.kana-read-all"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -22,9 +20,7 @@
     "subject": "ja",
     "domain": "kaku",
     "icon": "trace-letters",
-    "prereq": [
-      "p5.hand.kana-trace"
-    ],
+    "prereq": ["p5.hand.kana-trace"],
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
@@ -37,9 +33,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.hiragana-read"
-    ],
+    "prereq": ["g1.ja.hiragana-read"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -52,9 +46,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "mode-trace",
-    "prereq": [
-      "g1.ja.kanji-read-g1"
-    ],
+    "prereq": ["g1.ja.kanji-read-g1"],
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
@@ -67,9 +59,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "trace-letters",
-    "prereq": [
-      "p5.ja.katakana-read"
-    ],
+    "prereq": ["p5.ja.katakana-read"],
     "priority": "P1",
     "status": "ready",
     "engine": "match"
@@ -95,9 +85,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "mode-hiragana",
-    "prereq": [
-      "g1.ja.special-kana"
-    ],
+    "prereq": ["g1.ja.special-kana"],
     "priority": "P1",
     "status": "ready",
     "engine": "fill"
@@ -110,9 +98,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.particles"
-    ],
+    "prereq": ["g1.ja.particles"],
     "priority": "P1",
     "status": "ready",
     "engine": "fill"
@@ -125,9 +111,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.read-story"
-    ],
+    "prereq": ["g1.ja.read-story"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -140,9 +124,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.hiragana-read"
-    ],
+    "prereq": ["g1.ja.hiragana-read"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -155,9 +137,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.particles"
-    ],
+    "prereq": ["g1.ja.particles"],
     "priority": "P1",
     "status": "ready",
     "engine": "build"
@@ -170,9 +150,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "mode-hiragana",
-    "prereq": [
-      "g1.ja.hiragana-read"
-    ],
+    "prereq": ["g1.ja.hiragana-read"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -198,9 +176,7 @@
     "subject": "ja",
     "domain": "kaku",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.sentence-build"
-    ],
+    "prereq": ["g1.ja.sentence-build"],
     "priority": "P1",
     "status": "ready",
     "engine": "order"
@@ -213,9 +189,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-add",
-    "prereq": [
-      "g1.math.compose-10"
-    ],
+    "prereq": ["g1.math.compose-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -228,10 +202,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g1.math.numbers-20",
-      "g1.math.compose-10"
-    ],
+    "prereq": ["g1.math.numbers-20", "g1.math.compose-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -244,9 +215,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g1.math.numbers-120"
-    ],
+    "prereq": ["g1.math.numbers-120"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -259,9 +228,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "g1m-clock",
-    "prereq": [
-      "p5.math.clock"
-    ],
+    "prereq": ["p5.math.clock"],
     "priority": "P1",
     "status": "ready",
     "engine": "clock"
@@ -274,9 +241,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "mode-compare",
-    "prereq": [
-      "p5.math.measure-compare"
-    ],
+    "prereq": ["p5.math.measure-compare"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -289,9 +254,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g1.math.numbers-10"
-    ],
+    "prereq": ["g1.math.numbers-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -304,9 +267,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "p5.math.numbers-10"
-    ],
+    "prereq": ["p5.math.numbers-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "numberline"
@@ -319,9 +280,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g1.math.numbers-20"
-    ],
+    "prereq": ["g1.math.numbers-20"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -334,9 +293,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g1.math.compose-10"
-    ],
+    "prereq": ["g1.math.compose-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -349,9 +306,7 @@
     "subject": "math",
     "domain": "D-data",
     "icon": "subj-sansu",
-    "prereq": [
-      "g1.math.numbers-10"
-    ],
+    "prereq": ["g1.math.numbers-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "graph"
@@ -364,9 +319,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "subj-sansu",
-    "prereq": [
-      "g1.math.numbers-10"
-    ],
+    "prereq": ["g1.math.numbers-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -392,9 +345,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g1.math.sub-borrow"
-    ],
+    "prereq": ["g1.math.sub-borrow"],
     "priority": "P1",
     "status": "ready",
     "engine": "fill"
@@ -407,9 +358,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-sub",
-    "prereq": [
-      "g1.math.add-basic"
-    ],
+    "prereq": ["g1.math.add-basic"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -422,9 +371,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-sub",
-    "prereq": [
-      "g1.math.add-carry"
-    ],
+    "prereq": ["g1.math.add-carry"],
     "priority": "P1",
     "status": "ready",
     "engine": "fill"
@@ -437,41 +384,10 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-add",
-    "prereq": [
-      "g1.math.add-carry",
-      "g1.math.sub-borrow"
-    ],
+    "prereq": ["g1.math.add-carry", "g1.math.sub-borrow"],
     "priority": "P2",
     "status": "ready",
     "engine": "number"
-  },
-  {
-    "id": "g1.prog.condition",
-    "pack": "prog-g16",
-    "title": "もし ○○なら",
-    "stage": "g1",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g1.prog.sequence"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g1.prog.sequence",
-    "pack": "prog-g16",
-    "title": "じゅんばんに ならべよう",
-    "stage": "g1",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "order"
   },
   {
     "id": "g2.ja.kanji-read-g2",
@@ -481,9 +397,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.kanji-read-g1"
-    ],
+    "prereq": ["g1.ja.kanji-read-g1"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -496,9 +410,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "mode-trace",
-    "prereq": [
-      "g1.ja.kanji-write-g1"
-    ],
+    "prereq": ["g1.ja.kanji-write-g1"],
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
@@ -511,9 +423,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.katakana"
-    ],
+    "prereq": ["g1.ja.katakana"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -526,9 +436,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "mode-hiragana",
-    "prereq": [
-      "g1.ja.special-kana"
-    ],
+    "prereq": ["g1.ja.special-kana"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -554,9 +462,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "look",
-    "prereq": [
-      "g1.ja.read-info"
-    ],
+    "prereq": ["g1.ja.read-info"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -569,9 +475,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.read-story"
-    ],
+    "prereq": ["g1.ja.read-story"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -584,9 +488,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.sentence-build"
-    ],
+    "prereq": ["g1.ja.sentence-build"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -599,9 +501,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.vocab-groups"
-    ],
+    "prereq": ["g1.ja.vocab-groups"],
     "priority": "P1",
     "status": "ready",
     "engine": "match"
@@ -614,9 +514,7 @@
     "subject": "ja",
     "domain": "kaku",
     "icon": "notebook",
-    "prereq": [
-      "g1.ja.write-order"
-    ],
+    "prereq": ["g1.ja.write-order"],
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
@@ -629,9 +527,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g1.math.add-sub-2digit"
-    ],
+    "prereq": ["g1.math.add-sub-2digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -644,9 +540,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-add",
-    "prereq": [
-      "g2.math.sub-column"
-    ],
+    "prereq": ["g2.math.sub-column"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -659,9 +553,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g2.math.add-sub-3digit"
-    ],
+    "prereq": ["g2.math.add-sub-3digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -674,9 +566,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g2.math.triangles-quads"
-    ],
+    "prereq": ["g2.math.triangles-quads"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -702,9 +592,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "pencil",
-    "prereq": [
-      "g1.math.compare-quantity"
-    ],
+    "prereq": ["g1.math.compare-quantity"],
     "priority": "P1",
     "status": "ready",
     "engine": "measure"
@@ -717,9 +605,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g2.math.times-tables"
-    ],
+    "prereq": ["g2.math.times-tables"],
     "priority": "P2",
     "status": "ready",
     "engine": "number"
@@ -732,9 +618,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g2.math.add-sub-relations"
-    ],
+    "prereq": ["g2.math.add-sub-relations"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -747,9 +631,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g1.math.numbers-120"
-    ],
+    "prereq": ["g1.math.numbers-120"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -762,9 +644,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g2.math.numbers-1000"
-    ],
+    "prereq": ["g2.math.numbers-1000"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -777,9 +657,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-sub",
-    "prereq": [
-      "g2.math.add-column"
-    ],
+    "prereq": ["g2.math.add-column"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -792,9 +670,7 @@
     "subject": "math",
     "domain": "D-data",
     "icon": "mode-sorting",
-    "prereq": [
-      "g1.math.picture-graph"
-    ],
+    "prereq": ["g1.math.picture-graph"],
     "priority": "P1",
     "status": "ready",
     "engine": "graph"
@@ -807,9 +683,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "mode-math",
-    "prereq": [
-      "g1.math.clock"
-    ],
+    "prereq": ["g1.math.clock"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -822,9 +696,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g2.math.mult-meaning"
-    ],
+    "prereq": ["g2.math.mult-meaning"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -837,9 +709,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g1.math.shapes"
-    ],
+    "prereq": ["g1.math.shapes"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -852,42 +722,10 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "mode-compare",
-    "prereq": [
-      "g2.math.length"
-    ],
+    "prereq": ["g2.math.length"],
     "priority": "P1",
     "status": "ready",
     "engine": "measure"
-  },
-  {
-    "id": "g2.prog.debug",
-    "pack": "prog-g16",
-    "title": "まちがいを なおそう",
-    "stage": "g2",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g1.prog.sequence"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "program"
-  },
-  {
-    "id": "g2.prog.repeat",
-    "pack": "prog-g16",
-    "title": "くりかえし",
-    "stage": "g2",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g1.prog.sequence"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
   },
   {
     "id": "g3.ja.dictionary",
@@ -910,9 +748,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g3.ja.kanji-read-g3"
-    ],
+    "prereq": ["g3.ja.kanji-read-g3"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -925,9 +761,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g2.ja.subject-predicate"
-    ],
+    "prereq": ["g2.ja.subject-predicate"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -953,9 +787,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g2.ja.read-story"
-    ],
+    "prereq": ["g2.ja.read-story"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -968,9 +800,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g2.ja.read-info"
-    ],
+    "prereq": ["g2.ja.read-info"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -996,9 +826,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "subj-kokugo",
-    "prereq": [
-      "g1.ja.special-kana"
-    ],
+    "prereq": ["g1.ja.special-kana"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1011,9 +839,7 @@
     "subject": "ja",
     "domain": "kaku",
     "icon": "notebook",
-    "prereq": [
-      "g2.ja.write-structure"
-    ],
+    "prereq": ["g2.ja.write-structure"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1026,9 +852,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g2.math.add-sub-3digit"
-    ],
+    "prereq": ["g2.math.add-sub-3digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1041,9 +865,7 @@
     "subject": "math",
     "domain": "D-data",
     "icon": "mode-sorting",
-    "prereq": [
-      "g2.math.tables-graphs"
-    ],
+    "prereq": ["g2.math.tables-graphs"],
     "priority": "P1",
     "status": "ready",
     "engine": "graph"
@@ -1056,9 +878,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.division-basic"
-    ],
+    "prereq": ["g3.math.division-basic"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1071,9 +891,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g2.math.triangles-quads"
-    ],
+    "prereq": ["g2.math.triangles-quads"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1086,9 +904,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g2.math.volume"
-    ],
+    "prereq": ["g2.math.volume"],
     "priority": "P1",
     "status": "ready",
     "engine": "numberline"
@@ -1101,9 +917,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g2.math.times-tables"
-    ],
+    "prereq": ["g2.math.times-tables"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1116,9 +930,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g3.math.division-basic"
-    ],
+    "prereq": ["g3.math.division-basic"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1131,9 +943,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g2.math.fraction-simple"
-    ],
+    "prereq": ["g2.math.fraction-simple"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1146,9 +956,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g2.math.numbers-10000"
-    ],
+    "prereq": ["g2.math.numbers-10000"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1161,9 +969,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "pencil",
-    "prereq": [
-      "g2.math.length"
-    ],
+    "prereq": ["g2.math.length"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1176,9 +982,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.mult-rules"
-    ],
+    "prereq": ["g3.math.mult-rules"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1191,9 +995,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.mult-1digit"
-    ],
+    "prereq": ["g3.math.mult-1digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1206,9 +1008,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g2.math.times-tables"
-    ],
+    "prereq": ["g2.math.times-tables"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1221,9 +1021,7 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "g1m-clock",
-    "prereq": [
-      "g2.math.time"
-    ],
+    "prereq": ["g2.math.time"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1236,10 +1034,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g2.math.triangles-quads",
-      "g3.math.circle-sphere"
-    ],
+    "prereq": ["g2.math.triangles-quads", "g3.math.circle-sphere"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1252,43 +1047,10 @@
     "subject": "math",
     "domain": "C-measure",
     "icon": "mode-compare",
-    "prereq": [
-      "g3.math.length-km"
-    ],
+    "prereq": ["g3.math.length-km"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
-  },
-  {
-    "id": "g3.prog.condition-combo",
-    "pack": "prog-g16",
-    "title": "じょうけんと くりかえし",
-    "stage": "g3",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g2.prog.repeat",
-      "g1.prog.condition"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "program"
-  },
-  {
-    "id": "g3.prog.decompose",
-    "pack": "prog-g16",
-    "title": "ちいさく わけよう",
-    "stage": "g3",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g2.prog.debug"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "sort"
   },
   {
     "id": "g4.ja.idioms",
@@ -1298,9 +1060,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "notebook",
-    "prereq": [
-      "g3.ja.proverbs"
-    ],
+    "prereq": ["g3.ja.proverbs"],
     "priority": "P1",
     "status": "ready",
     "engine": "match"
@@ -1313,9 +1073,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g3.ja.read-paragraphs"
-    ],
+    "prereq": ["g3.ja.read-paragraphs"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1328,9 +1086,7 @@
     "subject": "ja",
     "domain": "kanji",
     "icon": "pencil",
-    "prereq": [
-      "g3.ja.kanji-read-g3"
-    ],
+    "prereq": ["g3.ja.kanji-read-g3"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1343,9 +1099,7 @@
     "subject": "ja",
     "domain": "kotoba",
     "icon": "notebook",
-    "prereq": [
-      "g2.ja.polite"
-    ],
+    "prereq": ["g2.ja.polite"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1358,9 +1112,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g3.ja.read-character"
-    ],
+    "prereq": ["g3.ja.read-character"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -1373,9 +1125,7 @@
     "subject": "ja",
     "domain": "yomu",
     "icon": "notebook",
-    "prereq": [
-      "g3.ja.read-paragraphs"
-    ],
+    "prereq": ["g3.ja.read-paragraphs"],
     "priority": "P1",
     "status": "ready",
     "engine": "reading"
@@ -1388,12 +1138,49 @@
     "subject": "ja",
     "domain": "kaku",
     "icon": "notebook",
-    "prereq": [
-      "g3.ja.write-reasons"
-    ],
+    "prereq": ["g3.ja.write-reasons"],
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
+  },
+  {
+    "id": "g4.math.angle",
+    "pack": "g4-math",
+    "title": "角《かく》の 大《おお》きさ",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "C-measure",
+    "icon": "mode-shapes",
+    "prereq": ["g3.math.triangles"],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "geometry"
+  },
+  {
+    "id": "g4.math.area",
+    "pack": "g4-math",
+    "title": "面積《めんせき》",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "C-measure",
+    "icon": "mode-shapes",
+    "prereq": ["g4.math.order-ops"],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g4.math.change-relations",
+    "pack": "g4-math",
+    "title": "変《か》わり方《かた》（ともなって 変《か》わる 2つの 数《かず》）",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "C-measure",
+    "icon": "mode-sorting",
+    "prereq": ["g4.math.order-ops"],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
   },
   {
     "id": "g4.math.cuboid",
@@ -1403,9 +1190,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "g1m-box",
-    "prereq": [
-      "g2.math.box"
-    ],
+    "prereq": ["g2.math.box"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1418,9 +1203,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.decimals"
-    ],
+    "prereq": ["g3.math.decimals"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1433,10 +1216,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-add",
-    "prereq": [
-      "g4.math.div-1digit",
-      "g4.math.decimal-add-sub"
-    ],
+    "prereq": ["g4.math.div-1digit", "g4.math.decimal-add-sub"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1449,9 +1229,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g3.math.division-remainder"
-    ],
+    "prereq": ["g3.math.division-remainder"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1464,9 +1242,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "mode-math",
-    "prereq": [
-      "g4.math.div-1digit"
-    ],
+    "prereq": ["g4.math.div-1digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1479,9 +1255,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g3.math.fractions"
-    ],
+    "prereq": ["g3.math.fractions"],
     "priority": "P1",
     "status": "ready",
     "engine": "numberline"
@@ -1494,12 +1268,23 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-split",
-    "prereq": [
-      "g4.math.fraction-kinds"
-    ],
+    "prereq": ["g4.math.fraction-kinds"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
+  },
+  {
+    "id": "g4.math.line-graph",
+    "pack": "g4-math",
+    "title": "折《お》れ線《せん》グラフ",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "D-data",
+    "icon": "mode-sorting",
+    "prereq": ["g3.math.bar-graph"],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "graph"
   },
   {
     "id": "g4.math.oku-cho",
@@ -1509,9 +1294,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g3.math.large-numbers"
-    ],
+    "prereq": ["g3.math.large-numbers"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1524,9 +1307,7 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "math-formula-sub",
-    "prereq": [
-      "g3.math.mult-2digit"
-    ],
+    "prereq": ["g3.math.mult-2digit"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
@@ -1539,9 +1320,7 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g3.math.triangles"
-    ],
+    "prereq": ["g3.math.triangles"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1554,12 +1333,23 @@
     "subject": "math",
     "domain": "B-shape",
     "icon": "mode-shapes",
-    "prereq": [
-      "g4.math.parallel-perp"
-    ],
+    "prereq": ["g4.math.parallel-perp"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g4.math.ratio-intro",
+    "pack": "g4-math",
+    "title": "何倍《なんばい》かで くらべる（かんたんな 割合《わりあい》）",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "C-measure",
+    "icon": "mode-compare",
+    "prereq": ["g4.math.decimal-int"],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
   },
   {
     "id": "g4.math.rounding",
@@ -1569,102 +1359,23 @@
     "subject": "math",
     "domain": "A-number",
     "icon": "subj-sansu",
-    "prereq": [
-      "g4.math.oku-cho"
-    ],
+    "prereq": ["g4.math.oku-cho"],
     "priority": "P1",
     "status": "ready",
     "engine": "number"
   },
   {
-    "id": "g4.prog.draw-shapes",
-    "pack": "prog-g16",
-    "title": "命令《めいれい》で 図形《ずけい》を かこう",
+    "id": "g4.math.two-way-table",
+    "pack": "g4-math",
+    "title": "2つの ことがらの 表《ひょう》",
     "stage": "g4",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g3.prog.condition-combo"
-    ],
+    "subject": "math",
+    "domain": "D-data",
+    "icon": "mode-sorting",
+    "prereq": ["g4.math.line-graph"],
     "priority": "P1",
     "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g4.prog.prefecture-finder",
-    "pack": "prog-g16",
-    "title": "県《けん》を みつける しつもん",
-    "stage": "g4",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g3.prog.condition-combo"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g5.prog.debug-plan",
-    "pack": "prog-g16",
-    "title": "手順《てじゅん》を よくしよう",
-    "stage": "g5",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g3.prog.decompose"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "program"
-  },
-  {
-    "id": "g5.prog.polygon",
-    "pack": "prog-g16",
-    "title": "正多角形《せいたかくけい》を かく 命令《めいれい》",
-    "stage": "g5",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g4.prog.draw-shapes"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g6.prog.efficient",
-    "pack": "prog-g16",
-    "title": "よりよい 手順《てじゅん》",
-    "stage": "g6",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g5.prog.debug-plan"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "program"
-  },
-  {
-    "id": "g6.prog.sensor",
-    "pack": "prog-g16",
-    "title": "センサーで うごく どうぐ",
-    "stage": "g6",
-    "subject": "prog",
-    "domain": "prog",
-    "icon": "subj-program",
-    "prereq": [
-      "g3.prog.condition-combo"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
+    "engine": "number"
   },
   {
     "id": "p23.env.daily-life",
@@ -1682,13 +1393,8 @@
   {
     "legacy": {
       "modeId": "trace",
-      "variants": [
-        "lines"
-      ],
-      "levelRange": [
-        0,
-        1
-      ]
+      "variants": ["lines"],
+      "levelRange": [0, 1]
     },
     "id": "p23.hand.lines",
     "pack": "p23",
@@ -1789,9 +1495,7 @@
     "subject": "hand",
     "domain": "play",
     "icon": "trace-letters",
-    "prereq": [
-      "p4.hand.lines"
-    ],
+    "prereq": ["p4.hand.lines"],
     "priority": "P2",
     "status": "ready",
     "engine": "trace"
@@ -1799,9 +1503,7 @@
   {
     "legacy": {
       "modeId": "trace",
-      "variants": [
-        "letters"
-      ]
+      "variants": ["letters"]
     },
     "id": "p4.hand.letters-classic",
     "pack": "p4",
@@ -1810,9 +1512,7 @@
     "subject": "hand",
     "domain": "play",
     "icon": "trace-letters",
-    "prereq": [
-      "p4.hand.lines"
-    ],
+    "prereq": ["p4.hand.lines"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -1820,14 +1520,8 @@
   {
     "legacy": {
       "modeId": "trace",
-      "variants": [
-        "lines",
-        "maze"
-      ],
-      "levelRange": [
-        0,
-        3
-      ]
+      "variants": ["lines", "maze"],
+      "levelRange": [0, 3]
     },
     "id": "p4.hand.lines",
     "pack": "p4",
@@ -1836,9 +1530,7 @@
     "subject": "hand",
     "domain": "play",
     "icon": "mode-trace",
-    "prereq": [
-      "p23.hand.lines"
-    ],
+    "prereq": ["p23.hand.lines"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -1880,9 +1572,7 @@
     "subject": "ja",
     "domain": "play",
     "icon": "trace-letters",
-    "prereq": [
-      "p4.ja.first-sound"
-    ],
+    "prereq": ["p4.ja.first-sound"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -1895,9 +1585,7 @@
     "subject": "ja",
     "domain": "play",
     "icon": "listen",
-    "prereq": [
-      "p4.ja.first-sound"
-    ],
+    "prereq": ["p4.ja.first-sound"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -1929,9 +1617,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-compare",
-    "prereq": [
-      "p23.math.compare"
-    ],
+    "prereq": ["p23.math.compare"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -1944,9 +1630,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "math-add",
-    "prereq": [
-      "p4.math.shop"
-    ],
+    "prereq": ["p4.math.shop"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -1954,10 +1638,7 @@
   {
     "legacy": {
       "modeId": "shapes",
-      "levelRange": [
-        0,
-        3
-      ]
+      "levelRange": [0, 3]
     },
     "id": "p4.math.shapes",
     "pack": "p4",
@@ -1966,9 +1647,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-shapes",
-    "prereq": [
-      "p23.math.shape-match"
-    ],
+    "prereq": ["p23.math.shape-match"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -1984,9 +1663,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-shopping",
-    "prereq": [
-      "p23.math.shop"
-    ],
+    "prereq": ["p23.math.shop"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -2015,9 +1692,7 @@
     "subject": "think",
     "domain": "play",
     "icon": "mode-sorting",
-    "prereq": [
-      "p4.think.sort"
-    ],
+    "prereq": ["p4.think.sort"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -2049,9 +1724,7 @@
     "subject": "think",
     "domain": "play",
     "icon": "mode-sorting",
-    "prereq": [
-      "p23.think.sort"
-    ],
+    "prereq": ["p23.think.sort"],
     "priority": "P1",
     "status": "ready",
     "engine": "legacy"
@@ -2064,9 +1737,7 @@
     "subject": "hand",
     "domain": "play",
     "icon": "trace-letters",
-    "prereq": [
-      "p4.hand.lines"
-    ],
+    "prereq": ["p4.hand.lines"],
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
@@ -2080,9 +1751,7 @@
     "subject": "hand",
     "domain": "play",
     "icon": "trace-letters",
-    "prereq": [
-      "p5.hand.kana-trace"
-    ],
+    "prereq": ["p5.hand.kana-trace"],
     "priority": "P2",
     "status": "ready",
     "engine": "trace"
@@ -2095,9 +1764,7 @@
     "subject": "ja",
     "domain": "play",
     "icon": "mode-hiragana",
-    "prereq": [
-      "p4.ja.kana-read"
-    ],
+    "prereq": ["p4.ja.kana-read"],
     "priority": "P1",
     "status": "ready",
     "engine": "listen"
@@ -2110,9 +1777,7 @@
     "subject": "ja",
     "domain": "play",
     "icon": "bus-yellow",
-    "prereq": [
-      "p5.ja.kana-read-all"
-    ],
+    "prereq": ["p5.ja.kana-read-all"],
     "priority": "P1",
     "status": "ready",
     "engine": "match"
@@ -2138,9 +1803,7 @@
     "subject": "ja",
     "domain": "play",
     "icon": "mode-hiragana",
-    "prereq": [
-      "p5.ja.kana-read-all"
-    ],
+    "prereq": ["p5.ja.kana-read-all"],
     "priority": "P1",
     "status": "ready",
     "engine": "build"
@@ -2154,9 +1817,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "math-formula-add",
-    "prereq": [
-      "p5.math.compose"
-    ],
+    "prereq": ["p5.math.compose"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -2182,9 +1843,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "math-split",
-    "prereq": [
-      "p5.math.numbers-10"
-    ],
+    "prereq": ["p5.math.numbers-10"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -2197,9 +1856,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-compare",
-    "prereq": [
-      "p4.math.compare"
-    ],
+    "prereq": ["p4.math.compare"],
     "priority": "P1",
     "status": "ready",
     "engine": "order"
@@ -2212,9 +1869,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-math",
-    "prereq": [
-      "p4.math.count-pictures"
-    ],
+    "prereq": ["p4.math.count-pictures"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
@@ -2227,9 +1882,7 @@
     "subject": "math",
     "domain": "play",
     "icon": "mode-shapes",
-    "prereq": [
-      "p4.math.shapes"
-    ],
+    "prereq": ["p4.math.shapes"],
     "priority": "P1",
     "status": "ready",
     "engine": "geometry"
@@ -2242,9 +1895,7 @@
     "subject": "prog",
     "domain": "play",
     "icon": "subj-program",
-    "prereq": [
-      "p4.think.road"
-    ],
+    "prereq": ["p4.think.road"],
     "priority": "P1",
     "status": "ready",
     "engine": "program"
@@ -2257,9 +1908,7 @@
     "subject": "think",
     "domain": "play",
     "icon": "mode-sorting",
-    "prereq": [
-      "p4.think.pattern"
-    ],
+    "prereq": ["p4.think.pattern"],
     "priority": "P1",
     "status": "ready",
     "engine": "choice"

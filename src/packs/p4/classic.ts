@@ -16,7 +16,7 @@ const common = {
   intro: [],
   review: 'view',
   revised: '2026-10-24',
-} as const;
+} satisfies Partial<UnitSpec>;
 
 export const hiraganaClassic: UnitSpec = {
   ...common,

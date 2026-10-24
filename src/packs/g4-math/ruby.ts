@@ -80,7 +80,8 @@ export function R(s: string, extra: readonly [string, string][] = []): string {
       }
     }
     if (!hit) {
-      if (/[一-鿿]/.test(s[i]!) && !MISSING.has(s[i]!)) MISSING.set(s[i]!, s.slice(Math.max(0, i - 8), i + 8));
+      if (/[一-鿿]/.test(s[i]!) && !MISSING.has(s[i]!))
+        MISSING.set(s[i]!, s.slice(Math.max(0, i - 8), i + 8));
       out += s[i];
       i++;
     }

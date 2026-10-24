@@ -80,6 +80,39 @@ export function reportError(e: unknown): void {
 // ---- 接続 ----
 let dbPromise: Promise<IDBDatabase | null> | null = null;
 
+/** 保存が使えない理由（保護者向けの案内に使う） */
+export type StorageProblem = 'version' | 'blocked' | 'unsupported' | 'error' | null;
+let problem: StorageProblem = null;
+export function getStorageProblem(): StorageProblem {
+  return problem;
+}
+
+/**
+ * スキーマの段階ごとの変更（architecture.md 5.4）。versionchange トランザクションの中で
+ * oldVersion+1 から SCHEMA_VERSION まで順に適用する。途中で例外が出るとトランザクション全体が
+ * 取り消され、元のデータがそのまま残る。新しい版を作るときは UPGRADES[2] を足し、SCHEMA_VERSION を上げる。
+ */
+export const UPGRADES: Record<number, (db: IDBDatabase, tx: IDBTransaction) => void> = {
+  1: (db, tx) => createStores(db, tx),
+};
+
+export function runUpgrades(
+  db: IDBDatabase,
+  tx: IDBTransaction,
+  oldVersion: number,
+  newVersion: number,
+): void {
+  for (let v = oldVersion + 1; v <= newVersion; v++) {
+    const step = UPGRADES[v];
+    if (!step) throw new Error(`schema upgrade step ${v} is missing`);
+    step(db, tx);
+  }
+  tx.objectStore(STORE.meta).put(
+    { schemaVersion: newVersion, createdAt: Date.now(), lastAppVersion: '' },
+    'meta',
+  );
+}
+
 function createStores(db: IDBDatabase, upgrade: IDBTransaction): void {
   db.createObjectStore(STORE.meta);
   db.createObjectStore(STORE.app);
@@ -96,9 +129,7 @@ function createStores(db: IDBDatabase, upgrade: IDBTransaction): void {
   memos.createIndex('profileId', 'profileId');
   db.createObjectStore(STORE.drafts, { keyPath: ['profileId', 'modeId', 'variantId'] });
   db.createObjectStore(STORE.favorites, { keyPath: 'profileId' });
-  upgrade
-    .objectStore(STORE.meta)
-    .put({ schemaVersion: SCHEMA_VERSION, createdAt: Date.now(), lastAppVersion: '' }, 'meta');
+  void upgrade;
 }
 
 function doOpen(): Promise<IDBDatabase | null> {
@@ -109,8 +140,11 @@ function doOpen(): Promise<IDBDatabase | null> {
       return;
     }
     let settled = false;
-    const fail = (): void => {
+    const fail = (why: Exclude<StorageProblem, null>): void => {
+      problem = why;
       setHealth('unavailable');
+      // 次に呼ばれたときに開き直せるようにする（blocked が解けた後など）
+      dbPromise = null;
       if (!settled) {
         settled = true;
         resolve(null);
@@ -121,18 +155,19 @@ function doOpen(): Promise<IDBDatabase | null> {
       req = indexedDB.open(DB_NAME, SCHEMA_VERSION);
     } catch (e) {
       console.warn('[storage] open failed', e);
-      fail();
+      fail('unsupported');
       return;
     }
-    req.onupgradeneeded = () => {
+    req.onupgradeneeded = (ev) => {
       const tx = req.transaction;
-      if (tx) createStores(req.result, tx);
+      if (tx) runUpgrades(req.result, tx, ev.oldVersion, ev.newVersion ?? SCHEMA_VERSION);
     };
-    req.onblocked = fail;
+    req.onblocked = () => fail('blocked');
     req.onerror = (ev) => {
       ev.preventDefault();
       console.warn('[storage] open error', req.error);
-      fail();
+      // 新しい版のアプリで保存したデータを古い版で開いた
+      fail(req.error?.name === 'VersionError' ? 'version' : 'error');
     };
     req.onsuccess = () => {
       const db = req.result;

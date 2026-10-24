@@ -107,6 +107,25 @@ for (const file of walk(path.join(root, 'src/illust'), ['.tsx'])) {
 
 // ---- 子供に見える文字
 const KANJI = /[一-鿿㐀-䶿]/;
+// 子供に見えるカタカナは、品物名（vocab）と発注で決まったモード名の語だけ（DESINGN.md 4章）
+const KATAKANA_RUN = /[ァ-ヶー]{2,}|[ァ-ヶ]/g;
+const vocabTs = readFileSync(path.join(root, 'src/content/vocab.ts'), 'utf8');
+// 物の名前（外来語）は可。かたちパズルで作る絵の名前もここに足す（動作・説明の語「タップ」「ヒント」「レジ」等は不可）
+const KATAKANA_OK = new Set<string>([
+  'パズル',
+  'ノート',
+  'ハート',
+  'アイス',
+  'ロケット',
+  'ロボット',
+  'ヨット',
+  'ケーキ',
+  'トラック',
+]);
+for (const m of vocabTs.matchAll(/label: '([^']+)'/g)) {
+  for (const k of m[1]!.match(KATAKANA_RUN) ?? []) KATAKANA_OK.add(k);
+}
+const badKatakana = (t: string) => (t.match(KATAKANA_RUN) ?? []).filter((k) => !KATAKANA_OK.has(k));
 const LATIN = /[A-Za-z]/;
 const EMOJI = /\p{Extended_Pictographic}/u;
 for (const [key, entry] of Object.entries(VOICE_CATALOG)) {
@@ -114,6 +133,8 @@ for (const [key, entry] of Object.entries(VOICE_CATALOG)) {
   if (KANJI.test(t)) problems.push(`voice ${key}: 漢字「${t}」`);
   if (LATIN.test(t)) problems.push(`voice ${key}: 英字「${t}」`);
   if (EMOJI.test(t)) problems.push(`voice ${key}: 絵文字「${t}」`);
+  for (const k of badKatakana(t))
+    problems.push(`voice ${key}: 許可されていないカタカナ「${k}」（${t}）`);
 }
 const childDirs = ['src/app', 'src/modes', 'src/ui'].map((d) => path.join(root, d));
 const parentFiles = new Set(['src/app/ParentGate.tsx', 'src/app/ChunkErrorBoundary.tsx']);
@@ -131,6 +152,8 @@ for (const dir of childDirs) {
         if (KANJI.test(text)) problems.push(`${at} 子供画面に漢字「${text}」`);
         if (LATIN.test(text)) problems.push(`${at} 子供画面に英字「${text}」`);
         if (EMOJI.test(text)) problems.push(`${at} 子供画面に絵文字「${text}」`);
+        for (const k of badKatakana(text))
+          problems.push(`${at} 子供画面に許可されていないカタカナ「${k}」`);
       }
     });
   }

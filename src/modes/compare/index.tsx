@@ -5,7 +5,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import type { QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, type QuestionState } from '../../core/session/questionFlow';
 import { textOf } from '../../app/voiceText';
 import { Bubble } from '../../ui/Bubble';
 import { Choice } from '../../ui/Choice';
@@ -34,6 +34,7 @@ interface Draft {
   wrong: number[];
   placed: number[];
   counted: boolean;
+  own?: number;
 }
 
 const at = (b: Box): CSSProperties => ({
@@ -63,6 +64,7 @@ export default function Compare({ session }: ModePlayProps) {
   const [nums, setNums] = useState<Record<string, number>>({});
   const results = useRef<Draft['results']>(resume?.results ?? []);
   const countedRound = useRef(resume?.counted ?? false);
+  const ownSolved = useRef(resume?.own ?? 0);
   const restored = useRef(false);
   const q = useQuestion();
   const question: CompareQuestion = questions[index]!;
@@ -115,6 +117,7 @@ export default function Compare({ session }: ModePlayProps) {
       wrong,
       placed,
       counted: countedRound.current,
+      own: ownSolved.current,
       ...over,
     } satisfies Draft);
 
@@ -127,10 +130,28 @@ export default function Compare({ session }: ModePlayProps) {
 
   const advance = (ok: boolean) => {
     results.current = [...results.current, { key: itemKey(question), ok }];
+    // 記録と同時に次の問題の下書きを保存する（最後なら消す）
+    if (index + 1 >= questions.length) session.clearDraft();
+    else {
+      session.saveDraft({
+        index: index + 1,
+        q: initialQuestion(),
+        results: results.current,
+        wrong: [],
+        placed: [],
+        counted: countedRound.current,
+        own: ownSolved.current,
+      } satisfies Draft);
+    }
     window.setTimeout(() => {
       if (index + 1 >= questions.length) {
         const done = doneVoice(questions);
-        const praise = countedRound.current ? 'praise.counted' : 'praise.finished';
+        const praise =
+          ownSolved.current === 0
+            ? 'praise.watched'
+            : countedRound.current
+              ? 'praise.counted'
+              : 'praise.finished';
         const seen = new Set<string>();
         const things = questions
           .filter((x) => !seen.has(x.thing) && seen.add(x.thing))
@@ -154,14 +175,6 @@ export default function Compare({ session }: ModePlayProps) {
       setNums({});
       setBusy(false);
       q.reset();
-      session.saveDraft({
-        index: index + 1,
-        q: q.current,
-        results: results.current,
-        wrong: [],
-        placed: [],
-        counted: countedRound.current,
-      } satisfies Draft);
     }, NEXT_MS);
   };
 
@@ -172,8 +185,12 @@ export default function Compare({ session }: ModePlayProps) {
     setDone(true);
     if (finalPlaced) setPlaced(finalPlaced);
     setBubble(null);
-    if (question.type === 'pair' && question.kind === 'count' && Object.keys(nums).length >= 2) {
-      countedRound.current = true;
+    ownSolved.current += 1;
+    // 比べる2つの群の物を全部数えたときだけ「かぞえられたね」
+    if (question.type === 'pair' && question.kind === 'count') {
+      const n0 = Object.keys(nums).filter((k) => k.startsWith('0-')).length;
+      const n1 = Object.keys(nums).filter((k) => k.startsWith('1-')).length;
+      if (n0 === question.values[0] && n1 === question.values[1]) countedRound.current = true;
     }
     session.sfx('correct');
     void session.say(
@@ -344,9 +361,12 @@ export default function Compare({ session }: ModePlayProps) {
         </>
       )}
 
-      <Bubble text={bubble} style={{ left: 'calc(var(--u) * 16)', bottom: 'calc(var(--u) * 3)' }} />
+      <Bubble
+        text={bubble}
+        style={{ left: 'calc(var(--u) * 10)', bottom: 'calc(var(--u) * 3.5)' }}
+      />
 
-      <div className="cmp-bottom">
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -355,6 +375,8 @@ export default function Compare({ session }: ModePlayProps) {
           onPress={askHint}
           testId="hint-button"
         />
+      </div>
+      <div className="bottom-right">
         {isOrder ? (
           <Tap
             label="もどす"
@@ -365,7 +387,6 @@ export default function Compare({ session }: ModePlayProps) {
             testId="undo-button"
           />
         ) : null}
-        <span className="cmp-bottom__space" />
         {q.state.canSkip && !busy ? (
           <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
         ) : (

@@ -32,7 +32,8 @@ export const voice = {
   'math.tabeta': 'たべたよ',
   'math.kocchi': 'こっちに',
   'math.zenbu': 'ぜんぶで',
-  'math.datta': 'だったね。',
+  'math.datta': 'だね',
+  'math.hint-kocchi': 'こっち',
   // 問い（画面上部の文）
   'math.q-all': 'ぜんぶで なんこ？',
   'math.q-rest': 'のこりは なんこ？',
@@ -51,13 +52,13 @@ export const voice = {
   'math.intro-split':
     'たべものを ゆびで さわると、おさらに のるよ。ふたつの おさらに わけて みよう',
   // ヒント
-  'math.hint-count': 'えを ひとつずつ かぞえて みよう',
+  'math.hint-count': 'えを ひとつずつ かぞえよう',
   'math.hint-together': 'いっしょに かぞえて みよう',
-  'math.hint-picture': 'えで みて たしかめて みよう',
-  'math.hint-split-1': 'ゆびで さわって、おさらに のせて みよう',
-  'math.hint-split-2': 'どちらの おさらにも、ひとつは いれてね',
+  'math.hint-picture': 'えで みて たしかめよう',
+  'math.hint-split-1': 'さわって おさらに のせよう',
+  'math.hint-split-2': 'どちらにも ひとつ いれてね',
   // 分ける
-  'math.split-need': 'ぜんぶ のせて、ふたつの おさらに いれてね',
+  'math.split-need': 'ぜんぶ のせて、ふたつに わけよう',
   'math.other-split': 'ほかの わけかたも ある かな？',
   'math.same-split': 'さっきと おなじ わけかただね',
   'math.all-splits': 'ぜんぶの わけかたが でたね',

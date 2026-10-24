@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { audio } from '../core/audio/index';
-import { MODE_DOMAIN, recommend, type Recommendation } from '../core/progress/recommend';
+import { recommend, type Recommendation } from '../core/progress/recommend';
 import * as db from '../core/storage/index';
 import type { ModeId } from '../core/types';
 import { Illust } from '../illust/Illust';
@@ -9,8 +8,6 @@ import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate } from './router';
 import './home.css';
-
-void MODE_DOMAIN;
 
 function todayInfo() {
   const d = new Date();
@@ -43,6 +40,8 @@ export function Home() {
   const app = useApp();
   const profile = app.profile;
   const [recs, setRecs] = useState<Recommendation[]>([]);
+  const [health, setHealth] = useState(db.getStorageHealth());
+  useEffect(() => db.onStorageHealth(setHealth), []);
 
   useEffect(() => {
     if (!profile || !app.settings) return;
@@ -75,8 +74,7 @@ export function Home() {
     app.settings!.homeDisplay === 'all' || app.settings!.visibleModes.includes(m);
 
   const open = (m: ModeId) => {
-    void audio.play(MODES.find((x) => x.id === m)!.titleVoice);
-    navigate({ name: 'mode', modeId: m });
+    navigate({ name: 'mode', modeId: m }, { say: MODES.find((x) => x.id === m)!.titleVoice });
   };
 
   return (
@@ -86,7 +84,19 @@ export function Home() {
           <Illust id={profile.avatar} className="home-profile__avatar" decorative />
           <span className="label-text">{profile.name}</span>
         </div>
-        <ParentGateButton />
+        <div className="home-top__right">
+          {health !== 'ok' ? (
+            <span
+              className="home-health"
+              role="img"
+              aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください"
+              data-testid="home-health"
+            >
+              !
+            </span>
+          ) : null}
+          <ParentGateButton />
+        </div>
       </div>
       <div className="home-grid" role="list" aria-label="ぜんぶの あそび">
         {MODES.map((m) =>
@@ -134,8 +144,7 @@ export function Home() {
           className="home-rec home-rec--note"
           aria-label="がんばりノート"
           onClick={() => {
-            void audio.play('app.notebook');
-            navigate({ name: 'notebook' });
+            navigate({ name: 'notebook' }, { say: 'app.notebook' });
           }}
           data-testid="home-notebook"
         >

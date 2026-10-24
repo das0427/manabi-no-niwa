@@ -54,18 +54,6 @@
   stroke: var(--ink);
   stroke-width: 0.8;
 }
-.cmp-bottom {
-  position: absolute;
-  left: var(--edge);
-  right: var(--edge);
-  bottom: calc(var(--u) * 1.5);
-  display: flex;
-  align-items: center;
-  gap: calc(var(--u) * 1.6);
-}
-.cmp-bottom__space {
-  flex: 1;
-}
 .cmp-showcase {
   display: flex;
   align-items: center;

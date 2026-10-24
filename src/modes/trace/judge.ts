@@ -11,6 +11,7 @@
  * - 完成は k が終点から弧長 r/2 以内に達したとき。完成した時点で、その線の残りは見ない。
  * - 1.5r より外にある点が 40% を超える線は使わない（塗りつぶし）。
  * - 使った部分の長さが、残りのお手本の長さの 5 倍を超える線も使わない（管の中での往復の塗りつぶし）。
+ * - 完成には、お手本の 70% 以上（終点の手前 r を除く）を指が実際に通っていること（点線で飛び飛びに書いて完成させない）。
  * - 長さ r/2 未満の線は無視する（点を打つだけ）。
  * - 複数の画は番号順。今の画だけを判定し、完成したら次の画へ進む。
  * - 線の列から何度でも再計算できる（「ひとつ もどす」は最後の線を除いて呼び直すだけ）。
@@ -35,6 +36,8 @@ export const SHORT_FACTOR = 0.5;
 export const END_FACTOR = 0.5;
 /** 使った部分の長さが、残りのお手本の長さのこの倍数を超える線は、なぐり書きとして使わない */
 export const SCRIBBLE_RATIO = 5;
+/** 完成に必要な、実際に指が通ったお手本の割合（終点の手前 r を除く） */
+export const COVER_MIN = 0.7;
 /** 入力の補間間隔 */
 export const INPUT_STEP = 5;
 /** お手本の点の間隔 */
@@ -169,6 +172,24 @@ export interface TraceJudgement {
   complete: boolean;
 }
 
+/** 終点の手前 r を除くお手本のうち、指が通った点の割合と、いちばん手前の抜けた点 */
+function coverage(
+  gs: PreparedStroke,
+  cov: Uint8Array,
+  r: number,
+): { ratio: number; firstGap: number } {
+  let eligible = 0;
+  let covered = 0;
+  let firstGap = -1;
+  for (let j = 0; j < gs.pts.length; j++) {
+    if (gs.arc[j]! > gs.total - r) break;
+    eligible++;
+    if (cov[j]) covered++;
+    else if (firstGap < 0) firstGap = j;
+  }
+  return { ratio: eligible === 0 ? 1 : covered / eligible, firstGap };
+}
+
 export function judge(
   lines: readonly (readonly Pt[])[],
   guide: readonly (readonly Pt[])[],
@@ -182,6 +203,8 @@ export function judge(
     complete: false,
   }));
   const results: LineJudgement[] = [];
+  /** 画ごとに「実際に指が通った」お手本の点（書いた線が r 以内を通った点）。点線で飛び飛びに書いて完成させる抜け道をふさぐ */
+  const covs = g.map((st) => new Uint8Array(st.pts.length));
   let s = 0;
 
   for (const line of lines) {
@@ -222,7 +245,10 @@ export function judge(
     let k = st.k;
     let last = pts.length - 1;
     let done = false;
+    let reachedEnd = false;
     const reach = LOOKAHEAD_FACTOR * r;
+    const cov = covs[s]!.slice();
+    let prevJ = -1;
     for (let i = 0; i < pts.length; i++) {
       const p = pts[i]!;
       let best = k;
@@ -230,13 +256,46 @@ export function judge(
         if (dist(p, gs.pts[j]!) <= r) best = j;
       }
       k = best;
+      // 指が実際に通った点: 前の点で通った所の近く（なければ k の手前 2r 以内）で、
+      // 入力点に最も近く、r 以内のお手本の点。k は指の先を指すので、k より先は見ない
+      let lo = k;
+      let hi = k;
+      if (prevJ >= 0) {
+        // 指は少しずつ動くので、前の点の近く（2点戻り〜4点先）だけを見る。曲がりの小さな字で反対側の足に飛ばない
+        lo = Math.max(0, prevJ - 2);
+        hi = Math.min(k, prevJ + 4);
+      } else {
+        while (lo > 0 && gs.arc[k]! - gs.arc[lo - 1]! <= 2 * r) lo--;
+      }
+      let bj = -1;
+      let bd = r;
+      for (let j = lo; j <= hi; j++) {
+        const d = dist(p, gs.pts[j]!);
+        if (d <= bd) {
+          bd = d;
+          bj = j;
+        }
+      }
+      if (bj >= 0) {
+        cov[bj] = 1;
+        if (prevJ >= 0 && Math.abs(bj - prevJ) <= 6) {
+          for (let j = Math.min(bj, prevJ); j <= Math.max(bj, prevJ); j++) cov[j] = 1;
+        }
+      }
+      prevJ = bj;
       if (gs.total - gs.arc[k]! <= END_FACTOR * r) {
-        done = true;
-        last = i;
-        break;
+        reachedEnd = true;
+        // 完成には、お手本（終点の手前 r を除く）の COVER_MIN 以上を実際に指が通っていること。
+        // 足りないときは、この線の続きを見る（先読みで終点に届いても、指が通っていなければ完成にしない）
+        if (coverage(gs, cov, r).ratio >= COVER_MIN) {
+          done = true;
+          last = i;
+          break;
+        }
       }
     }
-
+    // 終点に届いたのに通った所が足りない: いちばん手前の抜けた所まで進み位置を戻す（そこから続きを書ける）
+    if (reachedEnd && !done) k = Math.max(0, coverage(gs, cov, r).firstGap);
     // 塗りつぶし: 1.5r より外の点が多い線は使わない（完成した場合は完成までの部分で数える）
     let outside = 0;
     for (let i = 0; i <= last; i++) {
@@ -254,6 +313,7 @@ export function judge(
       continue;
     }
 
+    covs[s] = cov;
     const startedAtStart = st.k === 0 && dist(pts[0]!, gs.pts[0]!) <= r;
     st.k = k;
     st.arc = gs.arc[k]!;

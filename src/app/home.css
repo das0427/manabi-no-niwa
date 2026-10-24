@@ -82,7 +82,7 @@
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1.4);
-  height: calc(var(--u) * 10);
+  height: calc(var(--u) * 8.6);
   padding: 0 calc(var(--u) * 1.4);
   border: var(--outline) solid var(--ink);
   border-radius: var(--radius);
@@ -104,11 +104,29 @@
   box-shadow: 0 var(--step) 0 var(--paper-2);
 }
 .home-rec__illust {
-  width: calc(var(--u) * 7.5);
-  height: calc(var(--u) * 7.5);
+  width: calc(var(--u) * 6.4);
+  height: calc(var(--u) * 6.4);
   flex: none;
 }
 .home-rec__name {
   font-size: var(--text-label);
   line-height: 1.2;
+}
+
+/* 保存に問題があるときの、保護者向けの小さな印（鍵の左。子供の操作は止めない） */
+.home-health {
+  display: inline-grid;
+  place-items: center;
+  width: calc(var(--u) * 3);
+  height: calc(var(--u) * 3);
+  margin-right: calc(var(--u) * 0.8);
+  border: var(--outline) solid var(--ink);
+  border-radius: 50%;
+  background: var(--sun);
+  font-size: calc(var(--u) * 2);
+  line-height: 1;
+}
+.home-top__right {
+  display: flex;
+  align-items: center;
 }

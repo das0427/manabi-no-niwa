@@ -40,46 +40,43 @@
   line-height: 1;
   text-align: center;
 }
+/* 主操作「おねがいします」は右下（つぎへ の左。DESINGN.md 5.1） */
 .shop-register {
-  position: absolute !important;
-  right: var(--edge);
-  top: calc(var(--u) * 1);
-  width: calc(var(--u) * 20);
-  height: calc(var(--u) * 15);
-  flex-direction: column;
+  min-width: calc(var(--u) * 30);
+  height: calc(var(--u) * 8.6);
 }
 .shop-register .tap__icon {
-  width: calc(var(--u) * 7);
-  height: calc(var(--u) * 7);
+  width: calc(var(--u) * 5.5);
+  height: calc(var(--u) * 5.5);
 }
 .shop-register__text {
-  font-size: var(--text-small);
+  font-size: var(--text-label);
   line-height: 1.15;
   text-align: center;
+  white-space: nowrap;
 }
+/* 上: 左に注文、右に棚。中: かご。下: ヒント／おねがいします・つぎへ */
 .shop-shelf {
   position: absolute;
-  left: 50%;
-  top: calc(var(--u) * 17.5);
-  transform: translateX(-50%);
+  left: calc(var(--u) * 37);
+  right: var(--edge);
+  top: calc(var(--u) * 1);
   display: flex;
-  gap: calc(var(--u) * 3);
-  padding: calc(var(--u) * 1) calc(var(--u) * 2) calc(var(--u) * 1.6);
+  justify-content: center;
+  gap: calc(var(--u) * 2.4);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1) calc(var(--u) * 1.4);
   border-bottom: calc(var(--u) * 1.2) solid var(--wood);
 }
 .shop-shelf__item {
-  width: calc(var(--u) * 14);
-  height: calc(var(--u) * 14);
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
 }
-.shop-bottom {
+.shop-basket-row {
   position: absolute;
   left: var(--edge);
   right: var(--edge);
-  bottom: calc(var(--u) * 1.5);
+  top: calc(var(--u) * 19);
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: calc(var(--u) * 2);
 }
 .shop-basket {
   flex: 1;
@@ -97,7 +94,7 @@
   outline: calc(var(--u) * 0.8) solid var(--leaf);
 }
 .shop-basket__empty {
-  color: var(--wood-dark);
+  color: var(--ink);
   font-size: var(--text-label);
 }
 .shop-basket__item {

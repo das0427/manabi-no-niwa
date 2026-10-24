@@ -1,44 +1,32 @@
 import { CHEEK, INK, line, type IllustDef } from '../types';
 import { P } from '../palette';
 
+const TAIL = 'M28 84 C6 92 2 56 18 52 C26 50 26 40 18 40';
+const ARM = 'M56 54 C70 60 76 72 72 84';
+
 export const monkey: IllustDef = {
   id: 'monkey',
   label: 'さる',
   status: 'final',
   draw: () => (
     <g>
-      {/* ながいしっぽ */}
-      <path
-        d="M26 86 C4 92 0 62 14 46 C18 42 12 36 8 40"
-        fill="none"
-        stroke={INK}
-        strokeWidth="13"
-        strokeLinecap="round"
-      />
-      <path
-        d="M26 86 C4 92 0 62 14 46 C18 42 12 36 8 40"
-        fill="none"
-        stroke={P.brown}
-        strokeWidth="6.5"
-        strokeLinecap="round"
-      />
-      {/* 奥の耳 */}
-      <circle cx="74" cy="20" r="7" fill={P.tan} {...line} />
-      {/* からだ（すわり） */}
-      <path
-        d="M44 48 C30 54 20 70 22 84 C23 91 28 92 34 92 L70 92 C72 76 70 60 62 48 Z"
-        fill={P.brown}
-        {...line}
-      />
-      <ellipse cx="34" cy="78" rx="14" ry="12" fill={P.brown} {...line} />
-      <ellipse cx="42" cy="90" rx="12" ry="4.5" fill={P.tan} {...line} />
-      <ellipse cx="58" cy="72" rx="8" ry="13" fill={P.tan} />
-      {/* まえあし */}
-      <rect x="56" y="62" width="14" height="30" rx="7" fill={P.brown} {...line} />
-      <ellipse cx="63" cy="90" rx="8" ry="4.5" fill={P.tan} {...line} />
+      {/* くるっと巻くしっぽ */}
+      <path d={TAIL} fill="none" stroke={INK} strokeWidth="10" strokeLinecap="round" />
+      <path d={TAIL} fill="none" stroke={P.brown} strokeWidth="4" strokeLinecap="round" />
+      {/* おくの耳 */}
+      <circle cx="75" cy="20" r="7" fill={P.tan} {...line} />
+      {/* からだ（しゃがむ） */}
+      <ellipse cx="46" cy="66" rx="19" ry="22" fill={P.brown} {...line} />
+      <ellipse cx="52" cy="70" rx="10" ry="14" fill={P.tan} />
+      <ellipse cx="36" cy="80" rx="12" ry="11" fill={P.brown} {...line} />
+      <ellipse cx="44" cy="91" rx="13" ry="4.5" fill={P.tan} {...line} />
+      {/* ほそくて長いうで */}
+      <path d={ARM} fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round" />
+      <path d={ARM} fill="none" stroke={P.brown} strokeWidth="3" strokeLinecap="round" />
+      <circle cx="72" cy="87" r="5" fill={P.tan} {...line} />
       {/* あたま */}
       <ellipse cx="58" cy="32" rx="19" ry="17" fill={P.brown} {...line} />
-      {/* 手前の耳 */}
+      {/* てまえの耳 */}
       <circle cx="42" cy="34" r="8" fill={P.tan} {...line} />
       <circle cx="42" cy="34" r="3.5" fill={P.brown} />
       {/* 顔 */}

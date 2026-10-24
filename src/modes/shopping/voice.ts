@@ -20,7 +20,7 @@ export const voice = {
   ...perItem,
   ...counts,
   'shop.intro': 'おみせやさんだよ。ちゅうもんの ものを かごに いれてね',
-  'shop.how': 'できたら レジを おしてね',
+  'shop.how': 'できたら おねがいしますを おしてね',
   'shop.kudasai': 'ください',
   'shop.register': 'これで おねがいします',
   'shop.thanks': 'ありがとう。ちゅうもんどおりだね',
@@ -30,4 +30,5 @@ export const voice = {
   'shop.look-order': 'ちゅうもんの えを みて みよう',
   'shop.basket-full': 'かごが いっぱいだよ',
   'shop.answer': 'こたえは これだよ',
+  'shop.looks-right': 'あってるよ。おねがいしますを おしてね',
 } satisfies VoiceEntries;

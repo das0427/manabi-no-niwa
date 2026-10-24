@@ -239,7 +239,7 @@ describe('誤答の数え方・声かけ・保存', () => {
         { skipped: false, fromStart: true },
       ]),
     ).toBe('praise.start-point');
-    expect(praiseOf([{ skipped: true, fromStart: false }])).toBe('praise.finished');
+    expect(praiseOf([{ skipped: true, fromStart: false }])).toBe('praise.watched');
     expect(praiseOf([])).toBe('praise.finished');
   });
   it('simplifyLine: 整数化・範囲内・近い点を間引く・終点を残す', () => {
@@ -372,6 +372,41 @@ describe('全教材 × 判定幅: お手本どおりになぞって完成し、�
       }
     }
   }
+  describe('点線（短い線を間をあけて並べる）で完成扱いにしない', () => {
+    /** お手本の弧長 a〜b の区間の点列 */
+    const cutArc = (s: readonly Pt[], a: number, b: number): Pt[] => {
+      const out: Pt[] = [];
+      let acc = 0;
+      for (let i = 0; i < s.length; i++) {
+        if (i > 0) acc += dist(s[i - 1]!, s[i]!);
+        if (acc >= a && acc <= b) out.push(s[i]!);
+      }
+      return out;
+    };
+    const dashes = (s: readonly Pt[], dash: number, step: number): Pt[][] => {
+      const total = polylineLength(s);
+      const out: Pt[][] = [];
+      for (let a = 0; a < total; a += step) out.push(cutArc(s, a, Math.min(total, a + dash)));
+      return out.filter((l) => l.length >= 2);
+    };
+    const singles = TRACE_ITEMS.filter((i) => i.strokes.length === 1);
+    for (const item of singles) {
+      for (const r of rsOf(item)) {
+        it(`${item.id} r=${r}: 長さ 0.55〜1.0r の線を 1.6〜2.5r おきに並べても（描いたのは約3割）完成しない`, () => {
+          for (const df of [0.55, 0.7, 1.0]) {
+            for (const sf of [1.6, 2.0, 2.2, 2.5]) {
+              const lines = dashes(item.strokes[0]!, r * df, r * sf);
+              expect(judge(lines, item.strokes, r).complete, `dash=${df}r step=${sf}r`).toBe(false);
+            }
+          }
+        });
+        it(`${item.id} r=${r}: 点線でも、ほとんど重ねて（長さ 1.3r・間隔 1.0r）全体をなぞれば完成する`, () => {
+          const lines = dashes(item.strokes[0]!, r * 1.3, r * 1.0);
+          expect(judge(lines, item.strokes, r).complete).toBe(true);
+        });
+      }
+    }
+  });
   it('近道・角飛ばしのテストが実際に何本か実行されている（空振りでない）', () => {
     let chords = 0;
     let corners = 0;
@@ -398,5 +433,21 @@ describe('全教材 × 判定幅: お手本どおりになぞって完成し、�
     const len = (i: TraceItem) => polylineLength(i.strokes[0]!);
     for (const i of itemsForLevel(0)) expect(len(i)).toBeLessThanOrEqual(850);
     for (const i of itemsForLevel(1)) expect(len(i)).toBeGreaterThanOrEqual(800);
+  });
+});
+
+describe('ことばの共通ルール L3（台本）', () => {
+  const keys = Object.keys(VOICE_CATALOG).filter((k) => k.startsWith('trace.'));
+  it('「タップ」を使わない', () => {
+    for (const k of keys) expect(voiceText(VOICE_CATALOG[k]!), k).not.toContain('タップ');
+  });
+  it('問題文は16文字以内（空白をのぞく）、吹き出しになる文は20文字以内', () => {
+    for (const k of keys) {
+      const len = [...voiceText(VOICE_CATALOG[k]!).replace(/\s/g, '')].length;
+      expect(len, k).toBeLessThanOrEqual(
+        k.startsWith('trace.prompt.') || k.startsWith('trace.letter.') ? 16 : 20,
+      );
+    }
+    expect(VOICE_CATALOG['praise.watched']).toBeDefined();
   });
 });

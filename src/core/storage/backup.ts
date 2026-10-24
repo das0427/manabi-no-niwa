@@ -171,6 +171,7 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   const d = migrated.data as unknown as Record<string, unknown[]>;
   const profiles = mapAll(d.profiles ?? [], validateProfile);
   if (!profiles) return bad('プロフィールの情報が正しくありません。名前は40文字までです。');
+  if (profiles.length === 0) return bad('プロフィールが1つも入っていないファイルです。');
   const ids = new Set(profiles.map((p) => p.id));
   if (ids.size !== profiles.length) return bad('プロフィールのIDが重複しています。');
   const settings = mapAll(d.settings ?? [], (s) =>
@@ -262,6 +263,47 @@ export async function exportBackup(
   });
 }
 
+// ---- 置き換え前の退避（別データベース。本体の削除・置き換えの影響を受けない）
+export const SNAPSHOT_DB = 'manabi-no-niwa-snapshot';
+
+function openSnapshotDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(SNAPSHOT_DB, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('snapshots');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveSnapshot(file: BackupFile): Promise<void> {
+  const db = await openSnapshotDb();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction('snapshots', 'readwrite');
+      tx.objectStore('snapshots').put({ savedAt: Date.now(), file }, 'before-replace');
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+/** 「すべて置き換え」の直前に退避したデータ（なければ null）。保護者画面から元に戻すのに使う */
+export async function getReplaceSnapshot(): Promise<{ savedAt: number; file: BackupFile } | null> {
+  const db = await openSnapshotDb();
+  try {
+    return await new Promise((resolve, reject) => {
+      const req = db.transaction('snapshots').objectStore('snapshots').get('before-replace');
+      req.onsuccess = () => resolve((req.result as { savedAt: number; file: BackupFile }) ?? null);
+      req.onerror = () => reject(req.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
 function uniqueName(name: string, taken: Set<string>): string {
   if (!taken.has(name)) return name;
   for (let n = 2; ; n++) {
@@ -277,8 +319,12 @@ export async function importBackup(
   mode: 'add' | 'replace',
 ): Promise<ImportSummary> {
   const d = file.data;
+  if (d.profiles.length === 0) throw new Error('プロフィールが1つも入っていないため読み込めません');
   return strict(async () => {
     if (mode === 'replace') {
+      // 置き換える前の全データを、端末内の別のデータベースに1世代だけ退避する（DA-06）。
+      // 退避に失敗したら置き換えない（ダウンロードの成否に頼らない）。
+      await saveSnapshot(await exportBackup({ kind: 'all' }, file.appVersion));
       await runTx([...ALL_STORES], 'readwrite', async (tx) => {
         for (const s of ALL_STORES)
           if (s !== STORE.meta && s !== STORE.app) tx.objectStore(s).clear();

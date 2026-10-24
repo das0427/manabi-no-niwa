@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ひらがな（よむ）の問題生成と判定（純粋関数）。仕様: docs/learning-design.md 2章。
  * 段階: H1 音→文字2択 / H2 音→文字3択 / H3 絵＋語→語頭の文字2択 /
  *       H4 2文字の言葉を作る（タイル3） / H5 3文字の言葉を作る（タイル4）。
@@ -140,6 +140,8 @@ export const slowKey = (id: VocabId) => `kana.slow.${id}`;
 export const splitKey = (id: VocabId) => `kana.split.${id}`;
 export const makeKey = (id: VocabId) => `kana.make.${id}`;
 export const nthKey = (n: number) => `kana.nth.${n}`;
+/** 「○○の にばんめの おと」（言葉の中の位置を言う。字は言わない） */
+export const posKey = (id: VocabId, n: number) => `kana.pos.${id}.${n}`;
 
 /** 音声キーの列（数値は無音の間） */
 export type Seq = (string | number)[];
@@ -151,9 +153,14 @@ export function promptOf(q: KanaQuestion): Seq {
   return [makeKey(q.word)];
 }
 
-/** 画面上部に出す文（H3 は名前を言い直さず、問いの文だけ） */
-export function displayOf(q: KanaQuestion): Seq {
-  return q.kind === 'first' ? [firstKey(q.word)] : promptOf(q);
+/**
+ * 画面上部に出す文。音が使えるとき（silent=false）は、答えの字や語の字を含めない
+ * （字を見て形合わせで解けてしまうため）。silent のときだけ字入りの文を出す。
+ */
+export function displayOf(q: KanaQuestion, silent = false): Seq {
+  if (q.kind === 'build') return promptOf(q);
+  if (silent) return q.kind === 'first' ? [firstKey(q.word)] : promptOf(q);
+  return [q.kind === 'first' ? 'kana.first-short' : 'kana.listen-prompt'];
 }
 
 /** 最初の問題だけに足す説明 */
@@ -169,6 +176,12 @@ export function thatIsText(c: string): string {
   return `それは 『${c}』だよ`;
 }
 
+/** 次のマスの例語の絵を出してよいか（作っている語そのもの・例語なしのときは出さない） */
+export function showsExample(q: BuildQuestion, filled: number): boolean {
+  const w = kanaOf(q.chars[filled]!).word;
+  return w !== undefined && w !== q.word;
+}
+
 /** ヒントの声。level 1 = 注目、2 = 具体 */
 export function hintSeq(q: KanaQuestion, level: 1 | 2, filled = 0): Seq {
   if (q.kind === 'pick') {
@@ -178,19 +191,16 @@ export function hintSeq(q: KanaQuestion, level: 1 | 2, filled = 0): Seq {
     return level === 1 ? [slowKey(q.word)] : [splitKey(q.word)];
   }
   const c = q.chars[filled]!;
-  const nth = [nthKey(filled + 1), charKey(c)];
-  if (level === 1 || !kanaOf(c).word) return nth;
-  return [...nth, 300, exampleKey(c)];
+  if (level === 1) return [nthKey(filled + 1), charKey(c)];
+  return showsExample(q, filled) ? [exampleKey(c)] : [posKey(q.word, filled + 1)];
 }
 
-/** ヒントの吹き出しの文（音声と同じ。ただし選ぶ問題の1段目は答えの字を画面に出さない） */
+/** ヒントの吹き出しの文。選ぶ問題では答えの字を画面に出さない（声では言う） */
 export function hintText(q: KanaQuestion, level: 1 | 2, filled = 0): string {
-  if (q.kind === 'pick' && level === 1) return 'もういちど きいてね';
-  if (q.kind === 'build' && level === 2) {
-    // 吹き出しは短く: 例語の文だけ（マスの音は声で言う）
-    const c = q.chars[filled]!;
-    if (kanaOf(c).word) return textOf(exampleKey(c));
+  if (q.kind === 'pick') {
+    return level === 1 ? 'もういちど きいてね' : `${vocab(q.word).label}の はじめの おと`;
   }
+  if (q.kind === 'first') return level === 1 ? 'ゆっくり きいてね' : 'なまえを わけて きいてね';
   return textOf(hintSeq(q, level, filled));
 }
 

@@ -32,8 +32,14 @@ export function useQuestion() {
     review: useCallback(() => set(Q.review(ref.current)), [set]),
     skip: useCallback(() => set(Q.skip(ref.current)), [set]),
     reset: useCallback(() => set(Q.initialQuestion()), [set]),
-    /** 中断データから戻す */
-    restore: useCallback((s: Q.QuestionState) => set({ ...s, tapTimes: [] }), [set]),
+    /**
+     * 中断データから戻す。誤答・ヒント・見直しの回数は引き継ぐ（再開で自力扱いに戻らない）。
+     * 確定（done/outcome）は捨てる: 確定後に保存された下書きで、再開した問題が操作できなくなるのを防ぐ。
+     */
+    restore: useCallback(
+      (s: Q.QuestionState) => set({ ...s, tapTimes: [], done: false, outcome: null }),
+      [set],
+    ),
   };
 }
 

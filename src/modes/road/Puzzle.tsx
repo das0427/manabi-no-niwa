@@ -35,6 +35,8 @@ import './road.css';
 interface Result {
   id: string;
   solved: Board;
+  /** つぎへ で見せてもらった盤面（自分で解いていない） */
+  skipped?: boolean;
   rotated: boolean;
   selfFixed: boolean;
 }
@@ -196,19 +198,26 @@ export default function Puzzle({ session }: ModePlayProps) {
     nextTimer.current = window.setTimeout(() => {
       if (index + 1 >= defs.length) {
         session.finish({
-          showcase: (
-            <div className="road-showcase">
-              {results.current.map((r) => (
-                <RoadPicture
-                  key={r.id}
-                  board={r.solved}
-                  icons
-                  className="road-showcase__pic"
-                  label="できた みち"
-                />
-              ))}
-            </div>
-          ),
+          // つぎへ で見せた盤面は「できた みち」に並べない
+          ...(results.current.some((r) => !r.skipped)
+            ? {
+                showcase: (
+                  <div className="road-showcase">
+                    {results.current
+                      .filter((r) => !r.skipped)
+                      .map((r) => (
+                        <RoadPicture
+                          key={r.id}
+                          board={r.solved}
+                          icons
+                          className="road-showcase__pic"
+                          label="できた みち"
+                        />
+                      ))}
+                  </div>
+                ),
+              }
+            : { illusts: ['rabbit', 'carrot'] }),
           praise: praiseKey(results.current),
         });
         return;
@@ -312,7 +321,7 @@ export default function Puzzle({ session }: ModePlayProps) {
     });
     results.current = [
       ...results.current,
-      { id: def.id, solved, rotated: false, selfFixed: false },
+      { id: def.id, solved, skipped: true, rotated: false, selfFixed: false },
     ];
     const path = findPath(solved);
     if (path) walker.start(path, () => undefined);
@@ -351,34 +360,36 @@ export default function Puzzle({ session }: ModePlayProps) {
 
       <Bubble text={bubble} style={BUBBLE_STYLE} />
 
-      <div className="road-bottom">
-        <div className="road-bottom__left">
-          <Tap
-            label="ヒント"
-            icon="hint"
-            size="aux"
-            variant="white"
-            disabled={busy}
-            onPress={askHint}
-            testId="hint-button"
-          />
-        </div>
+      <div className="bottom-left">
+        <Tap
+          label="ヒント"
+          icon="hint"
+          size="aux"
+          variant="white"
+          disabled={busy}
+          onPress={askHint}
+          testId="hint-button"
+        />
+      </div>
+      <div className="road-tools-wrap">
         <Toolbar tools={PUZZLE_TOOLS} tool={tool} disabled={busy} onPick={pickTool} />
-        <div className="road-bottom__right">
-          {q.state.canSkip && phase === 'build' ? (
-            <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
-          ) : null}
-          <Tap
-            label="しゅっぱつ"
-            text="しゅっぱつ"
-            icon="go"
-            variant="main"
-            className="road-go"
-            disabled={busy}
-            onPress={go}
-            testId="go-button"
-          />
-        </div>
+      </div>
+      <div className="bottom-right">
+        <Tap
+          label="しゅっぱつ"
+          text="しゅっぱつ"
+          icon="go"
+          variant="main"
+          className="road-go"
+          disabled={busy}
+          onPress={go}
+          testId="go-button"
+        />
+        {q.state.canSkip && phase === 'build' ? (
+          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
+        ) : (
+          <span style={{ width: 'var(--tap-aux)' }} />
+        )}
       </div>
     </div>
   );

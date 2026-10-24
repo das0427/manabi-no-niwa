@@ -62,11 +62,15 @@ const META_PATH = '__mnw-meta.json';
 const CONCURRENCY = 6;
 const FETCH_ATTEMPTS = 2;
 const PROGRESS_INTERVAL_MS = 80;
+/** 作りかけ（pending）のキャッシュを、他の版の activate で消さずに待つ時間 */
+const PENDING_GRACE_MS = 10 * 60 * 1000;
 
+/** pending は install 中（作りかけ）の印。installedAt は、pending のときは開始時刻、完成後は完成時刻 */
 interface CacheMeta {
   version: string;
   installedAt: number;
   fileCount: number;
+  pending?: boolean;
 }
 
 function scopeUrl(path: string): string {
@@ -99,10 +103,24 @@ async function fetchToCache(cache: Cache, path: string): Promise<void> {
   throw lastError instanceof Error ? lastError : new Error(`取得に失敗: ${path}`);
 }
 
+function writeMeta(cache: Cache, meta: CacheMeta): Promise<void> {
+  return cache.put(
+    scopeUrl(META_PATH),
+    new Response(JSON.stringify(meta), { headers: { 'Content-Type': 'application/json' } }),
+  );
+}
+
 async function precacheAll(): Promise<void> {
   await caches.delete(CACHE_NAME);
   const cache = await caches.open(CACHE_NAME);
   const total = FILES.length;
+  // 作りかけの印を先に書く。別の版の activate が「記録のないキャッシュ」として消さないようにする
+  await writeMeta(cache, {
+    version: VERSION,
+    installedAt: Date.now(),
+    fileCount: total,
+    pending: true,
+  });
   let done = 0;
   let next = 0;
   let failure: unknown = null;
@@ -132,11 +150,7 @@ async function precacheAll(): Promise<void> {
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, total) }, worker));
   if (failure !== null) throw failure;
 
-  const meta: CacheMeta = { version: VERSION, installedAt: Date.now(), fileCount: total };
-  await cache.put(
-    scopeUrl(META_PATH),
-    new Response(JSON.stringify(meta), { headers: { 'Content-Type': 'application/json' } }),
-  );
+  await writeMeta(cache, { version: VERSION, installedAt: Date.now(), fileCount: total });
   await broadcast({ type: 'precache-progress', done: total, total });
 }
 
@@ -150,6 +164,7 @@ async function readMeta(cacheName: string): Promise<CacheMeta | null> {
       version: meta.version,
       installedAt: meta.installedAt,
       fileCount: Number(meta.fileCount ?? 0),
+      pending: meta.pending === true,
     };
   } catch {
     return null;
@@ -166,6 +181,7 @@ async function findPreviousName(): Promise<string | null> {
     const meta = await readMeta(name);
     if (
       meta &&
+      !meta.pending &&
       meta.installedAt < mine.installedAt &&
       (best === null || meta.installedAt > best.at)
     ) {
@@ -181,12 +197,26 @@ function getPreviousName(): Promise<string | null> {
   return previousNamePromise;
 }
 
-/** 現在の版と直前の版だけを残す。未完成（記録なし）のキャッシュや、より新しい版・古い版は消す */
+/**
+ * 現在の版と直前の版を残し、それ以外を消す。ただし次は消さない:
+ *  - install 中（pending）で、開始から PENDING_GRACE_MS 以内のキャッシュ（別の版が作っている最中）
+ *  - 自分より新しい版の、完成したキャッシュ（待機中の新版）
+ * 消すのは、古い版、期限切れの作りかけ、完成記録のないキャッシュ。
+ */
 async function cleanupCaches(): Promise<void> {
+  const mine = await readMeta(CACHE_NAME);
   const previous = await findPreviousName();
+  const now = Date.now();
   const names = (await caches.keys()).filter((n) => n.startsWith(CACHE_PREFIX));
   await Promise.all(
-    names.filter((n) => n !== CACHE_NAME && n !== previous).map((n) => caches.delete(n)),
+    names
+      .filter((n) => n !== CACHE_NAME && n !== previous)
+      .map(async (n) => {
+        const meta = await readMeta(n);
+        if (meta?.pending && now - meta.installedAt < PENDING_GRACE_MS) return;
+        if (meta && !meta.pending && mine && meta.installedAt > mine.installedAt) return;
+        await caches.delete(n);
+      }),
   );
   previousNamePromise = Promise.resolve(previous);
 }

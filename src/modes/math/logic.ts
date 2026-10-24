@@ -295,7 +295,8 @@ export function hintVoice(p: MathProblem, stage: MathStage, level: 1 | 2): Seq {
   if (stage === 'D1') return [level === 1 ? 'math.hint-split-1' : 'math.hint-split-2'];
   if (level === 2) return ['math.hint-together'];
   if (isFormulaOnly(stage)) return ['math.hint-picture'];
-  if (p.op === 'part') return ['math.zenbu', ko(p.a), 'math.datta', 300, 'math.kocchi', ko(p.b)];
+  if (p.op === 'part')
+    return ['math.zenbu', ko(p.a), 'math.datta', 300, 'math.hint-kocchi', ko(p.b)];
   return ['math.hint-count'];
 }
 

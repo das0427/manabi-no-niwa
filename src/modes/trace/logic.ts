@@ -145,11 +145,12 @@ export function guideOf(data: TraceWorkData): TraceItem | undefined {
  * 回の終わりの声かけ。観測できた行動だけ（learning-design.md 0.5）。
  * - 完成した題がすべて「みどりの まるから 書き始めた線」で完成 → みどりの まるから かけたね
  * - 1題でも完成した → さいごまで なぞれたね
- * - 完成した題がない（すべて「つぎへ」）→ さいごまで できたね
+ * - 完成した題がない（すべて「つぎへ」）→ いっしょに さいごまで みたね
  */
 export function praiseOf(results: readonly { skipped: boolean; fromStart: boolean }[]): string {
   const done = results.filter((r) => !r.skipped);
   if (done.length > 0 && done.every((r) => r.fromStart)) return 'praise.start-point';
   if (done.length > 0) return 'praise.traced';
-  return 'praise.finished';
+  // 自分でなぞった題が0（全部「つぎへ」）の回: いっしょに さいごまで みたね（共通ルール L6）
+  return done.length === 0 && results.length > 0 ? 'praise.watched' : 'praise.finished';
 }

@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import type { QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, type QuestionState } from '../../core/session/questionFlow';
 import { Bubble } from '../../ui/Bubble';
 import { Tap } from '../../ui/Tap';
 import { textOf } from '../../app/voiceText';
@@ -22,6 +22,7 @@ import {
   hintTarget,
   initBoard,
   isComplete,
+  isPlaced,
   LEVEL_COUNT,
   needsTurn,
   place,
@@ -41,6 +42,7 @@ interface Result {
   ok: boolean;
   rotated: boolean;
   outcome: string;
+  wrongTries: number;
 }
 
 interface Draft {
@@ -69,6 +71,8 @@ interface HintView {
   slot: number | null;
   /** ヒント2（K4）: 「まわす」を囲む */
   rotate: boolean;
+  /** ヒント2（K1）: 薄くする（違う形の）候補。3択なので1つ薄くしてよい */
+  dim: number | null;
 }
 
 const mainPrompt = (level: number) =>
@@ -150,25 +154,54 @@ export default function Shapes({ session }: ModePlayProps) {
       piece !== null && puzzle.turnable && sameKind(piece, slot) && !matches(piece, slot);
     let seq: string[];
     if (lv === 1) {
-      seq = [featureKey(slot.shape), ...(turnForPiece ? ['shape.try-turn'] : [])];
+      // 形は合っていて向きだけ違うときは、向きを言う（特徴は言わなくても分かる）
+      seq = [turnForPiece ? 'shape.try-turn' : featureKey(slot.shape)];
       setHint(null);
     } else {
       const rotate = needsTurn(puzzle, b, pieceId, target);
       seq = [
-        hasOwnSlot(puzzle, b, pieceId) ? 'shape.here' : 'shape.here-find',
-        ...(rotate ? ['shape.try-turn'] : []),
+        rotate
+          ? 'shape.here-turn'
+          : hasOwnSlot(puzzle, b, pieceId)
+            ? 'shape.here'
+            : 'shape.here-find',
       ];
-      setHint({ slot: target, rotate });
+      // K1 は穴が1つで囲むだけでは手がかりが増えないので、違う形の候補を1つ薄くする
+      const dim =
+        puzzle.layout === 'hole'
+          ? (puzzle.pieces.find(
+              (p) => p.id !== pieceId && !isPlaced(b, p.id) && !matches(p, puzzle.slots[0]!),
+            )?.id ?? null)
+          : null;
+      setHint({ slot: target, rotate, dim });
     }
     setBubble(seq.map((k) => textOf(k)).join('。'));
     void session.say(seq);
+  };
+
+  /** record と同じ処理の中で、次の問題の下書きを保存する（最後なら消す）。離脱しても二重に記録されない */
+  const saveNextDraft = () => {
+    if (index + 1 >= puzzles.length) {
+      session.clearDraft();
+      return;
+    }
+    session.saveDraft({
+      index: index + 1,
+      board: initBoard(puzzles[index + 1]!),
+      q: initialQuestion(),
+      results: results.current,
+    } satisfies Draft);
   };
 
   const next = () => {
     later(() => {
       if (index + 1 >= puzzles.length) {
         const rotated = results.current.some((r) => r.ok && r.rotated);
-        const selfFixed = results.current.some((r) => r.outcome === 'self_corrected');
+        const selfFixed = results.current.some(
+          (r) => r.outcome === 'self_corrected' && r.wrongTries > 0,
+        );
+        // 自分で解いた問題が0（全部「つぎへ」）の回
+        const watched = results.current.every((r) => !r.ok);
         session.finish({
           showcase: (
             <div className="shp-showcase" data-testid="shapes-showcase">
@@ -177,7 +210,13 @@ export default function Shapes({ session }: ModePlayProps) {
               ))}
             </div>
           ),
-          praise: rotated ? 'shape.rotated' : selfFixed ? 'praise.self-fixed' : undefined,
+          praise: rotated
+            ? 'shape.rotated'
+            : watched
+              ? 'praise.watched'
+              : selfFixed
+                ? 'praise.self-fixed'
+                : undefined,
         });
         return;
       }
@@ -192,12 +231,6 @@ export default function Shapes({ session }: ModePlayProps) {
       setBusy(false);
       rotatedPlaced.current = false;
       q.reset();
-      session.saveDraft({
-        index: index + 1,
-        board: fresh,
-        q: q.current,
-        results: results.current,
-      } satisfies Draft);
     }, 1600);
   };
 
@@ -233,7 +266,12 @@ export default function Shapes({ session }: ModePlayProps) {
     ]);
     results.current = [
       ...results.current,
-      { ok: true, rotated: rotatedPlaced.current, outcome: s.outcome! },
+      {
+        ok: true,
+        rotated: rotatedPlaced.current,
+        outcome: s.outcome!,
+        wrongTries: s.wrongTries,
+      },
     ];
     session.record({
       itemKey: puzzle.name,
@@ -243,6 +281,7 @@ export default function Shapes({ session }: ModePlayProps) {
       operationIssue: s.operationIssue,
       detail: { rotated: rotatedPlaced.current, pieces: b.placed.length },
     });
+    saveNextDraft();
     next();
   };
 
@@ -296,6 +335,7 @@ export default function Shapes({ session }: ModePlayProps) {
     if (busy) return;
     const s = q.hint();
     showHint(s.hintLevel === 2 ? 2 : 1, board, board.selected);
+    saveDraft(board);
   };
 
   const skip = () => {
@@ -308,7 +348,10 @@ export default function Shapes({ session }: ModePlayProps) {
     setHint(null);
     setBubble(null);
     void session.say('shape.answer');
-    results.current = [...results.current, { ok: false, rotated: false, outcome: s.outcome! }];
+    results.current = [
+      ...results.current,
+      { ok: false, rotated: false, outcome: s.outcome!, wrongTries: s.wrongTries },
+    ];
     session.record({
       itemKey: puzzle.name,
       outcome: s.outcome!,
@@ -316,10 +359,12 @@ export default function Shapes({ session }: ModePlayProps) {
       hintsUsed: s.hintsUsed,
       operationIssue: s.operationIssue,
     });
+    saveNextDraft();
     next();
   };
 
   const selectedPiece = board.selected !== null;
+  const showSkip = q.state.canSkip && !done;
 
   return (
     <div
@@ -333,7 +378,6 @@ export default function Shapes({ session }: ModePlayProps) {
           <span className="shp-sample__label">みほん</span>
         </div>
       ) : null}
-
       <div className={`shp-board ${done ? 'shp-board--done' : ''}`}>
         <Board
           puzzle={puzzle}
@@ -343,12 +387,16 @@ export default function Shapes({ session }: ModePlayProps) {
           onTap={tapBoard}
         />
       </div>
-
-      <Tray puzzle={puzzle} board={board} flash={flash} disabled={busy} onSelect={choose} />
-
-      <Bubble text={bubble} style={{ left: 'calc(var(--u) * 10)', bottom: 'calc(var(--u) * 1)' }} />
-
-      <div className="shp-bottom">
+      <Tray
+        puzzle={puzzle}
+        board={board}
+        flash={flash}
+        dim={hint?.dim ?? null}
+        disabled={busy}
+        onSelect={choose}
+      />
+      <Bubble text={bubble} style={{ left: 'calc(var(--u) * 10)', bottom: 'var(--edge)' }} />
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -358,10 +406,8 @@ export default function Shapes({ session }: ModePlayProps) {
           disabled={busy}
           testId="hint-button"
         />
-        <span className="shp-bottom__space" />
-        {q.state.canSkip && !done ? (
-          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
-        ) : null}
+      </div>
+      <div className="bottom-right">
         {puzzle.turnable ? (
           <Tap
             label="まわす"
@@ -374,7 +420,18 @@ export default function Shapes({ session }: ModePlayProps) {
             testId="rotate-button"
           />
         ) : null}
-      </div>
+        {showSkip || puzzle.turnable ? (
+          <Tap
+            label="つぎへ"
+            icon="next"
+            size="aux"
+            onPress={skip}
+            disabled={!showSkip}
+            style={showSkip ? undefined : { visibility: 'hidden' }}
+            testId="skip-button"
+          />
+        ) : null}
+      </div>{' '}
     </div>
   );
 }

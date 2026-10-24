@@ -32,8 +32,12 @@ export interface ShopQuestion {
 
 export type Basket = Partial<Record<ShopItem, number>>;
 
+/** 注文の同一性（品物の並び順は問わない: りんご2＋バナナ1 と バナナ1＋りんご2 は同じ注文） */
 export function orderKey(lines: readonly OrderLine[]): string {
-  return lines.map((l) => `${l.item}x${l.count}`).join('+');
+  return lines
+    .map((l) => `${l.item}x${l.count}`)
+    .sort()
+    .join('+');
 }
 
 export function totalOf(lines: readonly OrderLine[]): number {

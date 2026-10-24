@@ -366,6 +366,11 @@ describe('ヒント', () => {
   });
 });
 
+const text = (k: string) => {
+  const v = VOICE_CATALOG[k]!;
+  return typeof v === 'string' ? v : v.text;
+};
+
 describe('音声と表示の一致', () => {
   it('このモードの音声キーが台本にある', () => {
     const keys = [
@@ -379,6 +384,7 @@ describe('音声と表示の一致', () => {
       'shape.try-turn',
       'shape.here',
       'shape.here-find',
+      'shape.here-turn',
       'shape.rotated',
       'shape.fit',
       'shape.answer',
@@ -395,14 +401,34 @@ describe('音声と表示の一致', () => {
   });
 
   it('ヒント1の特徴の文が、形の数え方と合っている', () => {
-    const text = (s: string) => {
-      const v = VOICE_CATALOG[`shape.feat.${s}`]!;
-      return typeof v === 'string' ? v : v.text;
-    };
-    expect(text('triangle')).toContain('みっつ');
-    expect(text('square')).toContain('よっつ');
-    expect(text('rect')).toContain('よっつ');
-    expect(text('rtriangle')).toContain('みっつ');
-    expect(text('star')).toContain('いつつ');
+    expect(text('shape.feat.triangle')).toContain('みっつ');
+    expect(text('shape.feat.square')).toContain('よっつ');
+    expect(text('shape.feat.rect')).toContain('よっつ');
+    expect(text('shape.feat.rtriangle')).toContain('みっつ');
+    expect(text('shape.feat.star')).toContain('いつつ');
+  });
+  it('台本に「タップ」を使わず、ヒントの吹き出しは20文字以内（共通ルール L3）', () => {
+    for (const k of Object.keys(VOICE_CATALOG)) {
+      if (k.startsWith('shape.')) expect(text(k), k).not.toContain('タップ');
+    }
+    const bubbles = [
+      ...SHAPES.map((s) => `shape.feat.${s}`),
+      'shape.try-turn',
+      'shape.here',
+      'shape.here-find',
+      'shape.here-turn',
+      'shape.pick-first',
+    ];
+    for (const k of bubbles) expect(text(k).length, k).toBeLessThanOrEqual(20);
+    for (const k of ['shape.q-same', 'shape.q-make', 'shape.q-sample']) {
+      expect(text(k).length, k).toBeLessThanOrEqual(16);
+    }
+  });
+
+  it('言葉: しかくい かどの さんかく、おはな、「へん」を使わない', () => {
+    expect(text('shape.name.rtriangle')).toBe('しかくい かどの さんかく');
+    expect(text('shape.made.flower')).toBe('おはなが できたね');
+    for (const s of SHAPES) expect(text(`shape.feat.${s}`), s).not.toContain('へん');
+    expect(text('shape.feat.heart')).toContain('とがって いる');
   });
 });

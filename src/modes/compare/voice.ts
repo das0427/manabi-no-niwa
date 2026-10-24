@@ -16,18 +16,18 @@ export const voice = {
   'cmp.q5.count.more': 'おおい じゅんに ならべてね',
   'cmp.q5.count.less': 'すくない じゅんに ならべてね',
   // 最初の問題だけの短い説明
-  'cmp.intro.pick': 'いいと おもう ほうを タップしてね',
+  'cmp.intro.pick': 'あっている ほうを おしてね',
   'cmp.intro.three': 'ひだり みぎ おなじ から えらんでね',
-  'cmp.intro.order': 'タップした じゅんに ならぶよ',
+  'cmp.intro.order': 'おした じゅんに ならぶよ',
   // 正解のとき
   'cmp.same-right': 'おなじ だったね',
   // ヒント1（比べ方を言う）
   'cmp.hint.size': 'おおきさを よく みてごらん',
-  'cmp.hint.length': 'はしを みてごらん',
+  'cmp.hint.length': 'みぎの はじっこを みてごらん',
   'cmp.hint.count': 'かぞえて みよう',
   // ヒント2（具体化）
   'cmp.hint2.size': 'かさねて みると わかるよ',
-  'cmp.hint2.length': 'はしに せんを ひいたよ',
+  'cmp.hint2.length': 'はじっこに せんを ひいたよ',
   'cmp.hint2.count': 'ひとつずつ せんで むすんだよ',
   'cmp.hint2.count5': 'かずを かぞえたよ',
   // 完了画面（比べた量の種類）

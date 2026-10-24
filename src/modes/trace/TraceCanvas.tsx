@@ -158,7 +158,7 @@ export function TraceCanvas(props: TraceCanvasProps) {
   };
 
   const onPointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (propsRef.current.locked || live.current || !e.isPrimary) return;
+    if (propsRef.current.locked || !e.isPrimary) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     e.preventDefault();
     const kind = pointerKind(e.pointerType);
@@ -167,6 +167,8 @@ export function TraceCanvas(props: TraceCanvasProps) {
     } catch {
       /* 取れなくても描ける */
     }
+    // pointerup を取りこぼして残った古い線は捨てる（以後の入力を受け付けなくならないように）
+    live.current = null;
     // お手本の動きの途中で触ったら、動きを止めて書き始める
     demo.current = null;
     arrowsUntil.current = 0;
@@ -213,6 +215,7 @@ export function TraceCanvas(props: TraceCanvasProps) {
       onPointerMove={onPointerMove}
       onPointerUp={end}
       onPointerCancel={end}
+      onLostPointerCapture={end}
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
       role="img"

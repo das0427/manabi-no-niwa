@@ -23,7 +23,7 @@ interface Props {
   modeId: ModeId;
   variant: VariantDef;
   /** 中断データから再開する場合（保存した seed と、モードが保存した状態） */
-  resume: { seed: number; data: unknown } | null;
+  resume: { seed: number; data: unknown; level?: number; roundSize?: number } | null;
 }
 
 const DAY_START = () => {
@@ -44,6 +44,9 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
   const [roundKey, setRoundKey] = useState(0);
   const [seed, setSeed] = useState(() => resume?.seed ?? freshSeed());
   const [resumeState, setResumeState] = useState<unknown>(resume?.data ?? null);
+  const [resumeMeta, setResumeMeta] = useState(
+    resume ? { level: resume.level, roundSize: resume.roundSize } : null,
+  );
   const [summary, setSummary] = useState<RoundSummary | null>(null);
   const [timeUp, setTimeUp] = useState(false);
   const [promptText, setPromptText] = useState('');
@@ -67,7 +70,8 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
 
   const locked = skill ? settings.levelLocks[skill.id] : undefined;
   const levelCount = skill?.levels.length ?? 1;
-  const skillLevel = skill ? (locked ?? progress?.level ?? 0) : 0;
+  // 保存データの段階がスキルの段階数を超えていても、最上段に丸める（読み込んだ古いデータ等）
+  const skillLevel = skill ? Math.min(levelCount - 1, locked ?? progress?.level ?? 0) : 0;
   const [lo, hi] = variant.levelRange ?? [0, levelCount - 1];
   const level = Math.max(lo, Math.min(hi, skillLevel));
   /** 遊び方の範囲で段階を丸めた場合（なぞりの「せん」を後で遊ぶ等）は練習として扱い、進度を動かさない */
@@ -106,6 +110,11 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
     return audio.play(seq);
   }, []);
 
+  const roundSize = roundSizeFor(variant.roundKind, settings.roundSize);
+  /** 中断データは、保存したときと段階・1回の問題数が同じときだけ使う（保護者が設定を変えた等で食い違うと壊れるため） */
+  const resumeValid =
+    resumeMeta !== null && resumeMeta.level === level && resumeMeta.roundSize === roundSize;
+
   const session = useMemo<ModeSession | null>(() => {
     if (!progress) return null;
     return {
@@ -115,11 +124,11 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
       skillId: skill?.id ?? null,
       level,
       levelCount,
-      roundSize: roundSizeFor(variant.roundKind, settings.roundSize),
+      roundSize,
       seed,
       settings,
       reduceMotion: app.reduceMotion,
-      resume: resumeState,
+      resume: resumeValid ? resumeState : null,
       prompt: playPrompt,
       say: (seq) => audio.play(seq),
       sfx: (name) => audio.sfx(name),
@@ -152,7 +161,7 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
           modeId,
           variantId: variant.id,
           savedAt: Date.now(),
-          state: { level, seed, data: state },
+          state: { level, seed, roundSize, data: state },
         }),
       clearDraft: () => void db.deleteDraft(profile.id, modeId, variant.id),
       saveWork: async (w: WorkInput) => {
@@ -207,7 +216,6 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
     profile.id,
     modeId,
     variant.id,
-    variant.roundKind,
     skill,
     level,
     levelCount,
@@ -217,26 +225,30 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
     settings,
     app.reduceMotion,
     resumeState,
+    resumeValid,
+    roundSize,
     playPrompt,
   ]);
 
   const again = useCallback(() => {
-    setSummary(null);
-    setTimeUp(false);
-    setResumeState(null);
-    setSeed(freshSeed());
-    setPromptText('');
-    promptRef.current = null;
-    // 段階が変わっている可能性があるので読み直す
-    if (skill) {
-      void db.getProgress(profile.id, skill.id).then((p) => {
+    // 段階が変わっている可能性があるので、先に読み直してから一度に切り替える
+    // （古い段階のまま一瞬描画して問題文が鳴るのを防ぐ）
+    const restart = (p: SkillProgress | null) => {
+      if (p) {
         progressRef.current = p;
         setProgress(p);
-        setRoundKey((k) => k + 1);
-      });
-    } else {
+      }
+      setSummary(null);
+      setTimeUp(false);
+      setResumeState(null);
+      setResumeMeta(null);
+      setSeed(freshSeed());
+      setPromptText('');
+      promptRef.current = null;
       setRoundKey((k) => k + 1);
-    }
+    };
+    if (skill) void db.getProgress(profile.id, skill.id).then(restart);
+    else restart(null);
   }, [profile.id, skill]);
 
   if (!session) return null;
@@ -265,7 +277,7 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
         canListen={promptText !== ''}
       />
       <div className="screen" style={{ top: 'calc(var(--u) * 8)' }} key={`${roundKey}-${seed}`}>
-        <ChunkErrorBoundary>
+        <ChunkErrorBoundary onError={() => void db.deleteDraft(profile.id, modeId, variant.id)}>
           <Suspense fallback={null}>
             <Component session={session} />
           </Suspense>

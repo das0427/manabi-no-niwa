@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { audio } from '../core/audio/index';
+import { useOfflineState } from '../core/offline/index';
+import { getStorageProblem, type StorageProblem } from '../core/storage/index';
 import { Illust } from '../illust/Illust';
 import { Tap } from '../ui/Tap';
 import { useApp } from './AppState';
@@ -21,20 +23,8 @@ export function StartScreen() {
       void audio.play('app.who');
       return;
     }
-    void audio.play('app.welcome');
-    navigate({ name: 'home' }, { force: true });
+    navigate({ name: 'home' }, { force: true, say: 'app.welcome' });
   };
-
-  if (app.storageUnavailable) {
-    return (
-      <div className="center-col" style={{ fontFamily: 'var(--font-parent)', fontWeight: 400 }}>
-        <p className="label-text">
-          （保護者の方へ）記録を保存できません。新しい版のアプリで保存したデータがあるか、
-          ブラウザの保存が無効になっています。アプリを更新するか、ページを再読み込みしてください。
-        </p>
-      </div>
-    );
-  }
 
   if (choosing) {
     return (
@@ -50,8 +40,7 @@ export function StartScreen() {
               style={{ width: 'calc(var(--u) * 18)', gap: 'calc(var(--u) * 0.6)' }}
               onClick={() => {
                 void app.selectProfile(p.id).then(() => {
-                  void audio.play('app.welcome');
-                  navigate({ name: 'home' }, { force: true });
+                  navigate({ name: 'home' }, { force: true, say: 'app.welcome' });
                 });
               }}
             >
@@ -82,6 +71,38 @@ export function StartScreen() {
         testId="start-button"
         style={{ minWidth: 'calc(var(--u) * 30)' }}
       />
+      <ParentNotes />
+    </div>
+  );
+}
+
+const PROBLEM_TEXT: Record<Exclude<StorageProblem, null>, string> = {
+  version:
+    '新しい版のアプリで保存した記録があります。アプリを更新してください。いまは記録を残さずに遊べます。',
+  blocked: 'ほかの画面がアプリを開いています。ほかのタブを閉じて再読み込みしてください。',
+  unsupported: 'このブラウザでは記録を保存できません（プライベート窓など）。記録は残りません。',
+  error: '記録を保存できませんでした。いまは記録を残さずに遊べます。',
+};
+
+/** 起動画面の隅の、保護者向けの小さな表示（オフラインの準備状況 OF-02 と、保存の問題 DA-07） */
+function ParentNotes() {
+  const app = useApp();
+  const off = useOfflineState();
+  const problem = app.storageUnavailable ? (getStorageProblem() ?? 'error') : null;
+  let offline: string | null = null;
+  if (off.status === 'installing' && off.progress) {
+    offline = `オフラインの準備中 ${Math.round((off.progress.done / Math.max(1, off.progress.total)) * 100)}%`;
+  } else if (off.status === 'ready') {
+    offline = 'オフラインで つかえます';
+  } else if (off.status === 'error') {
+    offline = 'オフラインの準備に失敗しました（保護者画面を見てください）';
+  }
+  return (
+    <div className="start-notes" data-testid="start-notes">
+      {problem ? (
+        <p data-testid="storage-problem">（保護者の方へ）{PROBLEM_TEXT[problem]}</p>
+      ) : null}
+      {offline ? <p data-testid="offline-status">{offline}</p> : null}
     </div>
   );
 }

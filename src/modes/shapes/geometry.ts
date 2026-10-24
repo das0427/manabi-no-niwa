@@ -25,7 +25,7 @@ export const SHAPE_LABEL: Record<ShapeId, string> = {
   square: 'しかく',
   rect: 'ながしかく',
   triangle: 'さんかく',
-  rtriangle: 'ちょっかくさんかく',
+  rtriangle: 'しかくい かどの さんかく',
   semicircle: 'はんえん',
   star: 'ほし',
   heart: 'ハート',

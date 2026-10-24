@@ -2,16 +2,21 @@ import { describe, expect, it } from 'vitest';
 import { vocab } from '../../content/vocab';
 import { getIllust } from '../../illust/registry';
 import { VOICE_CATALOG } from '../../voice/catalog/index';
+import { voiceText } from '../../voice/types';
+import { textOf } from '../../app/voiceText';
 import {
   areSimilar,
   INCLUDED_KANA,
   KANA_TABLE,
+  kanaOf,
   SIMILAR_GROUPS,
   TILE_KANA,
   WORDS_2,
   WORDS_3,
 } from './kana-table';
 import {
+  displayOf,
+  showsExample,
   generateRound,
   hintSeq,
   hintText,
@@ -265,7 +270,51 @@ describe('音声と表示の一致', () => {
   });
   it('収録字・タイル専用字の音声がある', () => {
     for (const e of KANA_TABLE.filter((x) => x.included || x.tileOnly)) {
-      expect(VOICE_CATALOG[`kana.char.${e.romaji}`], e.char).toBe(e.char);
+      expect(voiceText(VOICE_CATALOG[`kana.char.${e.romaji}`]!), e.char).toBe(e.char);
+    }
+  });
+  it('音が使えるときの上部の文・ヒント2の吹き出しは答えの字を含まない', () => {
+    for (const level of [0, 1, 2]) {
+      for (const seed of SEEDS) {
+        for (const q of generateRound(level, seed, 5) as ChoiceQuestion[]) {
+          const shown = textOf(displayOf(q, false));
+          expect(shown, `level=${level} seed=${seed}`).not.toContain(`『${q.answer}』`);
+          expect(shown).toBe(
+            q.kind === 'pick' ? 'こえを きいて えらぼう' : 'はじめの おとは どれかな',
+          );
+          if (q.kind === 'pick') expect(hintText(q, 2)).not.toContain('『');
+          // 字入りの文は silent のときだけ
+          if (q.kind === 'pick') expect(textOf(displayOf(q, true))).toContain(q.answer);
+        }
+      }
+    }
+  });
+  it('H4/H5 ヒント2: 例語が語そのもの・例語なしのときは絵を出さず位置を言う', () => {
+    for (const level of [3, 4]) {
+      for (const seed of SEEDS.slice(0, 60)) {
+        for (const q of generateRound(level, seed, 5) as BuildQuestion[]) {
+          q.chars.forEach((c, i) => {
+            const w = kanaOf(c).word;
+            const shows = showsExample(q, i);
+            expect(shows, `${q.word}:${c}`).toBe(w !== undefined && w !== q.word);
+            const seq = hintSeq(q, 2, i);
+            expect(seq).toEqual(
+              shows ? [`kana.ex.${kanaOf(c).romaji}`] : [`kana.pos.${q.word}.${i + 1}`],
+            );
+            expect(hintText(q, 2, i)).not.toBe(hintText(q, 1, i));
+          });
+        }
+      }
+    }
+  });
+  it('似た形の組を広げた（ね ぬ め れ わ / る ろ ぬ）', () => {
+    for (const [a, b] of [
+      ['ね', 'ぬ'],
+      ['め', 'わ'],
+      ['ぬ', 'ろ'],
+      ['る', 'ぬ'],
+    ]) {
+      expect(areSimilar(a!, b!)).toBe(true);
     }
   });
   it('H3 の問題文は語の名前を言ってから「はじめの おと」を聞く', () => {

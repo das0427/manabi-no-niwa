@@ -45,45 +45,48 @@ export function orderLength(level: number): number {
   return level === 4 ? 2 : 3;
 }
 
+/** 答えに使わない絵（グループ名が子供に腑に落ちにくい・曖昧）。誤りの選択肢には使ってよい */
+export const AMBIGUOUS: readonly MemItem[] = ['egg', 'octopus', 'ant', 'flower', 'leaf'];
+export const ANSWER_POOL: readonly MemItem[] = POOL.filter((i) => !AMBIGUOUS.includes(i));
+
 export function generateRound(level: number, seed: number, size: number): MemQuestion[] {
   const rng = createRng(hashSeed('memory', level, seed));
   const used = new Set<MemItem>();
-  const fresh = (pred: (i: MemItem) => boolean = () => true): MemItem => {
-    const c = POOL.filter((i) => !used.has(i) && pred(i));
-    const it = rng.pick(c);
+  const unusedIn = (g: MemGroup) => ANSWER_POOL.filter((i) => !used.has(i) && groupOf(i) === g);
+  const freshIn = (g: MemGroup): MemItem => {
+    const it = rng.pick(unusedIn(g));
     used.add(it);
     return it;
   };
+  /** 答えにできる絵が残っているグループから n 個 */
+  const groupsFor = (n: number): MemGroup[] =>
+    rng.sample(
+      GROUPS.filter((g) => unusedIn(g).length > 0),
+      n,
+    );
+  /** 各グループから誤りの絵を1つずつ（すべて互いに別グループ） */
+  const decoys = (gs: readonly MemGroup[]): MemItem[] =>
+    gs.map((g) => rng.pick(POOL.filter((i) => groupOf(i) === g)));
   const out: MemQuestion[] = [];
 
   if (level <= 2) {
     const n = CHOICE_COUNTS[level]!;
+    const need = level === 2 ? 2 : 1;
     const positions = balancedPositions(size, n, rng);
     for (let k = 0; k < size; k++) {
       const pos = positions[k] ?? 0;
-      if (level < 2) {
-        const a = fresh();
-        const g = groupOf(a);
-        const others = rng.sample(
-          POOL.filter((i) => groupOf(i) !== g),
-          n - 1,
-        );
-        out.push({ kind: 'pick', shown: [a], answer: [a], choices: placeAt(a, others, pos, rng) });
-      } else {
-        const [ga, gb] = rng.sample(GROUPS, 2) as [MemGroup, MemGroup];
-        const a = fresh((i) => groupOf(i) === ga);
-        const b = fresh((i) => groupOf(i) === gb);
-        const others = rng.sample(
-          POOL.filter((i) => groupOf(i) !== ga && groupOf(i) !== gb),
-          2,
-        );
-        out.push({
-          kind: 'pick',
-          shown: rng.shuffle([a, b]),
-          answer: [a, b],
-          choices: placeAt(a, [b, ...others], pos, rng),
-        });
-      }
+      const ans = groupsFor(need).map(freshIn);
+      const rest = rng.sample(
+        GROUPS.filter((g) => !ans.some((a) => groupOf(a) === g)),
+        n - need,
+      );
+      const others = [...ans.slice(1), ...decoys(rest)];
+      out.push({
+        kind: 'pick',
+        shown: rng.shuffle(ans),
+        answer: ans,
+        choices: placeAt(ans[0]!, others, pos, rng),
+      });
     }
     return out;
   }
@@ -91,7 +94,7 @@ export function generateRound(level: number, seed: number, size: number): MemQue
   if (level === 3) {
     const positions = balancedPositions(size, PLACE_COUNT, rng);
     for (let k = 0; k < size; k++) {
-      const a = fresh();
+      const a = freshIn(groupsFor(1)[0]!);
       out.push({ kind: 'place', shown: [a], answer: [a], choices: [], pos: positions[k] ?? 0 });
     }
     return out;
@@ -100,14 +103,13 @@ export function generateRound(level: number, seed: number, size: number): MemQue
   const len = orderLength(level);
   for (let k = 0; k < size; k++) {
     const seq: MemItem[] = [];
-    for (let j = 0; j < len; j++) seq.push(fresh());
+    for (let j = 0; j < len; j++) seq.push(freshIn(groupsFor(1)[0]!));
     let tray = rng.shuffle(seq);
     for (let t = 0; t < 20 && tray.every((x, i) => x === seq[i]); t++) tray = rng.shuffle(seq);
     out.push({ kind: 'order', shown: seq, answer: seq, choices: tray });
   }
   return out;
 }
-
 /** pick: 押した絵が正解の絵か */
 export function isAnswerPick(q: MemQuestion, item: MemItem): boolean {
   return q.answer.includes(item);

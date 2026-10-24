@@ -24,13 +24,25 @@ export default function MathMode({ session }: ModePlayProps) {
   const results = useRef<QResult[]>(resume?.results ?? []);
   const question = questions[index] ?? questions[questions.length - 1]!;
 
-  const saveDraft = (sub: ChoiceDraft | SplitDraft | null, at = index) =>
+  const last = index + 1 >= questions.length;
+  /** 最後の問題を記録したあとは下書きを作り直さない（正解後の待ち時間に離脱→再開しても二重記録にならない） */
+  const cleared = useRef(false);
+  const saveDraft = (sub: ChoiceDraft | SplitDraft | null, at = index) => {
+    if (cleared.current) return;
     session.saveDraft({ index: at, results: results.current, sub } satisfies Draft);
+  };
+  /** 記録した直後: 最後の問題なら下書きを消す */
+  const onRecorded = () => {
+    if (!last) return;
+    session.clearDraft();
+    cleared.current = true;
+  };
 
   /** 答えが決まった: 結果を残し、次の問題からやり直せるよう下書きを保存（最後の問題は完了画面まで保存しない） */
   const onSettled = (r: QResult) => {
     results.current = [...results.current, r];
-    if (index + 1 < questions.length) saveDraft(null, index + 1);
+    if (last) onRecorded();
+    else saveDraft(null, index + 1);
   };
   const onAdvance = () => {
     if (index + 1 >= questions.length) {
@@ -59,6 +71,7 @@ export default function MathMode({ session }: ModePlayProps) {
       first={first}
       initial={initial as SplitDraft | null}
       saveDraft={saveDraft}
+      onRecorded={onRecorded}
       onNext={onNext}
     />
   ) : (

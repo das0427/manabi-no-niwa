@@ -5,6 +5,7 @@
 import { useSyncExternalStore } from 'react';
 import { audio } from '../core/audio/index';
 import { MODE_IDS, type ModeId } from '../core/types';
+import type { VoiceSeq } from '../voice/catalog/index';
 
 export type Route =
   | { name: 'start' }
@@ -43,14 +44,23 @@ export function routeToHash(r: Route): string {
 }
 
 let last = 0;
+/** 遷移した後に読み上げる声（遷移で前の声を止めてから再生する。止めた直後に消えないように） */
+let pendingSay: VoiceSeq | null = null;
 
-export function navigate(r: Route, opts: { replace?: boolean; force?: boolean } = {}): void {
+export function navigate(
+  r: Route,
+  opts: { replace?: boolean; force?: boolean; say?: VoiceSeq } = {},
+): void {
   const now = Date.now();
   if (!opts.force && now - last < 400) return;
   last = now;
   audio.stop();
   const hash = routeToHash(r);
-  if (location.hash === hash) return;
+  if (location.hash === hash) {
+    if (opts.say) void audio.play(opts.say);
+    return;
+  }
+  pendingSay = opts.say ?? null;
   if (opts.replace) {
     history.replaceState(null, '', hash);
     window.dispatchEvent(new HashChangeEvent('hashchange'));
@@ -62,6 +72,9 @@ export function navigate(r: Route, opts: { replace?: boolean; force?: boolean } 
 function subscribe(cb: () => void): () => void {
   const onChange = () => {
     audio.stop();
+    const say = pendingSay;
+    pendingSay = null;
+    if (say) void audio.play(say);
     cb();
   };
   window.addEventListener('hashchange', onChange);

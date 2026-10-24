@@ -223,8 +223,10 @@ export function ChoiceQuestion({
     if (solved || !q.tap()) return;
     if (i === question.answerIndex) {
       const s = q.correct();
+      // 「ひとつずつ かぞえられたね」は、数える対象の絵を全部数えたときだけ（L6）
+      const target = demoOrder(p, layout);
       const counted =
-        numBy === 'child' && numbers.filter((n) => n > 0).length >= Math.min(2, canCount.size);
+        numBy === 'child' && target.length > 0 && target.every((id) => numbers[id]! > 0);
       setSolved(true);
       setShown(i);
       setBubble(null);
@@ -341,17 +343,7 @@ export function ChoiceQuestion({
         ))}
       </div>
 
-      <div className="math-left">
-        {q.state.canSkip && !solved ? (
-          <Tap
-            label="つぎへ"
-            text={<span className="math-tool-text">つぎへ</span>}
-            icon="next"
-            size="aux"
-            onPress={skip}
-            testId="skip-button"
-          />
-        ) : null}
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -363,11 +355,10 @@ export function ChoiceQuestion({
         />
       </div>
 
-      <div className="math-right">
+      <div className="bottom-right">
         {formulaOnly && !pic ? (
           <Tap
             label="えで みる"
-            text={<span className="math-tool-text">えで みる</span>}
             icon="picture"
             size="aux"
             variant="white"
@@ -379,7 +370,6 @@ export function ChoiceQuestion({
         ) : (
           <Tap
             label="かぞえなおす"
-            text={<span className="math-tool-text">かぞえなおす</span>}
             icon="recount"
             size="aux"
             variant="white"
@@ -388,6 +378,9 @@ export function ChoiceQuestion({
             testId="recount-button"
           />
         )}
+        {q.state.canSkip && !solved ? (
+          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
+        ) : null}
       </div>
     </div>
   );

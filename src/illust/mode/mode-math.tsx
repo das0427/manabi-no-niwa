@@ -1,5 +1,25 @@
-import { HIGHLIGHT, line, type IllustDef } from '../types';
+import { INK, line, type IllustDef } from '../types';
 import { P } from '../palette';
+
+const apple = (cx: number, cy: number) => (
+  <g key={cx}>
+    <path d={`M${cx} ${cy - 6} L${cx + 2} ${cy - 13}`} fill="none" {...line} />
+    <ellipse
+      cx={cx + 7}
+      cy={cy - 12}
+      rx="5.5"
+      ry="3"
+      transform={`rotate(-25 ${cx + 7} ${cy - 12})`}
+      fill={P.green}
+      {...line}
+    />
+    <path
+      d={`M${cx} ${cy - 6} C${cx - 4} ${cy - 10} ${cx - 14} ${cy - 6} ${cx - 14} ${cy + 3} C${cx - 14} ${cy + 11} ${cx - 8} ${cy + 15} ${cx - 4} ${cy + 14} C${cx - 2} ${cy + 13} ${cx + 2} ${cy + 13} ${cx + 4} ${cy + 14} C${cx + 8} ${cy + 15} ${cx + 14} ${cy + 11} ${cx + 14} ${cy + 3} C${cx + 14} ${cy - 6} ${cx + 4} ${cy - 10} ${cx} ${cy - 6} Z`}
+      fill={P.red}
+      {...line}
+    />
+  </g>
+);
 
 export const modeMath: IllustDef = {
   id: 'mode-math',
@@ -7,80 +27,18 @@ export const modeMath: IllustDef = {
   status: 'final',
   draw: () => (
     <g>
-      <ellipse cx="28" cy="68" rx="24" ry="9" fill={P.sky} {...line} />
-      <ellipse cx="77" cy="68" rx="17" ry="9" fill={P.sky} {...line} />
-      <path
-        d="M14.86 43.92C14.86 40.88 15.62 38.22 17.14 35.94L19.04 36.7C18.28 38.98 17.9 41.26 17.9 43.92Z"
-        fill={P.brown}
-        {...line}
-      />
-      <path
-        d="M18.28 38.98C20.56 34.42 26.64 34.04 28.92 36.32C26.64 40.5 20.94 41.26 18.28 38.98Z"
-        fill={P.green}
-        {...line}
-      />
-      <path
-        d="M16 42.78C12.96 40.12 2.32 40.88 2.32 51.9C2.32 60.64 8.4 65.96 12.96 65.2C14.48 64.82 17.52 64.82 19.04 65.2C23.6 65.96 29.68 60.64 29.68 51.9C29.68 40.88 19.04 40.12 16 42.78Z"
-        fill={P.red}
-        {...line}
-      />
-      <ellipse
-        cx="8.02"
-        cy="50"
-        rx="1.33"
-        ry="2.66"
-        transform="rotate(12 8.02 50)"
-        fill={HIGHLIGHT}
-        opacity="0.5"
-      />
-      <path
-        d="M38.86 43.92C38.86 40.88 39.62 38.22 41.14 35.94L43.04 36.7C42.28 38.98 41.9 41.26 41.9 43.92Z"
-        fill={P.brown}
-        {...line}
-      />
-      <path
-        d="M42.28 38.98C44.56 34.42 50.64 34.04 52.92 36.32C50.64 40.5 44.94 41.26 42.28 38.98Z"
-        fill={P.green}
-        {...line}
-      />
-      <path
-        d="M40 42.78C36.96 40.12 26.32 40.88 26.32 51.9C26.32 60.64 32.4 65.96 36.96 65.2C38.48 64.82 41.52 64.82 43.04 65.2C47.6 65.96 53.68 60.64 53.68 51.9C53.68 40.88 43.04 40.12 40 42.78Z"
-        fill={P.red}
-        {...line}
-      />
-      <ellipse
-        cx="32.02"
-        cy="50"
-        rx="1.33"
-        ry="2.66"
-        transform="rotate(12 32.02 50)"
-        fill={HIGHLIGHT}
-        opacity="0.5"
-      />
-      <path
-        d="M75.86 43.92C75.86 40.88 76.62 38.22 78.14 35.94L80.04 36.7C79.28 38.98 78.9 41.26 78.9 43.92Z"
-        fill={P.brown}
-        {...line}
-      />
-      <path
-        d="M79.28 38.98C81.56 34.42 87.64 34.04 89.92 36.32C87.64 40.5 81.94 41.26 79.28 38.98Z"
-        fill={P.green}
-        {...line}
-      />
-      <path
-        d="M77 42.78C73.96 40.12 63.32 40.88 63.32 51.9C63.32 60.64 69.4 65.96 73.96 65.2C75.48 64.82 78.52 64.82 80.04 65.2C84.6 65.96 90.68 60.64 90.68 51.9C90.68 40.88 80.04 40.12 77 42.78Z"
-        fill={P.red}
-        {...line}
-      />
-      <ellipse
-        cx="69.02"
-        cy="50"
-        rx="1.33"
-        ry="2.66"
-        transform="rotate(12 69.02 50)"
-        fill={HIGHLIGHT}
-        opacity="0.5"
-      />
+      {/* 木の札 */}
+      <rect x="8" y="50" width="84" height="42" rx="6" fill={P.wood} {...line} />
+      {/* 「1＋2」（記号として path で描く） */}
+      <g fill="none" stroke={INK} strokeWidth="5.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M22 64 L31 59 L31 83" />
+        <path d="M44 71 L62 71 M53 62 L53 80" />
+        <path d="M68 65 C70 58 82 58 82 66 C82 73 70 77 67 83 L83 83" />
+      </g>
+      {/* りんご3つ */}
+      {apple(22, 26)}
+      {apple(50, 26)}
+      {apple(78, 26)}
     </g>
   ),
 };

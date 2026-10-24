@@ -54,8 +54,13 @@ for (const e of INCLUDED_KANA) {
   };
 }
 
+const NTH = ['', 'いちばんめ', 'にばんめ', 'さんばんめ'];
 for (const id of [...WORDS_2, ...WORDS_3]) {
-  entries[`kana.make.${id}`] = `${vocab(id).label}を つくろう`;
+  const label = vocab(id).label;
+  entries[`kana.make.${id}`] = `${label}を つくろう`;
+  [...label].forEach((_, i) => {
+    entries[`kana.pos.${id}.${i + 1}`] = `${label}の ${NTH[i + 1]}の おと`;
+  });
 }
 
 /** ひらがな の音声台本 */
@@ -64,6 +69,8 @@ export const voice = {
   'kana.how-pick': 'こえを きいて、あう もじを おしてね',
   'kana.how-first': 'えと なまえを きいて、はじめの おとの もじを おしてね',
   'kana.how-build': 'もじを おして、ことばを つくろう',
+  'kana.listen-prompt': 'こえを きいて えらぼう',
+  'kana.first-short': 'はじめの おとは どれかな',
   'kana.that-is': 'それは',
   'kana.dayo': 'だよ',
   'kana.listen-again': 'もういちど きいてね',

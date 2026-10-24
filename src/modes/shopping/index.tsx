@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import type { QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, type QuestionState } from '../../core/session/questionFlow';
 import { vocab } from '../../content/vocab';
 import { Illust } from '../../illust/Illust';
 import { Bubble } from '../../ui/Bubble';
@@ -128,13 +128,23 @@ export default function Shopping({ session }: ModePlayProps) {
 
   const next = (ok: boolean) => {
     results.current = [...results.current, { key: label(question.lines), ok }];
+    // 記録と同時に「次の問題」の下書きを保存する（正解直後に離れて再開しても同じ問題を二重に記録しない）
+    if (index + 1 >= questions.length) session.clearDraft();
+    else
+      session.saveDraft({
+        index: index + 1,
+        placed: [],
+        q: initialQuestion(),
+        results: results.current,
+      } satisfies Draft);
     window.setTimeout(() => {
       if (index + 1 >= questions.length) {
         const last = question.lines;
         const total = totalOf(last);
         session.finish({
           before: ['shop.total', `count.ko.${total}`],
-          praise: results.current.some((r) => r.ok) ? 'praise.gathered' : 'praise.finished',
+          // 全部「つぎへ」で進んだ回は、行動に基づく声かけにしない（L6）
+          praise: results.current.some((r) => r.ok) ? 'praise.gathered' : 'praise.watched',
           showcase: <Showcase lines={last} total={total} />,
         });
         return;
@@ -146,12 +156,6 @@ export default function Shopping({ session }: ModePlayProps) {
       setSolved(false);
       setBusy(false);
       q.reset();
-      session.saveDraft({
-        index: index + 1,
-        placed: [],
-        q: q.current,
-        results: results.current,
-      } satisfies Draft);
     }, 1600);
   };
 
@@ -185,8 +189,16 @@ export default function Shopping({ session }: ModePlayProps) {
 
   const askHint = () => {
     if (busy || solved) return;
+    const r = judge(basket, question.lines);
+    if (r.ok) {
+      // もう注文どおり: ヒントの回数に数えず、レジを押すよう知らせる
+      setBubble(textOf('shop.looks-right'));
+      void session.say('shop.looks-right');
+      return;
+    }
     const s = q.hint();
-    showHint(s.hintLevel === 2 ? 2 : 1, judge(basket, question.lines).issues[0]);
+    showHint(s.hintLevel === 2 ? 2 : 1, r.issues[0]);
+    saveDraft(placed);
   };
 
   const skip = () => {
@@ -232,18 +244,7 @@ export default function Shopping({ session }: ModePlayProps) {
         ))}
       </section>
 
-      <Tap
-        label="これで おねがいします"
-        text={<span className="shop-register__text">おねがい します</span>}
-        icon="register"
-        variant="main"
-        className="shop-register"
-        disabled={busy}
-        onPress={submit}
-        testId="register-button"
-      />
-
-      <Bubble text={bubble} style={{ left: 'calc(var(--u) * 36)', top: 'calc(var(--u) * 1)' }} />
+      <Bubble text={bubble} style={{ left: 'calc(var(--u) * 36)', top: 'calc(var(--u) * 27)' }} />
 
       <div className="shop-shelf" role="group" aria-label="たな">
         {question.shelf.map((item) => (
@@ -261,7 +262,7 @@ export default function Shopping({ session }: ModePlayProps) {
         ))}
       </div>
 
-      <div className="shop-bottom">
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -271,6 +272,23 @@ export default function Shopping({ session }: ModePlayProps) {
           disabled={busy}
           testId="hint-button"
         />
+      </div>
+      <div className="bottom-right">
+        <Tap
+          label="これで おねがいします"
+          text={<span className="shop-register__text">おねがい します</span>}
+          icon="register"
+          variant="main"
+          className="shop-register"
+          disabled={busy}
+          onPress={submit}
+          testId="register-button"
+        />
+        {q.state.canSkip && !solved ? (
+          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
+        ) : null}
+      </div>
+      <div className="shop-basket-row">
         <div
           className={`shop-basket ${solved ? 'shop-basket--done' : ''}`}
           aria-label="かご"
@@ -294,11 +312,6 @@ export default function Shopping({ session }: ModePlayProps) {
             </button>
           ))}
         </div>
-        {q.state.canSkip && !solved ? (
-          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
-        ) : (
-          <span style={{ width: 'var(--tap-aux)' }} />
-        )}
       </div>
     </div>
   );

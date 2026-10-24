@@ -69,8 +69,10 @@ export function hintCell(def: RoadBoardDef, board: Board): Pos | null {
 
 /** 回の終わりの声かけ（行動に基づくもの。learning-design.md 0.5）。当てはまらなければ undefined（＝さいごまで できたね） */
 export function praiseKey(
-  results: readonly { rotated: boolean; selfFixed: boolean }[],
+  results: readonly { rotated: boolean; selfFixed: boolean; skipped?: boolean }[],
 ): string | undefined {
+  // 全部「つぎへ」だった回（自分で解いた盤面が0）
+  if (results.length > 0 && results.every((r) => r.skipped)) return 'praise.watched';
   if (results.some((r) => r.rotated)) return 'praise.rotated';
   if (results.some((r) => r.selfFixed)) return 'praise.self-fixed';
   return undefined;

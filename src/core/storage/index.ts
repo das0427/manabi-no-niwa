@@ -1,5 +1,13 @@
 /** 端末内保存（IndexedDB）の公開 API */
-export { SCHEMA_VERSION, DB_NAME, openStorage, getStorageHealth, onStorageHealth } from './db';
+export {
+  SCHEMA_VERSION,
+  DB_NAME,
+  openStorage,
+  getStorageHealth,
+  onStorageHealth,
+  getStorageProblem,
+} from './db';
+export type { StorageProblem } from './db';
 export {
   getAppRecord,
   saveAppRecord,
@@ -34,5 +42,12 @@ export {
   requestPersist,
   deleteAllData,
 } from './repo';
-export { exportBackup, parseBackup, migrateBackup, importBackup } from './backup';
+export {
+  exportBackup,
+  parseBackup,
+  migrateBackup,
+  importBackup,
+  getReplaceSnapshot,
+  SNAPSHOT_DB,
+} from './backup';
 export type { BackupFile, BackupData, ParseResult, ImportPreview, ImportSummary } from './backup';

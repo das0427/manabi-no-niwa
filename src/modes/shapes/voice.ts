@@ -5,13 +5,13 @@ import { SHAPES, SHAPE_LABEL, type ShapeId } from './geometry';
 /** ヒント1: その形の特徴（数や形の言葉で言う。答えの場所は言わない） */
 const FEATURE: Record<ShapeId, string> = {
   circle: 'まるい かたちだよ。かどは ないね',
-  square: 'かどが よっつ。どの へんも おなじ ながさだよ',
-  rect: 'かどが よっつ。ながい へんが あるよ',
+  square: 'かどが よっつ。ながさは みんな おなじ',
+  rect: 'かどが よっつ。ながい ところが あるよ',
   triangle: 'かどが みっつ あるよ',
-  rtriangle: 'かどが みっつ。ひとつは しかくい かどだよ',
-  semicircle: 'はんぶんの まるだよ。まっすぐな へんが あるよ',
+  rtriangle: 'かどが みっつ。しかくい かどが ある',
+  semicircle: 'はんぶんの まる。まっすぐな ところ',
   star: 'とがった かどが いつつ あるよ',
-  heart: 'まるい ところが ふたつ。したは とがっているよ',
+  heart: 'したが とがって いるよ。うえは まるい',
 };
 
 const names: VoiceEntries = {};
@@ -41,6 +41,7 @@ export const voice = {
   'shape.try-turn': 'むきを かえて みよう',
   'shape.here': 'ここに いれて みよう',
   'shape.here-find': 'ここに はいる かたちを さがそう',
+  'shape.here-turn': 'むきを かえて ここに いれよう',
   'shape.rotated': 'むきを かえたら はいったね',
   'shape.fit': 'ぴったり はいったね',
   'shape.answer': 'こたえは これだよ',

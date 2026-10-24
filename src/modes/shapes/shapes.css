@@ -167,19 +167,6 @@
   stroke-linejoin: round;
 }
 
-/* ---- 下の札 ---- */
-.shp-bottom {
-  position: absolute;
-  left: var(--edge);
-  right: var(--edge);
-  bottom: calc(var(--u) * 1.5);
-  display: flex;
-  align-items: center;
-  gap: calc(var(--u) * 2);
-}
-.shp-bottom__space {
-  flex: 1;
-}
 .shp .bubble {
   pointer-events: none;
   max-width: calc(var(--u) * 60);

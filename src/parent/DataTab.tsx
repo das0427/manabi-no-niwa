@@ -14,6 +14,7 @@ import {
   useLoad,
 } from './util';
 
+const MAX_IMPORT_BYTES = 50 * 1024 * 1024;
 const WARN_BYTES = 40 * 1024 * 1024;
 
 type Loaded =
@@ -62,6 +63,14 @@ export function DataTab() {
   const onFile = async (f: File | undefined): Promise<void> => {
     setMsg('');
     if (!f) return;
+    if (f.size > MAX_IMPORT_BYTES) {
+      setLoaded({
+        ok: false,
+        fileName: f.name,
+        reason: 'ファイルが大きすぎます（50MBまで）。プロフィールごとの書き出しをお試しください。',
+      });
+      return;
+    }
     try {
       const text = await readFileText(f);
       const r = db.parseBackup(text, f.size);
@@ -209,7 +218,7 @@ export function DataTab() {
               </button>
             </div>
             <Note>
-              「追加」は今のデータを変えず、新しいプロフィールとして加えます。「置き換え」は今のデータをすべて消して入れ替えます（直前に今のデータを自動で書き出します）。
+              「追加」は今のデータを変えず、新しいプロフィールとして加えます。「置き換え」は今のデータをすべて消して入れ替えます（直前に今のデータを自動で書き出します）。置き換える前の記録は、この端末に1つ前の分だけ保存されます。ダウンロードもされます。
             </Note>
           </div>
         ) : null}

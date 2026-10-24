@@ -21,9 +21,9 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
   const profileId = app.profile?.id;
   const [progress, setProgress] = useState<Partial<Record<SkillId, SkillProgress>> | null>(null);
   const [draft, setDraft] = useState<DraftRecord | null | undefined>(undefined);
-  const [resume, setResume] = useState<{ seed: number; data: unknown } | null | undefined>(
-    undefined,
-  );
+  const [resume, setResume] = useState<
+    { seed: number; data: unknown; level?: number; roundSize?: number } | null | undefined
+  >(undefined);
 
   useEffect(() => {
     if (!profileId) return;
@@ -70,8 +70,7 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
         <VariantPicker
           variants={available}
           onPick={(v) => {
-            void audio.play(v.titleVoice);
-            navigate({ name: 'mode', modeId, variantId: v.id });
+            navigate({ name: 'mode', modeId, variantId: v.id }, { say: v.titleVoice });
           }}
         />
       </div>
@@ -82,7 +81,12 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
 
   // つづきから？
   if (draft && resume === undefined) {
-    const state = draft.state as { seed?: number; data?: unknown };
+    const state = draft.state as {
+      seed?: number;
+      data?: unknown;
+      level?: number;
+      roundSize?: number;
+    };
     return (
       <div className="screen" data-testid="resume-prompt">
         <ModeHeader
@@ -105,7 +109,14 @@ export function ModeEntry({ modeId, variantId }: { modeId: ModeId; variantId?: s
               variant="main"
               size="big"
               testId="resume-yes"
-              onPress={() => setResume({ seed: state.seed ?? 0, data: state.data ?? null })}
+              onPress={() =>
+                setResume({
+                  seed: state.seed ?? 0,
+                  data: state.data ?? null,
+                  level: state.level,
+                  roundSize: state.roundSize,
+                })
+              }
             />
             <Tap
               label="はじめから"
@@ -156,13 +167,20 @@ function VariantPicker({
             onClick={() => onPick(v)}
             data-testid={`variant-${v.id}`}
             style={{
-              width: 'calc(var(--u) * 20)',
+              width: 'calc(var(--u) * 24)',
+              height: 'calc(var(--u) * 22)',
               minHeight: 'calc(var(--u) * 20)',
               gap: 'calc(var(--u) * 0.6)',
             }}
           >
             <Illust id={v.icon} className="choice__illust" decorative />
-            <span className="label-text">{v.title}</span>
+            <span className="label-text" style={{ whiteSpace: 'nowrap', textAlign: 'center' }}>
+              {v.title.split(' ').map((w, i) => (
+                <span key={i} style={{ display: 'block' }}>
+                  {w}
+                </span>
+              ))}
+            </span>
           </button>
         ))}
       </div>

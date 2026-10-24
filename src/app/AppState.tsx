@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
-import type { ChildSettings, ModeId, Profile } from '../core/types';
+import { defaultSettings, type ChildSettings, type ModeId, type Profile } from '../core/types';
 
 export interface AppStateValue {
   ready: boolean;
@@ -75,11 +75,22 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const load = useCallback(async () => {
     await initOnce();
     if (db.getStorageHealth() === 'unavailable') {
+      // 保存が使えなくても子供は遊べるようにする（DA-07）。記録は残らない一時的なプロフィールを使う。
+      // 新しい版のデータ（version）の場合も、書き込まないので壊さない。
+      const temp: Profile = { id: 'temp', name: 'こども', avatar: 'rabbit', createdAt: 0 };
       setUnavailable(true);
+      setProfiles([temp]);
+      setProfile(temp);
+      setSettings(defaultSettings(temp.id));
       setReady(true);
       return;
     }
-    const list = await db.listProfiles();
+    let list = await db.listProfiles();
+    if (list.length === 0) {
+      // 置き換えや削除でプロフィールが無くなった場合も、子供の画面が空にならないように
+      await db.createProfile(DEFAULT_PROFILE.name, DEFAULT_PROFILE.avatar);
+      list = await db.listProfiles();
+    }
     const app = await db.getAppRecord();
     const active = list.find((p) => p.id === app.activeProfileId) ?? list[0] ?? null;
     setProfiles(list);

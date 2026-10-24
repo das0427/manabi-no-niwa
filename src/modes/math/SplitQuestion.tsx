@@ -32,6 +32,8 @@ interface Props {
   first: boolean;
   initial: SplitDraft | null;
   saveDraft: (d: SplitDraft) => void;
+  /** 記録した直後（最後の問題なら下書きを消す） */
+  onRecorded: () => void;
   onNext: (r: QResult) => void;
 }
 
@@ -42,6 +44,7 @@ export function SplitQuestion({
   first,
   initial,
   saveDraft,
+  onRecorded,
   onNext,
 }: Props) {
   const p = question.problem;
@@ -149,6 +152,7 @@ export function SplitQuestion({
         operationIssue: s.operationIssue,
         detail: { stage: 'D1', item: p.item },
       });
+      onRecorded();
       const nextSplits = [key];
       setRecorded(true);
       setSplits(nextSplits);
@@ -231,6 +235,7 @@ export function SplitQuestion({
       operationIssue: s.operationIssue,
       detail: { stage: 'D1', item: p.item },
     });
+    onRecorded();
     void say(splitVoice(n, n - 1, 1), false);
     save({ q: q.current, place: example, recorded: true, splits: [key], phase: 'done' });
   };
@@ -270,7 +275,6 @@ export function SplitQuestion({
           </span>
         </div>
       ))}
-
       {place.map((where, i) => {
         const pos = splitPicPos(lay, place, i);
         return (
@@ -294,26 +298,13 @@ export function SplitQuestion({
           </button>
         );
       })}
-
       {showFormula ? (
         <p className="math-split-formula" data-testid="split-formula">
           {splitFormula(n, cntA, cntB)}
         </p>
       ) : null}
-
       <Bubble text={bubble} style={{ left: u(9), top: u(37), maxWidth: u(50) }} />
-
-      <div className="math-left">
-        {q.state.canSkip && phase === 'play' ? (
-          <Tap
-            label="つぎへ"
-            text={<span className="math-tool-text">つぎへ</span>}
-            icon="next"
-            size="aux"
-            onPress={skip}
-            testId="skip-button"
-          />
-        ) : null}
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -324,54 +315,37 @@ export function SplitQuestion({
           testId="hint-button"
         />
       </div>
-
-      <div className="math-split-actions">
+      <div className="bottom-right">
         {phase === 'done' ? (
-          <>
-            {canAgain ? (
-              <Tap
-                label="ほかの わけかたを やってみる"
-                text={<span className="math-tool-text">もういちど</span>}
-                icon="again"
-                size="aux"
-                variant="white"
-                onPress={again}
-                testId="split-again"
-              />
-            ) : null}
+          canAgain ? (
             <Tap
-              label="つぎへ"
-              text="つぎへ"
-              icon="next"
-              variant="main"
-              onPress={leave}
-              testId="split-next"
+              label="ほかの わけかたを やってみる"
+              text={<span className="math-tool-text">もういちど</span>}
+              icon="again"
+              size="aux"
+              variant="white"
+              onPress={again}
+              testId="split-again"
             />
-          </>
+          ) : null
         ) : (
-          <>
-            {phase === 'retry' ? (
-              <Tap
-                label="つぎへ"
-                text={<span className="math-tool-text">つぎへ</span>}
-                icon="next"
-                size="aux"
-                variant="white"
-                onPress={leave}
-                testId="split-next"
-              />
-            ) : null}
-            <Tap
-              label="できた"
-              text="できた"
-              icon="done"
-              variant="main"
-              onPress={done}
-              testId="done-button"
-            />
-          </>
+          <Tap
+            label="できた"
+            text="できた"
+            icon="done"
+            variant="main"
+            onPress={done}
+            testId="done-button"
+          />
         )}
-      </div>
+        {phase === 'play' ? (
+          q.state.canSkip ? (
+            <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
+          ) : null
+        ) : (
+          <Tap label="つぎへ" icon="next" size="aux" onPress={leave} testId="split-next" />
+        )}
+      </div>{' '}
     </div>
   );
 }

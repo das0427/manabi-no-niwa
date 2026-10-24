@@ -42,6 +42,8 @@ export interface Draft {
 
 /** 完了画面の声かけ: 行動に基づくものだけ（learning-design.md 0.5）。当たらなければ省略（＝さいごまで できたね） */
 export function praiseOf(results: readonly QResult[]): string | undefined {
+  // 自分で解いた問題が0（全部「つぎへ」）の回は、できたと言わず、いっしょに見たことを言う（L6）
+  if (results.length > 0 && results.every((r) => !r.ok)) return 'praise.watched';
   if (results.some((r) => r.otherSplit)) return 'praise.other-split';
   if (results.some((r) => r.reviewed)) return 'praise.picture-checked';
   if (results.some((r) => r.counted)) return 'praise.counted';

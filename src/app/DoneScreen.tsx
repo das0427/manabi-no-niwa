@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { audio } from '../core/audio/index';
 import type { RoundSummary } from '../core/session/types';
 import type { ModeId } from '../core/types';
 import { Illust } from '../illust/Illust';
+import { ModeHeader } from '../ui/ModeHeader';
 import { Tap } from '../ui/Tap';
 import { useApp } from './AppState';
 import { textOf } from './voiceText';
@@ -25,17 +26,25 @@ export function DoneScreen({ modeId, summary, timeUp, onAgain, onHome }: Props) 
   const liked = app.favorites.includes(modeId);
   const [busy, setBusy] = useState(false);
 
+  const seq = useMemo(
+    () => [...toList(summary.before), praise, ...(timeUp ? ['app.timeup'] : [])],
+    [summary, praise, timeUp],
+  );
   useEffect(() => {
-    const seq = [...toList(summary.before), praise, ...(timeUp ? ['app.timeup'] : [])];
     void audio.play(seq);
-  }, [summary, praise, timeUp]);
+  }, [seq]);
 
   const caption = summary.caption ?? textOf(praise);
   const illusts = (summary.illusts ?? []).slice(0, 5);
 
   return (
     <div className="screen done" data-testid="done-screen">
-      <div className="center-col" style={{ gap: 'calc(var(--u) * 2.4)' }}>
+      {/* 完了画面も、おうち（左上）と もういちど きく（右上）の位置は同じ（DESINGN.md 5.1） */}
+      <ModeHeader promptText="" onHome={onHome} onListen={() => void audio.play(seq)} canListen />
+      <div
+        className="center-col"
+        style={{ gap: 'calc(var(--u) * 2.4)', top: 'calc(var(--u) * 6)' }}
+      >
         <div className="row" style={{ minHeight: 'calc(var(--u) * 16)' }}>
           {summary.showcase ??
             illusts.map((id, i) => (

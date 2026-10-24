@@ -78,7 +78,7 @@ export const commonVoice = {
   'app.look-again': 'よく みてね',
   'app.show-answer': 'こたえは これだよ。つぎに いこう',
   'app.done': 'おしまい',
-  'app.parent-only': 'ここは おとなの ひと ようだよ',
+  'app.parent-only': 'ここは おとなの ひとの ばしょだよ',
   'app.no-sound': 'おとが でないみたい',
   // 行動に基づく声かけ（learning-design.md「声かけの例と条件」）
   'praise.counted': 'ひとつずつ かぞえられたね',
@@ -93,6 +93,8 @@ export const commonVoice = {
   'praise.gathered': 'ちゅうもんどおりに そろえられたね',
   'praise.picture-checked': 'えで たしかめたね',
   'praise.finished': 'さいごまで できたね',
+  // 全部の問題を「つぎへ」で進んだ回（自分で解いた問題がない）の完了画面
+  'praise.watched': 'いっしょに さいごまで みたね',
   // 遊び方の名前（src/modes/registry.ts）
   'road.variant.puzzle': 'もんだい',
   'road.variant.free': 'じゆうに つくる',

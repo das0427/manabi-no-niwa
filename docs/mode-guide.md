@@ -74,6 +74,19 @@ q.reset();  // 次の問題へ
 - 台本を足したら `npm run voice:script` → `npm run voice:build` → `npm run check:audio` で音声を作り、合っているか確認する（生成は数秒）。
 - src/voice/voice-keys.test.ts が、ソース中の音声キーがすべて台本にあることを検査する。
 
+## 6.5 レビュー後の共通ルール（T21 で決定。全モード必須）
+
+| # | ルール |
+|---|---|
+| L1 | **下の帯の位置**: 「ヒント」は左下（`<div className="bottom-left">`）、「つぎへ」は右下の角（`<div className="bottom-right">` の最後。`<Tap label="つぎへ" icon="next" size="aux" />` 文字なし）。主操作（しゅっぱつ・おねがいします・おぼえた・できた 等）は bottom-right の中で つぎへ の左（間隔 3u は .bottom-right が持つ）。下・左右の余白は `var(--edge)`（2u）。独自の bottom: 1.5u をやめる |
+| L2 | **ヒントの札**は全モード `<Tap label="ヒント" icon="hint" size="aux" variant="white" />`（文字なし）。「ヒント」「みる」など子供画面にカタカナ・説明文の札を出さない |
+| L3 | **ことば**: 「タップ」を使わない（「ゆびで さわって」「おして」）。画面上部の問題文は16文字以内、吹き出しは20文字以内（2行まで） |
+| L4 | **答えを押させるヒントにしない**: ヒント2は答えの場所を直接囲まない（例外は learning-design 0.2 に明記したものだけ）。属性を言う・手がかりを足す・見直しを勧める |
+| L5 | **記録と下書き**: `session.record()` と同じ処理の中で、次の問題の下書きを保存する（最後の問題なら `session.clearDraft()`）。「ヒント」ボタンを押したときも下書きを保存する。再開時に wrongTries・hint・review が初期化されて自力扱いになる抜け道を作らない |
+| L6 | **完了画面の声かけ**: 自分で解いた問題が0（全部「つぎへ」）の回は `praise.watched`（いっしょに さいごまで みたね）。「ひとつずつ かぞえられたね」は、数える対象を**全部**数えたときだけ |
+| L7 | **誤答の表示**: 選んだ札・置いた物に `state="wrong"`（中身が薄くなり、？の吹き出しの印が付く）。共通 CSS が処理する |
+| L8 | **操作のとまどい**: `q.tap()` は「選択・判定」の操作でだけ呼ぶ（正しく速く操作しただけで operationIssue にしない） |
+
 ## 7. テストと完了条件
 
 - `npx vitest run src/modes/<mode>`、`npx tsc -b`、`npx eslint src/modes/<mode>`、`npx prettier --check src/modes/<mode>` が成功。

@@ -398,3 +398,9 @@
 .p-badge {
   white-space: nowrap;
 }
+
+.parent-root input,
+.parent-root select,
+.parent-root textarea {
+  accent-color: var(--leaf);
+}

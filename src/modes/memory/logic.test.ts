@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { VOICE_CATALOG } from '../../voice/catalog/index';
 import {
+  AMBIGUOUS,
   generateRound,
   groupOf,
   isFinishedPick,
@@ -43,11 +44,9 @@ function check(level: number, q: MemQuestion, ctx: string) {
       q.choices.filter((c) => q.answer.includes(c)),
       ctx,
     ).toHaveLength(need);
-    const ag = new Set(q.answer.map(groupOf));
-    for (const c of q.choices) {
-      if (!q.answer.includes(c))
-        expect(ag.has(groupOf(c)), `${ctx} 誤りが同じグループ`).toBe(false);
-    }
+    // 選択肢はすべて互いに別グループ（仲間はずれ探しで解けない）
+    expect(new Set(q.choices.map(groupOf)).size, ctx + ' グループ重複').toBe(n);
+    for (const a of q.answer) expect(AMBIGUOUS, ctx).not.toContain(a);
     expect(isFinishedPick(q, q.answer), ctx).toBe(true);
     expect(isFinishedPick(q, [q.answer[0]!]), ctx).toBe(need === 1);
     expect([...q.shown].sort(), ctx).toEqual([...q.answer].sort());
@@ -56,6 +55,7 @@ function check(level: number, q: MemQuestion, ctx: string) {
     expect(q.shown).toHaveLength(1);
     expect(q.pos, ctx).toBeGreaterThanOrEqual(0);
     expect(q.pos, ctx).toBeLessThan(PLACE_COUNT);
+    expect(AMBIGUOUS, ctx).not.toContain(q.answer[0]);
     expect(q.choices, ctx).toHaveLength(0);
   } else {
     expect(q.kind, ctx).toBe('order');
@@ -92,21 +92,17 @@ describe('偏り', () => {
     }
     expect(Math.max(...total) - Math.min(...total)).toBeLessThan(80);
   });
-  it('全段階で 40 点すべての絵が答えとして出る', () => {
+  it('答えに使える絵がすべて出て、曖昧な絵は答えにならない', () => {
     const seen = new Set<string>();
     for (const level of LEVELS)
       for (const seed of SEEDS)
         for (const q of generateRound(level, seed, 5)) q.answer.forEach((a) => seen.add(a));
-    expect(seen.size).toBe(POOL.length);
-    expect(POOL.length).toBeGreaterThanOrEqual(40);
+    expect(seen.size).toBe(POOL.length - AMBIGUOUS.length);
   });
 });
 
 describe('音声', () => {
   it('絵ごとの「いちばん」の台本がある', () => {
     for (const id of POOL) expect(VOICE_CATALOG[`mem.first.${id}`], id).toBeDefined();
-    for (const g of ['food', 'animal', 'vehicle', 'thing']) {
-      expect(VOICE_CATALOG[`mem.group.${g}`], g).toBeDefined();
-    }
   });
 });

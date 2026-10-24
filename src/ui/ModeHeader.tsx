@@ -47,7 +47,11 @@ function SpeakingDots({ active }: { active: boolean }) {
     <svg
       viewBox="0 0 30 10"
       aria-hidden
-      style={{ width: 'calc(var(--u) * 3)', height: 'calc(var(--u) * 1)', opacity: active ? 1 : 0 }}
+      style={{
+        width: 'calc(var(--u) * 3)',
+        height: 'calc(var(--u) * 1)',
+        opacity: active ? 1 : 0.35,
+      }}
     >
       {[5, 15, 25].map((x) => (
         <circle key={x} className="listen-wave" cx={x} cy={5} r={3.5} fill="#4A3B32" />

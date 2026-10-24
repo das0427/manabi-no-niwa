@@ -342,6 +342,7 @@ export default function Trace({ session }: ModePlayProps) {
           top: 'calc(var(--u) * 3)',
           maxWidth: 'calc(var(--u) * 25)',
           wordBreak: 'keep-all',
+          fontSize: 'var(--text-small)',
         }}
       />
       <div className="trace-board">
@@ -363,50 +364,40 @@ export default function Trace({ session }: ModePlayProps) {
         ) : null}
       </div>
 
-      <Tap
-        label="もういちど みる"
-        text={<span className="trace-aux__text">みる</span>}
-        icon="look"
-        size="aux"
-        variant="white"
-        className="trace-aux trace-aux--left trace-aux--upper"
-        disabled={phase !== 'play'}
-        onPress={look}
-        testId="look-button"
-      />
-      <Tap
-        label="ヒント"
-        text={<span className="trace-aux__text">ヒント</span>}
-        icon="hint"
-        size="aux"
-        variant="white"
-        className="trace-aux trace-aux--left"
-        disabled={phase !== 'play'}
-        onPress={askHint}
-        testId="hint-button"
-      />
-      {q.state.canSkip && phase === 'play' ? (
+      <div className="bottom-left">
         <Tap
-          label="つぎへ"
-          text={<span className="trace-aux__text">つぎへ</span>}
-          icon="next"
+          label="ヒント"
+          icon="hint"
           size="aux"
-          className="trace-aux trace-aux--right trace-aux--upper"
-          onPress={skip}
-          testId="skip-button"
+          variant="white"
+          disabled={phase !== 'play'}
+          onPress={askHint}
+          testId="hint-button"
         />
-      ) : null}
-      <Tap
-        label="ひとつ もどす"
-        text={<span className="trace-aux__text">ひとつ もどす</span>}
-        icon="undo"
-        size="aux"
-        variant="sky"
-        className="trace-aux trace-aux--right"
-        disabled={phase !== 'play' || lines.length === 0}
-        onPress={undo}
-        testId="undo-button"
-      />
+        <Tap
+          label="もういちど みる"
+          icon="look"
+          size="aux"
+          variant="white"
+          disabled={phase !== 'play'}
+          onPress={look}
+          testId="look-button"
+        />
+      </div>
+      <div className="bottom-right">
+        <Tap
+          label="ひとつ もどす"
+          icon="undo"
+          size="aux"
+          variant="white"
+          disabled={phase !== 'play' || lines.length === 0}
+          onPress={undo}
+          testId="undo-button"
+        />
+        {q.state.canSkip && phase === 'play' ? (
+          <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -199,7 +199,7 @@ export const K3_PICTURES: readonly Picture[] = [
   ),
   pic(
     'flower',
-    'はな',
+    'おはな',
     [
       ['circle', 36, 0, 0, 0, P.pink],
       ['rect', 34, 90, 0, 35, P.greenDark],

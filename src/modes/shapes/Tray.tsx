@@ -11,6 +11,8 @@ interface Props {
   board: BoardState;
   /** 置き間違いの直後に「？」を出すピース */
   flash: number | null;
+  /** ヒント2（K1）で薄くする候補 */
+  dim?: number | null;
   disabled: boolean;
   onSelect: (id: number) => void;
 }
@@ -19,7 +21,7 @@ const u = (n: number) => `calc(var(--u) * ${Math.round(n * 1000) / 1000})`;
 /** ピースの下の段差（盤面の単位） */
 const STEP = 1.4;
 
-export function Tray({ puzzle, board, flash, disabled, onSelect }: Props) {
+export function Tray({ puzzle, board, flash, dim = null, disabled, onSelect }: Props) {
   const { cells } = useMemo(() => trayLayout(puzzle), [puzzle]);
   return (
     <div
@@ -34,11 +36,12 @@ export function Tray({ puzzle, board, flash, disabled, onSelect }: Props) {
         const placed = isPlaced(board, c.id);
         const selected = board.selected === c.id;
         const wrong = flash === c.id;
+        const dimmed = dim === c.id && !placed;
         return (
           <button
             key={c.id}
             type="button"
-            className={`shp-piece ${selected ? 'is-selected' : ''} ${wrong ? 'is-wrong' : ''}`}
+            className={`shp-piece ${selected ? 'is-selected' : ''} ${wrong || dimmed ? 'is-wrong' : ''}`}
             style={{
               left: u(c.x * SCALE),
               top: u(c.y * SCALE),

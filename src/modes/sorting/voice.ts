@@ -10,12 +10,12 @@ for (const v of ALL_VALUES) {
 /** なかまわけ の音声台本 */
 export const voice = {
   ...perValue,
-  'sort.how': 'えを タップして、はこを タップしてね',
+  'sort.how': 'えを ゆびで さわって、はこを おしてね',
   'sort.by-color': 'いろで わけよう',
   'sort.by-kind': 'なかまで わけよう',
   'sort.then-color': 'こんどは いろで わけなおそう',
   'sort.and': 'と',
   'sort.look-color': 'いろを みてね',
   'sort.look-kind': 'なかまを みてね',
-  'sort.pick-first': 'さきに えを タップしてね',
+  'sort.pick-first': 'さきに えを ゆびで さわってね',
 } satisfies VoiceEntries;

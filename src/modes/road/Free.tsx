@@ -113,8 +113,11 @@ export default function Free({ session }: ModePlayProps) {
     setBoard(res.board);
     clearView();
     session.sfx(res.action === 'place' ? 'place' : res.action === 'remove' ? 'remove' : 'tap');
-    session.saveDraft({ board: res.board, workId: workId.current } satisfies Draft);
-    void persist(res.board, true);
+    // 何も置いていない間は つくりかけ を作らない（すでに作品があれば同じ id を更新する）
+    if (placedCount(res.board) > 0 || workId.current !== undefined) {
+      session.saveDraft({ board: res.board, workId: workId.current } satisfies Draft);
+      void persist(res.board, true);
+    }
   };
 
   const go = () => {
@@ -186,30 +189,30 @@ export default function Free({ session }: ModePlayProps) {
 
       <Bubble text={bubble} style={BUBBLE_STYLE} />
 
-      <div className="road-bottom road-bottom--free">
+      <div className="road-tools-wrap road-tools-wrap--free">
         <Toolbar tools={FREE_TOOLS} tool={tool} disabled={locked} onPick={pickTool} />
-        <div className="road-bottom__right">
-          <Tap
-            label="しゅっぱつ"
-            text="しゅっぱつ"
-            icon="go"
-            variant="main"
-            className="road-go"
-            disabled={locked}
-            onPress={go}
-            testId="go-button"
-          />
-          <Tap
-            label="かざる"
-            text="かざる"
-            icon="done"
-            variant="sky"
-            className="road-go road-go--short"
-            disabled={locked || placedCount(board) === 0}
-            onPress={decorate}
-            testId="decorate-button"
-          />
-        </div>
+      </div>
+      <div className="bottom-right">
+        <Tap
+          label="しゅっぱつ"
+          text="しゅっぱつ"
+          icon="go"
+          variant="main"
+          className="road-go"
+          disabled={locked}
+          onPress={go}
+          testId="go-button"
+        />
+        <Tap
+          label="かざる"
+          text="かざる"
+          icon="done"
+          variant="sky"
+          className="road-go road-go--short"
+          disabled={locked || placedCount(board) === 0}
+          onPress={decorate}
+          testId="decorate-button"
+        />
       </div>
     </div>
   );

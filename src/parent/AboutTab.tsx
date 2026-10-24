@@ -68,7 +68,7 @@ export function AboutTab() {
       </Section>
 
       <Section title="おうちで ためせる あそび">
-        <p className="p-small">画面を使わずに、同じ力を生活の中で試せる遊びです。</p>
+        <p className="p-small">画面を使わずに、同じような遊びを生活の中で試せます。</p>
         {MODES.map((m) => (
           <div key={m.id} data-testid={`tips-${m.id}`}>
             <h3>{m.title.replace(/\s+/g, '')}</h3>

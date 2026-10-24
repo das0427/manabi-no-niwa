@@ -37,14 +37,14 @@ for (const [id, ch] of Object.entries(LETTER))
 
 export const voice = {
   ...letters,
-  'trace.prompt.line': 'みどりの まるから ほしまで なぞろう',
-  'trace.prompt.maze': 'みちを とおって ほしまで いこう',
+  'trace.prompt.line': 'みどりから ほしまで なぞろう',
+  'trace.prompt.maze': 'みちを とおって ほしへ いこう',
   // ヒント1（注目させる）
   'trace.hint.start': 'みどりの まるから はじめよう',
-  'trace.hint.next': 'つぎの みどりの まるから はじめよう',
-  'trace.hint.resume': 'とまった ところから つづけよう',
+  'trace.hint.next': 'つぎの まるから はじめよう',
+  'trace.hint.resume': 'とまった ところから',
   // ヒント2（お手本の動きをもう一度）
-  'trace.hint.watch': 'おてほんを もういちど みてね',
+  'trace.hint.watch': 'おてほんを みてね',
   // 逆向き・遠くから始めた線（誤答に数えない声かけ）
   'trace.from-green': 'みどりの まるから かこう',
 } satisfies VoiceEntries;

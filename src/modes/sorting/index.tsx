@@ -5,12 +5,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import type { QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, type QuestionState } from '../../core/session/questionFlow';
 import type { Outcome } from '../../core/types';
 import { vocab } from '../../content/vocab';
 import { Illust } from '../../illust/Illust';
 import { Bubble } from '../../ui/Bubble';
-import { Tap } from '../../ui/Tap';
+import { StateMark, Tap } from '../../ui/Tap';
 import { textOf } from '../../app/voiceText';
 import {
   boardLabel,
@@ -57,6 +57,7 @@ export default function Sorting({ session }: ModePlayProps) {
   const [solved, setSolved] = useState(false);
   const outcomes = useRef<Outcome[]>(resume?.outcomes ?? []);
   const lastTried = useRef<SortPic | null>(null);
+  const [wrongPic, setWrongPic] = useState<SortPic | null>(null);
   const q = useQuestion();
   const board: Board = boards[index]!;
   const stage = board.stages[stageNo]!;
@@ -125,17 +126,28 @@ export default function Sorting({ session }: ModePlayProps) {
 
   const nextBoard = () => {
     outcomes.current = [...outcomes.current, q.current.outcome ?? 'skipped'];
+    const last = index + 1 >= boards.length;
+    // record と同時に、次の盤面の下書きを保存（最後なら消す）
+    if (last) session.clearDraft();
+    else
+      session.saveDraft({
+        index: index + 1,
+        stage: 0,
+        placed: {},
+        q: initialQuestion(),
+        outcomes: outcomes.current,
+      } satisfies Draft);
     window.setTimeout(() => {
-      if (index + 1 >= boards.length) {
-        const independent = outcomes.current.includes('independent');
-        session.finish({
-          praise: independent
+      if (last) {
+        const all = outcomes.current;
+        const praise = all.every((o) => o === 'skipped')
+          ? 'praise.watched'
+          : all.includes('independent')
             ? stage.criterion === 'color'
               ? 'praise.sorted-color'
               : 'praise.sorted-kind'
-            : 'praise.finished',
-          showcase: <Showcase board={board} stageNo={stageNo} />,
-        });
+            : 'praise.finished';
+        session.finish({ praise, showcase: <Showcase board={board} stageNo={stageNo} /> });
         return;
       }
       setIndex(index + 1);
@@ -148,7 +160,6 @@ export default function Sorting({ session }: ModePlayProps) {
       setBusy(false);
       lastTried.current = null;
       q.reset();
-      saveDraft({}, 0, index + 1);
     }, 1600);
   };
 
@@ -158,13 +169,15 @@ export default function Sorting({ session }: ModePlayProps) {
       void session.say('sort.pick-first');
       return;
     }
-    if (!q.tap()) return;
     const pic = selected;
     lastTried.current = pic;
     if (correctBox(stage, pic) !== value) {
+      if (!q.tap()) return;
       const s = q.wrong();
       session.sfx('wrong');
       setSelected(null); // 絵は元の場所へ戻る
+      setWrongPic(pic);
+      window.setTimeout(() => setWrongPic(null), 1200);
       showHint(s.hintLevel === 2 ? 2 : 1, pic);
       saveDraft(placed);
       return;
@@ -211,6 +224,7 @@ export default function Sorting({ session }: ModePlayProps) {
     const pic = selected ?? lastTried.current ?? inTray[0];
     if (!pic) return;
     showHint(s.hintLevel === 2 ? 2 : 1, pic);
+    saveDraft(placed);
   };
 
   const skip = () => {
@@ -233,7 +247,6 @@ export default function Sorting({ session }: ModePlayProps) {
     nextBoard();
   };
 
-  const hintBox = hint && hint.level === 2 ? correctBox(stage, hint.pic) : null;
   const n = stage.boxes.length;
 
   return (
@@ -245,7 +258,6 @@ export default function Sorting({ session }: ModePlayProps) {
             value={v}
             allPics={board.pics}
             contents={inBox(v)}
-            hint={hintBox === v}
             onBox={() => tapBox(v)}
             onPic={(pic) => (selected ? tapBox(v) : tapPic(pic))}
           />
@@ -258,13 +270,14 @@ export default function Sorting({ session }: ModePlayProps) {
             <button
               key={pic}
               type="button"
-              className={`choice sort-pic ${selected === pic ? 'is-selected' : ''} ${hint?.level === 2 && hint.pic === pic ? 'is-hint' : ''}`}
+              className={`choice sort-pic ${selected === pic ? 'is-selected' : ''} ${hint?.level === 2 && hint.pic === pic ? 'is-hint' : ''} ${wrongPic === pic ? 'is-wrong' : ''}`}
               aria-label={vocab(pic).label}
               onClick={() => tapPic(pic)}
               disabled={busy}
               data-testid={`pic-${pic}`}
             >
               <Illust id={pic} className="sort-pic__img" decorative />
+              <StateMark state={wrongPic === pic ? 'wrong' : null} />
             </button>
           ) : (
             <span key={pic} className="sort-pic sort-pic--gap" aria-hidden />
@@ -274,7 +287,7 @@ export default function Sorting({ session }: ModePlayProps) {
 
       <Bubble text={bubble} style={{ left: 'calc(var(--u) * 12)', bottom: 'calc(var(--u) * 3)' }} />
 
-      <div className="sort-bottom">
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -284,11 +297,11 @@ export default function Sorting({ session }: ModePlayProps) {
           disabled={busy}
           testId="hint-button"
         />
+      </div>
+      <div className="bottom-right">
         {q.state.canSkip && !solved ? (
           <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
-        ) : (
-          <span style={{ width: 'var(--tap-aux)' }} />
-        )}
+        ) : null}
       </div>
     </div>
   );

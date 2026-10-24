@@ -1,0 +1,139 @@
+[
+ {
+  "screen": "start",
+  "u": 11,
+  "buttons": 1,
+  "issues": []
+ },
+ {
+  "screen": "home",
+  "u": 11,
+  "buttons": 14,
+  "issues": [
+   {
+    "kind": "small-button",
+    "desc": "button[parent-key]「おとなの ひと（ながおし）」",
+    "detail": {
+     "minSidePx": 49.6,
+     "minSideU": 4.5,
+     "w": 4.5,
+     "h": 4.5
+    }
+   }
+  ]
+ },
+ {
+  "screen": "mode-shopping",
+  "u": 11,
+  "buttons": 8,
+  "issues": []
+ },
+ {
+  "screen": "done-shopping",
+  "u": 11,
+  "buttons": 3,
+  "issues": []
+ },
+ {
+  "screen": "mode-hiragana",
+  "u": 11,
+  "buttons": 5,
+  "issues": []
+ },
+ {
+  "screen": "mode-sorting",
+  "u": 11,
+  "buttons": 9,
+  "issues": []
+ },
+ {
+  "screen": "mode-shapes",
+  "u": 11,
+  "buttons": 6,
+  "issues": []
+ },
+ {
+  "screen": "mode-memory",
+  "u": 11,
+  "buttons": 3,
+  "issues": []
+ },
+ {
+  "screen": "mode-memory-answer",
+  "u": 11,
+  "buttons": 6,
+  "issues": []
+ },
+ {
+  "screen": "mode-compare",
+  "u": 11,
+  "buttons": 5,
+  "issues": []
+ },
+ {
+  "screen": "mode-road",
+  "u": 11,
+  "buttons": 7,
+  "issues": []
+ },
+ {
+  "screen": "mode-trace",
+  "u": 11,
+  "buttons": 5,
+  "issues": []
+ },
+ {
+  "screen": "mode-math",
+  "u": 11,
+  "buttons": 9,
+  "issues": []
+ },
+ {
+  "screen": "notebook",
+  "u": 11,
+  "buttons": 2,
+  "issues": []
+ },
+ {
+  "screen": "parent-records",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-settings",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-works",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-memos",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-profiles",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-data",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ },
+ {
+  "screen": "parent-about",
+  "u": 11,
+  "buttons": 0,
+  "issues": []
+ }
+]

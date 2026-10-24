@@ -1,18 +1,18 @@
 ﻿/**
  * ひらがな（よむ）。H1〜H3 は1タップで即判定、H4・H5 は字のタイルを左のマスから順に置く。
- * 仕様: docs/learning-design.md 2章。問題の生成と判定は logic.ts、教材の表は kana-table.ts。
+ * 仕様: docs/learning-design.md 2章。問題の生成と判定は logic.ts、教材の表は kana-table.ts、
+ * 盤面の部品は boards.tsx。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import type { QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, type QuestionState } from '../../core/session/questionFlow';
 import { useAudioState } from '../../core/audio/index';
-import { vocab } from '../../content/vocab';
 import { Illust } from '../../illust/Illust';
 import { Bubble } from '../../ui/Bubble';
-import { Choice } from '../../ui/Choice';
-import { StateMark, Tap } from '../../ui/Tap';
+import { Tap } from '../../ui/Tap';
 import { textOf } from '../../app/voiceText';
+import { BuildBoard, ChoiceBoard, Showcase } from './boards';
 import {
   charKey,
   displayOf,
@@ -26,12 +26,7 @@ import {
   recapSeq,
   thatIsSeq,
   thatIsText,
-  wordChars,
-  type BuildQuestion,
-  type ChoiceQuestion,
-  type KanaQuestion,
 } from './logic';
-import { kanaOf } from './kana-table';
 import './hiragana.css';
 
 interface Result {
@@ -58,8 +53,7 @@ export default function Hiragana({ session }: ModePlayProps) {
     [session.level, session.seed, session.roundSize],
   );
   const resume = session.resume as Draft | null;
-  const audioState = useAudioState();
-  const silent = audioState.health === 'silent';
+  const silent = useAudioState().health === 'silent';
 
   const [index, setIndex] = useState(resume?.index ?? 0);
   const [filled, setFilled] = useState<string[]>(resume?.filled ?? []);
@@ -79,8 +73,7 @@ export default function Hiragana({ session }: ModePlayProps) {
   const restored = useRef(false);
   const q = useQuestion();
   const question = questions[index]!;
-  const isPick = question.kind === 'pick';
-  const listening = isPick && !silent && listenDone !== index;
+  const listening = question.kind === 'pick' && !silent && listenDone !== index;
 
   const later = (fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -114,10 +107,10 @@ export default function Hiragana({ session }: ModePlayProps) {
     const first = index === 0 && !resume;
     const done = session.prompt(
       first ? [introOf(question.kind), 400, ...main] : main,
-      displayOf(question),
+      displayOf(question, silent),
     );
     if (question.kind === 'pick') {
-      // 音声だけが手がかり: 読み上げが終わるまで（最大3秒）選択肢を無効にする
+      // 音声だけが手がかり: 読み上げが終わるまで（最大3秒）選択肢を押せなくする
       const timeout = new Promise<void>((r) => window.setTimeout(r, LISTEN_MAX_MS));
       void Promise.race([done, timeout]).then(() => {
         if (alive) setListenDone(index);
@@ -129,32 +122,52 @@ export default function Hiragana({ session }: ModePlayProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index]);
 
-  const saveDraft = (over: Partial<Draft> = {}) =>
+  // 音が出ないと分かったら、上部の文を字入りに切り替える（音は出ないので再生しても支障なし）
+  const silentSeen = useRef(false);
+  useEffect(() => {
+    if (silent && !silentSeen.current) {
+      silentSeen.current = true;
+      void session.prompt(promptOf(question), displayOf(question, true));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [silent]);
+
+  const saveDraft = () =>
     session.saveDraft({
       index,
       q: q.current,
       filled: filledRef.current,
       used: usedRef.current,
       results: results.current,
-      ...over,
     } satisfies Draft);
-
-  // ---- ヒント ----
-  const showHint = (level: 1 | 2) => {
-    const seq = hintSeq(question, level, filledRef.current.length);
-    setHintLevel(level);
-    setBubble(hintText(question, level, filledRef.current.length));
-    void session.say(seq);
-  };
 
   const clearHint = () => {
     setHintLevel(0);
     setBubble(null);
   };
 
-  // ---- 次の問題へ ----
-  const advance = (res: Result) => {
+  /** 1問の確定: 記録と、次の問題の下書き（最後なら破棄）を同時に行う（L5） */
+  const commit = (s: QuestionState, res: Result) => {
     results.current = [...results.current, res];
+    session.record({
+      itemKey: question.itemKey,
+      outcome: s.outcome!,
+      wrongTries: s.wrongTries,
+      hintsUsed: s.hintsUsed,
+      operationIssue: s.operationIssue,
+      detail: { kind: question.kind, level: session.level },
+    });
+    if (index + 1 >= questions.length) {
+      session.clearDraft();
+    } else {
+      session.saveDraft({
+        index: index + 1,
+        q: initialQuestion(),
+        filled: [],
+        used: [],
+        results: results.current,
+      } satisfies Draft);
+    }
     later(() => {
       if (index + 1 >= questions.length) {
         const tried = questions.slice(0, results.current.length);
@@ -177,25 +190,10 @@ export default function Hiragana({ session }: ModePlayProps) {
       setSolved(false);
       setBusy(false);
       q.reset();
-      session.saveDraft({
-        index: index + 1,
-        q: q.current,
-        filled: [],
-        used: [],
-        results: results.current,
-      } satisfies Draft);
     }, 1700);
   };
 
-  const record = (s: QuestionState) =>
-    session.record({
-      itemKey: question.itemKey,
-      outcome: s.outcome!,
-      wrongTries: s.wrongTries,
-      hintsUsed: s.hintsUsed,
-      operationIssue: s.operationIssue,
-      detail: { kind: question.kind, level: session.level },
-    });
+  const fixedOf = (s: QuestionState) => s.wrongTries > 0 && s.outcome === 'self_corrected';
 
   // ---- H1〜H3: 選ぶ ----
   const pickChoice = (i: number) => {
@@ -209,8 +207,7 @@ export default function Hiragana({ session }: ModePlayProps) {
       clearHint();
       session.sfx('correct');
       void session.say(['app.ok', 300, charKey(question.answer)]);
-      record(s);
-      advance({ ok: true, fixed: s.wrongTries > 0 && s.outcome === 'self_corrected' });
+      commit(s, { ok: true, fixed: fixedOf(s) });
     } else {
       const s = q.wrong();
       const c = question.choices[i]!;
@@ -218,9 +215,8 @@ export default function Hiragana({ session }: ModePlayProps) {
       session.sfx('wrong');
       const level = s.hintLevel === 2 ? 2 : 1;
       setHintLevel(level);
-      const hs = hintSeq(question, level);
       setBubble(`${thatIsText(c)}。${hintText(question, level, 0)}`);
-      void session.say([...(thatIsSeq(c) as string[]), 400, ...(hs as (string | number)[])]);
+      void session.say([...thatIsSeq(c), 400, ...hintSeq(question, level)]);
       later(() => setWrongIdx(null), 1100);
       saveDraft();
     }
@@ -244,9 +240,7 @@ export default function Hiragana({ session }: ModePlayProps) {
         setSolved(true);
         setBusy(true);
         void session.say([charKey(ch), 300, `item.${question.word}`, 300, 'app.ok']);
-        record(s);
-        saveDraft();
-        advance({ ok: true, fixed: s.wrongTries > 0 && s.outcome === 'self_corrected' });
+        commit(s, { ok: true, fixed: fixedOf(s) });
       } else {
         void session.say(charKey(ch));
         saveDraft();
@@ -259,9 +253,8 @@ export default function Hiragana({ session }: ModePlayProps) {
       session.sfx('wrong');
       const level = s.hintLevel === 2 ? 2 : 1;
       setHintLevel(level);
-      const hs = hintSeq(question, level, pos);
       setBubble(hintText(question, level, pos));
-      void session.say([charKey(ch), 500, ...(hs as (string | number)[])]);
+      void session.say([charKey(ch), 500, ...hintSeq(question, level, pos)]);
       later(() => {
         setPending(null);
         setBusy(false);
@@ -273,7 +266,11 @@ export default function Hiragana({ session }: ModePlayProps) {
   const askHint = () => {
     if (busy || solved || listening) return;
     const s = q.hint();
-    showHint(s.hintLevel === 2 ? 2 : 1);
+    const level = s.hintLevel === 2 ? 2 : 1;
+    const pos = filledRef.current.length;
+    setHintLevel(level);
+    setBubble(hintText(question, level, pos));
+    void session.say(hintSeq(question, level, pos));
     saveDraft();
   };
 
@@ -292,17 +289,20 @@ export default function Hiragana({ session }: ModePlayProps) {
       setCorrectIdx(question.answerIndex);
       void session.say(['app.show-answer', 300, charKey(question.answer)]);
     }
-    record(s);
-    advance({ ok: false, fixed: false });
+    commit(s, { ok: false, fixed: false });
   };
-
-  const showSkip = q.state.canSkip && !solved;
 
   return (
     <div className={`hira hira--${question.kind}`} data-testid="hiragana-board">
       {silent && question.kind !== 'build' ? (
         <p className="hira-bigtext" data-testid="silent-prompt">
-          {textOf(displayOf(question))}
+          {textOf(displayOf(question, true))}
+        </p>
+      ) : null}
+      {listening ? (
+        <p className="hira-listening" data-testid="listening">
+          <Illust id="listen" className="hira-listening__icon" decorative />
+          きいてね
         </p>
       ) : null}
 
@@ -334,7 +334,7 @@ export default function Hiragana({ session }: ModePlayProps) {
 
       {silent ? <p className="hira-parent-note">{NO_SOUND}</p> : null}
 
-      <div className="hira-bottom">
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -344,165 +344,12 @@ export default function Hiragana({ session }: ModePlayProps) {
           disabled={busy || solved || listening}
           testId="hint-button"
         />
-        {showSkip ? (
+      </div>
+      <div className="bottom-right">
+        {q.state.canSkip && !solved ? (
           <Tap label="つぎへ" icon="next" size="aux" onPress={skip} testId="skip-button" />
-        ) : (
-          <span style={{ width: 'var(--tap-aux)' }} />
-        )}
+        ) : null}
       </div>
-    </div>
-  );
-}
-
-function ChoiceBoard({
-  question,
-  wrongIdx,
-  correctIdx,
-  hintLevel,
-  listening,
-  busy,
-  onPick,
-}: {
-  question: ChoiceQuestion;
-  wrongIdx: number | null;
-  correctIdx: number | null;
-  hintLevel: number;
-  listening: boolean;
-  busy: boolean;
-  onPick: (i: number) => void;
-}) {
-  const first = question.kind === 'first';
-  const word = wordChars(question.word);
-  return (
-    <>
-      {first ? (
-        <div className="hira-picture" data-testid="word-picture">
-          <Illust id={question.word} className="hira-picture__illust" decorative />
-        </div>
-      ) : null}
-      <div
-        className={`hira-choices hira-choices--${question.choices.length} ${listening ? 'is-waiting' : ''}`}
-        role="group"
-        aria-label="えらぶ"
-      >
-        {question.choices.map((c, i) => (
-          <Choice
-            key={`${c}-${i}`}
-            label={c}
-            letter={c}
-            className="hira-card"
-            state={correctIdx === i ? 'correct' : wrongIdx === i ? 'wrong' : null}
-            disabled={listening || (busy && correctIdx !== i)}
-            onPress={() => onPick(i)}
-            testId={`choice-${i}`}
-          />
-        ))}
-      </div>
-      {hintLevel === 2 && !first ? (
-        <div className="hira-clue" data-testid="hint-picture">
-          <Illust id={question.word} className="hira-clue__illust" decorative />
-          <span className="hira-clue__label">{vocab(question.word).label}</span>
-        </div>
-      ) : null}
-      {hintLevel === 2 && first ? (
-        <div className="hira-split" data-testid="hint-split" aria-hidden>
-          {word.map((c, i) => (
-            <span key={i} className={`hira-split__char ${i === 0 ? 'is-hint' : ''}`}>
-              {c}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </>
-  );
-}
-
-function BuildBoard({
-  question,
-  filled,
-  used,
-  pending,
-  hintLevel,
-  busy,
-  onTile,
-}: {
-  question: BuildQuestion;
-  filled: string[];
-  used: number[];
-  pending: { tile: number; char: string } | null;
-  hintLevel: number;
-  busy: boolean;
-  onTile: (i: number) => void;
-}) {
-  const next = filled.length;
-  const nextChar = question.chars[next];
-  const exWord = nextChar ? kanaOf(nextChar).word : undefined;
-  return (
-    <>
-      <div className="hira-picture hira-picture--build" data-testid="word-picture">
-        <Illust id={question.word} className="hira-picture__illust" decorative />
-      </div>
-      <div className="hira-cells" aria-label="ことば">
-        {question.chars.map((_, i) => {
-          const ch = filled[i] ?? (i === next && pending ? pending.char : '');
-          const isWrong = i === next && pending !== null;
-          const isHint = hintLevel === 2 && i === next && !pending;
-          return (
-            <div
-              key={i}
-              className={`hira-cell ${ch && !isWrong ? 'is-filled' : ''} ${isHint ? 'is-hint' : ''}`}
-              data-testid={`cell-${i}`}
-              data-state={isWrong ? 'wrong' : ch ? 'placed' : 'empty'}
-            >
-              <span className="hira-cell__letter">{ch}</span>
-              {isWrong ? <StateMark state="wrong" /> : null}
-            </div>
-          );
-        })}
-      </div>
-      {hintLevel === 2 && exWord && !pending ? (
-        <div className="hira-clue hira-clue--build" data-testid="hint-picture">
-          <Illust id={exWord} className="hira-clue__illust" decorative />
-          <span className="hira-clue__label">{vocab(exWord).label}</span>
-        </div>
-      ) : null}
-      <div
-        className={`hira-tiles hira-tiles--${question.tiles.length}`}
-        role="group"
-        aria-label="もじ"
-      >
-        {question.tiles.map((c, i) =>
-          used.includes(i) ? (
-            <span key={i} className="hira-tile-slot" aria-hidden />
-          ) : (
-            <Choice
-              key={i}
-              label={c}
-              letter={c}
-              className="hira-card"
-              state={pending?.tile === i ? 'wrong' : null}
-              disabled={busy && pending?.tile !== i}
-              onPress={() => onTile(i)}
-              testId={`tile-${i}`}
-            />
-          ),
-        )}
-      </div>
-    </>
-  );
-}
-
-function Showcase({ items }: { items: readonly KanaQuestion[] }) {
-  return (
-    <div className="hira-showcase" data-testid="hiragana-showcase">
-      {items.map((it, i) => (
-        <div key={i} className="hira-showcase__item">
-          <Illust id={it.word} className="hira-showcase__pic" decorative />
-          <span className={`hira-showcase__letter ${it.kind === 'build' ? 'is-word' : ''}`}>
-            {it.kind === 'build' ? vocab(it.word).label : it.answer}
-          </span>
-        </div>
-      ))}
     </div>
   );
 }

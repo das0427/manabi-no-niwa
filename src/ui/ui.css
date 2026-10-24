@@ -74,13 +74,19 @@
 }
 
 /* ---- 状態（色だけにしない: 印・線・不透明度） ---- */
+/* 選択中: こげ茶の太い輪郭＋内側の黄色い帯（グレースケールでも濃い輪郭で分かる）＋持ち上がる */
 .is-selected {
-  outline: calc(var(--u) * 0.6) solid var(--sun);
-  outline-offset: 0;
+  outline: calc(var(--u) * 0.5) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.35);
+  box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
   transform: translateY(calc(var(--u) * -1));
 }
-.is-wrong {
+/* 誤答: 中身だけを薄くし、「？」の印は濃いまま残す */
+.is-wrong > :not(.mark) {
   opacity: 0.45;
+}
+.is-wrong {
+  border-color: var(--ink-soft);
 }
 .is-hint {
   outline: calc(var(--u) * 0.4) dashed var(--ink);
@@ -92,19 +98,27 @@
   pointer-events: none;
   z-index: 2;
 }
+/* 正解の○: 札の短い辺に合わせた真円を中央に（横長の札でも楕円にしない） */
 .mark--correct {
-  inset: calc(var(--u) * -0.8);
+  top: 50%;
+  left: 50%;
+  height: calc(100% + var(--u) * 1.6);
+  max-height: calc(var(--u) * 20);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
   border: calc(var(--u) * 0.9) solid var(--leaf);
   border-radius: 50%;
 }
+/* 誤答の？: 小さな吹き出しの形（しっぽ付き）。札の中身と違って薄くならない */
 .mark--wrong {
-  top: calc(var(--u) * -1.6);
-  right: calc(var(--u) * -1.2);
-  width: calc(var(--u) * 3.6);
-  height: calc(var(--u) * 3.6);
+  top: calc(var(--u) * -1.8);
+  right: calc(var(--u) * -1.4);
+  width: calc(var(--u) * 3.8);
+  height: calc(var(--u) * 3.8);
   border: var(--outline) solid var(--ink);
-  border-radius: 50%;
+  border-radius: 50% 50% 50% 0;
   background: var(--white);
+  color: var(--ink);
   display: grid;
   place-items: center;
   font-size: calc(var(--u) * 2.4);
@@ -131,6 +145,27 @@
 }
 .choice:active:not(:disabled) {
   transform: translateY(calc(var(--u) * 0.4));
+  box-shadow: 0 calc(var(--u) * 0.2) 0 var(--paper-2);
+}
+
+/* ---- 下の操作の帯（全モード共通の位置。DESINGN.md 5.1）
+   左下: ヒント ／ 右下の角: つぎへ ／ 主操作は つぎへ の左に 3u 以上あけて置く ---- */
+.bottom-left {
+  position: absolute;
+  left: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  gap: var(--gap-min);
+  z-index: 4;
+}
+.bottom-right {
+  position: absolute;
+  right: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--u) * 3);
+  z-index: 4;
 }
 .choice:disabled {
   cursor: default;
@@ -217,6 +252,22 @@
   border-right: var(--outline) solid var(--ink);
   border-bottom: var(--outline) solid var(--ink);
   transform: rotate(45deg) translate(-30%, -30%);
+}
+
+/* ---- 起動画面の保護者向けの小さな表示 ---- */
+.start-notes {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: var(--edge);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: max(12px, calc(var(--u) * 1.4));
+  color: var(--ink-soft);
+  text-align: right;
+}
+.start-notes p {
+  margin: 0.2em 0;
 }
 
 /* ---- 汎用レイアウト ---- */

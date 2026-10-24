@@ -358,6 +358,16 @@ describe('回の終わりの声かけ', () => {
   it('どちらでもなければ省略（＝さいごまで できたね）', () => {
     expect(praiseKey([{ rotated: false, selfFixed: false }])).toBeUndefined();
   });
+  it('全部つぎへ の回は praise.watched', () => {
+    expect(praiseKey([{ rotated: false, selfFixed: false, skipped: true }])).toBe('praise.watched');
+    expect(
+      praiseKey([
+        { rotated: false, selfFixed: false, skipped: true },
+        { rotated: false, selfFixed: false },
+      ]),
+    ).toBeUndefined();
+    expect(hasVoice('praise.watched')).toBe(true);
+  });
   it('使う声かけキーは台本にある', () => {
     expect(hasVoice('praise.rotated')).toBe(true);
     expect(hasVoice('praise.self-fixed')).toBe(true);

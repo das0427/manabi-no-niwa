@@ -28,34 +28,6 @@
   cursor: crosshair;
 }
 
-/* 補助の札（みる・ヒント・ひとつ もどす・つぎへ）。左右の下に積む */
-.trace-aux {
-  position: absolute !important;
-  flex-direction: column;
-  gap: calc(var(--u) * 0.2);
-  min-width: calc(var(--u) * 12);
-  min-height: calc(var(--u) * 8.5);
-  bottom: calc(var(--u) * 1.5);
-}
-.trace-aux .tap__icon {
-  width: calc(var(--u) * 4);
-  height: calc(var(--u) * 4);
-}
-.trace-aux__text {
-  font-size: var(--text-small);
-  line-height: 1.1;
-  white-space: nowrap;
-}
-.trace-aux--left {
-  left: var(--edge);
-}
-.trace-aux--right {
-  right: var(--edge);
-}
-.trace-aux--upper {
-  bottom: calc(var(--u) * 11.6);
-}
-
 /* 完了画面に並べる作品 */
 .trace-showcase {
   display: flex;

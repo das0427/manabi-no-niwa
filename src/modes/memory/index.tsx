@@ -6,13 +6,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ModePlayProps } from '../../core/session/types';
 import { useQuestion } from '../../core/session/useQuestion';
-import { praiseFor, type QuestionState } from '../../core/session/questionFlow';
+import { initialQuestion, praiseFor, type QuestionState } from '../../core/session/questionFlow';
 import { Bubble } from '../../ui/Bubble';
 import { Tap } from '../../ui/Tap';
 import { textOf } from '../../app/voiceText';
 import {
   generateRound,
-  groupOf,
   isAnswerPick,
   isFinishedPick,
   itemKey,
@@ -31,6 +30,7 @@ interface Draft {
   picked: MemItem[];
   placedCount: number;
   outcomes: string[];
+  phase: 'study' | 'answer';
 }
 
 const ANSWER_PROMPT = {
@@ -69,7 +69,12 @@ export default function Memory({ session }: ModePlayProps) {
   useEffect(() => {
     if (resume && !restored.current) {
       restored.current = true;
-      q.restore(resume.q);
+      // 答える画面で中断していたら、覚える画面から始まる＝見直しとして数える
+      q.restore(
+        resume.phase === 'answer'
+          ? { ...resume.q, reviewsUsed: resume.q.reviewsUsed + 1 }
+          : resume.q,
+      );
     }
     session.expose({
       index,
@@ -85,7 +90,9 @@ export default function Memory({ session }: ModePlayProps) {
   // 声（覚える画面・答える画面）
   useEffect(() => {
     if (phase === 'study') {
-      void session.prompt(index === 0 && studyKey === 0 && !resume ? 'mem.look' : 'app.look-again');
+      if (index === 0 && studyKey === 0 && !resume) {
+        void session.prompt(['mem.look', 'mem.press'], 'mem.look');
+      } else void session.prompt('app.look-again');
     } else {
       const key = question.answer.length === 2 ? 'mem.which2' : ANSWER_PROMPT[question.kind];
       void session.prompt(key);
@@ -112,8 +119,15 @@ export default function Memory({ session }: ModePlayProps) {
       picked,
       placedCount,
       outcomes: outcomes.current,
+      phase,
       ...over,
     } satisfies Draft);
+
+  // 覚える画面・答える画面の切り替えのたびに下書きを保存する（再開時の見直し判定に使う）
+  useEffect(() => {
+    save();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const startStudy = () => {
     setPhase('study');
@@ -135,9 +149,9 @@ export default function Memory({ session }: ModePlayProps) {
 
   const showHint = (level: 1 | 2) => {
     let seq: string[] = ['mem.hint-review'];
-    setNudge(true);
     if (level === 2) {
-      if (question.kind === 'pick') seq = [`mem.group.${groupOf(question.answer[0]!)}`];
+      setNudge(true);
+      seq = ['mem.hint-review2'];
       if (question.kind === 'order') {
         const next = nextInOrder(question, placedCount);
         setHintItem(next ?? null);
@@ -156,18 +170,33 @@ export default function Memory({ session }: ModePlayProps) {
   };
 
   const advance = () => {
+    const last = index + 1 >= questions.length;
+    // record と同時に次の問題の下書きを保存する（最後なら消す）
+    if (last) session.clearDraft();
+    else {
+      session.saveDraft({
+        index: index + 1,
+        q: initialQuestion(),
+        picked: [],
+        placedCount: 0,
+        outcomes: outcomes.current,
+        phase: 'study',
+      } satisfies Draft);
+    }
     window.setTimeout(() => {
-      if (index + 1 >= questions.length) {
+      if (last) {
         const seen = new Set<string>();
         for (const qu of questions) for (const a of qu.answer) seen.add(a);
-        session.finish({
-          illusts: [...seen].slice(0, 5),
-          praise: outcomes.current.includes('after_review') ? 'praise.reviewed' : 'praise.finished',
-        });
+        const solved = outcomes.current.some((o) => o !== 'skipped');
+        const praise = !solved
+          ? 'praise.watched'
+          : outcomes.current.includes('after_review')
+            ? 'praise.reviewed'
+            : 'praise.finished';
+        session.finish({ illusts: [...seen].slice(0, 5), praise });
         return;
       }
-      const ni = index + 1;
-      setIndex(ni);
+      setIndex(index + 1);
       setPicked([]);
       setPlacedCount(0);
       setWrongs([]);
@@ -176,13 +205,6 @@ export default function Memory({ session }: ModePlayProps) {
       setBusy(false);
       q.reset();
       startStudy();
-      session.saveDraft({
-        index: ni,
-        q: q.current,
-        picked: [],
-        placedCount: 0,
-        outcomes: outcomes.current,
-      } satisfies Draft);
     }, 1600);
   };
 
@@ -270,20 +292,21 @@ export default function Memory({ session }: ModePlayProps) {
     return (
       <div className="mem" data-testid="memory-study">
         <StudyView key={`${index}-${studyKey}`} q={question} onAllShown={() => setAllShown(true)} />
-        <Tap
-          label="おぼえた！"
-          text={<span>おぼえた！</span>}
-          icon="done"
-          variant="main"
-          size="big"
-          className="mem-done"
-          disabled={!ready}
-          onPress={() => {
-            session.sfx('tap');
-            setPhase('answer');
-          }}
-          testId="memorized-button"
-        />
+        <div className="bottom-right">
+          <Tap
+            label="おぼえた"
+            text={<span>おぼえた</span>}
+            variant="main"
+            size="big"
+            className="mem-done"
+            disabled={!ready}
+            onPress={() => {
+              session.sfx('tap');
+              setPhase('answer');
+            }}
+            testId="memorized-button"
+          />
+        </div>
       </div>
     );
   }
@@ -303,7 +326,7 @@ export default function Memory({ session }: ModePlayProps) {
         onPick={onPick}
         onCard={onCard}
       />
-      <div className="mem-bottom">
+      <div className="bottom-left">
         <Tap
           label="ヒント"
           icon="hint"
@@ -313,6 +336,8 @@ export default function Memory({ session }: ModePlayProps) {
           disabled={busy}
           testId="hint-button"
         />
+      </div>
+      <div className="bottom-right">
         <Tap
           label="もういちど みる"
           text={<span>もういちど みる</span>}

@@ -43,6 +43,9 @@ import {
   type MathSkill,
   type MathStage,
 } from './logic';
+import { textOf } from '../../app/voiceText';
+import { praiseOf, type QResult } from './types';
+import { headerVoice } from './logic';
 import { voice } from './voice';
 import { createRng } from '../../core/util/rng';
 
@@ -626,6 +629,54 @@ describe('C の盤面: 皿は1枚で、皿の中の絵の数＝a、斜線の絵�
       }
     });
   }
+});
+
+describe('ことば（L3）と完了画面の声かけ（L6）', () => {
+  it('吹き出しは20文字以内、画面上部の問題文は16文字以内（空白を含む）', () => {
+    for (const stage of ALL_STAGES) {
+      for (const p of everyProblem(stage)) {
+        const ctx = `${stage} ${problemKey(p)}`;
+        for (const level of [1, 2] as const) {
+          expect(textOf(hintVoice(p, stage, level)).length, ctx).toBeLessThanOrEqual(20);
+        }
+        expect(textOf(headerVoice(p, stage)).length, ctx).toBeLessThanOrEqual(16);
+      }
+    }
+    for (const k of [
+      'math.split-need',
+      'math.other-split',
+      'math.same-split',
+      'math.all-splits',
+      'praise.other-split',
+    ]) {
+      expect(textOf(k).length, k).toBeLessThanOrEqual(20);
+    }
+  });
+  it('「タップ」を使わない', () => {
+    for (const [k, e] of Object.entries(voice)) expect(voiceText(e), k).not.toContain('タップ');
+  });
+  const r = (over: Partial<QResult>): QResult => ({
+    texts: ['1 ＋ 1 ＝ 2'],
+    item: 'apple',
+    ok: true,
+    counted: false,
+    reviewed: false,
+    otherSplit: false,
+    ...over,
+  });
+  it('全部「つぎへ」の回は praise.watched', () => {
+    expect(praiseOf([r({ ok: false }), r({ ok: false })])).toBe('praise.watched');
+  });
+  it('数えた問題があれば praise.counted、なければ省略', () => {
+    expect(praiseOf([r({ ok: false }), r({ counted: true })])).toBe('praise.counted');
+    expect(praiseOf([r({}), r({})])).toBeUndefined();
+  });
+  it('D1 の2通り目 > えで みる > 数えた の順', () => {
+    expect(praiseOf([r({ counted: true, reviewed: true, otherSplit: true })])).toBe(
+      'praise.other-split',
+    );
+    expect(praiseOf([r({ counted: true, reviewed: true })])).toBe('praise.picture-checked');
+  });
 });
 
 describe('音声台本', () => {

@@ -25,7 +25,10 @@
 - [完了] エンジン17種（choice, number, order, sort, match, fill, build, listen, reading, trace, explain, program, clock, measure, numberline, graph, geometry）。開発用の見本画面 #/dev/engines でブラウザ表示を確認（reading・program・trace・clock ほか）
 - [完了] おえかき（インクの層を重なり順の列に入れる文書モデル、はんこ63種・6カテゴリ、図形7種、配置後の編集、塗りの境界は合成、undo 50手/64MB、自動保存と下書きからの復元、PNG 1600×1000、作品の zip、作品一覧）。E2E Chromium 18件＋計測、Firefox 16件。開発PCではんこ200個でもフレーム間隔16.7ms。色名の読み上げ27本を生成
 - [完了] 単元の中断・再開（review-1 #31）、保護者が開く単元（hiddenByDefault）、がんばりノートに単元の回、教材の音声の組み立て（数の部品566本）と台本の書き出し（voice:packs）、P1 の充足の報告（curriculum:report）
-- [進行中] 教材: 幼児 p23・p4・p5（Opus）、小1・小2 国語（Opus）、小1・小2 漢字（Sonnet）、小1 算数（Opus）、小2 算数（Opus）
+- [完了] 教材 全26パック・258単元（P1 254・P2 4。すべて ready）: 幼児 p23・p4・p5、小1〜小6 算数・国語、漢字 1〜6年、生活、理科・社会・英語（3〜6年）、プログラミング。エンジン19種（map・experiment を追加。number の筆算・単位、graph の折れ線2本・帯/円グラフ）
+- [完了] 内容レビューと修正: 小1〜小4の算数・国語は独立レビュー（Fable）、それ以外は Opus（修正も同じ担当）。重大の修正 合計約190件、再発防止テスト
+- [完了] 2.0.0-beta.1（段階1）を main にマージしプレリリース（https://github.com/das0427/manabi-no-niwa/releases/tag/v2.0.0-beta.1）
+- [完了] 配布 zip の分割（本体＋学年ごとの音声）、install.sh で教材のファイルの欠けを検出
 
 ## 実機・判断待ちの項目（おえかき・エンジン）
 - trace の盤は作業領域（約27u）に合わせて v1（44u）より小さい。幼児のなぞりは主に v1 の画面を使う。実機で指の幅に対して足りるか確認する（判定幅 r の調整を含む）

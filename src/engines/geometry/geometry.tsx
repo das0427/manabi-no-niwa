@@ -36,9 +36,12 @@ import {
   type Pt,
   type ShapeClass,
 } from './shapes';
+import { displayOrder, displayPosition } from '../shared/order';
 import './geometry.css';
 
 export type { Pt, ShapeClass } from './shapes';
+
+const geoLabel = (o: { label?: RichText }) => (typeof o.label === 'string' ? o.label : undefined);
 
 /** 図の中の形（格子の座標。closed: false なら折れ線・線分） */
 export interface GeoShape {
@@ -349,7 +352,12 @@ export function geometryAnswerText(item: GeometryItem): RichText {
   const t = item.task;
   if (t.kind === 'pick')
     return t.options
-      .map((o, i) => (o.correct ? (o.label ?? `${i + 1}ばん`) : null))
+      .map((o, i) =>
+        o.correct
+          ? (o.label ??
+            `${displayPosition(item, t.options.length, i, t.options.map(geoLabel))}ばん`)
+          : null,
+      )
       .filter((x) => x !== null)
       .join('、');
   if (t.kind === 'angle') return `${t.degrees}°`;
@@ -765,25 +773,31 @@ function PickView({
   return (
     <div className="eng-geo eng-geo--pick">
       <div className="eng-geo__options">
-        {t.options.map((o, i) => (
-          <Choice
-            key={i}
-            label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばんの かたち`}
-            state={stateOf(i)}
-            disabled={disabled || revealed}
-            onPress={() => press(i)}
-            testId={`opt-${i}`}
-            className="eng-geo__opt"
-          >
-            {o.shape ? <OptionShape s={o.shape} /> : null}
-            {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-            {o.label !== undefined ? (
-              <span className="eng-geo__optlabel">
-                <Rt text={o.label} ctx={ctx} />
-              </span>
-            ) : null}
-          </Choice>
-        ))}
+        {displayOrder(
+          item,
+          t.options.map((_, i) => i),
+          t.options.map(geoLabel),
+        )
+          .map((i, pos) => ({ o: t.options[i]!, i, pos }))
+          .map(({ o, i, pos }) => (
+            <Choice
+              key={i}
+              label={o.label !== undefined ? plainText(o.label) : `${pos + 1}ばんの かたち`}
+              state={stateOf(i)}
+              disabled={disabled || revealed}
+              onPress={() => press(i)}
+              testId={`opt-${i}`}
+              className="eng-geo__opt"
+            >
+              {o.shape ? <OptionShape s={o.shape} /> : null}
+              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+              {o.label !== undefined ? (
+                <span className="eng-geo__optlabel">
+                  <Rt text={o.label} ctx={ctx} />
+                </span>
+              ) : null}
+            </Choice>
+          ))}
       </div>
       {t.multi && !revealed ? (
         <button

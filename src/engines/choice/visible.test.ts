@@ -17,9 +17,15 @@ describe('選択肢の並び', () => {
     expect(first / 400).toBeGreaterThan(0.2);
     expect(first / 400).toBeLessThan(0.47);
   });
-  it('絵だけの選択肢（番号で呼ぶ）は並べ替えない', () => {
+  it('絵だけの選択肢は、解説・ヒントが「1ばん」と位置で指すときだけ並べ替えない', () => {
     const options = [{ correct: true }, {}, {}];
-    expect(displayOrder({ id: 'q:1', options }, [0, 1, 2])).toEqual([0, 1, 2]);
+    expect(
+      displayOrder({ id: 'q:1', options, explain: '1ばんの えが ただしい' }, [0, 1, 2]),
+    ).toEqual([0, 1, 2]);
+    let moved = 0;
+    for (let k = 0; k < 50; k++)
+      if (displayOrder({ id: `p:${k}`, options }, [0, 1, 2])[0] !== 0) moved++;
+    expect(moved).toBeGreaterThan(20);
   });
   it('fixedOrder と「あ・い」は並べ替えない', () => {
     expect(

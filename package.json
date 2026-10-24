@@ -21,7 +21,10 @@
     "voice:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice/build.ps1",
     "voice:build:sh": "bash scripts/voice/build.sh",
     "check:audio": "tsx scripts/check-audio.ts",
+    "check:design": "tsx scripts/check-design.ts",
     "chars": "tsx scripts/collect-chars.ts",
+    "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
+    "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
     "package": "tsx scripts/package-release.ts"
   },
   "dependencies": {

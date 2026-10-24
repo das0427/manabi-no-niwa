@@ -1,0 +1,179 @@
+/* なかまわけ。舞台の下部 100u x 48u を使う */
+.sort {
+  position: absolute;
+  inset: 0;
+}
+.sort-boxes {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  top: calc(var(--u) * 1);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+}
+.sort-box {
+  position: relative;
+  width: calc(var(--u) * 38);
+  height: calc(var(--u) * 23);
+  padding: calc(var(--u) * 1);
+  border: var(--outline) solid var(--ink);
+  border-bottom: calc(var(--u) * 1.2) solid var(--wood-dark);
+  border-radius: var(--radius);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1);
+}
+.sort-boxes--3 .sort-box {
+  width: calc(var(--u) * 29);
+  gap: calc(var(--u) * 0.6);
+}
+.sort-box--red {
+  background: color-mix(in srgb, var(--mat-red) 25%, var(--white));
+  border-bottom-color: var(--mat-red);
+}
+.sort-box--yellow {
+  background: color-mix(in srgb, var(--mat-yellow) 30%, var(--white));
+  border-bottom-color: var(--mat-yellow);
+}
+.sort-box--green {
+  background: color-mix(in srgb, var(--mat-green) 28%, var(--white));
+  border-bottom-color: var(--mat-green);
+}
+.sort-box__hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sort-box__head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  height: calc(var(--u) * 8);
+}
+.sort-box__swatch {
+  flex: none;
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+}
+.sort-box__swatch--red {
+  background: var(--mat-red);
+}
+.sort-box__swatch--yellow {
+  background: var(--mat-yellow);
+}
+.sort-box__swatch--green {
+  background: var(--mat-green);
+}
+.sort-box__name {
+  font-size: var(--text-prompt);
+  line-height: 1;
+  white-space: nowrap;
+}
+.sort-boxes--3 .sort-box__name {
+  font-size: var(--text-label);
+}
+.sort-box__rep {
+  flex: none;
+  width: calc(var(--u) * 7);
+  height: calc(var(--u) * 7);
+}
+.sort-box__body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  border: calc(var(--u) * 0.3) dashed var(--ink-soft);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.sort-box.is-hint {
+  background-color: color-mix(in srgb, var(--sun) 45%, var(--white));
+}
+.sort-pic--in {
+  position: relative;
+  z-index: 2;
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sort-pic--static {
+  cursor: default;
+}
+.sort-tray {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  top: calc(var(--u) * 26.5);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+}
+.sort-tray .sort-pic {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  min-width: 0;
+  min-height: 0;
+  padding: calc(var(--u) * 0.6);
+}
+.sort-pic--gap {
+  display: block;
+}
+.sort-pic__img {
+  width: 100%;
+  height: 100%;
+}
+.sort-bottom {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: calc(var(--u) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sort-showcase {
+  display: flex;
+  gap: calc(var(--u) * 3);
+}
+.sort-box--small {
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 17);
+  padding: calc(var(--u) * 0.6);
+  gap: calc(var(--u) * 0.6);
+}
+.sort-box--small .sort-box__head {
+  height: calc(var(--u) * 5);
+  gap: calc(var(--u) * 0.6);
+}
+.sort-box--small .sort-box__swatch {
+  width: calc(var(--u) * 3.6);
+  height: calc(var(--u) * 3.6);
+}
+.sort-box--small .sort-box__name {
+  font-size: var(--text-small);
+}
+.sort-box--small .sort-box__rep {
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+}
+.sort-box--small .sort-pic--in {
+  width: calc(var(--u) * 6.5);
+  height: calc(var(--u) * 6.5);
+}

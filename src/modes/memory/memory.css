@@ -1,0 +1,162 @@
+/* おぼえてさがす。舞台の下部 100u × 48u を使う */
+.mem {
+  position: absolute;
+  inset: 0;
+}
+
+/* ---- 覚える画面 ---- */
+.mem-study {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 2);
+  height: calc(var(--u) * 30);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+}
+.mem-frame {
+  border: var(--outline) solid var(--ink);
+  border-radius: calc(var(--u) * 2);
+  background: var(--white);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+  display: grid;
+  place-items: center;
+}
+.mem-frame.is-empty {
+  border-style: dashed;
+  background: transparent;
+  box-shadow: none;
+}
+.mem-frame--big {
+  width: calc(var(--u) * 28);
+  height: calc(var(--u) * 28);
+}
+.mem-frame--place {
+  width: calc(var(--u) * 24);
+  height: calc(var(--u) * 24);
+}
+.mem-frame--order {
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
+}
+.mem-frame__pic {
+  width: 82%;
+  height: 82%;
+}
+.mem-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+.mem-step__num {
+  font-size: var(--text-label);
+}
+.mem-done {
+  position: absolute !important;
+  left: 50%;
+  bottom: calc(var(--u) * 2.5);
+  transform: translateX(-50%);
+  min-width: calc(var(--u) * 26);
+  min-height: calc(var(--u) * 9);
+  font-size: calc(var(--u) * 3.4);
+}
+.mem-done:active:not(:disabled) {
+  transform: translateX(-50%) translateY(calc(var(--u) * 0.4));
+}
+.mem-done .tap__icon {
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 5);
+}
+
+/* ---- 答える画面 ---- */
+.mem-answer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 11);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.mem-choice {
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 20);
+}
+.mem-choice .choice__illust,
+.mem-choice__pic {
+  width: calc(var(--u) * 15);
+  height: calc(var(--u) * 15);
+}
+.mem-card-back {
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+  border: var(--outline) solid var(--wood-dark);
+  border-radius: calc(var(--u) * 1.4);
+  background: var(--wood);
+}
+.mem-order {
+  position: absolute;
+  inset: 0;
+}
+.mem-slots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 9);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.mem-slot {
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+  border: var(--outline) dashed var(--ink-soft);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+}
+.mem-slot.is-filled {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--white);
+}
+.mem-slot__num {
+  font-size: var(--text-label);
+  color: var(--ink-soft);
+}
+.mem-slot__pic {
+  width: 85%;
+  height: 85%;
+}
+.mem-tray {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 24);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.mem-choice--tray {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  min-width: 0;
+  min-height: 0;
+}
+.mem-choice--tray .choice__illust {
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+}
+.mem-bottom {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: calc(var(--u) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+}

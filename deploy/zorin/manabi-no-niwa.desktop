@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=まなびのにわ
+Name[ja]=まなびのにわ
+Comment=4さいからの あそびながら まなぶ アプリ
+Exec="@APP_DIR@/deploy/zorin/manabi.sh"
+Icon=@APP_DIR@/dist/icons/icon-192.png
+Terminal=false
+Categories=Education;
+StartupNotify=false

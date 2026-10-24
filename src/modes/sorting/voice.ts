@@ -1,4 +1,21 @@
 import type { VoiceEntries } from '../../voice/types';
+import { ALL_VALUES, labelOf } from './logic';
 
-/** このモードの音声台本（キーは 'sorting.' ではなくモードの接頭辞で始める） */
-export const voice = {} satisfies VoiceEntries;
+const perValue: VoiceEntries = {};
+for (const v of ALL_VALUES) {
+  perValue[`sort.val.${v}`] = labelOf(v);
+  perValue[`sort.is.${v}`] = `これは ${labelOf(v)} だね`;
+}
+
+/** なかまわけ の音声台本 */
+export const voice = {
+  ...perValue,
+  'sort.how': 'えを タップして、はこを タップしてね',
+  'sort.by-color': 'いろで わけよう',
+  'sort.by-kind': 'なかまで わけよう',
+  'sort.then-color': 'こんどは いろで わけなおそう',
+  'sort.and': 'と',
+  'sort.look-color': 'いろを みてね',
+  'sort.look-kind': 'なかまを みてね',
+  'sort.pick-first': 'さきに えを タップしてね',
+} satisfies VoiceEntries;

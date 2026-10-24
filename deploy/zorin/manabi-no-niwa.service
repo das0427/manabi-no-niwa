@@ -1,0 +1,17 @@
+# まなびのにわ ローカル配信（systemd ユーザー単位）
+# install.sh --autostart で ~/.config/systemd/user/ に配置され、ログイン時に自動で始まります。
+# 127.0.0.1:8765 だけで待ち受けます。管理者権限（sudo）は使いません。
+[Unit]
+Description=まなびのにわ ローカル配信 (127.0.0.1:8765)
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/env python3 "@APP_DIR@/deploy/zorin/serve.py"
+Restart=on-failure
+RestartSec=3
+# 2 = 配信フォルダが無い、3 = ポート使用中。どちらも再試行しても直らないので止める
+RestartPreventExitStatus=2 3
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target

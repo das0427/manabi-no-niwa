@@ -1,0 +1,400 @@
+/* 保護者画面: px 基準・白地・こげ茶の文字・控えめな線（DESINGN.md 10章） */
+.parent-root {
+  position: fixed;
+  inset: 0;
+  overflow: auto;
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.parent-root h1 {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 500;
+}
+
+.parent-root h2 {
+  font-size: 17px;
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.parent-root h3 {
+  font-size: 15px;
+  margin: 12px 0 4px;
+  font-weight: 500;
+}
+
+.parent-root button,
+.parent-root select,
+.parent-root input,
+.parent-root textarea {
+  font: inherit;
+  font-size: 14px;
+}
+
+.parent-root button {
+  padding: 5px 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, var(--white));
+  border-radius: 4px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.parent-root button:hover:not(:disabled) {
+  background: var(--paper-2);
+}
+
+.parent-root button:disabled {
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.parent-root button:focus-visible,
+.parent-root select:focus-visible,
+.parent-root input:focus-visible,
+.parent-root textarea:focus-visible {
+  outline: 2px solid var(--sky-dark);
+  outline-offset: 1px;
+}
+
+.parent-root .p-primary {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
+
+.parent-root .p-primary:hover:not(:disabled) {
+  background: var(--ink);
+}
+
+.parent-root .p-danger {
+  border-color: var(--berry);
+  color: var(--berry);
+}
+
+.parent-root textarea {
+  width: 100%;
+  max-width: 640px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--ink) 40%, var(--white));
+  border-radius: 4px;
+}
+
+.p-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+}
+
+.p-header__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.p-profile-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p-avatar {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+
+.p-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+  overflow-x: auto;
+}
+
+.parent-root .p-tabs button {
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.parent-root .p-tabs button.is-current {
+  border-bottom-color: var(--ink);
+  font-weight: 500;
+}
+
+.p-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 20px 60px;
+}
+
+.p-section {
+  margin: 20px 0;
+}
+
+.p-note {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: var(--paper);
+  border-left: 3px solid color-mix(in srgb, var(--ink) 30%, var(--white));
+  font-size: 13px;
+}
+
+.p-muted {
+  color: var(--ink-soft);
+}
+
+.p-small {
+  font-size: 13px;
+}
+
+.p-error {
+  color: var(--berry);
+}
+
+.p-alert {
+  margin: 12px 0;
+  padding: 10px 14px;
+  border: 1px solid var(--berry);
+  background: color-mix(in srgb, var(--berry) 12%, var(--white));
+  color: var(--ink);
+}
+
+.p-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.p-table th,
+.p-table td {
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.p-table thead th {
+  white-space: nowrap;
+  background: var(--paper);
+  font-weight: 500;
+}
+
+.p-table--compact {
+  width: auto;
+}
+
+.p-table .is-current td {
+  background: var(--paper);
+}
+
+.p-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--paper-2);
+  font-size: 12px;
+}
+
+.p-badge--hard {
+  background: color-mix(in srgb, var(--sun) 35%, var(--white));
+  color: var(--ink);
+}
+
+.p-badge--idle {
+  margin-left: 0;
+  background: color-mix(in srgb, var(--sky) 30%, var(--white));
+  color: var(--ink);
+}
+
+.p-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.p-row--end {
+  justify-content: flex-end;
+}
+
+.p-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  max-width: 640px;
+}
+
+.p-field--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.p-checks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 4px 12px;
+  margin: 8px 0 0 20px;
+}
+
+.p-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.p-dialog {
+  width: min(480px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 18px 20px;
+  background: var(--white);
+  border-radius: 6px;
+  border: 2px solid var(--ink);
+}
+
+.p-dialog--wide {
+  width: min(560px, 92vw);
+}
+
+.p-dialog h3 {
+  margin-top: 0;
+  font-size: 17px;
+}
+
+.p-target {
+  margin: 4px 0 8px;
+  padding: 6px 10px;
+  background: var(--paper);
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.p-works,
+.p-profiles,
+.p-memos {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+}
+
+.p-works {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.p-works > li {
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+  border-radius: 6px;
+}
+
+.p-work__thumb {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 8px;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.p-work__big {
+  width: min(440px, 80vw);
+  height: min(440px, 60vh);
+  margin: 0 auto;
+  background: var(--paper);
+}
+
+.p-work__title {
+  font-weight: 500;
+}
+
+.p-profiles > li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+  flex-wrap: wrap;
+}
+
+.p-profile__name {
+  min-width: 160px;
+  font-weight: 500;
+}
+
+.p-profile__edit {
+  flex: 1;
+}
+
+.p-avatars {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+
+.p-avatars label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.p-avatars label.is-on {
+  border-color: var(--ink);
+  background: var(--paper);
+}
+
+.p-avatars .p-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.p-memos > li {
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 22%, var(--white));
+}
+
+.p-memo__date {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.p-memo__text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.p-badge {
+  white-space: nowrap;
+}

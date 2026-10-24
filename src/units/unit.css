@@ -17,7 +17,8 @@
 }
 .unit__work {
   position: absolute;
-  top: calc(var(--u) * 15);
+  /* 問題文が2行以上のときは問題文の下から（--prompt-bottom は UnitRunner が測る） */
+  top: max(calc(var(--u) * 15), calc(var(--prompt-bottom, 0px) + var(--u)));
   /* 下の帯（14u）: ヒント・つぎへ・誤答の説明の吹き出し。作業領域と重ならない */
   bottom: calc(var(--u) * 14);
   left: calc(var(--u) * 4);

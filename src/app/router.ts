@@ -43,7 +43,8 @@ export function parseHash(hash: string): Route {
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
   if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
   if (a === 'legacy' && b && UNIT_ID.test(b))
-    return c && /^[a-z0-9-]+$/.test(c)
+    // v1 の遊び方の id は formula_add のように _ を含む
+    return c && /^[a-z0-9_-]+$/.test(c)
       ? { name: 'legacy', unitId: b, variantId: c }
       : { name: 'legacy', unitId: b };
   if (a === 'card' && b && c && /^(p23|p4|p5)$/.test(b) && /^[a-z0-9-]+$/.test(c))

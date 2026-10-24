@@ -452,6 +452,21 @@ export function UnitRound({
     [item, misText, say, ux.softJudgement, s.phase],
   );
 
+  // 問題文が2行以上になったら、作業領域をその下から始める（なぞり盤などと重ならないように）
+  const rootRef = useRef<HTMLDivElement>(null);
+  const promptRef = useRef<HTMLDivElement>(null);
+  const isDone = s.phase === 'done';
+  useEffect(() => {
+    const root = rootRef.current;
+    const p = promptRef.current;
+    if (!root || !p || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      root.style.setProperty('--prompt-bottom', `${p.offsetTop + p.offsetHeight}px`);
+    });
+    ro.observe(p);
+    return () => ro.disconnect();
+  }, [isDone]);
+
   if (s.phase === 'done')
     return (
       <UnitDone
@@ -468,6 +483,7 @@ export function UnitRound({
   const Engine = item ? engineOf(item).Component : null;
   return (
     <div
+      ref={rootRef}
       className="screen unit"
       data-testid={`unit-${unit.id}`}
       data-phase={s.phase}
@@ -480,7 +496,7 @@ export function UnitRound({
         onListen={() => say([promptText])}
         canListen={promptText !== '' && support.readAloud !== 'off'}
       />
-      <div className="unit__prompt" data-testid="prompt-text">
+      <div ref={promptRef} className="unit__prompt" data-testid="prompt-text">
         <Rt text={promptText} ctx={ctx} />
       </div>
 

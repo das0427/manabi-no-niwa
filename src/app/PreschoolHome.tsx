@@ -2,9 +2,16 @@
  * 幼児ホーム（2〜3歳・4歳・5歳。ux-by-age 2.1）: 左に札の 3×3（位置は固定）、右に おえかき・がんばりノート。
  * 2歳段階は札4枚（2×2）・おすすめなし（review-1 #23）。保護者向けの案内は起動画面で出す。
  */
-import type { CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { audio } from '../core/audio/index';
-import type { HomeCard, PreschoolHomeDef } from '../curriculum/preschoolHome';
+import * as db from '../core/storage/index';
+import { MODE_IDS } from '../core/types';
+import {
+  recommendCards,
+  type CardRec,
+  type HomeCard,
+  type PreschoolHomeDef,
+} from '../curriculum/preschoolHome';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
 import { useApp } from './AppState';
@@ -27,10 +34,15 @@ export function cardUnits(card: HomeCard, opened: readonly string[] = []): strin
   });
 }
 
-function TwoLine({ text }: { text: string }) {
+/** v1 のモード名の札は v1 と同じ目印（既存の E2E と保護者の手順書の互換） */
+function cardTestId(id: string): string {
+  return (MODE_IDS as readonly string[]).includes(id) ? `home-mode-${id}` : `home-card-${id}`;
+}
+
+function TwoLine({ text, className = 'home-card__name' }: { text: string; className?: string }) {
   const [a, ...rest] = text.split(' ');
   return (
-    <span className="home-card__name">
+    <span className={className}>
       {a}
       {rest.length ? <br /> : null}
       {rest.join('')}
@@ -53,6 +65,36 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
       }
     : undefined;
 
+  // きょうの おすすめ（2歳段階は出さない: review-1 #23）
+  const [recs, setRecs] = useState<CardRec[]>([]);
+  const settings = app.settings;
+  useEffect(() => {
+    if (stage2 || !settings) return;
+    let alive = true;
+    void (async () => {
+      const d = new Date();
+      const start = new Date(d);
+      start.setHours(0, 0, 0, 0);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const rounds = await db.listRounds(profile.id, { since: start.getTime() - 30 * 86400000 });
+      const shown = cards.filter((c) => cardUnits(c, settings.unitsOpened).length > 0);
+      const r = recommendCards({
+        cards: shown,
+        today: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+        todayStart: start.getTime(),
+        rounds,
+        favorites: app.favorites,
+        legacyModeOf: (u) => unitMeta(u)?.legacy?.modeId,
+        domainOf: (c) => unitMeta(c.units[0]!)?.subject ?? c.id,
+      });
+      if (alive) setRecs(r);
+    })();
+    return () => {
+      alive = false;
+    };
+    // cards は def と stage2 で決まる
+  }, [profile.id, settings, app.favorites, def, stage2]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const open = (c: HomeCard) => {
     const units = cardUnits(c, app.settings?.unitsOpened);
     if (c.titleVoice) void audio.play(c.titleVoice);
@@ -61,7 +103,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
   };
 
   return (
-    <div className="screen home" data-testid={`preschool-home-${def.stage}`}>
+    <div className="screen home" data-testid="home" data-stage={def.stage}>
       <div className="home-top">
         <div className="home-profile">
           <Illust id={profile.avatar} className="home-profile__avatar" decorative />
@@ -81,7 +123,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
               className="home-card"
               aria-label={c.title.replace(/ /g, '')}
               onClick={() => open(c)}
-              data-testid={`home-card-${c.id}`}
+              data-testid={cardTestId(c.id)}
             >
               <Illust
                 id={c.icon}
@@ -99,6 +141,23 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
         )}
       </div>
       <aside className="home-side">
+        {stage2 ? null : <p className="label-text home-side__title">きょうの おすすめ</p>}
+        {recs.map((r) => {
+          const c = cards.find((x) => x.id === r.cardId)!;
+          return (
+            <button
+              key={c.id}
+              type="button"
+              className="home-rec"
+              aria-label={`おすすめ ${c.title.replace(/ /g, '')}`}
+              onClick={() => open(c)}
+              data-testid={`home-rec-${c.id}`}
+            >
+              <Illust id={c.icon} className="home-rec__illust" decorative />
+              <TwoLine text={c.title} className="home-rec__name" />
+            </button>
+          );
+        })}
         <button
           type="button"
           className="home-rec home-rec--note"

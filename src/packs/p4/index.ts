@@ -1,5 +1,6 @@
 /** 4歳（p4）の教材パック（curriculum-matrix 3.2・4.1）。v1 のモードを使う単元（legacy）と新しい単元 */
 import type { PackContent } from '../../curriculum/types';
+import { hiraganaClassic, lettersClassic, mathClassic } from './classic';
 import { compareUnit } from './compare';
 import { countPictures } from './count-pictures';
 import { firstSound } from './first-sound';
@@ -30,6 +31,9 @@ const pack: PackContent = {
     roadUnit,
     linesUnit,
     kanaTraceEarly,
+    hiraganaClassic,
+    mathClassic,
+    lettersClassic,
   ],
 };
 export default pack;

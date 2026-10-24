@@ -189,12 +189,17 @@ interface Scene {
   id: string;
   unit: string;
   times: boolean;
+  /** 1つ分（もとの数）の範囲（場面の現実感: 1台の バスに 487人 などを 出さない） */
+  minA: number;
+  maxA: number;
   text: (a: number, b: number) => string;
 }
 /** 文章題の場面（1つ分×いくつ分 5、何倍 3） */
 const SCENES: Scene[] = [
   {
     id: 'notebook',
+    minA: 0,
+    maxA: 999,
     unit: '円《えん》',
     times: false,
     text: (a, b) =>
@@ -202,6 +207,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'boxes',
+    minA: 0,
+    maxA: 999,
     unit: 'こ',
     times: false,
     text: (a, b) =>
@@ -209,6 +216,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'seats',
+    minA: 0,
+    maxA: 60,
     unit: '人《にん》',
     times: false,
     text: (a, b) =>
@@ -216,6 +225,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'pages',
+    minA: 0,
+    maxA: 60,
     unit: 'ページ',
     times: false,
     text: (a, b) =>
@@ -223,6 +234,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'ribbon',
+    minA: 0,
+    maxA: 999,
     unit: 'cm',
     times: false,
     text: (a, b) =>
@@ -230,6 +243,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'tape',
+    minA: 0,
+    maxA: 999,
     unit: 'cm',
     times: true,
     text: (a, b) =>
@@ -237,6 +252,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'weight',
+    minA: 100,
+    maxA: 999,
     unit: 'g',
     times: true,
     text: (a, b) =>
@@ -244,6 +261,8 @@ const SCENES: Scene[] = [
   },
   {
     id: 'savings',
+    minA: 0,
+    maxA: 999,
     unit: '円《えん》',
     times: true,
     text: (a, b) =>
@@ -253,7 +272,10 @@ const SCENES: Scene[] = [
 
 function word(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = SCENES[rng.int(0, SCENES.length - 1)]!;
-  const [a, b] = pick(rng, rng.next() < 0.5 ? 'carry' : 'three');
+  const kind =
+    sc.maxA < 100 ? 'carry' : sc.minA >= 100 ? 'three' : rng.next() < 0.5 ? 'carry' : 'three';
+  let [a, b] = pick(rng, kind);
+  while (a < sc.minA || a > sc.maxA) [a, b] = pick(rng, kind);
   const ans = a * b;
   return {
     engine: 'number',

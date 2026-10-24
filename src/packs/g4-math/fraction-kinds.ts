@@ -234,13 +234,13 @@ function toMixed(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: alt
       ? [
           `テープ 1本は ${den}こに 分けて あるよ。`,
-          `ぜんぶ ぬった テープは ${w}本。`,
-          `のこりの テープは ${den}こ中 ${r}こ ぬって あるね。`,
+          'ぜんぶ ぬった テープが 何本 あるか 数えよう。それが 整数の 部分。',
+          `のこりの テープは、${den}こに 分けた うちの いくつ分を ぬって あるかな。それが 分子だよ。`,
         ]
       : [
           `${F(den, den)}で 1に なるよ。`,
           `${num} ÷ ${den} を 考えよう。`,
-          `${num} ÷ ${den} ＝ ${w} あまり ${r}。商が 整数の 部分、あまりが 分子だよ。`,
+          `わり算の 商が 整数の 部分、あまりが 分子に なるよ。分母は ${den}の まま。`,
         ],
     explain: `${num} ÷ ${den} ＝ ${w} あまり ${r}なので、${F(num, den)} ＝ ${M(w, r, den)}です。`,
     explainFigure: barsFig(w, r, den),
@@ -421,8 +421,8 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     fixedOrder: true,
     hints: [
       '同じ 形に そろえて くらべよう。',
-      `${b}を 仮分数に すると、${den} × ${w} ＋ ${r}。`,
-      `${F(mixedVal, den)}と ${a}の 分子を くらべよう。`,
+      `${b}を 仮分数に なおそう。整数の ${w}は ${F(1, den)}が いくつ分かな。`,
+      `${den} × ${w} ＋ ${r}を 計算して、${a}の 分子の ${num}と くらべよう。`,
     ],
     explain: `${b} ＝ ${F(mixedVal, den)}。${cmp === 0 ? '同じ 大きさです。' : `${cmp > 0 ? a : b}の ほうが 大きいです。`}`,
     identity: `compare:${num}/${den}:${w}-${r}${alt ? ':line' : ''}`,

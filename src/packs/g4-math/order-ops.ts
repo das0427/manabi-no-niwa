@@ -134,12 +134,75 @@ function makeExpr(
     const ts = tokens(tpl, vals);
     const v = evalTok(ts, 'std');
     if (v === null) continue;
-    const l = evalTok(ts, 'ltr');
     const n = obj === 'muldiv' ? null : evalTok(ts, 'nop');
-    if (obj !== 'paren' && l === v) continue;
+    // （ ）の 問題だけ「（ ）を 無視しても 同じ答え」を外す。muldiv・mixed は 左から 計算しても 同じに なる
+    // 型（a × b ＋ c など）も 出す（「×÷は いつも 後ろに ある」と 覚えないように。レビュー 中-C）
     if (obj === 'paren' && n === v) continue;
+    // ヒント②（まず ○ ＝ □）の 数が 答えと 同じに ならない
+    if (solveSteps(ts)[0]!.v === v) continue;
     return { ts, v, tpl };
   }
+}
+
+/** 正しい順序で 1つずつ 計算した 手順（式の 部分・その 答え） */
+function solveSteps(ts0: Tok[]): { part: Tok[]; v: number }[] {
+  const steps: { part: Tok[]; v: number }[] = [];
+  let ts = [...ts0];
+  for (let guard = 0; guard < 10 && ts.length > 1; guard++) {
+    const open = ts.indexOf('(');
+    if (open >= 0) {
+      const close = ts.indexOf(')', open);
+      const inner = ts.slice(open + 1, close);
+      if (inner.length <= 3) {
+        const v = evalTok(inner, 'std')!;
+        steps.push({ part: inner, v });
+        ts = [...ts.slice(0, open), v, ...ts.slice(close + 1)];
+        continue;
+      }
+      // （ ）の 中に 計算が 2つ 以上: 中だけ 1つ 進める
+      const sub = solveSteps(inner)[0]!;
+      const k = indexOfPart(inner, sub.part);
+      ts = [
+        ...ts.slice(0, open + 1),
+        ...inner.slice(0, k),
+        sub.v,
+        ...inner.slice(k + 3),
+        ...ts.slice(close),
+      ];
+      steps.push(sub);
+      continue;
+    }
+    let k = ts.findIndex((t) => t === '×' || t === '÷');
+    if (k < 0) k = ts.findIndex((t) => t === '+' || t === '-');
+    const part = ts.slice(k - 1, k + 2);
+    const v = evalTok(part, 'std')!;
+    steps.push({ part, v });
+    ts = [...ts.slice(0, k - 1), v, ...ts.slice(k + 2)];
+  }
+  return steps;
+}
+
+function indexOfPart(ts: Tok[], part: Tok[]): number {
+  for (let i = 0; i + part.length <= ts.length; i++)
+    if (part.every((p, j) => ts[i + j] === p)) return i;
+  return 0;
+}
+
+/** ヒント③: 2つめの 計算を（答えは 言わずに）示す */
+function nextStepHint(ts: Tok[]): string {
+  const st = solveSteps(ts);
+  if (st.length < 2) return 'のこりを 計算しよう。';
+  const second = st[1]!;
+  return st.length === 2
+    ? `つぎに ${showExpr(second.part)} を 計算しよう。`
+    : `つぎに ${showExpr(second.part)} を 計算しよう。かけ算・わり算が のこって いたら 先に、さいごに たし算・ひき算だよ。`;
+}
+
+/** 解説: ぜんぶの 手順 */
+function allSteps(ts: Tok[]): string {
+  return solveSteps(ts)
+    .map((s, i) => `${['①', '②', '③', '④'][i] ?? ''} ${showExpr(s.part)} ＝ ${s.v}`)
+    .join('、');
 }
 
 /** 計算の順序の文 */
@@ -176,8 +239,8 @@ function calc(
       ? 'どこから 計算するか 考えて、答えを 求めよう。（計算する 順に 番号を つけると わかりやすいよ）'
       : '計算しよう。',
     figure: expr(`${e} ＝ {{}}`),
-    hints: [ORDER_HINT, firstStep(ts), 'のこりを 左から 計算しよう。'],
-    explain: `${firstStep(ts)}${ORDER_HINT} ${e} ＝ ${v}`,
+    hints: [ORDER_HINT, firstStep(ts), nextStepHint(ts)],
+    explain: `${ORDER_HINT} ${allSteps(ts)}。${e} ＝ ${v}`,
     identity: alt ? `${e}:order` : e,
     alt,
     fields: [{ answer: answers[0]! }],
@@ -206,7 +269,7 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
         ans: c,
         w: [[a - b, 'distrib-partial']],
       },
-      { e: `${a} × ${b} × ${c} ＝ ${a} × （${b} × □）`, ans: c, w: [[b * c, 'assoc-add']] },
+      { e: `${a} × ${b} × ${c} ＝ ${a} × （${b} × □）`, ans: c, w: [[b * c, 'blank-product']] },
     ] as const;
     const f = forms[kind]!;
     const answers = [{ kind: 'int' as const, value: f.ans }];
@@ -295,7 +358,14 @@ function rules(level: number, rng: Rng, alt: boolean): NumberItem {
       kind <= 1
         ? 'かけ算だけの 式は、かける 順を かえても よいよ。100や 1000に なる 組を さがそう。'
         : '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □ の きまりを 使おう。',
-      f.how.split('、')[0]!,
+      [
+        f.how.split('、')[0]!,
+        f.how.split('、')[0]!,
+        '99 ＝ 100 − 1 と 考えよう。',
+        '102 ＝ 100 ＋ 2 と 考えよう。',
+        `どちらも ${a}を かけて いるね。かける 数を まとめよう。`,
+        `どちらも ${a}を かけて いるね。かける 数を まとめよう。`,
+      ][kind]!,
       f.how,
     ],
     explain: `${f.how} ＝ ${f.v}。`,
@@ -610,6 +680,11 @@ export const orderOps: UnitSpec = finishUnit({
       id: 'assoc-add',
       explain:
         'かけ算の 式の とちゅうを たし算に して しまったのかな。かける 順を かえても、ぜんぶ かけ算の ままだよ。',
+    },
+    {
+      id: 'blank-product',
+      explain:
+        '□に かけ算の 答えを 書いたのかな。□には、かける 数を 1つ 入れるよ。左の 式と くらべて みよう。',
     },
     {
       id: 'distrib-partial',

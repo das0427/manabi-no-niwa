@@ -65,10 +65,12 @@ function classify(level: number, rng: Rng, alt: boolean): ChoiceItem | GeometryI
       [b + 1, 0],
       [b + 2, h],
     ];
+    // たての辺が 横の辺と 同じ長さだと 直角二等辺三角形に なってしまうので、ずらす
+    const h2 = h + 1 === b ? h + 2 : h + 1;
     const sc2: Pt[] = [
       [0, 0],
       [b, 0],
-      [0, h + 1],
+      [0, h2],
     ];
     return {
       engine: 'geometry',
@@ -133,7 +135,7 @@ function classify(level: number, rng: Rng, alt: boolean): ChoiceItem | GeometryI
       kind === 'iso'
         ? `${s[0]}cmの 辺《へん》が 2つ あるので ${ISO}です。`
         : kind === 'eq'
-          ? `3つの 辺《へん》が みんな ${s[0]}cmなので ${EQ}です。`
+          ? `3つの 辺《へん》が みんな ${s[0]}cmなので ${EQ}です。（2つの 辺《へん》も 等《ひと》しいので ${ISO}の なかまでも ありますが、3つとも 等《ひと》しい ときは ${EQ}と 答《こた》えます。）`
           : '等《ひと》しい 長《なが》さの 辺《へん》が ないので、どちらでも ありません。',
     identity: `sides:${sorted}`,
     alt: false,

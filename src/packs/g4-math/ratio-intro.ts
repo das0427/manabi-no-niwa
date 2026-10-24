@@ -21,7 +21,7 @@ interface Scene {
 }
 const SCENES: Scene[] = [
   { id: 'ribbon', a: '青い リボン', b: '赤い リボン', u: 'cm', step: 5 },
-  { id: 'plant', a: 'ひまわりの 先週の 高さ', b: 'ひまわりの 今週の 高さ', u: 'cm', step: 2 },
+  { id: 'plant', a: 'ひまわりの 1か月前の 高さ', b: 'ひまわりの いまの 高さ', u: 'cm', step: 2 },
   { id: 'price', a: 'えんぴつの ねだん', b: 'ノートの ねだん', u: '円', step: 10 },
   { id: 'water', a: '小さい 水とうに 入る 水', b: '大きい 水そうに 入る 水', u: 'dL', step: 1 },
   { id: 'book', a: 'きのう 読んだ ページ', b: 'きょう 読んだ ページ', u: 'ページ', step: 3 },
@@ -111,7 +111,8 @@ const C_SCENES = [
 function compare(level: number, rng: Rng, alt: boolean): Item {
   const sc = pick(rng, C_SCENES);
   for (;;) {
-    const a1 = rng.int(1, 6) * 10;
+    // アと イは 同じ 範囲から（正解が かたよらないように）
+    const a1 = rng.int(1, 9) * 10;
     const n1 = rng.int(2, 5);
     const a2 = rng.int(1, 9) * 10;
     const n2 = rng.int(2, 5);

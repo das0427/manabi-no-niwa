@@ -92,15 +92,15 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         prompt: '□に あてはまる 数《かず》は？',
         figure: {
           kind: 'text',
-          text: `${m}分《ぷん》${s}秒《びょう》 ＝ {{}}秒《びょう》`,
+          text: `${FUN(m)}${s}秒《びょう》 ＝ {{}}秒《びょう》`,
           size: 'xl',
         },
         hints: [
           '1分《ぷん》は 60秒《びょう》 だよ。',
-          `${m}分《ぷん》は ${m * 60}秒《びょう》。`,
+          `${FUN(m)}は ${m * 60}秒《びょう》。`,
           `${m * 60}秒《びょう》と ${s}秒《びょう》を あわせよう。`,
         ],
-        explain: `1分《ぷん》 ＝ 60秒《びょう》なので ${m}分《ぷん》 ＝ ${m * 60}秒《びょう》。${m * 60} ＋ ${s} ＝ ${v}で ${v}秒《びょう》です。`,
+        explain: `1分《ぷん》 ＝ 60秒《びょう》なので ${FUN(m)} ＝ ${m * 60}秒《びょう》。${m * 60} ＋ ${s} ＝ ${v}で ${v}秒《びょう》です。`,
         identity: `ms-s:${m}:${s}`,
         alt: false,
         fields: [{ label: '秒《びょう》', answer: { kind: 'int', value: v } }],
@@ -123,9 +123,9 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         hints: [
           '60秒《びょう》で 1分《ぷん》 だよ。',
           `${v}秒《びょう》の 中《なか》に 60秒《びょう》は いくつ あるかな。`,
-          `${m * 60}秒《びょう》で ${m}分《ふん》。のこりは？`,
+          '60秒《びょう》ずつ まとめよう。まとめた 数《かず》が 分《ふん》、のこりが 秒《びょう》。',
         ],
-        explain: `${v}秒《びょう》 ＝ ${m * 60}秒《びょう》 ＋ ${s}秒《びょう》 ＝ ${m}分《ふん》${s}秒《びょう》です。`,
+        explain: `${v}秒《びょう》 ＝ ${m * 60}秒《びょう》 ＋ ${s}秒《びょう》 ＝ ${FUN(m)}${s}秒《びょう》です。`,
         identity: `s-ms:${v}`,
         alt: false,
         fields: [

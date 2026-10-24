@@ -67,6 +67,155 @@ function extraChecks(unit: UnitSpec): string[] {
   return [...new Set(errs)];
 }
 
+/** 単元の items（items 形式の単元だけ） */
+function itemsOf(unitId: string) {
+  const u = pack.units.find((x) => x.id === unitId);
+  if (!u || u.source.kind !== 'items') throw new Error(`items の単元がない: ${unitId}`);
+  return u.source.items;
+}
+
+/** ふりがな《》を除いた地の文 */
+const plain = (s: string) => s.replace(/《[^》]*》/g, '').replace(/\s+/g, '');
+
+/**
+ * 正解の位置が並べ替えられない選択肢（fixedOrder）で、正解が一つの位置にかたよらないこと
+ * （位置で解けてしまう問題を防ぐ。content-review-g34 重大8・中-A）
+ */
+function fixedOrderBias(units: typeof pack.units): string[] {
+  const errs: string[] = [];
+  for (const unit of units) {
+    if (unit.status === 'planned') continue;
+    const pos: number[] = [];
+    for (const it of sampleItems(unit, 50))
+      if (
+        (it.engine === 'choice' || it.engine === 'reading') &&
+        'fixedOrder' in it &&
+        it.fixedOrder
+      )
+        pos.push(it.options.findIndex((o) => o.correct));
+    if (pos.length >= 3 && new Set(pos).size < 2)
+      errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0] + 1} 番目`);
+  }
+  return errs;
+}
+
+/**
+ * 小3以上は通常の文（curriculum-matrix 2.1）。分かち書きの残りを探す。
+ * 本文（詩の行・日記の見出し）・選択肢は見ない（ローマ字の2語の句は語の区切りに合わせて空白を残す）。
+ * 「」『』の中（引用）は空白を残してよい。
+ */
+function wakachiLeft(units: readonly UnitSpec[]): string[] {
+  const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
+  const errs = new Set<string>();
+  for (const unit of units) {
+    if (unit.status === 'planned') continue;
+    const texts = [
+      unit.title,
+      ...unit.intro.map((s) => s.text),
+      ...unit.misconceptions.map((m) => m.explain),
+      ...unit.objectives.map((o) => o.title),
+    ];
+    for (const it of sampleItems(unit, 50)) {
+      const x = it as { prompt?: string; hints?: string[]; explain?: string };
+      texts.push(x.prompt ?? '', ...(x.hints ?? []), x.explain ?? '');
+    }
+    for (const t of texts) {
+      const p = t.replace(/《[^》]*》/g, '').replace(/「[^「」]*」|『[^『』]*』/g, '「」');
+      if (ja.test(p)) errs.add(`${unit.id}: ${p.slice(0, 50)}`);
+    }
+  }
+  return [...errs];
+}
+
+describe('誤概念の説明と誤答の位置関係（content-review-g34 重大5・6）', () => {
+  it('fixedOrder の選択肢で正解の位置がかたよらない', () => {
+    expect(fixedOrderBias(pack.units)).toEqual([]);
+  });
+
+  it('modifiers: m-before は前の語、m-near はすぐ後ろの語、m-far は正解より後ろの語', () => {
+    const errs: string[] = [];
+    let n = 0;
+    const check = (
+      id: string,
+      text: string,
+      mod: string,
+      ans: string,
+      wrong: string,
+      m?: string,
+    ) => {
+      const t = plain(text);
+      const [im, ia, iw] = [plain(mod), plain(ans), plain(wrong)].map((s) => t.indexOf(s));
+      if (im < 0 || ia < 0 || iw < 0) return errs.push(`[${id}] 文の中に語がない: ${wrong}`);
+      if (m === 'm-before' && !(iw < im)) errs.push(`[${id}] m-before なのに後ろの語: ${wrong}`);
+      if (m === 'm-near' && iw !== im + plain(mod).length)
+        errs.push(`[${id}] m-near なのにすぐ後ろでない: ${wrong}`);
+      if (m === 'm-far' && !(iw > ia))
+        errs.push(`[${id}] m-far なのに正解より後ろでない: ${wrong}`);
+      if (m === 'm-near' || m === 'm-before' || m === 'm-far') n++;
+    };
+    for (const it of itemsOf('g3.ja.modifiers')) {
+      if (it.engine === 'choice' && it.id.startsWith('target:') && it.figure?.kind === 'text') {
+        const mod = /「(.+?)」が/.exec(plain(it.prompt))?.[1] ?? '';
+        const ans = it.options.find((o) => o.correct)?.label ?? '';
+        for (const o of it.options)
+          if (!o.correct) check(it.id, it.figure.text, mod, ans, o.label ?? '', o.misconception);
+      }
+      if (it.engine === 'match' && it.figure?.kind === 'text')
+        for (const w of it.wrongPairs ?? []) {
+          const [l, r] = w.pair;
+          const right = it.pairs.find(([pl]) => pl === l)?.[1] ?? -1;
+          check(
+            it.id,
+            it.figure.text,
+            it.left[l].label ?? '',
+            it.right[right]?.label ?? '',
+            it.right[r].label ?? '',
+            w.misconception,
+          );
+        }
+    }
+    expect(errs).toEqual([]);
+    expect(n).toBeGreaterThan(5);
+  });
+
+  it('reference-connectives: ペア取り違えの誤概念は、正解と誤答がそのペアのときだけ', () => {
+    const PAIRS: Record<string, string[]> = {
+      'rc-jun-gyaku': ['だから', 'しかし'],
+      'rc-tenka-sentaku': ['そのうえ', 'それとも'],
+      'rc-matome-rei': ['つまり', 'たとえば'],
+    };
+    const WORDS = new Set(Object.values(PAIRS).flat().concat(['すると', 'そして']));
+    const errs: string[] = [];
+    const check = (id: string, ans: string, wrong: string, m?: string) => {
+      const pair = m ? PAIRS[m] : undefined;
+      if (!pair || !WORDS.has(wrong)) return;
+      if (!pair.includes(ans) || !pair.includes(wrong))
+        errs.push(`[${id}] ${m} だが正解「${ans}」誤答「${wrong}」`);
+    };
+    for (const it of itemsOf('g3.ja.reference-connectives')) {
+      if (it.engine === 'fill')
+        for (const b of it.blanks)
+          for (const w of b.wrong ?? []) check(it.id, b.answers[0], w.value, w.misconception);
+      if (it.engine === 'choice' || it.engine === 'reading') {
+        const ans = it.options.find((o) => o.correct)?.label ?? '';
+        for (const o of it.options)
+          if (!o.correct) check(it.id, ans, o.label ?? '', o.misconception);
+      }
+    }
+    expect(errs).toEqual([]);
+  });
+
+  it('小3以上は通常の文: 日本語どうしの間の空白（文節分かち書き）がほとんどない', () => {
+    expect(wakachiLeft(pack.units)).toEqual([]);
+  });
+
+  it('write-reasons riyuu-match:anzen: 誤答の理由が「速い」でない（正解が2つにならない）', () => {
+    const it = itemsOf('g3.ja.write-reasons').find((x) => x.id === 'riyuu-match:anzen');
+    expect(it).toBeDefined();
+    expect(JSON.stringify(it)).not.toContain('速《はや》い');
+  });
+});
+
 describe('g3-ja の教材検査（curriculum-matrix 1.8）', () => {
   it('パックの形', () => {
     expect(pack.packId).toBe('g3-ja');

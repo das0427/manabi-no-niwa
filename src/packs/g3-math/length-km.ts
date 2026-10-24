@@ -97,7 +97,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       hints: [
         '1kmは 1000m だよ。',
         `${total}mの 中《なか》に 1000mは いくつ あるかな。`,
-        `${k * 1000}mで ${k}km。のこりは 何《なん》m？`,
+        '1000mずつ まとめよう。まとめた 数《かず》が km、のこりが m。',
       ],
       explain: `1km ＝ 1000m。${total}m ＝ ${k * 1000}m ＋ ${m}m ＝ ${k}km${m}mです。`,
       identity: `m-km:${total}`,
@@ -144,7 +144,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         hints: [
           '1000mで 1km だよ。',
           `${total}mの 中《なか》に 1000mは いくつ あるかな。`,
-          `${k * 1000}mで ${k}km。のこりは？`,
+          '1000mずつ まとめよう。まとめた 数《かず》が km、のこりが m。',
         ],
         explain: `${total}m ＝ ${k * 1000}m ＋ ${m}m ＝ ${k}km${m}mです。`,
         identity: `m-km:${total}`,
@@ -265,11 +265,50 @@ const UNIT_ITEMS: { id: string; text: string; n: number; u: 'mm' | 'cm' | 'm' | 
   { id: 'coin', text: '1円玉《いちえんだま》の 直径《ちょっけい》', n: 20, u: 'mm' },
 ];
 const UNIT_FACTS = [
-  { id: 'km', q: '1kmは 何《なん》mですか。', a: 1000, w: [[100, 'km-as-100']] },
-  { id: 'm', q: '1mは 何《なん》cmですか。', a: 100, w: [[1000, 'unit-sense']] },
-  { id: 'cm', q: '1cmは 何《なん》mmですか。', a: 10, w: [[100, 'unit-sense']] },
-  { id: '2km', q: '2kmは 何《なん》mですか。', a: 2000, w: [[200, 'km-as-100']] },
-  { id: '5km', q: '5kmは 何《なん》mですか。', a: 5000, w: [[500, 'km-as-100']] },
+  {
+    id: 'km',
+    q: '1kmは 何《なん》mですか。',
+    h: [
+      'km の k（キロ）は、もとの たんいの 何倍《なんばい》を あらわすかな。',
+      '1kmは、100mの 10こ分《ぶん》。',
+    ],
+    a: 1000,
+    w: [[100, 'km-as-100']],
+  },
+  {
+    id: 'm',
+    q: '1mは 何《なん》cmですか。',
+    h: [
+      '1mの ものさしを 思《おも》い出《だ》そう。',
+      '1mの ものさしには、10cmの まとまりが 10こ あるよ。',
+    ],
+    a: 100,
+    w: [[1000, 'unit-sense']],
+  },
+  {
+    id: 'cm',
+    q: '1cmは 何《なん》mmですか。',
+    h: [
+      'ものさしの 1cmの 中《なか》の 小《ちい》さい めもりを 思《おも》い出《だ》そう。',
+      '1cmの 中《なか》に、1mmの めもりは いくつ あるかな。',
+    ],
+    a: 10,
+    w: [[100, 'unit-sense']],
+  },
+  {
+    id: '2km',
+    q: '2kmは 何《なん》mですか。',
+    h: ['まず 1kmが 何《なん》mか 思《おも》い出《だ》そう。', '2kmは 1kmの 2こ分《ぶん》。'],
+    a: 2000,
+    w: [[200, 'km-as-100']],
+  },
+  {
+    id: '5km',
+    q: '5kmは 何《なん》mですか。',
+    h: ['まず 1kmが 何《なん》mか 思《おも》い出《だ》そう。', '5kmは 1kmの 5こ分《ぶん》。'],
+    a: 5000,
+    w: [[500, 'km-as-100']],
+  },
 ] as const;
 
 function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberItem {
@@ -281,11 +320,7 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
       objective: 'unit',
       level,
       prompt: f.q,
-      hints: [
-        '長《なが》さの たんいの かんけいを 思《おも》い出《だ》そう。',
-        '1km ＝ 1000m、1m ＝ 100cm、1cm ＝ 10mm。',
-        'km の k は「1000」の いみだよ。',
-      ],
+      hints: ['長《なが》さの たんいの かんけいを 思《おも》い出《だ》そう。', ...f.h],
       explain: `1km ＝ 1000m、1m ＝ 100cm、1cm ＝ 10mm。答《こた》えは ${f.a}です。`,
       identity: `fact:${f.id}`,
       alt: true,

@@ -165,7 +165,7 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem {
     id: `read${alt ? '-alt' : ''}:${d.id}:${vals.join(',')}:${i}`,
     objective: 'read',
     level,
-    prompt: `${d.labels[i]}の ${d.id === 'plant' ? 'たけ' : d.id === 'puppy' ? '体重' : '温度'}は 何${d.unit}ですか。`,
+    prompt: `${d.labels[i]}の ${({ plant: 'たけ', puppy: '体重', body: '体温', temp: '気温', month: '気温' } as Record<string, string>)[d.id] ?? '温度'}は 何${d.unit}ですか。`,
     hints: [
       alt
         ? `たての じくは ${d.min}${d.unit}から 始まって いるよ（とちゅうを 省いて いる しるしが あるね）。`
@@ -244,7 +244,9 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
   const others = diffs.map((_, j) => j).filter((j) => j !== k && j !== highSpan && j !== minD);
   const wrongs: [string, string][] = [];
   if (highSpan !== k) wrongs.push([span(highSpan), 'value-not-change']);
-  if (minD !== k && minD !== highSpan) wrongs.push([span(minD), 'down-vs-up']);
+  // 右下がりの 区間だけ down-vs-up（横ばい・右上がりは かたむきの 読みちがい）
+  if (minD !== k && minD !== highSpan)
+    wrongs.push([span(minD), diffs[minD]! < 0 ? 'down-vs-up' : 'slope-read']);
   for (const j of rng.shuffle(others)) wrongs.push([span(j), 'slope-read']);
   return {
     engine: 'graph',

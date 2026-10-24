@@ -243,8 +243,8 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `compound-alt:${W}x${H}:${r}`,
       objective: 'compound',
       level,
-      prompt: `たて ${H}m、横 ${W}mの 花だんの まわりに、はば ${r}mの 道が あります（色の 部分）。道の 面積は 何m²ですか。`,
-      figure: svg(W * k + 50, H * k + 40, body, '花だんと まわりの 道'),
+      prompt: `たて ${H}m、横 ${W}mの 長方形の 土地の 内がわに そって、はば ${r}mの 道を つけました（色の 部分）。のこりは 花だんです。道の 面積は 何m²ですか。`,
+      figure: svg(W * k + 50, H * k + 40, body, '長方形の 土地と、内がわの まわりの 道'),
       hints: [
         '大きい 長方形から、中の 長方形を ひくと 求められるよ。',
         `中の 長方形の たては ${H} − ${r} × 2、横は ${W} − ${r} × 2。`,
@@ -323,8 +323,8 @@ function units(level: number, rng: Rng, alt: boolean): Item {
       prompt: `${th.t}を 表すのに ちょうど よい 単位は どれ？`,
       hints: [
         '1cm²は 指先くらい、1m²は 新聞紙を 2まい ならべたくらいの 広さだよ。',
-        '1aは 1辺 10mの 正方形、1haは 1辺 100mの 正方形の 広さ。',
-        '1km²は 1辺 1kmの 正方形の 広さだよ。',
+        '1aは 1辺 10m、1haは 1辺 100m、1km²は 1辺 1kmの 正方形の 広さ。',
+        'その 広さを 正方形に したら、1辺は 何cm・何m・何kmくらいかな。いちばん 近い 単位を さがそう。',
       ],
       explain: `${th.t}は ${th.u}で 表すと ちょうど よいです。`,
       identity: `units-pick:${th.t}`,

@@ -43,7 +43,7 @@ function tens(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: [
       '10の まとまりで 考えよう。',
       `${a}は 10が ${k}こ、${d}は 10が ${m}こ。${k} ÷ ${m}を 考えるよ。`,
-      `${k} ÷ ${m} ＝ ${q} あまり ${k % m}。あまりは 10が いくつ分かな。`,
+      `${m}の だんで ${k}を こえない いちばん 大きい 数を さがそう。あまりは 10が いくつ分かな。`,
     ],
     explain: `10の まとまりで ${k} ÷ ${m} ＝ ${q} あまり ${k % m}。あまりは 10が ${k % m}こなので ${r}。${a} ÷ ${d} ＝ ${q}${r ? ` あまり ${r}` : ''}です。`,
     identity: `${a}÷${d}${alt ? ':coin' : ''}`,
@@ -206,10 +206,8 @@ function rule(level: number, rng: Rng, alt: boolean): Item {
     figure: expr(`${a} ÷ ${d}`),
     hints: [
       `わられる数と わる数の 0を ${z}こずつ 消して、${A} ÷ ${D}で 考えよう。`,
-      `${A} ÷ ${D} ＝ ${q}${rr ? ` あまり ${rr}` : ''}。`,
-      rr
-        ? `あまりは、消した 0を もどして 考えるよ。${rr}の 後ろに 0を ${z}こ。`
-        : 'わりきれたね。商は そのまま。',
+      `${A} ÷ ${D}の 商と あまりを 出そう。商は そのまま 答えの 商だよ。`,
+      'あまりが 出たら、消した 0を もどして 考えるよ。',
     ],
     explain: `${A} ÷ ${D} ＝ ${q}${rr ? ` あまり ${rr}` : ''}。${rr ? `あまりは ${zeros.length === 1 ? '10' : '100'}の まとまりが ${rr}こなので ${r}。` : ''}${a} ÷ ${d} ＝ ${q}${r ? ` あまり ${r}` : ''}。（たしかめ: ${d} × ${q}${r ? ` ＋ ${r}` : ''} ＝ ${a}）`,
     identity: `rule:${a}÷${d}`,
@@ -356,12 +354,12 @@ const SCENES: Scene[] = [
     unit: 'パック',
   },
   {
-    id: 'page',
+    id: 'ribbon',
     type: 'down',
     text: (a, d) =>
-      `${a}ページの 本を 毎日 ${d}ページずつ 読みます。${d}ページ 読める 日は 何日 ありますか。`,
+      `リボンが ${a}cm あります。${d}cm 使って かざりを 1こ 作ります。かざりは 何こ 作れますか。`,
     labels: ['', ''],
-    unit: '日',
+    unit: 'こ',
   },
 ];
 
@@ -406,7 +404,13 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
   if (sc.type === 'tobun' || sc.type === 'hogan')
     return {
       ...base,
-      hints: [h1, `式は ${a} ÷ ${d}。`, `${stepTexts(a, d)[0]}。のこりの 位も わろう。`],
+      hints: [
+        h1,
+        `式は ${a} ÷ ${d}。`,
+        q >= 10
+          ? `上から 2けたの ${String(a).slice(0, 2)}を ${d}で わって、十の位に 商を たてよう。のこりの 位も 同じように わろう。`
+          : `商は 1けた。${d}を ${Math.round(d / 10) * 10}と みて 見当を つけ、${d} × □が ${a}を こえない いちばん 大きい □を さがそう。`,
+      ],
       explain: `${a} ÷ ${d} ＝ ${q} あまり ${r}。${sc.labels[0]} ${q}、あまり ${r}です。`,
       fields: [
         { label: sc.labels[0], answer: { kind: 'int', value: q } },
@@ -420,10 +424,8 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     ...base,
     hints: [
       h1,
-      `式は ${a} ÷ ${d} ＝ ${q} あまり ${r}。`,
-      sc.type === 'up'
-        ? `あまりの ${r}の 分にも もう1つ いるね。`
-        : `あまりの ${r}では ${d}に たりないね。`,
+      `式は ${a} ÷ ${d}。商と あまりを 出そう。`,
+      sc.type === 'up' ? 'あまりの 分にも もう1つ いるね。' : `あまりの 分では ${d}に たりないね。`,
     ],
     explain:
       sc.type === 'up'

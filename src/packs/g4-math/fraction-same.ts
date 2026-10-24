@@ -173,9 +173,7 @@ function calc(obj: Exclude<Obj, 'story'>, level: number, rng: Rng, alt: boolean)
         ? `どの 数も [[1/${q.d}]]の いくつ分かで 表せるよ。`
         : '分母が 同じなので、分母は そのままで 計算するよ。',
       steps,
-      q.op === 'add'
-        ? `[[1/${q.d}]]が ${q.a + q.b}こ。${form === 'mixed' ? '帯分数に なおそう。' : form === 'improper' ? '仮分数の まま 書こう。' : ''}`
-        : `[[1/${q.d}]]が ${q.a} − ${q.b} ＝ ${v}こ。${form === 'mixed' ? '帯分数に なおそう。' : ''}`,
+      `${q.op === 'add' ? 'あわせて' : 'のこりは'} [[1/${q.d}]]が いくつ分かを 数えて、それを 分子に しよう。${form === 'mixed' ? '帯分数に なおそう。' : form === 'improper' ? '仮分数の まま 書こう。' : ''}`,
     ],
     explain: `${exprText(q)} ＝ ${show(v, q.d, form === 'improper' ? 'improper' : 'mixed')}${v > q.d && v % q.d !== 0 ? `（${show(v, q.d, form === 'improper' ? 'mixed' : 'improper')}）` : ''}。分母は そのままで、分子どうしを ${sym === '＋' ? 'たします' : 'ひきます'}。`,
     identity: `${keyOf(q)}${alt ? ':unit' : ''}`,

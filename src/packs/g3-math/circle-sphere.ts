@@ -252,10 +252,7 @@ function apply(level: number, rng: Rng, alt: boolean): NumberItem {
       identity: `box-rev:${r}:${n}`,
       alt: true,
       fields: [{ label: 'cm', answer: { kind: 'int', value: r } }],
-      wrongAnswers: wrongList(String(r), 1, [
-        [d, 'radius-diameter-swap'],
-        [d * n - n, 'use-radius'],
-      ]),
+      wrongAnswers: wrongList(String(r), 1, [[d, 'radius-diameter-swap']]),
     };
   }
   const givenR = rng.next() < 0.6;
@@ -331,7 +328,7 @@ function sphere(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem 
         hints: [
           'はしの ほうを 切《き》ると、切《き》り口《くち》は 小《ちい》さいね。',
           'まん中《なか》に 近《ちか》いほど…',
-          '球《きゅう》の 中心《ちゅうしん》を とおる ところ。',
+          'ボールを ちょうど 半分《はんぶん》に 切《き》った ときの 切《き》り口《くち》を 思《おも》い出《だ》そう。',
         ],
         explain:
           '球《きゅう》の 中心《ちゅうしん》を とおるように 切《き》ると、切《き》り口《くち》が いちばん 大《おお》きい 円《えん》に なります。その 円《えん》の 半径《はんけい》・直径《ちょっけい》が 球《きゅう》の 半径《はんけい》・直径《ちょっけい》です。',

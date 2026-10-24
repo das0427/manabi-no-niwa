@@ -49,7 +49,8 @@ function numItem(
 }
 
 function zero(level: number, rng: Rng, alt: boolean): NumberItem {
-  const a = rng.int(0, 10);
+  // 玉入れの場面（alt）では「0こ 入りました」に ならないよう 1こ以上
+  const a = rng.int(alt ? 1 : 0, 10);
   const first = alt || rng.next() < 0.5; // 0 × a
   const expr = first ? `0 × ${a}` : `${a} × 0`;
   const key = first ? `0x${a}` : `${a}x0`;
@@ -96,7 +97,10 @@ function ten(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'ten',
     level,
     identity: key,
-    explain: `${expr} ＝ ${a * 10}。10の かけ算《ざん》の 答《こた》えは、${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。${a} × 9 ＝ ${a * 9} より ${a} 大《おお》きい とも 考《かんが》えられます。`,
+    // 10 × a は「10が aこ」、a × 10 は「a × 9 より a 大きい」で説明する（交換の きまりは 後の 到達項目）
+    explain: first
+      ? `${expr} ＝ ${a * 10}。10 × ${a} は 10が ${a}こ分《ぶん》。10の まとまりが ${a}こで ${a * 10}です。答《こた》えは ${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。`
+      : `${expr} ＝ ${a * 10}。10の かけ算《ざん》の 答《こた》えは、${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。${a} × 9 ＝ ${a * 9} より ${a} 大《おお》きい とも 考《かんが》えられます。`,
     value: a * 10,
     wrong: [[a + 10, 'ten-add'] as [number, string], [a * 100, 'ten-zeros'] as [number, string]],
   };
@@ -113,11 +117,17 @@ function ten(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `ten:${key}`,
     prompt: '計算《けいさん》しよう。',
     figure: { kind: 'text', text: `${expr} ＝ {{}}`, size: 'xl' },
-    hints: [
-      '10の かけ算《ざん》だね。',
-      `${a} × 9 の 答《こた》えを 思《おも》い出《だ》そう。`,
-      `${a} × 9 ＝ ${a * 9}。かける数《かず》が 1 ふえると、答《こた》えは ${a} ふえるよ。`,
-    ],
+    hints: first
+      ? [
+          '10の かけ算《ざん》だね。',
+          `10 × ${a} は、10が ${a}こ分《ぶん》。`,
+          '10の まとまりが いくつ あるかを 考《かんが》えよう。',
+        ]
+      : [
+          '10の かけ算《ざん》だね。',
+          `${a} × 9 の 答《こた》えを 思《おも》い出《だ》そう。`,
+          `${a} × 9 ＝ ${a * 9}。かける数《かず》が 1 ふえると、答《こた》えは ${a} ふえるよ。`,
+        ],
     alt: false,
   });
 }

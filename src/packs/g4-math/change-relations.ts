@@ -390,7 +390,7 @@ function formula(level: number, rng: Rng, alt: boolean): Item {
       fields: [{ answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [sc.f(xs[0]!, k), 'first-pair'],
-        [target * 2, 'half-perimeter'],
+        [sc.id === 'rope' ? target * 2 : null, 'half-perimeter'],
       ]),
     };
     return item;

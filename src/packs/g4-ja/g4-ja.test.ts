@@ -58,6 +58,75 @@ function extraChecks(unit: UnitSpec): string[] {
   return [...new Set(errs)];
 }
 
+/**
+ * 小3以上は通常の文（curriculum-matrix 2.1）。分かち書きの残りを探す。
+ * 本文（詩の行・日記の見出し）・選択肢は見ない。「」『』の中（引用・詩の引用）と、
+ * 作者名の姓と名の間（「森 ゆうき」）は空白を残してよい。
+ */
+function wakachiLeft(units: readonly UnitSpec[]): string[] {
+  const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
+  const errs = new Set<string>();
+  for (const unit of units) {
+    if (unit.status === 'planned') continue;
+    const texts = [
+      unit.title,
+      ...unit.intro.map((s) => s.text),
+      ...unit.misconceptions.map((m) => m.explain),
+      ...unit.objectives.map((o) => o.title),
+    ];
+    for (const it of sampleItems(unit, 50)) {
+      const x = it as { prompt?: string; hints?: string[]; explain?: string };
+      texts.push(x.prompt ?? '', ...(x.hints ?? []), x.explain ?? '');
+    }
+    for (const t of texts) {
+      const p = t
+        .replace(/《[^》]*》/g, '')
+        .replace(/「[^「」]*」|『[^『』]*』/g, '「」')
+        .replace(/[一-鿿]{1,3} [ぁ-ん]{2,4}(?=[、，）』」]|が|$)/g, '名');
+      if (ja.test(p)) errs.add(`${unit.id}: ${p.slice(0, 50)}`);
+    }
+  }
+  return [...errs];
+}
+
+describe('位置で解けない・小3以上は通常の文（content-review-g34 重大8・中-C）', () => {
+  it('fixedOrder の選択肢で正解の位置がかたよらない', () => {
+    const errs: string[] = [];
+    for (const unit of pack.units) {
+      if (unit.status === 'planned') continue;
+      const pos: number[] = [];
+      for (const it of sampleItems(unit, 50))
+        if (
+          (it.engine === 'choice' || it.engine === 'reading') &&
+          'fixedOrder' in it &&
+          it.fixedOrder
+        )
+          pos.push(it.options.findIndex((o) => o.correct));
+      if (pos.length >= 3 && new Set(pos).size < 2)
+        errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0] + 1} 番目`);
+    }
+    expect(errs).toEqual([]);
+  });
+
+  it('plain-polite-style shiki: 選択肢の並びがどの問題でも同じ（ラベル順で固定）', () => {
+    const u = pack.units.find((x) => x.id === 'g4.ja.plain-polite-style');
+    if (!u || u.source.kind !== 'items') throw new Error('plain-polite-style がない');
+    const orders = new Set<string>();
+    const pos = new Set<number>();
+    for (const it of u.source.items)
+      if (it.engine === 'choice' && it.id.startsWith('shiki:')) {
+        orders.add(it.options.map((o) => o.label).join('|'));
+        pos.add(it.options.findIndex((o) => o.correct));
+      }
+    expect(orders.size).toBe(1);
+    expect(pos.size).toBe(2);
+  });
+
+  it('題・説明・問題文・ヒント・解説に文節分かち書き（日本語どうしの間の空白）がない', () => {
+    expect(wakachiLeft(pack.units)).toEqual([]);
+  });
+});
+
 describe('g4-ja の教材検査（curriculum-matrix 1.8）', () => {
   it('パックの形', () => {
     expect(pack.packId).toBe('g4-ja');

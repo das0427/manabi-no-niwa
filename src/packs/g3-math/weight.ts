@@ -100,8 +100,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           prompt: `トラックに ${t}tの 荷物《にもつ》を のせます。これは 何《なん》kgですか。`,
           hints: [
             'とても 重《おも》い ものは t（トン）で あらわすよ。',
-            '1t ＝ 1000kg。',
-            `${t}tは 1000kgの ${t}こ分《ぶん》。`,
+            '1tは、100kgの 10こ分《ぶん》。',
+            `${t}tは 1tの ${t}こ分《ぶん》。1tを kgに なおして 考《かんが》えよう。`,
           ],
           explain: `1t ＝ 1000kg なので ${t}t ＝ ${t * 1000}kgです。`,
           identity: `t-kg:${t}`,
@@ -116,9 +116,9 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           level,
           prompt: `${t * 1000}kgは 何《なん》tですか。`,
           hints: [
-            '1t ＝ 1000kg。',
+            'tと kgの かんけいを 思《おも》い出《だ》そう。',
             `${t * 1000}kgの 中《なか》に 1000kgは いくつ？`,
-            `1000kgが ${t}こ。`,
+            '1000kg、2000kg、3000kg、… と 1000kgずつ 数《かぞ》えよう。',
           ],
           explain: `1000kg ＝ 1t なので ${t * 1000}kg ＝ ${t}tです。`,
           identity: `kg-t:${t}`,
@@ -162,7 +162,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         hints: [
           '1000gで 1kg だよ。',
           `${total}gの 中《なか》に 1000gは いくつ あるかな。`,
-          `${k * 1000}gで ${k}kg。のこりは？`,
+          '1000gずつ まとめよう。まとめた 数《かず》が kg、のこりが g。',
         ],
         explain: `${total}g ＝ ${k * 1000}g ＋ ${g}g ＝ ${k}kg${g}gです。`,
         identity: `g-kg:${total}`,
@@ -290,11 +290,50 @@ const UNIT_ITEMS: { id: string; text: string; n: number; u: 'g' | 'kg' | 't' }[]
   { id: 'chair', text: '教室《きょうしつ》の いす 1きゃくの 重《おも》さ', n: 5, u: 'kg' },
 ];
 const FACTS = [
-  { id: 'kg', q: '1kgは 何《なん》gですか。', a: 1000, w: 100 },
-  { id: 't', q: '1tは 何《なん》kgですか。', a: 1000, w: 100 },
-  { id: '2kg', q: '2kgは 何《なん》gですか。', a: 2000, w: 200 },
-  { id: '3t', q: '3tは 何《なん》kgですか。', a: 3000, w: 300 },
-  { id: 'half', q: '1kgの 半分《はんぶん》は 何《なん》gですか。', a: 500, w: 50 },
+  {
+    id: 'kg',
+    q: '1kgは 何《なん》gですか。',
+    h: [
+      'kg の k（キロ）は、もとの たんいの 何倍《なんばい》を あらわすかな。',
+      '1kgは、100gの 10こ分《ぶん》。',
+    ],
+    a: 1000,
+    w: 100,
+  },
+  {
+    id: 't',
+    q: '1tは 何《なん》kgですか。',
+    h: [
+      '1tは とても 重《おも》い。kgで あらわすと 大《おお》きな 数《かず》に なるよ。',
+      '1tは、100kgの 10こ分《ぶん》。',
+    ],
+    a: 1000,
+    w: 100,
+  },
+  {
+    id: '2kg',
+    q: '2kgは 何《なん》gですか。',
+    h: ['まず 1kgが 何《なん》gか 思《おも》い出《だ》そう。', '2kgは 1kgの 2こ分《ぶん》。'],
+    a: 2000,
+    w: 200,
+  },
+  {
+    id: '3t',
+    q: '3tは 何《なん》kgですか。',
+    h: ['まず 1tが 何《なん》kgか 思《おも》い出《だ》そう。', '3tは 1tの 3こ分《ぶん》。'],
+    a: 3000,
+    w: 300,
+  },
+  {
+    id: 'half',
+    q: '1kgの 半分《はんぶん》は 何《なん》gですか。',
+    h: [
+      'まず 1kgが 何《なん》gか 思《おも》い出《だ》そう。',
+      '半分《はんぶん》は、2つに 同《おな》じように 分《わ》けた 1つ分《ぶん》。',
+    ],
+    a: 500,
+    w: 50,
+  },
 ] as const;
 
 function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberItem {
@@ -306,11 +345,7 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
       objective: 'unit',
       level,
       prompt: f.q,
-      hints: [
-        '重《おも》さの たんいの かんけいを 思《おも》い出《だ》そう。',
-        '1kg ＝ 1000g、1t ＝ 1000kg。',
-        'kg の k は「1000」の いみだよ。',
-      ],
+      hints: ['重《おも》さの たんいの かんけいを 思《おも》い出《だ》そう。', ...f.h],
       explain: `1kg ＝ 1000g、1t ＝ 1000kg。答《こた》えは ${f.a}です。`,
       identity: `fact:${f.id}`,
       alt: true,

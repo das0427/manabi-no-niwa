@@ -87,12 +87,15 @@ function unit(level: number, rng: Rng, alt: boolean): NumberItem {
 function figureItem(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
   const [k, n] = pickKN(rng, 3, 1, -1);
   if (alt) {
-    // 等分でない図を まちがいに ふくめて、k/n を あらわす図を えらぶ
+    // 等分でない図を まちがいに ふくめて、k/n を あらわす図を えらぶ。
+    // 無印の部分の長さ rest は 1 でも n−k でもない値（n−k だと ● の長さが ちょうど k/n m に なってしまう）
+    const rest = n - k + 1;
+    if (rest === n - k || rest === 1) throw new Error('figure-alt: 等分でない図が k/n になる');
     const uneven: Figure = {
       kind: 'tape',
       parts: [
         ...Array.from({ length: k }, () => ({ length: 1, label: '●', tone: 'focus' as const })),
-        { length: Math.max(1, n - k - 1) * 2, tone: 'muted' as const },
+        { length: rest, tone: 'muted' as const },
       ],
       total: '1m',
     };
@@ -188,24 +191,28 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
   if (alt) {
     const n = rng.int(2, 10);
     const k = rng.int(1, n);
-    const rel = k < n ? '＜' : '＝';
+    // 向き: 半分は「1 □ k/n」（3年は真分数なので、向きが一つだと ＜ ばかりが 正解に なる）
+    const flip = rng.next() < 0.5;
+    const rel = k === n ? '＝' : flip ? '＞' : '＜';
+    const left = flip ? '1' : F(k, n);
+    const right = flip ? F(k, n) : '1';
     return {
       engine: 'choice',
-      id: `compare-alt:${k}/${n}`,
+      id: `compare-alt${flip ? '-r' : ''}:${k}/${n}`,
       objective: 'compare',
       level,
-      prompt: `□に あてはまる しるしは どれ？\n${F(k, n)} □ 1`,
+      prompt: `□に あてはまる しるしは どれ？\n${left} □ ${right}`,
       hints: [
         '1は、分母《ぶんぼ》と 分子《ぶんし》が おなじ 分数《ぶんすう》で あらわせるよ。',
         `1 ＝ ${F(n, n)}。`,
         `${F(k, n)} と ${F(n, n)} の 分子《ぶんし》を くらべよう。`,
       ],
-      explain: `1 ＝ ${F(n, n)}。${F(k, n)} ${rel} 1 です。`,
-      identity: `vs1:${k}/${n}`,
+      explain: `1 ＝ ${F(n, n)}。${left} ${rel} ${right} です。`,
+      identity: `vs1${flip ? 'r' : ''}:${k}/${n}`,
       alt: true,
       fixedOrder: true,
       options: [
-        { label: '＞', misconception: 'frac-vs-one' },
+        { label: '＞', ...(rel === '＞' ? { correct: true } : { misconception: 'frac-vs-one' }) },
         { label: '＜', ...(rel === '＜' ? { correct: true } : { misconception: 'frac-vs-one' }) },
         { label: '＝', ...(rel === '＝' ? { correct: true } : { misconception: 'frac-vs-one' }) },
       ],

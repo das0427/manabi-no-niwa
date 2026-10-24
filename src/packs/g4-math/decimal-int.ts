@@ -194,13 +194,13 @@ function rem(level: number, rng: Rng, alt: boolean): NumberItem {
           `[[1/100]]の位まで 計算すると ${dec(q100, 2)}。`,
           `[[1/100]]の位の ${q100 % 10}を 四捨五入しよう。`,
         ],
-        explain: `${a} ÷ ${n} ＝ ${dec(q100, 2)}…。[[1/100]]の位を 四捨五入して ${dec(q10, 1)}です。`,
+        explain: `${a} ÷ ${n} ＝ ${decFixed(q100, 2)}${(av * 10) % n === 0 ? '' : '…'}。[[1/100]]の位を 四捨五入して ${decFixed(q10, 1)}です。`,
         identity: `round:${a}÷${n}`,
         alt: true,
         fields: [{ label: '約', answer: answers[0]! }],
         keys: ['decimal'],
         wrongAnswers: wrongList(answers, [
-          [q10 !== cut ? dec(cut, 1) : dec(cut + 1, 1), 'round-cut'],
+          [q10 !== cut ? dec(cut, 1) : dec(cut + 1, 1), q10 !== cut ? 'round-cut' : 'round-up'],
           [dec(q100, 2), 'round-cut'],
           [q10, 'point-place'],
         ]),
@@ -421,6 +421,11 @@ export const decimalInt: UnitSpec = finishUnit({
     {
       id: 'rem-continue',
       explain: '商を 一の位で 止める 問題だよ。わり進まずに、一の位まで 求めて あまりを 出そう。',
+    },
+    {
+      id: 'round-up',
+      explain:
+        '切り上げて しまったのかな。四捨五入では、[[1/100]]の位が 0〜4なら 切り捨て、5〜9なら 切り上げるよ。',
     },
     {
       id: 'round-cut',

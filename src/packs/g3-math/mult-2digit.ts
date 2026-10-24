@@ -59,6 +59,17 @@ function hintsOf(a: number, b: number): string[] {
   ];
 }
 
+/** 部分積を欄で答える問題のヒント（欄の答えの数は書かない） */
+function partialHints(a: number, b: number): string[] {
+  const b1 = b % 10;
+  const b10 = Math.floor(b / 10);
+  return [
+    `まず ${a} × ${b1}、つぎに ${a} × ${b10} を 計算《けいさん》しよう。`,
+    `${a} × ${b10} の 答《こた》えは、十《じゅう》のくらいから 書《か》くよ（1けた 左《ひだり》に ずらす）。`,
+    '1だんめと 2だんめを、くらいを そろえて たそう。',
+  ];
+}
+
 function tens(level: number, rng: Rng, alt: boolean): NumberItem {
   const a = rng.int(11, 99);
   const t = rng.int(2, 9);
@@ -112,7 +123,11 @@ function partial(level: number, rng: Rng, alt: boolean): NumberItem {
         text: `${a} × ${b1} ＝ {{}}\u3000${a} × ${b10 * 10} ＝ {{}}\u3000あわせて {{}}`,
         size: 'l',
       },
-      hints: hintsOf(a, b),
+      hints: [
+        `${b}は ${b10 * 10}と ${b1}。べつべつに かけて、あとで たそう。`,
+        `${a} × ${b10 * 10} は、${a} × ${b10} の 答《こた》えを 10倍《ばい》した 数《かず》。`,
+        '2つの 答《こた》えを、くらいを そろえて たそう。',
+      ],
       explain: explainOf(a, b),
       identity: `${a}x${b}`,
       alt: true,
@@ -132,8 +147,12 @@ function partial(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'partial',
     level,
     prompt: '筆算《ひっさん》の とちゅうの 数《かず》と 答《こた》えを 書《か》こう。',
-    figure: columnFigure(a, b, '×', String(ans).length, [String(p1), `${p2}\u3000`]),
-    hints: hintsOf(a, b),
+    // とちゅうの数は 欄で答えるので、図では ？ にして 位置（2だんめは 1けた ずらす）だけ 見せる
+    figure: columnFigure(a, b, '×', String(ans).length, [
+      '？'.repeat(String(p1).length),
+      `${'？'.repeat(String(p2).length)}\u3000`,
+    ]),
+    hints: partialHints(a, b),
     explain: explainOf(a, b),
     identity: `${a}x${b}`,
     alt: false,
@@ -189,52 +208,62 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
 interface Scene {
   id: string;
   unit: string;
+  /** 1つ分の数の上限（場面の現実感） */
+  maxA: number;
   text: (a: number, b: number) => string;
 }
 const SCENES: Scene[] = [
   {
     id: 'tickets',
+    maxA: 999,
     unit: '円《えん》',
     text: (a, b) =>
       `1まい ${a}円《えん》の 入場《にゅうじょう》けんを ${b}まい 買《か》います。代金《だいきん》は 何《なん》円《えん》ですか。`,
   },
   {
     id: 'chairs',
+    maxA: 40,
     unit: 'きゃく',
     text: (a, b) =>
       `1れつに ${a}きゃくずつ いすを ならべます。${b}れつ では、いすは 何《なん》きゃく ですか。`,
   },
   {
     id: 'eggs',
+    maxA: 30,
     unit: 'こ',
     text: (a, b) =>
       `1はこに ${a}こ 入《はい》った たまごが ${b}はこ あります。たまごは 全部《ぜんぶ》で 何《なん》こですか。`,
   },
   {
     id: 'walk',
+    maxA: 999,
     unit: 'm',
     text: (a, b) =>
       `1日《にち》に ${a}m ずつ 走《はし》ります。${b}日《にち》で 何《なん》m 走《はし》りますか。`,
   },
   {
     id: 'paper',
+    maxA: 30,
     unit: 'まい',
     text: (a, b) =>
       `1人《り》に ${a}まいずつ 画用紙《がようし》を くばります。${b}人《にん》に くばるには、何《なん》まい いりますか。`,
   },
   {
     id: 'rope',
+    maxA: 999,
     unit: 'cm',
     text: (a, b) => `${a}cmの ロープの ${b}倍《ばい》の 長《なが》さは 何《なん》cmですか。`,
   },
   {
     id: 'bus',
+    maxA: 60,
     unit: '人《にん》',
     text: (a, b) =>
       `1台《だい》に ${a}人《にん》 乗《の》れる バスが ${b}台《だい》 あります。全部《ぜんぶ》で 何《なん》人《にん》 乗《の》れますか。`,
   },
   {
     id: 'stamps',
+    maxA: 999,
     unit: '円《えん》',
     text: (a, b) =>
       `1まい ${a}円《えん》の シールを ${b}まい 買《か》うと、何《なん》円《えん》に なりますか。`,
@@ -243,7 +272,10 @@ const SCENES: Scene[] = [
 
 function word(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = SCENES[rng.int(0, SCENES.length - 1)]!;
-  const [a, b] = pick(rng, rng.next() < 0.6 ? 'two' : 'three');
+  // 場面に あう 大きさの 数だけ（1台に 999人の バス などを 出さない）
+  const kind = sc.maxA >= 100 && rng.next() >= 0.6 ? 'three' : 'two';
+  let [a, b] = pick(rng, kind);
+  while (a > sc.maxA) [a, b] = pick(rng, kind);
   const ans = a * b;
   return {
     engine: 'number',

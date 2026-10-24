@@ -40,7 +40,8 @@ export default defineConfig({
             // パックが値として使う本体の小さな部品（乱数・漢字の学年表・RichText）を固定名のチャンクに
             // まとめる。本体を更新してもパックの import 先の名前が変わらず、パックの版（packs.json の hash）が
             // 変わらない（コードレビュー #2: 更新のたびに全パックが outdated になるのを防ぐ）
-            { name: packRuntimeName, priority: 90 },
+            // パックのグループは依存先も取り込むので、本体の部品は先（高い優先度）で取り分ける
+            { name: packRuntimeName, priority: 110 },
           ],
         },
         // パックと pack-runtime はファイル名に hash を付けない（版は packs.json の内容 hash で管理する）

@@ -170,7 +170,7 @@ function make(level: number, rng: Rng, alt: boolean): ChoiceItem {
     hints: [
       'お話《はなし》の じゅんに、はじめ → どう なった → おわり と 考《かんが》えよう。',
       `分《わ》からない 数《かず》が □。そこから「${sc.kind === 'add' ? 'ふえた' : sc.kind === 'sub' ? 'へった' : sc.kind === 'mult' ? 'いくつ分《ぶん》' : '分《わ》けた'}」ね。`,
-      `□ ${SIGN[sc.kind]} ${a} の 答《こた》えが ${c}に なる 式《しき》は？`,
+      `□は はじめの 数《かず》なので 式《しき》の いちばん 左《ひだり》。${a}と ${c}は どこに 来《く》るかな。`,
     ],
     explain: `はじめの □に ${a}を「${SIGN[sc.kind]}」して ${c}に なったので、${expr(sc.kind, a, c)}。□は ${inverse(sc.kind, a, c)} で もとめられます。`,
     identity: `make:${sc.id}:${a}:${c}`,

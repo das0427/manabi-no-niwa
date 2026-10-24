@@ -1,350 +1,350 @@
 # 単元の充足の報告（自動生成: npm run curriculum:report）
 
-P1 実装済み **1 / 251**（0.4%）。表の値は「実装済み／P1 の数」。
+P1 実装済み **251 / 251**（100.0%）。表の値は「実装済み／P1 の数」。
 実装済み = 検査の誤りなし・量 Q≥1・網羅 C 全部・汎用誤答 20%以下・音声がそろう（acceptance.md 2章、curriculum-matrix 1.1）。
 検査の seed 数は 1000（CI の qa テストと同じ）。
 
 | 段階 | ja | math | think | env | hand | life | sci | soc | en | prog |
 |---|---|---|---|---|---|---|---|---|---|---|
-| p23 | 0/2 | 0/3 | 0/1 | 0/1 | 0/1 | − | − | − | − | − |
-| p4 | 0/3 | 0/4 | 0/4 | 0/0 | 0/1 | − | − | − | − | − |
-| p5 | 0/4 | 0/6 | 0/1 | 0/0 | 0/1 | − | − | − | − | 0/1 |
-| g1 | 0/14 | 1/15 | − | − | − | 0/3 | − | − | − | 0/2 |
-| g2 | 0/10 | 0/15 | − | − | − | 0/3 | − | − | − | 0/2 |
-| g3 | 0/11 | 0/16 | − | − | − | − | 0/4 | 0/3 | 0/3 | 0/2 |
-| g4 | 0/9 | 0/18 | − | − | − | − | 0/4 | 0/3 | 0/2 | 0/2 |
-| g5 | 0/10 | 0/19 | − | − | − | − | 0/4 | 0/3 | 0/4 | 0/2 |
-| g6 | 0/8 | 0/13 | − | − | − | − | 0/4 | 0/5 | 0/3 | 0/2 |
+| p23 | 2/2 | 3/3 | 1/1 | 1/1 | 1/1 | − | − | − | − | − |
+| p4 | 3/3 | 4/4 | 4/4 | 0/0 | 1/1 | − | − | − | − | − |
+| p5 | 4/4 | 6/6 | 1/1 | 0/0 | 1/1 | − | − | − | − | 1/1 |
+| g1 | 14/14 | 15/15 | − | − | − | 3/3 | − | − | − | 2/2 |
+| g2 | 10/10 | 15/15 | − | − | − | 3/3 | − | − | − | 2/2 |
+| g3 | 11/11 | 16/16 | − | − | − | − | 4/4 | 3/3 | 3/3 | 2/2 |
+| g4 | 9/9 | 18/18 | − | − | − | − | 4/4 | 3/3 | 2/2 | 2/2 |
+| g5 | 10/10 | 19/19 | − | − | − | − | 4/4 | 3/3 | 4/4 | 2/2 |
+| g6 | 8/8 | 13/13 | − | − | − | − | 4/4 | 5/5 | 3/3 | 2/2 |
 
 ## 単元ごと
 
 | 単元 | 優先 | 状態 | 値 |
 |---|---|---|---|
-| p23.math.shape-match | P1 | 未実装 |  |
-| p23.think.sort | P1 | 未実装 |  |
-| p23.math.compare | P1 | 未実装 |  |
-| p23.math.shop | P1 | 未実装 |  |
-| p23.ja.word-listen | P1 | 未実装 |  |
-| p23.ja.sound-play | P1 | 未実装 |  |
-| p23.env.daily-life | P1 | 未実装 |  |
-| p23.hand.lines | P1 | 未実装 |  |
+| p23.math.shape-match | P1 | 実装済み | Q 3.67 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 79/79 |
+| p23.think.sort | P1 | 実装済み | Q 2.42 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 94/94 |
+| p23.math.compare | P1 | 実装済み | Q 2.58 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 98/98 |
+| p23.math.shop | P1 | 実装済み | Q 1.83 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 103/103 |
+| p23.ja.word-listen | P1 | 実装済み | Q 4.42 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 133/133 |
+| p23.ja.sound-play | P1 | 実装済み | Q 2.42 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 95/95 |
+| p23.env.daily-life | P1 | 実装済み | Q 2.08 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 91/91 |
+| p23.hand.lines | P1 | 実装済み | Q 1.00 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
 | p23.ja.first-sound | P2 | 未実装 |  |
 | p23.think.peekaboo | P2 | 未実装 |  |
 | p23.math.puzzle2 | P2 | 未実装 |  |
 | p23.think.road | P2 | 未実装 |  |
 | p23.ja.picture-book | P2 | 未実装 |  |
-| p4.math.shop | P1 | 未実装 |  |
-| p4.math.count-pictures | P1 | 未実装 |  |
-| p4.math.shapes | P1 | 未実装 |  |
-| p4.math.compare | P1 | 未実装 |  |
-| p4.ja.first-sound | P1 | 未実装 |  |
-| p4.ja.kana-read | P1 | 未実装 |  |
-| p4.ja.word-play | P1 | 未実装 |  |
-| p4.think.sort | P1 | 未実装 |  |
-| p4.think.pattern | P1 | 未実装 |  |
-| p4.think.memory | P1 | 未実装 |  |
-| p4.think.road | P1 | 未実装 |  |
-| p4.hand.lines | P1 | 未実装 |  |
+| p4.math.shop | P1 | 実装済み | Q 1.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.math.count-pictures | P1 | 実装済み | Q 5.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 62/62 |
+| p4.math.shapes | P1 | 実装済み | Q 1.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.math.compare | P1 | 実装済み | Q 1.00 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.ja.first-sound | P1 | 実装済み | Q 5.42 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 176/176 |
+| p4.ja.kana-read | P1 | 実装済み | Q 3.07 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 193/193 |
+| p4.ja.word-play | P1 | 実装済み | Q 5.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 262/262 |
+| p4.think.sort | P1 | 実装済み | Q 1.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.think.pattern | P1 | 実装済み | Q 6.08 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 275/275 |
+| p4.think.memory | P1 | 実装済み | Q 1.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.think.road | P1 | 実装済み | Q 1.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
+| p4.hand.lines | P1 | 実装済み | Q 1.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 1/1 |
 | p4.ja.story-listen | P2 | 未実装 |  |
 | p4.env.seasons | P2 | 未実装 |  |
 | p4.env.daily-order | P2 | 未実装 |  |
-| p4.hand.kana-trace-early | P2 | 未実装 |  |
-| p5.math.numbers-10 | P1 | 未実装 |  |
-| p5.math.compose | P1 | 未実装 |  |
-| p5.math.add-sub | P1 | 未実装 |  |
-| p5.math.clock | P1 | 未実装 |  |
-| p5.math.shapes | P1 | 未実装 |  |
-| p5.math.measure-compare | P1 | 未実装 |  |
-| p5.think.pattern | P1 | 未実装 |  |
-| p5.prog.steps | P1 | 未実装 |  |
-| p5.ja.kana-read-all | P1 | 未実装 |  |
-| p5.ja.word-build | P1 | 未実装 |  |
-| p5.ja.katakana-read | P1 | 未実装 |  |
-| p5.ja.story-listen | P1 | 未実装 |  |
-| p5.hand.kana-trace | P1 | 未実装 |  |
+| p4.hand.kana-trace-early | P2 | 実装済み | Q 9.00 / C 1/1 / 誤り 0 / 汎用誤答 0% / 音声 25/25 |
+| p5.math.numbers-10 | P1 | 実装済み | Q 2.78 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 136/136 |
+| p5.math.compose | P1 | 実装済み | Q 1.80 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 64/64 |
+| p5.math.add-sub | P1 | 実装済み | Q 4.26 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 69/69 |
+| p5.math.clock | P1 | 実装済み | Q 1.20 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 59/59 |
+| p5.math.shapes | P1 | 実装済み | Q 1.07 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 109/109 |
+| p5.math.measure-compare | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 120/120 |
+| p5.think.pattern | P1 | 実装済み | Q 1.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 244/244 |
+| p5.prog.steps | P1 | 実装済み | Q 1.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 60/60 |
+| p5.ja.kana-read-all | P1 | 実装済み | Q 3.70 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 269/269 |
+| p5.ja.word-build | P1 | 実装済み | Q 5.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 304/304 |
+| p5.ja.katakana-read | P1 | 実装済み | Q 2.47 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 282/282 |
+| p5.ja.story-listen | P1 | 実装済み | Q 1.27 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 190/190 |
+| p5.hand.kana-trace | P1 | 実装済み | Q 63.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 119/119 |
 | p5.ja.small-kana | P2 | 未実装 |  |
-| p5.hand.katakana-trace | P2 | 未実装 |  |
+| p5.hand.katakana-trace | P2 | 実装済み | Q 58.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 114/114 |
 | p5.think.why | P2 | 未実装 |  |
 | p5.env.predict | P2 | 未実装 |  |
 | p5.ja.letter-play | P2 | 未実装 |  |
 | p5.math.money | 外 | 未実装 |  |
-| g1.ja.hiragana-read | P1 | 未実装 |  |
-| g1.ja.hiragana-write | P1 | 未実装 |  |
-| g1.ja.special-kana | P1 | 未実装 |  |
-| g1.ja.particles | P1 | 未実装 |  |
-| g1.ja.punctuation | P1 | 未実装 |  |
-| g1.ja.katakana | P1 | 未実装 |  |
-| g1.ja.kanji-read-g1 | P1 | 未実装 |  |
-| g1.ja.kanji-write-g1 | P1 | 未実装 |  |
-| g1.ja.vocab-groups | P1 | 未実装 |  |
-| g1.ja.sentence-build | P1 | 未実装 |  |
-| g1.ja.read-story | P1 | 未実装 |  |
-| g1.ja.read-info | P1 | 未実装 |  |
-| g1.ja.listen | P1 | 未実装 |  |
-| g1.ja.write-order | P1 | 未実装 |  |
+| g1.ja.hiragana-read | P1 | 実装済み | Q 6.63 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 562/562 |
+| g1.ja.hiragana-write | P1 | 実装済み | Q 106.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 368/368 |
+| g1.ja.special-kana | P1 | 実装済み | Q 2.13 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 307/307 |
+| g1.ja.particles | P1 | 実装済み | Q 1.47 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 151/151 |
+| g1.ja.punctuation | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 115/115 |
+| g1.ja.katakana | P1 | 実装済み | Q 4.13 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 511/511 |
+| g1.ja.kanji-read-g1 | P1 | 実装済み | Q 10.53 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 568/568 |
+| g1.ja.kanji-write-g1 | P1 | 実装済み | Q 704.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 353/353 |
+| g1.ja.vocab-groups | P1 | 実装済み | Q 1.37 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 208/208 |
+| g1.ja.sentence-build | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 333/333 |
+| g1.ja.read-story | P1 | 実装済み | Q 1.17 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 373/373 |
+| g1.ja.read-info | P1 | 実装済み | Q 1.20 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 373/373 |
+| g1.ja.listen | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 264/264 |
+| g1.ja.write-order | P1 | 実装済み | Q 1.30 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 278/278 |
 | g1.ja.word-play | P2 | 未実装 |  |
 | g1.ja.folktales | P2 | 未実装 |  |
 | g1.ja.speak | 外 | 未実装 |  |
 | g1.ja.posture | 外 | 未実装 |  |
-| g1.math.numbers-10 | P1 | 未実装 |  |
-| g1.math.compose-10 | P1 | 未実装 |  |
+| g1.math.numbers-10 | P1 | 実装済み | Q 8.02 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 205/205 |
+| g1.math.compose-10 | P1 | 実装済み | Q 1.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 87/87 |
 | g1.math.add-basic | P1 | 実装済み | Q 1.00 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 114/114 |
-| g1.math.sub-basic | P1 | 未実装 |  |
-| g1.math.numbers-20 | P1 | 未実装 |  |
-| g1.math.add-carry | P1 | 未実装 |  |
-| g1.math.sub-borrow | P1 | 未実装 |  |
-| g1.math.numbers-120 | P1 | 未実装 |  |
-| g1.math.add-sub-2digit | P1 | 未実装 |  |
-| g1.math.story-expression | P1 | 未実装 |  |
-| g1.math.compare-quantity | P1 | 未実装 |  |
-| g1.math.clock | P1 | 未実装 |  |
-| g1.math.shapes | P1 | 未実装 |  |
-| g1.math.position | P1 | 未実装 |  |
-| g1.math.picture-graph | P1 | 未実装 |  |
-| g1.math.three-numbers | P2 | 未実装 |  |
-| g1.life.school-safety | P1 | 未実装 |  |
-| g1.life.seasons | P1 | 未実装 |  |
-| g1.life.plant-diary | P1 | 未実装 |  |
+| g1.math.sub-basic | P1 | 実装済み | Q 1.00 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 123/123 |
+| g1.math.numbers-20 | P1 | 実装済み | Q 4.18 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 159/159 |
+| g1.math.add-carry | P1 | 実装済み | Q 1.00 / C 7/7 / 誤り 0 / 汎用誤答 0% / 音声 155/155 |
+| g1.math.sub-borrow | P1 | 実装済み | Q 1.00 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 158/158 |
+| g1.math.numbers-120 | P1 | 実装済み | Q 20.18 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 188/188 |
+| g1.math.add-sub-2digit | P1 | 実装済み | Q 8.10 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 112/112 |
+| g1.math.story-expression | P1 | 実装済み | Q 26.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 259/259 |
+| g1.math.compare-quantity | P1 | 実装済み | Q 18.10 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 201/201 |
+| g1.math.clock | P1 | 実装済み | Q 7.33 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 118/118 |
+| g1.math.shapes | P1 | 実装済み | Q 19.23 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 157/157 |
+| g1.math.position | P1 | 実装済み | Q 37.95 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 351/351 |
+| g1.math.picture-graph | P1 | 実装済み | Q 49.88 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 321/321 |
+| g1.math.three-numbers | P2 | 実装済み | Q 17.44 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 124/124 |
+| g1.life.school-safety | P1 | 実装済み | Q 1.25 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 251/251 |
+| g1.life.seasons | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 174/174 |
+| g1.life.plant-diary | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 188/188 |
 | g1.life.public | P2 | 未実装 |  |
 | g1.life.home | P2 | 未実装 |  |
 | g1.life.play-make | 外 | 未実装 |  |
-| g1.prog.sequence | P1 | 未実装 |  |
-| g1.prog.condition | P1 | 未実装 |  |
-| g2.ja.kanji-read-g2 | P1 | 未実装 |  |
-| g2.ja.kanji-write-g2 | P1 | 未実装 |  |
-| g2.ja.katakana-words | P1 | 未実装 |  |
-| g2.ja.subject-predicate | P1 | 未実装 |  |
-| g2.ja.polite | P1 | 未実装 |  |
-| g2.ja.vocab-meaning | P1 | 未実装 |  |
-| g2.ja.orthography | P1 | 未実装 |  |
-| g2.ja.read-story | P1 | 未実装 |  |
-| g2.ja.read-info | P1 | 未実装 |  |
-| g2.ja.write-structure | P1 | 未実装 |  |
+| g1.prog.sequence | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 154/154 |
+| g1.prog.condition | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 211/211 |
+| g2.ja.kanji-read-g2 | P1 | 実装済み | Q 20.40 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 650/650 |
+| g2.ja.kanji-write-g2 | P1 | 実装済み | Q 1218.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 452/452 |
+| g2.ja.katakana-words | P1 | 実装済み | Q 1.40 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 229/229 |
+| g2.ja.subject-predicate | P1 | 実装済み | Q 1.73 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 287/287 |
+| g2.ja.polite | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 207/207 |
+| g2.ja.vocab-meaning | P1 | 実装済み | Q 1.67 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 280/280 |
+| g2.ja.orthography | P1 | 実装済み | Q 1.57 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 239/239 |
+| g2.ja.read-story | P1 | 実装済み | Q 1.43 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 412/412 |
+| g2.ja.read-info | P1 | 実装済み | Q 1.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 361/361 |
+| g2.ja.write-structure | P1 | 実装済み | Q 1.30 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 216/216 |
 | g2.ja.listen-notes | P2 | 未実装 |  |
 | g2.ja.culture | P2 | 未実装 |  |
 | g2.ja.speak | 外 | 未実装 |  |
-| g2.math.numbers-1000 | P1 | 未実装 |  |
-| g2.math.numbers-10000 | P1 | 未実装 |  |
-| g2.math.add-column | P1 | 未実装 |  |
-| g2.math.sub-column | P1 | 未実装 |  |
-| g2.math.add-sub-3digit | P1 | 未実装 |  |
-| g2.math.add-sub-relations | P1 | 未実装 |  |
-| g2.math.mult-meaning | P1 | 未実装 |  |
-| g2.math.times-tables | P1 | 未実装 |  |
-| g2.math.mult-beyond | P2 | 未実装 |  |
-| g2.math.fraction-simple | P1 | 未実装 |  |
-| g2.math.length | P1 | 未実装 |  |
-| g2.math.volume | P1 | 未実装 |  |
-| g2.math.time | P1 | 未実装 |  |
-| g2.math.triangles-quads | P1 | 未実装 |  |
-| g2.math.box | P1 | 未実装 |  |
-| g2.math.tables-graphs | P1 | 未実装 |  |
-| g2.life.growth | P1 | 未実装 |  |
-| g2.life.town | P1 | 未実装 |  |
-| g2.life.animals | P1 | 未実装 |  |
+| g2.math.numbers-1000 | P1 | 実装済み | Q 27.98 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 193/193 |
+| g2.math.numbers-10000 | P1 | 実装済み | Q 35.40 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 191/191 |
+| g2.math.add-column | P1 | 実装済み | Q 26.34 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 128/128 |
+| g2.math.sub-column | P1 | 実装済み | Q 27.37 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 114/114 |
+| g2.math.add-sub-3digit | P1 | 実装済み | Q 13.16 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 98/98 |
+| g2.math.add-sub-relations | P1 | 実装済み | Q 30.67 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 119/119 |
+| g2.math.mult-meaning | P1 | 実装済み | Q 8.52 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 160/160 |
+| g2.math.times-tables | P1 | 実装済み | Q 5.47 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 133/133 |
+| g2.math.mult-beyond | P2 | 実装済み | Q 1.05 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 110/110 |
+| g2.math.fraction-simple | P1 | 実装済み | Q 2.30 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 142/142 |
+| g2.math.length | P1 | 実装済み | Q 19.87 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 177/177 |
+| g2.math.volume | P1 | 実装済み | Q 10.35 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 163/163 |
+| g2.math.time | P1 | 実装済み | Q 34.82 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 197/197 |
+| g2.math.triangles-quads | P1 | 実装済み | Q 27.22 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 159/159 |
+| g2.math.box | P1 | 実装済み | Q 9.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 107/107 |
+| g2.math.tables-graphs | P1 | 実装済み | Q 30.60 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 235/235 |
+| g2.life.growth | P1 | 実装済み | Q 3.00 / C 2/2 / 誤り 0 / 汎用誤答 0% / 音声 97/97 |
+| g2.life.town | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 158/158 |
+| g2.life.animals | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 205/205 |
 | g2.life.tell | P2 | 未実装 |  |
 | g2.life.toys | 外 | 未実装 |  |
-| g2.prog.repeat | P1 | 未実装 |  |
-| g2.prog.debug | P1 | 未実装 |  |
-| g3.ja.kanji-read-g3 | P1 | 未実装 |  |
-| g3.ja.kanji-write-g3 | P1 | 未実装 |  |
-| g3.ja.romaji | P1 | 未実装 |  |
-| g3.ja.modifiers | P1 | 未実装 |  |
-| g3.ja.reference-connectives | P1 | 未実装 |  |
-| g3.ja.dictionary | P1 | 未実装 |  |
-| g3.ja.kanji-parts | P1 | 未実装 |  |
-| g3.ja.proverbs | P1 | 未実装 |  |
-| g3.ja.read-paragraphs | P1 | 未実装 |  |
-| g3.ja.read-character | P1 | 未実装 |  |
-| g3.ja.write-reasons | P1 | 未実装 |  |
+| g2.prog.repeat | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 144/144 |
+| g2.prog.debug | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 86/86 |
+| g3.ja.kanji-read-g3 | P1 | 実装済み | Q 25.57 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 691/691 |
+| g3.ja.kanji-write-g3 | P1 | 実装済み | Q 1447.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 455/455 |
+| g3.ja.romaji | P1 | 実装済み | Q 8.87 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 1125/1125 |
+| g3.ja.modifiers | P1 | 実装済み | Q 1.90 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 373/373 |
+| g3.ja.reference-connectives | P1 | 実装済み | Q 1.43 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 258/258 |
+| g3.ja.dictionary | P1 | 実装済み | Q 1.37 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 337/337 |
+| g3.ja.kanji-parts | P1 | 実装済み | Q 1.67 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 410/410 |
+| g3.ja.proverbs | P1 | 実装済み | Q 2.93 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 389/389 |
+| g3.ja.read-paragraphs | P1 | 実装済み | Q 1.50 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 369/369 |
+| g3.ja.read-character | P1 | 実装済み | Q 1.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 434/434 |
+| g3.ja.write-reasons | P1 | 実装済み | Q 1.40 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 252/252 |
 | g3.ja.haiku | P2 | 未実装 |  |
 | g3.ja.listen-memo | P2 | 未実装 |  |
 | g3.ja.brush | 外 | 未実装 |  |
 | g3.ja.typing | 外 | 未実装 |  |
 | g3.ja.speak | 外 | 未実装 |  |
-| g3.math.large-numbers | P1 | 未実装 |  |
-| g3.math.add-sub-column | P1 | 未実装 |  |
-| g3.math.mult-rules | P1 | 未実装 |  |
-| g3.math.mult-1digit | P1 | 未実装 |  |
-| g3.math.mult-2digit | P1 | 未実装 |  |
-| g3.math.division-basic | P1 | 未実装 |  |
-| g3.math.division-remainder | P1 | 未実装 |  |
-| g3.math.decimals | P1 | 未実装 |  |
-| g3.math.fractions | P1 | 未実装 |  |
-| g3.math.box-expression | P1 | 未実装 |  |
-| g3.math.circle-sphere | P1 | 未実装 |  |
-| g3.math.triangles | P1 | 未実装 |  |
-| g3.math.length-km | P1 | 未実装 |  |
-| g3.math.weight | P1 | 未実装 |  |
-| g3.math.time | P1 | 未実装 |  |
-| g3.math.bar-graph | P1 | 未実装 |  |
+| g3.math.large-numbers | P1 | 実装済み | Q 62.77 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 230/230 |
+| g3.math.add-sub-column | P1 | 実装済み | Q 39.87 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 155/155 |
+| g3.math.mult-rules | P1 | 実装済み | Q 2.96 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 144/144 |
+| g3.math.mult-1digit | P1 | 実装済み | Q 19.00 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 153/153 |
+| g3.math.mult-2digit | P1 | 実装済み | Q 35.04 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 185/185 |
+| g3.math.division-basic | P1 | 実装済み | Q 6.45 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 206/206 |
+| g3.math.division-remainder | P1 | 実装済み | Q 23.21 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 243/243 |
+| g3.math.decimals | P1 | 実装済み | Q 19.62 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 135/135 |
+| g3.math.fractions | P1 | 実装済み | Q 11.33 / C 7/7 / 誤り 0 / 汎用誤答 0% / 音声 464/464 |
+| g3.math.box-expression | P1 | 実装済み | Q 46.17 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 187/187 |
+| g3.math.circle-sphere | P1 | 実装済み | Q 6.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 156/156 |
+| g3.math.triangles | P1 | 実装済み | Q 10.40 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 148/148 |
+| g3.math.length-km | P1 | 実装済み | Q 33.65 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 171/171 |
+| g3.math.weight | P1 | 実装済み | Q 31.45 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 190/190 |
+| g3.math.time | P1 | 実装済み | Q 38.48 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 152/152 |
+| g3.math.bar-graph | P1 | 実装済み | Q 50.32 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 506/506 |
 | g3.math.abacus | P2 | 未実装 |  |
-| g3.sci.living-things | P1 | 未実装 |  |
-| g3.sci.sun-ground | P1 | 未実装 |  |
-| g3.sci.magnets | P1 | 未実装 |  |
-| g3.sci.circuits | P1 | 未実装 |  |
+| g3.sci.living-things | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 303/303 |
+| g3.sci.sun-ground | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 259/259 |
+| g3.sci.magnets | P1 | 実装済み | Q 1.17 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 268/268 |
+| g3.sci.circuits | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 280/280 |
 | g3.sci.weight | P2 | 未実装 |  |
 | g3.sci.wind-rubber | P2 | 未実装 |  |
 | g3.sci.light-sound | P2 | 未実装 |  |
 | g3.sci.making | 外 | 未実装 |  |
-| g3.soc.map-symbols | P1 | 未実装 |  |
-| g3.soc.shop-work | P1 | 未実装 |  |
-| g3.soc.city-changes | P1 | 未実装 |  |
+| g3.soc.map-symbols | P1 | 実装済み | Q 3.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 310/310 |
+| g3.soc.shop-work | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 253/253 |
+| g3.soc.city-changes | P1 | 実装済み | Q 1.42 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 312/312 |
 | g3.soc.safety | P2 | 未実装 |  |
 | g3.soc.my-area | 外 | 未実装 |  |
-| g3.en.greetings | P1 | 未実装 |  |
-| g3.en.numbers-colors | P1 | 未実装 |  |
-| g3.en.alphabet-upper | P1 | 未実装 |  |
+| g3.en.greetings | P1 | 実装済み | Q 1.90 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 200/200 |
+| g3.en.numbers-colors | P1 | 実装済み | Q 2.57 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 188/188 |
+| g3.en.alphabet-upper | P1 | 実装済み | Q 2.77 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 101/101 |
 | g3.en.likes | P2 | 未実装 |  |
 | g3.en.speak | 外 | 未実装 |  |
-| g3.prog.condition-combo | P1 | 未実装 |  |
-| g3.prog.decompose | P1 | 未実装 |  |
-| g4.ja.kanji-read-g4 | P1 | 未実装 |  |
-| g4.ja.kanji-write-g4 | P1 | 未実装 |  |
-| g4.ja.okurigana | P1 | 未実装 |  |
-| g4.ja.idioms | P1 | 未実装 |  |
-| g4.ja.plain-polite-style | P1 | 未実装 |  |
-| g4.ja.info-compare | P1 | 未実装 |  |
-| g4.ja.read-summary | P1 | 未実装 |  |
-| g4.ja.read-feelings | P1 | 未実装 |  |
-| g4.ja.write-report | P1 | 未実装 |  |
+| g3.prog.condition-combo | P1 | 実装済み | Q 1.07 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 80/80 |
+| g3.prog.decompose | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 182/182 |
+| g4.ja.kanji-read-g4 | P1 | 実装済み | Q 26.20 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 673/673 |
+| g4.ja.kanji-write-g4 | P1 | 実装済み | Q 1503.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 500/500 |
+| g4.ja.okurigana | P1 | 実装済み | Q 1.63 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 239/239 |
+| g4.ja.idioms | P1 | 実装済み | Q 3.80 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 443/443 |
+| g4.ja.plain-polite-style | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 182/182 |
+| g4.ja.info-compare | P1 | 実装済み | Q 1.27 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 391/391 |
+| g4.ja.read-summary | P1 | 実装済み | Q 1.50 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 484/484 |
+| g4.ja.read-feelings | P1 | 実装済み | Q 1.53 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 472/472 |
+| g4.ja.write-report | P1 | 実装済み | Q 1.20 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 243/243 |
 | g4.ja.tanka | P2 | 未実装 |  |
 | g4.ja.discuss | 外 | 未実装 |  |
-| g4.math.oku-cho | P1 | 未実装 |  |
-| g4.math.rounding | P1 | 未実装 |  |
-| g4.math.div-1digit | P1 | 未実装 |  |
-| g4.math.div-2digit | P1 | 未実装 |  |
-| g4.math.decimal-add-sub | P1 | 未実装 |  |
-| g4.math.decimal-int | P1 | 未実装 |  |
-| g4.math.fraction-kinds | P1 | 未実装 |  |
-| g4.math.fraction-same | P1 | 未実装 |  |
-| g4.math.order-ops | P1 | 未実装 |  |
-| g4.math.parallel-perp | P1 | 未実装 |  |
-| g4.math.quadrilaterals | P1 | 未実装 |  |
-| g4.math.cuboid | P1 | 未実装 |  |
-| g4.math.area | P1 | 未実装 |  |
-| g4.math.angle | P1 | 未実装 |  |
-| g4.math.change-relations | P1 | 未実装 |  |
-| g4.math.ratio-intro | P1 | 未実装 |  |
-| g4.math.line-graph | P1 | 未実装 |  |
-| g4.math.two-way-table | P1 | 未実装 |  |
+| g4.math.oku-cho | P1 | 実装済み | Q 45.28 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 583/583 |
+| g4.math.rounding | P1 | 実装済み | Q 59.52 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 326/326 |
+| g4.math.div-1digit | P1 | 実装済み | Q 26.04 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 211/211 |
+| g4.math.div-2digit | P1 | 実装済み | Q 33.73 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 283/283 |
+| g4.math.decimal-add-sub | P1 | 実装済み | Q 38.55 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 150/150 |
+| g4.math.decimal-int | P1 | 実装済み | Q 35.34 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 195/195 |
+| g4.math.fraction-kinds | P1 | 実装済み | Q 25.22 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 475/475 |
+| g4.math.fraction-same | P1 | 実装済み | Q 20.83 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 404/404 |
+| g4.math.order-ops | P1 | 実装済み | Q 37.88 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 195/195 |
+| g4.math.parallel-perp | P1 | 実装済み | Q 23.28 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 102/102 |
+| g4.math.quadrilaterals | P1 | 実装済み | Q 32.28 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 183/183 |
+| g4.math.cuboid | P1 | 実装済み | Q 12.43 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 245/245 |
+| g4.math.area | P1 | 実装済み | Q 30.17 / C 6/6 / 誤り 0 / 汎用誤答 0% / 音声 243/243 |
+| g4.math.angle | P1 | 実装済み | Q 9.72 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 191/191 |
+| g4.math.change-relations | P1 | 実装済み | Q 9.40 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 232/232 |
+| g4.math.ratio-intro | P1 | 実装済み | Q 37.95 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 267/267 |
+| g4.math.line-graph | P1 | 実装済み | Q 48.97 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 194/194 |
+| g4.math.two-way-table | P1 | 実装済み | Q 50.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 279/279 |
 | g4.math.abacus | P2 | 未実装 |  |
-| g4.sci.air-water | P1 | 未実装 |  |
-| g4.sci.current | P1 | 未実装 |  |
-| g4.sci.weather | P1 | 未実装 |  |
-| g4.sci.moon-stars | P1 | 未実装 |  |
+| g4.sci.air-water | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 257/257 |
+| g4.sci.current | P1 | 実装済み | Q 1.21 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 290/290 |
+| g4.sci.weather | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 315/315 |
+| g4.sci.moon-stars | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 298/298 |
 | g4.sci.temperature | P2 | 未実装 |  |
 | g4.sci.body | P2 | 未実装 |  |
 | g4.sci.seasons-life | P2 | 未実装 |  |
 | g4.sci.rainwater | P2 | 未実装 |  |
-| g4.soc.prefectures | P1 | 未実装 |  |
-| g4.soc.water-waste | P1 | 未実装 |  |
-| g4.soc.disaster | P1 | 未実装 |  |
+| g4.soc.prefectures | P1 | 実装済み | Q 7.40 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 815/815 |
+| g4.soc.water-waste | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 270/270 |
+| g4.soc.disaster | P1 | 実装済み | Q 1.25 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 272/272 |
 | g4.soc.tradition | P2 | 未実装 |  |
 | g4.soc.local-feature | 外 | 未実装 |  |
-| g4.en.alphabet-lower | P1 | 未実装 |  |
-| g4.en.time-days | P1 | 未実装 |  |
+| g4.en.alphabet-lower | P1 | 実装済み | Q 2.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 49/49 |
+| g4.en.time-days | P1 | 実装済み | Q 1.57 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 117/117 |
 | g4.en.want | P2 | 未実装 |  |
 | g4.en.directions | P2 | 未実装 |  |
 | g4.en.speak | 外 | 未実装 |  |
-| g4.prog.prefecture-finder | P1 | 未実装 |  |
-| g4.prog.draw-shapes | P1 | 未実装 |  |
-| g5.ja.kanji-read-g5 | P1 | 未実装 |  |
-| g5.ja.kanji-write-g5 | P1 | 未実装 |  |
-| g5.ja.honorifics | P1 | 未実装 |  |
-| g5.ja.word-structure | P1 | 未実装 |  |
-| g5.ja.sentence-relations | P1 | 未実装 |  |
-| g5.ja.figurative | P1 | 未実装 |  |
-| g5.ja.read-gist | P1 | 未実装 |  |
-| g5.ja.read-relations | P1 | 未実装 |  |
-| g5.ja.text-figure | P1 | 未実装 |  |
-| g5.ja.write-fact-opinion | P1 | 未実装 |  |
+| g4.prog.prefecture-finder | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 152/152 |
+| g4.prog.draw-shapes | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 352/352 |
+| g5.ja.kanji-read-g5 | P1 | 実装済み | Q 25.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 647/647 |
+| g5.ja.kanji-write-g5 | P1 | 実装済み | Q 1531.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 469/469 |
+| g5.ja.honorifics | P1 | 実装済み | Q 1.73 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 280/280 |
+| g5.ja.word-structure | P1 | 実装済み | Q 1.77 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 272/272 |
+| g5.ja.sentence-relations | P1 | 実装済み | Q 1.37 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 290/290 |
+| g5.ja.figurative | P1 | 実装済み | Q 1.30 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 263/263 |
+| g5.ja.read-gist | P1 | 実装済み | Q 1.17 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 332/332 |
+| g5.ja.read-relations | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 446/446 |
+| g5.ja.text-figure | P1 | 実装済み | Q 1.40 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 697/697 |
+| g5.ja.write-fact-opinion | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 176/176 |
 | g5.ja.spoken-written | P2 | 未実装 |  |
 | g5.ja.classics | P2 | 未実装 |  |
 | g5.ja.speak | 外 | 未実装 |  |
-| g5.math.multiples-divisors | P1 | 未実装 |  |
-| g5.math.decimal-shift | P1 | 未実装 |  |
-| g5.math.decimal-mult | P1 | 未実装 |  |
-| g5.math.decimal-div | P1 | 未実装 |  |
-| g5.math.fraction-decimal | P1 | 未実装 |  |
-| g5.math.fraction-equiv | P1 | 未実装 |  |
-| g5.math.fraction-add-diff | P1 | 未実装 |  |
-| g5.math.congruence | P1 | 未実装 |  |
-| g5.math.angle-sum | P1 | 未実装 |  |
-| g5.math.polygon-circle | P1 | 未実装 |  |
-| g5.math.prism-cylinder | P1 | 未実装 |  |
-| g5.math.area-formulas | P1 | 未実装 |  |
-| g5.math.volume | P1 | 未実装 |  |
-| g5.math.proportion-simple | P1 | 未実装 |  |
-| g5.math.per-unit | P1 | 未実装 |  |
-| g5.math.speed | P1 | 未実装 |  |
-| g5.math.percent | P1 | 未実装 |  |
-| g5.math.pie-band | P1 | 未実装 |  |
-| g5.math.average | P1 | 未実装 |  |
+| g5.math.multiples-divisors | P1 | 実装済み | Q 13.50 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 221/221 |
+| g5.math.decimal-shift | P1 | 実装済み | Q 21.07 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 144/144 |
+| g5.math.decimal-mult | P1 | 実装済み | Q 27.70 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 187/187 |
+| g5.math.decimal-div | P1 | 実装済み | Q 28.91 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 199/199 |
+| g5.math.fraction-decimal | P1 | 実装済み | Q 19.35 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 337/337 |
+| g5.math.fraction-equiv | P1 | 実装済み | Q 15.45 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 439/439 |
+| g5.math.fraction-add-diff | P1 | 実装済み | Q 17.29 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 390/390 |
+| g5.math.congruence | P1 | 実装済み | Q 31.40 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 216/216 |
+| g5.math.angle-sum | P1 | 実装済み | Q 17.53 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 190/190 |
+| g5.math.polygon-circle | P1 | 実装済み | Q 3.63 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 206/206 |
+| g5.math.prism-cylinder | P1 | 実装済み | Q 4.35 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 286/286 |
+| g5.math.area-formulas | P1 | 実装済み | Q 16.15 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 150/150 |
+| g5.math.volume | P1 | 実装済み | Q 15.61 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 235/235 |
+| g5.math.proportion-simple | P1 | 実装済み | Q 31.17 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 290/290 |
+| g5.math.per-unit | P1 | 実装済み | Q 29.33 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 398/398 |
+| g5.math.speed | P1 | 実装済み | Q 26.44 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 271/271 |
+| g5.math.percent | P1 | 実装済み | Q 22.79 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 274/274 |
+| g5.math.pie-band | P1 | 実装済み | Q 49.80 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 478/478 |
+| g5.math.average | P1 | 実装済み | Q 35.14 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 230/230 |
 | g5.math.expressions | P2 | 未実装 |  |
-| g5.sci.pendulum | P1 | 未実装 |  |
-| g5.sci.dissolve | P1 | 未実装 |  |
-| g5.sci.germination | P1 | 未実装 |  |
-| g5.sci.weather-change | P1 | 未実装 |  |
+| g5.sci.pendulum | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 326/326 |
+| g5.sci.dissolve | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 294/294 |
+| g5.sci.germination | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 269/269 |
+| g5.sci.weather-change | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 261/261 |
 | g5.sci.electromagnet | P2 | 未実装 |  |
 | g5.sci.birth | P2 | 未実装 |  |
 | g5.sci.flowing-water | P2 | 未実装 |  |
-| g5.soc.land | P1 | 未実装 |  |
-| g5.soc.food | P1 | 未実装 |  |
-| g5.soc.industry | P1 | 未実装 |  |
+| g5.soc.land | P1 | 実装済み | Q 2.13 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 443/443 |
+| g5.soc.food | P1 | 実装済み | Q 1.92 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 414/414 |
+| g5.soc.industry | P1 | 実装済み | Q 1.83 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 359/359 |
 | g5.soc.information | P2 | 未実装 |  |
 | g5.soc.environment | P2 | 未実装 |  |
-| g5.en.letters-write | P1 | 未実装 |  |
-| g5.en.listen-self | P1 | 未実装 |  |
-| g5.en.read-words | P1 | 未実装 |  |
-| g5.en.word-order | P1 | 未実装 |  |
+| g5.en.letters-write | P1 | 実装済み | Q 97.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 112/112 |
+| g5.en.listen-self | P1 | 実装済み | Q 2.17 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 153/153 |
+| g5.en.read-words | P1 | 実装済み | Q 12.83 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 671/671 |
+| g5.en.word-order | P1 | 実装済み | Q 1.47 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 98/98 |
 | g5.en.where | P2 | 未実装 |  |
 | g5.en.speak | 外 | 未実装 |  |
-| g5.prog.polygon | P1 | 未実装 |  |
-| g5.prog.debug-plan | P1 | 未実装 |  |
-| g6.ja.kanji-read-g6 | P1 | 未実装 |  |
-| g6.ja.kanji-write-g6 | P1 | 未実装 |  |
-| g6.ja.kanji-usage | P1 | 未実装 |  |
-| g6.ja.read-argument | P1 | 未実装 |  |
-| g6.ja.read-literature | P1 | 未実装 |  |
-| g6.ja.info-relations | P1 | 未実装 |  |
-| g6.ja.classics-read | P1 | 未実装 |  |
-| g6.ja.write-opinion | P1 | 未実装 |  |
+| g5.prog.polygon | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 217/217 |
+| g5.prog.debug-plan | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 177/177 |
+| g6.ja.kanji-read-g6 | P1 | 実装済み | Q 24.80 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 655/655 |
+| g6.ja.kanji-write-g6 | P1 | 実装済み | Q 1536.00 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 458/458 |
+| g6.ja.kanji-usage | P1 | 実装済み | Q 2.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 257/257 |
+| g6.ja.read-argument | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 414/414 |
+| g6.ja.read-literature | P1 | 実装済み | Q 1.10 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 443/443 |
+| g6.ja.info-relations | P1 | 実装済み | Q 1.17 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 297/297 |
+| g6.ja.classics-read | P1 | 実装済み | Q 1.23 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 394/394 |
+| g6.ja.write-opinion | P1 | 実装済み | Q 1.30 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 218/218 |
 | g6.ja.language-change | P2 | 未実装 |  |
 | g6.ja.speak | 外 | 未実装 |  |
-| g6.math.fraction-mult | P1 | 未実装 |  |
-| g6.math.fraction-div | P1 | 未実装 |  |
-| g6.math.letters | P1 | 未実装 |  |
-| g6.math.symmetry | P1 | 未実装 |  |
-| g6.math.scale | P1 | 未実装 |  |
-| g6.math.circle-area | P1 | 未実装 |  |
-| g6.math.prism-volume | P1 | 未実装 |  |
-| g6.math.ratio | P1 | 未実装 |  |
-| g6.math.proportion | P1 | 未実装 |  |
-| g6.math.inverse | P1 | 未実装 |  |
-| g6.math.representative | P1 | 未実装 |  |
-| g6.math.frequency | P1 | 未実装 |  |
-| g6.math.combinations | P1 | 未実装 |  |
+| g6.math.fraction-mult | P1 | 実装済み | Q 22.04 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 550/550 |
+| g6.math.fraction-div | P1 | 実装済み | Q 19.52 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 638/638 |
+| g6.math.letters | P1 | 実装済み | Q 32.03 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 303/303 |
+| g6.math.symmetry | P1 | 実装済み | Q 56.65 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 229/229 |
+| g6.math.scale | P1 | 実装済み | Q 30.57 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 185/185 |
+| g6.math.circle-area | P1 | 実装済み | Q 3.85 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 158/158 |
+| g6.math.prism-volume | P1 | 実装済み | Q 40.65 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 133/133 |
+| g6.math.ratio | P1 | 実装済み | Q 25.17 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 345/345 |
+| g6.math.proportion | P1 | 実装済み | Q 19.62 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 273/273 |
+| g6.math.inverse | P1 | 実装済み | Q 17.83 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 222/222 |
+| g6.math.representative | P1 | 実装済み | Q 64.20 / C 5/5 / 誤り 0 / 汎用誤答 0% / 音声 228/228 |
+| g6.math.frequency | P1 | 実装済み | Q 61.07 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 218/218 |
+| g6.math.combinations | P1 | 実装済み | Q 15.03 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 274/274 |
 | g6.math.approx-area | P2 | 未実装 |  |
-| g6.sci.lever | P1 | 未実装 |  |
-| g6.sci.combustion | P1 | 未実装 |  |
-| g6.sci.moon-sun | P1 | 未実装 |  |
-| g6.sci.electricity-use | P1 | 未実装 |  |
+| g6.sci.lever | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 261/261 |
+| g6.sci.combustion | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 291/291 |
+| g6.sci.moon-sun | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 237/237 |
+| g6.sci.electricity-use | P1 | 実装済み | Q 1.13 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 286/286 |
 | g6.sci.solutions | P2 | 未実装 |  |
 | g6.sci.body | P2 | 未実装 |  |
 | g6.sci.plant-water | P2 | 未実装 |  |
 | g6.sci.ecosystem | P2 | 未実装 |  |
 | g6.sci.strata | P2 | 未実装 |  |
-| g6.soc.politics | P1 | 未実装 |  |
-| g6.soc.history-1 | P1 | 未実装 |  |
-| g6.soc.history-2 | P1 | 未実装 |  |
-| g6.soc.history-3 | P1 | 未実装 |  |
-| g6.soc.world | P1 | 未実装 |  |
-| g6.en.past | P1 | 未実装 |  |
-| g6.en.places | P1 | 未実装 |  |
-| g6.en.sentence-write | P1 | 未実装 |  |
+| g6.soc.politics | P1 | 実装済み | Q 1.88 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 445/445 |
+| g6.soc.history-1 | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 351/351 |
+| g6.soc.history-2 | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 363/363 |
+| g6.soc.history-3 | P1 | 実装済み | Q 1.33 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 382/382 |
+| g6.soc.world | P1 | 実装済み | Q 1.47 / C 4/4 / 誤り 0 / 汎用誤答 0% / 音声 271/271 |
+| g6.en.past | P1 | 実装済み | Q 2.00 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 235/235 |
+| g6.en.places | P1 | 実装済み | Q 1.40 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 126/126 |
+| g6.en.sentence-write | P1 | 実装済み | Q 1.40 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 86/86 |
 | g6.en.future | P2 | 未実装 |  |
 | g6.en.speak | 外 | 未実装 |  |
-| g6.prog.sensor | P1 | 未実装 |  |
-| g6.prog.efficient | P1 | 未実装 |  |
+| g6.prog.sensor | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 186/186 |
+| g6.prog.efficient | P1 | 実装済み | Q 1.03 / C 3/3 / 誤り 0 / 汎用誤答 0% / 音声 210/210 |
 | g6.prog.ai | 外 | 未実装 |  |

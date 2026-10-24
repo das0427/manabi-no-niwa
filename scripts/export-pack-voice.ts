@@ -90,20 +90,26 @@ if (isMain) {
   const packsDir = join(root, 'src', 'packs');
   const outDir = join(root, 'voice', 'packs');
   mkdirSync(outDir, { recursive: true });
+  // 教材に出てくる数の部品（1万・100万・億 など allNumberParts に無い大きな数も含む）
+  const usedNumbers = new Set<string>();
   for (const d of readdirSync(packsDir, { withFileTypes: true })) {
     if (!d.isDirectory() || d.name.startsWith('_')) continue;
     const mod = (await import(pathToFileURL(join(packsDir, d.name, 'index.ts')).href)) as {
       default: PackContent;
     };
-    const { pack } = packScript(mod.default);
+    const { pack, numbers } = packScript(mod.default);
+    for (const y of numbers) usedNumbers.add(y);
     writeFileSync(
       join(outDir, `${d.name}.json`),
       JSON.stringify({ version: 1, entries: pack }, null, 2) + '\n',
     );
     console.log(`voice/packs/${d.name}.json: ${pack.length} 本`);
   }
-  // 数の部品は全部（どの数も読めるように）
-  const nums = allNumberParts().map((y) => ({ key: yomiHash(y), text: y }));
+  // 数の部品は全部（どの数も読めるように）＋教材に出てくる大きな数の部品
+  const nums = [...new Set([...allNumberParts(), ...usedNumbers])].map((y) => ({
+    key: yomiHash(y),
+    text: y,
+  }));
   writeFileSync(
     join(outDir, 'num.json'),
     JSON.stringify({ version: 1, entries: nums }, null, 2) + '\n',

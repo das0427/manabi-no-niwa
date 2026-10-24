@@ -1,0 +1,416 @@
+{
+ "version": 1,
+ "voice": "mei_normal (MMDAgent Mei, CC BY 3.0 Nagoya Institute of Technology) via Open JTalk (pyopenjtalk-plus)",
+ "entries": {
+  "114eqf0": {
+   "file": "114eqf0.mp3",
+   "hash": "adb843877dc6",
+   "ms": 672
+  },
+  "114zjc8": {
+   "file": "114zjc8.mp3",
+   "hash": "661972267f66",
+   "ms": 2040
+  },
+  "11jaz09": {
+   "file": "11jaz09.mp3",
+   "hash": "e01428f71cb7",
+   "ms": 480
+  },
+  "120optr": {
+   "file": "120optr.mp3",
+   "hash": "d5870d21089c",
+   "ms": 3936
+  },
+  "12bvnge": {
+   "file": "12bvnge.mp3",
+   "hash": "f6e584bb9337",
+   "ms": 360
+  },
+  "12d0ah": {
+   "file": "12d0ah.mp3",
+   "hash": "0ae195a2a55d",
+   "ms": 1272
+  },
+  "13yrgme": {
+   "file": "13yrgme.mp3",
+   "hash": "e22e9463711c",
+   "ms": 1488
+  },
+  "15ne6pf": {
+   "file": "15ne6pf.mp3",
+   "hash": "5ea3893a50f9",
+   "ms": 648
+  },
+  "15zacdg": {
+   "file": "15zacdg.mp3",
+   "hash": "27b4ddb5352b",
+   "ms": 864
+  },
+  "1797yb3": {
+   "file": "1797yb3.mp3",
+   "hash": "1c469440f9d8",
+   "ms": 2640
+  },
+  "18e3yxh": {
+   "file": "18e3yxh.mp3",
+   "hash": "290309d8fe81",
+   "ms": 528
+  },
+  "18tgxzs": {
+   "file": "18tgxzs.mp3",
+   "hash": "282bea8aabb7",
+   "ms": 2616
+  },
+  "19wu6nq": {
+   "file": "19wu6nq.mp3",
+   "hash": "2147293053ee",
+   "ms": 1944
+  },
+  "1bui8pz": {
+   "file": "1bui8pz.mp3",
+   "hash": "2a5884dce566",
+   "ms": 624
+  },
+  "1ciohwp": {
+   "file": "1ciohwp.mp3",
+   "hash": "7d471fbc690a",
+   "ms": 3000
+  },
+  "1hddjgx": {
+   "file": "1hddjgx.mp3",
+   "hash": "16de61d57f45",
+   "ms": 1200
+  },
+  "1hixueq": {
+   "file": "1hixueq.mp3",
+   "hash": "3d46ca85ff29",
+   "ms": 3072
+  },
+  "1j6p0h6": {
+   "file": "1j6p0h6.mp3",
+   "hash": "176415c7d0a8",
+   "ms": 720
+  },
+  "1k6ozny": {
+   "file": "1k6ozny.mp3",
+   "hash": "156a1384e29e",
+   "ms": 5472
+  },
+  "1m5mrzh": {
+   "file": "1m5mrzh.mp3",
+   "hash": "04c8779e79c2",
+   "ms": 888
+  },
+  "1mj5trs": {
+   "file": "1mj5trs.mp3",
+   "hash": "b515352d1721",
+   "ms": 1464
+  },
+  "1nf1g6a": {
+   "file": "1nf1g6a.mp3",
+   "hash": "68c6026f42cf",
+   "ms": 384
+  },
+  "1s2szt2": {
+   "file": "1s2szt2.mp3",
+   "hash": "3f11b46cf04e",
+   "ms": 3144
+  },
+  "1syti1q": {
+   "file": "1syti1q.mp3",
+   "hash": "ae0078e3ee78",
+   "ms": 360
+  },
+  "1t7de57": {
+   "file": "1t7de57.mp3",
+   "hash": "a09adda55b03",
+   "ms": 1392
+  },
+  "1tssb4n": {
+   "file": "1tssb4n.mp3",
+   "hash": "442b56e9c7a0",
+   "ms": 360
+  },
+  "1u2rwtm": {
+   "file": "1u2rwtm.mp3",
+   "hash": "65136ec40c71",
+   "ms": 360
+  },
+  "1v5iuwu": {
+   "file": "1v5iuwu.mp3",
+   "hash": "79b6e7997600",
+   "ms": 816
+  },
+  "1v8yr76": {
+   "file": "1v8yr76.mp3",
+   "hash": "1f91e4597039",
+   "ms": 2496
+  },
+  "1wptc2d": {
+   "file": "1wptc2d.mp3",
+   "hash": "9a526987308e",
+   "ms": 2256
+  },
+  "1x30ibr": {
+   "file": "1x30ibr.mp3",
+   "hash": "fd4b04294d24",
+   "ms": 4008
+  },
+  "1xwvxep": {
+   "file": "1xwvxep.mp3",
+   "hash": "5762888965e5",
+   "ms": 3144
+  },
+  "1ytv5pa": {
+   "file": "1ytv5pa.mp3",
+   "hash": "bc872375916a",
+   "ms": 3072
+  },
+  "1yvftcd": {
+   "file": "1yvftcd.mp3",
+   "hash": "8ecbebd59520",
+   "ms": 2928
+  },
+  "27s3jx": {
+   "file": "27s3jx.mp3",
+   "hash": "7184e42906f4",
+   "ms": 5064
+  },
+  "49aaa4": {
+   "file": "49aaa4.mp3",
+   "hash": "5f07c0e229cb",
+   "ms": 744
+  },
+  "4sh25v": {
+   "file": "4sh25v.mp3",
+   "hash": "644e8ebb041e",
+   "ms": 2736
+  },
+  "4tqu0z": {
+   "file": "4tqu0z.mp3",
+   "hash": "bf261b061ab0",
+   "ms": 1656
+  },
+  "5rny1g": {
+   "file": "5rny1g.mp3",
+   "hash": "bc4ecda9ad58",
+   "ms": 1584
+  },
+  "5ud3rs": {
+   "file": "5ud3rs.mp3",
+   "hash": "b24a5c76b6f8",
+   "ms": 552
+  },
+  "76ut1j": {
+   "file": "76ut1j.mp3",
+   "hash": "ccefb1dddee7",
+   "ms": 2208
+  },
+  "7nmcbx": {
+   "file": "7nmcbx.mp3",
+   "hash": "849cb77a99d9",
+   "ms": 3528
+  },
+  "9mkn1y": {
+   "file": "9mkn1y.mp3",
+   "hash": "104f40877f02",
+   "ms": 840
+  },
+  "aghxhe": {
+   "file": "aghxhe.mp3",
+   "hash": "149cc13ed9c0",
+   "ms": 744
+  },
+  "bn7pff": {
+   "file": "bn7pff.mp3",
+   "hash": "94416a4e2024",
+   "ms": 3768
+  },
+  "bvo4c0": {
+   "file": "bvo4c0.mp3",
+   "hash": "690da2173f7f",
+   "ms": 5568
+  },
+  "bzy7gr": {
+   "file": "bzy7gr.mp3",
+   "hash": "2179d09f3eed",
+   "ms": 5568
+  },
+  "cgd4g3": {
+   "file": "cgd4g3.mp3",
+   "hash": "62b0b3c19217",
+   "ms": 5616
+  },
+  "dpk8xh": {
+   "file": "dpk8xh.mp3",
+   "hash": "a8e62f14ffdb",
+   "ms": 4584
+  },
+  "fdi9su": {
+   "file": "fdi9su.mp3",
+   "hash": "bcdb27542cab",
+   "ms": 2184
+  },
+  "fnj5km": {
+   "file": "fnj5km.mp3",
+   "hash": "54b91f4deef1",
+   "ms": 768
+  },
+  "fpsmfb": {
+   "file": "fpsmfb.mp3",
+   "hash": "6f2f4cb89802",
+   "ms": 1176
+  },
+  "gactwo": {
+   "file": "gactwo.mp3",
+   "hash": "7276566c86f5",
+   "ms": 720
+  },
+  "gyziob": {
+   "file": "gyziob.mp3",
+   "hash": "ee2108a7ab57",
+   "ms": 5784
+  },
+  "hp2nul": {
+   "file": "hp2nul.mp3",
+   "hash": "d78a2c44d190",
+   "ms": 1944
+  },
+  "ik0f1i": {
+   "file": "ik0f1i.mp3",
+   "hash": "fb2872353271",
+   "ms": 648
+  },
+  "ius37z": {
+   "file": "ius37z.mp3",
+   "hash": "99609ee172e0",
+   "ms": 4416
+  },
+  "iv23ac": {
+   "file": "iv23ac.mp3",
+   "hash": "ab1ecb967739",
+   "ms": 2880
+  },
+  "jeoa8": {
+   "file": "jeoa8.mp3",
+   "hash": "617b7e06fce2",
+   "ms": 840
+  },
+  "k82pgr": {
+   "file": "k82pgr.mp3",
+   "hash": "3b398a168aea",
+   "ms": 3312
+  },
+  "mffbfl": {
+   "file": "mffbfl.mp3",
+   "hash": "911f7a7d7dbc",
+   "ms": 528
+  },
+  "mr760h": {
+   "file": "mr760h.mp3",
+   "hash": "ad7178a5118c",
+   "ms": 576
+  },
+  "njo45g": {
+   "file": "njo45g.mp3",
+   "hash": "a70dcc14d37b",
+   "ms": 672
+  },
+  "nn1wbv": {
+   "file": "nn1wbv.mp3",
+   "hash": "917a05962472",
+   "ms": 1200
+  },
+  "r21vsa": {
+   "file": "r21vsa.mp3",
+   "hash": "a81dbb0ed7ec",
+   "ms": 720
+  },
+  "r9r63g": {
+   "file": "r9r63g.mp3",
+   "hash": "89fe248c5533",
+   "ms": 1896
+  },
+  "rv93wx": {
+   "file": "rv93wx.mp3",
+   "hash": "a5e5b7d14cfc",
+   "ms": 2448
+  },
+  "s4sw0x": {
+   "file": "s4sw0x.mp3",
+   "hash": "f9accfedf06c",
+   "ms": 2688
+  },
+  "s6ehca": {
+   "file": "s6ehca.mp3",
+   "hash": "e9929f18fcf2",
+   "ms": 768
+  },
+  "srofig": {
+   "file": "srofig.mp3",
+   "hash": "753d61fdd8b1",
+   "ms": 552
+  },
+  "sytdxb": {
+   "file": "sytdxb.mp3",
+   "hash": "d6b0e6461a7b",
+   "ms": 5712
+  },
+  "t6jyd9": {
+   "file": "t6jyd9.mp3",
+   "hash": "c6dc49b73dfb",
+   "ms": 1344
+  },
+  "whahpo": {
+   "file": "whahpo.mp3",
+   "hash": "4281b9058c64",
+   "ms": 5496
+  },
+  "xsqwl2": {
+   "file": "xsqwl2.mp3",
+   "hash": "e99871a1213d",
+   "ms": 4968
+  },
+  "y0zqqr": {
+   "file": "y0zqqr.mp3",
+   "hash": "1a62fef58ac5",
+   "ms": 3144
+  },
+  "ydfj0q": {
+   "file": "ydfj0q.mp3",
+   "hash": "947653428247",
+   "ms": 1104
+  },
+  "ymahp9": {
+   "file": "ymahp9.mp3",
+   "hash": "7d25d1c990b2",
+   "ms": 384
+  },
+  "ymzvie": {
+   "file": "ymzvie.mp3",
+   "hash": "1c73daf9815d",
+   "ms": 2856
+  },
+  "z0r9qy": {
+   "file": "z0r9qy.mp3",
+   "hash": "9ccaa9e1e7b8",
+   "ms": 6360
+  },
+  "zf9xd9": {
+   "file": "zf9xd9.mp3",
+   "hash": "d5fa0a5c7571",
+   "ms": 4224
+  },
+  "zoo7vw": {
+   "file": "zoo7vw.mp3",
+   "hash": "2b429100b154",
+   "ms": 1488
+  },
+  "zxwpjt": {
+   "file": "zxwpjt.mp3",
+   "hash": "265fb78e1bc3",
+   "ms": 792
+  }
+ }
+}

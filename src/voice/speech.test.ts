@@ -38,7 +38,6 @@ describe('文の部品分け', () => {
       '、みかんが',
       'にじゅう',
       'さんこ',
-      '。',
     ]);
     expect(p[1]!.key.startsWith('num/')).toBe(true);
   });

@@ -83,7 +83,8 @@ export function speechParts(packId: string, rich: string): SpeechPart[] {
 
 function pushText(out: SpeechPart[], packId: string, s: string): void {
   const yomi = speechYomi(s).trim();
-  if (!yomi) return;
+  // 句読点・記号だけの部品は読まない（音が空になる）
+  if (!/[ぁ-ゖァ-ヺ一-鿿A-Za-z]/.test(yomi)) return;
   out.push({ key: `${packId}/${yomiHash(yomi)}`, yomi, text: s.trim() });
 }
 

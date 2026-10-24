@@ -18,6 +18,7 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "voice:script": "tsx scripts/export-voice-script.ts",
+    "voice:packs": "tsx --tsconfig tsconfig.app.json --import ./scripts/ignore-assets.mjs scripts/export-pack-voice.ts",
     "voice:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/voice/build.ps1",
     "voice:build:sh": "bash scripts/voice/build.sh",
     "check:audio": "tsx scripts/check-audio.ts",

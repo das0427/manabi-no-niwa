@@ -88,7 +88,7 @@ export function normalizeInput(s: string): string {
     .replace(/[／]/g, '/')
     .replace(/[－ー−]/g, '-')
     .replace(/[,，、]/g, '')
-    .replace(/[\s　]+/g, ' ')
+    .replace(/\s+/g, ' ') // \s は全角空白も含む
     .trim();
 }
 
@@ -120,7 +120,7 @@ export function parseNumberInput(input: string): ParsedNumber | null {
     return { value: rational(n, 10 ** places), form: 'decimal', places };
   }
   // 整数
-  if ((m = /^-?\d+$/.exec(s))) {
+  if (/^-?\d+$/.test(s)) {
     return { value: rational(Number(s), 1), form: 'int' };
   }
   return null;

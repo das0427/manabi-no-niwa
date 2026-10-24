@@ -66,7 +66,7 @@ export function segmentKana(kana: string): Seg[] {
       sokuon = true;
       continue;
     }
-    let seg: Seg | null = null;
+    let seg: Seg;
     if (next && SMALL_Y[next] && YOON[c]) {
       const [h, k] = YOON[c]!;
       const v = SMALL_Y[next]!;
@@ -138,7 +138,7 @@ export function normalizeRomaji(s: string): string {
     .replace(/ê/g, 'ē')
     .replace(/ô/g, 'ō')
     .replace(/[’‘`]/g, "'")
-    .replace(/[\s　-]+/g, '');
+    .replace(/[\s-]+/g, ''); // \s は全角空白も含む
 }
 
 /** 告示のつづり（長音符号を使う形）。画面の手本に使う */

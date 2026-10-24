@@ -45,6 +45,12 @@ describe('judgeNumber', () => {
     expect(judgeNumber(a, '3/10')).toEqual({ result: 'retry', reason: 'form' });
     expect(judgeNumber(a, '0.4').result).toBe('wrong');
   });
+  it('帯分数の分数部分が分母以上（1と4/3）は「もう一度」。正しい形は正解', () => {
+    const a = { kind: 'fraction', num: 7, den: 3 } as const;
+    expect(judgeNumber(a, '2と1/3').result).toBe('correct');
+    expect(judgeNumber(a, '1と4/3')).toEqual({ result: 'retry', reason: 'form' });
+    expect(judgeNumber(a, '7/3').result).toBe('correct');
+  });
   it('小数の桁数の指定: 3.0 と書く単元では 3 は「もう一度」（誤答にしない）', () => {
     const a = { kind: 'decimal', value: 3, places: 1 } as const;
     expect(judgeNumber(a, '3.0').result).toBe('correct');

@@ -48,6 +48,8 @@ export interface ParsedNumber {
   raw?: { n: number; d: number };
   /** 小数の桁数 */
   places?: number;
+  /** 帯分数の分数部分が分母以上（「1と4/3」など。値は同じでも帯分数の書き方として正しくない） */
+  badMixed?: boolean;
 }
 
 export type Verdict =
@@ -109,7 +111,12 @@ export function parseNumberInput(input: string): ParsedNumber | null {
     const d = Number(m[4]);
     if (d === 0) return null;
     const rn = sign * (w * d + n);
-    return { value: rational(rn, d), form: 'mixed', raw: { n: rn, d } };
+    return {
+      value: rational(rn, d),
+      form: 'mixed',
+      raw: { n: rn, d },
+      ...(n >= d ? { badMixed: true } : {}),
+    };
   }
   // 分数: "3/4"
   if ((m = /^(-?\d+)\s*\/\s*(\d+)$/.exec(s))) {
@@ -176,6 +183,8 @@ export function judgeNumber(answer: NumberAnswer, input: string, unit?: string):
       }
       if (p.form === 'mixed' && answer.allowMixed === false)
         return { result: 'retry', reason: 'form' };
+      // 「1と4/3」: 値は合っているが帯分数の書き方として正しくない → 形式を直してもらう
+      if (p.badMixed) return { result: 'retry', reason: 'form' };
       if (p.form === 'fraction' && answer.allowImproper === false && Math.abs(p.raw!.n) >= p.raw!.d)
         return { result: 'retry', reason: 'form' };
       if (answer.mustReduce && p.raw) {

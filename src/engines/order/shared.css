@@ -1,0 +1,131 @@
+/* order・sort・match・fill・build の共通部品（DESINGN.md 7〜8章）。寸法は --u 基準。色はトークンだけ */
+
+/* カード（押せるもの）。主操作の寸法（6u 以上） */
+.tk-card {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.4);
+  min-width: calc(var(--u) * 7);
+  min-height: calc(var(--u) * 7);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+  color: var(--ink);
+  font-family: var(--font-child);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform var(--dur-fast);
+}
+.tk-card:active:not(:disabled) {
+  transform: translateY(calc(var(--u) * 0.4));
+  box-shadow: 0 calc(var(--u) * 0.2) 0 var(--paper-2);
+}
+.tk-card:focus-visible {
+  outline: calc(var(--u) * 0.4) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+}
+.tk-card:disabled {
+  cursor: default;
+}
+.tk-card.is-selected {
+  outline: calc(var(--u) * 0.6) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.2);
+  box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
+  transform: translateY(calc(var(--u) * -1));
+}
+.tk-card__label {
+  font-size: var(--text-label);
+  line-height: 1.25;
+}
+.tk-card__fig {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: calc(var(--u) * 16);
+  max-height: calc(var(--u) * 9);
+  overflow: hidden;
+}
+.tk-card__illust {
+  width: calc(var(--u) * 5.6);
+  height: calc(var(--u) * 5.6);
+}
+/* 2〜3歳: カードを大きく（絵が中心） */
+.tk--big .tk-card {
+  min-width: calc(var(--u) * 11);
+  min-height: calc(var(--u) * 10);
+}
+.tk--big .tk-card__illust {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+}
+
+/* 組の番号など（角の小さな丸） */
+.tk-badge {
+  position: absolute;
+  top: calc(var(--u) * -1.2);
+  left: calc(var(--u) * -1.2);
+  min-width: calc(var(--u) * 2.8);
+  height: calc(var(--u) * 2.8);
+  padding: 0 calc(var(--u) * 0.4);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 1.4);
+  background: var(--sun);
+  color: var(--ink);
+  font-size: calc(var(--u) * 1.8);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+/* 空いている置き場（破線の枠。押せないときは薄い） */
+.tk-slot {
+  position: relative;
+  min-width: calc(var(--u) * 7);
+  min-height: calc(var(--u) * 7);
+  border: calc(var(--u) * 0.3) dashed var(--ink-soft);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  color: var(--ink-soft);
+  font-family: var(--font-child);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tk-slot.is-next {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--white);
+}
+
+/* こたえあわせ（作業領域の右） */
+.tk-check {
+  min-width: calc(var(--u) * 16);
+  font-size: calc(var(--u) * 2.6);
+  white-space: nowrap;
+}
+
+/* 操作の部分と こたえあわせ を左右に */
+.tk-frame {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  column-gap: calc(var(--u) * 3);
+}
+.tk-frame__main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2.4);
+}

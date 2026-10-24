@@ -1,0 +1,85 @@
+/* なかま分け: 上に箱、下に わけるもの。こたえあわせ は右 */
+.eng-sort__boxes {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: calc(var(--u) * 2);
+}
+.eng-sort__box {
+  position: relative;
+  flex: 1 1 0;
+  max-width: calc(var(--u) * 34);
+  min-height: calc(var(--u) * 13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1) calc(var(--u) * 1.2);
+}
+/* 箱の面（押せる）。木の札の色と段差 */
+.eng-sort__lid {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  box-shadow: 0 var(--step) 0 var(--wood-dark);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.eng-sort__lid:focus-visible {
+  outline: calc(var(--u) * 0.4) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+}
+.eng-sort__lid:disabled {
+  cursor: default;
+}
+/* カードをえらんでいる間: 箱の輪郭を太い破線にして「ここへ入れられる」を示す（色だけにしない） */
+.eng-sort__box.is-ready .eng-sort__lid {
+  border-style: dashed;
+  border-width: calc(var(--u) * 0.5);
+  background: var(--white);
+}
+.eng-sort__name {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  font-weight: 700;
+  font-size: var(--text-label);
+  color: var(--ink);
+}
+.eng-sort__name .tk-card__illust {
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+}
+.eng-sort__inside {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+  pointer-events: none;
+}
+.eng-sort__inside .tk-card {
+  pointer-events: auto;
+  min-width: calc(var(--u) * 6);
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.8);
+}
+.eng-sort__inside .tk-card__illust {
+  width: calc(var(--u) * 4.6);
+  height: calc(var(--u) * 4.6);
+}
+.eng-sort__pool {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+  min-height: calc(var(--u) * 7);
+}

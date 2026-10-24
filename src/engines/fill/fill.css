@@ -1,0 +1,57 @@
+/* 文の空欄: 上に文（空欄は押せる枠）、下に選択肢。こたえあわせ は右 */
+.eng-fill__text {
+  margin: 0;
+  font-size: calc(var(--u) * 3.6);
+  font-weight: 700;
+  line-height: 2;
+  color: var(--ink);
+  text-align: center;
+  white-space: pre-line;
+}
+.eng-fill__blank {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  min-width: calc(var(--u) * 7);
+  min-height: calc(var(--u) * 6.4);
+  margin: 0 calc(var(--u) * 0.6);
+  padding: 0 calc(var(--u) * 1);
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: calc(var(--u) * 0.35) solid var(--ink);
+  border-radius: calc(var(--u) * 1);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.eng-fill__blank.is-empty {
+  border-style: dashed;
+  background: var(--paper-2);
+}
+/* えらんでいる空欄: 太い輪郭＋黄色い帯（色だけにしない） */
+.eng-fill__blank.is-active {
+  outline: calc(var(--u) * 0.5) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+  box-shadow: 0 0 0 calc(var(--u) * 0.3) var(--sun);
+}
+.eng-fill__blank.is-revealed {
+  border-color: var(--correct);
+  border-width: calc(var(--u) * 0.5);
+}
+.eng-fill__blank:disabled {
+  cursor: default;
+}
+.eng-fill__options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-fill__opt {
+  min-width: calc(var(--u) * 8);
+}
+.eng-fill__opt:disabled {
+  opacity: 0.4;
+}

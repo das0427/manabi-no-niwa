@@ -6,6 +6,11 @@ import type { NumberAnswer } from '../core/answer/number';
 import type { ModeId } from '../core/types';
 import type { Rng } from '../core/util/rng';
 import type { Figure } from '../engines/figure/types';
+import type { OrderItem } from '../engines/order/order';
+import type { SortItem } from '../engines/sort/sort';
+import type { MatchItem } from '../engines/match/match';
+import type { FillItem } from '../engines/fill/fill';
+import type { BuildItem } from '../engines/build/build';
 
 /** 文の記法（src/text/rich.ts）。漢字は必ず《よみ》付き */
 export type RichText = string;
@@ -111,7 +116,14 @@ export interface NumberItem extends ItemBase {
 }
 
 /** 問題の型の和。エンジンを足すときはここに加える（統括が管理） */
-export type Item = ChoiceItem | NumberItem;
+export type Item =
+  | ChoiceItem
+  | NumberItem
+  | OrderItem
+  | SortItem
+  | MatchItem
+  | FillItem
+  | BuildItem;
 export type EngineId = Item['engine'];
 
 // ---- 単元 ----

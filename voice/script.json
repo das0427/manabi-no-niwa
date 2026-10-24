@@ -290,6 +290,114 @@
       "text": "きゅうこ"
     },
     {
+      "key": "draw.color.black",
+      "text": "くろ"
+    },
+    {
+      "key": "draw.color.blue",
+      "text": "あお"
+    },
+    {
+      "key": "draw.color.brown",
+      "text": "ちゃいろ"
+    },
+    {
+      "key": "draw.color.darkgray",
+      "text": "こいはいいろ"
+    },
+    {
+      "key": "draw.color.darkgreen",
+      "text": "ふかみどり"
+    },
+    {
+      "key": "draw.color.darkred",
+      "text": "こいあか"
+    },
+    {
+      "key": "draw.color.gold",
+      "text": "こがね"
+    },
+    {
+      "key": "draw.color.gray",
+      "text": "はいいろ"
+    },
+    {
+      "key": "draw.color.green",
+      "text": "みどり"
+    },
+    {
+      "key": "draw.color.lavender",
+      "text": "ふじいろ"
+    },
+    {
+      "key": "draw.color.lemon",
+      "text": "れもんいろ"
+    },
+    {
+      "key": "draw.color.lightbrown",
+      "text": "うすちゃ"
+    },
+    {
+      "key": "draw.color.lightpink",
+      "text": "うすもも"
+    },
+    {
+      "key": "draw.color.navy",
+      "text": "こん"
+    },
+    {
+      "key": "draw.color.orange",
+      "text": "だいだい"
+    },
+    {
+      "key": "draw.color.pink",
+      "text": "ももいろ"
+    },
+    {
+      "key": "draw.color.purple",
+      "text": "むらさき"
+    },
+    {
+      "key": "draw.color.red",
+      "text": "あか"
+    },
+    {
+      "key": "draw.color.skin",
+      "text": "はだいろ"
+    },
+    {
+      "key": "draw.color.sky",
+      "text": "みずいろ"
+    },
+    {
+      "key": "draw.color.teal",
+      "text": "あおみどり"
+    },
+    {
+      "key": "draw.color.white",
+      "text": "しろ"
+    },
+    {
+      "key": "draw.color.yellow",
+      "text": "きいろ"
+    },
+    {
+      "key": "draw.color.yellowgreen",
+      "text": "きみどり"
+    },
+    {
+      "key": "draw.gallery",
+      "text": "さくひん"
+    },
+    {
+      "key": "draw.other-tab",
+      "text": "べつの がめんで かいています"
+    },
+    {
+      "key": "draw.title",
+      "text": "おえかき"
+    },
+    {
       "key": "item.airplane",
       "text": "ひこうき"
     },

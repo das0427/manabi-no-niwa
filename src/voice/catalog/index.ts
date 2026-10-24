@@ -8,6 +8,7 @@ import { voice as compare } from '../../modes/compare/voice';
 import { voice as road } from '../../modes/road/voice';
 import { voice as trace } from '../../modes/trace/voice';
 import { voice as math } from '../../modes/math/voice';
+import { voice as drawing } from '../../drawing/voice';
 import type { VoiceEntries } from '../types';
 
 /**
@@ -25,6 +26,7 @@ const parts: Record<string, VoiceEntries> = {
   road,
   trace,
   math,
+  drawing,
 };
 
 function merge(): VoiceEntries {

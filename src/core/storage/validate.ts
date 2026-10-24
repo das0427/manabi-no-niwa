@@ -167,8 +167,15 @@ export function normalizeSettings(
     }
     return out as unknown as SupportSettings;
   };
+  const units = (v: unknown): string[] | undefined =>
+    Array.isArray(v) &&
+    v.length <= 500 &&
+    v.every((x) => typeof x === 'string' && /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/.test(x))
+      ? [...new Set(v as string[])]
+      : undefined;
   const s: ChildSettings = {
     support: take(raw.support, support, d.support),
+    unitsOpened: take(raw.unitsOpened, units, d.unitsOpened),
     profileId,
     volume: take(raw.volume, (v) => (num(v) && v >= 0 && v <= 1 ? v : undefined), d.volume),
     sfx: take(raw.sfx, (v) => (bool(v) ? v : undefined), d.sfx),

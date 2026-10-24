@@ -20,10 +20,10 @@ export function openUnit(unitId: string): void {
 }
 
 /** 札の単元のうち、子供画面に出すもの（保護者が開いていない hiddenByDefault は出さない） */
-export function cardUnits(card: HomeCard): string[] {
+export function cardUnits(card: HomeCard, opened: readonly string[] = []): string[] {
   return card.units.filter((id) => {
     const m = unitMeta(id);
-    return m && m.status !== 'planned' && !m.hiddenByDefault;
+    return m && m.status !== 'planned' && (!m.hiddenByDefault || opened.includes(id));
   });
 }
 
@@ -54,7 +54,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
     : undefined;
 
   const open = (c: HomeCard) => {
-    const units = cardUnits(c);
+    const units = cardUnits(c, app.settings?.unitsOpened);
     if (c.titleVoice) void audio.play(c.titleVoice);
     if (units.length === 1) openUnit(units[0]!);
     else if (units.length > 1) navigate({ name: 'card', stage: def.stage, cardId: c.id });
@@ -73,7 +73,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
       </div>
       <div className="home-grid" role="list" aria-label="ぜんぶの あそび" style={gridStyle}>
         {cards.map((c) =>
-          cardUnits(c).length > 0 ? (
+          cardUnits(c, app.settings?.unitsOpened).length > 0 ? (
             <button
               key={c.id}
               type="button"

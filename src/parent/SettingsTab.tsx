@@ -12,6 +12,8 @@ import {
   type TraceTolerance,
 } from '../core/types';
 import { MODES, SKILLS, roundSizeFor } from '../modes/registry';
+import { UNIT_INDEX } from '../curriculum/unitIndex';
+import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
 import { modeTitle, useLoad } from './util';
 
@@ -361,6 +363,33 @@ export function SettingsTab() {
             {f.note ? <span className="p-muted">{f.note}</span> : null}
           </fieldset>
         ))}
+      </Section>
+
+      <Section title="はじめは かくれている単元">
+        <Note>
+          就学前の先取り（5歳の式・カタカナの書きなど）は、はじめは子供の画面に出しません。チェックすると出ます。
+        </Note>
+        {UNIT_INDEX.filter((u) => u.hiddenByDefault).length === 0 ? (
+          <p className="p-muted">対象の単元はまだありません。</p>
+        ) : (
+          UNIT_INDEX.filter((u) => u.hiddenByDefault).map((u) => (
+            <label key={u.id} className="p-inline" style={{ display: 'block' }}>
+              <input
+                type="checkbox"
+                checked={s.unitsOpened.includes(u.id)}
+                onChange={(e) =>
+                  update({
+                    unitsOpened: e.target.checked
+                      ? [...s.unitsOpened, u.id]
+                      : s.unitsOpened.filter((x) => x !== u.id),
+                  })
+                }
+                data-testid={`setting-open-${u.id}`}
+              />
+              {plainText(u.title)}（{u.id}）
+            </label>
+          ))
+        )}
       </Section>
 
       <Section title="利用時間・問題数">

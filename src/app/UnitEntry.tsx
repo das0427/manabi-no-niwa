@@ -34,7 +34,7 @@ export function CardChooser({ stage, cardId }: { stage: string; cardId: string }
           className="row"
           style={{ gap: 'calc(var(--u) * 2.4)', flexWrap: 'wrap', maxWidth: 'calc(var(--u) * 92)' }}
         >
-          {cardUnits(card).map((id) => {
+          {cardUnits(card, app.settings.unitsOpened).map((id) => {
             const m = unitMeta(id)!;
             return (
               <button

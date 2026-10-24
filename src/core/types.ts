@@ -85,6 +85,8 @@ export interface ChildSettings {
   levelLocks: Partial<Record<SkillId, number>>;
   /** 支援設定（スキーマ2〜。docs/expansion/architecture.md 2章） */
   support: SupportSettings;
+  /** 保護者が開いた単元（既定で隠す単元 hiddenByDefault を子供画面に出す） */
+  unitsOpened: string[];
 }
 
 export interface Profile {
@@ -264,6 +266,7 @@ export type StorageHealth = 'ok' | 'full' | 'error' | 'unavailable';
 export function defaultSettings(profileId: string, audience: AudienceId = 'p4'): ChildSettings {
   return {
     support: defaultSupport(audience),
+    unitsOpened: [],
     profileId,
     volume: 0.8,
     sfx: true,

@@ -3,6 +3,7 @@
  * 1つ選ぶ問題はタップでそのまま答える（v1 と同じ）。すべて選ぶ問題は「こたえあわせ」で答える。
  */
 import { useState } from 'react';
+import { createRng, hashSeed } from '../../core/util/rng';
 import type { ChoiceItem } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
@@ -29,6 +30,28 @@ export function visibleOptionIndices(
   const wrong = options.flatMap((o, i) => (o.correct ? [] : [i]));
   const keep = new Set([...correct, ...wrong.slice(0, Math.max(0, limit - correct.length))]);
   return options.flatMap((_, i) => (keep.has(i) ? [i] : []));
+}
+
+/**
+ * 選択肢を並べる順（元の番号）。fixedOrder でなければ問題の id で決まる順に並べ替える。
+ * 教材の書き方で正解が先頭に偏っても、位置で当てられないようにする（漢字担当の要望）。
+ * 同じ問題は何度描いても・再開しても同じ順。
+ */
+export function displayOrder(
+  item: Pick<ChoiceItem, 'id' | 'fixedOrder' | 'options'>,
+  shown: number[],
+): number[] {
+  if (item.fixedOrder || shown.length < 2) return shown;
+  // 図の「あ」「い」…を指す選択肢は記号の順のまま
+  if (item.options.every((o) => typeof o.label === 'string' && /^[あいうえおかき]$/.test(o.label)))
+    return shown;
+  const rng = createRng(hashSeed('choice-order', item.id));
+  const out = [...shown];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = rng.int(0, i);
+    [out[i], out[j]] = [out[j]!, out[i]!];
+  }
+  return out;
 }
 
 export function judgeChoice(item: ChoiceItem, picked: ChoiceResponse): Judgement {
@@ -78,9 +101,9 @@ function ChoiceView({
 }: EngineProps<ChoiceItem, ChoiceResponse>) {
   const [picked, setPicked] = useState<number[]>([]);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
-  const shown = visibleOptionIndices(
-    item.options,
-    item.multi ? item.options.length : ctx.ux.maxChoices,
+  const shown = displayOrder(
+    item,
+    visibleOptionIndices(item.options, item.multi ? item.options.length : ctx.ux.maxChoices),
   );
   const stateOf = (i: number): TapState => {
     const o = item.options[i]!;

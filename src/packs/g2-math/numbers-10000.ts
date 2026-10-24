@@ -90,9 +90,14 @@ function hyaku(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: [
       unit === 100 ? '100が 10こで 1000 だね。' : '1000が いくつ あるか かんがえよう。',
       hint2,
+      // 最後の段で答えの数そのものを言わない
       unit === 100
-        ? `1000が ${Math.floor(k / 10)}こで ${Math.floor(k / 10) * 1000}。そこに 100が ${k % 10}こ…`
-        : `1000が ${k}こ…`,
+        ? k % 10 === 0
+          ? `1000の まとまりが ${k / 10}こ できるね。`
+          : `1000が ${Math.floor(k / 10)}こで ${Math.floor(k / 10) * 1000}。そこに 100が ${k % 10}こ…`
+        : alt
+          ? `1000ずつ かぞえて ${n}に なるまで なんかい かな。`
+          : `1000が ${k}こ…`,
     ],
     explain: alt
       ? `${n}は ${unit}を ${k}こ あつめた かずです。`
@@ -134,8 +139,9 @@ function around(level: number, rng: Rng, alt: boolean): NumberItem {
     figure: alt
       ? {
           kind: 'numberline',
-          min: Math.floor(Math.min(n, ans) / 1000) * 1000,
-          max: Math.floor(Math.min(n, ans) / 1000) * 1000 + 2000,
+          // 10000 を こえる めもりを かかない（2年は 1万まで）
+          min: Math.min(Math.floor(Math.min(n, ans) / 1000) * 1000, 8000),
+          max: Math.min(Math.floor(Math.min(n, ans) / 1000) * 1000, 8000) + 2000,
           step: 1000,
           minorStep: 100,
           marks: [{ at: n, tone: 'focus' }],
@@ -187,7 +193,11 @@ function line4(level: number, rng: Rng, alt: boolean): NumberlineItem {
   const hints = [
     `いちばん ちいさい 1めもりは ${minor} だよ。`,
     `${near}の ながい めもりを みつけよう。`,
-    `${near}から ${minor}ずつ かぞえよう。${near + minor}、${near + 2 * minor}、…`,
+    // 数えはじめの例に 答えの数を ふくめない
+    `${near}から ${minor}ずつ かぞえよう。${[near + minor, near + 2 * minor]
+      .filter((v) => v < at)
+      .map((v) => `${v}、`)
+      .join('')}…`,
   ];
   const base = {
     engine: 'numberline' as const,

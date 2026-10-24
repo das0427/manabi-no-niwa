@@ -153,7 +153,7 @@ function tashikame(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         'たしざんの こたえから、たした かずを ひくと、もとに もどるよ。',
         `${s}から ${y}を ひくと…`,
-        `${s} − ${y} が ${x}に なれば あって いるね。`,
+        `たしかめの しきの こたえが ${x}に なれば あって いるね。`,
       ],
       explain: `${s} − ${y} ＝ ${x}。もとの かず ${x}に もどるので、たしかめの しきは ${s} − ${y} です。`,
       identity: `tashikame-add:${Math.min(x, y)}+${Math.max(x, y)}`,
@@ -174,7 +174,7 @@ function tashikame(level: number, rng: Rng, alt: boolean): Item {
     hints: [
       'ひきざんの こたえに、ひいた かずを たすと、もとに もどるよ。',
       `こたえの ${d}に ${b}を たすと…`,
-      `${d} ＋ ${b} が ${a}に なれば あって いるね。`,
+      `たしかめの しきの こたえが ひかれる かずの ${a}に なれば あって いるね。`,
     ],
     explain: `${d} ＋ ${b} ＝ ${a}。ひかれる かず ${a}に もどるので、たしかめの しきは ${d} ＋ ${b} です。`,
     identity: `tashikame:${a}-${b}`,
@@ -201,7 +201,7 @@ function koukan(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         'たしざんは、たされる かずと たす かずを いれかえても こたえは おなじ。',
         'ひきざんは いれかえると こたえが かわるよ。',
-        `${b}と ${a}を いれかえた たしざんを さがそう。`,
+        'おなじ 2つの かずを つかった たしざんを さがそう。',
       ],
       explain: `${b} ＋ ${a} ＝ ${a + b}。たしざんは いれかえても こたえが おなじです。`,
       identity: `koukan-choose:${a}+${b}`,
@@ -231,7 +231,7 @@ function koukan(level: number, rng: Rng, alt: boolean): Item {
     fields: [{ label: '□', answer: { kind: 'int', value: b } }],
     wrongAnswers: wrongList(String(b), 1, [
       [a + b, 'answer-in-box'],
-      [a, 'swap-sub'],
+      [a, 'copy-number'],
     ]),
   } satisfies NumberItem;
 }
@@ -241,7 +241,10 @@ function kakko(level: number, rng: Rng, alt: boolean): Item {
   // b + c が 10・20・30 になる組
   const a = rng.int(11, 69);
   const target = rng.int(1, 3) * 10;
-  const b = rng.int(1, target - 1);
+  // a ＋ b も ちょうど 何十に なると、どちらを さきに たしても らく（正答が2つ）になるので除く
+  let b: number;
+  do b = rng.int(1, target - 1);
+  while ((a + b) % 10 === 0);
   const c = target - b;
   const s = a + b + c;
   if (alt) {
@@ -339,6 +342,11 @@ export const addSubRelations: UnitSpec = {
       id: 'swap-sub',
       explain:
         'いれかえて よいのは たしざん だけ だよ。ひきざんを いれかえると こたえが かわるね。',
+    },
+    {
+      id: 'copy-number',
+      explain:
+        '□の となりの かずを そのまま かいたのかな。ひだりの しきの 2つの かずの うち、みぎの しきに まだ ない ほうが □に はいるよ。',
     },
     {
       id: 'koukan-change',

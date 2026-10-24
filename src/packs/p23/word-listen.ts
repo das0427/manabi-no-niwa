@@ -76,7 +76,13 @@ function item(w: Word, level: number, alt: boolean): Item {
     alt,
     prompt: alt ? 'きいてね。どれかな？' : 'きいてね。どっちかな？',
     audio: { text: alt ? sentence : w.name },
-    hints: ['もういちど よく きいてね。', `はじめの おとは「${[...w.name][0]}」だよ。`],
+    // 1おんの語（「き」）は はじめの おと＝答え になるので、別の ことばに する
+    hints: [
+      'もういちど よく きいてね。',
+      [...w.name].length === 1
+        ? 'みじかい ことばだよ。えの なまえを ひとつずつ いって みよう。'
+        : `はじめの おとは「${[...w.name][0]}」だよ。`,
+    ],
     explain: `${w.name}だね。`,
     identity: id,
     correct: { label: w.name, figure: ill(w.illust) },

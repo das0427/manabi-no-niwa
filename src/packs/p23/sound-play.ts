@@ -74,7 +74,11 @@ function thingItem(s: Snd, alt: boolean): Item {
     alt,
     prompt: alt ? 'この おとが するのは どれ？' : 'なんの おとかな？',
     audio: { text: alt ? `${s.sound}。この おとが するのは なあに？` : s.sound },
-    hints: ['もういちど きいて、まねして いって みよう。', `${s.name}は どんな おとが するかな。`],
+    // 2段めに 物の名前（＝答え）を 書かない
+    hints: [
+      'もういちど きいて、まねして いって みよう。',
+      'えを ひとつずつ みて、どんな おとが するか いって みよう。',
+    ],
     explain: `${s.name}は「${s.sound}」。`,
     identity: id,
     correct: { label: s.name, figure: ill(s.illust) },

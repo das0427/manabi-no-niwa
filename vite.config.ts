@@ -12,6 +12,8 @@ const PACK_RUNTIME = [
 ];
 function packRuntimeName(id: string): string | null {
   const p = id.replace(/\\/g, '/').split('?')[0] ?? '';
+  // 既知の制約: rolldown の補助関数（動的 import の名前空間）は本体の hash 付きチャンクに入り、
+  // パックがそれを読み込む。本体を更新するとパックの版も変わる（更新時に配信から取り直す）
   return PACK_RUNTIME.some((m) => p.endsWith(m)) ? 'pack-runtime' : null;
 }
 

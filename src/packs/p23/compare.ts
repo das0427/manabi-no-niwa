@@ -96,7 +96,7 @@ function sizeItem(
       : `${want} ${t.name}は どっち？`,
     hints: [
       'ふたつを ならべて よく みよう。',
-      askBig ? 'ひろく のびて いる ほうだよ。' : 'こぢんまりした ほうだよ。',
+      askBig ? 'りょうてで かかえる くらいの ほうだよ。' : 'てのひらに のる くらいの ほうだよ。',
     ],
     explain: `こっちが ${want} ${t.name}。`,
     explainFigure: askBig ? big : small,

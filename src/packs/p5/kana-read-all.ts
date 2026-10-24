@@ -114,6 +114,9 @@ const SIMILAR = [
   'けは',
 ];
 const similar = (a: string, b: string) => SIMILAR.some((g) => g.includes(a) && g.includes(b));
+/** 同じ おとに きこえる 字（音だけでは区別できないので、誤答に入れない） */
+export const SAME_SOUND = ['じぢ', 'ずづ', 'おを'];
+const sameSound = (a: string, b: string) => SAME_SOUND.some((g) => g.includes(a) && g.includes(b));
 const base = (c: string) => c.normalize('NFD')[0]!;
 /** 同じ もとの字の 濁音・半濁音（「ぶ」→「ふ」「ぷ」） */
 const family = (c: string) => [...(SEION + DAKU)].filter((x) => x !== c && base(x) === base(c));
@@ -122,7 +125,7 @@ function charItem(c: string, ctx: boolean): Item {
   const daku = DAKU.includes(c);
   const fam = daku ? family(c) : [];
   const pool = [...(daku ? DAKU : SEION)].filter(
-    (x) => x !== c && !fam.includes(x) && !similar(base(x), base(c)),
+    (x) => x !== c && !fam.includes(x) && !similar(base(x), base(c)) && !sameSound(x, c),
   );
   const others = mix(`${c}:${ctx}`, pool).slice(0, 3 - fam.length);
   const id = `${ctx ? 'word' : 'char'}:${c}`;
@@ -177,13 +180,21 @@ const WORDS: { illust: string; name: string; wrong: [string, string] }[] = [
 ];
 
 function wordItem(w: (typeof WORDS)[number]): Item {
+  const first = [...w.name][0]!;
+  // はじめの 字が 正解にしか ない ときは、その字を いうと こたえに なるので いわない
+  const firstGivesAway = w.wrong.every((x) => [...x][0] !== first);
+  const hint2 = !firstGivesAway
+    ? `はじめの じは「${first}」だよ。`
+    : [...w.name].some((c) => DAKU.includes(c))
+      ? '「てんてん」と「まる」を よく みて くらべよう。'
+      : 'えの なまえを ゆっくり いって、じを ひとつずつ くらべよう。';
   return choiceItem({
     id: `read:${w.name}`,
     objective: 'words',
     level: 2,
     prompt: 'この えの なまえは どれ？ よんで えらぼう。',
     figure: ill(w.illust),
-    hints: ['ひとつずつ じを よんで みよう。', `はじめの じは「${[...w.name][0]}」だよ。`],
+    hints: ['ひとつずつ じを よんで みよう。', hint2],
     explain: `「${w.name}」と よむよ。`,
     identity: `read:${w.name}`,
     correct: { label: w.name },

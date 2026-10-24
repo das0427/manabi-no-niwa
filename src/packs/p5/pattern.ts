@@ -117,9 +117,9 @@ const LEVEL_T: Task[][] = [
     ),
   ],
   [
-    ...range(1, 6).flatMap((start) =>
-      [1, 2].map((step) => ({ k: 'num', start, step, dots: false }) as Task),
-    ),
+    // 5歳は 10まで: こたえ（5つめ）が 10を こえない ならびだけ
+    ...range(1, 6).map((start) => ({ k: 'num', start, step: 1, dots: false }) as Task),
+    ...range(1, 2).map((start) => ({ k: 'num', start, step: 2, dots: false }) as Task),
     ...range(5, 9).map((start) => ({ k: 'num', start, step: -1, dots: false }) as Task),
     ...range(1, 4).map((start) => ({ k: 'num', start, step: 1, dots: true }) as Task),
   ],
@@ -134,12 +134,13 @@ function make(t: Task, level: number, rng: Rng): Item {
     const key = `num:${t.start}:${t.step}${t.dots ? ':dots' : ''}`;
     const out: ChoiceOption[] = [{ label: String(ans), correct: true }];
     const add = (v: number, mis: string) => {
-      if (v >= 0 && !out.some((o) => o.label === String(v)) && out.length < 4)
+      if (v >= 0 && v <= 10 && !out.some((o) => o.label === String(v)) && out.length < 4)
         out.push({ label: String(v), misconception: mis });
     };
     add(seq[3]!, 'repeat-prev');
     add(t.step === 2 ? ans - 1 : t.step === 1 ? ans + 1 : ans - 1, 'step-wrong');
     add(t.step === -1 ? seq[3]! + 1 : ans + 2, 'step-wrong');
+    add(ans - 2, 'step-wrong');
     const dotsSvg = (n: number, x: number) =>
       range(0, n - 1)
         .map(
@@ -182,9 +183,17 @@ function make(t: Task, level: number, rng: Rng): Item {
     const prev = sym(t.len - 1);
     const key = `sound:${t.type}:${t.len}`;
     const opts: ChoiceOption[] = [{ label: ans, correct: true }];
+    const used = range(0, t.type.length - 1).map(sym);
     for (const s of SOUND)
       if (s !== ans)
-        opts.push({ label: s, misconception: s === prev ? 'repeat-prev' : 'pattern-skip' });
+        opts.push({
+          label: s,
+          misconception: !used.includes(s)
+            ? 'not-in-pattern'
+            : s === prev
+              ? 'repeat-prev'
+              : 'pattern-skip',
+        });
     const item: ListenItem = {
       engine: 'listen',
       id: key,

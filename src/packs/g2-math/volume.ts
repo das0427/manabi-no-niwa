@@ -296,7 +296,8 @@ function unit(level: number, rng: Rng, alt: boolean): ChoiceItem {
     do {
       x = rng.int(2, 9);
       y = rng.int(11, 25);
-      z = rng.int(2, 15);
+      // z を 25dL より 大きく とれるように（いつも「L が つく もの」が正解に ならないように）
+      z = rng.int(2, 29);
     } while (new Set([x, y, z]).size < 3 || y % 10 === 0);
     const vals = [
       { label: `${x * 100}mL`, v: x },

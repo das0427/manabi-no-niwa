@@ -283,10 +283,12 @@ test.describe('教材パック（見本パック）', () => {
     expect(Object.keys(d.index)).toEqual(expect.arrayContaining([A, B]));
     // コア同梱のパックは packs.json に載らない
     expect(d.index[CORE]).toBeUndefined();
-    // 共有データ（kanji-g1）は A と B の両方の files に入り、コアには入らない
+    // 共有データ（kanji-g1）: なぞりのエンジン（本体）が漢字の書き順を全学年分読み込むため、
+    // 本体から辿れる共有データはコアに入り、パックの files には入らない（両方に入らない）。
+    // コアから辿れない共有データだけが、それを使うすべてのパックに入る
     const shared = d.index[A]!.files.find((f) => f.startsWith('assets/packs/_data/'));
-    expect(shared).toBeTruthy();
-    expect(d.index[B]!.files).toContain(shared);
+    if (shared) expect(d.index[B]!.files).toContain(shared);
+    else expect(d.index[B]!.files.some((f) => f.startsWith('assets/packs/_data/'))).toBe(false);
     expect(d.index[A]!.files).toEqual(
       expect.arrayContaining([`audio/${A}/hello.mp3`, `audio/${A}/done.mp3`]),
     );
@@ -300,7 +302,8 @@ test.describe('教材パック（見本パック）', () => {
     // A を取得（進み具合が最後まで届く）
     const got = await download(page, A);
     expect(got).toMatchObject({ ok: true });
-    expect(got.last).toMatchObject({ doneFiles: 4, totalFiles: 4 });
+    const nFiles = d.index[A]!.files.length;
+    expect(got.last).toMatchObject({ doneFiles: nFiles, totalFiles: nFiles });
     expect(got.last?.doneBytes).toBe(d.index[A]!.bytes);
     expect(await packCaches(page)).toEqual([`mnw-pack/${A}@${d.index[A]!.hash}`]);
     expect(await stateOf(page, A)).toBe('ready');

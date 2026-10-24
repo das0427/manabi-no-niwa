@@ -119,16 +119,22 @@ function nanjuu(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'nanjuu',
     level,
     prompt: alt ? `${n}は 10を なんこ あつめた かず？` : `10を ${k}こ あつめた かずは？`,
-    figure: { kind: 'text', text: alt ? `${n} ＝ 10 × □` : `10が ${k}こ`, size: 'l' },
+    // かけ算（×）は この単元の あとで 習うので つかわない
+    figure: { kind: 'text', text: alt ? `${n} ＝ 10が □こ` : `10が ${k}こ`, size: 'l' },
     explainFigure: { kind: 'blocks', hundreds: tens, tens: ones, ones: 0 },
     hints: [
       '10が 10こで 100 だね。',
       alt
         ? `${n}は 100が ${Math.floor(n / 100)}こと、10が ${(n / 10) % 10}こ。`
         : `${k}こは 10こが ${tens}つと ${ones}こ。100が ${tens}こと 10が ${ones}こ。`,
+      // 最後の段で答えの数そのものを言わない（10の くらいが 0 の ときに注意）
       alt
-        ? `100の なかには 10が 10こ。${Math.floor(n / 100)}こぶんで 10が ${Math.floor(n / 100) * 10}こ。あと…`
-        : `100が ${tens}こで ${tens * 100}。そこに 10が ${ones}こ…`,
+        ? ones === 0
+          ? `100の なかには 10が 10こ。100が ${tens}こ ぶんでは？`
+          : `100の なかには 10が 10こ。${Math.floor(n / 100)}こぶんで 10が ${Math.floor(n / 100) * 10}こ。あと…`
+        : ones === 0
+          ? `100の まとまりが ${tens}こ できるね。`
+          : `100が ${tens}こで ${tens * 100}。そこに 10が ${ones}こ…`,
     ],
     explain: alt
       ? `${n}は 10を ${k}こ あつめた かずです。`
@@ -183,7 +189,11 @@ function line(level: number, rng: Rng, alt: boolean): NumberlineItem {
   const hints = [
     `いちばん ちいさい 1めもりは ${minor} だよ。`,
     `${near}の ながい めもりを みつけよう。`,
-    `${near}から ${minor}ずつ かぞえよう。${near + minor}、${near + 2 * minor}、…`,
+    // 数えはじめの例に 答えの数を ふくめない
+    `${near}から ${minor}ずつ かぞえよう。${[near + minor, near + 2 * minor]
+      .filter((v) => v < at)
+      .map((v) => `${v}、`)
+      .join('')}…`,
   ];
   if (alt)
     return {

@@ -41,8 +41,35 @@ const TOOLS: Tool[] = [
 ];
 const T = (illust: string) => TOOLS.find((t) => t.illust === illust)!;
 
+/**
+ * 同じ場面で いっしょに 使う物の組（誤りの選択肢に入れると 正解が2つになる）。
+ * 例: 「おそとへ いくよ」に ぼうし、「おやすみの じかん」に はぶらし・えほん。
+ */
+const CLASH: [string, string][] = [
+  ['umbrella', 'p23-shoe'],
+  ['umbrella', 'p23-hat'],
+  ['p23-shoe', 'p23-hat'],
+  ['p23-shoe', 'ball'],
+  ['p23-hat', 'ball'],
+  ['p23-book', 'p23-pillow'],
+  ['p23-book', 'pencil'],
+  ['p23-toothbrush', 'p23-pillow'],
+  ['p23-toothbrush', 'p23-cup'],
+  ['p23-soap', 'p23-towel'],
+  ['p23-soap', 'p23-toothbrush'],
+  ['p23-spoon', 'p23-cup'],
+];
+export const clash = (a: string, b: string): boolean =>
+  CLASH.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+
 function toolItem(t: Tool, alt: boolean): Item {
-  const wrong = others(`tool:${t.illust}:${alt}`, TOOLS, t, alt ? 2 : 1);
+  const wrong = others(
+    `tool:${t.illust}:${alt}`,
+    TOOLS,
+    t,
+    alt ? 2 : 1,
+    (x) => !clash(t.illust, x.illust),
+  );
   const id = `${alt ? 'use' : 'scene'}:${t.illust}`;
   return choiceItem({
     id,
@@ -117,7 +144,8 @@ function beforeItem(b: (typeof BEFORE)[number]): Item {
     explain: `${b.after} ${r.name}を つかうね。`,
     identity: `before:${b.id}`,
     correct: { label: r.name, figure: ill(r.illust) },
-    wrong: [{ label: w.name, figure: ill(w.illust), misconception: 'order-reverse' }],
+    // 誤りは「その前に する こと」ではない物（ねる・あそぶ もの）なので、順番の逆ではなく 別の場面の物
+    wrong: [{ label: w.name, figure: ill(w.illust), misconception: 'other-tool' }],
   });
 }
 

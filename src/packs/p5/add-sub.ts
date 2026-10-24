@@ -111,10 +111,13 @@ function make(t: Task, level: number, rng: Rng): Item {
         ...base,
         id,
         objective: 'shiki',
-        prompt: 'けいさん しよう。こまったら ヒントで えを みよう。',
+        // ヒントは 文だけ（絵は 出ない）なので、「えを みよう」とは いわない
+        prompt: 'けいさん しよう。こまったら ヒントを きこう。',
         figure: { kind: 'text', text: `${t.a} ${sym(t.op)} ${t.b} ＝ ？`, size: 'xl' },
         hints: [
-          `えで みると こうだよ。${t.op === '+' ? `${t.a}こと ${t.b}こ` : `${t.a}こから ${t.b}こ とる`}。`,
+          t.op === '+'
+            ? `${t.a}こと ${t.b}こを あわせるよ。ゆびで やって みよう。`
+            : `${t.a}こから ${t.b}こ とるよ。ゆびで やって みよう。`,
           t.op === '+'
             ? `${t.a}の つぎから ${t.b}つ かぞえよう。`
             : `${t.a}から ${t.b}つ もどって かぞえよう。`,
@@ -173,7 +176,7 @@ export const addSub: UnitSpec = {
   objectives: [
     { id: 'add', title: 'たす（えと しき）' },
     { id: 'sub', title: 'ひく（えと しき）' },
-    { id: 'shiki', title: 'しきだけ（えで みる ヒント つき）' },
+    { id: 'shiki', title: 'しきだけ（こたえの あとに えで たしかめる）' },
   ],
   misconceptions: [
     { id: 'op-swap', explain: '「たす」と「ひく」が いれかわったかな。しるしを よく みよう。' },

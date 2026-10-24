@@ -132,8 +132,10 @@ function tableItem(
 /** 九九のきまり */
 function kimari(level: number, rng: Rng, alt: boolean): Item {
   const a = rng.int(2, 9);
-  const b = rng.int(2, 9);
+  let b = rng.int(2, 9);
   if (alt) {
+    // a ＝ b だと 正解が 問いと 同じ しきに なり、2 × 2 では「2 ＋ 2」も 答えが 同じ（正解が2つ）
+    while (b === a) b = rng.int(2, 9);
     return {
       engine: 'choice',
       id: `kimari-alt:${a}x${b}`,

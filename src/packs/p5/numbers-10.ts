@@ -27,7 +27,9 @@ const ANIMALS = [
   { id: 'frog', name: 'かえる' },
   { id: 'fox', name: 'きつね' },
 ];
-const KAZU = ['', 'ひとつ', 'ふたつ', 'みっつ', 'よっつ', 'いつつ'];
+/** 「なんばんめ」と「なんこ」の えの なまえ（かずは いわない） */
+const KIND_LABEL = (n: number) =>
+  n === 1 ? 'ひとつだけ ぬった え' : 'まえから つづけて ぬった え';
 const WORD = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう', 'じゅう'];
 
 function numOpts(key: string, ans: number, wrong: { v: number; mis: string }[]): ChoiceOption[] {
@@ -242,10 +244,11 @@ function make(t: Task, level: number, rng: Rng): Item {
           ? `${t.pos}こ は まえから ${t.pos}つ ぜんぶ。`
           : `${t.pos}ばんめ は ${t.pos}つめの ひとつだけ。`,
         identity: id,
+        // ラベルに かず（「よっつ」など）を 書くと、もんだいの かずと あわせるだけで こたえられるので 書かない
         options: mix(id, [
-          { label: `きいろが ${KAZU[asIs.length]}`, figure: dotsRow(6, asIs), correct: true },
+          { label: KIND_LABEL(asIs.length), figure: dotsRow(6, asIs), correct: true },
           {
-            label: `きいろが ${KAZU[other.length]}`,
+            label: KIND_LABEL(other.length),
             figure: dotsRow(6, other),
             misconception: 'ord-vs-count',
           },

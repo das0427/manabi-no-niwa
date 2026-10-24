@@ -94,7 +94,7 @@ function fixedOrderBias(units: typeof pack.units): string[] {
       )
         pos.push(it.options.findIndex((o) => o.correct));
     if (pos.length >= 3 && new Set(pos).size < 2)
-      errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0] + 1} 番目`);
+      errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0]! + 1} 番目`);
   }
   return errs;
 }
@@ -144,7 +144,11 @@ describe('誤概念の説明と誤答の位置関係（content-review-g34 重大
       m?: string,
     ) => {
       const t = plain(text);
-      const [im, ia, iw] = [plain(mod), plain(ans), plain(wrong)].map((s) => t.indexOf(s));
+      const [im, ia, iw] = [plain(mod), plain(ans), plain(wrong)].map((s) => t.indexOf(s)) as [
+        number,
+        number,
+        number,
+      ];
       if (im < 0 || ia < 0 || iw < 0) return errs.push(`[${id}] 文の中に語がない: ${wrong}`);
       if (m === 'm-before' && !(iw < im)) errs.push(`[${id}] m-before なのに後ろの語: ${wrong}`);
       if (m === 'm-near' && iw !== im + plain(mod).length)
@@ -167,9 +171,9 @@ describe('誤概念の説明と誤答の位置関係（content-review-g34 重大
           check(
             it.id,
             it.figure.text,
-            it.left[l].label ?? '',
+            it.left[l]!.label ?? '',
             it.right[right]?.label ?? '',
-            it.right[r].label ?? '',
+            it.right[r]!.label ?? '',
             w.misconception,
           );
         }
@@ -195,7 +199,7 @@ describe('誤概念の説明と誤答の位置関係（content-review-g34 重大
     for (const it of itemsOf('g3.ja.reference-connectives')) {
       if (it.engine === 'fill')
         for (const b of it.blanks)
-          for (const w of b.wrong ?? []) check(it.id, b.answers[0], w.value, w.misconception);
+          for (const w of b.wrong ?? []) check(it.id, b.answers[0] ?? '', w.value, w.misconception);
       if (it.engine === 'choice' || it.engine === 'reading') {
         const ans = it.options.find((o) => o.correct)?.label ?? '';
         for (const o of it.options)

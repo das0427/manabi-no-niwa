@@ -61,9 +61,10 @@ const GROUPS: Group[] = [
       ['とおい', 'ちかい'],
       ['かたい', 'やわらかい'],
     ],
-    distractor: 'さむい',
+    // 「さむい」は あつい（天気）の はんたいにも なるので 誤りの選択肢に使わない（内容レビュー）
+    distractor: 'あたたかい',
     wrongLeft: 0,
-    mis: 'other-dimension',
+    mis: 'similar-for-opposite',
   },
   {
     pairs: [

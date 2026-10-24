@@ -20,19 +20,19 @@ interface Two {
 }
 
 const TWOS: Two[] = [
-  { who: 'いぬ', illust: 'dog', verb: 'ほえる', unfit: 'とぶ' },
+  { who: 'いぬ', illust: 'dog', verb: 'ほえる', unfit: 'さく' },
   { who: 'とり', illust: 'bird', verb: 'とぶ', unfit: 'ほえる' },
-  { who: 'かえる', illust: 'frog', verb: 'はねる', unfit: 'とぶ' },
-  { who: 'ねこ', illust: 'cat', verb: 'ねる', unfit: 'およぐ' },
+  { who: 'かえる', illust: 'frog', verb: 'はねる', unfit: 'ほえる' },
+  { who: 'ねこ', illust: 'cat', verb: 'ねる', unfit: 'ふる' },
   { who: 'たこ', illust: 'octopus', verb: 'およぐ', unfit: 'はしる' },
-  { who: 'ぞう', illust: 'elephant', verb: 'あるく', unfit: 'とぶ' },
-  { who: 'さる', illust: 'monkey', verb: 'のぼる', unfit: 'およぐ' },
-  { who: 'きつね', illust: 'fox', verb: 'はしる', unfit: 'とぶ' },
-  { who: 'ひよこ', illust: 'chick', verb: 'なく', unfit: 'およぐ' },
-  { who: 'くま', illust: 'bear', verb: 'ねむる', unfit: 'とぶ' },
-  { who: 'うさぎ', illust: 'rabbit', verb: 'はねる', unfit: 'およぐ' },
-  { who: 'かめ', illust: 'turtle', verb: 'およぐ', unfit: 'とぶ' },
-  { who: 'うし', illust: 'cow', verb: 'なく', unfit: 'とぶ' },
+  { who: 'ぞう', illust: 'elephant', verb: 'あるく', unfit: 'ふる' },
+  { who: 'さる', illust: 'monkey', verb: 'のぼる', unfit: 'さく' },
+  { who: 'きつね', illust: 'fox', verb: 'はしる', unfit: 'ひかる' },
+  { who: 'ひよこ', illust: 'chick', verb: 'なく', unfit: 'ふる' },
+  { who: 'くま', illust: 'bear', verb: 'ねむる', unfit: 'さく' },
+  { who: 'うさぎ', illust: 'rabbit', verb: 'はねる', unfit: 'ひかる' },
+  { who: 'かめ', illust: 'turtle', verb: 'およぐ', unfit: 'ふる' },
+  { who: 'うし', illust: 'cow', verb: 'なく', unfit: 'ひかる' },
 ];
 
 function twoBuild(t: Two): BuildItem {

@@ -19,6 +19,16 @@ type Obj = 'tabane' | 'kurai' | 'nl' | 'over100' | 'daishou';
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
 /** 10の ぼうと ばら（100 以上は 100の いた） */
+const ONES_KANA = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
+
+/** 1〜99 の読み（ひらがな）。「ひゃく15」のように数字と かなを混ぜないため（内容レビュー） */
+export function kanaOf(n: number): string {
+  const t = Math.floor(n / 10);
+  const o = n % 10;
+  const tens = t === 0 ? '' : `${t === 1 ? '' : ONES_KANA[t]}じゅう`;
+  return tens + ONES_KANA[o];
+}
+
 function blk(n: number): Figure {
   if (n >= 100)
     return { kind: 'blocks', hundreds: 1, tens: Math.floor((n - 100) / 10), ones: n % 10 };
@@ -331,7 +341,7 @@ function over100(level: number, rng: Rng, alt: boolean): Item {
       explain:
         r === 0
           ? '10の まとまりが 10こで 100。「ひゃく」と よむよ。'
-          : `100と ${r}で ${n}。「ひゃく${r}」と よむよ。`,
+          : `100と ${r}で ${n}。「ひゃく${kanaOf(r)}」と よむよ。`,
       explainFigure: blk(n),
     });
   }

@@ -66,6 +66,9 @@ const COUNTERS: Record<string, { base: string; rule: Rule }> = {
   じ: { base: 'じ', rule: (d) => ({ 4: 'よじ', 7: 'しちじ', 9: 'くじ' })[d] ?? null },
   えん: { base: 'えん', rule: (d) => ({ 4: 'よえん' })[d] ?? null },
 };
+/** 助数詞の一覧（長いものから。音声の部品分けにも使う） */
+export const COUNTER_NAMES: string[] = Object.keys(COUNTERS).sort((a, b) => b.length - a.length);
+
 const COUNTER_RE = new RegExp(
   `(\\d+)\\s*(${Object.keys(COUNTERS)
     .sort((a, b) => b.length - a.length)

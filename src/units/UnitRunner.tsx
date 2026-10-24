@@ -177,7 +177,13 @@ function UnitRound({
   const say = useCallback(
     (texts: string[]) => {
       if (support.readAloud === 'off' || texts.length === 0) return;
-      void audio.play(texts.map((t) => registerRich(packId, t)));
+      // 文と文の間に短い間（300ms）
+      void audio.play(
+        texts.flatMap((t, i) => [
+          ...(i > 0 ? [300] : []),
+          ...(registerRich(packId, t) as string[]),
+        ]),
+      );
     },
     [packId, support.readAloud],
   );

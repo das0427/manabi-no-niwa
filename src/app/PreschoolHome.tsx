@@ -18,6 +18,7 @@ import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate } from './router';
 import './home.css';
+import './school-home.css';
 
 /** 単元を開く（v1 のモードを使う単元は ModeEntry、それ以外は UnitRunner） */
 export function openUnit(unitId: string): void {
@@ -158,32 +159,45 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
             </button>
           );
         })}
+        <div className="school-side__row">
+          <button
+            type="button"
+            className="home-rec home-rec--note school-side__half"
+            aria-label="おえかき"
+            onClick={() => navigate({ name: 'draw' })}
+            data-testid="home-draw"
+          >
+            <Illust id="picture" className="home-rec__illust" decorative />
+            <span className="home-rec__name">おえかき</span>
+          </button>
+          {stage2 ? null : (
+            <button
+              type="button"
+              className="home-rec home-rec--note school-side__half"
+              aria-label="がんばりノート"
+              onClick={() => navigate({ name: 'notebook' }, { say: 'app.notebook' })}
+              data-testid="home-notebook"
+            >
+              <Illust id="notebook" className="home-rec__illust" decorative />
+              <span className="home-rec__name">ノート</span>
+            </button>
+          )}
+        </div>
+        {/* ほかの がくねん・きょうか（幼児からも小学生の教科をのぞける） */}
         <button
           type="button"
           className="home-rec home-rec--note"
-          aria-label="おえかき"
-          onClick={() => navigate({ name: 'draw' })}
-          data-testid="home-draw"
+          aria-label="ほかの がくねん・きょうか"
+          onClick={() => navigate({ name: 'explore' })}
+          data-testid="home-explore"
         >
-          <Illust id="picture" className="home-rec__illust" decorative />
-          <span className="home-rec__name">おえかき</span>
+          <Illust id="explore" className="home-rec__illust" decorative />
+          <span className="home-rec__name">
+            ほかの
+            <br />
+            がくねん
+          </span>
         </button>
-        {stage2 ? null : (
-          <button
-            type="button"
-            className="home-rec home-rec--note"
-            aria-label="がんばりノート"
-            onClick={() => navigate({ name: 'notebook' }, { say: 'app.notebook' })}
-            data-testid="home-notebook"
-          >
-            <Illust id="notebook" className="home-rec__illust" decorative />
-            <span className="home-rec__name">
-              がんばり
-              <br />
-              ノート
-            </span>
-          </button>
-        )}
       </aside>
     </div>
   );

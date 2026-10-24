@@ -26,7 +26,9 @@ export type Route =
   /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
   | { name: 'draw'; artId?: string }
   /** おえかきの作品一覧（さくひん） */
-  | { name: 'gallery' };
+  | { name: 'gallery' }
+  /** ほかの がくねん・きょうか（stage: 開いている区分。省略時は子供の区分） */
+  | { name: 'explore'; stage?: string };
 
 const ART_ID = /^[A-Za-z0-9-]{1,100}$/;
 
@@ -38,6 +40,10 @@ export function parseHash(hash: string): Route {
   if (a === 'home') return { name: 'home' };
   if (a === 'notebook') return { name: 'notebook' };
   if (a === 'gallery') return { name: 'gallery' };
+  if (a === 'explore')
+    return b && /^(p23|p4|p5|g[1-6])$/.test(b)
+      ? { name: 'explore', stage: b }
+      : { name: 'explore' };
   if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
@@ -87,6 +93,8 @@ export function routeToHash(r: Route): string {
       return r.artId ? `#/draw/${r.artId}` : '#/draw';
     case 'gallery':
       return '#/gallery';
+    case 'explore':
+      return r.stage ? `#/explore/${r.stage}` : '#/explore';
   }
 }
 

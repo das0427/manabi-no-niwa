@@ -7,6 +7,7 @@ import { navigate, useRoute } from './app/router';
 import { StartScreen } from './app/StartScreen';
 import { SubjectMap } from './app/SubjectMap';
 import { CardChooser, LegacyEntry } from './app/UnitEntry';
+import { Explore } from './app/Explore';
 import './ui/ui.css';
 
 const ParentApp = lazy(() => import('./parent/index'));
@@ -78,6 +79,8 @@ function Routes() {
     );
   else if (route.name === 'card')
     screen = <CardChooser key={route.cardId} stage={route.stage} cardId={route.cardId} />;
+  else if (route.name === 'explore')
+    screen = <Explore key={route.stage ?? ''} stage={route.stage} />;
   else if (route.name === 'subject')
     screen = <SubjectMap key={route.subject} subject={route.subject} grade={route.grade} />;
   else if (route.name === 'unit')

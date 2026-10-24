@@ -90,6 +90,23 @@ export function SchoolHome() {
             </button>
           );
         })}
+        {/* ほかの がくねん・きょうか（先取り・さかのぼり。教科は最大6つなので7枚目に入る） */}
+        <button
+          type="button"
+          role="listitem"
+          className="school-subject school-subject--explore"
+          style={{ ['--subj' as string]: 'var(--paper-2)' }}
+          aria-label="ほかの がくねん・きょうか"
+          onClick={() => navigate({ name: 'explore' })}
+          data-testid="home-explore"
+        >
+          <Illust id="explore" className="school-subject__illust" decorative />
+          <span className="school-subject__name">
+            ほかの
+            <br />
+            がくねん
+          </span>
+        </button>
       </div>
       <aside className="home-side">
         <p className="label-text home-side__title">きょうの おすすめ</p>

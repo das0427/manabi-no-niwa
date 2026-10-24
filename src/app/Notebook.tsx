@@ -6,6 +6,8 @@ import { MODE_BY_ID } from '../modes/registry';
 import { WorkThumb } from '../modes/workThumb';
 import { ModeHeader } from '../ui/ModeHeader';
 import { audio } from '../core/audio/index';
+import { unitMeta } from '../curriculum/unitIndex';
+import { plainText } from '../text/rich';
 import { useApp } from './AppState';
 import { navigate } from './router';
 import './notebook.css';
@@ -14,6 +16,8 @@ interface Day {
   date: string;
   label: string;
   modes: ModeId[];
+  /** 単元の回（単元ID） */
+  units: string[];
   works: WorkRecord[];
 }
 
@@ -45,6 +49,7 @@ export function Notebook() {
             date: k,
             label: `${dt.getMonth() + 1}がつ ${dt.getDate()}にち`,
             modes: [],
+            units: [],
             works: [],
           };
           map.set(k, d);
@@ -52,10 +57,11 @@ export function Notebook() {
         return d;
       };
       for (const r of rounds) {
-        // 単元の回は、がんばりノートの改修（単元の絵と名前）までは出さない
-        if (r.count === 0 || r.modeId === 'unit') continue;
+        if (r.count === 0) continue;
         const d = get(r.startedAt);
-        if (!d.modes.includes(r.modeId)) d.modes.push(r.modeId);
+        if (r.modeId === 'unit') {
+          if (r.unitId && unitMeta(r.unitId) && !d.units.includes(r.unitId)) d.units.push(r.unitId);
+        } else if (!d.modes.includes(r.modeId)) d.modes.push(r.modeId);
       }
       for (const w of works) {
         if ((w.data as { draft?: boolean } | null)?.draft) continue;
@@ -96,6 +102,17 @@ export function Notebook() {
                   label={MODE_BY_ID[m].title}
                 />
               ))}
+              {d.units.map((u) => {
+                const m = unitMeta(u)!;
+                return (
+                  <Illust
+                    key={u}
+                    id={m.icon}
+                    className="notebook-day__mode"
+                    label={plainText(m.title)}
+                  />
+                );
+              })}
               {d.works.slice(0, 6).map((w) => (
                 <div key={w.id} className="notebook-day__work">
                   <WorkThumb work={w} />

@@ -119,6 +119,65 @@ export async function saveArtwork(
   return ok;
 }
 
+export type CheckedSaveResult = 'ok' | 'conflict' | 'error';
+
+/**
+ * おえかきの自動保存用（review-1 #33・X-SV-10）。1つのトランザクションで:
+ * - 保存済みの updatedAt が expectUpdatedAt より新しければ（別のタブが保存した）何も書かず 'conflict'
+ *   （expectUpdatedAt=null は「まだ保存していない新しい作品」。既にあれば conflict）
+ * - 作品と画像を書く。keep を渡したときは、keep と blobs のどちらにも無い種類の画像を消す
+ *   （焼き付けで無くなったインクの層の画像を残さない）
+ */
+export async function saveArtworkChecked(
+  art: ArtworkRecord,
+  blobs: Partial<Record<ArtworkBlobKind, Blob>>,
+  opts: { expectUpdatedAt: number | null; keep?: ArtworkBlobKind[] },
+): Promise<CheckedSaveResult> {
+  let result: CheckedSaveResult = 'error';
+  await safeWrite(async () => {
+    result = await runTx([STORE.artworks, STORE.artworkBlobs], 'readwrite', async (tx) => {
+      const arts = tx.objectStore(STORE.artworks);
+      const cur = await r<ArtworkRecord | undefined>(arts.get(art.id));
+      if (cur && (opts.expectUpdatedAt === null || cur.updatedAt > opts.expectUpdatedAt)) {
+        return 'conflict' as const;
+      }
+      arts.put(art);
+      const st = tx.objectStore(STORE.artworkBlobs);
+      for (const [kind, blob] of Object.entries(blobs) as [ArtworkBlobKind, Blob][]) {
+        const rec: ArtworkBlobRecord = {
+          key: `${art.id}:${kind}`,
+          artId: art.id,
+          profileId: art.profileId,
+          kind,
+          blob,
+        };
+        st.put(rec);
+      }
+      if (opts.keep) {
+        const keep = new Set<string>([...opts.keep, ...Object.keys(blobs)]);
+        const keys = await r<IDBValidKey[]>(st.index('artId').getAllKeys(art.id));
+        const prefix = `${art.id}:`;
+        for (const k of keys) {
+          const kind = String(k).slice(prefix.length);
+          if (!keep.has(kind)) st.delete(k);
+        }
+      }
+      return 'ok' as const;
+    });
+  });
+  return result;
+}
+
+/** 作品の画像の種類の一覧（その作品に保存されている物） */
+export async function listArtworkBlobKinds(artId: string): Promise<ArtworkBlobKind[]> {
+  return safeRead(async () => {
+    const keys = await runTx([STORE.artworkBlobs], 'readonly', (tx) =>
+      r<IDBValidKey[]>(tx.objectStore(STORE.artworkBlobs).index('artId').getAllKeys(artId)),
+    );
+    return keys.map((k) => String(k).slice(artId.length + 1) as ArtworkBlobKind);
+  }, []);
+}
+
 /** 作品と画像を削除する（保護者操作・子供の「すてる」） */
 export async function deleteArtwork(id: string): Promise<void> {
   await strict(() =>

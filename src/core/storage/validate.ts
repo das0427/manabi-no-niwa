@@ -10,7 +10,7 @@ import {
   type Grade,
   type SupportSettings,
   type UnitProgress,
-  ARTWORK_BLOB_KINDS,
+  isArtworkBlobKind,
   MODE_IDS,
   OUTCOMES,
   SKILL_IDS,
@@ -265,7 +265,7 @@ export interface ArtworkBlobFile {
 export function validateArtworkBlobFile(x: unknown): ArtworkBlobFile | null {
   if (!isObj(x)) return null;
   if (!str(x.artId, LIMITS.id, 1) || !str(x.profileId, LIMITS.id, 1)) return null;
-  if (!oneOf(ARTWORK_BLOB_KINDS, x.kind)) return null;
+  if (!isArtworkBlobKind(x.kind)) return null;
   if (x.key !== `${x.artId}:${x.kind}`) return null;
   if (!str(x.dataUrl, LIMITS.artBlob) || !x.dataUrl.startsWith('data:image/png;base64,'))
     return null;
@@ -296,9 +296,17 @@ function progressCore(x: Obj): Omit<SkillProgress, 'skillId'> | null {
 }
 
 /** 1問の記録（id は引き継がない） */
+/** 記録の出どころ（v1 のモード、または 'unit' と単元ID）。不正なら null */
+function recordSource(x: Obj): { modeId: ModeId | 'unit'; unitId?: string } | null {
+  if (x.modeId === 'unit')
+    return str(x.unitId, LIMITS.id, 1) ? { modeId: 'unit', unitId: x.unitId } : null;
+  return isMode(x.modeId) && x.unitId === undefined ? { modeId: x.modeId } : null;
+}
+
 export function validateAttempt(x: unknown): AttemptRecord | null {
   if (!isObj(x)) return null;
-  if (!str(x.profileId, LIMITS.id, 1) || !isMode(x.modeId)) return null;
+  const src = recordSource(x);
+  if (!str(x.profileId, LIMITS.id, 1) || !src) return null;
   if (!str(x.variantId, LIMITS.variantId) || !time(x.at)) return null;
   if (!(x.skillId === null || isSkill(x.skillId))) return null;
   if (!int(x.level, 0, LIMITS.level) || !str(x.itemKey, LIMITS.itemKey)) return null;
@@ -307,7 +315,7 @@ export function validateAttempt(x: unknown): AttemptRecord | null {
   if (!int(x.reviewsUsed, 0, LIMITS.count) || !bool(x.operationIssue)) return null;
   const out: AttemptRecord = {
     profileId: x.profileId,
-    modeId: x.modeId,
+    ...src,
     variantId: x.variantId,
     skillId: x.skillId,
     level: x.level,
@@ -340,12 +348,13 @@ export function validateAttempt(x: unknown): AttemptRecord | null {
 /** 1回分の記録（id は引き継がない） */
 export function validateRound(x: unknown): RoundRecord | null {
   if (!isObj(x)) return null;
-  if (!str(x.profileId, LIMITS.id, 1) || !isMode(x.modeId)) return null;
+  const src = recordSource(x);
+  if (!str(x.profileId, LIMITS.id, 1) || !src) return null;
   if (!str(x.variantId, LIMITS.variantId) || !time(x.startedAt) || !time(x.endedAt)) return null;
   if (!int(x.count, 0, LIMITS.count) || !bool(x.completed)) return null;
   return {
     profileId: x.profileId,
-    modeId: x.modeId,
+    ...src,
     variantId: x.variantId,
     startedAt: x.startedAt,
     endedAt: x.endedAt,

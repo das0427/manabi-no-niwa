@@ -52,7 +52,8 @@ export function Notebook() {
         return d;
       };
       for (const r of rounds) {
-        if (r.count === 0) continue;
+        // 単元の回は、がんばりノートの改修（単元の絵と名前）までは出さない
+        if (r.count === 0 || r.modeId === 'unit') continue;
         const d = get(r.startedAt);
         if (!d.modes.includes(r.modeId)) d.modes.push(r.modeId);
       }

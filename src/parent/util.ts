@@ -15,7 +15,8 @@ export const OUTCOME_LABEL: Record<Outcome, string> = {
   abandoned: '途中でやめた',
 };
 
-export function modeTitle(id: ModeId): string {
+export function modeTitle(id: ModeId | 'unit', unitId?: string): string {
+  if (id === 'unit') return unitId ?? 'たんげん';
   return MODES.find((m) => m.id === id)?.title.replace(/\s+/g, '') ?? id;
 }
 

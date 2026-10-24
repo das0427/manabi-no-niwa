@@ -192,7 +192,7 @@ describe('スキーマ2 の作品・単元の進度', () => {
     const s = await freshStorage();
     const p = await s.createProfile('はな', 'cat', { audience: 'g3', enrolledGrade: 3 });
     expect((await s.getSettings(p.id)).support.readAloud).toBe('button');
-    expect(await s.saveArtwork(art(p.id), { under: png(), thumb: png() })).toBe(true);
+    expect(await s.saveArtwork(art(p.id), { 'ink:L1': png(), thumb: png() })).toBe(true);
     await s.saveUnitProgress({ ...s.emptyUnitProgress(p.id, 'g3.math.division'), attempted: true });
 
     const file = await s.exportBackup({ kind: 'all' }, 'test');
@@ -204,10 +204,10 @@ describe('スキーマ2 の作品・単元の進度', () => {
     if (!parsed.ok) return;
 
     await s.deleteArtwork('a1');
-    expect(await s.getArtworkBlob('a1', 'under')).toBeUndefined();
+    expect(await s.getArtworkBlob('a1', 'ink:L1')).toBeUndefined();
     await s.importBackup(parsed.file, 'replace');
 
-    const back = await s.getArtworkBlob('a1', 'under');
+    const back = await s.getArtworkBlob('a1', 'ink:L1');
     expect(back).toBeDefined();
     expect([...new Uint8Array(await back!.arrayBuffer())]).toEqual([137, 80, 78, 71, 1, 2, 3]);
     expect((await s.listArtworks(p.id)).map((a) => a.title)).toEqual(['くま']);
@@ -220,24 +220,24 @@ describe('スキーマ2 の作品・単元の進度', () => {
     await wipe(DB_NAME);
     const s = await freshStorage();
     const p = await s.createProfile('はな', 'cat');
-    await s.saveArtwork(art(p.id), { under: png() });
+    await s.saveArtwork(art(p.id), { 'ink:L1': png() });
     const file = await s.exportBackup({ kind: 'all' }, 'test');
     await s.importBackup(file, 'add');
     const profiles = await s.listProfiles();
     expect(profiles).toHaveLength(2);
     const added = (await s.listArtworks(profiles[1]!.id))[0]!;
     expect(added.id).not.toBe('a1');
-    expect(await s.getArtworkBlob(added.id, 'under')).toBeDefined();
+    expect(await s.getArtworkBlob(added.id, 'ink:L1')).toBeDefined();
   });
 
   it('プロフィールを消すと作品の画像も消える（孤児を残さない）', async () => {
     await wipe(DB_NAME);
     const s = await freshStorage();
     const p = await s.createProfile('はな', 'cat');
-    await s.saveArtwork(art(p.id), { under: png(), full: png() });
+    await s.saveArtwork(art(p.id), { 'ink:L1': png(), full: png() });
     await s.deleteProfile(p.id);
     expect(await s.getArtwork('a1')).toBeUndefined();
-    expect(await s.getArtworkBlob('a1', 'under')).toBeUndefined();
+    expect(await s.getArtworkBlob('a1', 'ink:L1')).toBeUndefined();
     expect(await s.getArtworkBlob('a1', 'full')).toBeUndefined();
   });
 
@@ -245,16 +245,56 @@ describe('スキーマ2 の作品・単元の進度', () => {
     await wipe(DB_NAME);
     const s = await freshStorage();
     const p = await s.createProfile('はな', 'cat');
-    await s.saveArtwork(art(p.id), { under: png() });
+    await s.saveArtwork(art(p.id), { 'ink:L1': png() });
     const file = await s.exportBackup({ kind: 'all' }, 'test');
     const broken = {
       ...file,
       data: {
         ...file.data,
-        artworkBlobs: [{ ...file.data.artworkBlobs[0]!, artId: 'zz', key: 'zz:under' }],
+        artworkBlobs: [{ ...file.data.artworkBlobs[0]!, artId: 'zz', key: 'zz:ink:L1' }],
       },
     };
     const t = JSON.stringify(broken);
     expect(s.parseBackup(t, t.length).ok).toBe(false);
+    // 廃止した種類（under/over）や不正なインクの層の ID は受け付けない
+    for (const kind of ['under', 'ink:', 'ink:a/b']) {
+      const b2 = {
+        ...file,
+        data: {
+          ...file.data,
+          artworkBlobs: [{ ...file.data.artworkBlobs[0]!, kind, key: `a1:${kind}` }],
+        },
+      };
+      const t2 = JSON.stringify(b2);
+      expect(s.parseBackup(t2, t2.length).ok).toBe(false);
+    }
+  });
+
+  it('確認つきの保存: 古い updatedAt からの保存は止め、残さない画像を消す', async () => {
+    await wipe(DB_NAME);
+    const s = await freshStorage();
+    const { saveArtworkChecked } = await import('./repo-v2');
+    const p = await s.createProfile('はな', 'cat');
+    const a = art(p.id);
+    expect(
+      await saveArtworkChecked(a, { 'ink:L1': png(), 'ink:L2': png() }, { expectUpdatedAt: null }),
+    ).toBe('ok');
+    // 別のタブが新しく保存した
+    expect(await saveArtworkChecked({ ...a, updatedAt: 5 }, {}, { expectUpdatedAt: 2 })).toBe('ok');
+    // こちらのタブは updatedAt=2 のつもりで保存しようとする → 止める
+    expect(await saveArtworkChecked({ ...a, updatedAt: 3 }, {}, { expectUpdatedAt: 2 })).toBe(
+      'conflict',
+    );
+    expect((await s.getArtwork('a1'))!.updatedAt).toBe(5);
+    // keep にない画像は消える
+    expect(
+      await saveArtworkChecked(
+        { ...a, updatedAt: 6 },
+        {},
+        { expectUpdatedAt: 5, keep: ['ink:L2'] },
+      ),
+    ).toBe('ok');
+    expect(await s.getArtworkBlob('a1', 'ink:L1')).toBeUndefined();
+    expect(await s.getArtworkBlob('a1', 'ink:L2')).toBeDefined();
   });
 });

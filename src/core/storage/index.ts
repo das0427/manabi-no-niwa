@@ -51,8 +51,11 @@ export {
   getArtwork,
   getArtworkBlob,
   saveArtwork,
+  saveArtworkChecked,
+  listArtworkBlobKinds,
   deleteArtwork,
 } from './repo-v2';
+export type { CheckedSaveResult } from './repo-v2';
 export {
   exportBackup,
   parseBackup,

@@ -150,8 +150,19 @@ export interface ArtworkRecord {
   doc: unknown;
 }
 
-export const ARTWORK_BLOB_KINDS = ['under', 'over', 'full', 'thumb'] as const;
-export type ArtworkBlobKind = (typeof ARTWORK_BLOB_KINDS)[number];
+/**
+ * 作品の画像の種類（review-1 #1 の文書モデル）:
+ * base = 焼き付けた背景の層、`ink:<itemId>` = インクの層（可変枚数）、full = 閲覧用の合成、thumb = 縮小。
+ */
+export const ARTWORK_BLOB_FIXED_KINDS = ['base', 'full', 'thumb'] as const;
+export type ArtworkBlobKind = (typeof ARTWORK_BLOB_FIXED_KINDS)[number] | `ink:${string}`;
+const INK_KIND = /^ink:[A-Za-z0-9_-]{1,64}$/;
+export function isArtworkBlobKind(x: unknown): x is ArtworkBlobKind {
+  return (
+    typeof x === 'string' &&
+    ((ARTWORK_BLOB_FIXED_KINDS as readonly string[]).includes(x) || INK_KIND.test(x))
+  );
+}
 
 /** 作品の画像（ストア artworkBlobs）。key = `${artId}:${kind}` */
 export interface ArtworkBlobRecord {
@@ -162,10 +173,15 @@ export interface ArtworkBlobRecord {
   blob: Blob;
 }
 
+/** 記録の出どころ: v1 のモード、または新しい単元（'unit'。単元IDは unitId） */
+export type RecordModeId = ModeId | 'unit';
+
 export interface AttemptRecord {
   id?: number;
   profileId: string;
-  modeId: ModeId;
+  modeId: RecordModeId;
+  /** modeId が 'unit' のときの単元ID */
+  unitId?: string;
   variantId: string;
   skillId: SkillId | null;
   level: number;
@@ -185,7 +201,9 @@ export interface AttemptRecord {
 export interface RoundRecord {
   id?: number;
   profileId: string;
-  modeId: ModeId;
+  modeId: RecordModeId;
+  /** modeId が 'unit' のときの単元ID */
+  unitId?: string;
   variantId: string;
   startedAt: number;
   endedAt: number;

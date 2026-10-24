@@ -1498,7 +1498,7 @@
   {
     "id": "g3.soc.city-changes",
     "pack": "soc-g34",
-    "title": "市《し》の うつりかわり",
+    "title": "市《し》のうつりかわり",
     "stage": "g3",
     "subject": "soc",
     "domain": "soc",
@@ -1511,7 +1511,7 @@
   {
     "id": "g3.soc.map-symbols",
     "pack": "soc-g34",
-    "title": "方位《ほうい》と 地図記号《ちずきごう》",
+    "title": "方位《ほうい》と地図記号《ちずきごう》",
     "stage": "g3",
     "subject": "soc",
     "domain": "soc",
@@ -1526,7 +1526,7 @@
   {
     "id": "g3.soc.shop-work",
     "pack": "soc-g34",
-    "title": "お店《みせ》の しごと",
+    "title": "お店《みせ》のしごと",
     "stage": "g3",
     "subject": "soc",
     "domain": "soc",
@@ -2063,7 +2063,7 @@
   {
     "id": "g4.soc.disaster",
     "pack": "soc-g34",
-    "title": "自然災害《しぜんさいがい》に そなえる",
+    "title": "自然災害《しぜんさいがい》にそなえる",
     "stage": "g4",
     "subject": "soc",
     "domain": "soc",
@@ -2093,7 +2093,7 @@
   {
     "id": "g4.soc.water-waste",
     "pack": "soc-g34",
-    "title": "水《みず》と ごみの しょり",
+    "title": "水《みず》とごみのしょり",
     "stage": "g4",
     "subject": "soc",
     "domain": "soc",
@@ -2693,7 +2693,7 @@
   {
     "id": "g5.soc.food",
     "pack": "soc-g56",
-    "title": "わたしたちの 生活《せいかつ》と 食料生産《しょくりょうせいさん》",
+    "title": "わたしたちの生活《せいかつ》と食料生産《しょくりょうせいさん》",
     "stage": "g5",
     "subject": "soc",
     "domain": "soc",
@@ -2709,7 +2709,7 @@
   {
     "id": "g5.soc.industry",
     "pack": "soc-g56",
-    "title": "わたしたちの 生活《せいかつ》と 工業生産《こうぎょうせいさん》",
+    "title": "わたしたちの生活《せいかつ》と工業生産《こうぎょうせいさん》",
     "stage": "g5",
     "subject": "soc",
     "domain": "soc",
@@ -2725,7 +2725,7 @@
   {
     "id": "g5.soc.land",
     "pack": "soc-g56",
-    "title": "日本《にっぽん》の 国土《こくど》",
+    "title": "日本《にっぽん》の国土《こくど》",
     "stage": "g5",
     "subject": "soc",
     "domain": "soc",
@@ -3188,7 +3188,7 @@
   {
     "id": "g6.soc.history-1",
     "pack": "soc-g56",
-    "title": "歴史《れきし》1 むらから 国《くに》へ・貴族《きぞく》の くらし",
+    "title": "歴史《れきし》1 むらから国《くに》へ・貴族《きぞく》のくらし",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",
@@ -3203,7 +3203,7 @@
   {
     "id": "g6.soc.history-2",
     "pack": "soc-g56",
-    "title": "歴史《れきし》2 武士《ぶし》の 世《よ》の 中《なか》から 江戸《えど》の 文化《ぶんか》まで",
+    "title": "歴史《れきし》2 武士《ぶし》の世《よ》の中《なか》から江戸《えど》の文化《ぶんか》まで",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",
@@ -3218,7 +3218,7 @@
   {
     "id": "g6.soc.history-3",
     "pack": "soc-g56",
-    "title": "歴史《れきし》3 明治《めいじ》から 今《いま》の 日本《にほん》へ",
+    "title": "歴史《れきし》3 明治《めいじ》から今《いま》の日本《にほん》へ",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",
@@ -3233,7 +3233,7 @@
   {
     "id": "g6.soc.politics",
     "pack": "soc-g56",
-    "title": "政治《せいじ》の はたらき",
+    "title": "政治《せいじ》のはたらき",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",
@@ -3246,7 +3246,7 @@
   {
     "id": "g6.soc.world",
     "pack": "soc-g56",
-    "title": "世界《せかい》と 日本《にっぽん》",
+    "title": "世界《せかい》と日本《にっぽん》",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",

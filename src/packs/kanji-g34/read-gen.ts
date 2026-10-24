@@ -100,7 +100,9 @@ function lastHint(occ: Occurrence, isWord: boolean): string {
 
 function explainOf(entry: KanjiEntry, occ: Occurrence, isWord: boolean): string {
   const target = `${entry.ch}《${occ.part}》`;
-  const okuri = occ.okuri ? `「${occ.okuri}」は送《おく》りがなだから、読《よ》みには入《い》れないよ。` : '';
+  const okuri = occ.okuri
+    ? `「${occ.okuri}」は送《おく》りがなだから、読《よ》みには入《い》れないよ。`
+    : '';
   return isWord
     ? `「${occ.shown}」は「${occ.whole}」と読《よ》むよ。${target}はここでは「${occ.part}」。${okuri}`
     : `${occ.shown}\nこの文《ぶん》では${target}を「${occ.part}」と読《よ》むよ。${okuri}`;

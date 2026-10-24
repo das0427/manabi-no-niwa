@@ -27,48 +27,48 @@
       "text": "I like apples."
     },
     {
-      "key": "en-g56.intro.im-ben-i-can-run-fast",
-      "text": "I'm Ben. I can run fast."
+      "key": "en-g56.intro.im-ben-i-can-dance",
+      "text": "I'm Ben. I can dance."
     },
     {
       "key": "en-g56.intro.im-ben-i-like-soccer",
       "text": "I'm Ben. I like soccer."
     },
     {
-      "key": "en-g56.intro.im-emi-i-like-cats",
-      "text": "I'm Emi. I like cats."
+      "key": "en-g56.intro.im-emi-i-like-trains",
+      "text": "I'm Emi. I like trains."
     },
     {
       "key": "en-g56.intro.im-emi-my-birthday-is-july-tenth",
       "text": "I'm Emi. My birthday is July tenth."
     },
     {
-      "key": "en-g56.intro.im-ken-i-can-ski",
-      "text": "I'm Ken. I can ski."
+      "key": "en-g56.intro.im-ken-i-can-play-the-piano",
+      "text": "I'm Ken. I can play the piano."
     },
     {
-      "key": "en-g56.intro.im-ken-i-like-trains",
-      "text": "I'm Ken. I like trains."
+      "key": "en-g56.intro.im-ken-i-like-cats",
+      "text": "I'm Ken. I like cats."
     },
     {
-      "key": "en-g56.intro.im-lily-i-can-cook",
-      "text": "I'm Lily. I can cook."
+      "key": "en-g56.intro.im-lily-i-can-swim",
+      "text": "I'm Lily. I can swim."
     },
     {
       "key": "en-g56.intro.im-lily-i-like-rabbits",
       "text": "I'm Lily. I like rabbits."
     },
     {
-      "key": "en-g56.intro.im-mai-i-can-dance",
-      "text": "I'm Mai. I can dance."
+      "key": "en-g56.intro.im-mai-i-can-run-fast",
+      "text": "I'm Mai. I can run fast."
     },
     {
       "key": "en-g56.intro.im-mai-my-birthday-is-may-fifth",
       "text": "I'm Mai. My birthday is May fifth."
     },
     {
-      "key": "en-g56.intro.im-nina-i-can-play-the-piano",
-      "text": "I'm Nina. I can play the piano."
+      "key": "en-g56.intro.im-nina-i-can-ski",
+      "text": "I'm Nina. I can ski."
     },
     {
       "key": "en-g56.intro.im-sam-i-like-bears",
@@ -79,8 +79,8 @@
       "text": "I'm Sam. My birthday is March third."
     },
     {
-      "key": "en-g56.intro.im-tom-i-can-swim",
-      "text": "I'm Tom. I can swim."
+      "key": "en-g56.intro.im-tom-i-can-cook",
+      "text": "I'm Tom. I can cook."
     },
     {
       "key": "en-g56.intro.im-tom-my-birthday-is-june-tenth",
@@ -119,8 +119,8 @@
       "text": "I enjoyed camping."
     },
     {
-      "key": "en-g56.past.i-enjoyed-music",
-      "text": "I enjoyed music."
+      "key": "en-g56.past.i-enjoyed-english",
+      "text": "I enjoyed English."
     },
     {
       "key": "en-g56.past.i-go-to-the-park",
@@ -135,12 +135,12 @@
       "text": "I make a cake."
     },
     {
-      "key": "en-g56.past.i-played-soccer",
-      "text": "I played soccer."
+      "key": "en-g56.past.i-played-outside",
+      "text": "I played outside."
     },
     {
-      "key": "en-g56.past.i-played-tennis",
-      "text": "I played tennis."
+      "key": "en-g56.past.i-played-soccer",
+      "text": "I played soccer."
     },
     {
       "key": "en-g56.past.i-saw-a-rainbow",
@@ -177,10 +177,6 @@
     {
       "key": "en-g56.past.i-watched-a-movie",
       "text": "I watched a movie."
-    },
-    {
-      "key": "en-g56.past.i-watched-tv",
-      "text": "I watched TV."
     },
     {
       "key": "en-g56.past.i-went-to-the-mountains",

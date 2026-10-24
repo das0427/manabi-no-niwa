@@ -61,6 +61,11 @@ export const OKURIGANA: ReadonlySet<string> = new Set([
   'らか',
   'やか',
   'ずか',
+  // 文の中で、短い送り仮名に切れないように（確かめる・借りる・率いる・険しく）
+  'かめる',
+  'りる',
+  'いる',
+  'しく',
 ]);
 
 export type ReadKind = 'on' | 'kun';
@@ -151,7 +156,8 @@ function occurrence(
   }
   const next = tokens[idx + 1];
   let okuri = '';
-  if (next?.t === 'text') {
+  // 音読みの後ろの「する・した」などは送り仮名ではない（相談する の「す」）。音読みの送り仮名は「じる・ずる」だけ
+  if (next?.t === 'text' && (!isOn || /^[じず]/.test(next.s))) {
     let i = 0;
     while (i < next.s.length && !STOP.test(next.s[i]!)) i++;
     const lead = next.s.slice(0, i);

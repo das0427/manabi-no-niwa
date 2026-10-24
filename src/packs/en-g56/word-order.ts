@@ -165,7 +165,7 @@ const QUESTIONS: Sent[] = [
   {
     s: 'What color do you like?',
     ja: 'なに色《いろ》が すきですか',
-    wrong: [['What do you like color?', 'wh-place']],
+    wrong: [['What do you like color?', 'wh-chunk']],
   },
   {
     s: 'Do you have a pen?',
@@ -352,6 +352,11 @@ export const wordOrder: UnitSpec = {
     {
       id: 'wh-place',
       explain: '「なに・いつ・どこ」を たずねる ことばは、文《ぶん》の いちばん はじめに おくよ。',
+    },
+    {
+      id: 'wh-chunk',
+      explain:
+        '「なに色《いろ》」のように、たずねる ことばと ひとまとまりの ことばは、はなさずに いっしょに 文《ぶん》の はじめに おくよ。',
     },
     { id: 'word-choice', explain: 'にている タイルと とりちがえたのかな。いみを たしかめよう。' },
   ],

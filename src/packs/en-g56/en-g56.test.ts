@@ -146,4 +146,79 @@ describe('en-g56 の教材検査（curriculum-matrix 1.8）', () => {
         if (it.engine === 'listen' || it.engine === 'choice')
           for (const o of it.options) if (!o.correct) expect(o.misconception, it.id).toBeTruthy();
   });
+
+  // ---- 内容レビューの 再発防止 ----
+  const itemsOf = (id: string) =>
+    sampleItems(
+      pack.units.find((u) => u.id === id)!,
+      1,
+    );
+  const soundsOf = (it: { audio: { text: string } | { text: string }[] }) =>
+    (Array.isArray(it.audio) ? it.audio : [it.audio]).map((s) => s.text);
+
+  it('いま・すぎた の聞き分け: -ed の つぎの 語は 母音で はじまる（watched TV のように -ed が 聞こえない 組を さける）', () => {
+    for (const it of itemsOf('g6.en.past')) {
+      if (it.engine !== 'listen' || !it.id.startsWith('tense')) continue;
+      for (const s of soundsOf(it)) {
+        const w = s.replace(/[.?!]/g, '').split(' ');
+        if (w[1]?.endsWith('ed')) expect(w[2]?.[0] ?? 'a', `${it.id}: ${s}`).toMatch(/[aeiou]/i);
+      }
+    }
+  });
+
+  it('月の聞きとり: ヒント③の「〜がつから 〜がつ」で 選択肢が 正答 1つに しぼれない', () => {
+    for (const it of itemsOf('g5.en.listen-self')) {
+      if (it.engine !== 'listen') continue;
+      const m = /(\d+)がつから (\d+)がつ/.exec(String(it.hints[2]));
+      if (!m) continue;
+      const [lo, hi] = [Number(m[1]), Number(m[2])];
+      const inRange = it.options.filter((o) => {
+        const n = Number(/^(\d+)がつ$/.exec(o.label ?? '')?.[1]);
+        return n >= lo && n <= hi;
+      });
+      expect(inRange.length, it.id).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('2人の しょうかい: ヒント③で 何人めかを 言わない（答えの 人が 決まる）', () => {
+    for (const it of itemsOf('g5.en.listen-self'))
+      if (it.id.startsWith('intro:'))
+        expect(String(it.hints[2]), it.id).not.toMatch(/[12]人《(ひとり|ふたり)》め/);
+  });
+
+  it('誤概念IDの 付け違い: 話の「いつ」に tense-mix、wh 語が 先頭に ある 誤答に wh-place を 付けない', () => {
+    for (const it of itemsOf('g6.en.past'))
+      if (it.engine === 'listen' && it.id.startsWith('story:'))
+        for (const o of it.options) expect(o.misconception, it.id).not.toBe('tense-mix');
+    for (const it of itemsOf('g5.en.word-order'))
+      if (it.engine === 'build')
+        for (const w of it.wrongAnswers ?? [])
+          if (w.misconception === 'wh-place')
+            expect(w.value, it.id).not.toMatch(/^(What|When|Where|Who|How)\b/);
+    const mean = itemsOf('g6.en.places').find((x) => x.id === 'mean:3')!;
+    if (mean.engine === 'choice')
+      expect(mean.options.find((o) => o.label === 'りんごが すきな まち')?.misconception).toBe(
+        'adj-mix',
+      );
+  });
+
+  it('しょうかいの 性役割: 女子名だけが りょうり・ピアノ・おどり、男子名だけが はやく はしる・でんしゃ に ならない', () => {
+    const girls = ['Emi', 'Lily', 'Mai', 'Nina', 'Yuki'];
+    const said = new Map<string, Set<string>>();
+    for (const it of itemsOf('g5.en.listen-self')) {
+      if (it.engine !== 'listen' || !it.id.startsWith('intro:')) continue;
+      for (const s of soundsOf(it)) {
+        const m = /^I'm (\w+)\. I (?:can|like) (.+)\.$/.exec(s);
+        if (!m) continue;
+        const k = m[2]!;
+        if (!said.has(k)) said.set(k, new Set());
+        said.get(k)!.add(girls.includes(m[1]!) ? 'g' : 'b');
+      }
+    }
+    expect([...(said.get('cook') ?? [])]).toEqual(['b']);
+    expect([...(said.get('dance') ?? [])]).toEqual(['b']);
+    expect([...(said.get('play the piano') ?? [])]).toEqual(['b']);
+    expect([...(said.get('run fast') ?? [])]).toEqual(['g']);
+    expect([...(said.get('trains') ?? [])]).toEqual(['g']);
+  });
 });

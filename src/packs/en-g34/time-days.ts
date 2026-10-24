@@ -7,7 +7,7 @@
  */
 import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
 import type { Figure } from '../../engines/figure/types';
-import { en, enText, listen, pickOthers, slugOf } from './lib';
+import { en, enText, listen, pickOthers, rangeKeepsTwo, SAY_HINT, slugOf } from './lib';
 
 const DAYS: { word: string; ja: string; kanji: string }[] = [
   { word: 'Sunday', ja: 'にちようび', kanji: '日《にち》' },
@@ -125,6 +125,7 @@ function timeItems(): Item[] {
   const out: Item[] = [];
   for (let h = 1; h <= 12; h++) {
     const text = `It's ${NUM[h]} o'clock.`;
+    const hours = [h, ...HOUR_CONFUSE[h]!];
     out.push(
       listen({
         id: `oclock:${h}`,
@@ -143,7 +144,11 @@ function timeItems(): Item[] {
         hints: [
           'かずの ことばを よく 聞《き》こう。',
           'さいごの ことばは「ちょうど」の いみだよ。みじかい はりは どこかな。',
-          h <= 6 ? '1から 6の どれかだよ。' : '7から 12の どれかだよ。',
+          rangeKeepsTwo(hours, (x) => x <= 6 === h <= 6)
+            ? h <= 6
+              ? '1から 6の どれかだよ。'
+              : '7から 12の どれかだよ。'
+            : SAY_HINT,
         ],
         explain: `${h}じ ちょうど です。`,
         explainFigure: enText(text),
@@ -171,9 +176,12 @@ function timeItems(): Item[] {
         hints: [
           'はじめの かずが「なんじ」、あとの かずが「なんぷん」だよ。',
           'あとの かずは 30の ことだよ。',
-          h <= 6
-            ? 'はじめの かずは 1から 6の どれかだよ。'
-            : 'はじめの かずは 7から 12の どれかだよ。',
+          // ②で h:00 が きえるので、範囲で wrongH も きえる ときは ③で しぼらない
+          wrongH <= 6 !== h <= 6
+            ? SAY_HINT
+            : h <= 6
+              ? 'はじめの かずは 1から 6の どれかだよ。'
+              : 'はじめの かずは 7から 12の どれかだよ。',
         ],
         explain: `${h}じ 30ぷん です。`,
         explainFigure: enText(text),

@@ -7,7 +7,7 @@
  * 同一性キー: 形式 × 字（または語）。
  */
 import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
-import { en, enText, listen } from './lib';
+import { en, enText, listen, rangeKeepsTwo, SAY_HINT } from './lib';
 
 export const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
@@ -59,6 +59,12 @@ function soundAlike(c: string): [string, string][] {
 
 const half = (c: string) => (c <= 'M' ? 'am' : 'nz');
 
+/** 名前の音が にている なかまの 字（自分を のぞく） */
+export const soundMates = (c: string): string[] =>
+  SOUND_GROUPS.find((s) => s.includes(c))!
+    .split('')
+    .filter((x) => x !== c);
+
 function nameItems(): Item[] {
   const out: Item[] = [];
   UPPER.forEach((c) => {
@@ -77,7 +83,9 @@ function nameItems(): Item[] {
         hints: [
           '文字《もじ》の 名前《なまえ》を さいごまで 聞《き》こう。',
           '名前《なまえ》の おわりの 音《おと》が にている 文字《もじ》が あるよ。はじめの 音《おと》を くらべよう。',
-          `アルファベットの ${c <= 'M' ? 'まえの はんぶん（AからM）' : 'うしろの はんぶん（NからZ）'}に ある 文字《もじ》だよ。`,
+          rangeKeepsTwo(opts, (o) => half(o.label!) === half(c))
+            ? `アルファベットの ${c <= 'M' ? 'まえの はんぶん（AからM）' : 'うしろの はんぶん（NからZ）'}に ある 文字《もじ》だよ。`
+            : SAY_HINT,
         ],
         explain:
           'こたえの 文字《もじ》を ゆびで なぞりながら、名前《なまえ》を まねして いって みよう。',
@@ -101,7 +109,9 @@ function nameItems(): Item[] {
         hints: [
           '名前《なまえ》を 聞《き》いたら、その 文字《もじ》の 形《かたち》を おもいうかべよう。',
           'ぼうの かず、まるい ところ、とびでた ところを くらべよう。',
-          `アルファベットの ${c <= 'M' ? 'まえの はんぶん' : 'うしろの はんぶん'}に ある 文字《もじ》だよ。`,
+          rangeKeepsTwo(shapeOpts, (o) => half(o.label!) === half(c))
+            ? `アルファベットの ${c <= 'M' ? 'まえの はんぶん' : 'うしろの はんぶん'}に ある 文字《もじ》だよ。`
+            : SAY_HINT,
         ],
         explain:
           '形《かたち》の にている 文字《もじ》と くらべて、ちがう ところを 見《み》つけよう。',
@@ -224,7 +234,11 @@ function signItems(): Item[] {
         audio: abc(f.c),
         options: [
           { label: f.right, correct: true },
-          ...f.wrong.map((w) => ({ label: w, misconception: 'sound-alike' })),
+          // 音の にている 字が 入っている かんばんだけ sound-alike（入っていなければ find-miss）
+          ...f.wrong.map((w) => ({
+            label: w,
+            misconception: soundMates(f.c).some((x) => w.includes(x)) ? 'sound-alike' : 'find-miss',
+          })),
         ],
         hints: [
           'まず 文字《もじ》の 名前《なまえ》を 聞《き》きとろう。',
@@ -271,6 +285,11 @@ export const alphabetUpper: UnitSpec = {
     {
       id: 'pair-order',
       explain: 'じゅんばんが ぎゃくに なったのかな。1つめから じゅんに 聞《き》こう。',
+    },
+    {
+      id: 'find-miss',
+      explain:
+        '聞《き》こえた 文字《もじ》が 入《はい》って いない かんばんを えらんだのかな。かんばんの 文字《もじ》を 1つずつ たしかめよう。',
     },
     {
       id: 'one-letter',

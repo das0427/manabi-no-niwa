@@ -70,6 +70,12 @@ const pickWeighted = (rng: Rng, table: [Form, number][]): Form => {
 /** 「ことば」の手がかりに使えるか（問う字だけの語は、手がかりが無いので使わない） */
 const hasContext = (o: Occurrence) => [...o.plain].length > 1;
 
+/**
+ * 1・2年の字の文（data/rows-g1・g2*.ts）は分かち書きなので、3年以上の単元に出すときは空白を除く
+ * （curriculum-matrix 2.1: 小3以上は通常の文）。
+ */
+const flat = (s: string) => s.replace(/\s+/g, '');
+
 export interface WriteModel {
   generate(ctx: GenerateContext): Item;
   /** 異なる問題（同一性キー）の総数 */
@@ -95,7 +101,7 @@ export function makeWriteModel(cfg: WriteConfig): WriteModel {
   const shownChar = (e: KanjiEntry, part: string) => `${e.ch}《${part}》`;
 
   /** なぞる・書く問題の問題文は1行にする（なぞり盤は大きく、2行にすると問題文と重なる） */
-  const kanaPrompt = (occ: Occurrence, verb: string) => `${occ.kana}（${verb}）`;
+  const kanaPrompt = (occ: Occurrence, verb: string) => `${flat(occ.kana)}（${verb}）`;
   // 書く字の読みを示す文は、ほかの漢字をかなにしてある（occ.kana）
 
   const baseOf = (
@@ -210,7 +216,7 @@ export function makeWriteModel(cfg: WriteConfig): WriteModel {
     return {
       engine: 'choice',
       id: `${form}:${e.ch}${isSent ? '' : `:${occ.plain}`}`,
-      prompt: `ふといひらがなにあてはまる字《じ》は、どれ？\n${occ.kana}`,
+      prompt: `ふといひらがなにあてはまる字《じ》は、どれ？\n${flat(occ.kana)}`,
       hints: [
         isSent
           ? 'この文《ぶん》がなにをいっているか、かんがえてあてはまる字《じ》をえらぼう。'
@@ -221,8 +227,8 @@ export function makeWriteModel(cfg: WriteConfig): WriteModel {
       options,
       layout: 'row',
       explain: isSent
-        ? `ふといところは「${shownChar(e, occ.part)}」だよ。\n${occ.shown}`
-        : `「${occ.shown}」のふといところは「${shownChar(e, occ.part)}」だよ。`,
+        ? `ふといところは「${shownChar(e, occ.part)}」だよ。\n${flat(occ.shown)}`
+        : `「${flat(occ.shown)}」のふといところは「${shownChar(e, occ.part)}」だよ。`,
       ...baseOf(e, 'choose', level, form, form === 'cw', isSent ? '' : occ.plain),
     };
   }
@@ -244,7 +250,7 @@ export function makeWriteModel(cfg: WriteConfig): WriteModel {
     return {
       engine: 'build',
       id: `pt:${e.ch}`,
-      prompt: `ふといひらがなにあてはまる字《じ》の、ぶひんをならべよう。\n${occ.kana}`,
+      prompt: `ふといひらがなにあてはまる字《じ》の、ぶひんをならべよう。\n${flat(occ.kana)}`,
       tiles,
       answer: { kind: 'parts', parts: parts.map(kanjiLabel) },
       wrongAnswers: swap.filter((w) => {

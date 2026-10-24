@@ -240,6 +240,18 @@ const MONTH_CONFUSE: Record<number, [number, number]> = {
   12: [11, 9],
 };
 
+/**
+ * ヒント③（前半・後半の月か）。選択肢が 正答の がわに 2つ以上 のこる ときだけ つかう
+ * （のこりが 正答 1つだと 答えを いって しまう。例: 7がつ・6がつ・5がつ）
+ */
+function monthHint3(n: number): string {
+  const first = n <= 6;
+  const same = [n, ...MONTH_CONFUSE[n]!].filter((x) => x <= 6 === first).length;
+  if (same >= 2)
+    return first ? '1がつから 6がつの どれかだよ。' : '7がつから 12がつの どれかだよ。';
+  return '月《つき》の なまえを こえに 出《だ》して、1がつから じゅんに いって くらべよう。';
+}
+
 function birthdayItems(): Item[] {
   const out: Item[] = [];
   MONTHS.forEach((m, i) => {
@@ -259,7 +271,7 @@ function birthdayItems(): Item[] {
         hints: [
           '「わたしの たんじょう日《び》は」の あとに、月《つき》の なまえが くるよ。',
           '月《つき》の なまえの はじめの 音《おと》を よく 聞《き》こう。',
-          n <= 6 ? '1がつから 6がつの どれかだよ。' : '7がつから 12がつの どれかだよ。',
+          monthHint3(n),
         ],
         explain: `${n}がつ です。月《つき》の なまえの あとの ことばは「なん日《にち》」を あらわして います。`,
         explainFigure: enText(text),
@@ -284,7 +296,7 @@ function birthdayItems(): Item[] {
         hints: [
           'はじめの 音《おと》を よく 聞《き》こう。',
           'おわりの 音《おと》が にている 月《つき》が あるよ。',
-          n <= 6 ? '1がつから 6がつの どれかだよ。' : '7がつから 12がつの どれかだよ。',
+          monthHint3(n),
         ],
         explain: `${n}がつ の ことです。`,
         explainFigure: enText(m),
@@ -299,14 +311,14 @@ function birthdayItems(): Item[] {
 /** 2人の しょうかいを 聞いて、だれの ことかを えらぶ */
 const PEOPLE: { a: [string, string]; b: [string, string]; ask: 'a' | 'b'; askJa: string }[] = [
   {
-    a: ['Ken', 'I like trains.'],
-    b: ['Emi', 'I like cats.'],
+    a: ['Emi', 'I like trains.'],
+    b: ['Ken', 'I like cats.'],
     ask: 'a',
     askJa: 'でんしゃが すきなのは だれ？',
   },
   {
-    a: ['Tom', 'I can swim.'],
-    b: ['Lily', 'I can cook.'],
+    a: ['Lily', 'I can swim.'],
+    b: ['Tom', 'I can cook.'],
     ask: 'b',
     askJa: 'りょうりが できるのは だれ？',
   },
@@ -323,8 +335,8 @@ const PEOPLE: { a: [string, string]; b: [string, string]; ask: 'a' | 'b'; askJa:
     askJa: 'おんがくが すきなのは だれ？',
   },
   {
-    a: ['Nina', 'I can play the piano.'],
-    b: ['Ken', 'I can ski.'],
+    a: ['Ken', 'I can play the piano.'],
+    b: ['Nina', 'I can ski.'],
     ask: 'b',
     askJa: 'スキーが できるのは だれ？',
   },
@@ -341,8 +353,8 @@ const PEOPLE: { a: [string, string]; b: [string, string]; ask: 'a' | 'b'; askJa:
     askJa: 'くまが すきなのは だれ？',
   },
   {
-    a: ['Ben', 'I can run fast.'],
-    b: ['Mai', 'I can dance.'],
+    a: ['Mai', 'I can run fast.'],
+    b: ['Ben', 'I can dance.'],
     ask: 'b',
     askJa: 'おどる ことが できるのは だれ？',
   },
@@ -372,7 +384,7 @@ function introItems(): Item[] {
         hints: [
           'それぞれ、はじめに なまえ、つぎに じぶんの ことを いって いるよ。',
           '1人《ひとり》めと 2人《ふたり》めを わけて 聞《き》こう。',
-          `${p.ask === 'a' ? '1人《ひとり》め' : '2人《ふたり》め'}の 人《ひと》の 文《ぶん》を もういちど 聞《き》こう。`,
+          'たずねられて いる ことを いった 文《ぶん》を さがして、その まえの なまえを 聞《き》こう。',
         ],
         explain: `${p.ask === 'a' ? '1人《ひとり》め' : '2人《ふたり》め'}の ${right}さんの ことです。`,
         explainFigure: { kind: 'column', items: [enText(sa, 'm'), enText(sb, 'm')] },
@@ -478,7 +490,7 @@ export const listenSelf: UnitSpec = {
     {
       id: 'can-cant',
       explain:
-        '「できる」と「できない」を とりちがえたのかな。できない ときは ことばの おわりに 音《おと》が つくよ。もういちど 聞《き》こう。',
+        '「できる」と「できない」を とりちがえたのかな。できない ときは、その ことばを つよく はっきり いう ことが 多《おお》いよ。おわりの みじかい 音《おと》にも 気《き》を つけて もういちど 聞《き》こう。',
     },
     {
       id: 'month-mix',

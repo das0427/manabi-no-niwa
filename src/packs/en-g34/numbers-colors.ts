@@ -7,7 +7,7 @@
  */
 import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
 import type { Figure } from '../../engines/figure/types';
-import { en, enText, listen, pickOthers } from './lib';
+import { en, enText, listen, notHint, pickOthers, rangeKeepsTwo, SAY_HINT } from './lib';
 
 const WORDS = [
   '',
@@ -90,8 +90,12 @@ function numberItems(): Item[] {
             ? 'はじめの 音《おと》が にている かずが あるよ。ちがいを 聞《き》きわけよう。'
             : 'おわりの 音《おと》を のばして いうか、みじかく おわるかを 聞《き》こう。',
           small
-            ? `${n <= 5 ? '1から5' : '6から10'}の どれかだよ。`
-            : '10より 大《おお》きく 20までの かずだよ。',
+            ? rangeKeepsTwo(opts, (o) => Number(o.label) <= 5 === n <= 5)
+              ? `${n <= 5 ? '1から5' : '6から10'}の どれかだよ。`
+              : SAY_HINT
+            : rangeKeepsTwo(opts, (o) => Number(o.label) > 10 && Number(o.label) <= 20)
+              ? '10より 大《おお》きく 20までの かずだよ。'
+              : 'おわりを のばして いえば「10と いくつ」、みじかく おわれば「10が いくつ」の かずだよ。',
         ],
         explain: `${n}の ことでした。`,
         explainFigure: enText(`${n}  ${WORDS[n]}`),
@@ -202,11 +206,8 @@ function colorItems(): Item[] {
         hints: [
           'さいごまで よく 聞《き》こう。',
           'はじめの 音《おと》が にている 色《いろ》の なまえが あるよ。',
-          c.thing
-            ? `${c.thing.ja}の 色《いろ》だよ。`
-            : c.word === 'blue'
-              ? 'はれた ひの そらの 色《いろ》だよ。'
-              : 'よるの そらの 色《いろ》だよ。',
+          // ③で 色の ものを いうと 聞かずに きまるので、誤りを1つ けす
+          notHint([...rest, ...same][0]!.ja),
         ],
         explain: `「${c.ja}」の ことです。`,
         explainFigure: enText(c.word),
@@ -247,7 +248,7 @@ function colorItems(): Item[] {
         hints: [
           'まず 色《いろ》の なまえを 聞《き》きとろう。',
           'その 色《いろ》を して いる ものを さがそう。',
-          `「${c.ja}」の ものだよ。`,
+          notHint(others[0]!.thing!.ja),
         ],
         explain: `「${c.ja}」なので、${c.thing!.ja}です。`,
         explainFigure: enText(c.word),
@@ -348,7 +349,7 @@ function shapeItems(): Item[] {
             : s.kin === 'mark'
               ? 'しるしに よく つかう 形《かたち》だよ。'
               : s.kin === 'tri'
-                ? 'かどが ある 形《かたち》だよ。'
+                ? notHint([...same, ...rest][0]!.ja) // さんかくは なかまが なく、かどの ヒントで きまる
                 : 'かどが ない 形《かたち》だよ。',
         ],
         explain: `「${s.ja}」の ことです。`,

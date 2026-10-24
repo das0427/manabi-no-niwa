@@ -9,6 +9,8 @@ import { enG34Illust } from '../../illust/content/en-g34';
 import { getIllust } from '../../illust/registry';
 import { kanjiGrade } from '../../text/kanji-grades';
 import { parseRich, type Token } from '../../text/rich';
+import { isMirror } from './alphabet-lower';
+import { soundMates } from './alphabet-upper';
 import pack from './index';
 import { englishScript } from './voice';
 
@@ -120,6 +122,96 @@ describe('en-g34 の教材検査（curriculum-matrix 1.8）', () => {
       walk(sampleItems(unit, 1));
     }
     expect([...new Set(missing)]).toEqual([]);
+  });
+
+  // ---- 内容レビュー（2026-10-24）の 再発防止 ----
+  const allItems = () => pack.units.flatMap((u) => sampleItems(u, 1));
+  const hint3 = (it: { hints?: unknown[] }) => String(it.hints?.[2] ?? '');
+  type Opt = { label?: string; correct?: boolean; misconception?: string };
+  const optsOf = (it: unknown): Opt[] => ((it as { options?: Opt[] }).options ?? []) as Opt[];
+
+  it('ヒント③が 正答の 選択肢を そのまま いわない', () => {
+    const bad: string[] = [];
+    for (const it of allItems()) {
+      const h = hint3(it);
+      for (const o of optsOf(it))
+        if (
+          o.correct &&
+          o.label &&
+          o.label.length >= 2 &&
+          !/^\d/.test(o.label) &&
+          h.includes(o.label)
+        )
+          bad.push(`${it.id}: ${h}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('ヒント③の 範囲（AからMの はんぶん・1から6 など）で 選択肢が 1つに きまらない', () => {
+    const bad: string[] = [];
+    for (const it of allItems()) {
+      const h = hint3(it);
+      let opts = optsOf(it).filter((o) => o.label);
+      if (!opts.length) continue;
+      // half: ②で「ちょうど」（:00）は きえる
+      if (it.id.startsWith('half:')) opts = opts.filter((o) => !o.label!.endsWith(':00'));
+      const num = (o: Opt) => parseInt(o.label!, 10);
+      let inRange: ((o: Opt) => boolean) | null = null;
+      const m = /(\d+)から ?(\d+)の どれか/.exec(h);
+      if (m) inRange = (o) => num(o) >= Number(m[1]) && num(o) <= Number(m[2]);
+      else if (h.includes('10より 大《おお》きく 20までの'))
+        inRange = (o) => num(o) > 10 && num(o) <= 20;
+      else if (h.includes('まえの はんぶん')) inRange = (o) => o.label!.toUpperCase() <= 'M';
+      else if (h.includes('うしろの はんぶん')) inRange = (o) => o.label!.toUpperCase() > 'M';
+      if (inRange && opts.filter(inRange).length < 2) bad.push(`${it.id}: ${h}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('誤概念 mirror（むきが はんたい）は かがみ・さかさの 組だけに つく', () => {
+    const bad: string[] = [];
+    for (const it of allItems()) {
+      const right = optsOf(it).find((o) => o.correct)?.label;
+      for (const o of optsOf(it))
+        if (o.misconception === 'mirror' && !(right && isMirror(right, o.label!)))
+          bad.push(`${it.id}: ${right} / ${o.label}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('かんばん さがし: sound-alike は 音の にている 字が 入った かんばんだけ', () => {
+    const bad: string[] = [];
+    for (const it of allItems())
+      if (it.id.startsWith('find:')) {
+        const c = it.id.slice(5);
+        for (const o of optsOf(it))
+          if (o.misconception === 'sound-alike' && !soundMates(c).some((x) => o.label!.includes(x)))
+            bad.push(`${it.id}: ${o.label}`);
+      }
+    expect(bad).toEqual([]);
+  });
+
+  it('あいさつの ばめん（when）の 誤りに「はじめだけ 聞いた」を つけない', () => {
+    for (const it of allItems())
+      if (it.id.startsWith('when:'))
+        for (const o of optsOf(it)) expect(o.misconception, it.id).not.toBe('whole-phrase');
+  });
+
+  it('きもちの ばめん（feel-scene）: その ばめんでも いえる きもちを 誤りに しない', () => {
+    const NG: Record<string, string[]> = {
+      'feel-scene:im-thirsty': ['たくさん はしった', 'なつの ひに そとに いる'],
+      'feel-scene:im-tired': [
+        'みずを のみたい',
+        'あさごはんを たべて いない',
+        'よる おそくまで おきて いた',
+      ],
+      'feel-scene:im-hungry': ['たくさん はしった'],
+      'feel-scene:im-sleepy': ['たくさん はしった'],
+      'feel-scene:im-hot': ['みずを のみたい'],
+    };
+    for (const it of allItems())
+      for (const o of optsOf(it))
+        if (!o.correct) expect(NG[it.id] ?? [], it.id).not.toContain(o.label);
   });
 
   it('listen の誤りの選択肢には すべて誤概念IDが付く', () => {

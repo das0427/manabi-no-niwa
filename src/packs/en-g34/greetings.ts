@@ -5,7 +5,7 @@
  * 同一性キー: 到達項目の形式 × 英語の表現（同じ表現でも、意味を選ぶ・場面を選ぶ は別の問題）。
  */
 import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
-import { en, enText, listen, ordinalOptions, pickOthers, slugOf } from './lib';
+import { en, enText, listen, notHint, ordinalOptions, pickOthers, slugOf } from './lib';
 
 type Group = 'time' | 'meet' | 'polite';
 
@@ -80,6 +80,20 @@ const FEELINGS: Feeling[] = [
   { text: "I'm cold.", ja: 'さむい', scene: 'ゆきの ひに そとに いる', group: 'temp' },
 ];
 
+/**
+ * ばめんを えらぶ 問題で 誤りに できない 組（その ばめんでも 言えるので、正答が 2つに なる）。
+ * たくさん はしった → のどが かわいた・おなかが すいた、よる おそくまで おきて いた → つかれた、
+ * なつの ひに そとに いる → のどが かわいた。
+ */
+const SCENE_CLASH: [string, string][] = [
+  ["I'm tired.", "I'm thirsty."],
+  ["I'm tired.", "I'm hungry."],
+  ["I'm tired.", "I'm sleepy."],
+  ["I'm hot.", "I'm thirsty."],
+];
+export const sceneClash = (a: { text: string }, b: { text: string }): boolean =>
+  SCENE_CLASH.some(([x, y]) => (a.text === x && b.text === y) || (a.text === y && b.text === x));
+
 const FEEL_MIS: Record<Mood, string> = {
   mood: 'feel-mood',
   body: 'feel-body',
@@ -118,7 +132,8 @@ function meaningItems(): Item[] {
             : p.group === 'meet'
               ? 'あう とき・わかれる ときの あいさつだよ。'
               : 'おれい・おわび・ようすを きく ことばの なかまだよ。',
-          `この あいさつは「${p.when}」に つかうよ。`,
+          // ③で つかう ばめんを いうと 聞かずに いみが きまるので、誤りを1つ けす
+          notHint(others[0]!.ja),
         ],
         explain: `「${p.ja}」と いう いみの あいさつです。${p.when}に つかいます。`,
         explainFigure: enText(p.text),
@@ -134,9 +149,10 @@ function meaningItems(): Item[] {
     );
     const opts: ChoiceOption[] = [
       { label: p.when, correct: true },
+      // ほかの なかまの あいさつの ばめん: 「はじめだけ 聞いた」ではなく、いみと ばめんの むすびつけの 誤り
       ...others.slice(0, 2).map((q) => ({
         label: q.when,
-        misconception: q.group === p.group ? GROUP_MIS[p.group] : 'whole-phrase',
+        misconception: q.group === p.group ? GROUP_MIS[p.group] : 'when-mix',
       })),
     ];
     out.push(
@@ -150,7 +166,7 @@ function meaningItems(): Item[] {
         hints: [
           'あいさつの いみを おもいだそう。',
           'いみが わかったら、その ことばを いう ばめんを そうぞう しよう。',
-          `いみは「${p.ja}」だよ。`,
+          notHint(others[0]!.when),
         ],
         explain: `「${p.ja}」の あいさつなので、${p.when}に いいます。`,
         explainFigure: enText(p.text),
@@ -355,7 +371,7 @@ function feelItems(): Item[] {
             : f.group === 'temp'
               ? 'あつさ・さむさを あらわす ことばだよ。'
               : 'こころの きもちを あらわす ことばだよ。',
-          `「${f.scene}」ときに いう ことばだよ。`,
+          notHint([...diff, ...same][0]!.ja),
         ],
         explain: `「${f.ja}」と いう いみです。`,
         explainFigure: enText(f.text),
@@ -366,7 +382,12 @@ function feelItems(): Item[] {
   // 別例: 「How are you?」への へんじを 聞いて、ばめんを えらぶ
   FEELINGS.forEach((f, i) => {
     if (f.text === "I'm fine.") return;
-    const others = pickOthers(FEELINGS, i, 2, (g) => g !== f && g.text !== "I'm fine.");
+    const others = pickOthers(
+      FEELINGS,
+      i,
+      2,
+      (g) => g !== f && g.text !== "I'm fine." && !sceneClash(f, g),
+    );
     out.push(
       listen({
         id: `feel-scene:${slugOf(f.text)}`,
@@ -385,7 +406,7 @@ function feelItems(): Item[] {
         hints: [
           'あとの ほうの こたえを よく 聞《き》こう。',
           'こたえの きもち・ようすを おもいだそう。',
-          `こたえは「${f.ja}」と いう いみだよ。`,
+          notHint(others[0]!.scene),
         ],
         explain: `「${f.ja}」と こたえて います。${f.scene}ときに ぴったりです。`,
         explainFigure: enText(`How are you?  →  ${f.text}`, 'm'),
@@ -433,6 +454,11 @@ export const greetings: UnitSpec = {
       id: 'whole-phrase',
       explain:
         'はじめの ほうだけ 聞《き》いて えらんだのかな。さいごまで 聞《き》いてから えらぼう。',
+    },
+    {
+      id: 'when-mix',
+      explain:
+        'ほかの あいさつを つかう ばめんを えらんだのかな。聞《き》こえた あいさつの いみを おもいだしてから、ばめんを かんがえよう。',
     },
     {
       id: 'reply-mismatch',

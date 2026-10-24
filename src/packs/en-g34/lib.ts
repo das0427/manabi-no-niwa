@@ -91,6 +91,21 @@ export function pickOthers<T>(list: T[], i: number, n: number, ok: (x: T) => boo
   return out;
 }
 
+/**
+ * ヒント③: 誤りの選択肢を1つだけ消す（③で こたえを いわない。1.2-5）。
+ * 意味・場面を そのまま いう ヒントは、聞かずに こたえが きまるので つかわない。
+ */
+export const notHint = (wrongLabel: string): string =>
+  `「${wrongLabel}」では ないよ。のこりの 中《なか》から、もういちど 聞《き》いて えらぼう。`;
+
+/** ヒント③: 範囲で しぼると こたえが 1つに なる ときの かわり */
+export const SAY_HINT =
+  'こたえの こうほを 1つずつ こえに だして いって みよう。聞《き》こえた 音《おと》と おなじ ものは どれかな。';
+
+/** 範囲の ヒントが こたえを いわないか（範囲に 入る 選択肢が 2つ以上 のこる） */
+export const rangeKeepsTwo = <T>(opts: T[], inRange: (x: T) => boolean): boolean =>
+  opts.filter(inRange).length >= 2;
+
 /** 「1ばんめ」「2ばんめ」… の選択肢（順に聞いた音から選ぶ） */
 export function ordinalOptions(
   n: number,

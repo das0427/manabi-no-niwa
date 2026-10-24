@@ -99,7 +99,7 @@ function didItems(): Item[] {
         hints: [
           'すぎた ことを あらわす ことばだよ。',
           'いまの ことを あらわす 形《かたち》とは 音《おと》が ちがうよ。',
-          'こたえは「〜た」で おわる ことばだよ。',
+          'こたえは「〜た」か「〜だ」で おわる ことばだよ。',
         ],
         explain: `「${past}」と いう いみです。`,
         explainFigure: enText(v, 'xl'),
@@ -111,15 +111,19 @@ function didItems(): Item[] {
   return out;
 }
 
-/** いま（いつも）の 文と すぎた 文 */
+/**
+ * いま（いつも）の 文と すぎた 文。
+ * -ed の 文は、つぎの 語を 母音で はじめる（watched TV・played tennis のように つぎの 子音に -ed の 音が
+ * のみこまれて、いまの 文と 聞き分けられない 組を さける）。
+ */
 const TENSE: { now: string; past: string; ja: string }[] = [
-  { now: 'I play tennis.', past: 'I played tennis.', ja: 'テニスを する' },
+  { now: 'I play outside.', past: 'I played outside.', ja: 'そとで あそぶ' },
   { now: 'I go to the park.', past: 'I went to the park.', ja: 'こうえんに いく' },
   { now: 'I eat bread.', past: 'I ate bread.', ja: 'パンを たべる' },
   { now: 'I see birds.', past: 'I saw birds.', ja: 'とりを 見《み》る' },
-  { now: 'I watch TV.', past: 'I watched TV.', ja: 'テレビを 見《み》る' },
+  { now: 'I watch a movie.', past: 'I watched a movie.', ja: 'えいがを 見《み》る' },
   { now: 'I swim in the sea.', past: 'I swam in the sea.', ja: 'うみで およぐ' },
-  { now: 'I enjoy music.', past: 'I enjoyed music.', ja: 'おんがくを たのしむ' },
+  { now: 'I enjoy English.', past: 'I enjoyed English.', ja: 'えいごを たのしむ' },
   { now: 'I make a cake.', past: 'I made a cake.', ja: 'ケーキを つくる' },
 ];
 
@@ -149,7 +153,7 @@ function tenseItems(): Item[] {
         hints: [
           '2つめの ことばを よく 聞《き》こう。',
           'すぎた ことは、ことばの 形《かたち》や 音《おと》が かわるよ。',
-          `この 文《ぶん》は「${t.ja}」に かんけいする 文《ぶん》だよ。2つめの ことばの おわりの 音《おと》に ちゅうもく。`,
+          `この 文《ぶん》は「${t.ja}」に かんけいする 文《ぶん》だよ。2つめの ことばの 形《かたち》と 音《おと》に ちゅうもく。`,
         ],
         explain: isPast
           ? 'すぎた ことを いう 形《かたち》です。'
@@ -177,7 +181,7 @@ function tenseItems(): Item[] {
         hints: [
           '2つの 文《ぶん》は、2つめの ことばだけが ちがうよ。',
           'すぎた ことは、ことばの 形《かたち》や 音《おと》が かわるよ。',
-          '2つめの ことばの おわりの 音《おと》を くらべよう。',
+          '2つめの ことばの 音《おと》を くらべよう。ことば ぜんたいが かわる ものも あるよ。',
         ],
         explain: `${pos + 1}ばんめが すぎた ことを いう 形《かたち》です。`,
         explainFigure: { kind: 'column', items: [enText(seq[0]!, 'm'), enText(seq[1]!, 'm')] },
@@ -328,7 +332,7 @@ const STORIES: Story[] = [
         ask: 'いつの こと？',
         right: 'きのう',
         wrong: ['きょう', 'あした'],
-        mis: ['tense-mix', 'tense-mix'],
+        mis: ['detail-when', 'detail-when'],
         at: 1,
       },
       {
@@ -566,7 +570,7 @@ export const past: UnitSpec = {
     {
       id: 'detail-when',
       explain:
-        'いつの ことかを とりちがえたのかな。曜日《ようび》や 月《つき》の ことばを 聞《き》こう。',
+        'いつの ことかを とりちがえたのかな。「きのう」や 曜日《ようび》・月《つき》など、いつを あらわす ことばを 聞《き》こう。',
     },
     {
       id: 'gist-part',

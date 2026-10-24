@@ -6,7 +6,7 @@
  * 3・4年は 文字を書かせない（2.3）。同一性キー: 形式 × 字（match は 字の組）。
  */
 import type { ChoiceOption, Item, MatchItem, UnitSpec } from '../../curriculum/types';
-import { en, enText, listen } from './lib';
+import { en, enText, listen, rangeKeepsTwo, SAY_HINT } from './lib';
 
 const LOWER = 'abcdefghijklmnopqrstuvwxyz'.split('');
 const SOUND_GROUPS = ['bcdegptvz', 'ahjk', 'flmnsx', 'iy', 'quw', 'or'];
@@ -72,7 +72,9 @@ function nameItems(): Item[] {
         hints: [
           '文字《もじ》の 名前《なまえ》を さいごまで 聞《き》こう。',
           '大文字《おおもじ》を おもいうかべてから、小文字《こもじ》の 形《かたち》を さがそう。',
-          `アルファベットの ${c <= 'm' ? 'まえの はんぶん' : 'うしろの はんぶん'}に ある 文字《もじ》だよ。`,
+          rangeKeepsTwo(opts, (o) => o.label! <= 'm' === c <= 'm')
+            ? `アルファベットの ${c <= 'm' ? 'まえの はんぶん' : 'うしろの はんぶん'}に ある 文字《もじ》だよ。`
+            : SAY_HINT,
         ],
         explain:
           '小文字《こもじ》も 名前《なまえ》は 大文字《おおもじ》と おなじ。形《かたち》を たしかめよう。',
@@ -190,6 +192,15 @@ function matchItems(): Item[] {
   return out;
 }
 
+/**
+ * かがみに うつした・さかさにした 形の 組（b d p q の なかま、m と w、n と u）。
+ * 誤概念 mirror（むきが はんたい）は この 組だけに つける。ほかの にている 字は shape-alike。
+ */
+const MIRROR_SETS = ['bdpq', 'mw', 'nu'];
+export const isMirror = (a: string, b: string): boolean =>
+  a !== b && MIRROR_SETS.some((s) => s.includes(a.toLowerCase()) && s.includes(b.toLowerCase()));
+const flipMis = (a: string, b: string) => (isMirror(a, b) ? 'mirror' : 'shape-alike');
+
 /** 形の にている 小文字（聞いて えらぶ） */
 const SIMILAR: string[][] = [
   ['b', 'd', 'p'],
@@ -219,7 +230,7 @@ function similarItems(): Item[] {
         audio: abc(c!),
         options: [
           { label: c!, correct: true },
-          ...rest.map((x) => ({ label: x, misconception: 'mirror' })),
+          ...rest.map((x) => ({ label: x, misconception: flipMis(c!, x) })),
         ],
         hints: [
           '名前《なまえ》を 聞《き》いて、大文字《おおもじ》を おもいうかべよう。',
@@ -252,7 +263,7 @@ function similarItems(): Item[] {
       figure: enText(l, 'xl'),
       options: [
         { label: U, correct: true },
-        { label: W, misconception: 'mirror' },
+        { label: W, misconception: flipMis(l, W) },
         { label: SHAPE_ALIKE[l]![1]!.toUpperCase(), misconception: 'shape-alike' },
       ],
       hints: [

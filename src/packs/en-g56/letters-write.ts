@@ -425,7 +425,10 @@ function letterItems(): Item[] {
     );
   for (const [c, s] of Object.entries(LOWER)) {
     const b = BAND_OF(c);
-    out.push(traceItem(c, s, 'lower', 1, BAND_LABEL[b]));
+    // t の たての線は 1本めまで とどかない（1本めと 2本めの あいだから）
+    const where =
+      c === 't' ? '1本《ぽん》めと 2本《ほん》めの あいだから 3本《ぼん》めまで' : BAND_LABEL[b];
+    out.push(traceItem(c, s, 'lower', 1, where));
   }
   for (const c of ['A', 'G', 'K', 'M', 'R', 'S']) out.push(freeItem(c, 'upper', 0));
   for (const c of ['a', 'b', 'd', 'g', 'p', 'q', 'y']) out.push(freeItem(c, 'lower', 1));

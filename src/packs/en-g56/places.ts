@@ -78,7 +78,7 @@ function hearItems(): Item[] {
         hints: [
           'はじめの 2つの ことばは「わたしたちの まちには 〜が ある」の いみだよ。',
           'まんなかの ことばは ようす（おおきい・あたらしい など）だよ。',
-          'さいごの ことばが、ばしょの なまえだよ。',
+          'さいごの ほうの ことばが、ばしょの なまえだよ。2つの ことばで 1つの ばしょを いう ことも あるよ。',
         ],
         explain: `この まちには ${p.ja}が あります。`,
         explainFigure: enText(text),
@@ -239,7 +239,7 @@ function readItems(): Item[] {
       text: 'Our town is famous for apples.',
       right: 'りんごで ゆうめいな まち',
       wrong: ['りんごが すきな まち', 'りんごが ない まち'],
-      mis: ['word-mix', 'have-not'],
+      mis: ['adj-mix', 'have-not'],
     },
   ];
   MEAN.forEach((m, i) => {

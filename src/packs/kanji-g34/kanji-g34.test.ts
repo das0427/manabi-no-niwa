@@ -43,7 +43,10 @@ function allTexts(unit: UnitSpec, items: Item[]): string[] {
     ...unit.misconceptions.map((m) => m.explain),
     ...unit.intro.map((s) => s.text),
   ];
-  return [...own, ...items.flatMap((it) => textsOf(it.engine === 'trace' ? { ...it, char: '' } : it))];
+  return [
+    ...own,
+    ...items.flatMap((it) => textsOf(it.engine === 'trace' ? { ...it, char: '' } : it)),
+  ];
 }
 
 const GRADE_OF_UNIT: Record<string, number> = {
@@ -102,7 +105,24 @@ describe('字のデータ表（data/rows-*.ts）', () => {
     expect(read('物', '荷物')).toBe('もつ');
     expect(read('物', '食べ物')).toBe('もの');
     expect(read('宮', '王宮')).toBe('きゅう');
-    expect(read('宮', '神宮')).toBe('ぐう');
+    expect(read('宮', '宮中')).toBe('きゅう');
+    // 中学校で学ぶ音訓は問う字の読みにしない（宮の「ぐう」・州の「す」など。レビューで外した）
+    for (const [ch, r] of [
+      ['宮', 'ぐう'],
+      ['州', 'す'],
+      ['極', 'ごく'],
+      ['極', 'きわ'],
+      ['兆', 'きざ'],
+      ['健', 'すこ'],
+      ['好', 'この'],
+      ['利', 'き'],
+    ] as const) {
+      const e = ENTRY_OF.get(ch)!;
+      expect(
+        [...e.words, e.sentence].map((o) => o.part),
+        `${ch}:${r}`,
+      ).not.toContain(r);
+    }
     expect(read('坂', '坂道')).toBe('さか');
     expect(read('由', '理由')).toBe('ゆう');
     expect(read('由', '由来')).toBe('ゆ');
@@ -128,9 +148,7 @@ describe('字のデータ表（data/rows-*.ts）', () => {
 
   it('4年の都道府県名の字（g4.soc.prefectures と共有）が、県名の語例を持つ', () => {
     const chars = '茨岐阜埼栃梨奈媛潟熊沖縄香佐鹿賀岡阪崎徳富井滋';
-    const missing = [...chars].filter(
-      (c) => !ENTRY_OF.get(c)!.words.some((w) => isPrefWord(w)),
-    );
+    const missing = [...chars].filter((c) => !ENTRY_OF.get(c)!.words.some((w) => isPrefWord(w)));
     expect(missing).toEqual([]);
     const pref = ENTRIES_G4.flatMap((e) => e.words).filter((w) => isPrefWord(w));
     console.info(`県名の語例: ${pref.length}`);
@@ -139,9 +157,11 @@ describe('字のデータ表（data/rows-*.ts）', () => {
   it('ほかの漢字のふりがなが、その字の音訓と食い違っていない（先頭の音で確かめる）', () => {
     // 濁音・半濁音・促音・連濁を許して、ふりがなの先頭の音が、その字のどれかの読みの先頭の音と同じか
     const seion = (s: string) =>
-      s.replace(/[がぎぐげござじずぜぞだぢづでどばびぶべぼ]/g, (c) =>
-        String.fromCharCode(c.charCodeAt(0) - 1),
-      ).replace(/[ぱぴぷぺぽ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 2));
+      s
+        .replace(/[がぎぐげござじずぜぞだぢづでどばびぶべぼ]/g, (c) =>
+          String.fromCharCode(c.charCodeAt(0) - 1),
+        )
+        .replace(/[ぱぴぷぺぽ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 2));
     // 音訓の欄にない（表に載せていない）、ふりがなの付け方で、人が確かめたもの
     const okSpecial = new Set([
       '間:ま', // 谷間・仲間（間の訓 ま）
@@ -323,6 +343,108 @@ describe('答えを問題文・ヒントに出さない', () => {
   });
 });
 
+describe('内容の検査（教材レビューで直したものの再発防止）', () => {
+  const all = [...ENTRIES_G2, ...ENTRIES_G3, ...ENTRIES_G4].flatMap((e) =>
+    [...e.words, e.sentence].map((o) => ({ ch: e.ch, o })),
+  );
+
+  it('語例・文に、子どもに強い不安を与える語（死・暴力・戦争・犯罪など）を使わない', () => {
+    // 字そのものは配当表にあるので出す。語例・文がこれらを強く想起させないようにする
+    const ng = [
+      '死ぬ',
+      '死ん',
+      '死亡',
+      '殺人',
+      '戦争',
+      '軍歌',
+      '部隊',
+      '犯罪',
+      '暴力',
+      '重病',
+      '重傷',
+      '銃',
+      '爆',
+      '葬',
+    ];
+    const bad = all.filter(({ o }) => ng.some((w) => o.plain.includes(w))).map(({ o }) => o.plain);
+    expect(bad).toEqual([]);
+  });
+
+  it('性別の役割を固定する文の組み合わせ（父＝仕事・母＝料理）にしない', () => {
+    const sents = [...ENTRIES_G3, ...ENTRIES_G4].map((e) => e.sentence.plain);
+    expect(sents).not.toContain('母が料理を作る。');
+  });
+
+  it('1字だけの語例は、同じ字のほかの読みでも単独で読めるもの（他: ほか／た）にしない', () => {
+    for (const ch of ['他']) {
+      expect(
+        ENTRY_OF.get(ch)!.words.map((w) => w.plain),
+        ch,
+      ).not.toContain(ch);
+    }
+    // 「他の人」は「ほかのひと」「たのひと」の両方に読める
+    expect(ENTRY_OF.get('他')!.sentence.plain).not.toContain('他の');
+    // 「カードの表」は「おもて」「ひょう」の両方に読める
+    expect(ENTRY_OF.get('表')!.sentence.plain).not.toContain('カードの表');
+  });
+
+  it('語・文の書き表しの誤り（柱時計の「計」落ち・ある日＝有る日・風邪＝風）を出さない', () => {
+    const plains = all.map(({ o }) => o.plain);
+    expect(plains).not.toContain('柱時');
+    expect(plains.filter((p) => p.includes('有る日') || p.includes('風の薬'))).toEqual([]);
+  });
+
+  it('語全体の読みの誤り（滋賀＝じが・工夫＝こうふう・漁船＝りょうせん・大差＝おおさ・次第＝じだい）を出さない', () => {
+    const whole = (ch: string, plain: string) =>
+      ENTRY_OF.get(ch)!.words.find((w) => w.plain === plain)?.whole;
+    expect(whole('滋', '滋賀県')).toBe('しがけん');
+    expect(whole('夫', '工夫')).toBe('くふう');
+    expect(whole('漁', '漁船')).toBe('ぎょせん');
+    expect(whole('差', '大差')).toBe('たいさ');
+    expect(
+      all.map(({ o }) => o.whole).filter((w) => /^じが|こうふう|りょうせん|^おおさ$/.test(w)),
+    ).toEqual([]);
+    // 読みが二通りある語（昨日＝きのう／さくじつ、お札＝おさつ／おふだ）は使わない
+    expect(
+      all.map(({ o }) => o.plain).filter((p) => p === '昨日' || p === 'お札' || p === '次第'),
+    ).toEqual([]);
+  });
+
+  it('送り仮名: 音読みの後ろの「する」は送り仮名にしない・文の送り仮名を短く切らない', () => {
+    const okuri = (ch: string) => ENTRY_OF.get(ch)!.sentence.okuri;
+    expect(okuri('談')).toBe(''); // 相談する（「す」は送り仮名ではない）
+    expect(okuri('感')).toBe('じる'); // 感じる
+    expect(okuri('借')).toBe('りる'); // 借りる
+    // 解説に「〜は送りがな」と出るのは、音読みでは「じる・ずる」だけ
+    const bad = all
+      .filter(({ o }) => o.kind === 'on' && o.okuri !== '' && !/^[じず]/.test(o.okuri))
+      .map(({ ch, o }) => `${ch}:${o.plain}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('同音の字の選択肢で、□に入れると別の実在の語になる字を出さない', () => {
+    // 死角／四角、坂／阪（阪も「さか」の意味）
+    for (const [k, v] of [
+      ['死', '四'],
+      ['坂', '阪'],
+    ] as const) {
+      expect(HOMOPHONE_OF.get(k) ?? [], `${k}→${v}`).not.toContain(v);
+    }
+  });
+});
+
+describe('3年以上は通常の文（分かち書きをしない）', () => {
+  it('書きの単元で、2年の字の文（分かち書き）を出すときも空白を除く', () => {
+    const spaced = /[ぁ-んァ-ヶ一-鿿] [ぁ-んァ-ヶ一-鿿]/u;
+    for (const unit of pack.units) {
+      const bad = sampleItems(unit, 300)
+        .filter((it) => [it.prompt, it.explain ?? ''].some((t) => spaced.test(plainText(t))))
+        .map((it) => `${it.id} ${plainText(it.prompt)}`);
+      expect(bad.slice(0, 5), unit.id).toEqual([]);
+    }
+  });
+});
+
 describe('網羅（全件が、2つ以上の形式で出る）', () => {
   it('読み: すべての語例・文が、形式の違う2問以上で出る', () => {
     for (const unit of pack.units.filter((u) => u.kind === 'knowledge')) {
@@ -355,7 +477,8 @@ describe('網羅（全件が、2つ以上の形式で出る）', () => {
         s.add(it.id.split(':')[0]!);
         seen.set(ch, s);
       }
-      const entries = unit.stage === 'g3' ? [...ENTRIES_G3, ...ENTRIES_G2] : [...ENTRIES_G4, ...ENTRIES_G3];
+      const entries =
+        unit.stage === 'g3' ? [...ENTRIES_G3, ...ENTRIES_G2] : [...ENTRIES_G4, ...ENTRIES_G3];
       const missing: string[] = [];
       for (const e of entries) {
         const got = seen.get(e.ch);

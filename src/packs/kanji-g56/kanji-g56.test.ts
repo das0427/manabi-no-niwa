@@ -97,33 +97,76 @@ describe('字のデータ表（data/rows-*.ts）', () => {
     expect(read('興', '興味')).toBe('きょう');
     expect(read('興', '新興')).toBe('こう');
     expect(read('財', '財産')).toBe('ざい');
-    expect(read('財', '財布')).toBe('さい');
     expect(read('素', '素材')).toBe('そ');
     expect(read('素', '素直')).toBe('す');
     expect(read('団', '団体')).toBe('だん');
-    expect(read('団', '布団')).toBe('とん');
     expect(read('判', '判断')).toBe('はん');
     expect(read('判', '評判')).toBe('ばん');
     expect(read('武', '武士')).toBe('ぶ');
-    expect(read('武', '武者')).toBe('む');
     expect(read('夢', '夢中')).toBe('む');
     expect(read('留', '留学')).toBe('りゅう');
-    expect(read('留', '留守')).toBe('る');
-    expect(read('境', '境内')).toBe('けい');
     expect(read('境', '境界')).toBe('きょう');
+    expect(read('境', '国境')).toBe('きょう');
     expect(read('率', '確率')).toBe('りつ');
     expect(read('率', '引率')).toBe('そつ');
     expect(read('納', '納税')).toBe('のう');
-    expect(read('納', '納屋')).toBe('な');
     expect(read('模', '模型')).toBe('も');
     expect(read('模', '規模')).toBe('ぼ');
     expect(read('砂', '砂糖')).toBe('さ');
-    expect(read('砂', '土砂')).toBe('しゃ');
     expect(read('宗', '宗教')).toBe('しゅう');
-    expect(read('宗', '宗家')).toBe('そう');
-    expect(read('仁', '仁王')).toBe('に');
-    expect(read('就', '成就')).toBe('じゅ');
     expect(read('就', '就職')).toBe('しゅう');
+  });
+
+  it('中学校で学ぶ音訓（小学校の段階で扱わないもの）を、問う字の読みにしない', () => {
+    // 字:読み。音訓の小・中・高等学校段階別割り振り表で中学校以上とされるもの（レビューで外した）
+    const middle = [
+      '仮:け',
+      '境:けい',
+      '経:きょう',
+      '再:さ',
+      '財:さい',
+      '殺:さい',
+      '雑:ぞう',
+      '性:しょう',
+      '精:しょう',
+      '損:そこ',
+      '団:とん',
+      '程:ほど',
+      '独:ひと',
+      '武:む',
+      '報:むく',
+      '留:る',
+      '遺:ゆい',
+      '映:は',
+      '干:ひ',
+      '供:く',
+      '己:き',
+      '己:おのれ',
+      '紅:べに',
+      '砂:しゃ',
+      '宗:そう',
+      '就:じゅ',
+      '仁:に',
+      '推:お',
+      '誠:まこと',
+      '専:もっぱ',
+      '銭:ぜに',
+      '装:しょう',
+      '敵:かたき',
+      '納:な',
+      '極:ごく',
+      '極:きわ',
+      '兆:きざ',
+      '健:すこ',
+      '好:この',
+      '利:き',
+    ];
+    const bad = middle.filter((k) => {
+      const [ch, r] = k.split(':') as [string, string];
+      const e = ENTRY_OF.get(ch);
+      return !!e && [...e.words, e.sentence].some((o) => o.part === r);
+    });
+    expect(bad).toEqual([]);
   });
 
   it('ほかの漢字のふりがなが、その字の音訓と食い違っていない（先頭の音で確かめる）', () => {
@@ -162,6 +205,7 @@ describe('字のデータ表（data/rows-*.ts）', () => {
       '灯:あか',
       '成:じょう',
       '皇:のう',
+      '団:とん', // 布団（問う字ではない。団の「とん」は中学校の音）
     ]);
     const bad: string[] = [];
     for (const e of [...ENTRIES_G4, ...ENTRIES_G5, ...ENTRIES_G6]) {
@@ -313,6 +357,89 @@ describe('答えを問題文・ヒントに出さない', () => {
   });
 });
 
+describe('内容の検査（教材レビューで直したものの再発防止）', () => {
+  const all = [...ENTRIES_G4, ...ENTRIES_G5, ...ENTRIES_G6].flatMap((e) =>
+    [...e.words, e.sentence].map((o) => ({ ch: e.ch, o })),
+  );
+
+  it('語例・文に、子どもに強い不安を与える語（死・暴力・戦争・犯罪など）を使わない', () => {
+    // 字そのものは配当表にあるので出す（殺風景・消毒・墓など）。語例・文がこれらを強く想起させないようにする
+    const ng = [
+      '死ぬ',
+      '死ん',
+      '死亡',
+      '殺人',
+      '相殺',
+      '戦争',
+      '軍歌',
+      '部隊',
+      '兵士',
+      '犯罪',
+      '暴力',
+      '武器',
+      '毒ガス',
+      '重傷',
+      '重病',
+      '事件の犯人',
+      'おじいさんの墓',
+      '銃',
+      '爆',
+      '葬',
+    ];
+    const bad = all.filter(({ o }) => ng.some((w) => o.plain.includes(w))).map(({ o }) => o.plain);
+    expect(bad).toEqual([]);
+  });
+
+  it('1字だけの語例は、同じ字のほかの読みでも単独で読めるもの（敵: てき／かたき、綿: わた／めん、銭: ぜに／せん）にしない', () => {
+    for (const ch of ['敵', '綿', '銭']) {
+      expect(
+        ENTRY_OF.get(ch)!.words.map((w) => w.plain),
+        ch,
+      ).not.toContain(ch);
+    }
+  });
+
+  it('事実の誤り（王様の妻＝女王）・分かち書きの残り（空白）を出さない', () => {
+    expect(all.map(({ o }) => o.plain).filter((p) => p.includes('妻は女王'))).toEqual([]);
+    expect(all.map(({ o }) => o.plain).filter((p) => /[ぁ-ん一-鿿] [ぁ-ん一-鿿]/u.test(p))).toEqual(
+      [],
+    );
+  });
+
+  it('語全体の読みの誤り（先祖＝せんそ・発奮＝はっふん）・読みが二通りある語（重複・墓石・一寸）を出さない', () => {
+    const wholes = all.map(({ o }) => o.whole);
+    expect(wholes.filter((w) => w === 'せんそ' || w === 'はっふん')).toEqual([]);
+    // 文の中のふりがなの誤り（話《はなし》し声・学《がっ》芸会・この円《まる》）
+    expect(wholes.filter((w) => /はなしし|がっげい|このまるの/.test(w))).toEqual([]);
+    const plains = all.map(({ o }) => o.plain);
+    expect(plains.filter((p) => ['重複', '墓石', '一寸', '肺がん'].includes(p))).toEqual([]);
+  });
+
+  it('送り仮名: 音読みの後ろの「する」は送り仮名にしない・文の送り仮名を短く切らない', () => {
+    const okuri = (ch: string) => ENTRY_OF.get(ch)!.sentence.okuri;
+    expect(okuri('応')).toBe('じる'); // 応じる
+    expect(okuri('確')).toBe('かめる'); // 確かめる
+    expect(okuri('率')).toBe('いる'); // 率いる
+    const bad = all
+      .filter(({ o }) => o.kind === 'on' && o.okuri !== '' && !/^[じず]/.test(o.okuri))
+      .map(({ ch, o }) => `${ch}:${o.plain}`);
+    expect(bad).toEqual([]);
+  });
+
+  it('同音の字の選択肢で、□に入れると別の実在の語になる字を出さない', () => {
+    // 証明／照明、視力／資力、仕事に就く／付く
+    for (const [k, v] of [
+      ['証', '照'],
+      ['視', '資'],
+      ['就', '付'],
+    ] as const) {
+      expect(HOMOPHONE_OF.get(k) ?? [], `${k}→${v}`).not.toContain(v);
+    }
+    // 表の先頭の行も読まれている（以 の同音の字が "n以" という鍵にならない）
+    expect(HOMOPHONE_OF.get('以')).toBeDefined();
+  });
+});
+
 describe('網羅（全件が、2つ以上の形式で出る）', () => {
   it('読み: すべての語例・文が、形式の違う2問以上で出る', () => {
     for (const unit of pack.units.filter((u) => u.kind === 'knowledge')) {
@@ -344,7 +471,8 @@ describe('網羅（全件が、2つ以上の形式で出る）', () => {
         s.add(it.id.split(':')[0]!);
         seen.set(ch, s);
       }
-      const entries = unit.stage === 'g5' ? [...ENTRIES_G5, ...ENTRIES_G4] : [...ENTRIES_G6, ...ENTRIES_G5];
+      const entries =
+        unit.stage === 'g5' ? [...ENTRIES_G5, ...ENTRIES_G4] : [...ENTRIES_G6, ...ENTRIES_G5];
       const missing: string[] = [];
       for (const e of entries) {
         const got = seen.get(e.ch);

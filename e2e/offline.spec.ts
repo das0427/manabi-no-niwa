@@ -303,6 +303,14 @@ const MODE_IDS = [
   'math',
 ] as const;
 
+/** 4歳のホームの札から、初期版のモードをそのまま使う単元（src/packs/p4） */
+const CLASSIC_UNIT_OF: Record<string, string> = {
+  hiragana: 'p4.ja.hiragana-classic',
+  math: 'p4.math.classic',
+  sorting: 'p4.think.sort',
+  trace: 'p4.hand.lines',
+};
+
 /** 画面遷移ボタンは直前の遷移から 400ms 以内の押下を無視する（OP-05）ため、目的の画面が出るまで押し直す */
 async function clickUntil(button: Locator, target: Locator): Promise<void> {
   await expect(async () => {
@@ -338,7 +346,14 @@ test.describe('オフラインで全 9 モード（BC-04 / OF-03）', () => {
     for (const id of MODE_IDS) {
       const screen = page.getByTestId(`mode-${id}`);
       const picker = page.getByTestId('variant-picker');
-      await clickUntil(page.getByTestId(`home-mode-${id}`), screen.or(picker));
+      const chooser = page.locator('[data-testid^="card-chooser-"]');
+      await clickUntil(page.getByTestId(`home-mode-${id}`), screen.or(picker).or(chooser));
+      // 4歳のホーム: 札に単元が複数あるときは、初期版のモードを使う単元を選ぶ（e2e/helpers/app.ts と同じ）
+      if (await chooser.isVisible()) {
+        const unitId = CLASSIC_UNIT_OF[id];
+        if (!unitId) throw new Error(`初期版の単元が無い: ${id}`);
+        await clickUntil(page.getByTestId(`card-unit-${unitId}`), screen.or(picker));
+      }
       // 遊び方の選択があるモード（road, trace, math）は最初の遊び方を選ぶ
       if (await picker.isVisible()) {
         await clickUntil(page.locator('button[data-testid^="variant-"]').first(), screen);

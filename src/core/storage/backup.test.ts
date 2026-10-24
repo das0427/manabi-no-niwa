@@ -241,11 +241,12 @@ describe('migrateBackup', () => {
     },
   });
 
-  it('v0 は memoryAutoHideSec=0 を補って v1 になる（入力は変更しない）', () => {
+  it('v0 は memoryAutoHideSec=0 を補い、v1→v2 でプロフィールを4歳向けにする（入力は変更しない）', () => {
     const input = v0();
     const out = migrateBackup(input);
-    expect(out.schemaVersion).toBe(1);
+    expect(out.schemaVersion).toBe(2);
     expect(out.data.settings[0]).toMatchObject({ volume: 0.2, memoryAutoHideSec: 0 });
+    expect(out.data.profiles[0]).toMatchObject({ audience: 'p4' });
     expect(input.schemaVersion).toBe(0);
     expect('memoryAutoHideSec' in (input.data.settings[0] as object)).toBe(false);
   });

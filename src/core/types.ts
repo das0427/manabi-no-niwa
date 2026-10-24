@@ -2,6 +2,15 @@
  * アプリ全体で共有する型。モード・保存・進度のすべてがここを基準にする。
  * 変更は Opus（統括）が行う。各担当はここを編集しない。
  */
+import {
+  defaultSupport,
+  type AudienceId,
+  type Grade,
+  type SupportSettings,
+  type ToddlerStage,
+} from '../audience/audience';
+export type { AudienceId, Grade, SupportSettings, ToddlerStage };
+import type { ReviewState } from '../curriculum/review';
 
 export const MODE_IDS = [
   'shopping',
@@ -74,6 +83,8 @@ export interface ChildSettings {
   memoryAutoHideSec: 0 | 3 | 5 | 8;
   /** スキルごとの固定。値がないスキルは自動調整 */
   levelLocks: Partial<Record<SkillId, number>>;
+  /** 支援設定（スキーマ2〜。docs/expansion/architecture.md 2章） */
+  support: SupportSettings;
 }
 
 export interface Profile {
@@ -82,6 +93,20 @@ export interface Profile {
   /** IllustId（プロフィールの絵） */
   avatar: string;
   createdAt: number;
+  // ---- スキーマ2〜（無いときは profileAudience() で 'p4' として扱う） ----
+  /** いま主に使う区分（ホームと既定の教材） */
+  audience?: AudienceId;
+  /** 2〜3歳の内部段階 */
+  toddlerStage?: ToddlerStage;
+  /** 在籍学年（就学前は null） */
+  enrolledGrade?: Grade | null;
+  /** 年齢の目安（'y2'〜'y12'。生年月日は保存しない） */
+  ageGuide?: string;
+}
+
+/** v1 のプロフィールは4歳向けとして作られた */
+export function profileAudience(p: Pick<Profile, 'audience'>): AudienceId {
+  return p.audience ?? 'p4';
 }
 
 export interface LevelChange {
@@ -103,6 +128,38 @@ export interface SkillProgress {
   attempted: boolean;
   changedAt: number;
   lastChange: LevelChange | null;
+}
+
+/** 新しい単元の進度（スキーマ2〜。ストア unitProgress） */
+export interface UnitProgress extends Omit<SkillProgress, 'skillId'> {
+  unitId: string;
+  review: ReviewState;
+}
+
+/**
+ * おえかきの作品（ストア artworks）。doc の中身は drawing/ が定義・検証する。
+ * ここでは保存・書き出しに必要な共通の項目だけを決める。
+ */
+export interface ArtworkRecord {
+  id: string;
+  profileId: string;
+  title: string;
+  createdAt: number;
+  updatedAt: number;
+  /** 文書（ArtDoc。JSON 化できること） */
+  doc: unknown;
+}
+
+export const ARTWORK_BLOB_KINDS = ['under', 'over', 'full', 'thumb'] as const;
+export type ArtworkBlobKind = (typeof ARTWORK_BLOB_KINDS)[number];
+
+/** 作品の画像（ストア artworkBlobs）。key = `${artId}:${kind}` */
+export interface ArtworkBlobRecord {
+  key: string;
+  artId: string;
+  profileId: string;
+  kind: ArtworkBlobKind;
+  blob: Blob;
 }
 
 export interface AttemptRecord {
@@ -186,8 +243,9 @@ export interface MetaRecord {
 
 export type StorageHealth = 'ok' | 'full' | 'error' | 'unavailable';
 
-export function defaultSettings(profileId: string): ChildSettings {
+export function defaultSettings(profileId: string, audience: AudienceId = 'p4'): ChildSettings {
   return {
+    support: defaultSupport(audience),
     profileId,
     volume: 0.8,
     sfx: true,

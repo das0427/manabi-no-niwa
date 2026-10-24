@@ -16,7 +16,7 @@ import {
   SNAPSHOT_DB,
   DB_NAME,
 } from './index';
-import { runUpgrades, UPGRADES } from './db';
+import { runUpgrades, SCHEMA_VERSION, UPGRADES } from './db';
 
 const wipe = (name: string) =>
   new Promise<void>((res) => {
@@ -66,7 +66,9 @@ describe('スキーマの更新（DA-02, DA-03）', () => {
 
   it('手順が足りない版への更新はトランザクションごと失敗する', () => {
     const fakeTx = { objectStore: () => ({ put: () => undefined }) } as unknown as IDBTransaction;
-    expect(() => runUpgrades({} as IDBDatabase, fakeTx, 1, 2)).toThrow(/missing/);
+    expect(() =>
+      runUpgrades({} as IDBDatabase, fakeTx, SCHEMA_VERSION, SCHEMA_VERSION + 1),
+    ).toThrow(/missing/);
   });
 
   it('新しい版のアプリで作ったデータを古い版で開くと、壊さずに「version」として止まる', async () => {

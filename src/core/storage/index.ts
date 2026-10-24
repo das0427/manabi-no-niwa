@@ -43,6 +43,17 @@ export {
   deleteAllData,
 } from './repo';
 export {
+  emptyUnitProgress,
+  getUnitProgress,
+  listUnitProgress,
+  saveUnitProgress,
+  listArtworks,
+  getArtwork,
+  getArtworkBlob,
+  saveArtwork,
+  deleteArtwork,
+} from './repo-v2';
+export {
   exportBackup,
   parseBackup,
   migrateBackup,

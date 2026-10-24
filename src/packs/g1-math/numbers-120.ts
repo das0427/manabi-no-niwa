@@ -12,7 +12,7 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { NumberlineItem } from '../../engines/numberline/numberline';
 import type { ChoiceItem, ChoiceOption, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { REVISED, expr, pickFrom } from './util';
+import { REVISED, countUpHint, expr, pickFrom } from './util';
 
 type Obj = 'tabane' | 'kurai' | 'nl' | 'over100' | 'daishou';
 
@@ -255,9 +255,7 @@ function nl(level: number, rng: Rng, alt: boolean): Item {
       o <= 5
         ? `${base}の めもりから かぞえよう。`
         : `${base}と ${base + 10}の まんなかは ${base + 5}。そこから かぞえよう。`,
-      o <= 5
-        ? `${base}、${base + 1}、…と かぞえて いこう。`
-        : `${base + 5}、${base + 6}、…と かぞえて いこう。`,
+      countUpHint(o <= 5 ? base : base + 5, n),
     ],
     explain: `${base}から みぎへ ${o}めもりで ${n}。`,
     identity: `nl:${min}:${n}`,
@@ -295,9 +293,7 @@ function over100(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         '90・100・110・120 の めもりに すうじが かいて あるよ。',
         `${base}の めもりを さがそう。`,
-        n % 10 <= 5
-          ? `${base}、${base + 1}、…と かぞえて いこう。`
-          : `${base + 5}、${base + 6}、…と かぞえて いこう。`,
+        countUpHint(n % 10 <= 5 ? base : base + 5, n),
       ],
       explain: `${base}から みぎへ ${n % 10}めもりで ${n}。${n > 100 ? `${n}は 100と ${n - 100}。` : ''}`,
       identity: `over-nl:${n}`,
@@ -366,7 +362,10 @@ function over100(level: number, rng: Rng, alt: boolean): Item {
     wrongs,
     hints: [
       'となりどうしの かずを くらべよう。',
-      '1ずつ ふえて いるね。99の つぎは 100 だよ。',
+      // 答えが 100 のとき「99の つぎは 100」と書くと答えになるので、数を出さずに くりあがりの ことだけ言う
+      s <= 99 && s + 3 >= 100
+        ? '1ずつ ふえて いるね。9の つぎは 10 で、くらいが ひとつ あがる ことを おもいだそう。'
+        : '1ずつ ふえて いるね。',
       pos > 0 ? `${arr[pos - 1]}に 1 たすと？` : `${arr[1]}から 1 へらすと？`,
     ],
     explain: `${arr.join('、')}。1ずつ ふえる ならびなので ${ans}。`,
@@ -426,7 +425,14 @@ function daishou(level: number, rng: Rng, alt: boolean): Item {
       : 'いちの くらいが ちいさい ほうは どっちかな。';
   if (kind === 'C') hints[2] = 'かずの せんで 100より みぎに ある ほうが おおきいよ。';
   const prompt = big ? 'おおきい ほうは どっち？' : 'ちいさい ほうは どっち？';
-  const explain = `${hi}の ほうが ${lo}より おおきい。${kind === 'A' ? 'じゅうの くらいで くらべるよ。' : kind === 'B' ? 'じゅうの くらいが おなじなので いちの くらいで くらべるよ。' : '100より おおきい かずは 99より おおきいよ。'}`;
+  const why =
+    kind === 'A'
+      ? 'じゅうの くらいで くらべるよ。'
+      : kind === 'B'
+        ? 'じゅうの くらいが おなじなので いちの くらいで くらべるよ。'
+        : '100より おおきい かずは 99より おおきいよ。';
+  // 問いが「ちいさい ほう」のときは、大きい側の説明に もう一手（だから ちいさい ほうは lo）を足す
+  const explain = `${hi}の ほうが ${lo}より おおきい。${why}${big ? '' : `だから ちいさい ほうは ${lo} です。`}`;
   const key = `${big ? 'max' : 'min'}:${lo}-${hi}`;
   if (alt)
     return {

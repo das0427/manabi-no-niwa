@@ -224,8 +224,15 @@ function basho(level: number, rng: Rng, alt: boolean): MatchItem {
       r0.k === 'kyusa' || rng.next() < 0.5
         ? { e: exprText('-', r0.b, r0.a), mis: 'small-big' }
         : { e: exprText('+', r0.a, r0.b), mis: 'op-swap' };
-  if (rows.some((r) => r.e === distract.e))
-    distract = { e: exprText(r0.op, r0.a + 1, r0.b), mis: 'num-wrong' };
+  // 右側に、どの行の式とも「同じ式・たし算を交換した式」にならない まちがいを おく
+  // （2＋8 の話に 8＋2 を ならべると、どちらも あうので 正答が 1つに ならない）
+  const forbidden = new Set<string>();
+  for (const r of rows) {
+    forbidden.add(r.e);
+    if (r.op === '+') forbidden.add(exprText('+', r.b, r.a));
+  }
+  for (let d = 1; forbidden.has(distract.e); d++)
+    distract = { e: exprText(r0.op, r0.a + d, r0.b), mis: 'num-wrong' };
   const right = [...rows.map((r) => ({ label: r.e })), { label: distract.e }];
   const key = alt
     ? `basho-alt:${rows

@@ -149,7 +149,7 @@ function aiteAlt([t, ok, plain, bad, mis]: (typeof AITE_ALT)[number]): FillItem 
       'めうえの 人《ひと》には ていねいに いうよ。',
       '「〜ます」「〜です」の ただしい かたちを えらぼう。',
     ],
-    explain: `${plainOf(t)}は めうえの 人《ひと》への ことばなので「${ok}」が あいます。`,
+    explain: `${plainOf(t)}に はなす ときは、めうえの 人《ひと》への ていねいな ことばを つかうので「${ok}」が あいます。`,
     identity: `aite-alt:${ok}`,
   };
 }

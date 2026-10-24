@@ -44,8 +44,19 @@ for (let a = 1; a <= 18; a++)
       if (b <= a && a - b + c <= 20) DOMAIN.subadd.push({ form: 'subadd', a, b, c });
     }
 const MIXED = [...DOMAIN.addsub, ...DOMAIN.subadd];
-const LV1 = [...DOMAIN.sub3, ...MIXED];
-const ALL = [...DOMAIN.add3, ...LV1];
+const SUB_AND_MIXED = [...DOMAIN.sub3, ...MIXED];
+const ALL = [...DOMAIN.add3, ...SUB_AND_MIXED];
+
+/** x − y が くりさがり（11〜18 から 1けたを ひき、ばらが たりない）か */
+const borrows = (x: number, y: number) => x >= 11 && x % 10 < y;
+/** 式の どこかの ひきざんが くりさがりを ひつようと するか（内容レビュー #9） */
+export function needsBorrow(e: Expr): boolean {
+  const [o1, o2] = OPS[e.form];
+  if (o1 === '-' && borrows(e.a, e.b)) return true;
+  return o2 === '-' && borrows(mid(e), e.c);
+}
+/** 段階1: ひきざんを ふくむ式のうち、くりさがりの ない ものだけ。くりさがりの ある式は 段階2（まぜて）から */
+const LV1 = SUB_AND_MIXED.filter((e) => !needsBorrow(e));
 
 const objOf = (f: Form): Obj => (f === 'add3' ? 'add3' : f === 'sub3' ? 'sub3' : 'mixed');
 
@@ -213,7 +224,8 @@ export const threeNumbers: UnitSpec = {
   priority: 'P2',
   status: 'ready',
   icon: 'math-add',
-  prereq: ['g1.math.add-carry'],
+  // くりさがりの ある ひきざん（段階2）も ふくむので sub-borrow も前提にする
+  prereq: ['g1.math.add-carry', 'g1.math.sub-borrow'],
   objectives: [
     { id: 'add3', title: '3つの かずの たしざん' },
     { id: 'sub3', title: '3つの かずの ひきざん' },

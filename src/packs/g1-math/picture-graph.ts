@@ -256,7 +256,8 @@ function chigai(level: number, rng: Rng, alt: boolean): GraphItem {
     { value: String(Math.max(a, b)), misconception: 'mis-one-number' },
   ];
   return item('chigai', level, id, alt, {
-    prompt: `${big}は ${small}より ${d.theme.nan} おおい？`,
+    // 「みかんは ぶどうより なんにん」だと みかんが ひとに なるので、かぞえる ものを 主語に する
+    prompt: `${d.theme.who(big)}は ${d.theme.who(small)}より ${d.theme.nan} おおい？`,
     hints: alt
       ? [
           'ひょうで 2つの かずを みよう。',

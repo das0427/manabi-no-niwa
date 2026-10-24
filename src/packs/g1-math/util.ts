@@ -56,6 +56,18 @@ export function numberOpts(
   return out;
 }
 
+/**
+ * 「from から かぞえて いこう」のヒント③。答えの手前で止める（答えの数を書かない: curriculum-matrix 1.2-5）。
+ * answer が from の 2つ以上先のときは「from、from+1、…」と 途中までしか見せない。
+ * 1つ先のときは数を書かず「1めもり（1つ）すすむ」とだけ言う。
+ */
+export function countUpHint(from: number, answer: number): string {
+  const d = answer - from;
+  if (d >= 2) return `${from}、${from + 1}、…と かぞえて いこう。`;
+  if (d === 1) return `${from}の めもりから 1めもり すすんだ ところだよ。`;
+  return `${from}の めもりを よく みよう。`;
+}
+
 /** 定義域（配列）から均等に1つ（生成のあとで数をずらさない: add-basic の pickPair と同じ考え） */
 export function pickFrom<T>(rng: Rng, domain: readonly T[]): T {
   return domain[rng.int(0, domain.length - 1)]!;

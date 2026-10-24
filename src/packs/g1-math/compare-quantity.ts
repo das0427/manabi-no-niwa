@@ -96,7 +96,8 @@ function chokusetsu(level: number, rng: Rng, alt: boolean): ChoiceItem {
       alt
         ? 'だいに のって いる ぶんは たかさに いれないよ。つみきの ますを かぞえて みよう。'
         : 'はしが そろって いない ときは、テープの ながさ そのものを くらべよう。',
-      `あは ${p.len[0]}つぶん、いは ${p.len[1]}つぶん。どちらが ${word}かな。`,
+      // 答えの手前で止める: あの つぶんだけを言い、いは 自分で かぞえて くらべる
+      `あは ${p.len[0]}つぶん。いは なんつぶん かな。かぞえて くらべよう。`,
     ],
     explain: `あは ${p.len[0]}つぶん、いは ${p.len[1]}つぶん。${word}のは ${names[ans]} だよ。${aligned ? '' : 'はしを そろえて くらべると よく わかるね。'}`,
     identity: id,
@@ -187,37 +188,53 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
     const all: [number, number][] = [];
     for (let a = 2; a <= 5; a++) for (let b = a + 1; b < 2 * a; b++) all.push([a, b]);
     const [a, b] = all[rng.int(0, all.length - 1)]!;
+    // 大きい ブロックの テープを あ・い のどちらに おくか（半々）。正答が いつも「あ」にならないように
+    const bigIsA = rng.next() < 0.5;
     const row = (y: number, n: number, size: number, fill: string) =>
       Array.from(
         { length: n },
         (_, i) =>
           `<rect x="${44 + i * size * U}" y="${y}" width="${size * U}" height="30" fill="${fill}" ${INK}/>`,
       ).join('');
+    const top = bigIsA
+      ? row(16, a, 2, 'var(--sun)')
+      : row(16, b, 1, 'var(--sky)');
+    const bottom = bigIsA
+      ? row(76, b, 1, 'var(--sky)')
+      : row(76, a, 2, 'var(--sun)');
     const fig = svg(
       60 + 10 * U,
       130,
-      `${label(20, 40, 'あ')}${row(16, a, 2, 'var(--sun)')}${label(20, 100, 'い')}${row(76, b, 1, 'var(--sky)')}`,
+      `${label(20, 40, 'あ')}${top}${label(20, 100, 'い')}${bottom}`,
       'ブロックを ならべた テープ',
     );
-    const id = `tani-size:${a}-${b}`;
+    const big = bigIsA ? 'あ' : 'い';
+    const small = bigIsA ? 'い' : 'あ';
+    // id は あ・い の入れかえも区別する。同一性キー（identity）は入れかえを同じとみる（1.4: 正解の位置）
+    const id = `tani-size:${a}-${b}:${big}`;
     return {
       engine: 'choice',
       id,
       objective: 'tani',
       level,
-      prompt: `あは おおきい ブロック ${a}こ、いは ちいさい ブロック ${b}こ ぶんの ながさです。ながいのは どっち？`,
+      prompt: `${big}は おおきい ブロック ${a}こ、${small}は ちいさい ブロック ${b}こ ぶんの ながさです。ながいのは どっち？`,
       figure: fig,
       hints: [
         'ブロックの おおきさは おなじかな。',
         'おおきい ブロック 1こは、ちいさい ブロック 2こ ぶん だよ。',
-        `あを ちいさい ブロックで かぞえると ${a}こが 2つずつ…`,
+        `${big}を ちいさい ブロックで かぞえると ${a}こが 2つずつ…`,
       ],
-      explain: `おおきい ブロック 1こは ちいさい ブロック 2こ ぶん。あは ちいさい ブロック ${2 * a}こ ぶんで、いの ${b}こ より ながいよ。`,
-      identity: id,
+      explain: `おおきい ブロック 1こは ちいさい ブロック 2こ ぶん。${big}は ちいさい ブロック ${2 * a}こ ぶんで、${small}の ${b}こ より ながいよ。`,
+      identity: `tani-size:${a}-${b}`,
       alt: true,
       options: [
-        { label: 'あ', correct: true },
-        { label: 'い', misconception: 'mis-unit-size' },
+        // あ・い の順に固定して並べ、正答の印だけを入れかえる
+        bigIsA
+          ? { label: 'あ', correct: true }
+          : { label: 'あ', misconception: 'mis-unit-size' },
+        bigIsA
+          ? { label: 'い', misconception: 'mis-unit-size' }
+          : { label: 'い', correct: true },
         { label: 'おなじ', misconception: 'mis-same' },
       ],
       fixedOrder: true,
@@ -430,7 +447,7 @@ function kasa(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         'いれものの かたちでは なく、コップの かずを みよう。',
         'コップが おおい ほうが、みずも おおいよ。',
-        `あは コップ ${a}はい、いは ${b}はい。`,
+        `あは コップ ${a}はい。いの コップも かぞえて くらべよう。`,
       ],
       explain: `あは コップ ${a}はい、いは ${b}はい。おおいのは ${names[big]} だよ。`,
       identity: id,
@@ -579,7 +596,7 @@ export const compareQuantity: UnitSpec = {
     },
     {
       text: '7は 5より おおきいので、あの ほうが ながい です。',
-      figure: { kind: 'text', text: '7 ＞ 5', size: 'xl' },
+      figure: { kind: 'text', text: '7は 5より おおきい', size: 'xl' },
     },
   ],
   source: {

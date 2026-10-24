@@ -118,7 +118,8 @@ function picOrder(s: PicStory): OrderItem {
     hints: [
       s.h1,
       `いちばん はじめは 「${s.steps[0]![0]}」 だよ。`,
-      `「${s.steps[0]![0]}」の つぎは 「${s.steps[1]![0]}」。のこりを ならべよう。`,
+      // 答えの手前で止める: 2ばんめの カードを 書くと、3まいの ときは 順が ぜんぶ きまってしまう
+      `「${s.steps[0]![0]}」の あとに した ことを、のこりの カードから えらぼう。`,
     ],
     explain: `${s.steps.map(([l]) => l).join(' → ')} の じゅん だよ。`,
     identity: `pics:${s.id}`,
@@ -177,6 +178,8 @@ interface Diary {
   lines: string[];
   h1: string;
   alt?: boolean;
+  /** ほかに みとめる じゅん（カードの はじめの じゅんの 番号） */
+  alsoAccept?: number[][];
 }
 
 const DIARIES: Diary[] = [
@@ -288,6 +291,8 @@ const DIARIES: Diary[] = [
       'きってを はります。',
       'ポストに いれます。',
     ],
+    // きってを はってから ふうとうに いれる じゅんも ただしい（内容レビュー #7）
+    alsoAccept: [[0, 2, 1, 3]],
   },
   {
     id: 'alt-asagao',
@@ -316,6 +321,7 @@ function cardOrder(d: Diary): OrderItem {
     layout: 'column',
     cards: d.lines.map((label) => ({ label })),
     ends: ['はじめ', 'おわり'],
+    alsoAccept: d.alsoAccept,
     reverseMisconception: 'order-reverse',
     wrongOrders: [
       { order: [1, 0, ...d.lines.slice(2).map((_, i) => i + 2)], misconception: 'start-skip' },

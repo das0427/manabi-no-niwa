@@ -72,7 +72,7 @@ const ESSAYS: Essay[] = [
   {
     id: 'cookie',
     title: 'クッキーづくり',
-    start: 'おかあさんと クッキーを やきました。',
+    start: 'おとうさんと クッキーを やきました。',
     middle: [
       'こむぎこと バターを まぜました。',
       'ほしの かたちに ぬきました。',
@@ -157,7 +157,7 @@ const ORDER_ALT: { id: string; title: string; cards: string[]; alsoAccept?: numb
       'にちようびに おてつだいを しました。',
       'おふろを あらいました。',
       'げんかんの くつも ならべました。',
-      'おかあさんに ほめられて、うれしかったです。',
+      'かぞくに ほめられて、うれしかったです。',
     ],
     alsoAccept: [[0, 2, 1, 3]],
   },
@@ -207,7 +207,7 @@ const TSUNAGI: [string, string, string, string, string, string][] = [
     'conj-order',
   ],
   [
-    'あさ、かおを あらいました。{{}}、ごはんを たべました。',
+    'あさ、かおを あらいました。{{}}、ごはんを たべました。さいごに、はを みがきました。',
     'それから',
     'でも',
     'conj-reverse',
@@ -223,7 +223,7 @@ const TSUNAGI: [string, string, string, string, string, string][] = [
     'conj-reverse',
   ],
   [
-    'まず、たねを まきます。{{}}、水《みず》を やります。',
+    'まず、たねを まきます。{{}}、水《みず》を やります。さいごに、ひなたに おきます。',
     'つぎに',
     'さいごに',
     'conj-order',

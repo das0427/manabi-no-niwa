@@ -160,7 +160,10 @@ function nakamaPick(level: number, rng: Rng): GeometryItem {
         : target === 'cyl'
           ? 'まるい たいらな めんが ある ものを さがそう。'
           : 'どこから みても まるい ものを さがそう。',
-      `${ts.filter((t) => t.cls === target)[0]!.name}は ${CLS_NAME[target]}。ほかにも あるかな。`,
+      // 正答が 1つだけの組では、名前を出すと 答えを ぜんぶ言うことに なるので 出さない
+      ts.filter((t) => t.cls === target).length >= 2
+        ? `${ts.filter((t) => t.cls === target)[0]!.name}は ${CLS_NAME[target]}。ほかにも あるかな。`
+        : `1つずつ ${CLS_NAME[target]}か どうか たしかめよう。`,
     ],
     explain: `${ts
       .filter((t) => t.cls === target)
@@ -337,7 +340,9 @@ function utsusuPick(level: number, rng: Rng): GeometryItem {
         : target === 'quad'
           ? 'かどが 4つの めんが ある ものを さがそう。'
           : 'かどが 3つの めんが ある ものを さがそう。',
-      `${ts.find((t) => faceGroup(t.face!) === target)!.name}の そこは ${word}。ほかにも あるかな。`,
+      ts.filter((t) => faceGroup(t.face!) === target).length >= 2
+        ? `${ts.find((t) => faceGroup(t.face!) === target)!.name}の そこは ${word}。ほかにも あるかな。`
+        : `1つずつ そこの かたちを たしかめよう。`,
     ],
     explain: `${ts
       .filter((t) => faceGroup(t.face!) === target)

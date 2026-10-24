@@ -12,7 +12,7 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { NumberlineItem } from '../../engines/numberline/numberline';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { REVISED, expr, pickFrom } from './util';
+import { REVISED, countUpHint, expr, pickFrom } from './util';
 
 type Obj = 'juuto' | 'bunkai' | 'nlread' | 'nlplace' | 'narabi';
 
@@ -123,9 +123,22 @@ function juuto(level: number, rng: Rng, alt: boolean): Item {
     answer: n,
     wrongs,
     hints: [
-      frame ? 'いっぱいの わくは 10こ だよ。' : 'ながい ぼうは ブロック 10こ ぶん だよ。',
-      n === 20 ? '10が 2つ あるね。' : `10と、ばらが ${k}こ。`,
-      n === 20 ? '10、20 と かぞえよう。' : `10、11、…と ばらを かぞえて いこう。`,
+      // 答えの手前で止める: n=10 のとき「10」と書くと答えそのものになるので、数を出さない言い方にする
+      n === 10
+        ? frame
+          ? 'いっぱいの わくは ブロックを まとめた ものだよ。'
+          : 'ながい ぼう 1ぽんは ブロックを まとめた ものだよ。'
+        : frame
+          ? 'いっぱいの わくは 10こ だよ。'
+          : 'ながい ぼうは ブロック 10こ ぶん だよ。',
+      n === 20 ? '10が 2つ あるね。' : n === 10 ? 'ばらは ないね。' : `10と、ばらが ${k}こ。`,
+      n === 20
+        ? '10、… と 10の まとまりを かぞえて いこう。'
+        : n === 10
+          ? 'ぼう 1ぽんで ブロックは なんこぶん かな。'
+          : k === 1
+            ? 'ばらは 1こ。10の つぎの かずだね。'
+            : '10、11、…と ばらを かぞえて いこう。',
     ],
     explain:
       n === 20
@@ -250,10 +263,8 @@ function nlread(level: number, rng: Rng, alt: boolean): Item {
       '0・10・20 の めもりに すうじが かいて あるよ。',
       n % 10 <= 5
         ? `${base}の めもりから かぞえよう。`
-        : `${base + 5}の なかくらいの めもりから かぞえよう。`,
-      n % 10 <= 5
-        ? `${base}、${base + 1}、…と かぞえて いこう。`
-        : `${base + 5}、${base + 6}、…と かぞえて いこう。`,
+        : `${base + 5}の めもり（まんなかの ながい めもり）から かぞえよう。`,
+      countUpHint(n % 10 <= 5 ? base : base + 5, n),
     ],
     explain: `${base}から みぎへ ${n - base}めもりで ${n}。`,
     identity: `nlread:${n}`,
@@ -308,7 +319,7 @@ function nlplace(level: number, rng: Rng, alt: boolean): Item {
       n < 10 ? '0と 10の あいだに あるよ。' : '10と 20の あいだに あるよ。',
       n % 10 <= 5
         ? `${base}の めもりから かぞえよう。`
-        : `${base + 5}の なかくらいの めもりから かぞえよう。`,
+        : `${base + 5}の めもり（まんなかの ながい めもり）から かぞえよう。`,
       n % 10 <= 5
         ? `${base}から みぎへ ${n - base}めもり すすもう。`
         : `${base + 5}から みぎへ ${n - base - 5}めもり すすもう。`,

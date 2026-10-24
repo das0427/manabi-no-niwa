@@ -13,7 +13,7 @@ import type {
   ReadingPassage,
 } from '../../engines/reading/reading';
 import type { Item, UnitSpec } from '../../curriculum/types';
-import { REVISED, opts, type Wrong } from './util';
+import { REVISED, opts, plain, type Wrong } from './util';
 
 type Obj = 'order' | 'word' | 'qa';
 
@@ -53,14 +53,18 @@ function make(p: ReadingPassage, q: Q, alt: boolean): ReadingItem {
     id: `${p.id}:${q.n}`,
     objective: q.obj,
     level: alt ? 1 : 0,
-    prompt: q.prompt,
+    // 問題文・選択肢・ヒント・解説は ひらがな（本文だけが 1年配当の漢字に ふりがな付き）
+    prompt: plain(q.prompt),
     passage: p,
     aspect: q.aspect ?? DEFAULT_ASPECT[q.obj],
-    options: opts(q.correct, q.wrong),
-    hints: [hint1(p, q.at), q.h2, q.h3],
+    options: opts(
+      plain(q.correct),
+      q.wrong.map(([label, m]) => [plain(label), m] as const),
+    ),
+    hints: [hint1(p, q.at), q.h2, q.h3].map(plain),
     hintFocus: [paras, q.at, q.at],
     evidence: q.at,
-    explain: q.explain,
+    explain: plain(q.explain),
     identity: `info:${p.id}:${q.n}`,
     alt,
   };
@@ -215,7 +219,7 @@ const RECORD: ReadingPassage = {
     ['六月《ろくがつ》一日《ついたち》 はっぱが 五《ご》まいに なった。'],
     ['六月《ろくがつ》十日《とおか》 きいろい 花《はな》が 三《みっ》つ さいた。'],
     ['六月《ろくがつ》二十日《はつか》 みどりの 小《ちい》さな みが できた。'],
-    ['七月《しちがつ》五日《いつか》 みが 赤《あか》く なった。はじめて たべた。'],
+    ['七月《しちがつ》二十五日《にじゅうごにち》 みが 赤《あか》く なった。はじめて たべた。'],
   ],
 };
 
@@ -717,8 +721,8 @@ const ALT_QS: [ReadingPassage, Q[]][] = [
           ['たねを まいた', NW],
         ],
         at: [{ p: 3, s: 1 }],
-        h2: '六月《ろくがつ》十日《とおか》の つぎの ひづけを 見《み》よう。',
-        h3: '六月《ろくがつ》二十日《はつか》に なにが できたかな。',
+        h2: '六月《ろくがつ》 十日《とおか》の つぎの ひづけを 見《み》よう。',
+        h3: '六月《ろくがつ》 二十日《はつか》に なにが できたかな。',
         explain:
           'ひづけの じゅんに、はっぱ → 花《はな》 → みどりの み → 赤《あか》い み と かわって いるよ。',
       },
@@ -726,17 +730,17 @@ const ALT_QS: [ReadingPassage, Q[]][] = [
         n: 'when-flower',
         obj: 'word',
         prompt: '花《はな》が さいたのは いつですか。',
-        correct: '六月《ろくがつ》十日《とおか》',
+        correct: '六月《ろくがつ》 十日《とおか》',
         wrong: [
-          ['六月《ろくがつ》一日《ついたち》', OP],
-          ['七月《しちがつ》五日《いつか》', OP],
-          ['六月《ろくがつ》二十日《はつか》', OP],
+          ['六月《ろくがつ》 一日《ついたち》', OP],
+          ['七月《しちがつ》 二十五日《にじゅうごにち》', OP],
+          ['六月《ろくがつ》 二十日《はつか》', OP],
         ],
         at: [{ p: 2, s: 1 }],
         h2: '「花《はな》」と いう ことばが ある ひを さがそう。',
         h3: 'その ぎょうの はじめに かいて ある ひづけを 見《み》よう。',
         explain:
-          '「六月《ろくがつ》十日《とおか》 きいろい 花《はな》が 三《みっ》つ さいた」と あるよ。',
+          '「六月《ろくがつ》 十日《とおか》 きいろい 花《はな》が 三《みっ》つ さいた」と あるよ。',
       },
       {
         n: 'what-record',
@@ -831,14 +835,14 @@ function orderItem(
     id: `${p.id}:order-cards`,
     objective: 'order',
     level: 1,
-    prompt: `「${p.title ?? ''}」を よんで、せつめいの じゅんに カードを ならべよう。`,
+    prompt: plain(`「${p.title ?? ''}」を よんで、せつめいの じゅんに カードを ならべよう。`),
     figure: passageFig(p),
-    cards: cards.map((label) => ({ label })),
+    cards: cards.map((label) => ({ label: plain(label) })),
     layout: 'column',
     ends: ['はじめ', 'おわり'],
     reverseMisconception: OR,
-    hints,
-    explain,
+    hints: hints.map(plain) as [string, string, string],
+    explain: plain(explain),
     identity: `info:${p.id}:order-cards`,
     alt: true,
   };
@@ -893,7 +897,7 @@ const ITEMS: Item[] = [
   ...ORDER_ITEMS,
 ];
 
-export const readInfo: UnitSpec = {
+const base: UnitSpec = {
   id: 'g1.ja.read-info',
   title: 'せつめいの ぶんを よもう',
   stage: 'g1',
@@ -957,4 +961,11 @@ export const readInfo: UnitSpec = {
     '小学校学習指導要領（平成29年告示）国語 第1学年及び第2学年 C 読むこと（時間的な順序や事柄の順序などを考えながら内容の大体を捉える、重要な語や文を考えて選び出す）、〔知識及び技能〕(2)（順序）',
   gradeIsAppProposal: true,
   revised: REVISED,
+};
+
+// 単元の説明文（おてほん・まちがいの せつめい）も ひらがなにする（内容レビュー #13）
+export const readInfo: UnitSpec = {
+  ...base,
+  intro: base.intro.map((s) => ({ ...s, text: plain(s.text) })),
+  misconceptions: base.misconceptions.map((m) => ({ ...m, explain: plain(m.explain) })),
 };

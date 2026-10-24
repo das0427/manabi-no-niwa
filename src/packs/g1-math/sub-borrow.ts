@@ -19,7 +19,12 @@ interface Scene {
   type: 'kyuuzan' | 'kyuusa';
   unit: string;
   text: (a: number, b: number) => string;
+  /** ヒント①: この場面の「きいて いる ところ」（場面ごとに言葉が違うので場面が持つ） */
+  look: string;
 }
+
+const LOOK_NOKORI = '「のこりは」は へった あとの かずを きいて いるね。';
+const LOOK_CHIGAI = '「なんびき おおい」は ふたつを くらべて いるね。';
 
 /** 文章題の場面（求残5・求差4。数値だけ違うものは同じ場面: 1.4） */
 const SCENES: Scene[] = [
@@ -28,12 +33,14 @@ const SCENES: Scene[] = [
     type: 'kyuuzan',
     unit: 'こ',
     text: (a, b) => `みかんが ${a}こ あります。${b}こ たべました。のこりは なんこ ですか。`,
+    look: LOOK_NOKORI,
   },
   {
     id: 'birds',
     type: 'kyuuzan',
     unit: 'わ',
     text: (a, b) => `とりが ${a}わ います。${b}わ とんで いきました。のこりは なんわ ですか。`,
+    look: LOOK_NOKORI,
   },
   {
     id: 'origami',
@@ -41,6 +48,7 @@ const SCENES: Scene[] = [
     unit: 'まい',
     text: (a, b) =>
       `いろがみが ${a}まい あります。${b}まい つかいました。のこりは なんまい ですか。`,
+    look: LOOK_NOKORI,
   },
   {
     id: 'sticker',
@@ -48,12 +56,14 @@ const SCENES: Scene[] = [
     unit: 'まい',
     text: (a, b) =>
       `シールが ${a}まい あります。ともだちに ${b}まい あげました。のこりは なんまい ですか。`,
+    look: LOOK_NOKORI,
   },
   {
     id: 'bus',
     type: 'kyuuzan',
     unit: 'にん',
     text: (a, b) => `バスに ${a}にん のって います。${b}にん おりました。なんにんに なりましたか。`,
+    look: '「おりました」で ひとが へったね。あとの にんずうを きいて いるよ。',
   },
   {
     id: 'dogcat',
@@ -61,12 +71,14 @@ const SCENES: Scene[] = [
     unit: 'ひき',
     text: (a, b) =>
       `いぬが ${a}ひき、ねこが ${b}ひき います。いぬは ねこより なんびき おおいですか。`,
+    look: LOOK_CHIGAI,
   },
   {
     id: 'fruit',
     type: 'kyuusa',
     unit: 'こ',
     text: (a, b) => `りんごが ${a}こ、ももが ${b}こ あります。ちがいは なんこ ですか。`,
+    look: '「ちがいは」は ふたつの かずを くらべて いるね。',
   },
   {
     id: 'chairs',
@@ -74,6 +86,7 @@ const SCENES: Scene[] = [
     unit: 'にん',
     text: (a, b) =>
       `こどもが ${a}にん、いすが ${b}こ あります。いすに すわれない こどもは なんにん ですか。`,
+    look: 'こどもの かずと いすの かずを くらべて、たりない ぶんを きいて いるね。',
   },
   {
     id: 'frogs',
@@ -81,6 +94,7 @@ const SCENES: Scene[] = [
     unit: 'ひき',
     text: (a, b) =>
       `かえるが ${a}ひき、かめが ${b}ひき います。かえるは かめより なんびき おおいですか。`,
+    look: LOOK_CHIGAI,
   },
 ];
 
@@ -225,11 +239,10 @@ function choiceItem(level: number, a: number, b: number, sc: Scene, alt: boolean
         }
       : undefined,
     hints: [
-      sc.type === 'kyuuzan'
-        ? '「のこりは」は へった あとの かずを きいて いるね。'
-        : '「ちがいは」「なんびき おおい」は ふたつを くらべて いるね。',
+      sc.look,
       'へる・くらべる ときは ひきざん（−）を つかうよ。',
-      `おおきい ${a}から ちいさい ${b}を ひく しきは どれかな。`,
+      // 答えの手前で止める: 「おおきい かずを さきに かく」ことだけを言い、どの式かは言わない
+      'ひきざんの しきは、おおきい かずを さきに かくよ。この おはなしで おおきい かずは どっちかな。',
     ],
     explain: `ひきざんの しきは ${a} − ${b} です。おおきい かずから ちいさい かずを ひきます。`,
     identity: key(a, b),
@@ -356,9 +369,7 @@ export function generateSubBorrow(level: number, rng: Rng, index: number): Item 
         fig,
         alt,
         [
-          obj === 'kyuuzan'
-            ? '「のこりは」は ひきざんで もとめるよ。'
-            : '「ちがいは」「なんびき おおい」は ひきざんで もとめるよ。',
+          `${sc.look}ひきざんで もとめるよ。`,
           `しきは ${a} − ${b} だね。`,
           `10から ${b}を ひくと ${10 - b}。${10 - b}と ${u}で…`,
         ],

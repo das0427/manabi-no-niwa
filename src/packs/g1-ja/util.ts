@@ -16,6 +16,13 @@ export function opts(correct: string, wrongs: readonly Wrong[]): ChoiceOption[] 
   ];
 }
 
+/**
+ * 漢字《よみ》をよみのひらがなだけにする。1年の問題文・ヒント・選択肢・解説はひらがな基本で、
+ * 漢字は学習対象の語例に限る（curriculum-matrix 2.1。内容レビュー #13）。読解の本文には使わない
+ * （本文は読解教材として、1年配当の漢字にふりがなを付けたままにする）。
+ */
+export const plain = (s: string): string => s.replace(/[一-鿿々〆]+《!?([^》]+)》/g, '$1');
+
 /** 作成中の単元（子供画面に出さない。テストは planned を検査しない） */
 export function stubUnit(id: string, title: string, icon = 'subj-kokugo'): UnitSpec {
   return {

@@ -101,9 +101,9 @@ const THREES: Three[] = [
   { who: 'ぞう', what: 'みず', verb: 'のむ', illust: 'elephant' },
   { who: 'わたし', what: 'え', verb: 'かく' },
   { who: 'ともだち', what: 'ほん', verb: 'よむ' },
-  { who: 'おかあさん', what: 'ごはん', verb: 'つくる' },
+  { who: 'おとうさん', what: 'ごはん', verb: 'つくる' },
   { who: 'こども', what: 'ボール', verb: 'なげる' },
-  { who: 'おとうさん', what: 'くるま', verb: 'あらう' },
+  { who: 'おかあさん', what: 'くるま', verb: 'あらう' },
   { who: 'ぼく', what: 'はな', verb: 'そだてる' },
   { who: 'くま', what: 'はちみつ', verb: 'なめる', illust: 'bear' },
 ];

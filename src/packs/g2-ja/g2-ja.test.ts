@@ -51,6 +51,61 @@ function extraChecks(unit: UnitSpec): string[] {
   return [...new Set(errs)];
 }
 
+const unitOf = (id: string) => pack.units.find((u) => u.id === id)!;
+const itemsOf = (id: string) => sampleItems(unitOf(id), 5);
+
+describe('内容レビューの修正（g2-ja）', () => {
+  it('write-structure: 順序のつなぎことばを問う文は、2手順でなく 3つの手順にする（「まず…さいごに」が自然になる形を避ける）', () => {
+    const fills = itemsOf('g2.ja.write-structure').filter(
+      (it) => it.engine === 'fill' && it.id.startsWith('tsunagi:'),
+    );
+    // あさの手順と たねの手順は 3つの手順に した
+    const texts = fills.map((it) => (it.engine === 'fill' ? it.text : ''));
+    expect(texts.filter((t) => t.includes('さいごに、はを みがきました')).length).toBe(1);
+    expect(texts.filter((t) => t.includes('さいごに、ひなたに おきます')).length).toBe(1);
+  });
+
+  it('read-info: おたまじゃくしの本文は g1 側だけ（学年をまたぐ重複をなくした）', () => {
+    for (const it of itemsOf('g2.ja.read-info')) {
+      expect(JSON.stringify(it), it.id).not.toContain('おたまじゃくし');
+    }
+    const kabuto = itemsOf('g2.ja.read-info').filter((it) => it.id.startsWith('g2i-kabuto:'));
+    expect(kabuto.length).toBe(4);
+  });
+
+  it('subject-predicate: 「つよく」を述語と まちがえたら 修飾語の誤概念', () => {
+    const it = itemsOf('g2.ja.subject-predicate').find((i) => i.id === 'pred:かぜがつよくふく');
+    expect(it?.engine).toBe('choice');
+    if (it?.engine === 'choice') {
+      const strong = it.options.find((o) => o.label === 'つよく')!;
+      expect(strong.misconception).toBe('modifier-as-pred');
+    }
+  });
+
+  it('orthography: 同音の連呼（ちぢむ・つづく）の解説は「にごった」の言い方がちがう', () => {
+    for (const w of ['ちぢむ', 'つづく', 'ちぢれる']) {
+      const it = itemsOf('g2.ja.orthography').find((i) => i.id === `didu:${w}`)!;
+      expect(it.explain, w).toContain('つづいて');
+      expect(it.explain, w).not.toContain('もとの ことばの');
+    }
+    const hanaji = itemsOf('g2.ja.orthography').find((i) => i.id === 'didu:はなぢ')!;
+    expect(hanaji.explain).toContain('もとの ことばの');
+  });
+
+  it('katakana-words: ひらがなの文に「ー」をまぜた形を見せない', () => {
+    for (const it of itemsOf('g2.ja.katakana-words')) {
+      if (it.id.startsWith('erabu-alt:') && it.engine === 'choice') {
+        expect(it.prompt, it.id).not.toContain('ー');
+      }
+    }
+  });
+
+  it('read-story: 日記は お母さんと つり（家族の役わりに性別の決めつけがない）', () => {
+    const s = JSON.stringify(itemsOf('g2.ja.read-story').filter((i) => i.id.startsWith('g2s-nikki')));
+    expect(s).not.toContain('お父《とう》さんと 川');
+  });
+});
+
 describe('g2-ja の教材検査（curriculum-matrix 1.8）', () => {
   it('パックの形', () => {
     expect(pack.packId).toBe('g2-ja');

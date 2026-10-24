@@ -51,6 +51,97 @@ function extraChecks(unit: UnitSpec): string[] {
   return [...new Set(errs)];
 }
 
+const unitOf = (id: string) => pack.units.find((u) => u.id === id)!;
+const itemsOf = (id: string) => sampleItems(unitOf(id), 5);
+
+describe('内容レビューの修正（g1-ja）', () => {
+  it('punctuation: かぎの中の文末にも「。」を打つ形にそろっている（「おはよう。」と いいました。）', () => {
+    const texts: string[] = [];
+    for (const it of itemsOf('g1.ja.punctuation')) {
+      if (it.engine === 'fill') {
+        let t = it.text;
+        for (const b of it.blanks) t = t.replace('{{}}', b.answers[0]!);
+        texts.push(t);
+      } else if (it.engine === 'choice') {
+        texts.push(it.options.find((o) => o.correct)!.label!);
+      }
+    }
+    const quoted = texts.filter((t) => /「[^」]*」と/.test(t));
+    expect(quoted.length).toBeGreaterThanOrEqual(8);
+    // 「と」に続くかぎの中は、必ず「。」か「、」などでなく、文末の「。」で終わる
+    for (const t of quoted) expect(t, t).toMatch(/「[^」]*。」と/);
+  });
+
+  it('write-order: 3まいの えにっきは、ヒント②③で 順が ぜんぶは きまらない', () => {
+    const items = itemsOf('g1.ja.write-order').filter(
+      (it) => it.engine === 'order' && it.id.startsWith('pics'),
+    );
+    expect(items.length).toBeGreaterThan(8);
+    for (const it of items) {
+      if (it.engine !== 'order') continue;
+      const labels = it.cards.map((c) => c.label ?? c.name ?? '').filter(Boolean);
+      // ヒント②③に出てくる カードの名前は 1つまで（はじめの 1まいだけ）
+      const text = `${it.hints[1]} ${it.hints[2]}`;
+      const hit = labels.filter((l) => text.includes(l));
+      expect(hit.length, it.id).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('write-order: てがみの 手順は 切手を先に貼る順も 正しい', () => {
+    const it = itemsOf('g1.ja.write-order').find((i) => i.id === 'cards:alt-tegami')!;
+    expect(it.engine).toBe('order');
+    if (it.engine === 'order') expect(it.alsoAccept).toEqual([[0, 2, 1, 3]]);
+  });
+
+  it('vocab-groups: 絵の無い「のり」を 文房具に つかわない', () => {
+    for (const it of itemsOf('g1.ja.vocab-groups')) {
+      const labels = JSON.stringify(it);
+      expect(labels.includes('"のり"'), it.id).toBe(false);
+    }
+  });
+
+  it('read-story: おむすびころりんは使わない・問題文とヒントと選択肢と解説に よみ付きの漢字が無い', () => {
+    const unit = unitOf('g1.ja.read-story');
+    for (const it of itemsOf('g1.ja.read-story')) {
+      expect(it.id).not.toContain('omusubi');
+      if (it.engine === 'reading') {
+        for (const s of [it.prompt, ...it.hints, it.explain, ...it.options.map((o) => o.label ?? '')])
+          expect(s, it.id).not.toContain('《');
+      }
+    }
+    for (const s of unit.intro) expect(s.text).not.toContain('《');
+    for (const m of unit.misconceptions) expect(m.explain).not.toContain('《');
+  });
+
+  it('read-info: 問題文とヒントと選択肢と解説に よみ付きの漢字が無い・実が赤くなる日は7月下旬', () => {
+    const unit = unitOf('g1.ja.read-info');
+    for (const it of itemsOf('g1.ja.read-info')) {
+      if (it.engine === 'reading') {
+        for (const s of [it.prompt, ...it.hints, it.explain, ...it.options.map((o) => o.label ?? '')])
+          expect(s, it.id).not.toContain('《');
+        expect(JSON.stringify(it.passage)).not.toContain('七月《しちがつ》五日');
+      } else if (it.engine === 'order') {
+        for (const s of [it.prompt, ...it.hints, it.explain, ...it.cards.map((c) => c.label ?? '')])
+          expect(s, it.id).not.toContain('《');
+      }
+    }
+    for (const s of unit.intro) expect(s.text).not.toContain('《');
+  });
+
+  it('sentence-build: 家事の 役わりに 性別の かたよりが ない（おとうさん＝ごはん、おかあさん＝くるま）', () => {
+    const ids = itemsOf('g1.ja.sentence-build').map((i) => JSON.stringify(i)).join('');
+    expect(ids).not.toContain('おかあさんが ごはんを つくる');
+    expect(ids).not.toContain('おとうさんが くるまを あらう');
+  });
+
+  it('listen: かずを こたえる 問題の せんたくしは 1つ・2つ・3つ の じゅん', () => {
+    for (const id of ['two-count-bring', 'two-count-do']) {
+      const it = itemsOf('g1.ja.listen').find((i) => i.id === id)!;
+      if (it.engine === 'listen') expect(it.options.map((o) => o.label)).toEqual(['1つ', '2つ', '3つ']);
+    }
+  });
+});
+
 describe('g1-ja の教材検査（curriculum-matrix 1.8）', () => {
   it('パックの形', () => {
     expect(pack.packId).toBe('g1-ja');

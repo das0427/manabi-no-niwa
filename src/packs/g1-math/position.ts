@@ -118,7 +118,10 @@ function zengo(level: number, rng: Rng, alt: boolean): ChoiceItem {
       [
         `「${end}」は どちらの はしかな。`,
         `${end}の はしに いる ${at(1, fromBack).name}が 1ばんめ だよ。`,
-        `${at(1, fromBack).name}、${at(2, fromBack).name}、… と ${k}まで かぞえよう。`,
+        // 答えの手前で止める: k=2 のときは 2ばんめの名前を書かない
+        k === 2
+          ? `${at(1, fromBack).name}の すぐ となりに いる のは だれ かな。`
+          : `${at(1, fromBack).name}、${at(2, fromBack).name}、… と ${k}まで かぞえよう。`,
       ],
       `${end}から 1ばんめ、2ばんめ、… と かぞえると、${k}ばんめは ${target.name}だよ。`,
     );
@@ -225,7 +228,9 @@ function sayuu(level: number, rng: Rng, alt: boolean): ChoiceItem {
     [
       lrHint,
       `${side}の はしに ある ${at(1, fromRight).name}が 1ばんめ だよ。`,
-      `${at(1, fromRight).name}、${at(2, fromRight).name}、… と かぞえよう。`,
+      k === 2
+        ? `${at(1, fromRight).name}の すぐ となりに ある のは どれ かな。`
+        : `${at(1, fromRight).name}、${at(2, fromRight).name}、… と かぞえよう。`,
     ],
     `${side}から かぞえて ${k}ばんめは ${at(k, fromRight).name}だよ。`,
   );

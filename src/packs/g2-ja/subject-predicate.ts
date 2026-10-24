@@ -50,6 +50,8 @@ const NANDA: Sent[] = [
   S(['あしたは', 'たのしい', 'えんそくだ'], 0, 2, 'nanda'),
 ];
 
+/** じゅつごを くわしく する ことば（ふくし）。じゅつごと まちがえたら 'modifier-as-pred'（ばしょ・ものの ことばは 'other-as-pred'） */
+const ADVERBS = new Set(['つよく', 'とても']);
 const others = (x: Sent) => x.w.filter((_, i) => i !== x.s && i !== x.p).slice(0, 2);
 const TYPE_Q: Record<Type, string> = {
   dousuru: 'どうする',
@@ -61,7 +63,10 @@ function predItem(x: Sent, obj: 'jutsugo' | 'donnada'): ChoiceItem {
   const pred = x.w[x.p]!;
   const wrongs: Wrong[] = [
     [x.w[x.s]!, 'subj-as-pred'],
-    ...others(x).map((o): Wrong => [o, obj === 'jutsugo' ? 'other-as-pred' : 'modifier-as-pred']),
+    ...others(x).map((o): Wrong => [
+      o,
+      ADVERBS.has(o) || obj !== 'jutsugo' ? 'modifier-as-pred' : 'other-as-pred',
+    ]),
   ];
   return {
     engine: 'choice',
@@ -320,7 +325,7 @@ export const subjectPredicate: UnitSpec = {
     {
       id: 'modifier-as-pred',
       explain:
-        'くわしく する ことば（とても・この など）を えらんだのかな。じゅつごは ぶんの おわりの「どんなだ・なんだ」に あたる ことばだよ。',
+        'くわしく する ことば（とても・つよく・この など）を えらんだのかな。じゅつごは ぶんの おわりの「どんなだ・なんだ」に あたる ことばだよ。',
     },
     {
       id: 'pred-as-subj',

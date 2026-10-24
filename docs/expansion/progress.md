@@ -17,6 +17,10 @@
 - [完了] 英語のオフライン音声: Kokoro-82M（Apache-2.0）＋ kokoro-onnx（MIT）、声 af_heart、話速 0.85（scripts/voice/generate_en.py、docs/assets-pipeline.md 5節）。Piper lessac 系は学習データの許諾が研究限定のため不採用。**聴感の確認・Linux での生成は未実施**。
 - [完了] 基盤の純粋関数: RichText（src/text/rich.ts）、数の答えの判定（src/core/answer/number.ts）、ローマ字の判定（src/core/answer/romaji.ts）、復習の段階（src/curriculum/review.ts）
 
+- [完了] 漢字配当表（src/text/kanji-grades.ts、1026字）と書き順（KanjiVG: かな171字＋漢字1026字）。配当表は KANJIDIC2（2026-297版）・日本語版／英語版ウィキペディアの3資料と学年ごとに完全一致（独立検証。文部科学省の別表 PDF との機械照合は、別表が画像のため未実施）
+- [完了] 単元対応表 curriculum-matrix.md（328単元。P1 251 を凍結）、独立設計レビュー1（Fable）と判断（reviews/design-review-1.md）、実装計画 implementation-plan.md
+- [進行中] 設計文書へのレビュー判断の反映（Opus）、おえかき（Opus）、教材パックの分離・取得（Opus）、単元の型・エンジン枠・UnitRunner（統括）
+
 ## 重要な判断（理由は各文書）
 - 2〜3歳は親子利用を前提に入口を1つにし、内部で2歳段階・3歳段階を分ける（research/early-childhood.md）。
 - はんこ・図形は「確定後も再編集できるオブジェクト」として保存する（要件。research/drawing.md の推奨案Cとは異なる判断）。

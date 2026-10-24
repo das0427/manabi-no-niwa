@@ -339,7 +339,7 @@ export const addBasic: UnitSpec = {
   domain: 'A-number',
   kind: 'calc',
   priority: 'P1',
-  status: 'partial',
+  status: 'ready',
   icon: 'math-add',
   prereq: ['g1.math.compose-10'],
   objectives: [

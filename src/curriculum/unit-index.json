@@ -11,7 +11,7 @@
       "g1.math.compose-10"
     ],
     "priority": "P1",
-    "status": "partial",
+    "status": "ready",
     "engine": "number"
   }
 ]

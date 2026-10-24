@@ -103,7 +103,7 @@ describe('位置で解けない・小3以上は通常の文（content-review-g34
         )
           pos.push(it.options.findIndex((o) => o.correct));
       if (pos.length >= 3 && new Set(pos).size < 2)
-        errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0] + 1} 番目`);
+        errs.push(`${unit.id}: fixedOrder の ${pos.length} 問で正解がいつも ${pos[0]! + 1} 番目`);
     }
     expect(errs).toEqual([]);
   });

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { reconcilePacks } from './packs';
 
 /**
  * Service Worker の登録とオフライン準備の状態（docs/architecture.md 7章）。
@@ -260,7 +261,12 @@ async function start(): Promise<void> {
 /** main.tsx から 1 回呼ぶ。本番ビルドのみ Service Worker を登録する（開発サーバーでは登録しない） */
 export function startOffline(): void {
   if (!import.meta.env.PROD) return;
-  void start();
+  void start().then(() => {
+    // 教材パックの版の照合と整理（packs.json に無いパックのキャッシュを消す等。R#4）
+    if (state.supported) void reconcilePacks().catch(() => undefined);
+  });
+  // E2E 用のビルド（見本パック入り）だけ、テスト用の口（window.__mnwPacks）を起動時に用意する
+  if (import.meta.env.VITE_MNW_SAMPLE_PACKS === '1') void import('../../packs/loader');
 }
 
 /** 待機中の新版を適用する。SKIP_WAITING を送り、切り替わったら再読み込みする */

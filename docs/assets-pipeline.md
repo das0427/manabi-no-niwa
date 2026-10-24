@@ -175,3 +175,86 @@ https://kanjivg.tagaini.net / https://creativecommons.org/licenses/by-sa/3.0/
 本アプリでは座標を等間隔サンプリングして利用しています(改変あり)。
 ```
 ライセンス全文は `licenses/` を配布物(`public/licenses/` など)に同梱するのが望ましい。
+
+## 5. 英語音声 (`scripts/voice/generate_en.py`)
+
+小学校外国語活動・外国語(英語)の単元で使う英語の読み上げ。日本語(Open JTalk)とは別パイプラインで、**開発時にオフライン生成した mp3 だけをアプリに同梱**する(実行時に音声合成サービスは使わない)。
+
+### 採用: Kokoro-82M (ONNX) + 声 `af_heart`(米国英語・女声)
+| 項目 | 内容 |
+|---|---|
+| モデル | hexgrad/Kokoro-82M v1.0(8,200 万パラメータ)の ONNX 変換版 `kokoro-v1.0.onnx` + `voices-v1.0.bin`(thewh1teagle/kokoro-onnx のリリース `model-files-v1.1`) |
+| 実行 | Python `kokoro-onnx 0.6.1` + `onnxruntime 1.31.0`(CPU のみ。GPU 不要)。テキスト→音素は `phonemizer` + `espeakng-loader`(espeak-ng 同梱) |
+| ライセンス | モデル: **Apache-2.0**。kokoro-onnx: MIT。onnxruntime: MIT。phonemizer / espeak-ng: GPL-3.0(**生成時のツールでアプリには入らず、出力の mp3 にも及ばない**) |
+| 取得物 | `.cache/kokoro-en/kokoro-v1.0.onnx`(約 310 MiB), `voices-v1.0.bin`(約 27 MiB)。初回に自動取得し SHA-256 を検証(`.cache/` は git 管理外) |
+| 出力 | `public/audio/en/<key>.mp3` + `manifest.json`(mono, 24 kHz, CBR 約 48 kbps、先頭/末尾の無音約 50 ms、有音部 RMS ≒ -18 dBFS・ピーク ≦ -1 dBFS)。後処理・エンコードは日本語の `generate.py` の関数を共用 |
+
+声は米国英語で統一(`af_heart`。Kokoro 公式の声評価で最高の A)。英国英語にしたい場合は `--voice bf_emma` かつ script の `defaults.lang` を `"en-gb"` にする(一冊の教材内で米英を混ぜない)。
+
+### 実行
+```powershell
+.\scripts\voice\build_en.ps1                       # voice/script-en.json -> public/audio/en (差分)
+.\scripts\voice\build_en.ps1 --force               # 全再生成
+.\scripts\voice\build_en.ps1 --dry-run             # 何件生成されるかだけ表示
+.\scripts\voice\build_en.ps1 --script X.json --out DIR      # 入出力先を変更(テスト用)
+.\scripts\voice\build_en.ps1 --voice af_bella --speed 0.8   # 声・基準話速を変更
+.\.venv\Scripts\python.exe -I scripts\voice\verify.py --dir public\audio\en   # 検査(日本語と共通)
+```
+`build_en.ps1` / `build_en.sh` は venv が無ければ作り、`requirements-en.txt`(版固定)が変わったときだけ `pip install` する。
+venv は日本語・フォントと共用(`.venv`)。pip で入るのは `.venv` の中だけ。
+
+### Linux (Zorin 等) での実行
+```bash
+bash scripts/voice/build_en.sh [同じ引数]
+```
+`kokoro-onnx` / `onnxruntime` / `espeakng-loader` はいずれも manylinux wheel があり、espeak-ng ライブラリは `espeakng-loader` に同梱されるので `apt install espeak-ng` は不要の想定。
+**Linux での実行はこの環境では未検証**(Windows 11 / Python 3.12.10 のみで確認)。
+
+### voice/script-en.json
+```json
+{"version":1,
+ "defaults":{"speed":0.85,"voice":"af_heart","lang":"en-us"},
+ "entries":[
+  {"key":"en.word.apple","text":"apple","speed":1.0},
+  {"key":"en.abc.a","text":"A"},
+  {"key":"en.word.read-past","text":"read","say":"red"},
+  {"key":"en.word.x","text":"apple","phonemes":"ˈæpəl"}
+ ]}
+```
+- `key`: `[a-z0-9._-]+`(重複不可)。出力は `<key>.mp3`。`defaults` は省略可
+- `text`: 表示用の英文。`say` があればそちらを合成(読み誤り対策。日本語側の `yomi` に相当)。`phonemes` があれば IPA 音素列を直接合成(最優先。espeak-ng 形式。例 `ˈæpəl`)
+- `speed`: **基準話速に掛ける倍率**(1.0 = 基準)。基準話速 `defaults.speed` の既定は 0.85(Kokoro の speed は 0.5〜2.0、1.0 が標準)
+- `voice`(任意): 個別に声を変える。通常は使わない(一貫性のため)
+- 文末の `.` `?` `!` を付けるとイントネーションが文として終わる。単語1語はピリオドなしでよい(`apple`, `dog`)
+- 1 文字の `A` `B` `C` は文字名(エー・ビー・シー)で読まれる(実測の音素: `ˈeɪ` `bˈiː` `sˈiː`)。冠詞の "a" の弱形にはならない
+- 差分生成: hash(合成文 + 音素 + 実効話速 + 声 + 言語 + モデル + パイプライン版 + SR/bitrate)の先頭 12 桁が変わった/manifest に無い/ファイルが無いものだけ再生成。script から消えたキーの mp3 は(前回 manifest にあったものに限り)削除
+- 後処理を変えたら `generate.py` の `PIPELINE_VERSION`、英語固有の処理を変えたら `generate_en.py` の `EN_PIPELINE_VERSION` を上げる
+
+### 実測(Windows 11, CPU のみ)
+- 生成: 52 件(アルファベット26 + 単語/文26)で 18.2 秒 = 約 0.35 秒/件(モデル読込・初回の準備は別)
+- サイズ: 平均 約 4.8 KB/件(単語 約 3.6〜4.8 KB、文 約 6〜8 KB)。長さは単語 0.6〜0.8 秒、短文 0.9〜1.4 秒
+- 全件デコード可能・mono・24 kHz・48 kbps・ピーク -1.4〜-8 dBFS・RMS 約 -18.4 dBFS・先頭無音 42〜52 ms(`verify.py`)
+
+### ライセンスと検討した代替
+一次情報で確認した結果:
+| 候補 | 判定 | 根拠 |
+|---|---|---|
+| **Kokoro-82M** | **採用** | モデルカードに `license: apache-2.0`、「This is an Apache-licensed model, and Kokoro has been deployed in numerous projects and commercial APIs.」「trained exclusively on permissive/non-copyrighted audio data」。https://huggingface.co/hexgrad/Kokoro-82M ・ https://github.com/hexgrad/kokoro/blob/main/LICENSE (Apache-2.0) ・ https://github.com/thewh1teagle/kokoro-onnx (MIT) |
+| Piper `en_US-lessac`(最も有名) | 不採用 | データセット(Blizzard 2013 Lessac)のライセンスが研究目的限定で商用開発・配布を含まない(https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html )。`amy` `alba` `hfc_*` `jenny` など多くの声が lessac のファインチューン |
+| Piper `hfc_female/male` | 不採用 | CC BY-NC-SA 4.0(非商用) |
+| Piper `ljspeech`(public domain)/`libritts_r`(CC BY 4.0)/`cori`・`kristin`(LibriVox, public domain) | 採用可能な予備 | 各 `MODEL_CARD`(https://huggingface.co/rhasspy/piper-voices )に記載。ただしエンジンは現行の OHF-Voice/piper1-gpl が GPL-3.0(出力音声には及ばない)。声は Kokoro より機械的で、品質は未比較 |
+| espeak-ng 単体 | 不採用 | GPL-3.0 だが出力音声は問題ない。品質が明らかに機械的で子供向けに不向き(音素変換にのみ利用) |
+
+### クレジット表記案(「このアプリについて」に追加。第4節の「■ 音声」に続けて)
+```
+英語の読み上げ音声は音声合成 Kokoro-82M (hexgrad, Apache License 2.0) https://huggingface.co/hexgrad/Kokoro-82M
+で作成しました(kokoro-onnx (MIT) https://github.com/thewh1teagle/kokoro-onnx を使用)。
+```
+ライセンス全文: `licenses/Apache-2.0-Kokoro-LICENSE.txt`, `licenses/MIT-kokoro-onnx-LICENSE.txt`、由来・取得物のハッシュ・モデルカード抜粋: `licenses/Kokoro-82M-NOTICE.txt`。
+mp3 の再配布にクレジットは法的には必須とされていない(Apache-2.0 は出力物に条件を付けない)が、上記を入れておくのが安全。モデルや espeak-ng 自体はアプリに同梱しない。
+
+### 未確認事項
+- **聴感での品質確認は未実施**(聞き取りやすさ・発音の自然さ・子供向けの速さは人が聴いて確認が必要)。波形上は長さ・音量・無音が正常で、`apple/dog/red/Hello./How are you?/I like cats./What color do you like?/A/B/C` を含むアルファベット全 26 字・短文 24 文で生成エラー無し
+- 基準話速 0.85 でも文によっては速めに感じる可能性がある(「What color do you like?」は約 4.7 音節/秒)。必要なら `defaults.speed` を 0.75〜0.8 に下げる
+- Kokoro の学習データの一部は「closed TTS provider 由来の合成音声」(モデルカードの記載)。モデルは Apache-2.0 で公開されているが、その合成元事業者の利用規約までは確認できていない(残余リスク)。個々の声(`af_heart`)のデータ来歴・ライセンスはモデルカード/VOICES.md に個別記載が無い
+- Linux 実行は未検証。Piper の予備案の音質は未検証

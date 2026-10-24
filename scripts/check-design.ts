@@ -11,6 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { VOICE_CATALOG } from '../src/voice/catalog/index.ts';
 import { voiceText } from '../src/voice/types.ts';
+import { STAMP_LIST } from '../src/illust/stamps/catalog.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const problems: string[] = [];
@@ -105,6 +106,41 @@ for (const file of walk(path.join(root, 'src/illust'), ['.tsx'])) {
   if (/status:\s*'draft'/.test(src)) problems.push(`${at} 仮素材（status: 'draft'）が残っている`);
 }
 
+// ---- はんこ（X-ST-01、DESINGN.md 20章・23章）: 60種以上・6カテゴリ以上・一覧と stamps.json の一致
+{
+  const catalogTs = readFileSync(path.join(root, 'src/illust/stamps/catalog.ts'), 'utf8');
+  const stampsJson = JSON.parse(
+    readFileSync(path.join(root, 'src/drawing/stamps.json'), 'utf8'),
+  ) as {
+    categories: { id: string }[];
+    stamps: { id: string; version: number; category: string; svg: string }[];
+  };
+  const minCount = Number(/STAMP_MIN_COUNT = (\d+)/.exec(catalogTs)?.[1] ?? 60);
+  const minCats = Number(/STAMP_MIN_CATEGORIES = (\d+)/.exec(catalogTs)?.[1] ?? 6);
+  const s = stampsJson.stamps;
+  if (s.length < minCount) problems.push(`はんこが ${s.length} 種（${minCount} 種以上必要）`);
+  const cats = new Set(s.map((x) => x.category));
+  if (cats.size < minCats) problems.push(`はんこのカテゴリが ${cats.size}（${minCats} 以上必要）`);
+  for (const c of stampsJson.categories) {
+    if (!cats.has(c.id)) problems.push(`はんこのカテゴリ ${c.id} に絵柄がない`);
+  }
+  if (new Set(s.map((x) => x.id)).size !== s.length) problems.push('はんこの ID が重複している');
+  const sig = (l: { id: string; version: number; category: string }[]) =>
+    l.map((x) => `${x.id}@${x.version}:${x.category}`).join(',');
+  if (sig(s) !== sig(STAMP_LIST)) {
+    problems.push(
+      'src/drawing/stamps.json が src/illust/stamps/catalog.ts と一致しない（npm run build-stamps を実行）',
+    );
+  }
+  for (const x of s) {
+    if (!/^<svg [^>]*width="100" height="100"/.test(x.svg)) {
+      problems.push(`はんこ ${x.id}: SVG に width/height=100 がない`);
+    }
+    if (/<text\b|Gradient|<filter\b/.test(x.svg))
+      problems.push(`はんこ ${x.id}: 文字・グラデーション・filter がある`);
+  }
+}
+
 // ---- 子供に見える文字
 const KANJI = /[一-鿿㐀-䶿]/;
 // 子供に見えるカタカナは、品物名（vocab）と発注で決まったモード名の語だけ（DESINGN.md 4章）
@@ -121,6 +157,9 @@ const KATAKANA_OK = new Set<string>([
   'ヨット',
   'ケーキ',
   'トラック',
+  // おえかきの道具の名前（物の名前: ペン・けしゴム）
+  'ペン',
+  'ゴム',
 ]);
 for (const m of vocabTs.matchAll(/label: '([^']+)'/g)) {
   for (const k of m[1]!.match(KATAKANA_RUN) ?? []) KATAKANA_OK.add(k);
@@ -136,7 +175,7 @@ for (const [key, entry] of Object.entries(VOICE_CATALOG)) {
   for (const k of badKatakana(t))
     problems.push(`voice ${key}: 許可されていないカタカナ「${k}」（${t}）`);
 }
-const childDirs = ['src/app', 'src/modes', 'src/ui'].map((d) => path.join(root, d));
+const childDirs = ['src/app', 'src/modes', 'src/ui', 'src/drawing'].map((d) => path.join(root, d));
 const parentFiles = new Set(['src/app/ParentGate.tsx', 'src/app/ChunkErrorBoundary.tsx']);
 for (const dir of childDirs) {
   for (const file of walk(dir, ['.tsx'])) {

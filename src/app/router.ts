@@ -21,6 +21,8 @@ export type Route =
   | { name: 'legacy'; unitId: string; variantId?: string }
   /** 幼児ホームの札（単元が2つ以上のとき、選ぶ画面） */
   | { name: 'card'; stage: string; cardId: string }
+  /** 開発用: エンジンの見本（開発時だけ） */
+  | { name: 'dev-engines' }
   /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
   | { name: 'draw'; artId?: string }
   /** おえかきの作品一覧（さくひん） */
@@ -39,6 +41,7 @@ export function parseHash(hash: string): Route {
   if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
+  if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
   if (a === 'legacy' && b && UNIT_ID.test(b))
     return c && /^[a-z0-9-]+$/.test(c)
       ? { name: 'legacy', unitId: b, variantId: c }
@@ -77,6 +80,8 @@ export function routeToHash(r: Route): string {
       return r.variantId ? `#/legacy/${r.unitId}/${r.variantId}` : `#/legacy/${r.unitId}`;
     case 'card':
       return `#/card/${r.stage}/${r.cardId}`;
+    case 'dev-engines':
+      return '#/dev/engines';
     case 'draw':
       return r.artId ? `#/draw/${r.artId}` : '#/draw';
     case 'gallery':

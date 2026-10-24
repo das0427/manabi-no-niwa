@@ -54,67 +54,107 @@ const crc32 = (buf: Buffer) => {
   return (c ^ 0xffffffff) >>> 0;
 };
 
-const locals: Buffer[] = [];
-const centrals: Buffer[] = [];
-let offset = 0;
 const now = new Date();
 const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
 const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
 
-for (const [src, name] of files) {
-  const data = readFileSync(src);
-  const comp = deflateRawSync(data, { level: 9 });
-  const nameBuf = Buffer.from(name, 'utf8');
-  const crc = crc32(data);
-  const mode = name.endsWith('.sh') ? 0o100755 : 0o100644;
-
-  const local = Buffer.alloc(30);
-  local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt16LE(20, 4);
-  local.writeUInt16LE(0x0800, 6); // UTF-8
-  local.writeUInt16LE(8, 8); // deflate
-  local.writeUInt16LE(dosTime, 10);
-  local.writeUInt16LE(dosDate, 12);
-  local.writeUInt32LE(crc, 14);
-  local.writeUInt32LE(comp.length, 18);
-  local.writeUInt32LE(data.length, 22);
-  local.writeUInt16LE(nameBuf.length, 26);
-  local.writeUInt16LE(0, 28);
-  locals.push(local, nameBuf, comp);
-
-  const central = Buffer.alloc(46);
-  central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt16LE((3 << 8) | 20, 4); // made by Unix（実行権限を伝えるため）
-  central.writeUInt16LE(20, 6);
-  central.writeUInt16LE(0x0800, 8);
-  central.writeUInt16LE(8, 10);
-  central.writeUInt16LE(dosTime, 12);
-  central.writeUInt16LE(dosDate, 14);
-  central.writeUInt32LE(crc, 16);
-  central.writeUInt32LE(comp.length, 20);
-  central.writeUInt32LE(data.length, 24);
-  central.writeUInt16LE(nameBuf.length, 28);
-  central.writeUInt32LE((mode << 16) >>> 0, 38);
-  central.writeUInt32LE(offset, 42);
-  centrals.push(central, nameBuf);
-  offset += local.length + nameBuf.length + comp.length;
+/**
+ * 小学生の教材パックの音声（dist/audio/<packId>/）は数万本あるので、学年ごとの別の zip に分ける。
+ * ZIP（ZIP64 でない形）はファイル数 65535・4GB まで、GitHub の添付は 1 ファイル 2GB までのため。
+ * どの zip も同じ最上位フォルダ manabi-no-niwa/ を持つので、全部を同じ場所に展開すれば1つにそろう。
+ */
+const packIds: string[] = (() => {
+  try {
+    const pj = JSON.parse(readFileSync(path.join(dist, 'packs.json'), 'utf8')) as {
+      packs?: Record<string, unknown>;
+    };
+    return Object.keys(pj.packs ?? pj);
+  } catch {
+    return [];
+  }
+})();
+function audioGroupOf(name: string): string | null {
+  const m = new RegExp(`^${top}/dist/audio/([^/]+)/`).exec(name);
+  if (!m || !packIds.includes(m[1]!)) return null;
+  const id = m[1]!;
+  // 学年: g<n>-… は n、<教科>-g<ab> は a（例 kanji-g34 → 3、prog-g16 → 5・6 にまとめる）
+  const g = /^g(\d)-/.exec(id)?.[1] ?? (id === 'prog-g16' ? '5' : /-g(\d)/.exec(id)?.[1]);
+  const n = Number(g ?? 0);
+  return n <= 2 ? 'audio-g1-g2' : n <= 4 ? 'audio-g3-g4' : 'audio-g5-g6';
 }
-
-const centralBuf = Buffer.concat(centrals);
-const end = Buffer.alloc(22);
-end.writeUInt32LE(0x06054b50, 0);
-end.writeUInt16LE(files.length, 8);
-end.writeUInt16LE(files.length, 10);
-end.writeUInt32LE(centralBuf.length, 12);
-end.writeUInt32LE(offset, 16);
-
-const zip = Buffer.concat([...locals, centralBuf, end]);
+const groups = new Map<string, [string, string][]>([['', []]]);
+for (const f of files) {
+  const g = audioGroupOf(f[1]) ?? '';
+  if (!groups.has(g)) groups.set(g, []);
+  groups.get(g)!.push(f);
+}
 mkdirSync(path.join(root, 'release'), { recursive: true });
-const out = path.join(root, 'release', `${top}-${pkg.version}.zip`);
-writeFileSync(out, zip);
-const sha = createHash('sha256').update(zip).digest('hex');
-writeFileSync(`${out}.sha256`, `${sha}  ${path.basename(out)}\n`);
-console.log(
-  `${path.relative(root, out)}  ${(zip.length / 1024 / 1024).toFixed(2)} MB  ${files.length} files`,
-);
-console.log(`sha256 ${sha}`);
+for (const [g, list] of groups)
+  writeZip(g ? `${top}-${pkg.version}-${g}.zip` : `${top}-${pkg.version}.zip`, list);
+
+function writeZip(fileName: string, list: [string, string][]): void {
+  if (list.length > 65535) throw new Error(`${fileName}: ファイルが多すぎる（${list.length}）`);
+  const locals: Buffer[] = [];
+  const centrals: Buffer[] = [];
+  let offset = 0;
+  for (const [src, name] of list) {
+    const data = readFileSync(src);
+    // mp3 は圧縮が効かないので格納だけ（作成を速くする）
+    const store = name.endsWith('.mp3');
+    const comp = store ? data : deflateRawSync(data, { level: 9 });
+    const method = store ? 0 : 8;
+    const nameBuf = Buffer.from(name, 'utf8');
+    const crc = crc32(data);
+    const mode = name.endsWith('.sh') ? 0o100755 : 0o100644;
+
+    const local = Buffer.alloc(30);
+    local.writeUInt32LE(0x04034b50, 0);
+    local.writeUInt16LE(20, 4);
+    local.writeUInt16LE(0x0800, 6); // UTF-8
+    local.writeUInt16LE(method, 8); // 8: deflate, 0: 格納
+    local.writeUInt16LE(dosTime, 10);
+    local.writeUInt16LE(dosDate, 12);
+    local.writeUInt32LE(crc, 14);
+    local.writeUInt32LE(comp.length, 18);
+    local.writeUInt32LE(data.length, 22);
+    local.writeUInt16LE(nameBuf.length, 26);
+    local.writeUInt16LE(0, 28);
+    locals.push(local, nameBuf, comp);
+
+    const central = Buffer.alloc(46);
+    central.writeUInt32LE(0x02014b50, 0);
+    central.writeUInt16LE((3 << 8) | 20, 4); // made by Unix（実行権限を伝えるため）
+    central.writeUInt16LE(20, 6);
+    central.writeUInt16LE(0x0800, 8);
+    central.writeUInt16LE(method, 10);
+    central.writeUInt16LE(dosTime, 12);
+    central.writeUInt16LE(dosDate, 14);
+    central.writeUInt32LE(crc, 16);
+    central.writeUInt32LE(comp.length, 20);
+    central.writeUInt32LE(data.length, 24);
+    central.writeUInt16LE(nameBuf.length, 28);
+    central.writeUInt32LE((mode << 16) >>> 0, 38);
+    central.writeUInt32LE(offset, 42);
+    centrals.push(central, nameBuf);
+    offset += local.length + nameBuf.length + comp.length;
+  }
+
+  const centralBuf = Buffer.concat(centrals);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(list.length, 8);
+  end.writeUInt16LE(list.length, 10);
+  end.writeUInt32LE(centralBuf.length, 12);
+  end.writeUInt32LE(offset, 16);
+  if (offset > 0xffffffff) throw new Error(`${fileName}: 4GB を超える`);
+
+  const zip = Buffer.concat([...locals, centralBuf, end]);
+  const out = path.join(root, 'release', fileName);
+  writeFileSync(out, zip);
+  const sha = createHash('sha256').update(zip).digest('hex');
+  writeFileSync(`${out}.sha256`, `${sha}  ${path.basename(out)}\n`);
+  console.log(
+    `${path.relative(root, out)}  ${(zip.length / 1024 / 1024).toFixed(2)} MB  ${list.length} files`,
+  );
+  console.log(`sha256 ${sha}`);
+}

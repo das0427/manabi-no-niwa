@@ -1,0 +1,1802 @@
+{
+    "version":  1,
+    "defaults":  {
+                     "speed":  0.85,
+                     "voice":  "af_heart",
+                     "lang":  "en-us"
+                 },
+    "entries":  [
+                    {
+                        "key":  "en-g34.abc.a",
+                        "text":  "A"
+                    },
+                    {
+                        "key":  "en-g34.abc.b",
+                        "text":  "B"
+                    },
+                    {
+                        "key":  "en-g34.abc.c",
+                        "text":  "C"
+                    },
+                    {
+                        "key":  "en-g34.abc.d",
+                        "text":  "D"
+                    },
+                    {
+                        "key":  "en-g34.abc.e",
+                        "text":  "E"
+                    },
+                    {
+                        "key":  "en-g34.abc.f",
+                        "text":  "F"
+                    },
+                    {
+                        "key":  "en-g34.abc.g",
+                        "text":  "G"
+                    },
+                    {
+                        "key":  "en-g34.abc.h",
+                        "text":  "H"
+                    },
+                    {
+                        "key":  "en-g34.abc.i",
+                        "text":  "I"
+                    },
+                    {
+                        "key":  "en-g34.abc.j",
+                        "text":  "J"
+                    },
+                    {
+                        "key":  "en-g34.abc.k",
+                        "text":  "K"
+                    },
+                    {
+                        "key":  "en-g34.abc.l",
+                        "text":  "L"
+                    },
+                    {
+                        "key":  "en-g34.abc.m",
+                        "text":  "M"
+                    },
+                    {
+                        "key":  "en-g34.abc.n",
+                        "text":  "N"
+                    },
+                    {
+                        "key":  "en-g34.abc.o",
+                        "text":  "O"
+                    },
+                    {
+                        "key":  "en-g34.abc.p",
+                        "text":  "P"
+                    },
+                    {
+                        "key":  "en-g34.abc.q",
+                        "text":  "Q"
+                    },
+                    {
+                        "key":  "en-g34.abc.r",
+                        "text":  "R"
+                    },
+                    {
+                        "key":  "en-g34.abc.s",
+                        "text":  "S"
+                    },
+                    {
+                        "key":  "en-g34.abc.t",
+                        "text":  "T"
+                    },
+                    {
+                        "key":  "en-g34.abc.u",
+                        "text":  "U"
+                    },
+                    {
+                        "key":  "en-g34.abc.v",
+                        "text":  "V"
+                    },
+                    {
+                        "key":  "en-g34.abc.w",
+                        "text":  "W"
+                    },
+                    {
+                        "key":  "en-g34.abc.x",
+                        "text":  "X"
+                    },
+                    {
+                        "key":  "en-g34.abc.y",
+                        "text":  "Y"
+                    },
+                    {
+                        "key":  "en-g34.abc.z",
+                        "text":  "Z"
+                    },
+                    {
+                        "key":  "en-g34.ask.what-time-do-you-eat-dinner",
+                        "text":  "What time do you eat dinner?"
+                    },
+                    {
+                        "key":  "en-g34.ask.what-time-do-you-get-up",
+                        "text":  "What time do you get up?"
+                    },
+                    {
+                        "key":  "en-g34.ask.what-time-do-you-go-home",
+                        "text":  "What time do you go home?"
+                    },
+                    {
+                        "key":  "en-g34.ask.what-time-do-you-go-to-bed",
+                        "text":  "What time do you go to bed?"
+                    },
+                    {
+                        "key":  "en-g34.ask.what-time-do-you-go-to-school",
+                        "text":  "What time do you go to school?"
+                    },
+                    {
+                        "key":  "en-g34.color.black",
+                        "text":  "black"
+                    },
+                    {
+                        "key":  "en-g34.color.blue",
+                        "text":  "blue"
+                    },
+                    {
+                        "key":  "en-g34.color.brown",
+                        "text":  "brown"
+                    },
+                    {
+                        "key":  "en-g34.color.gray",
+                        "text":  "gray"
+                    },
+                    {
+                        "key":  "en-g34.color.green",
+                        "text":  "green"
+                    },
+                    {
+                        "key":  "en-g34.color.orange",
+                        "text":  "orange"
+                    },
+                    {
+                        "key":  "en-g34.color.pink",
+                        "text":  "pink"
+                    },
+                    {
+                        "key":  "en-g34.color.purple",
+                        "text":  "purple"
+                    },
+                    {
+                        "key":  "en-g34.color.red",
+                        "text":  "red"
+                    },
+                    {
+                        "key":  "en-g34.color.white",
+                        "text":  "white"
+                    },
+                    {
+                        "key":  "en-g34.color.yellow",
+                        "text":  "yellow"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-blue-triangle",
+                        "text":  "a blue triangle"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-brown-circle",
+                        "text":  "a brown circle"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-green-square",
+                        "text":  "a green square"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-pink-heart",
+                        "text":  "a pink heart"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-purple-rectangle",
+                        "text":  "a purple rectangle"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-red-circle",
+                        "text":  "a red circle"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-white-diamond",
+                        "text":  "a white diamond"
+                    },
+                    {
+                        "key":  "en-g34.combo.a-yellow-star",
+                        "text":  "a yellow star"
+                    },
+                    {
+                        "key":  "en-g34.day.friday",
+                        "text":  "Friday"
+                    },
+                    {
+                        "key":  "en-g34.day.monday",
+                        "text":  "Monday"
+                    },
+                    {
+                        "key":  "en-g34.day.saturday",
+                        "text":  "Saturday"
+                    },
+                    {
+                        "key":  "en-g34.day.sunday",
+                        "text":  "Sunday"
+                    },
+                    {
+                        "key":  "en-g34.day.thursday",
+                        "text":  "Thursday"
+                    },
+                    {
+                        "key":  "en-g34.day.tuesday",
+                        "text":  "Tuesday"
+                    },
+                    {
+                        "key":  "en-g34.day.wednesday",
+                        "text":  "Wednesday"
+                    },
+                    {
+                        "key":  "en-g34.feel.im-angry",
+                        "text":  "I\u0027m angry."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-cold",
+                        "text":  "I\u0027m cold."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-fine",
+                        "text":  "I\u0027m fine."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-happy",
+                        "text":  "I\u0027m happy."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-hot",
+                        "text":  "I\u0027m hot."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-hungry",
+                        "text":  "I\u0027m hungry."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-sad",
+                        "text":  "I\u0027m sad."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-sleepy",
+                        "text":  "I\u0027m sleepy."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-thirsty",
+                        "text":  "I\u0027m thirsty."
+                    },
+                    {
+                        "key":  "en-g34.feel.im-tired",
+                        "text":  "I\u0027m tired."
+                    },
+                    {
+                        "key":  "en-g34.num.eight",
+                        "text":  "eight"
+                    },
+                    {
+                        "key":  "en-g34.num.eighteen",
+                        "text":  "eighteen"
+                    },
+                    {
+                        "key":  "en-g34.num.eleven",
+                        "text":  "eleven"
+                    },
+                    {
+                        "key":  "en-g34.num.fifteen",
+                        "text":  "fifteen"
+                    },
+                    {
+                        "key":  "en-g34.num.five",
+                        "text":  "five"
+                    },
+                    {
+                        "key":  "en-g34.num.four",
+                        "text":  "four"
+                    },
+                    {
+                        "key":  "en-g34.num.fourteen",
+                        "text":  "fourteen"
+                    },
+                    {
+                        "key":  "en-g34.num.nine",
+                        "text":  "nine"
+                    },
+                    {
+                        "key":  "en-g34.num.nineteen",
+                        "text":  "nineteen"
+                    },
+                    {
+                        "key":  "en-g34.num.one",
+                        "text":  "one"
+                    },
+                    {
+                        "key":  "en-g34.num.seven",
+                        "text":  "seven"
+                    },
+                    {
+                        "key":  "en-g34.num.seventeen",
+                        "text":  "seventeen"
+                    },
+                    {
+                        "key":  "en-g34.num.six",
+                        "text":  "six"
+                    },
+                    {
+                        "key":  "en-g34.num.sixteen",
+                        "text":  "sixteen"
+                    },
+                    {
+                        "key":  "en-g34.num.ten",
+                        "text":  "ten"
+                    },
+                    {
+                        "key":  "en-g34.num.thirteen",
+                        "text":  "thirteen"
+                    },
+                    {
+                        "key":  "en-g34.num.three",
+                        "text":  "three"
+                    },
+                    {
+                        "key":  "en-g34.num.twelve",
+                        "text":  "twelve"
+                    },
+                    {
+                        "key":  "en-g34.num.twenty",
+                        "text":  "twenty"
+                    },
+                    {
+                        "key":  "en-g34.num.two",
+                        "text":  "two"
+                    },
+                    {
+                        "key":  "en-g34.phrase.good-afternoon",
+                        "text":  "Good afternoon."
+                    },
+                    {
+                        "key":  "en-g34.phrase.good-evening",
+                        "text":  "Good evening."
+                    },
+                    {
+                        "key":  "en-g34.phrase.good-morning",
+                        "text":  "Good morning."
+                    },
+                    {
+                        "key":  "en-g34.phrase.good-night",
+                        "text":  "Good night."
+                    },
+                    {
+                        "key":  "en-g34.phrase.goodbye",
+                        "text":  "Goodbye."
+                    },
+                    {
+                        "key":  "en-g34.phrase.hello",
+                        "text":  "Hello."
+                    },
+                    {
+                        "key":  "en-g34.phrase.how-are-you",
+                        "text":  "How are you?"
+                    },
+                    {
+                        "key":  "en-g34.phrase.im-fine",
+                        "text":  "I\u0027m fine."
+                    },
+                    {
+                        "key":  "en-g34.phrase.im-hungry",
+                        "text":  "I\u0027m hungry."
+                    },
+                    {
+                        "key":  "en-g34.phrase.im-sorry",
+                        "text":  "I\u0027m sorry."
+                    },
+                    {
+                        "key":  "en-g34.phrase.nice-to-meet-you",
+                        "text":  "Nice to meet you."
+                    },
+                    {
+                        "key":  "en-g34.phrase.nice-to-meet-you-too",
+                        "text":  "Nice to meet you, too."
+                    },
+                    {
+                        "key":  "en-g34.phrase.see-you",
+                        "text":  "See you."
+                    },
+                    {
+                        "key":  "en-g34.phrase.thank-you",
+                        "text":  "Thank you."
+                    },
+                    {
+                        "key":  "en-g34.phrase.thats-ok",
+                        "text":  "That\u0027s OK."
+                    },
+                    {
+                        "key":  "en-g34.phrase.youre-welcome",
+                        "text":  "You\u0027re welcome."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-do-my-homework-at-four",
+                        "text":  "I do my homework at four."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-eat-breakfast-at-seven",
+                        "text":  "I eat breakfast at seven."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-eat-dinner-at-six",
+                        "text":  "I eat dinner at six."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-eat-lunch-at-twelve",
+                        "text":  "I eat lunch at twelve."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-get-up-at-six",
+                        "text":  "I get up at six."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-go-home-at-three",
+                        "text":  "I go home at three."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-go-to-bed-at-nine",
+                        "text":  "I go to bed at nine."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-go-to-school-at-eight",
+                        "text":  "I go to school at eight."
+                    },
+                    {
+                        "key":  "en-g34.plan.i-take-a-bath-at-eight",
+                        "text":  "I take a bath at eight."
+                    },
+                    {
+                        "key":  "en-g34.shape.circle",
+                        "text":  "circle"
+                    },
+                    {
+                        "key":  "en-g34.shape.cross",
+                        "text":  "cross"
+                    },
+                    {
+                        "key":  "en-g34.shape.diamond",
+                        "text":  "diamond"
+                    },
+                    {
+                        "key":  "en-g34.shape.heart",
+                        "text":  "heart"
+                    },
+                    {
+                        "key":  "en-g34.shape.oval",
+                        "text":  "oval"
+                    },
+                    {
+                        "key":  "en-g34.shape.rectangle",
+                        "text":  "rectangle"
+                    },
+                    {
+                        "key":  "en-g34.shape.square",
+                        "text":  "square"
+                    },
+                    {
+                        "key":  "en-g34.shape.star",
+                        "text":  "star"
+                    },
+                    {
+                        "key":  "en-g34.shape.triangle",
+                        "text":  "triangle"
+                    },
+                    {
+                        "key":  "en-g34.time.its-eight-oclock",
+                        "text":  "It\u0027s eight o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-eight-thirty",
+                        "text":  "It\u0027s eight thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-eleven-oclock",
+                        "text":  "It\u0027s eleven o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-eleven-thirty",
+                        "text":  "It\u0027s eleven thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-five-oclock",
+                        "text":  "It\u0027s five o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-five-thirty",
+                        "text":  "It\u0027s five thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-four-oclock",
+                        "text":  "It\u0027s four o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-nine-oclock",
+                        "text":  "It\u0027s nine o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-one-oclock",
+                        "text":  "It\u0027s one o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-seven-oclock",
+                        "text":  "It\u0027s seven o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-seven-thirty",
+                        "text":  "It\u0027s seven thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-six-oclock",
+                        "text":  "It\u0027s six o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-six-thirty",
+                        "text":  "It\u0027s six thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-ten-oclock",
+                        "text":  "It\u0027s ten o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-ten-thirty",
+                        "text":  "It\u0027s ten thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-three-oclock",
+                        "text":  "It\u0027s three o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-three-thirty",
+                        "text":  "It\u0027s three thirty."
+                    },
+                    {
+                        "key":  "en-g34.time.its-twelve-oclock",
+                        "text":  "It\u0027s twelve o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g34.time.its-two-oclock",
+                        "text":  "It\u0027s two o\u0027clock."
+                    },
+                    {
+                        "key":  "en-g56.ask.can-you-cook",
+                        "text":  "Can you cook?"
+                    },
+                    {
+                        "key":  "en-g56.ask.can-you-swim",
+                        "text":  "Can you swim?"
+                    },
+                    {
+                        "key":  "en-g56.ask.what-do-you-like",
+                        "text":  "What do you like?"
+                    },
+                    {
+                        "key":  "en-g56.ask.when-is-your-birthday",
+                        "text":  "When is your birthday?"
+                    },
+                    {
+                        "key":  "en-g56.intro.i-like-apples",
+                        "text":  "I like apples."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-ben-i-can-dance",
+                        "text":  "I\u0027m Ben. I can dance."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-ben-i-like-soccer",
+                        "text":  "I\u0027m Ben. I like soccer."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-emi-i-like-trains",
+                        "text":  "I\u0027m Emi. I like trains."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-emi-my-birthday-is-july-tenth",
+                        "text":  "I\u0027m Emi. My birthday is July tenth."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-ken-i-can-play-the-piano",
+                        "text":  "I\u0027m Ken. I can play the piano."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-ken-i-like-cats",
+                        "text":  "I\u0027m Ken. I like cats."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-lily-i-can-swim",
+                        "text":  "I\u0027m Lily. I can swim."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-lily-i-like-rabbits",
+                        "text":  "I\u0027m Lily. I like rabbits."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-mai-i-can-run-fast",
+                        "text":  "I\u0027m Mai. I can run fast."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-mai-my-birthday-is-may-fifth",
+                        "text":  "I\u0027m Mai. My birthday is May fifth."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-nina-i-can-ski",
+                        "text":  "I\u0027m Nina. I can ski."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-sam-i-like-bears",
+                        "text":  "I\u0027m Sam. I like bears."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-sam-my-birthday-is-march-third",
+                        "text":  "I\u0027m Sam. My birthday is March third."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-tom-i-can-cook",
+                        "text":  "I\u0027m Tom. I can cook."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-tom-my-birthday-is-june-tenth",
+                        "text":  "I\u0027m Tom. My birthday is June tenth."
+                    },
+                    {
+                        "key":  "en-g56.intro.im-yuki-i-like-music",
+                        "text":  "I\u0027m Yuki. I like music."
+                    },
+                    {
+                        "key":  "en-g56.intro.my-birthday-is-october-first",
+                        "text":  "My birthday is October first."
+                    },
+                    {
+                        "key":  "en-g56.intro.no-i-cant",
+                        "text":  "No, I can\u0027t."
+                    },
+                    {
+                        "key":  "en-g56.intro.yes-i-can",
+                        "text":  "Yes, I can."
+                    },
+                    {
+                        "key":  "en-g56.past.i-ate-bread",
+                        "text":  "I ate bread."
+                    },
+                    {
+                        "key":  "en-g56.past.i-ate-ice-cream",
+                        "text":  "I ate ice cream."
+                    },
+                    {
+                        "key":  "en-g56.past.i-ate-watermelon",
+                        "text":  "I ate watermelon."
+                    },
+                    {
+                        "key":  "en-g56.past.i-enjoyed-camping",
+                        "text":  "I enjoyed camping."
+                    },
+                    {
+                        "key":  "en-g56.past.i-enjoyed-english",
+                        "text":  "I enjoyed English."
+                    },
+                    {
+                        "key":  "en-g56.past.i-go-to-the-park",
+                        "text":  "I go to the park."
+                    },
+                    {
+                        "key":  "en-g56.past.i-made-a-cake",
+                        "text":  "I made a cake."
+                    },
+                    {
+                        "key":  "en-g56.past.i-make-a-cake",
+                        "text":  "I make a cake."
+                    },
+                    {
+                        "key":  "en-g56.past.i-played-outside",
+                        "text":  "I played outside."
+                    },
+                    {
+                        "key":  "en-g56.past.i-played-soccer",
+                        "text":  "I played soccer."
+                    },
+                    {
+                        "key":  "en-g56.past.i-saw-a-rainbow",
+                        "text":  "I saw a rainbow."
+                    },
+                    {
+                        "key":  "en-g56.past.i-saw-birds",
+                        "text":  "I saw birds."
+                    },
+                    {
+                        "key":  "en-g56.past.i-saw-fireworks",
+                        "text":  "I saw fireworks."
+                    },
+                    {
+                        "key":  "en-g56.past.i-see-birds",
+                        "text":  "I see birds."
+                    },
+                    {
+                        "key":  "en-g56.past.i-swam-in-the-river",
+                        "text":  "I swam in the river."
+                    },
+                    {
+                        "key":  "en-g56.past.i-swam-in-the-sea",
+                        "text":  "I swam in the sea."
+                    },
+                    {
+                        "key":  "en-g56.past.i-swim-in-the-sea",
+                        "text":  "I swim in the sea."
+                    },
+                    {
+                        "key":  "en-g56.past.i-visited-my-grandmother",
+                        "text":  "I visited my grandmother."
+                    },
+                    {
+                        "key":  "en-g56.past.i-watched-a-movie",
+                        "text":  "I watched a movie."
+                    },
+                    {
+                        "key":  "en-g56.past.i-went-to-the-mountains",
+                        "text":  "I went to the mountains."
+                    },
+                    {
+                        "key":  "en-g56.past.i-went-to-the-park",
+                        "text":  "I went to the park."
+                    },
+                    {
+                        "key":  "en-g56.past.i-went-to-the-sea",
+                        "text":  "I went to the sea."
+                    },
+                    {
+                        "key":  "en-g56.past.i-went-to-the-zoo",
+                        "text":  "I went to the zoo."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-cook",
+                        "text":  "I can cook."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-dance",
+                        "text":  "I can dance."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-draw-pictures",
+                        "text":  "I can draw pictures."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-jump-rope",
+                        "text":  "I can jump rope."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-play-soccer",
+                        "text":  "I can play soccer."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-play-the-piano",
+                        "text":  "I can play the piano."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-read-english",
+                        "text":  "I can read English."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-ride-a-bicycle",
+                        "text":  "I can ride a bicycle."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-run-fast",
+                        "text":  "I can run fast."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-sing-well",
+                        "text":  "I can sing well."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-ski",
+                        "text":  "I can ski."
+                    },
+                    {
+                        "key":  "en-g56.self.i-can-swim",
+                        "text":  "I can swim."
+                    },
+                    {
+                        "key":  "en-g56.self.i-cant-cook-but-i-can-draw-pictures",
+                        "text":  "I can\u0027t cook. But I can draw pictures."
+                    },
+                    {
+                        "key":  "en-g56.self.i-cant-play-the-piano-but-i-can-dance",
+                        "text":  "I can\u0027t play the piano. But I can dance."
+                    },
+                    {
+                        "key":  "en-g56.self.i-cant-ride-a-bicycle-but-i-can-swim",
+                        "text":  "I can\u0027t ride a bicycle. But I can swim."
+                    },
+                    {
+                        "key":  "en-g56.self.i-cant-ski-but-i-can-jump-rope",
+                        "text":  "I can\u0027t ski. But I can jump rope."
+                    },
+                    {
+                        "key":  "en-g56.self.i-cant-swim-but-i-can-run-fast",
+                        "text":  "I can\u0027t swim. But I can run fast."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-apples-i-like-strawberries",
+                        "text":  "I don\u0027t like apples. I like strawberries."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-bears-i-like-rabbits",
+                        "text":  "I don\u0027t like bears. I like rabbits."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-dogs-i-like-cats",
+                        "text":  "I don\u0027t like dogs. I like cats."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-flowers-i-like-books",
+                        "text":  "I don\u0027t like flowers. I like books."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-peaches-i-like-bananas",
+                        "text":  "I don\u0027t like peaches. I like bananas."
+                    },
+                    {
+                        "key":  "en-g56.self.i-dont-like-trains-i-like-music",
+                        "text":  "I don\u0027t like trains. I like music."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-apples",
+                        "text":  "I like apples."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-bananas",
+                        "text":  "I like bananas."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-bears",
+                        "text":  "I like bears."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-books",
+                        "text":  "I like books."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-cats",
+                        "text":  "I like cats."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-dogs",
+                        "text":  "I like dogs."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-flowers",
+                        "text":  "I like flowers."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-music",
+                        "text":  "I like music."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-peaches",
+                        "text":  "I like peaches."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-rabbits",
+                        "text":  "I like rabbits."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-strawberries",
+                        "text":  "I like strawberries."
+                    },
+                    {
+                        "key":  "en-g56.self.i-like-trains",
+                        "text":  "I like trains."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-april-eighth",
+                        "text":  "My birthday is April eighth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-august-twentieth",
+                        "text":  "My birthday is August twentieth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-december-thirtieth",
+                        "text":  "My birthday is December thirtieth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-february-third",
+                        "text":  "My birthday is February third."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-january-first",
+                        "text":  "My birthday is January first."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-july-fifteenth",
+                        "text":  "My birthday is July fifteenth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-june-twelfth",
+                        "text":  "My birthday is June twelfth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-march-fifth",
+                        "text":  "My birthday is March fifth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-may-tenth",
+                        "text":  "My birthday is May tenth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-november-ninth",
+                        "text":  "My birthday is November ninth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-october-fourth",
+                        "text":  "My birthday is October fourth."
+                    },
+                    {
+                        "key":  "en-g56.self.my-birthday-is-september-second",
+                        "text":  "My birthday is September second."
+                    },
+                    {
+                        "key":  "en-g56.story.i-ate-shaved-ice",
+                        "text":  "I ate shaved ice."
+                    },
+                    {
+                        "key":  "en-g56.story.i-borrowed-a-book-about-space",
+                        "text":  "I borrowed a book about space."
+                    },
+                    {
+                        "key":  "en-g56.story.i-bought-a-fan-for-my-father",
+                        "text":  "I bought a fan for my father."
+                    },
+                    {
+                        "key":  "en-g56.story.i-enjoyed-the-fireworks",
+                        "text":  "I enjoyed the fireworks."
+                    },
+                    {
+                        "key":  "en-g56.story.i-made-a-cake-for-my-mother",
+                        "text":  "I made a cake for my mother."
+                    },
+                    {
+                        "key":  "en-g56.story.i-made-a-snowman-with-my-sister",
+                        "text":  "I made a snowman with my sister."
+                    },
+                    {
+                        "key":  "en-g56.story.i-ran-fast",
+                        "text":  "I ran fast."
+                    },
+                    {
+                        "key":  "en-g56.story.i-saw-a-big-elephant",
+                        "text":  "I saw a big elephant."
+                    },
+                    {
+                        "key":  "en-g56.story.i-saw-an-old-temple",
+                        "text":  "I saw an old temple."
+                    },
+                    {
+                        "key":  "en-g56.story.i-saw-many-stars-at-night",
+                        "text":  "I saw many stars at night."
+                    },
+                    {
+                        "key":  "en-g56.story.i-swam-with-my-brother",
+                        "text":  "I swam with my brother."
+                    },
+                    {
+                        "key":  "en-g56.story.i-visited-my-grandmother-in-august",
+                        "text":  "I visited my grandmother in August."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-camping-in-the-mountains",
+                        "text":  "I went camping in the mountains."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-to-a-summer-festival",
+                        "text":  "I went to a summer festival."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-to-kyoto-on-the-school-trip",
+                        "text":  "I went to Kyoto on the school trip."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-to-the-library-on-sunday",
+                        "text":  "I went to the library on Sunday."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-to-the-sea-last-summer",
+                        "text":  "I went to the sea last summer."
+                    },
+                    {
+                        "key":  "en-g56.story.i-went-to-the-zoo-with-my-family",
+                        "text":  "I went to the zoo with my family."
+                    },
+                    {
+                        "key":  "en-g56.story.it-snowed-last-winter",
+                        "text":  "It snowed last winter."
+                    },
+                    {
+                        "key":  "en-g56.story.it-was-delicious",
+                        "text":  "It was delicious."
+                    },
+                    {
+                        "key":  "en-g56.story.it-was-fun",
+                        "text":  "It was fun."
+                    },
+                    {
+                        "key":  "en-g56.story.it-was-interesting",
+                        "text":  "It was interesting."
+                    },
+                    {
+                        "key":  "en-g56.story.my-hands-were-very-cold",
+                        "text":  "My hands were very cold."
+                    },
+                    {
+                        "key":  "en-g56.story.my-team-won",
+                        "text":  "My team won."
+                    },
+                    {
+                        "key":  "en-g56.story.she-was-very-happy",
+                        "text":  "She was very happy."
+                    },
+                    {
+                        "key":  "en-g56.story.the-water-was-cold",
+                        "text":  "The water was cold."
+                    },
+                    {
+                        "key":  "en-g56.story.they-were-beautiful",
+                        "text":  "They were beautiful."
+                    },
+                    {
+                        "key":  "en-g56.story.we-ate-it-together",
+                        "text":  "We ate it together."
+                    },
+                    {
+                        "key":  "en-g56.story.we-cooked-curry-together",
+                        "text":  "We cooked curry together."
+                    },
+                    {
+                        "key":  "en-g56.story.we-had-a-sports-day-yesterday",
+                        "text":  "We had a sports day yesterday."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-bakery-but-we-dont-have-a-museum",
+                        "text":  "We have a bakery, but we don\u0027t have a museum."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-beautiful-library",
+                        "text":  "We have a beautiful library."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-big-park",
+                        "text":  "We have a big park."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-big-stadium",
+                        "text":  "We have a big stadium."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-famous-aquarium",
+                        "text":  "We have a famous aquarium."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-hospital-but-we-dont-have-a-fire-station",
+                        "text":  "We have a hospital, but we don\u0027t have a fire station."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-library-but-we-dont-have-a-zoo",
+                        "text":  "We have a library, but we don\u0027t have a zoo."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-library-we-have-a-park",
+                        "text":  "We have a library. We have a park."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-long-river",
+                        "text":  "We have a long river."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-mountain-we-have-a-bakery",
+                        "text":  "We have a mountain. We have a bakery."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-new-bakery",
+                        "text":  "We have a new bakery."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-new-station",
+                        "text":  "We have a new station."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-nice-beach",
+                        "text":  "We have a nice beach."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-nice-zoo",
+                        "text":  "We have a nice zoo."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-park-but-we-dont-have-an-aquarium",
+                        "text":  "We have a park, but we don\u0027t have an aquarium."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-pretty-flower-shop",
+                        "text":  "We have a pretty flower shop."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-river-but-we-dont-have-a-beach",
+                        "text":  "We have a river, but we don\u0027t have a beach."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-river-we-have-a-bakery",
+                        "text":  "We have a river. We have a bakery."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-small-museum",
+                        "text":  "We have a small museum."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-station-but-we-dont-have-a-stadium",
+                        "text":  "We have a station, but we don\u0027t have a stadium."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-station-we-have-a-museum",
+                        "text":  "We have a station. We have a museum."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-station-we-have-a-stadium",
+                        "text":  "We have a station. We have a stadium."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-tall-mountain",
+                        "text":  "We have a tall mountain."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-zoo-we-have-a-hospital",
+                        "text":  "We have a zoo. We have a hospital."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-a-zoo-we-have-a-park",
+                        "text":  "We have a zoo. We have a park."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-an-aquarium-we-have-a-hospital",
+                        "text":  "We have an aquarium. We have a hospital."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-an-old-fire-station",
+                        "text":  "We have an old fire station."
+                    },
+                    {
+                        "key":  "en-g56.town.we-have-an-old-hospital",
+                        "text":  "We have an old hospital."
+                    },
+                    {
+                        "key":  "en-g56.verb.ate",
+                        "text":  "ate"
+                    },
+                    {
+                        "key":  "en-g56.verb.enjoyed",
+                        "text":  "enjoyed"
+                    },
+                    {
+                        "key":  "en-g56.verb.played",
+                        "text":  "played"
+                    },
+                    {
+                        "key":  "en-g56.verb.saw",
+                        "text":  "saw"
+                    },
+                    {
+                        "key":  "en-g56.verb.swam",
+                        "text":  "swam"
+                    },
+                    {
+                        "key":  "en-g56.verb.went",
+                        "text":  "went"
+                    },
+                    {
+                        "key":  "en-g56.word.airplane",
+                        "text":  "airplane"
+                    },
+                    {
+                        "key":  "en-g56.word.ant",
+                        "text":  "ant"
+                    },
+                    {
+                        "key":  "en-g56.word.apple",
+                        "text":  "apple"
+                    },
+                    {
+                        "key":  "en-g56.word.april",
+                        "text":  "April"
+                    },
+                    {
+                        "key":  "en-g56.word.august",
+                        "text":  "August"
+                    },
+                    {
+                        "key":  "en-g56.word.bag",
+                        "text":  "bag"
+                    },
+                    {
+                        "key":  "en-g56.word.ball",
+                        "text":  "ball"
+                    },
+                    {
+                        "key":  "en-g56.word.banana",
+                        "text":  "banana"
+                    },
+                    {
+                        "key":  "en-g56.word.baseball",
+                        "text":  "baseball"
+                    },
+                    {
+                        "key":  "en-g56.word.bear",
+                        "text":  "bear"
+                    },
+                    {
+                        "key":  "en-g56.word.bicycle",
+                        "text":  "bicycle"
+                    },
+                    {
+                        "key":  "en-g56.word.big",
+                        "text":  "big"
+                    },
+                    {
+                        "key":  "en-g56.word.bird",
+                        "text":  "bird"
+                    },
+                    {
+                        "key":  "en-g56.word.black",
+                        "text":  "black"
+                    },
+                    {
+                        "key":  "en-g56.word.blue",
+                        "text":  "blue"
+                    },
+                    {
+                        "key":  "en-g56.word.book",
+                        "text":  "book"
+                    },
+                    {
+                        "key":  "en-g56.word.box",
+                        "text":  "box"
+                    },
+                    {
+                        "key":  "en-g56.word.bread",
+                        "text":  "bread"
+                    },
+                    {
+                        "key":  "en-g56.word.brother",
+                        "text":  "brother"
+                    },
+                    {
+                        "key":  "en-g56.word.brown",
+                        "text":  "brown"
+                    },
+                    {
+                        "key":  "en-g56.word.bus",
+                        "text":  "bus"
+                    },
+                    {
+                        "key":  "en-g56.word.cake",
+                        "text":  "cake"
+                    },
+                    {
+                        "key":  "en-g56.word.car",
+                        "text":  "car"
+                    },
+                    {
+                        "key":  "en-g56.word.carrot",
+                        "text":  "carrot"
+                    },
+                    {
+                        "key":  "en-g56.word.cat",
+                        "text":  "cat"
+                    },
+                    {
+                        "key":  "en-g56.word.chair",
+                        "text":  "chair"
+                    },
+                    {
+                        "key":  "en-g56.word.chick",
+                        "text":  "chick"
+                    },
+                    {
+                        "key":  "en-g56.word.clock",
+                        "text":  "clock"
+                    },
+                    {
+                        "key":  "en-g56.word.cloud",
+                        "text":  "cloud"
+                    },
+                    {
+                        "key":  "en-g56.word.cold",
+                        "text":  "cold"
+                    },
+                    {
+                        "key":  "en-g56.word.cook",
+                        "text":  "cook"
+                    },
+                    {
+                        "key":  "en-g56.word.cow",
+                        "text":  "cow"
+                    },
+                    {
+                        "key":  "en-g56.word.cucumber",
+                        "text":  "cucumber"
+                    },
+                    {
+                        "key":  "en-g56.word.cup",
+                        "text":  "cup"
+                    },
+                    {
+                        "key":  "en-g56.word.december",
+                        "text":  "December"
+                    },
+                    {
+                        "key":  "en-g56.word.desk",
+                        "text":  "desk"
+                    },
+                    {
+                        "key":  "en-g56.word.dog",
+                        "text":  "dog"
+                    },
+                    {
+                        "key":  "en-g56.word.duck",
+                        "text":  "duck"
+                    },
+                    {
+                        "key":  "en-g56.word.ear",
+                        "text":  "ear"
+                    },
+                    {
+                        "key":  "en-g56.word.egg",
+                        "text":  "egg"
+                    },
+                    {
+                        "key":  "en-g56.word.eight",
+                        "text":  "eight"
+                    },
+                    {
+                        "key":  "en-g56.word.elephant",
+                        "text":  "elephant"
+                    },
+                    {
+                        "key":  "en-g56.word.eraser",
+                        "text":  "eraser"
+                    },
+                    {
+                        "key":  "en-g56.word.eye",
+                        "text":  "eye"
+                    },
+                    {
+                        "key":  "en-g56.word.face",
+                        "text":  "face"
+                    },
+                    {
+                        "key":  "en-g56.word.father",
+                        "text":  "father"
+                    },
+                    {
+                        "key":  "en-g56.word.february",
+                        "text":  "February"
+                    },
+                    {
+                        "key":  "en-g56.word.five",
+                        "text":  "five"
+                    },
+                    {
+                        "key":  "en-g56.word.flower",
+                        "text":  "flower"
+                    },
+                    {
+                        "key":  "en-g56.word.foot",
+                        "text":  "foot"
+                    },
+                    {
+                        "key":  "en-g56.word.four",
+                        "text":  "four"
+                    },
+                    {
+                        "key":  "en-g56.word.fox",
+                        "text":  "fox"
+                    },
+                    {
+                        "key":  "en-g56.word.friday",
+                        "text":  "Friday"
+                    },
+                    {
+                        "key":  "en-g56.word.frog",
+                        "text":  "frog"
+                    },
+                    {
+                        "key":  "en-g56.word.grandfather",
+                        "text":  "grandfather"
+                    },
+                    {
+                        "key":  "en-g56.word.grandmother",
+                        "text":  "grandmother"
+                    },
+                    {
+                        "key":  "en-g56.word.green",
+                        "text":  "green"
+                    },
+                    {
+                        "key":  "en-g56.word.green-pepper",
+                        "text":  "green pepper"
+                    },
+                    {
+                        "key":  "en-g56.word.hand",
+                        "text":  "hand"
+                    },
+                    {
+                        "key":  "en-g56.word.happy",
+                        "text":  "happy"
+                    },
+                    {
+                        "key":  "en-g56.word.hat",
+                        "text":  "hat"
+                    },
+                    {
+                        "key":  "en-g56.word.head",
+                        "text":  "head"
+                    },
+                    {
+                        "key":  "en-g56.word.hospital",
+                        "text":  "hospital"
+                    },
+                    {
+                        "key":  "en-g56.word.hot",
+                        "text":  "hot"
+                    },
+                    {
+                        "key":  "en-g56.word.house",
+                        "text":  "house"
+                    },
+                    {
+                        "key":  "en-g56.word.ice-cream",
+                        "text":  "ice cream"
+                    },
+                    {
+                        "key":  "en-g56.word.january",
+                        "text":  "January"
+                    },
+                    {
+                        "key":  "en-g56.word.juice",
+                        "text":  "juice"
+                    },
+                    {
+                        "key":  "en-g56.word.july",
+                        "text":  "July"
+                    },
+                    {
+                        "key":  "en-g56.word.june",
+                        "text":  "June"
+                    },
+                    {
+                        "key":  "en-g56.word.leaf",
+                        "text":  "leaf"
+                    },
+                    {
+                        "key":  "en-g56.word.lemon",
+                        "text":  "lemon"
+                    },
+                    {
+                        "key":  "en-g56.word.library",
+                        "text":  "library"
+                    },
+                    {
+                        "key":  "en-g56.word.march",
+                        "text":  "March"
+                    },
+                    {
+                        "key":  "en-g56.word.may",
+                        "text":  "May"
+                    },
+                    {
+                        "key":  "en-g56.word.milk",
+                        "text":  "milk"
+                    },
+                    {
+                        "key":  "en-g56.word.monday",
+                        "text":  "Monday"
+                    },
+                    {
+                        "key":  "en-g56.word.monkey",
+                        "text":  "monkey"
+                    },
+                    {
+                        "key":  "en-g56.word.moon",
+                        "text":  "moon"
+                    },
+                    {
+                        "key":  "en-g56.word.mother",
+                        "text":  "mother"
+                    },
+                    {
+                        "key":  "en-g56.word.mountain",
+                        "text":  "mountain"
+                    },
+                    {
+                        "key":  "en-g56.word.mouth",
+                        "text":  "mouth"
+                    },
+                    {
+                        "key":  "en-g56.word.music",
+                        "text":  "music"
+                    },
+                    {
+                        "key":  "en-g56.word.nine",
+                        "text":  "nine"
+                    },
+                    {
+                        "key":  "en-g56.word.nose",
+                        "text":  "nose"
+                    },
+                    {
+                        "key":  "en-g56.word.notebook",
+                        "text":  "notebook"
+                    },
+                    {
+                        "key":  "en-g56.word.november",
+                        "text":  "November"
+                    },
+                    {
+                        "key":  "en-g56.word.october",
+                        "text":  "October"
+                    },
+                    {
+                        "key":  "en-g56.word.octopus",
+                        "text":  "octopus"
+                    },
+                    {
+                        "key":  "en-g56.word.one",
+                        "text":  "one"
+                    },
+                    {
+                        "key":  "en-g56.word.orange",
+                        "text":  "orange"
+                    },
+                    {
+                        "key":  "en-g56.word.park",
+                        "text":  "park"
+                    },
+                    {
+                        "key":  "en-g56.word.peach",
+                        "text":  "peach"
+                    },
+                    {
+                        "key":  "en-g56.word.pen",
+                        "text":  "pen"
+                    },
+                    {
+                        "key":  "en-g56.word.pencil",
+                        "text":  "pencil"
+                    },
+                    {
+                        "key":  "en-g56.word.pig",
+                        "text":  "pig"
+                    },
+                    {
+                        "key":  "en-g56.word.pink",
+                        "text":  "pink"
+                    },
+                    {
+                        "key":  "en-g56.word.purple",
+                        "text":  "purple"
+                    },
+                    {
+                        "key":  "en-g56.word.rabbit",
+                        "text":  "rabbit"
+                    },
+                    {
+                        "key":  "en-g56.word.rain",
+                        "text":  "rain"
+                    },
+                    {
+                        "key":  "en-g56.word.rainbow",
+                        "text":  "rainbow"
+                    },
+                    {
+                        "key":  "en-g56.word.red",
+                        "text":  "red"
+                    },
+                    {
+                        "key":  "en-g56.word.rice-ball",
+                        "text":  "rice ball"
+                    },
+                    {
+                        "key":  "en-g56.word.river",
+                        "text":  "river"
+                    },
+                    {
+                        "key":  "en-g56.word.rock",
+                        "text":  "rock"
+                    },
+                    {
+                        "key":  "en-g56.word.rocket",
+                        "text":  "rocket"
+                    },
+                    {
+                        "key":  "en-g56.word.run",
+                        "text":  "run"
+                    },
+                    {
+                        "key":  "en-g56.word.sad",
+                        "text":  "sad"
+                    },
+                    {
+                        "key":  "en-g56.word.saturday",
+                        "text":  "Saturday"
+                    },
+                    {
+                        "key":  "en-g56.word.school",
+                        "text":  "school"
+                    },
+                    {
+                        "key":  "en-g56.word.scissors",
+                        "text":  "scissors"
+                    },
+                    {
+                        "key":  "en-g56.word.sea",
+                        "text":  "sea"
+                    },
+                    {
+                        "key":  "en-g56.word.september",
+                        "text":  "September"
+                    },
+                    {
+                        "key":  "en-g56.word.seven",
+                        "text":  "seven"
+                    },
+                    {
+                        "key":  "en-g56.word.sheep",
+                        "text":  "sheep"
+                    },
+                    {
+                        "key":  "en-g56.word.ship",
+                        "text":  "ship"
+                    },
+                    {
+                        "key":  "en-g56.word.shoe",
+                        "text":  "shoe"
+                    },
+                    {
+                        "key":  "en-g56.word.shop",
+                        "text":  "shop"
+                    },
+                    {
+                        "key":  "en-g56.word.sister",
+                        "text":  "sister"
+                    },
+                    {
+                        "key":  "en-g56.word.six",
+                        "text":  "six"
+                    },
+                    {
+                        "key":  "en-g56.word.small",
+                        "text":  "small"
+                    },
+                    {
+                        "key":  "en-g56.word.snow",
+                        "text":  "snow"
+                    },
+                    {
+                        "key":  "en-g56.word.soccer",
+                        "text":  "soccer"
+                    },
+                    {
+                        "key":  "en-g56.word.spoon",
+                        "text":  "spoon"
+                    },
+                    {
+                        "key":  "en-g56.word.star",
+                        "text":  "star"
+                    },
+                    {
+                        "key":  "en-g56.word.station",
+                        "text":  "station"
+                    },
+                    {
+                        "key":  "en-g56.word.strawberry",
+                        "text":  "strawberry"
+                    },
+                    {
+                        "key":  "en-g56.word.sun",
+                        "text":  "sun"
+                    },
+                    {
+                        "key":  "en-g56.word.sunday",
+                        "text":  "Sunday"
+                    },
+                    {
+                        "key":  "en-g56.word.swim",
+                        "text":  "swim"
+                    },
+                    {
+                        "key":  "en-g56.word.swimming",
+                        "text":  "swimming"
+                    },
+                    {
+                        "key":  "en-g56.word.taxi",
+                        "text":  "taxi"
+                    },
+                    {
+                        "key":  "en-g56.word.ten",
+                        "text":  "ten"
+                    },
+                    {
+                        "key":  "en-g56.word.tennis",
+                        "text":  "tennis"
+                    },
+                    {
+                        "key":  "en-g56.word.three",
+                        "text":  "three"
+                    },
+                    {
+                        "key":  "en-g56.word.thursday",
+                        "text":  "Thursday"
+                    },
+                    {
+                        "key":  "en-g56.word.tomato",
+                        "text":  "tomato"
+                    },
+                    {
+                        "key":  "en-g56.word.towel",
+                        "text":  "towel"
+                    },
+                    {
+                        "key":  "en-g56.word.train",
+                        "text":  "train"
+                    },
+                    {
+                        "key":  "en-g56.word.tree",
+                        "text":  "tree"
+                    },
+                    {
+                        "key":  "en-g56.word.truck",
+                        "text":  "truck"
+                    },
+                    {
+                        "key":  "en-g56.word.tuesday",
+                        "text":  "Tuesday"
+                    },
+                    {
+                        "key":  "en-g56.word.turtle",
+                        "text":  "turtle"
+                    },
+                    {
+                        "key":  "en-g56.word.two",
+                        "text":  "two"
+                    },
+                    {
+                        "key":  "en-g56.word.umbrella",
+                        "text":  "umbrella"
+                    },
+                    {
+                        "key":  "en-g56.word.watermelon",
+                        "text":  "watermelon"
+                    },
+                    {
+                        "key":  "en-g56.word.wednesday",
+                        "text":  "Wednesday"
+                    },
+                    {
+                        "key":  "en-g56.word.white",
+                        "text":  "white"
+                    },
+                    {
+                        "key":  "en-g56.word.yellow",
+                        "text":  "yellow"
+                    },
+                    {
+                        "key":  "en-g56.word.zoo",
+                        "text":  "zoo"
+                    }
+                ]
+}

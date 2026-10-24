@@ -27,6 +27,19 @@
 - `fields: { label?, answer: NumberAnswer }[]`（「商とあまり」「□m□cm」は複数欄）。
 - `NumberAnswer`（`src/core/answer/number.ts`）: `int` / `decimal`（places）/ `fraction`（`mustReduce`・`allowImproper`・`allowMixed`・`allowDecimal`）/ `quantity`（`unit`・`acceptUnits`・`tolerance`）。判定は有理数で正確。形だけの違いは「もう一度」。
 - `keys?: ('decimal'|'fraction'|'minus')[]`（記号キーは3つまで）。`wrongAnswers: { value, misconception }[]`（複数欄は `'3|2'`）。
+- 欄の追加の項目（2026-10 追加。どれも省略可・今までの問題はそのまま動く）:
+  - `unit?`: 欄の**後ろ**に出す単位（「□ cm」）。`label` は今までどおり前。表示だけで判定に関係しない（quantity の `unit` とは別。両方書いても正答の表示で単位を重ねない）。graph の number の欄でも使える。
+  - `maxLength?`（1〜16）: 入る字数。既定は **15字**（兆の数 3000000000000 が入る。前は 12字）。答えが既定より長いと check が止める。
+  - `digitGroup?: 3 | 4`: 表示上だけ数字の間をあける（4 は 万・億・兆 の4けたごと。大きな数の単元向け）。既定は区切らない（カンマは入れない。4年の大きな数は4けたごとに読むため、3けたのカンマは混乱のもと・答えの手がかりになる）。
+  - 例: `fields: [{ answer: { kind: 'int', value: 3000000000000 }, digitGroup: 4 }]`、`fields: [{ answer: { kind: 'int', value: 100 }, unit: 'cm' }]`
+- **筆算** `column?: { op: 'add'|'sub'|'mul'|'div', operands: [上, 下]（わり算は [わられる数, わる数]）, partials?, memo? }`（curriculum-matrix B7）:
+  - 式の数字と線を縦にそろえて描き、答えは**位ごとのます**に入れる（たし算・ひき算・かけ算は一の位から左へ、わり算は左から右へ自動で進む。ますを押せば移動）。ますの数字を左から並べたものが欄の値。判定・`wrongAnswers` は今までどおり**欄ごとの値**（`'115|92|207'`）。数字の間・下の位のますが空いていると「あいている ますが あるよ」（もう一度）。
+  - `fields` の並び（check が式から計算して照らす。int だけ）: add/sub → `[答え]`、mul → かける数が1けた か `partials: false` なら `[答え]`、2けた以上なら `[部分積（かける数の一の位の段から）…, 答え]`（2段めは十の位から。一の位のますは無い）、div → `[商, かけた数, ひいた数（おろした数を含む）, …, あまり]`（0 の商の段は書かない）。
+  - `memo: true` で繰り上がり・繰り下がりのメモのます（小さい・2字まで・**採点しない**）。add は十の位から上、sub はひかれる数の各位、mul はかけられる数の上。div では使えない。
+  - 答えのますの数は答えの桁数を見せない（たし算は1けた多く、かけ算は両方の桁数の和）。
+  - 大きさ: ますは 6u×5.6u（数字キーと同じ）。作業領域（高さ 26.25u・幅 62u）に入らない式は check が止める。入るのは: たし算・ひき算（memo 付き可）、1けた×（memo 付き可）、2けた×2けた・3けた×2けた の部分積（memo なし）、**商が1けたのわり算**（75÷8、84÷21 など）。**商が2けた以上のわり算の全段は入らない**（段が多すぎる）。列は 9 まで。
+  - 筆算の問題には `figure`・`keys` を付けない。問題文は1行（24字まで）。かける数に 0 の位がある式（23×40）は `partials: false`。
+  - 例: `{ fields: [{ answer: { kind:'int', value:115 } }, { answer: { kind:'int', value:92 } }, { answer: { kind:'int', value:1035 } }], wrongAnswers: [{ value:'115|92|207', misconception:'…' }], column: { op:'mul', operands:[23, 45] } }`（見本 `src/engines/number/number.samples.ts`）。
 
 ## order（並べ替え）
 - `cards: Card[]` を**正しい順**に書く（画面で混ぜる）。Card = `{ label?, figure?, name? }`（絵だけのカードは `name` 必須）。横8枚・縦（`layout:'column'`）4枚まで。
@@ -88,6 +101,9 @@
 - `data: { kind: 'bar'|'picture'|'line'|'table'|'pie'|'band', labels, values, scaleStep?, labelEvery?, max?, min?, unit?, header?, illust?, title? }`（pie・band は % で合計100、読むだけ）。
 - `task: { kind:'choice', options, multi? }` / `{ kind:'number', fields, keys?, wrongAnswers? }` / `{ kind:'make', initial?, snap?, showTable? }`（make は `data.max` 必須）。
 - 自動の誤り: scaleAsOne。
+- **2本の折れ線**（読む問題だけ）: `data.series2: { name, values }` と 1本目の `data.name`（凡例。必須・別の名前）。1本目は実線と●、2本目は破線と■（色だけで区別しない）。凡例は単位の横。目盛りの上限は2本の値から決まる（`max` を書いてもよい）。作る問題には使えない。
+- 円・帯グラフ（読むだけ）: 割合を答えるのは `task.kind:'number'`（`fields: [{ label:'あげパン', answer:{kind:'int', value:25}, unit:'%' }]`）、いちばん多い項目を選ぶのは `task.kind:'choice'`。部分には番号①②…が付く（凡例と同じ）。見本 `graph.samples.ts`（pie-percent・band-most・line2-diff）。
+- graph の number の欄は 10字まで（`maxLength`・`digitGroup` は使えない）。数を答える問題の図は、欄と並べるため縦 16u・項目名 1.8u（項目名は短く。「4月《がつ》」など）。
 
 ## geometry（図形）
 - `task: { kind:'pick', options: { shape?: { points }, figure?, label?, correct?, misconception? }[], multi? }` / `{ kind:'draw', grid: { w, h }, given?, target }` / `{ kind:'angle', degrees, base?, protractor?, tolerance? }`（既定 ±2度）。

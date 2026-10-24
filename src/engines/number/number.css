@@ -70,6 +70,109 @@
   padding: 0;
   background: var(--sun);
 }
+/* 欄の後ろの単位（「□ cm」） */
+.eng-number__unit {
+  white-space: nowrap;
+}
+/* 表示上だけの数字の区切り（digitGroup）。文字は入れず、すき間だけ */
+.num-group__g--sep {
+  margin-left: 0.3em;
+}
+
+/* ---- 筆算（column）: ますの幅 6u・答えのます 5.6u（キーと同じ）・式の数字の行 3.6u。寸法は column.ts と合わせる ---- */
+.eng-number--column {
+  --col-w: calc(var(--u) * 6);
+  --col-fh: calc(var(--u) * 5.6);
+  --col-nh: calc(var(--u) * 3.6);
+  --col-mh: calc(var(--u) * 5.5);
+  --col-gap: calc(var(--u) * 0.7);
+  --col-bw: calc(var(--u) * 2);
+}
+.unit__work--number .num-col {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  justify-self: center;
+}
+.num-col {
+  display: grid;
+  column-gap: calc(var(--u) * 0.8);
+  /* 答えの行の前後のすき間（0.7u）は、すき間だけの行として JS が足す（column.ts の COL_GAP） */
+  row-gap: 0;
+  font-size: calc(var(--u) * 3.4);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+.num-col__d {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* わり算の ）: 右に丸い線 */
+.num-col__bracket {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border-right: calc(var(--u) * 0.35) solid var(--ink);
+  border-radius: 0 50% 50% 0 / 0 30% 30% 0;
+}
+/* 横線（式の下・部分積の下・わり算の かけた数の下）。行の上のふちに引く */
+.num-col__line {
+  align-self: center;
+  height: 0;
+  border-top: calc(var(--u) * 0.35) solid var(--ink);
+  pointer-events: none;
+}
+.num-col__line--top {
+  align-self: start;
+}
+.num-col__line--bottom {
+  align-self: end;
+}
+.num-col__cell {
+  /* 罫線のます（DESINGN 17章）。高さ 5.6u・幅 6u */
+  min-height: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ink);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 0.6);
+  touch-action: manipulation;
+}
+.num-col__cell.is-active,
+.num-col__memo.is-active .num-col__memobox {
+  outline: calc(var(--u) * 0.45) solid var(--sun);
+  outline-offset: calc(var(--u) * 0.15);
+  background: var(--paper-2);
+}
+.num-col__cell.is-wrong {
+  border-style: dashed;
+}
+/* メモ: 押せる面は 6u×5.5u、見える ますは小さく（採点しない） */
+.num-col__memo {
+  padding: 0;
+  font: inherit;
+  font-size: calc(var(--u) * 2.2);
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: calc(var(--u) * 0.4);
+  touch-action: manipulation;
+}
+.num-col__memobox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(var(--u) * 3.4);
+  height: calc(var(--u) * 3.4);
+  border: calc(var(--u) * 0.2) dashed var(--ink-soft);
+  border-radius: calc(var(--u) * 0.5);
+  background: var(--white);
+}
 .num-frac-show {
   display: inline-flex;
   align-items: center;

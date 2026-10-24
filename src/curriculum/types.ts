@@ -133,9 +133,33 @@ export interface ChoiceItem extends ItemBase {
 }
 
 export interface NumberField {
-  /** 欄の名前（「しょう」「あまり」「m」「cm」など） */
+  /** 欄の名前（欄の前に出す。「しょう」「あまり」など） */
   label?: RichText;
+  /** 欄の後ろに出す単位（「□ cm」の cm。表示だけ。quantity の判定の単位とは別） */
+  unit?: RichText;
   answer: NumberAnswer;
+  /** 入力できる字数（既定 15。兆の位まで入る。1〜16） */
+  maxLength?: number;
+  /** 表示上だけ数字を区切る（3 は 3けたごと、4 は 万・億・兆の 4けたごと）。判定には関係しない */
+  digitGroup?: 3 | 4;
+}
+
+/**
+ * 筆算のレイアウト（curriculum-matrix B7）。欄（fields）と判定は今までと同じで、並べ方だけを変える。
+ * fields の並び:
+ *  - add / sub: [答え]
+ *  - mul: かける数が1けた、または partials: false なら [答え]。
+ *         2けた以上なら [部分積（かける数の一の位から）…, 答え]
+ *  - div: [商, かけた数, ひいた数(おろした数をふくむ), かけた数, …, あまり]（0 の商の段は書かない）
+ */
+export interface NumberColumn {
+  op: 'add' | 'sub' | 'mul' | 'div';
+  /** [上の数, 下の数]（わり算は [わられる数, わる数]）。0 以上の整数 */
+  operands: [number, number];
+  /** かけ算で部分積の段を出す（かける数が2けた以上のとき。既定 true） */
+  partials?: boolean;
+  /** 繰り上がり・繰り下がりのメモの欄（小さい欄。採点しない） */
+  memo?: boolean;
 }
 
 export interface NumberItem extends ItemBase {
@@ -146,6 +170,8 @@ export interface NumberItem extends ItemBase {
   keys?: ('decimal' | 'fraction' | 'minus')[];
   /** 入力に応じた誤概念の推定（例: 繰り上がりを忘れた答え） */
   wrongAnswers?: { value: string; misconception: string }[];
+  /** 筆算の形で出す（位ごとのますに入れる） */
+  column?: NumberColumn;
 }
 
 /** 問題の型の和。エンジンを足すときはここに加える（統括が管理） */

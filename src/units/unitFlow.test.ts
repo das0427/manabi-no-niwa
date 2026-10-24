@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { Item } from '../curriculum/types';
-import { canSkip, flowReducer, initialFlow } from './unitFlow';
+import {
+  canSkip,
+  draftOf,
+  flowReducer,
+  initialFlow,
+  restoreFlow,
+  type FlowDraft,
+} from './unitFlow';
 
 const item = (id: string): Item => ({
   engine: 'number',
@@ -71,6 +78,17 @@ describe('単元の流れ', () => {
     expect(s.results[0]!.outcome).toBe('after_hint');
   });
 
+  it('中断データから、終えた問題の次から再開する', () => {
+    const items = [item('a'), item('b'), item('c')];
+    let s = initialFlow(items, true);
+    s = flowReducer(s, { type: 'intro-next', introLength: 1 });
+    s = flowReducer(s, { type: 'judged', j: { result: 'correct' } });
+    const d = JSON.parse(JSON.stringify(draftOf(s))) as FlowDraft;
+    const r = restoreFlow(items, d);
+    expect(r).toMatchObject({ phase: 'question', index: 1 });
+    expect(r.results.map((x) => [x.item.id, x.outcome])).toEqual([['a', 'independent']]);
+    expect(restoreFlow(items, { done: [...d.done, ...d.done, ...d.done] }).phase).toBe('done');
+  });
   it('解説中・終わった後の操作は無視', () => {
     let s = initialFlow([item('a')], false);
     s = flowReducer(s, { type: 'judged', j: { result: 'correct' } });

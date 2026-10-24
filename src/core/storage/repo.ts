@@ -358,7 +358,7 @@ export async function deleteMemo(id: string): Promise<void> {
 /** 中断データを取得する */
 export async function getDraft(
   profileId: string,
-  modeId: ModeId,
+  modeId: ModeId | 'unit',
   variantId: string,
 ): Promise<DraftRecord | undefined> {
   return safeRead(
@@ -384,7 +384,7 @@ export async function saveDraft(d: DraftRecord): Promise<void> {
 /** 中断データを削除する */
 export async function deleteDraft(
   profileId: string,
-  modeId: ModeId,
+  modeId: ModeId | 'unit',
   variantId: string,
 ): Promise<void> {
   await safeWrite(() =>

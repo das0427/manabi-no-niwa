@@ -68,6 +68,29 @@ export function initialFlow(items: Item[], showIntro: boolean): FlowState {
   };
 }
 
+/** 中断データ（何問目まで終えたか・その結果）。問題は seed から作り直す */
+export interface FlowDraft {
+  done: { outcome: Outcome; misconception?: string; q: QuestionState }[];
+}
+
+export function draftOf(s: FlowState): FlowDraft {
+  return {
+    done: s.results.map((r) => ({ outcome: r.outcome, misconception: r.misconception, q: r.q })),
+  };
+}
+
+/** 中断データから再開（終えた問題の次から。導入は出さない） */
+export function restoreFlow(items: Item[], d: FlowDraft): FlowState {
+  const n = Math.min(d.done.length, items.length);
+  const base = initialFlow(items, false);
+  return {
+    ...base,
+    index: n,
+    phase: n >= items.length ? 'done' : 'question',
+    results: d.done.slice(0, n).map((r, i) => ({ item: items[i]!, ...r })),
+  };
+}
+
 export function currentItem(s: FlowState): Item | undefined {
   return s.items[s.index];
 }

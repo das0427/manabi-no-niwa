@@ -238,7 +238,8 @@ export interface MemoRecord {
 
 export interface DraftRecord {
   profileId: string;
-  modeId: ModeId;
+  /** 'unit' のときは variantId が単元ID */
+  modeId: RecordModeId;
   variantId: string;
   savedAt: number;
   state: unknown;

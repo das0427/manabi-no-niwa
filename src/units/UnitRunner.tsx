@@ -34,13 +34,41 @@ import { registerRich } from '../voice/dynamic';
 import { useApp } from '../app/AppState';
 import { navigate } from '../app/router';
 import { exposeForTest } from '../app/testHook';
-import { canSkip, currentItem, flowReducer, initialFlow, type FlowState } from './unitFlow';
+import { Tap } from '../ui/Tap';
+import {
+  canSkip,
+  currentItem,
+  draftOf,
+  flowReducer,
+  initialFlow,
+  restoreFlow,
+  type FlowDraft,
+  type FlowState,
+} from './unitFlow';
 import './unit.css';
+
+/** 単元の中断データ（drafts ストア: modeId 'unit'・variantId 単元ID。review-1 #31） */
+interface UnitDraft {
+  seed: number;
+  level: number;
+  review: boolean;
+  count: number;
+  flow: FlowDraft;
+}
+
+const DRAFT_TTL = 24 * 60 * 60 * 1000;
 
 type Loaded =
   | { kind: 'loading' }
   | { kind: 'error'; text: string }
-  | { kind: 'ready'; unit: UnitSpec; packId: string; progress: UnitProgress; review: boolean };
+  | {
+      kind: 'ready';
+      unit: UnitSpec;
+      packId: string;
+      progress: UnitProgress;
+      review: boolean;
+      draft: UnitDraft | null;
+    };
 
 export function UnitRunner({ unitId }: { unitId: string }) {
   const app = useApp();
@@ -48,6 +76,8 @@ export function UnitRunner({ unitId }: { unitId: string }) {
   const settings = app.settings!;
   const [loaded, setLoaded] = useState<Loaded>({ kind: 'loading' });
   const [roundKey, setRoundKey] = useState(0);
+  /** undefined: まだ聞いていない／null: はじめから／UnitDraft: つづきから */
+  const [resume, setResume] = useState<UnitDraft | null | undefined>(undefined);
 
   useEffect(() => {
     let alive = true;
@@ -67,7 +97,16 @@ export function UnitRunner({ unitId }: { unitId: string }) {
         const review =
           isReviewDue(progress.review, now) &&
           (progress.review.stage === 'learned' || progress.review.stage === 'secured');
-        if (alive) setLoaded({ kind: 'ready', unit, packId: meta.pack, progress, review });
+        // 中断データ: 24時間以内・段階と復習かどうかが同じときだけ使う（設定が変わると問題が作り直せないため）
+        const d = await db.getDraft(profile.id, 'unit', unitId);
+        const st = d?.state as UnitDraft | undefined;
+        const level = Math.min(unit.levels.length - 1, progress.level);
+        const draft =
+          d && st && now - d.savedAt < DRAFT_TTL && st.level === level && st.review === review
+            ? st
+            : null;
+        if (d && !draft) void db.deleteDraft(profile.id, 'unit', unitId);
+        if (alive) setLoaded({ kind: 'ready', unit, packId: meta.pack, progress, review, draft });
       } catch (e) {
         if (!alive) return;
         setLoaded({
@@ -95,6 +134,47 @@ export function UnitRunner({ unitId }: { unitId: string }) {
         </div>
       </div>
     );
+  // つづきから？（v1 の ModeEntry と同じ形）
+  if (loaded.draft && resume === undefined)
+    return (
+      <div className="screen" data-testid="resume-prompt">
+        <ModeHeader
+          promptText="つづきから する？"
+          onHome={home}
+          onListen={() => void audio.play('app.resume')}
+          canListen
+        />
+        <div className="center-col">
+          <Illust
+            id={loaded.unit.icon}
+            style={{ width: 'calc(var(--u) * 16)', height: 'calc(var(--u) * 16)' }}
+            decorative
+          />
+          <div className="row">
+            <Tap
+              label="つづきから"
+              text="つづきから"
+              icon="next"
+              variant="main"
+              size="big"
+              testId="resume-yes"
+              onPress={() => setResume(loaded.draft)}
+            />
+            <Tap
+              label="はじめから"
+              text="はじめから"
+              icon="again"
+              size="big"
+              testId="resume-no"
+              onPress={() => {
+                void db.deleteDraft(profile.id, 'unit', loaded.unit.id);
+                setResume(null);
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    );
   return (
     <UnitRound
       key={roundKey}
@@ -102,9 +182,13 @@ export function UnitRunner({ unitId }: { unitId: string }) {
       packId={loaded.packId}
       progress={loaded.progress}
       review={loaded.review}
+      resume={resume ?? null}
       settings={settings}
       profile={profile}
-      onAgain={() => setRoundKey((k) => k + 1)}
+      onAgain={() => {
+        setResume(null);
+        setRoundKey((k) => k + 1);
+      }}
       onHome={home}
     />
   );
@@ -115,6 +199,7 @@ interface RoundProps {
   packId: string;
   progress: UnitProgress;
   review: boolean;
+  resume: UnitDraft | null;
   settings: NonNullable<ReturnType<typeof useApp>['settings']>;
   profile: NonNullable<ReturnType<typeof useApp>['profile']>;
   onAgain(): void;
@@ -126,6 +211,7 @@ function UnitRound({
   packId,
   progress,
   review,
+  resume,
   settings,
   profile,
   onAgain,
@@ -155,18 +241,16 @@ function UnitRound({
     ],
   );
   const level = Math.min(unit.levels.length - 1, progress.level);
-  const [seed] = useState(() => freshSeed());
+  const [seed] = useState(() => resume?.seed ?? freshSeed());
+  const count = resume?.count ?? (review ? REVIEW_SIZE : (unit.roundSize ?? ux.roundSize));
   const items = useMemo(
-    () =>
-      buildRound(unit, {
-        level: review ? unit.levels.length - 1 : level,
-        seed,
-        count: review ? REVIEW_SIZE : (unit.roundSize ?? ux.roundSize),
-      }),
-    [unit, level, seed, review, ux.roundSize],
+    () => buildRound(unit, { level: review ? unit.levels.length - 1 : level, seed, count }),
+    [unit, level, seed, review, count],
   );
   const firstTime = !progress.attempted && unit.intro.length > 0;
-  const [s, dispatch] = useReducer(flowReducer, undefined, () => initialFlow(items, firstTime));
+  const [s, dispatch] = useReducer(flowReducer, undefined, () =>
+    resume ? restoreFlow(items, resume.flow) : initialFlow(items, firstTime),
+  );
   const item = currentItem(s);
   const misText = useCallback(
     (id?: string) => unit.misconceptions.find((m) => m.id === id)?.explain,
@@ -216,7 +300,8 @@ function UnitRound({
   }, [roundRecord]);
 
   // 1問が確定したら記録する
-  const recorded = useRef(0);
+  // 再開したときは、前に記録した問題を記録し直さない
+  const recorded = useRef(resume?.flow.done.length ?? 0);
   useEffect(() => {
     while (recorded.current < s.results.length) {
       const r = s.results[recorded.current]!;
@@ -245,7 +330,18 @@ function UnitRound({
         },
       });
     }
-  }, [s.results, profile.id, unit.id, review, ensureRound, roundRecord]);
+    // 中断に備えて保存（最後の問題まで終えたら回の終わりで消す）
+    if (s.results.length > 0 && s.results.length < s.items.length) {
+      const state: UnitDraft = { seed, level, review, count, flow: draftOf(s) };
+      void db.saveDraft({
+        profileId: profile.id,
+        modeId: 'unit',
+        variantId: unit.id,
+        savedAt: Date.now(),
+        state,
+      });
+    }
+  }, [s, profile.id, unit.id, review, ensureRound, roundRecord, seed, level, count]);
 
   // 回の終わり: 進度と復習（AD-04: 段階の変更は回の終わりだけ）
   const finished = useRef(false);
@@ -282,13 +378,24 @@ function UnitRound({
         p = { ...p, attempted: true };
       }
       await db.saveUnitProgress(p);
+      void db.deleteDraft(profile.id, 'unit', unit.id);
       if (s.results.length > 0) {
         const id = await ensureRound();
         await db.updateRound(roundRecord(s.results.length, true, id));
       }
       audio.sfx('complete');
     })();
-  }, [s.phase, s.results, progress, review, unit, ux.recordMastery, ensureRound, roundRecord]);
+  }, [
+    s.phase,
+    s.results,
+    progress,
+    review,
+    unit,
+    ux.recordMastery,
+    ensureRound,
+    roundRecord,
+    profile.id,
+  ]);
 
   useEffect(() => {
     exposeForTest({ unitId: unit.id, level, index: s.index, phase: s.phase, item });

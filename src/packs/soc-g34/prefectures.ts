@@ -171,18 +171,18 @@ function whereInRegion(c: number): string {
   const cx = rs.reduce((s, x) => s + x.label[0], 0) / rs.length;
   const cy = rs.reduce((s, x) => s + x.label[1], 0) / rs.length;
   if (Math.hypot(me.label[0] - cx, me.label[1] - cy) < 18)
-    return `${REGION_NAME[me.region]}の まん中《なか》の あたりだよ。`;
+    return `${REGION_NAME[me.region]}のまん中《なか》のあたりだよ。`;
   const b = bearing([cx, cy], me.label);
-  return `${REGION_NAME[me.region]}の 中《なか》で ${DIR_NAME[b.dir]}の ほうに あるよ。`;
+  return `${REGION_NAME[me.region]}の中《なか》で${DIR_NAME[b.dir]}のほうにあるよ。`;
 }
 
 /** 近くの県から見た方位のヒント（境目に近いものは使わない） */
 function nearHint(c: number): string {
   if (c === OKINAWA)
-    return '九州《きゅうしゅう》の 南《みなみ》に つづく 島《しま》じまの 県《けん》だよ。';
+    return '九州《きゅうしゅう》の南《みなみ》につづく島《しま》じまの県《けん》だよ。';
   for (const o of [...nearbyInRegion(c), ...nearbyAll(c)]) {
     const b = bearing(pr(o).label, pr(c).label);
-    if (b.margin >= 8) return `${nm(o)}の ${DIR_NAME[b.dir]}に あるよ。`;
+    if (b.margin >= 8) return `${nm(o)}の${DIR_NAME[b.dir]}にあるよ。`;
   }
   return '';
 }
@@ -221,23 +221,23 @@ const regionItems: MapItem[] = PREFS.map((x) => {
   const sameReg = nearbyInRegion(x.code)[0];
   const h3 =
     x.code === 1
-      ? '1つの 道《どう》だけで できて いる 地方《ちほう》だよ。'
+      ? '1つの道《どう》だけでできている地方《ちほう》だよ。'
       : x.code === OKINAWA
-        ? `${nm(46)}と 同《おな》じ 地方《ちほう》だよ。`
-        : `${nm(sameReg!)}と 同《おな》じ 地方《ちほう》だよ。`;
+        ? `${nm(46)}と同《おな》じ地方《ちほう》だよ。`
+        : `${nm(sameReg!)}と同《おな》じ地方《ちほう》だよ。`;
   return mapItem({
     id: `region-${x.code}`,
     obj: 'region',
     level: 0,
-    prompt: `しるしの ついた ${nm(x.code)}は、どの 地方《ちほう》かな？`,
+    prompt: `しるしのついた${nm(x.code)}は、どの地方《ちほう》かな？`,
     task: { kind: 'region', pref: x.code, options: opts, showRegions: true },
     wrongAnswers: opts.slice(1).map((r) => ({ value: r, misconception: 'mis-region' })),
     hints: [
-      'ちずの もようと ばんごうを 見《み》よう。',
-      'しるしの 県《けん》と 同《おな》じ もようの ふだを さがそう。',
+      'ちずのもようとばんごうを見《み》よう。',
+      'しるしの県《けん》と同《おな》じもようのふだをさがそう。',
       h3,
     ],
-    explain: `${nm(x.code)}は ${REGION_NAME[x.region]}だよ。`,
+    explain: `${nm(x.code)}は${REGION_NAME[x.region]}だよ。`,
   });
 });
 
@@ -251,18 +251,18 @@ const regionAlts: MapItem[] = REGION_IDS.map((r) => {
     alt: true,
     prompt:
       r === 'hokkaido'
-        ? '北海道《ほっかいどう》地方《ちほう》を タップしよう。'
+        ? '北海道《ほっかいどう》地方《ちほう》をタップしよう。'
         : isKyushu
-          ? '九州《きゅうしゅう》地方《ちほう》の うち、九州《きゅうしゅう》の 島《しま》に ある 7つの 県《けん》を ぜんぶ タップしよう。'
-          : `${REGION_NAME[r]}の 都道府県《とどうふけん》を ぜんぶ タップしよう。`,
+          ? '九州《きゅうしゅう》地方《ちほう》のうち、九州《きゅうしゅう》の島《しま》にある7つの県《けん》をぜんぶタップしよう。'
+          : `${REGION_NAME[r]}の都道府県《とどうふけん》をぜんぶタップしよう。`,
     task: { kind: 'find', prefs: codes, view: r === 'hokkaido' ? 'japan' : r },
     misconceptions: { missing: 'mis-missing', sameRegion: 'mis-region' },
     hints: [
-      `${REGION_NAME[r]}は ${codes.length}つの 都道府県《とどうふけん》で できて いるよ。`,
-      `${REGION_NAME[r]}の さかいめを 目《め》で たどろう。`,
-      `${nm(codes[0]!)}から はじめて、となりを じゅんに タップしよう。`,
+      `${REGION_NAME[r]}は${codes.length}つの都道府県《とどうふけん》でできているよ。`,
+      `${REGION_NAME[r]}のさかいめを目《め》でたどろう。`,
+      `${nm(codes[0]!)}からはじめて、となりをじゅんにタップしよう。`,
     ],
-    explain: `${REGION_NAME[r]}は ${codes.map(nm).join('・')}だよ。${isKyushu ? '九州地方《きゅうしゅうちほう》には、ほかに 沖縄県《おきなわけん》も 入《はい》るよ。' : ''}`,
+    explain: `${REGION_NAME[r]}は${codes.map(nm).join('・')}だよ。${isKyushu ? '九州地方《きゅうしゅうちほう》には、ほかに沖縄県《おきなわけん》も入《はい》るよ。' : ''}`,
   });
 });
 
@@ -272,21 +272,21 @@ const positionItems: MapItem[] = PREFS.map((x) =>
     id: `find-${x.code}`,
     obj: 'position',
     level: 1,
-    prompt: `${nm(x.code)}は どこ？ ちずを タップしよう。`,
+    prompt: `${nm(x.code)}はどこ？ちずをタップしよう。`,
     task: { kind: 'find', prefs: [x.code], view: viewOf(x.code) },
     misconceptions: MAP_MIS,
     hints: [
-      `${nm(x.code)}は ${REGION_NAME[x.region]}に あるよ。`,
+      `${nm(x.code)}は${REGION_NAME[x.region]}にあるよ。`,
       x.code === 1
-        ? '日本《にほん》の いちばん 北《きた》の 大《おお》きな 島《しま》だよ。'
+        ? '日本《にほん》のいちばん北《きた》の大《おお》きな島《しま》だよ。'
         : x.code === OKINAWA
-          ? 'ちずの 左上《ひだりうえ》の かこみの 中《なか》を 見《み》よう。'
+          ? 'ちずの左上《ひだりうえ》のかこみの中《なか》を見《み》よう。'
           : whereInRegion(x.code),
       x.code === 1
-        ? '本州《ほんしゅう》の 北《きた》の、海《うみ》を わたった ところだよ。'
+        ? '本州《ほんしゅう》の北《きた》の、海《うみ》をわたったところだよ。'
         : nearHint(x.code),
     ],
-    explain: `${nm(x.code)}は ${REGION_NAME[x.region]}に あるよ。${x.code === 1 || x.code === OKINAWA ? '' : nearHint(x.code)}`,
+    explain: `${nm(x.code)}は${REGION_NAME[x.region]}にあるよ。${x.code === 1 || x.code === OKINAWA ? '' : nearHint(x.code)}`,
   }),
 );
 
@@ -297,11 +297,11 @@ const positionAlts: MapItem[] = BIG.map((c) =>
     obj: 'position',
     level: 2,
     alt: true,
-    prompt: `日本《にほん》全体《ぜんたい》の ちずで、${nm(c)}を タップしよう。`,
+    prompt: `日本《にほん》全体《ぜんたい》のちずで、${nm(c)}をタップしよう。`,
     task: { kind: 'find', prefs: [c], view: 'japan' },
     misconceptions: MAP_MIS,
-    hints: [`まず ${REGION_NAME[pr(c).region]}を さがそう。`, whereInRegion(c), nearHint(c)],
-    explain: `${nm(c)}は ${REGION_NAME[pr(c).region]}に あるよ。${nearHint(c)}`,
+    hints: [`まず${REGION_NAME[pr(c).region]}をさがそう。`, whereInRegion(c), nearHint(c)],
+    explain: `${nm(c)}は${REGION_NAME[pr(c).region]}にあるよ。${nearHint(c)}`,
   }),
 );
 
@@ -311,20 +311,20 @@ const nameItems: MapItem[] = PREFS.map((x) =>
     id: `name-${x.code}`,
     obj: 'name',
     level: 1,
-    prompt: 'しるしの ついた 都道府県《とどうふけん》の 名前《なまえ》は？',
+    prompt: 'しるしのついた都道府県《とどうふけん》の名前《なまえ》は？',
     task: { kind: 'name', pref: x.code, options: nameOptions(x.code), view: viewOf(x.code) },
     misconceptions: MAP_MIS,
     hints: [
-      `${REGION_NAME[x.region]}の 都道府県《とどうふけん》だよ。`,
-      `名前《なまえ》は、かなで ${[...x.yomi].length}もじだよ（「${x.suffix ? x.suffixYomi : ''}」の ぶぶんは のぞく）。`,
-      `「${firstKana(x.code)}」から はじまる 名前《なまえ》だよ。`,
+      `${REGION_NAME[x.region]}の都道府県《とどうふけん》だよ。`,
+      `名前《なまえ》は、かなで${[...x.yomi].length}もじだよ（「${x.suffix ? x.suffixYomi : ''}」のぶぶんはのぞく）。`,
+      `「${firstKana(x.code)}」からはじまる名前《なまえ》だよ。`,
     ],
-    explain: `${nm(x.code)}だよ。${REGION_NAME[x.region]}に あるよ。`,
+    explain: `${nm(x.code)}だよ。${REGION_NAME[x.region]}にあるよ。`,
   }),
 );
 // 北海道は「道」の部分を除く必要が無いので、ヒント②を書き直す
 for (const it of nameItems)
-  if (it.id === 'name-1') it.hints[1] = '名前《なまえ》は、かなで 6もじだよ。';
+  if (it.id === 'name-1') it.hints[1] = '名前《なまえ》は、かなで6もじだよ。';
 
 /** 4年で習う都道府県名の字を、ふりがな無しで読む */
 const KANJI_PREFS = [8, 9, 10, 11, 15, 21, 25, 38, 41, 43];
@@ -334,15 +334,15 @@ const nameKanji: MapItem[] = KANJI_PREFS.map((c) =>
     obj: 'name',
     level: 2,
     alt: true,
-    prompt: 'しるしの 都道府県《とどうふけん》の 名前《なまえ》を、漢字《かんじ》で えらぼう。',
+    prompt: 'しるしの都道府県《とどうふけん》の名前《なまえ》を、漢字《かんじ》でえらぼう。',
     task: { kind: 'name', pref: c, options: nameOptions(c), view: viewOf(c), nameStyle: 'kanji' },
     misconceptions: MAP_MIS,
     hints: [
-      `${REGION_NAME[pr(c).region]}の 県《けん》だよ。`,
-      `読《よ》み方《かた》は、かなで ${[...pr(c).yomi].length}もじだよ。`,
-      `「${firstKana(c)}」から はじまる 名前《なまえ》だよ。`,
+      `${REGION_NAME[pr(c).region]}の県《けん》だよ。`,
+      `読《よ》み方《かた》は、かなで${[...pr(c).yomi].length}もじだよ。`,
+      `「${firstKana(c)}」からはじまる名前《なまえ》だよ。`,
     ],
-    explain: `${nm(c)}だよ。漢字《かんじ》も 読《よ》めるように なろう。`,
+    explain: `${nm(c)}だよ。漢字《かんじ》も読《よ》めるようになろう。`,
   }),
 );
 
@@ -363,15 +363,15 @@ const spellItems: MapItem[] = SPELL.map((s) =>
     obj: 'name',
     level: 2,
     alt: true,
-    prompt: 'しるしの 県《けん》の 名前《なまえ》を、かなの ふだで ならべよう。',
+    prompt: 'しるしの県《けん》の名前《なまえ》を、かなのふだでならべよう。',
     task: { kind: 'spell', pref: s.c, tiles: s.tiles, view: viewOf(s.c) },
     wrongAnswers: [{ value: s.wrong, misconception: 'mis-dakuten' }],
     hints: [
-      `${REGION_NAME[pr(s.c).region]}の 県《けん》だよ。`,
-      `${[...pr(s.c).yomi].length}もじの 名前《なまえ》だよ。「゛」が つく 字《じ》に 気《き》を つけよう。`,
-      `「${firstKana(s.c)}」から はじまるよ。`,
+      `${REGION_NAME[pr(s.c).region]}の県《けん》だよ。`,
+      `${[...pr(s.c).yomi].length}もじの名前《なまえ》だよ。「゛」がつく字《じ》に気《き》をつけよう。`,
+      `「${firstKana(s.c)}」からはじまるよ。`,
     ],
-    explain: `${nm(s.c)}だよ。にごる 音《おと》（「゛」）も わすれずに。`,
+    explain: `${nm(s.c)}だよ。にごる音《おと》（「゛」）もわすれずに。`,
   }),
 );
 
@@ -383,6 +383,7 @@ const capLen = (cap: string) =>
     .length;
 const capFirst = (cap: string) =>
   /^[ぁ-ん]/.test(cap) ? cap[0]! : (/《([^》]+)》/.exec(cap)?.[1] ?? '')[0]!;
+const SAITAMA = 11;
 const DIFF = PREFS.filter((x) => x.capital && x.capital !== same(x.base, x.yomi));
 const capitalItems: Item[] = DIFF.map((x, i) => {
   // まちがいの選択肢: ほかの県の県庁所在地（近い県から）
@@ -395,16 +396,19 @@ const capitalItems: Item[] = DIFF.map((x, i) => {
     id: `capital-${x.code}`,
     obj: 'capital',
     level: 2,
-    prompt: `${nm(x.code)}の 県庁所在地《けんちょうしょざいち》は どこかな。`,
+    prompt: `${nm(x.code)}の県庁所在地《けんちょうしょざいち》はどこかな。`,
     right: cap,
     wrongs,
     layout: i % 2 ? 'grid' : 'column',
     hints: [
-      '県庁所在地《けんちょうしょざいち》は、県《けん》の しごとを する 県庁《けんちょう》が ある 市《し》だよ。',
-      `${nm(x.code)}の 名前《なまえ》と、県庁所在地《けんちょうしょざいち》の 名前《なまえ》は ちがうよ。ほかの 県《けん》の 市《し》を のぞこう。`,
-      `「${capFirst(cap)}」から はじまる、かなで ${capLen(cap)}もじの 市《し》だよ。`,
+      '県庁所在地《けんちょうしょざいち》は、県《けん》のしごとをする県庁《けんちょう》がある市《し》だよ。',
+      // 埼玉県（さいたま市）は読みが県名と同じなので「名前がちがう」とは言わない
+      x.code === SAITAMA
+        ? `${nm(x.code)}の県庁所在地《けんちょうしょざいち》は、いくつかの市《し》がいっしょになってできた市《し》だよ。ほかの県《けん》の市《し》をのぞこう。`
+        : `${nm(x.code)}の名前《なまえ》と、県庁所在地《けんちょうしょざいち》の名前《なまえ》はちがうよ。ほかの県《けん》の市《し》をのぞこう。`,
+      `「${capFirst(cap)}」からはじまる、かなで${capLen(cap)}もじの市《し》だよ。`,
     ],
-    explain: `${nm(x.code)}の 県庁所在地《けんちょうしょざいち》は ${cap}だよ。${x.code === 1 ? '北海道《ほっかいどう》では「道庁所在地《どうちょうしょざいち》」とも いうよ。' : ''}${wrongs.map((w) => w[0]).join('・')}は、ほかの 県《けん》の 県庁所在地《けんちょうしょざいち》だね。`,
+    explain: `${nm(x.code)}の県庁所在地《けんちょうしょざいち》は${cap}だよ。${x.code === 1 ? '北海道《ほっかいどう》では「道庁所在地《どうちょうしょざいち》」ともいうよ。' : ''}${x.code === SAITAMA ? '県《けん》の名前《なまえ》と読《よ》み方《かた》は同《おな》じで、ひらがなで書《か》くよ。' : ''}${wrongs.map((w) => w[0]).join('・')}は、ほかの県《けん》の県庁所在地《けんちょうしょざいち》だね。`,
   });
 });
 
@@ -416,15 +420,15 @@ const capitalRev: Item[] = CAP_REV.map((c) => {
     obj: 'capital',
     level: 2,
     alt: true,
-    prompt: `${pr(c).capital}が 県庁所在地《けんちょうしょざいち》に なって いる 県《けん》は どれかな。`,
+    prompt: `${pr(c).capital}が県庁所在地《けんちょうしょざいち》になっている県《けん》はどれかな。`,
     right: nm(c),
     wrongs: opts.slice(1).map((o) => [nm(o), 'capital-mix'] as [string, string]),
     hints: [
-      '県庁所在地《けんちょうしょざいち》は、県《けん》の 名前《なまえ》と ちがう ことが あるよ。',
-      `${REGION_NAME[pr(c).region]}の 県《けん》だよ。`,
+      '県庁所在地《けんちょうしょざいち》は、県《けん》の名前《なまえ》とちがうことがあるよ。',
+      `${REGION_NAME[pr(c).region]}の県《けん》だよ。`,
       nearHint(c),
     ],
-    explain: `${pr(c).capital}は ${nm(c)}の 県庁所在地《けんちょうしょざいち》だよ。`,
+    explain: `${pr(c).capital}は${nm(c)}の県庁所在地《けんちょうしょざいち》だよ。`,
   });
 });
 
@@ -441,15 +445,15 @@ const capitalSame: Item[] = SAME_SETS.map(([right, wrongs], i) =>
     level: 2,
     alt: true,
     prompt:
-      '県《けん》の 名前《なまえ》と、県庁所在地《けんちょうしょざいち》の 市《し》の 名前《なまえ》が 同《おな》じ なのは どれかな。',
+      '県《けん》の名前《なまえ》と、県庁所在地《けんちょうしょざいち》の市《し》の名前《なまえ》が同《おな》じなのはどれかな。',
     right: nm(right),
     wrongs: wrongs.map((w) => [nm(w), 'capital-same'] as [string, string]),
     hints: [
-      'それぞれの 県《けん》の 県庁所在地《けんちょうしょざいち》を 思《おも》い出《だ》そう。',
-      '名前《なまえ》が ちがう 県《けん》を 1つずつ のぞこう。',
-      `「${firstKana(right)}」から はじまる 県《けん》だよ。`,
+      'それぞれの県《けん》の県庁所在地《けんちょうしょざいち》を思《おも》い出《だ》そう。',
+      '名前《なまえ》がちがう県《けん》を1つずつのぞこう。',
+      `「${firstKana(right)}」からはじまる県《けん》だよ。`,
     ],
-    explain: `${nm(right)}の 県庁所在地《けんちょうしょざいち》は ${pr(right).capital}で、名前《なまえ》が 同《おな》じだよ。${wrongs.map((w) => `${nm(w)}は ${pr(w).capital}`).join('、')}だね。`,
+    explain: `${nm(right)}の県庁所在地《けんちょうしょざいち》は${pr(right).capital}で、名前《なまえ》が同《おな》じだよ。${wrongs.map((w) => `${nm(w)}は${pr(w).capital}`).join('、')}だね。`,
     layout: i % 2 ? 'grid' : 'column',
   }),
 );
@@ -478,21 +482,21 @@ const bearingItems: MapItem[] = PAIRS.map(([a, b]) => {
   const view = pr(a).region === pr(b).region ? pr(a).region : 'japan';
   const half =
     d.length === 2
-      ? '2つの 方位《ほうい》の あいだに なる ことも あるよ。'
-      : '北《きた》・東《ひがし》・南《みなみ》・西《にし》の どれかに なる ことも あるよ。';
+      ? '2つの方位《ほうい》のあいだになることもあるよ。'
+      : '北《きた》・東《ひがし》・南《みなみ》・西《にし》のどれかになることもあるよ。';
   return mapItem({
     id: `bearing-${a}-${b}`,
     obj: 'bearing',
     level: 2,
-    prompt: `${nm(a)}から 見《み》て、${nm(b)}は どの 方位《ほうい》？`,
+    prompt: `${nm(a)}から見《み》て、${nm(b)}はどの方位《ほうい》？`,
     task: { kind: 'bearing', from: a, to: b, view },
     misconceptions: DIR_MIS,
     hints: [
-      'ちずの 上《うえ》が 北《きた》だよ。',
-      `${nm(a)}の ピンから ${nm(b)}の ピンへ 線《せん》を おもいうかべよう。`,
-      `線《せん》の むきを 八方位《はっぽうい》で いうと どれかな。${half}`,
+      'ちずの上《うえ》が北《きた》だよ。',
+      `${nm(a)}のピンから${nm(b)}のピンへ線《せん》をおもいうかべよう。`,
+      `線《せん》のむきを八方位《はっぽうい》でいうとどれかな。${half}`,
     ],
-    explain: `${nm(b)}は ${nm(a)}の ${DIR_NAME[d]}に あるよ。`,
+    explain: `${nm(b)}は${nm(a)}の${DIR_NAME[d]}にあるよ。`,
   });
 });
 
@@ -571,16 +575,16 @@ const bearingAlts: Item[] = BALT.map((s, i) =>
     obj: 'bearing',
     level: 2,
     alt: true,
-    prompt: `${nm(s.from)}から 見《み》て ${DIR_NAME[s.dir]}に ある 県《けん》は どれかな。（ちずを 思《おも》いうかべよう）`,
+    prompt: `${nm(s.from)}から見《み》て${DIR_NAME[s.dir]}にある県《けん》はどれかな。（ちずを思《おも》いうかべよう）`,
     right: nm(s.right),
     wrongs: s.wrongs.map(([c, m]) => [nm(c), m] as [string, string]),
     layout: i % 2 ? 'grid' : 'column',
     hints: [
-      `${nm(s.from)}が ちずの どこに あるか 思《おも》い出《だ》そう。`,
-      `${DIR_NAME[s.dir]}は、ちずで いうと ${{ n: '上《うえ》', ne: '右上《みぎうえ》', e: '右《みぎ》', se: '右下《みぎした》', s: '下《した》', sw: '左下《ひだりした》', w: '左《ひだり》', nw: '左上《ひだりうえ》' }[s.dir]}の むきだよ。`,
-      'それぞれの 県《けん》が、どの むきに あるか 1つずつ たしかめよう。',
+      `${nm(s.from)}がちずのどこにあるか思《おも》い出《だ》そう。`,
+      `${DIR_NAME[s.dir]}は、ちずでいうと${{ n: '上《うえ》', ne: '右上《みぎうえ》', e: '右《みぎ》', se: '右下《みぎした》', s: '下《した》', sw: '左下《ひだりした》', w: '左《ひだり》', nw: '左上《ひだりうえ》' }[s.dir]}のむきだよ。`,
+      'それぞれの県《けん》が、どのむきにあるか1つずつたしかめよう。',
     ],
-    explain: `${nm(s.right)}は ${nm(s.from)}の ${DIR_NAME[s.dir]}に あるよ。${s.wrongs.map(([c]) => `${nm(c)}は ${DIR_NAME[bearing(pr(s.from).label, pr(c).label).dir]}`).join('、')}だね。`,
+    explain: `${nm(s.right)}は${nm(s.from)}の${DIR_NAME[s.dir]}にあるよ。${s.wrongs.map(([c]) => `${nm(c)}は${DIR_NAME[bearing(pr(s.from).label, pr(c).label).dir]}`).join('、')}だね。`,
   }),
 );
 
@@ -607,83 +611,83 @@ export const prefectures: UnitSpec = {
   review: 'item',
   prereq: ['g3.soc.map-symbols'],
   objectives: [
-    { id: 'region', title: '都道府県《とどうふけん》と 地方《ちほう》' },
-    { id: 'position', title: '都道府県《とどうふけん》の 位置《いち》' },
-    { id: 'name', title: '都道府県《とどうふけん》の 名前《なまえ》（漢字《かんじ》）' },
+    { id: 'region', title: '都道府県《とどうふけん》と地方《ちほう》' },
+    { id: 'position', title: '都道府県《とどうふけん》の位置《いち》' },
+    { id: 'name', title: '都道府県《とどうふけん》の名前《なまえ》（漢字《かんじ》）' },
     { id: 'capital', title: '県庁所在地《けんちょうしょざいち》' },
-    { id: 'bearing', title: '八方位《はっぽうい》で いう' },
+    { id: 'bearing', title: '八方位《はっぽうい》でいう' },
   ],
   misconceptions: [
     {
       id: 'mis-region',
       explain:
-        'となりの 地方《ちほう》と まざったのかな。ちずの もようと ばんごうで、地方《ちほう》の さかいめを たしかめよう。',
+        'となりの地方《ちほう》とまざったのかな。ちずのもようとばんごうで、地方《ちほう》のさかいめをたしかめよう。',
     },
     {
       id: 'mis-neighbor',
       explain:
-        'となりの 県《けん》を えらんだのかな。近《ちか》くの 県《けん》との ならび方《かた》を、ちずで もう一度《いちど》 見《み》よう。',
+        'となりの県《けん》をえらんだのかな。近《ちか》くの県《けん》とのならび方《かた》を、ちずでもう一度《いちど》見《み》よう。',
     },
     {
       id: 'mis-same-region',
       explain:
-        '同《おな》じ 地方《ちほう》の べつの 県《けん》と まちがえたのかな。地方《ちほう》の 中《なか》で 北《きた》・南《みなみ》・東《ひがし》・西《にし》の どこに あるか 見《み》よう。',
+        '同《おな》じ地方《ちほう》のべつの県《けん》とまちがえたのかな。地方《ちほう》の中《なか》で北《きた》・南《みなみ》・東《ひがし》・西《にし》のどこにあるか見《み》よう。',
     },
     {
       id: 'mis-missing',
       explain:
-        'まだ のこって いる 県《けん》が あるよ。地方《ちほう》の 都道府県《とどうふけん》の 数《かず》を 思《おも》い出《だ》して、かぞえて みよう。',
+        'まだのこっている県《けん》があるよ。地方《ちほう》の都道府県《とどうふけん》の数《かず》を思《おも》い出《だ》して、かぞえてみよう。',
     },
     {
       id: 'mis-dakuten',
       explain:
-        '「゛」（にごる しるし）を わすれたのかな。声《こえ》に 出《だ》して 読《よ》んで みよう。',
+        '「゛」（にごるしるし）をわすれたのかな。声《こえ》に出《だ》して読《よ》んでみよう。',
     },
     {
       id: 'capital-mix',
       explain:
-        'ほかの 県《けん》の 県庁所在地《けんちょうしょざいち》と まざったのかな。県《けん》と 市《し》を 組《く》に して おぼえよう。',
+        'ほかの県《けん》の県庁所在地《けんちょうしょざいち》とまざったのかな。県《けん》と市《し》を組《く》にしておぼえよう。',
     },
     {
       id: 'capital-same',
       explain:
-        '県《けん》の 名前《なまえ》と 県庁所在地《けんちょうしょざいち》の 名前《なまえ》は、いつも 同《おな》じ とは かぎらないよ。ちがう 県《けん》も あるね。',
+        '県《けん》の名前《なまえ》と県庁所在地《けんちょうしょざいち》の名前《なまえ》は、いつも同《おな》じとはかぎらないよ。ちがう県《けん》もあるね。',
     },
     {
       id: 'mis-opposite',
       explain:
-        '反対《はんたい》の 方位《ほうい》に したのかな。どちらから 見《み》て いるかを たしかめよう。「〜から 見《み》て」の 〜が 中心《ちゅうしん》だよ。',
+        '反対《はんたい》の方位《ほうい》にしたのかな。どちらから見《み》ているかをたしかめよう。「〜から見《み》て」の 〜が中心《ちゅうしん》だよ。',
     },
     {
       id: 'mis-east-west',
       explain:
-        '東《ひがし》と 西《にし》が 入《い》れかわったのかな。北《きた》を 上《うえ》に したとき、右《みぎ》が 東《ひがし》、左《ひだり》が 西《にし》だよ。',
+        '東《ひがし》と西《にし》が入《い》れかわったのかな。北《きた》を上《うえ》にしたとき、右《みぎ》が東《ひがし》、左《ひだり》が西《にし》だよ。',
     },
     {
       id: 'mis-dir',
       explain:
-        'ちがう むきの 県《けん》を えらんだのかな。ちずの 上《うえ》が 北《きた》。中心《ちゅうしん》の 県《けん》から 線《せん》を のばして、むきを たしかめよう。',
+        'ちがうむきの県《けん》をえらんだのかな。ちずの上《うえ》が北《きた》。中心《ちゅうしん》の県《けん》から線《せん》をのばして、むきをたしかめよう。',
     },
   ],
   levels: [
     { label: '地方《ちほう》', chance: 0.1 },
-    { label: '位置《いち》と 名前《なまえ》', chance: 0.1 },
-    { label: '県庁所在地《けんちょうしょざいち》と 方位《ほうい》', chance: 0.1 },
+    { label: '位置《いち》と名前《なまえ》', chance: 0.1 },
+    { label: '県庁所在地《けんちょうしょざいち》と方位《ほうい》', chance: 0.1 },
   ],
   intro: [
     {
-      text: '日本《にほん》には 47の 都道府県《とどうふけん》が あるよ。1つの 都《と》（東京都《とうきょうと》）、1つの 道《どう》（北海道《ほっかいどう》）、2つの 府《ふ》（京都府《きょうとふ》・大阪府《おおさかふ》）、43の 県《けん》だよ。',
+      text: '日本《にほん》には47の都道府県《とどうふけん》があるよ。1つの都《と》（東京都《とうきょうと》）、1つの道《どう》（北海道《ほっかいどう》）、2つの府《ふ》（京都府《きょうとふ》・大阪府《おおさかふ》）、43の県《けん》だよ。',
     },
     {
-      text: '都道府県《とどうふけん》は、8つの 地方《ちほう》に 分《わ》けて よぶ ことが あるよ。北海道《ほっかいどう》・東北《とうほく》・関東《かんとう》・中部《ちゅうぶ》・近畿《きんき》・中国《ちゅうごく》・四国《しこく》・九州《きゅうしゅう》だよ。ちずでは、地方《ちほう》を もようと ばんごうで 見分《みわ》けるよ。',
+      text: '都道府県《とどうふけん》は、8つの地方《ちほう》に分《わ》けてよぶことがあるよ。北海道《ほっかいどう》・東北《とうほく》・関東《かんとう》・中部《ちゅうぶ》・近畿《きんき》・中国《ちゅうごく》・四国《しこく》・九州《きゅうしゅう》だよ。ちずでは、地方《ちほう》をもようとばんごうで見分《みわ》けるよ。',
     },
     {
-      text: '県庁所在地《けんちょうしょざいち》は、県《けん》の しごとを する 県庁《けんちょう》が ある 市《し》だよ。県《けん》の 名前《なまえ》と ちがう 市《し》も あるよ。方位《ほうい》は、ちずの 上《うえ》が 北《きた》。八方位《はっぽうい》で いって みよう。',
+      text: '県庁所在地《けんちょうしょざいち》は、県《けん》のしごとをする県庁《けんちょう》がある市《し》だよ。県《けん》の名前《なまえ》とちがう市《し》もあるよ。方位《ほうい》は、ちずの上《うえ》が北《きた》。八方位《はっぽうい》でいってみよう。',
     },
   ],
   source: { kind: 'items', items },
   basis:
-    '小学校学習指導要領（平成29年告示）社会 第4学年 内容(1)（都道府県の様子。47都道府県の名称と位置）、内容の取扱い（八方位は第4学年修了までに）。都道府県名の漢字は国語 学年別漢字配当表 第4学年（2020年度からの配当）。地図は map エンジン（Natural Earth を簡略化）',
+    '小学校学習指導要領（平成29年告示）社会第4学年内容(1)（都道府県の様子。47都道府県の名称と位置）、内容の取扱い（八方位は第4学年修了までに）。都道府県名の漢字は国語学年別漢字配当表第4学年（2020年度からの配当）。地図は map エンジン（Natural Earth を簡略化）',
 };
 
 /** 学年（4年）より上の字の理由 */

@@ -18,6 +18,26 @@ describe('g1-math の教材検査（curriculum-matrix 1.8）', () => {
     });
   }
 
+  it('全単元: number の問題は正答で正解・誤答例で誤り（各段階）', () => {
+    for (const unit of pack.units) {
+      for (let level = 0; level < unit.levels.length; level++) {
+        for (const it of buildRound(unit, { level, seed: 11, count: 12 })) {
+          if (it.engine !== 'number') continue;
+          const eng = engineOf(it);
+          const ans = it.fields.map((f) => String((f.answer as { value: number }).value));
+          expect(eng.judge(it, ans).result, `${unit.id} ${it.id}`).toBe('correct');
+          for (const w of it.wrongAnswers ?? []) {
+            const j = eng.judge(it, w.value.split('|'));
+            expect(j, `${unit.id} ${it.id} ${w.value}`).toMatchObject({
+              result: 'wrong',
+              misconception: w.misconception,
+            });
+          }
+        }
+      }
+    }
+  });
+
   it('add-basic: 定義域35通りがすべて出る・正答で正解・誤答例で誤り', () => {
     const unit = pack.units.find((u) => u.id === 'g1.math.add-basic')!;
     const r = checkUnit(unit);

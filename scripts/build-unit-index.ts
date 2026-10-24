@@ -2,7 +2,7 @@
  * 単元の索引 src/curriculum/unit-index.json を、各パック（src/packs/<packId>/index.ts）から作る。
  * 実行: npm run build:unit-index（tsx）
  */
-import { readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { buildIndex } from '../src/curriculum/unitIndex';
@@ -12,6 +12,11 @@ const root = join(import.meta.dirname, '..', 'src', 'packs');
 const packs: PackContent[] = [];
 for (const name of readdirSync(root, { withFileTypes: true })) {
   if (!name.isDirectory() || name.name.startsWith('_')) continue;
+  // 作業中で index.ts がまだ無いパックは飛ばす
+  if (!existsSync(join(root, name.name, 'index.ts'))) {
+    console.warn(`skip: src/packs/${name.name}（index.ts が無い）`);
+    continue;
+  }
   const mod = (await import(pathToFileURL(join(root, name.name, 'index.ts')).href)) as {
     default: PackContent;
   };

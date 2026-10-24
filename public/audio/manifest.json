@@ -122,6 +122,136 @@
    "hash": "9af39469414a",
    "ms": 1104
   },
+  "cmp.done.count": {
+   "file": "cmp.done.count.mp3",
+   "hash": "b7f1bd9e0e7f",
+   "ms": 1416
+  },
+  "cmp.done.length": {
+   "file": "cmp.done.length.mp3",
+   "hash": "7bff7a6b8f11",
+   "ms": 1608
+  },
+  "cmp.done.length-count": {
+   "file": "cmp.done.length-count.mp3",
+   "hash": "57c66450c28e",
+   "ms": 2160
+  },
+  "cmp.done.size": {
+   "file": "cmp.done.size.mp3",
+   "hash": "38282cbd895b",
+   "ms": 1752
+  },
+  "cmp.hint.count": {
+   "file": "cmp.hint.count.mp3",
+   "hash": "4bc2a6057606",
+   "ms": 1152
+  },
+  "cmp.hint.length": {
+   "file": "cmp.hint.length.mp3",
+   "hash": "fd358ff0dc8a",
+   "ms": 1392
+  },
+  "cmp.hint.size": {
+   "file": "cmp.hint.size.mp3",
+   "hash": "b175e77626aa",
+   "ms": 1896
+  },
+  "cmp.hint2.count": {
+   "file": "cmp.hint2.count.mp3",
+   "hash": "daf018e05028",
+   "ms": 2160
+  },
+  "cmp.hint2.count5": {
+   "file": "cmp.hint2.count5.mp3",
+   "hash": "972c2e17d375",
+   "ms": 1416
+  },
+  "cmp.hint2.length": {
+   "file": "cmp.hint2.length.mp3",
+   "hash": "cab10400643a",
+   "ms": 1680
+  },
+  "cmp.hint2.size": {
+   "file": "cmp.hint2.size.mp3",
+   "hash": "0c6de8b28425",
+   "ms": 1872
+  },
+  "cmp.intro.order": {
+   "file": "cmp.intro.order.mp3",
+   "hash": "852793ab2182",
+   "ms": 1848
+  },
+  "cmp.intro.pick": {
+   "file": "cmp.intro.pick.mp3",
+   "hash": "6309e00ab748",
+   "ms": 2208
+  },
+  "cmp.intro.three": {
+   "file": "cmp.intro.three.mp3",
+   "hash": "28668cf3c240",
+   "ms": 2280
+  },
+  "cmp.or-same": {
+   "file": "cmp.or-same.mp3",
+   "hash": "4fa87a50e94a",
+   "ms": 1704
+  },
+  "cmp.q.count.less": {
+   "file": "cmp.q.count.less.mp3",
+   "hash": "c3f2b0f35665",
+   "ms": 1608
+  },
+  "cmp.q.count.more": {
+   "file": "cmp.q.count.more.mp3",
+   "hash": "e0cacc37e5e2",
+   "ms": 1464
+  },
+  "cmp.q.length.less": {
+   "file": "cmp.q.length.less.mp3",
+   "hash": "3db80e8ae888",
+   "ms": 1704
+  },
+  "cmp.q.length.more": {
+   "file": "cmp.q.length.more.mp3",
+   "hash": "21549b97b3ce",
+   "ms": 1464
+  },
+  "cmp.q.size.less": {
+   "file": "cmp.q.size.less.mp3",
+   "hash": "aac96b3048ad",
+   "ms": 1752
+  },
+  "cmp.q.size.more": {
+   "file": "cmp.q.size.more.mp3",
+   "hash": "61bc39e6f220",
+   "ms": 1632
+  },
+  "cmp.q5.count.less": {
+   "file": "cmp.q5.count.less.mp3",
+   "hash": "4623be3c93f5",
+   "ms": 1896
+  },
+  "cmp.q5.count.more": {
+   "file": "cmp.q5.count.more.mp3",
+   "hash": "69b49cde5bf0",
+   "ms": 1752
+  },
+  "cmp.q5.length.less": {
+   "file": "cmp.q5.length.less.mp3",
+   "hash": "afd4c814bfe4",
+   "ms": 2016
+  },
+  "cmp.q5.length.more": {
+   "file": "cmp.q5.length.more.mp3",
+   "hash": "507ae2d4b343",
+   "ms": 1776
+  },
+  "cmp.same-right": {
+   "file": "cmp.same-right.mp3",
+   "hash": "b8cb6df17816",
+   "ms": 1128
+  },
   "count.hiki.0": {
    "file": "count.hiki.0.mp3",
    "hash": "1b7d9059daee",
@@ -447,6 +577,986 @@
    "hash": "3db2e325feba",
    "ms": 720
   },
+  "kana.char.a": {
+   "file": "kana.char.a.mp3",
+   "hash": "fd3a037c290f",
+   "ms": 240
+  },
+  "kana.char.e": {
+   "file": "kana.char.e.mp3",
+   "hash": "794171d2f9fe",
+   "ms": 240
+  },
+  "kana.char.ha": {
+   "file": "kana.char.ha.mp3",
+   "hash": "2c68a84bd9a5",
+   "ms": 360
+  },
+  "kana.char.hi": {
+   "file": "kana.char.hi.mp3",
+   "hash": "be511a7d0a9d",
+   "ms": 384
+  },
+  "kana.char.hu": {
+   "file": "kana.char.hu.mp3",
+   "hash": "a1e0a2f1a930",
+   "ms": 384
+  },
+  "kana.char.i": {
+   "file": "kana.char.i.mp3",
+   "hash": "b65009af5c82",
+   "ms": 240
+  },
+  "kana.char.ka": {
+   "file": "kana.char.ka.mp3",
+   "hash": "58a9f67967f0",
+   "ms": 336
+  },
+  "kana.char.ki": {
+   "file": "kana.char.ki.mp3",
+   "hash": "642b9f3dc4f2",
+   "ms": 360
+  },
+  "kana.char.ko": {
+   "file": "kana.char.ko.mp3",
+   "hash": "48c312207411",
+   "ms": 384
+  },
+  "kana.char.ku": {
+   "file": "kana.char.ku.mp3",
+   "hash": "96decd970f39",
+   "ms": 360
+  },
+  "kana.char.ma": {
+   "file": "kana.char.ma.mp3",
+   "hash": "46c43127205a",
+   "ms": 360
+  },
+  "kana.char.me": {
+   "file": "kana.char.me.mp3",
+   "hash": "248d58979d1b",
+   "ms": 360
+  },
+  "kana.char.mi": {
+   "file": "kana.char.mi.mp3",
+   "hash": "e8f36a37066a",
+   "ms": 384
+  },
+  "kana.char.mo": {
+   "file": "kana.char.mo.mp3",
+   "hash": "82531f94f8bd",
+   "ms": 408
+  },
+  "kana.char.n": {
+   "file": "kana.char.n.mp3",
+   "hash": "205d6b6db086",
+   "ms": 576
+  },
+  "kana.char.na": {
+   "file": "kana.char.na.mp3",
+   "hash": "46b47120a07b",
+   "ms": 360
+  },
+  "kana.char.ne": {
+   "file": "kana.char.ne.mp3",
+   "hash": "8f80aa1b037e",
+   "ms": 360
+  },
+  "kana.char.nu": {
+   "file": "kana.char.nu.mp3",
+   "hash": "391c49a889ec",
+   "ms": 360
+  },
+  "kana.char.o": {
+   "file": "kana.char.o.mp3",
+   "hash": "35bbd3f62819",
+   "ms": 240
+  },
+  "kana.char.ri": {
+   "file": "kana.char.ri.mp3",
+   "hash": "41f73e297d81",
+   "ms": 360
+  },
+  "kana.char.ru": {
+   "file": "kana.char.ru.mp3",
+   "hash": "b3fdef9b0a92",
+   "ms": 360
+  },
+  "kana.char.sa": {
+   "file": "kana.char.sa.mp3",
+   "hash": "0cb359977d4b",
+   "ms": 408
+  },
+  "kana.char.si": {
+   "file": "kana.char.si.mp3",
+   "hash": "25c7a6116790",
+   "ms": 432
+  },
+  "kana.char.su": {
+   "file": "kana.char.su.mp3",
+   "hash": "07c19c989b99",
+   "ms": 432
+  },
+  "kana.char.ta": {
+   "file": "kana.char.ta.mp3",
+   "hash": "88f6cdcee1b6",
+   "ms": 336
+  },
+  "kana.char.to": {
+   "file": "kana.char.to.mp3",
+   "hash": "8e566217b8c6",
+   "ms": 360
+  },
+  "kana.char.u": {
+   "file": "kana.char.u.mp3",
+   "hash": "991293eb16f3",
+   "ms": 264
+  },
+  "kana.char.yo": {
+   "file": "kana.char.yo.mp3",
+   "hash": "a488995c4d36",
+   "ms": 408
+  },
+  "kana.dayo": {
+   "file": "kana.dayo.mp3",
+   "hash": "93a0f956fa85",
+   "ms": 504
+  },
+  "kana.ex.a": {
+   "file": "kana.ex.a.mp3",
+   "hash": "e605f682ebe7",
+   "ms": 1488
+  },
+  "kana.ex.e": {
+   "file": "kana.ex.e.mp3",
+   "hash": "855f9ceb7db0",
+   "ms": 1752
+  },
+  "kana.ex.ha": {
+   "file": "kana.ex.ha.mp3",
+   "hash": "6fde4fd69b35",
+   "ms": 2160
+  },
+  "kana.ex.hi": {
+   "file": "kana.ex.hi.mp3",
+   "hash": "eae2856fa1b7",
+   "ms": 2160
+  },
+  "kana.ex.hu": {
+   "file": "kana.ex.hu.mp3",
+   "hash": "2cd03df1a74a",
+   "ms": 1872
+  },
+  "kana.ex.i": {
+   "file": "kana.ex.i.mp3",
+   "hash": "b4248b5088d0",
+   "ms": 1536
+  },
+  "kana.ex.ka": {
+   "file": "kana.ex.ka.mp3",
+   "hash": "ea93004e27c5",
+   "ms": 1896
+  },
+  "kana.ex.ki": {
+   "file": "kana.ex.ki.mp3",
+   "hash": "a9aeae2606bd",
+   "ms": 2064
+  },
+  "kana.ex.ku": {
+   "file": "kana.ex.ku.mp3",
+   "hash": "3f6ac259097f",
+   "ms": 1896
+  },
+  "kana.ex.mi": {
+   "file": "kana.ex.mi.mp3",
+   "hash": "167609f223ba",
+   "ms": 2016
+  },
+  "kana.ex.mo": {
+   "file": "kana.ex.mo.mp3",
+   "hash": "f3ae56459100",
+   "ms": 1920
+  },
+  "kana.ex.na": {
+   "file": "kana.ex.na.mp3",
+   "hash": "4387f7225e50",
+   "ms": 1896
+  },
+  "kana.ex.ne": {
+   "file": "kana.ex.ne.mp3",
+   "hash": "b0860390077d",
+   "ms": 1872
+  },
+  "kana.ex.o": {
+   "file": "kana.ex.o.mp3",
+   "hash": "7e9733b04850",
+   "ms": 1800
+  },
+  "kana.ex.ri": {
+   "file": "kana.ex.ri.mp3",
+   "hash": "8af23838749b",
+   "ms": 1848
+  },
+  "kana.ex.sa": {
+   "file": "kana.ex.sa.mp3",
+   "hash": "1100a0582aec",
+   "ms": 2280
+  },
+  "kana.ex.su": {
+   "file": "kana.ex.su.mp3",
+   "hash": "d9614bdfbb53",
+   "ms": 2544
+  },
+  "kana.ex.ta": {
+   "file": "kana.ex.ta.mp3",
+   "hash": "b7b19c09a5cc",
+   "ms": 1920
+  },
+  "kana.ex.to": {
+   "file": "kana.ex.to.mp3",
+   "hash": "27ea3e9847a3",
+   "ms": 1776
+  },
+  "kana.ex.u": {
+   "file": "kana.ex.u.mp3",
+   "hash": "18f199919020",
+   "ms": 1584
+  },
+  "kana.first.ant": {
+   "file": "kana.first.ant.mp3",
+   "hash": "6f057f6362f4",
+   "ms": 2208
+  },
+  "kana.first.apple": {
+   "file": "kana.first.apple.mp3",
+   "hash": "9d333a3063b1",
+   "ms": 2352
+  },
+  "kana.first.bear": {
+   "file": "kana.first.bear.mp3",
+   "hash": "48c8b141e682",
+   "ms": 2256
+  },
+  "kana.first.bird": {
+   "file": "kana.first.bird.mp3",
+   "hash": "7724e275e921",
+   "ms": 2208
+  },
+  "kana.first.cat": {
+   "file": "kana.first.cat.mp3",
+   "hash": "328c2e206150",
+   "ms": 2328
+  },
+  "kana.first.chick": {
+   "file": "kana.first.chick.mp3",
+   "hash": "45a106976e2e",
+   "ms": 2472
+  },
+  "kana.first.cow": {
+   "file": "kana.first.cow.mp3",
+   "hash": "4c38c05cf8e8",
+   "ms": 2328
+  },
+  "kana.first.dog": {
+   "file": "kana.first.dog.mp3",
+   "hash": "f0030119aa24",
+   "ms": 2280
+  },
+  "kana.first.eggplant": {
+   "file": "kana.first.eggplant.mp3",
+   "hash": "d2afb8ef40c5",
+   "ms": 2304
+  },
+  "kana.first.fox": {
+   "file": "kana.first.fox.mp3",
+   "hash": "fa3bc10d8fd0",
+   "ms": 2352
+  },
+  "kana.first.mikan": {
+   "file": "kana.first.mikan.mp3",
+   "hash": "92c53c4a528d",
+   "ms": 2448
+  },
+  "kana.first.monkey": {
+   "file": "kana.first.monkey.mp3",
+   "hash": "2769c549fea3",
+   "ms": 2304
+  },
+  "kana.first.octopus": {
+   "file": "kana.first.octopus.mp3",
+   "hash": "08d54bd4c2bf",
+   "ms": 2256
+  },
+  "kana.first.onigiri": {
+   "file": "kana.first.onigiri.mp3",
+   "hash": "2d6bcd61c67d",
+   "ms": 2472
+  },
+  "kana.first.peach": {
+   "file": "kana.first.peach.mp3",
+   "hash": "c8e82926785a",
+   "ms": 2304
+  },
+  "kana.first.pencil": {
+   "file": "kana.first.pencil.mp3",
+   "hash": "9e48568a7bcf",
+   "ms": 2448
+  },
+  "kana.first.scissors": {
+   "file": "kana.first.scissors.mp3",
+   "hash": "3feeb1962f35",
+   "ms": 2424
+  },
+  "kana.first.ship": {
+   "file": "kana.first.ship.mp3",
+   "hash": "56451104dc46",
+   "ms": 2232
+  },
+  "kana.first.turtle": {
+   "file": "kana.first.turtle.mp3",
+   "hash": "13f1e276fa5e",
+   "ms": 2256
+  },
+  "kana.first.watermelon": {
+   "file": "kana.first.watermelon.mp3",
+   "hash": "34d8b86df41b",
+   "ms": 2496
+  },
+  "kana.how-build": {
+   "file": "kana.how-build.mp3",
+   "hash": "7a5afb96c48c",
+   "ms": 2736
+  },
+  "kana.how-first": {
+   "file": "kana.how-first.mp3",
+   "hash": "c256e1f979fa",
+   "ms": 4176
+  },
+  "kana.how-pick": {
+   "file": "kana.how-pick.mp3",
+   "hash": "bab907661cd4",
+   "ms": 2736
+  },
+  "kana.listen-again": {
+   "file": "kana.listen-again.mp3",
+   "hash": "6024cac04e76",
+   "ms": 1584
+  },
+  "kana.make.ant": {
+   "file": "kana.make.ant.mp3",
+   "hash": "8cfcd40cc312",
+   "ms": 1200
+  },
+  "kana.make.bear": {
+   "file": "kana.make.bear.mp3",
+   "hash": "0fd6c54c5336",
+   "ms": 1176
+  },
+  "kana.make.bird": {
+   "file": "kana.make.bird.mp3",
+   "hash": "8cf654665a9c",
+   "ms": 1152
+  },
+  "kana.make.cat": {
+   "file": "kana.make.cat.mp3",
+   "hash": "102936d2ca0f",
+   "ms": 1248
+  },
+  "kana.make.chick": {
+   "file": "kana.make.chick.mp3",
+   "hash": "7ea279fcc582",
+   "ms": 1392
+  },
+  "kana.make.cow": {
+   "file": "kana.make.cow.mp3",
+   "hash": "34007e62b27c",
+   "ms": 1272
+  },
+  "kana.make.dog": {
+   "file": "kana.make.dog.mp3",
+   "hash": "d3213e1b0e25",
+   "ms": 1200
+  },
+  "kana.make.eggplant": {
+   "file": "kana.make.eggplant.mp3",
+   "hash": "30b874962afc",
+   "ms": 1248
+  },
+  "kana.make.mikan": {
+   "file": "kana.make.mikan.mp3",
+   "hash": "211f158d4ff0",
+   "ms": 1392
+  },
+  "kana.make.monkey": {
+   "file": "kana.make.monkey.mp3",
+   "hash": "a8f3dac73397",
+   "ms": 1248
+  },
+  "kana.make.octopus": {
+   "file": "kana.make.octopus.mp3",
+   "hash": "1cce0cb0d931",
+   "ms": 1224
+  },
+  "kana.make.peach": {
+   "file": "kana.make.peach.mp3",
+   "hash": "f7f71d8393e3",
+   "ms": 1224
+  },
+  "kana.make.scissors": {
+   "file": "kana.make.scissors.mp3",
+   "hash": "041950a9ec8d",
+   "ms": 1368
+  },
+  "kana.make.ship": {
+   "file": "kana.make.ship.mp3",
+   "hash": "a75d5eca1bb2",
+   "ms": 1200
+  },
+  "kana.make.turtle": {
+   "file": "kana.make.turtle.mp3",
+   "hash": "5c8ad2039a1b",
+   "ms": 1176
+  },
+  "kana.make.umbrella": {
+   "file": "kana.make.umbrella.mp3",
+   "hash": "af90367b4c67",
+   "ms": 1248
+  },
+  "kana.make.watermelon": {
+   "file": "kana.make.watermelon.mp3",
+   "hash": "5e67c200f15f",
+   "ms": 1416
+  },
+  "kana.nth.1": {
+   "file": "kana.nth.1.mp3",
+   "hash": "d4331bf9d769",
+   "ms": 1080
+  },
+  "kana.nth.2": {
+   "file": "kana.nth.2.mp3",
+   "hash": "56cb79c58d2f",
+   "ms": 936
+  },
+  "kana.nth.3": {
+   "file": "kana.nth.3.mp3",
+   "hash": "c5d99b7b4b01",
+   "ms": 1056
+  },
+  "kana.q.a": {
+   "file": "kana.q.a.mp3",
+   "hash": "f4d035f4e696",
+   "ms": 1344
+  },
+  "kana.q.e": {
+   "file": "kana.q.e.mp3",
+   "hash": "f9bdbc142aa0",
+   "ms": 1344
+  },
+  "kana.q.ha": {
+   "file": "kana.q.ha.mp3",
+   "hash": "1017268d5c39",
+   "ms": 1536
+  },
+  "kana.q.hi": {
+   "file": "kana.q.hi.mp3",
+   "hash": "10c7a45860c7",
+   "ms": 1560
+  },
+  "kana.q.hu": {
+   "file": "kana.q.hu.mp3",
+   "hash": "88472456c8b3",
+   "ms": 1488
+  },
+  "kana.q.i": {
+   "file": "kana.q.i.mp3",
+   "hash": "ddd8f31e0464",
+   "ms": 1344
+  },
+  "kana.q.ka": {
+   "file": "kana.q.ka.mp3",
+   "hash": "cc190a6cf5c3",
+   "ms": 1512
+  },
+  "kana.q.ki": {
+   "file": "kana.q.ki.mp3",
+   "hash": "a831597f195e",
+   "ms": 1536
+  },
+  "kana.q.ku": {
+   "file": "kana.q.ku.mp3",
+   "hash": "d8e0854af623",
+   "ms": 1464
+  },
+  "kana.q.mi": {
+   "file": "kana.q.mi.mp3",
+   "hash": "13151d66d7ef",
+   "ms": 1512
+  },
+  "kana.q.mo": {
+   "file": "kana.q.mo.mp3",
+   "hash": "861bf98c1324",
+   "ms": 1512
+  },
+  "kana.q.na": {
+   "file": "kana.q.na.mp3",
+   "hash": "cfae2f4c3389",
+   "ms": 1512
+  },
+  "kana.q.ne": {
+   "file": "kana.q.ne.mp3",
+   "hash": "0b134a0dffcf",
+   "ms": 1512
+  },
+  "kana.q.o": {
+   "file": "kana.q.o.mp3",
+   "hash": "ef2bde345891",
+   "ms": 1344
+  },
+  "kana.q.ri": {
+   "file": "kana.q.ri.mp3",
+   "hash": "f9b212d18d1f",
+   "ms": 1512
+  },
+  "kana.q.sa": {
+   "file": "kana.q.sa.mp3",
+   "hash": "b0fe97473c03",
+   "ms": 1896
+  },
+  "kana.q.su": {
+   "file": "kana.q.su.mp3",
+   "hash": "d342266ea49e",
+   "ms": 1848
+  },
+  "kana.q.ta": {
+   "file": "kana.q.ta.mp3",
+   "hash": "4a27d7671415",
+   "ms": 1488
+  },
+  "kana.q.to": {
+   "file": "kana.q.to.mp3",
+   "hash": "1d30bbef10a8",
+   "ms": 1464
+  },
+  "kana.q.u": {
+   "file": "kana.q.u.mp3",
+   "hash": "7714356bfffd",
+   "ms": 1344
+  },
+  "kana.slow.ant": {
+   "file": "kana.slow.ant.mp3",
+   "hash": "84d2a94d1ae6",
+   "ms": 864
+  },
+  "kana.slow.apple": {
+   "file": "kana.slow.apple.mp3",
+   "hash": "d855782af0fd",
+   "ms": 1680
+  },
+  "kana.slow.bear": {
+   "file": "kana.slow.bear.mp3",
+   "hash": "0fe9252f156c",
+   "ms": 1056
+  },
+  "kana.slow.bird": {
+   "file": "kana.slow.bird.mp3",
+   "hash": "09c7ee98d614",
+   "ms": 1056
+  },
+  "kana.slow.cat": {
+   "file": "kana.slow.cat.mp3",
+   "hash": "4b2a0dd41b8b",
+   "ms": 1224
+  },
+  "kana.slow.chick": {
+   "file": "kana.slow.chick.mp3",
+   "hash": "f260441a2375",
+   "ms": 2040
+  },
+  "kana.slow.cow": {
+   "file": "kana.slow.cow.mp3",
+   "hash": "d59809f34605",
+   "ms": 1104
+  },
+  "kana.slow.dog": {
+   "file": "kana.slow.dog.mp3",
+   "hash": "c9917f7f0b69",
+   "ms": 912
+  },
+  "kana.slow.eggplant": {
+   "file": "kana.slow.eggplant.mp3",
+   "hash": "d51e81642065",
+   "ms": 1272
+  },
+  "kana.slow.fox": {
+   "file": "kana.slow.fox.mp3",
+   "hash": "b83a5cb99969",
+   "ms": 1920
+  },
+  "kana.slow.mikan": {
+   "file": "kana.slow.mikan.mp3",
+   "hash": "dba7dabe52f8",
+   "ms": 1800
+  },
+  "kana.slow.monkey": {
+   "file": "kana.slow.monkey.mp3",
+   "hash": "f3bd80d37cdb",
+   "ms": 1680
+  },
+  "kana.slow.octopus": {
+   "file": "kana.slow.octopus.mp3",
+   "hash": "b3f73b02710a",
+   "ms": 1200
+  },
+  "kana.slow.onigiri": {
+   "file": "kana.slow.onigiri.mp3",
+   "hash": "7ca7b8f5fc5a",
+   "ms": 2304
+  },
+  "kana.slow.peach": {
+   "file": "kana.slow.peach.mp3",
+   "hash": "586a002baaaf",
+   "ms": 1176
+  },
+  "kana.slow.pencil": {
+   "file": "kana.slow.pencil.mp3",
+   "hash": "f82b83dcfa65",
+   "ms": 2280
+  },
+  "kana.slow.scissors": {
+   "file": "kana.slow.scissors.mp3",
+   "hash": "3e1315a1ffd2",
+   "ms": 2448
+  },
+  "kana.slow.ship": {
+   "file": "kana.slow.ship.mp3",
+   "hash": "b58d4b2ff048",
+   "ms": 1080
+  },
+  "kana.slow.turtle": {
+   "file": "kana.slow.turtle.mp3",
+   "hash": "a71a29f0011c",
+   "ms": 1128
+  },
+  "kana.slow.watermelon": {
+   "file": "kana.slow.watermelon.mp3",
+   "hash": "258359f55d30",
+   "ms": 2184
+  },
+  "kana.split.ant": {
+   "file": "kana.split.ant.mp3",
+   "hash": "07fabbdd9d4d",
+   "ms": 1272
+  },
+  "kana.split.apple": {
+   "file": "kana.split.apple.mp3",
+   "hash": "b4a6bdaa9f86",
+   "ms": 1896
+  },
+  "kana.split.bear": {
+   "file": "kana.split.bear.mp3",
+   "hash": "c57190a57ea0",
+   "ms": 1560
+  },
+  "kana.split.bird": {
+   "file": "kana.split.bird.mp3",
+   "hash": "240625fb8ba5",
+   "ms": 1560
+  },
+  "kana.split.cat": {
+   "file": "kana.split.cat.mp3",
+   "hash": "e34223df8c2e",
+   "ms": 1584
+  },
+  "kana.split.chick": {
+   "file": "kana.split.chick.mp3",
+   "hash": "38767f4ebdd4",
+   "ms": 2256
+  },
+  "kana.split.cow": {
+   "file": "kana.split.cow.mp3",
+   "hash": "74c8cd32cdc1",
+   "ms": 1440
+  },
+  "kana.split.dog": {
+   "file": "kana.split.dog.mp3",
+   "hash": "6bf5ad9a4d04",
+   "ms": 1296
+  },
+  "kana.split.eggplant": {
+   "file": "kana.split.eggplant.mp3",
+   "hash": "1ad0db770a07",
+   "ms": 1680
+  },
+  "kana.split.fox": {
+   "file": "kana.split.fox.mp3",
+   "hash": "a7874d41ac0d",
+   "ms": 2208
+  },
+  "kana.split.mikan": {
+   "file": "kana.split.mikan.mp3",
+   "hash": "a17133b62458",
+   "ms": 2016
+  },
+  "kana.split.monkey": {
+   "file": "kana.split.monkey.mp3",
+   "hash": "eef94ca0b326",
+   "ms": 2016
+  },
+  "kana.split.octopus": {
+   "file": "kana.split.octopus.mp3",
+   "hash": "bce46bc9dd6d",
+   "ms": 1584
+  },
+  "kana.split.onigiri": {
+   "file": "kana.split.onigiri.mp3",
+   "hash": "7d479c0a9682",
+   "ms": 2328
+  },
+  "kana.split.peach": {
+   "file": "kana.split.peach.mp3",
+   "hash": "b8defd91fa1c",
+   "ms": 1584
+  },
+  "kana.split.pencil": {
+   "file": "kana.split.pencil.mp3",
+   "hash": "abadfe396c4d",
+   "ms": 2304
+  },
+  "kana.split.scissors": {
+   "file": "kana.split.scissors.mp3",
+   "hash": "3165443bb340",
+   "ms": 2568
+  },
+  "kana.split.ship": {
+   "file": "kana.split.ship.mp3",
+   "hash": "d68e2b721cb0",
+   "ms": 1560
+  },
+  "kana.split.turtle": {
+   "file": "kana.split.turtle.mp3",
+   "hash": "0fd888cb9f52",
+   "ms": 1584
+  },
+  "kana.split.watermelon": {
+   "file": "kana.split.watermelon.mp3",
+   "hash": "9c2968f889db",
+   "ms": 2400
+  },
+  "kana.that-is": {
+   "file": "kana.that-is.mp3",
+   "hash": "fe8d6d62e729",
+   "ms": 720
+  },
+  "math.add-came": {
+   "file": "math.add-came.mp3",
+   "hash": "e1e0ea66995f",
+   "ms": 600
+  },
+  "math.add-more": {
+   "file": "math.add-more.mp3",
+   "hash": "8ad6ee73bccd",
+   "ms": 504
+  },
+  "math.add-none": {
+   "file": "math.add-none.mp3",
+   "hash": "3f89af2bed01",
+   "ms": 1968
+  },
+  "math.all-splits": {
+   "file": "math.all-splits.mp3",
+   "hash": "3a9e63d058b5",
+   "ms": 2064
+  },
+  "math.aru": {
+   "file": "math.aru.mp3",
+   "hash": "ab171bde51e3",
+   "ms": 624
+  },
+  "math.datta": {
+   "file": "math.datta.mp3",
+   "hash": "ac38cc3ef5bd",
+   "ms": 744
+  },
+  "math.hint-count": {
+   "file": "math.hint-count.mp3",
+   "hash": "8e571aa3abe0",
+   "ms": 2256
+  },
+  "math.hint-picture": {
+   "file": "math.hint-picture.mp3",
+   "hash": "f3432177eff7",
+   "ms": 1968
+  },
+  "math.hint-split-1": {
+   "file": "math.hint-split-1.mp3",
+   "hash": "520cf215f558",
+   "ms": 3216
+  },
+  "math.hint-split-2": {
+   "file": "math.hint-split-2.mp3",
+   "hash": "61c20905a8f7",
+   "ms": 3096
+  },
+  "math.hint-together": {
+   "file": "math.hint-together.mp3",
+   "hash": "73cda458b1e2",
+   "ms": 1728
+  },
+  "math.ikutsu": {
+   "file": "math.ikutsu.mp3",
+   "hash": "e851f70db652",
+   "ms": 672
+  },
+  "math.intro-count": {
+   "file": "math.intro-count.mp3",
+   "hash": "f4957b83510e",
+   "ms": 2880
+  },
+  "math.intro-formula": {
+   "file": "math.intro-formula.mp3",
+   "hash": "2d210cb0de73",
+   "ms": 5112
+  },
+  "math.intro-split": {
+   "file": "math.intro-split.mp3",
+   "hash": "e15698e3be63",
+   "ms": 5952
+  },
+  "math.item-ga.apple": {
+   "file": "math.item-ga.apple.mp3",
+   "hash": "149cc13ed9c0",
+   "ms": 744
+  },
+  "math.item-ga.banana": {
+   "file": "math.item-ga.banana.mp3",
+   "hash": "8411f85bedea",
+   "ms": 744
+  },
+  "math.item-ga.egg": {
+   "file": "math.item-ga.egg.mp3",
+   "hash": "8c5ec5c4e485",
+   "ms": 744
+  },
+  "math.item-ga.mikan": {
+   "file": "math.item-ga.mikan.mp3",
+   "hash": "49283948ddfb",
+   "ms": 792
+  },
+  "math.item-ga.strawberry": {
+   "file": "math.item-ga.strawberry.mp3",
+   "hash": "79b6e7997600",
+   "ms": 816
+  },
+  "math.item-wa.apple": {
+   "file": "math.item-wa.apple.mp3",
+   "hash": "89cc65fbff07",
+   "ms": 768
+  },
+  "math.item-wa.banana": {
+   "file": "math.item-wa.banana.mp3",
+   "hash": "43f91feb5664",
+   "ms": 768
+  },
+  "math.item-wa.egg": {
+   "file": "math.item-wa.egg.mp3",
+   "hash": "67b0f722d8b1",
+   "ms": 768
+  },
+  "math.item-wa.mikan": {
+   "file": "math.item-wa.mikan.mp3",
+   "hash": "1c3a75b126ad",
+   "ms": 816
+  },
+  "math.item-wa.strawberry": {
+   "file": "math.item-wa.strawberry.mp3",
+   "hash": "5b90617be785",
+   "ms": 840
+  },
+  "math.ko-to.1": {
+   "file": "math.ko-to.1.mp3",
+   "hash": "444fbf8b9245",
+   "ms": 792
+  },
+  "math.ko-to.2": {
+   "file": "math.ko-to.2.mp3",
+   "hash": "de23eb4f121e",
+   "ms": 744
+  },
+  "math.ko-to.3": {
+   "file": "math.ko-to.3.mp3",
+   "hash": "3f603294e8ec",
+   "ms": 912
+  },
+  "math.ko-to.4": {
+   "file": "math.ko-to.4.mp3",
+   "hash": "ee98ea6d96ae",
+   "ms": 840
+  },
+  "math.kocchi": {
+   "file": "math.kocchi.mp3",
+   "hash": "bfb7b8d7cebd",
+   "ms": 792
+  },
+  "math.minus": {
+   "file": "math.minus.mp3",
+   "hash": "7d974fcdb6d0",
+   "ms": 528
+  },
+  "math.none": {
+   "file": "math.none.mp3",
+   "hash": "a290b4c208fd",
+   "ms": 1176
+  },
+  "math.other-split": {
+   "file": "math.other-split.mp3",
+   "hash": "afae0926d4cc",
+   "ms": 2208
+  },
+  "math.plus": {
+   "file": "math.plus.mp3",
+   "hash": "290309d8fe81",
+   "ms": 528
+  },
+  "math.q-all": {
+   "file": "math.q-all.mp3",
+   "hash": "b3f90d5c807f",
+   "ms": 1224
+  },
+  "math.q-other": {
+   "file": "math.q-other.mp3",
+   "hash": "54f0ed8e748f",
+   "ms": 1200
+  },
+  "math.q-rest": {
+   "file": "math.q-rest.mp3",
+   "hash": "fb06695ffdac",
+   "ms": 1248
+  },
+  "math.q-split": {
+   "file": "math.q-split.mp3",
+   "hash": "bc08224c0ada",
+   "ms": 1920
+  },
+  "math.same-split": {
+   "file": "math.same-split.mp3",
+   "hash": "c55762b5dad8",
+   "ms": 2208
+  },
+  "math.split-need": {
+   "file": "math.split-need.mp3",
+   "hash": "d4cf3ad01e03",
+   "ms": 3312
+  },
+  "math.tabeta": {
+   "file": "math.tabeta.mp3",
+   "hash": "7598d3438c7d",
+   "ms": 792
+  },
+  "math.to": {
+   "file": "math.to.mp3",
+   "hash": "442b56e9c7a0",
+   "ms": 360
+  },
   "math.variant.add": {
    "file": "math.variant.add.mp3",
    "hash": "290309d8fe81",
@@ -471,6 +1581,286 @@
    "file": "math.variant.sub.mp3",
    "hash": "7d974fcdb6d0",
    "ms": 528
+  },
+  "math.wa": {
+   "file": "math.wa.mp3",
+   "hash": "f6e584bb9337",
+   "ms": 360
+  },
+  "math.wa-q": {
+   "file": "math.wa-q.mp3",
+   "hash": "f6e584bb9337",
+   "ms": 360
+  },
+  "math.zenbu": {
+   "file": "math.zenbu.mp3",
+   "hash": "fe09126a180b",
+   "ms": 744
+  },
+  "mem.answer": {
+   "file": "mem.answer.mp3",
+   "hash": "dd1bec859638",
+   "ms": 1392
+  },
+  "mem.first.airplane": {
+   "file": "mem.first.airplane.mp3",
+   "hash": "b4612a6c9fd0",
+   "ms": 1992
+  },
+  "mem.first.ant": {
+   "file": "mem.first.ant.mp3",
+   "hash": "07874c101067",
+   "ms": 1704
+  },
+  "mem.first.apple": {
+   "file": "mem.first.apple.mp3",
+   "hash": "5d4fb470634c",
+   "ms": 1824
+  },
+  "mem.first.ball": {
+   "file": "mem.first.ball.mp3",
+   "hash": "0e2a3eb17964",
+   "ms": 1800
+  },
+  "mem.first.banana": {
+   "file": "mem.first.banana.mp3",
+   "hash": "648681928a2f",
+   "ms": 1824
+  },
+  "mem.first.bear": {
+   "file": "mem.first.bear.mp3",
+   "hash": "73daea8e2f66",
+   "ms": 1680
+  },
+  "mem.first.bicycle": {
+   "file": "mem.first.bicycle.mp3",
+   "hash": "0bf32aeae14b",
+   "ms": 2040
+  },
+  "mem.first.bird": {
+   "file": "mem.first.bird.mp3",
+   "hash": "a050922bcab5",
+   "ms": 1656
+  },
+  "mem.first.bread": {
+   "file": "mem.first.bread.mp3",
+   "hash": "c7fcf0993ae7",
+   "ms": 1656
+  },
+  "mem.first.bus-yellow": {
+   "file": "mem.first.bus-yellow.mp3",
+   "hash": "5e6c962e399e",
+   "ms": 1752
+  },
+  "mem.first.car-red": {
+   "file": "mem.first.car-red.mp3",
+   "hash": "1b8c79335c8f",
+   "ms": 1824
+  },
+  "mem.first.carrot": {
+   "file": "mem.first.carrot.mp3",
+   "hash": "60fa47a00d38",
+   "ms": 1896
+  },
+  "mem.first.cat": {
+   "file": "mem.first.cat.mp3",
+   "hash": "d6ab28e7aacd",
+   "ms": 1728
+  },
+  "mem.first.chick": {
+   "file": "mem.first.chick.mp3",
+   "hash": "c803c4b8b7ed",
+   "ms": 1920
+  },
+  "mem.first.cow": {
+   "file": "mem.first.cow.mp3",
+   "hash": "d7fe1f30d0ab",
+   "ms": 1776
+  },
+  "mem.first.cucumber": {
+   "file": "mem.first.cucumber.mp3",
+   "hash": "c2d7e4cc876e",
+   "ms": 1800
+  },
+  "mem.first.dog": {
+   "file": "mem.first.dog.mp3",
+   "hash": "90ef96220116",
+   "ms": 1704
+  },
+  "mem.first.egg": {
+   "file": "mem.first.egg.mp3",
+   "hash": "b49822c7d5c2",
+   "ms": 1824
+  },
+  "mem.first.eggplant": {
+   "file": "mem.first.eggplant.mp3",
+   "hash": "475afe06d917",
+   "ms": 1752
+  },
+  "mem.first.elephant": {
+   "file": "mem.first.elephant.mp3",
+   "hash": "0af83887a2f9",
+   "ms": 1632
+  },
+  "mem.first.flower": {
+   "file": "mem.first.flower.mp3",
+   "hash": "03ef40d46d6b",
+   "ms": 1872
+  },
+  "mem.first.fox": {
+   "file": "mem.first.fox.mp3",
+   "hash": "1e0952591a15",
+   "ms": 1800
+  },
+  "mem.first.frog": {
+   "file": "mem.first.frog.mp3",
+   "hash": "88f89cad6f3c",
+   "ms": 1800
+  },
+  "mem.first.green-pepper": {
+   "file": "mem.first.green-pepper.mp3",
+   "hash": "be2953a1a421",
+   "ms": 1896
+  },
+  "mem.first.leaf": {
+   "file": "mem.first.leaf.mp3",
+   "hash": "52fe991fbb1c",
+   "ms": 1848
+  },
+  "mem.first.lemon": {
+   "file": "mem.first.lemon.mp3",
+   "hash": "e78a6394a87c",
+   "ms": 1800
+  },
+  "mem.first.mikan": {
+   "file": "mem.first.mikan.mp3",
+   "hash": "60317b3be0e3",
+   "ms": 1872
+  },
+  "mem.first.monkey": {
+   "file": "mem.first.monkey.mp3",
+   "hash": "3f44e99f43e9",
+   "ms": 1776
+  },
+  "mem.first.octopus": {
+   "file": "mem.first.octopus.mp3",
+   "hash": "1fda33ccd9fd",
+   "ms": 1704
+  },
+  "mem.first.onigiri": {
+   "file": "mem.first.onigiri.mp3",
+   "hash": "3b11384fa1e5",
+   "ms": 1968
+  },
+  "mem.first.peach": {
+   "file": "mem.first.peach.mp3",
+   "hash": "55a545f061f6",
+   "ms": 1752
+  },
+  "mem.first.pencil": {
+   "file": "mem.first.pencil.mp3",
+   "hash": "dff1d7a029bc",
+   "ms": 1896
+  },
+  "mem.first.rabbit": {
+   "file": "mem.first.rabbit.mp3",
+   "hash": "9867d6d16a56",
+   "ms": 1896
+  },
+  "mem.first.scissors": {
+   "file": "mem.first.scissors.mp3",
+   "hash": "92aba3904afc",
+   "ms": 1872
+  },
+  "mem.first.ship": {
+   "file": "mem.first.ship.mp3",
+   "hash": "2a20fcd7f509",
+   "ms": 1728
+  },
+  "mem.first.strawberry": {
+   "file": "mem.first.strawberry.mp3",
+   "hash": "3bc0ca95e923",
+   "ms": 1896
+  },
+  "mem.first.tomato": {
+   "file": "mem.first.tomato.mp3",
+   "hash": "326cc6d1f787",
+   "ms": 1848
+  },
+  "mem.first.train": {
+   "file": "mem.first.train.mp3",
+   "hash": "b3e921bd199e",
+   "ms": 1872
+  },
+  "mem.first.turtle": {
+   "file": "mem.first.turtle.mp3",
+   "hash": "c5de6ac1842a",
+   "ms": 1704
+  },
+  "mem.first.umbrella": {
+   "file": "mem.first.umbrella.mp3",
+   "hash": "97ebf35d0893",
+   "ms": 1752
+  },
+  "mem.first.watermelon": {
+   "file": "mem.first.watermelon.mp3",
+   "hash": "b5978fbe1c36",
+   "ms": 1944
+  },
+  "mem.group.animal": {
+   "file": "mem.group.animal.mp3",
+   "hash": "8f3a77abb445",
+   "ms": 1296
+  },
+  "mem.group.food": {
+   "file": "mem.group.food.mp3",
+   "hash": "12044f06f7f3",
+   "ms": 1248
+  },
+  "mem.group.thing": {
+   "file": "mem.group.thing.mp3",
+   "hash": "99f0b2ea1159",
+   "ms": 1056
+  },
+  "mem.group.vehicle": {
+   "file": "mem.group.vehicle.mp3",
+   "hash": "c70d4ca4ff7b",
+   "ms": 1296
+  },
+  "mem.hint-review": {
+   "file": "mem.hint-review.mp3",
+   "hash": "104a83340df8",
+   "ms": 1824
+  },
+  "mem.look": {
+   "file": "mem.look.mp3",
+   "hash": "2dc940905fb6",
+   "ms": 3336
+  },
+  "mem.look-again": {
+   "file": "mem.look-again.mp3",
+   "hash": "d6f7d0a117e2",
+   "ms": 1704
+  },
+  "mem.order": {
+   "file": "mem.order.mp3",
+   "hash": "7e178443d28f",
+   "ms": 1464
+  },
+  "mem.where": {
+   "file": "mem.where.mp3",
+   "hash": "636642ec54cb",
+   "ms": 1440
+  },
+  "mem.which": {
+   "file": "mem.which.mp3",
+   "hash": "6f91555b74b3",
+   "ms": 1152
+  },
+  "mem.which2": {
+   "file": "mem.which2.mp3",
+   "hash": "17fa21020df2",
+   "ms": 1584
   },
   "num.0": {
    "file": "num.0.mp3",
@@ -587,6 +1977,91 @@
    "hash": "d750929307f1",
    "ms": 1704
   },
+  "road.arrived": {
+   "file": "road.arrived.mp3",
+   "hash": "c0d033bd379e",
+   "ms": 1536
+  },
+  "road.decorated": {
+   "file": "road.decorated.mp3",
+   "hash": "9338fc4cb527",
+   "ms": 1512
+  },
+  "road.free-intro": {
+   "file": "road.free-intro.mp3",
+   "hash": "9ca76aa31d0f",
+   "ms": 3816
+  },
+  "road.free-prompt": {
+   "file": "road.free-prompt.mp3",
+   "hash": "24006db939b5",
+   "ms": 1752
+  },
+  "road.free-stopped": {
+   "file": "road.free-stopped.mp3",
+   "hash": "28eef6eadf85",
+   "ms": 3408
+  },
+  "road.hint-start": {
+   "file": "road.hint-start.mp3",
+   "hash": "ee1c4f7e03e6",
+   "ms": 3648
+  },
+  "road.hint1": {
+   "file": "road.hint1.mp3",
+   "hash": "6a14ae3157e9",
+   "ms": 3408
+  },
+  "road.hint2": {
+   "file": "road.hint2.mp3",
+   "hash": "64e7a2622f4d",
+   "ms": 2256
+  },
+  "road.how1": {
+   "file": "road.how1.mp3",
+   "hash": "6532f8da49e2",
+   "ms": 3648
+  },
+  "road.how2": {
+   "file": "road.how2.mp3",
+   "hash": "35ec03cb4216",
+   "ms": 2952
+  },
+  "road.how3": {
+   "file": "road.how3.mp3",
+   "hash": "2a0c54419229",
+   "ms": 1992
+  },
+  "road.intro": {
+   "file": "road.intro.mp3",
+   "hash": "aba4234b17e3",
+   "ms": 4272
+  },
+  "road.prompt": {
+   "file": "road.prompt.mp3",
+   "hash": "f1f206ff0cd9",
+   "ms": 1392
+  },
+  "road.tool.corner": {
+   "file": "road.tool.corner.mp3",
+   "hash": "43e1a8ddb530",
+   "ms": 984
+  },
+  "road.tool.erase": {
+   "file": "road.tool.erase.mp3",
+   "hash": "6fd82dc61254",
+   "ms": 600
+  },
+  "road.tool.straight": {
+   "file": "road.tool.straight.mp3",
+   "hash": "fab417767147",
+   "ms": 840
+  },
+  "road.tool.tee": {
+   "file": "road.tool.tee.mp3",
+   "hash": "944a5c32143a",
+   "ms": 960
+  },
   "road.variant.free": {
    "file": "road.variant.free.mp3",
    "hash": "cef64e495203",
@@ -596,6 +2071,281 @@
    "file": "road.variant.puzzle.mp3",
    "hash": "5632112347d8",
    "ms": 672
+  },
+  "shape.answer": {
+   "file": "shape.answer.mp3",
+   "hash": "dd1bec859638",
+   "ms": 1392
+  },
+  "shape.feat.circle": {
+   "file": "shape.feat.circle.mp3",
+   "hash": "0bcba7a6052b",
+   "ms": 2712
+  },
+  "shape.feat.heart": {
+   "file": "shape.feat.heart.mp3",
+   "hash": "8dbe83913c5c",
+   "ms": 3528
+  },
+  "shape.feat.rect": {
+   "file": "shape.feat.rect.mp3",
+   "hash": "6aaa971575b9",
+   "ms": 2712
+  },
+  "shape.feat.rtriangle": {
+   "file": "shape.feat.rtriangle.mp3",
+   "hash": "3d0bd1cf101f",
+   "ms": 3288
+  },
+  "shape.feat.semicircle": {
+   "file": "shape.feat.semicircle.mp3",
+   "hash": "1042a98e7246",
+   "ms": 3480
+  },
+  "shape.feat.square": {
+   "file": "shape.feat.square.mp3",
+   "hash": "6396df7435e7",
+   "ms": 3408
+  },
+  "shape.feat.star": {
+   "file": "shape.feat.star.mp3",
+   "hash": "1ddaac040cb9",
+   "ms": 2088
+  },
+  "shape.feat.triangle": {
+   "file": "shape.feat.triangle.mp3",
+   "hash": "202d77b0caae",
+   "ms": 1464
+  },
+  "shape.fit": {
+   "file": "shape.fit.mp3",
+   "hash": "29d6dbe875ce",
+   "ms": 1368
+  },
+  "shape.here": {
+   "file": "shape.here.mp3",
+   "hash": "46bc5bcd62a1",
+   "ms": 1440
+  },
+  "shape.here-find": {
+   "file": "shape.here-find.mp3",
+   "hash": "a4cd5101f158",
+   "ms": 2304
+  },
+  "shape.how": {
+   "file": "shape.how.mp3",
+   "hash": "0bb1777f42c9",
+   "ms": 3288
+  },
+  "shape.how-sample": {
+   "file": "shape.how-sample.mp3",
+   "hash": "75d14e88b7f1",
+   "ms": 3336
+  },
+  "shape.how-turn": {
+   "file": "shape.how-turn.mp3",
+   "hash": "f358dbda032e",
+   "ms": 3576
+  },
+  "shape.made.airplane": {
+   "file": "shape.made.airplane.mp3",
+   "hash": "ca4c719410d8",
+   "ms": 1440
+  },
+  "shape.made.balloon": {
+   "file": "shape.made.balloon.mp3",
+   "hash": "46894884174c",
+   "ms": 1440
+  },
+  "shape.made.butterfly": {
+   "file": "shape.made.butterfly.mp3",
+   "hash": "8cc64f9ada13",
+   "ms": 1368
+  },
+  "shape.made.cake": {
+   "file": "shape.made.cake.mp3",
+   "hash": "13e14844b5b0",
+   "ms": 1296
+  },
+  "shape.made.car": {
+   "file": "shape.made.car.mp3",
+   "hash": "09576c30b140",
+   "ms": 1272
+  },
+  "shape.made.carrot": {
+   "file": "shape.made.carrot.mp3",
+   "hash": "7c376a0acb1a",
+   "ms": 1368
+  },
+  "shape.made.castle": {
+   "file": "shape.made.castle.mp3",
+   "hash": "c9a736853475",
+   "ms": 1344
+  },
+  "shape.made.cat": {
+   "file": "shape.made.cat.mp3",
+   "hash": "8985edd19a4f",
+   "ms": 1200
+  },
+  "shape.made.chick": {
+   "file": "shape.made.chick.mp3",
+   "hash": "f072014906ab",
+   "ms": 1368
+  },
+  "shape.made.desk": {
+   "file": "shape.made.desk.mp3",
+   "hash": "255840d75392",
+   "ms": 1272
+  },
+  "shape.made.fish": {
+   "file": "shape.made.fish.mp3",
+   "hash": "dc0480eb262e",
+   "ms": 1416
+  },
+  "shape.made.flower": {
+   "file": "shape.made.flower.mp3",
+   "hash": "7350480f0382",
+   "ms": 1176
+  },
+  "shape.made.ghost": {
+   "file": "shape.made.ghost.mp3",
+   "hash": "64246088802d",
+   "ms": 1368
+  },
+  "shape.made.house": {
+   "file": "shape.made.house.mp3",
+   "hash": "17eed49afbc7",
+   "ms": 1176
+  },
+  "shape.made.icecream": {
+   "file": "shape.made.icecream.mp3",
+   "hash": "888465b3c169",
+   "ms": 1320
+  },
+  "shape.made.mountain": {
+   "file": "shape.made.mountain.mp3",
+   "hash": "c657a6e537f6",
+   "ms": 1176
+  },
+  "shape.made.mushroom": {
+   "file": "shape.made.mushroom.mp3",
+   "hash": "21ecdebbf4c4",
+   "ms": 1344
+  },
+  "shape.made.robot": {
+   "file": "shape.made.robot.mp3",
+   "hash": "8e51995cc3f0",
+   "ms": 1392
+  },
+  "shape.made.rocket": {
+   "file": "shape.made.rocket.mp3",
+   "hash": "cd5a9a46e97c",
+   "ms": 1440
+  },
+  "shape.made.ship": {
+   "file": "shape.made.ship.mp3",
+   "hash": "00466a640434",
+   "ms": 1176
+  },
+  "shape.made.snail": {
+   "file": "shape.made.snail.mp3",
+   "hash": "661d5da120e8",
+   "ms": 1632
+  },
+  "shape.made.snowman": {
+   "file": "shape.made.snowman.mp3",
+   "hash": "051aa30baab3",
+   "ms": 1584
+  },
+  "shape.made.tree": {
+   "file": "shape.made.tree.mp3",
+   "hash": "ec55f98c2482",
+   "ms": 1056
+  },
+  "shape.made.truck": {
+   "file": "shape.made.truck.mp3",
+   "hash": "8bd5d73ba887",
+   "ms": 1344
+  },
+  "shape.made.umbrella": {
+   "file": "shape.made.umbrella.mp3",
+   "hash": "cbeae358a1b0",
+   "ms": 1200
+  },
+  "shape.made.yacht": {
+   "file": "shape.made.yacht.mp3",
+   "hash": "41ca54b7e974",
+   "ms": 1296
+  },
+  "shape.name.circle": {
+   "file": "shape.name.circle.mp3",
+   "hash": "22b0cf1e0124",
+   "ms": 504
+  },
+  "shape.name.heart": {
+   "file": "shape.name.heart.mp3",
+   "hash": "cd48e8a8cd4f",
+   "ms": 672
+  },
+  "shape.name.rect": {
+   "file": "shape.name.rect.mp3",
+   "hash": "27ddc4c7d56a",
+   "ms": 960
+  },
+  "shape.name.rtriangle": {
+   "file": "shape.name.rtriangle.mp3",
+   "hash": "ebe12ece467d",
+   "ms": 1392
+  },
+  "shape.name.semicircle": {
+   "file": "shape.name.semicircle.mp3",
+   "hash": "d2642c110d30",
+   "ms": 600
+  },
+  "shape.name.square": {
+   "file": "shape.name.square.mp3",
+   "hash": "4681c88571da",
+   "ms": 720
+  },
+  "shape.name.star": {
+   "file": "shape.name.star.mp3",
+   "hash": "e332969c0762",
+   "ms": 552
+  },
+  "shape.name.triangle": {
+   "file": "shape.name.triangle.mp3",
+   "hash": "7da08b0e8508",
+   "ms": 864
+  },
+  "shape.pick-first": {
+   "file": "shape.pick-first.mp3",
+   "hash": "960659153fed",
+   "ms": 2064
+  },
+  "shape.q-make": {
+   "file": "shape.q-make.mp3",
+   "hash": "500a83e6211f",
+   "ms": 2088
+  },
+  "shape.q-same": {
+   "file": "shape.q-same.mp3",
+   "hash": "7041a6f5ded0",
+   "ms": 1944
+  },
+  "shape.q-sample": {
+   "file": "shape.q-sample.mp3",
+   "hash": "f4a261f2cd8d",
+   "ms": 2064
+  },
+  "shape.rotated": {
+   "file": "shape.rotated.mp3",
+   "hash": "75ee6b479cbb",
+   "ms": 1992
+  },
+  "shape.try-turn": {
+   "file": "shape.try-turn.mp3",
+   "hash": "53977785db1c",
+   "ms": 1536
   },
   "shop.answer": {
    "file": "shop.answer.mp3",
@@ -757,6 +2507,106 @@
    "hash": "fe09126a180b",
    "ms": 744
   },
+  "sort.and": {
+   "file": "sort.and.mp3",
+   "hash": "442b56e9c7a0",
+   "ms": 360
+  },
+  "sort.by-color": {
+   "file": "sort.by-color.mp3",
+   "hash": "80441c680e35",
+   "ms": 1200
+  },
+  "sort.by-kind": {
+   "file": "sort.by-kind.mp3",
+   "hash": "004cac730e5b",
+   "ms": 1368
+  },
+  "sort.how": {
+   "file": "sort.how.mp3",
+   "hash": "3a03688343b2",
+   "ms": 2904
+  },
+  "sort.is.animal": {
+   "file": "sort.is.animal.mp3",
+   "hash": "d024a444e818",
+   "ms": 1440
+  },
+  "sort.is.food": {
+   "file": "sort.is.food.mp3",
+   "hash": "65a1eae036cf",
+   "ms": 1464
+  },
+  "sort.is.green": {
+   "file": "sort.is.green.mp3",
+   "hash": "f06666fd6768",
+   "ms": 1224
+  },
+  "sort.is.red": {
+   "file": "sort.is.red.mp3",
+   "hash": "993c7671dea0",
+   "ms": 1224
+  },
+  "sort.is.vehicle": {
+   "file": "sort.is.vehicle.mp3",
+   "hash": "a23a23d8fb32",
+   "ms": 1416
+  },
+  "sort.is.yellow": {
+   "file": "sort.is.yellow.mp3",
+   "hash": "9c0ed6844ac2",
+   "ms": 1368
+  },
+  "sort.look-color": {
+   "file": "sort.look-color.mp3",
+   "hash": "160af4aadf77",
+   "ms": 1056
+  },
+  "sort.look-kind": {
+   "file": "sort.look-kind.mp3",
+   "hash": "18a00cc33a31",
+   "ms": 1224
+  },
+  "sort.pick-first": {
+   "file": "sort.pick-first.mp3",
+   "hash": "00547b40a11b",
+   "ms": 1752
+  },
+  "sort.then-color": {
+   "file": "sort.then-color.mp3",
+   "hash": "cb6b64e9d9f8",
+   "ms": 1992
+  },
+  "sort.val.animal": {
+   "file": "sort.val.animal.mp3",
+   "hash": "a267663f435c",
+   "ms": 768
+  },
+  "sort.val.food": {
+   "file": "sort.val.food.mp3",
+   "hash": "b3db7f4293e7",
+   "ms": 744
+  },
+  "sort.val.green": {
+   "file": "sort.val.green.mp3",
+   "hash": "24b171e0813e",
+   "ms": 576
+  },
+  "sort.val.red": {
+   "file": "sort.val.red.mp3",
+   "hash": "20eefe3b73e2",
+   "ms": 504
+  },
+  "sort.val.vehicle": {
+   "file": "sort.val.vehicle.mp3",
+   "hash": "2412a4b014b6",
+   "ms": 768
+  },
+  "sort.val.yellow": {
+   "file": "sort.val.yellow.mp3",
+   "hash": "c67f60482eca",
+   "ms": 648
+  },
   "title.compare": {
    "file": "title.compare.mp3",
    "hash": "a3a4e32e9c67",
@@ -801,6 +2651,116 @@
    "file": "title.trace.mp3",
    "hash": "b790553949b6",
    "ms": 1320
+  },
+  "trace.from-green": {
+   "file": "trace.from-green.mp3",
+   "hash": "bc35657eb68e",
+   "ms": 1848
+  },
+  "trace.hint.next": {
+   "file": "trace.hint.next.mp3",
+   "hash": "153158b9b7c1",
+   "ms": 2496
+  },
+  "trace.hint.resume": {
+   "file": "trace.hint.resume.mp3",
+   "hash": "a5608799a5ba",
+   "ms": 2304
+  },
+  "trace.hint.start": {
+   "file": "trace.hint.start.mp3",
+   "hash": "e7d9be3a1f00",
+   "ms": 2064
+  },
+  "trace.hint.watch": {
+   "file": "trace.hint.watch.mp3",
+   "hash": "410533da8de0",
+   "ms": 2136
+  },
+  "trace.letter.chi": {
+   "file": "trace.letter.chi.mp3",
+   "hash": "8bf2b55ffc63",
+   "ms": 1008
+  },
+  "trace.letter.he": {
+   "file": "trace.letter.he.mp3",
+   "hash": "529d0a698b7c",
+   "ms": 960
+  },
+  "trace.letter.hi": {
+   "file": "trace.letter.hi.mp3",
+   "hash": "2456eb3f157f",
+   "ms": 1032
+  },
+  "trace.letter.i": {
+   "file": "trace.letter.i.mp3",
+   "hash": "eef6f61105b6",
+   "ms": 984
+  },
+  "trace.letter.ko": {
+   "file": "trace.letter.ko.mp3",
+   "hash": "6219a769068c",
+   "ms": 984
+  },
+  "trace.letter.ku": {
+   "file": "trace.letter.ku.mp3",
+   "hash": "d14f8baad3ba",
+   "ms": 1008
+  },
+  "trace.letter.no": {
+   "file": "trace.letter.no.mp3",
+   "hash": "8b41f56df3a3",
+   "ms": 984
+  },
+  "trace.letter.ri": {
+   "file": "trace.letter.ri.mp3",
+   "hash": "154dcf5893f9",
+   "ms": 984
+  },
+  "trace.letter.ro": {
+   "file": "trace.letter.ro.mp3",
+   "hash": "b078f0dd451f",
+   "ms": 984
+  },
+  "trace.letter.ru": {
+   "file": "trace.letter.ru.mp3",
+   "hash": "a77092701037",
+   "ms": 984
+  },
+  "trace.letter.shi": {
+   "file": "trace.letter.shi.mp3",
+   "hash": "23dce62cac31",
+   "ms": 1104
+  },
+  "trace.letter.so": {
+   "file": "trace.letter.so.mp3",
+   "hash": "4d395fcf5b10",
+   "ms": 1080
+  },
+  "trace.letter.te": {
+   "file": "trace.letter.te.mp3",
+   "hash": "96ee66d18a9f",
+   "ms": 984
+  },
+  "trace.letter.tsu": {
+   "file": "trace.letter.tsu.mp3",
+   "hash": "2cb4c32ce6c3",
+   "ms": 1056
+  },
+  "trace.letter.u": {
+   "file": "trace.letter.u.mp3",
+   "hash": "9e858715f60f",
+   "ms": 960
+  },
+  "trace.prompt.line": {
+   "file": "trace.prompt.line.mp3",
+   "hash": "7775ddcb42a4",
+   "ms": 2544
+  },
+  "trace.prompt.maze": {
+   "file": "trace.prompt.maze.mp3",
+   "hash": "4971f35fdee6",
+   "ms": 2400
   },
   "trace.variant.letters": {
    "file": "trace.variant.letters.mp3",

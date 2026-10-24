@@ -1,0 +1,83 @@
+/* くらべっこ。描画領域は 100u × 48.25u（舞台の上 8u を除く） */
+.cmp {
+  position: absolute;
+  inset: 0;
+}
+.cmp-scene {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--u) * 100);
+  height: calc(var(--u) * 48.25);
+  pointer-events: none;
+  overflow: visible;
+}
+.cmp-card {
+  position: absolute;
+  padding: 0;
+}
+.cmp-card--static {
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+}
+.cmp-card--empty {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.5;
+}
+.cmp-slot {
+  position: absolute;
+  padding: 0;
+  border: var(--outline) dashed var(--ink-soft);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.cmp-tab {
+  position: absolute !important;
+  top: calc(var(--u) * 30);
+  height: calc(var(--u) * 7);
+}
+.cmp-same {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+}
+.cmp-same__pic {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 2);
+  fill: var(--wood);
+  stroke: var(--ink);
+  stroke-width: 0.8;
+}
+.cmp-bottom {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: calc(var(--u) * 1.5);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+}
+.cmp-bottom__space {
+  flex: 1;
+}
+.cmp-showcase {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.cmp-showcase__pic {
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+}
+.cmp-slot--done {
+  border-style: solid;
+  border-color: var(--leaf);
+  outline: calc(var(--u) * 0.6) solid var(--leaf);
+  outline-offset: calc(var(--u) * -0.9);
+}

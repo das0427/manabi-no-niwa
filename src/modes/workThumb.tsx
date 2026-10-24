@@ -1,21 +1,15 @@
 /**
  * 作品の縮小表示（がんばりノート・保護者画面の作品一覧）。
- * 各モードが自分の作品の描き方を登録する（なぞり・みち）。未登録なら絵だけ。
+ * 作品の種類ごとに、各モードが用意した縮小表示を使う。
  */
-import type { ReactElement } from 'react';
-import type { WorkKind, WorkRecord } from '../core/types';
+import type { WorkRecord } from '../core/types';
 import { Illust } from '../illust/Illust';
-
-type Renderer = (data: unknown) => ReactElement;
-const renderers: Partial<Record<WorkKind, Renderer>> = {};
-
-export function registerWorkRenderer(kind: WorkKind, r: Renderer): void {
-  renderers[kind] = r;
-}
+import { RoadThumb } from './road/thumb';
+import { TraceThumb } from './trace/thumb';
 
 export function WorkThumb({ work }: { work: WorkRecord }) {
-  const r = renderers[work.kind];
-  if (r) return r(work.data);
+  if (work.kind === 'road') return <RoadThumb data={work.data} />;
+  if (work.kind === 'trace') return <TraceThumb data={work.data} />;
   return (
     <Illust
       id={work.kind === 'trace' ? 'mode-trace' : 'mode-road'}

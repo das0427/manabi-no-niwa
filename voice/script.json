@@ -98,6 +98,110 @@
       "text": "だれが あそぶ？"
     },
     {
+      "key": "cmp.done.count",
+      "text": "かずを くらべたね"
+    },
+    {
+      "key": "cmp.done.length",
+      "text": "ながさを くらべたね"
+    },
+    {
+      "key": "cmp.done.length-count",
+      "text": "ながさと かずを くらべたね"
+    },
+    {
+      "key": "cmp.done.size",
+      "text": "おおきさを くらべたね"
+    },
+    {
+      "key": "cmp.hint.count",
+      "text": "かぞえて みよう"
+    },
+    {
+      "key": "cmp.hint.length",
+      "text": "はしを みてごらん"
+    },
+    {
+      "key": "cmp.hint.size",
+      "text": "おおきさを よく みてごらん"
+    },
+    {
+      "key": "cmp.hint2.count",
+      "text": "ひとつずつ せんで むすんだよ"
+    },
+    {
+      "key": "cmp.hint2.count5",
+      "text": "かずを かぞえたよ"
+    },
+    {
+      "key": "cmp.hint2.length",
+      "text": "はしに せんを ひいたよ"
+    },
+    {
+      "key": "cmp.hint2.size",
+      "text": "かさねて みると わかるよ"
+    },
+    {
+      "key": "cmp.intro.order",
+      "text": "タップした じゅんに ならぶよ"
+    },
+    {
+      "key": "cmp.intro.pick",
+      "text": "いいと おもう ほうを タップしてね"
+    },
+    {
+      "key": "cmp.intro.three",
+      "text": "ひだり みぎ おなじ から えらんでね"
+    },
+    {
+      "key": "cmp.or-same",
+      "text": "おなじ かも しれないよ"
+    },
+    {
+      "key": "cmp.q.count.less",
+      "text": "すくないのは どっち？"
+    },
+    {
+      "key": "cmp.q.count.more",
+      "text": "おおいのは どっち？"
+    },
+    {
+      "key": "cmp.q.length.less",
+      "text": "みじかいのは どっち？"
+    },
+    {
+      "key": "cmp.q.length.more",
+      "text": "ながいのは どっち？"
+    },
+    {
+      "key": "cmp.q.size.less",
+      "text": "ちいさいのは どっち？"
+    },
+    {
+      "key": "cmp.q.size.more",
+      "text": "おおきいのは どっち？"
+    },
+    {
+      "key": "cmp.q5.count.less",
+      "text": "すくない じゅんに ならべてね"
+    },
+    {
+      "key": "cmp.q5.count.more",
+      "text": "おおい じゅんに ならべてね"
+    },
+    {
+      "key": "cmp.q5.length.less",
+      "text": "みじかい じゅんに ならべてね"
+    },
+    {
+      "key": "cmp.q5.length.more",
+      "text": "ながい じゅんに ならべてね"
+    },
+    {
+      "key": "cmp.same-right",
+      "text": "おなじ だったね"
+    },
+    {
       "key": "count.hiki.0",
       "text": "ぜろひき"
     },
@@ -358,6 +462,918 @@
       "text": "すいか"
     },
     {
+      "key": "kana.char.a",
+      "text": "あ",
+      "yomi": "ア"
+    },
+    {
+      "key": "kana.char.e",
+      "text": "え",
+      "yomi": "エ"
+    },
+    {
+      "key": "kana.char.ha",
+      "text": "は",
+      "yomi": "ハ"
+    },
+    {
+      "key": "kana.char.hi",
+      "text": "ひ",
+      "yomi": "ヒ"
+    },
+    {
+      "key": "kana.char.hu",
+      "text": "ふ",
+      "yomi": "フ"
+    },
+    {
+      "key": "kana.char.i",
+      "text": "い",
+      "yomi": "イ"
+    },
+    {
+      "key": "kana.char.ka",
+      "text": "か",
+      "yomi": "カ"
+    },
+    {
+      "key": "kana.char.ki",
+      "text": "き",
+      "yomi": "キ"
+    },
+    {
+      "key": "kana.char.ko",
+      "text": "こ",
+      "yomi": "コ"
+    },
+    {
+      "key": "kana.char.ku",
+      "text": "く",
+      "yomi": "ク"
+    },
+    {
+      "key": "kana.char.ma",
+      "text": "ま",
+      "yomi": "マ"
+    },
+    {
+      "key": "kana.char.me",
+      "text": "め",
+      "yomi": "メ"
+    },
+    {
+      "key": "kana.char.mi",
+      "text": "み",
+      "yomi": "ミ"
+    },
+    {
+      "key": "kana.char.mo",
+      "text": "も",
+      "yomi": "モ"
+    },
+    {
+      "key": "kana.char.n",
+      "text": "ん",
+      "yomi": "ン"
+    },
+    {
+      "key": "kana.char.na",
+      "text": "な",
+      "yomi": "ナ"
+    },
+    {
+      "key": "kana.char.ne",
+      "text": "ね",
+      "yomi": "ネ"
+    },
+    {
+      "key": "kana.char.nu",
+      "text": "ぬ",
+      "yomi": "ヌ"
+    },
+    {
+      "key": "kana.char.o",
+      "text": "お",
+      "yomi": "オ"
+    },
+    {
+      "key": "kana.char.ri",
+      "text": "り",
+      "yomi": "リ"
+    },
+    {
+      "key": "kana.char.ru",
+      "text": "る",
+      "yomi": "ル"
+    },
+    {
+      "key": "kana.char.sa",
+      "text": "さ",
+      "yomi": "サ"
+    },
+    {
+      "key": "kana.char.si",
+      "text": "し",
+      "yomi": "シ"
+    },
+    {
+      "key": "kana.char.su",
+      "text": "す",
+      "yomi": "ス"
+    },
+    {
+      "key": "kana.char.ta",
+      "text": "た",
+      "yomi": "タ"
+    },
+    {
+      "key": "kana.char.to",
+      "text": "と",
+      "yomi": "ト"
+    },
+    {
+      "key": "kana.char.u",
+      "text": "う",
+      "yomi": "ウ"
+    },
+    {
+      "key": "kana.char.yo",
+      "text": "よ",
+      "yomi": "ヨ"
+    },
+    {
+      "key": "kana.dayo",
+      "text": "だよ"
+    },
+    {
+      "key": "kana.ex.a",
+      "text": "『あ』は ありの 『あ』",
+      "yomi": "「ア」は ありの 「ア」"
+    },
+    {
+      "key": "kana.ex.e",
+      "text": "『え』は えんぴつの 『え』",
+      "yomi": "「エ」は えんぴつの 「エ」"
+    },
+    {
+      "key": "kana.ex.ha",
+      "text": "『は』は はさみの 『は』",
+      "yomi": "「ハ」は はさみの 「ハ」"
+    },
+    {
+      "key": "kana.ex.hi",
+      "text": "『ひ』は ひよこの 『ひ』",
+      "yomi": "「ヒ」は ひよこの 「ヒ」"
+    },
+    {
+      "key": "kana.ex.hu",
+      "text": "『ふ』は ふねの 『ふ』",
+      "yomi": "「フ」は ふねの 「フ」"
+    },
+    {
+      "key": "kana.ex.i",
+      "text": "『い』は いぬの 『い』",
+      "yomi": "「イ」は いぬの 「イ」"
+    },
+    {
+      "key": "kana.ex.ka",
+      "text": "『か』は かめの 『か』",
+      "yomi": "「カ」は かめの 「カ」"
+    },
+    {
+      "key": "kana.ex.ki",
+      "text": "『き』は きつねの 『き』",
+      "yomi": "「キ」は きつねの 「キ」"
+    },
+    {
+      "key": "kana.ex.ku",
+      "text": "『く』は くまの 『く』",
+      "yomi": "「ク」は くまの 「ク」"
+    },
+    {
+      "key": "kana.ex.mi",
+      "text": "『み』は みかんの 『み』",
+      "yomi": "「ミ」は みかんの 「ミ」"
+    },
+    {
+      "key": "kana.ex.mo",
+      "text": "『も』は ももの 『も』",
+      "yomi": "「モ」は ももの 「モ」"
+    },
+    {
+      "key": "kana.ex.na",
+      "text": "『な』は なすの 『な』",
+      "yomi": "「ナ」は なすの 「ナ」"
+    },
+    {
+      "key": "kana.ex.ne",
+      "text": "『ね』は ねこの 『ね』",
+      "yomi": "「ネ」は ねこの 「ネ」"
+    },
+    {
+      "key": "kana.ex.o",
+      "text": "『お』は おにぎりの 『お』",
+      "yomi": "「オ」は おにぎりの 「オ」"
+    },
+    {
+      "key": "kana.ex.ri",
+      "text": "『り』は りんごの 『り』",
+      "yomi": "「リ」は りんごの 「リ」"
+    },
+    {
+      "key": "kana.ex.sa",
+      "text": "『さ』は さるの 『さ』",
+      "yomi": "「サ」は さるの 「サ」"
+    },
+    {
+      "key": "kana.ex.su",
+      "text": "『す』は すいかの 『す』",
+      "yomi": "「ス」は すいかの 「ス」"
+    },
+    {
+      "key": "kana.ex.ta",
+      "text": "『た』は たこの 『た』",
+      "yomi": "「タ」は たこの 「タ」"
+    },
+    {
+      "key": "kana.ex.to",
+      "text": "『と』は とりの 『と』",
+      "yomi": "「ト」は とりの 「ト」"
+    },
+    {
+      "key": "kana.ex.u",
+      "text": "『う』は うしの 『う』",
+      "yomi": "「ウ」は うしの 「ウ」"
+    },
+    {
+      "key": "kana.first.ant",
+      "text": "ありの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.apple",
+      "text": "りんごの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.bear",
+      "text": "くまの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.bird",
+      "text": "とりの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.cat",
+      "text": "ねこの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.chick",
+      "text": "ひよこの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.cow",
+      "text": "うしの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.dog",
+      "text": "いぬの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.eggplant",
+      "text": "なすの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.fox",
+      "text": "きつねの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.mikan",
+      "text": "みかんの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.monkey",
+      "text": "さるの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.octopus",
+      "text": "たこの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.onigiri",
+      "text": "おにぎりの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.peach",
+      "text": "ももの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.pencil",
+      "text": "えんぴつの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.scissors",
+      "text": "はさみの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.ship",
+      "text": "ふねの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.turtle",
+      "text": "かめの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.first.watermelon",
+      "text": "すいかの はじめの おとは どれかな"
+    },
+    {
+      "key": "kana.how-build",
+      "text": "もじを おして、ことばを つくろう"
+    },
+    {
+      "key": "kana.how-first",
+      "text": "えと なまえを きいて、はじめの おとの もじを おしてね"
+    },
+    {
+      "key": "kana.how-pick",
+      "text": "こえを きいて、あう もじを おしてね"
+    },
+    {
+      "key": "kana.listen-again",
+      "text": "もういちど きいてね"
+    },
+    {
+      "key": "kana.make.ant",
+      "text": "ありを つくろう"
+    },
+    {
+      "key": "kana.make.bear",
+      "text": "くまを つくろう"
+    },
+    {
+      "key": "kana.make.bird",
+      "text": "とりを つくろう"
+    },
+    {
+      "key": "kana.make.cat",
+      "text": "ねこを つくろう"
+    },
+    {
+      "key": "kana.make.chick",
+      "text": "ひよこを つくろう"
+    },
+    {
+      "key": "kana.make.cow",
+      "text": "うしを つくろう"
+    },
+    {
+      "key": "kana.make.dog",
+      "text": "いぬを つくろう"
+    },
+    {
+      "key": "kana.make.eggplant",
+      "text": "なすを つくろう"
+    },
+    {
+      "key": "kana.make.mikan",
+      "text": "みかんを つくろう"
+    },
+    {
+      "key": "kana.make.monkey",
+      "text": "さるを つくろう"
+    },
+    {
+      "key": "kana.make.octopus",
+      "text": "たこを つくろう"
+    },
+    {
+      "key": "kana.make.peach",
+      "text": "ももを つくろう"
+    },
+    {
+      "key": "kana.make.scissors",
+      "text": "はさみを つくろう"
+    },
+    {
+      "key": "kana.make.ship",
+      "text": "ふねを つくろう"
+    },
+    {
+      "key": "kana.make.turtle",
+      "text": "かめを つくろう"
+    },
+    {
+      "key": "kana.make.umbrella",
+      "text": "かさを つくろう"
+    },
+    {
+      "key": "kana.make.watermelon",
+      "text": "すいかを つくろう"
+    },
+    {
+      "key": "kana.nth.1",
+      "text": "いちばんめは"
+    },
+    {
+      "key": "kana.nth.2",
+      "text": "にばんめは"
+    },
+    {
+      "key": "kana.nth.3",
+      "text": "さんばんめは"
+    },
+    {
+      "key": "kana.q.a",
+      "text": "『あ』は どれかな",
+      "yomi": "「ア」は どれかな"
+    },
+    {
+      "key": "kana.q.e",
+      "text": "『え』は どれかな",
+      "yomi": "「エ」は どれかな"
+    },
+    {
+      "key": "kana.q.ha",
+      "text": "『は』は どれかな",
+      "yomi": "「ハ」は どれかな"
+    },
+    {
+      "key": "kana.q.hi",
+      "text": "『ひ』は どれかな",
+      "yomi": "「ヒ」は どれかな"
+    },
+    {
+      "key": "kana.q.hu",
+      "text": "『ふ』は どれかな",
+      "yomi": "「フ」は どれかな"
+    },
+    {
+      "key": "kana.q.i",
+      "text": "『い』は どれかな",
+      "yomi": "「イ」は どれかな"
+    },
+    {
+      "key": "kana.q.ka",
+      "text": "『か』は どれかな",
+      "yomi": "「カ」は どれかな"
+    },
+    {
+      "key": "kana.q.ki",
+      "text": "『き』は どれかな",
+      "yomi": "「キ」は どれかな"
+    },
+    {
+      "key": "kana.q.ku",
+      "text": "『く』は どれかな",
+      "yomi": "「ク」は どれかな"
+    },
+    {
+      "key": "kana.q.mi",
+      "text": "『み』は どれかな",
+      "yomi": "「ミ」は どれかな"
+    },
+    {
+      "key": "kana.q.mo",
+      "text": "『も』は どれかな",
+      "yomi": "「モ」は どれかな"
+    },
+    {
+      "key": "kana.q.na",
+      "text": "『な』は どれかな",
+      "yomi": "「ナ」は どれかな"
+    },
+    {
+      "key": "kana.q.ne",
+      "text": "『ね』は どれかな",
+      "yomi": "「ネ」は どれかな"
+    },
+    {
+      "key": "kana.q.o",
+      "text": "『お』は どれかな",
+      "yomi": "「オ」は どれかな"
+    },
+    {
+      "key": "kana.q.ri",
+      "text": "『り』は どれかな",
+      "yomi": "「リ」は どれかな"
+    },
+    {
+      "key": "kana.q.sa",
+      "text": "『さ』は どれかな",
+      "yomi": "「サ」は どれかな"
+    },
+    {
+      "key": "kana.q.su",
+      "text": "『す』は どれかな",
+      "yomi": "「ス」は どれかな"
+    },
+    {
+      "key": "kana.q.ta",
+      "text": "『た』は どれかな",
+      "yomi": "「タ」は どれかな"
+    },
+    {
+      "key": "kana.q.to",
+      "text": "『と』は どれかな",
+      "yomi": "「ト」は どれかな"
+    },
+    {
+      "key": "kana.q.u",
+      "text": "『う』は どれかな",
+      "yomi": "「ウ」は どれかな"
+    },
+    {
+      "key": "kana.slow.ant",
+      "text": "あ・り",
+      "yomi": "ア、リ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.apple",
+      "text": "り・ん・ご",
+      "yomi": "リ、ン、ゴ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.bear",
+      "text": "く・ま",
+      "yomi": "ク、マ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.bird",
+      "text": "と・り",
+      "yomi": "ト、リ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.cat",
+      "text": "ね・こ",
+      "yomi": "ネ、コ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.chick",
+      "text": "ひ・よ・こ",
+      "yomi": "ヒ、ヨ、コ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.cow",
+      "text": "う・し",
+      "yomi": "ウ、シ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.dog",
+      "text": "い・ぬ",
+      "yomi": "イ、ヌ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.eggplant",
+      "text": "な・す",
+      "yomi": "ナ、ス",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.fox",
+      "text": "き・つ・ね",
+      "yomi": "キ、ツ、ネ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.mikan",
+      "text": "み・か・ん",
+      "yomi": "ミ、カ、ン",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.monkey",
+      "text": "さ・る",
+      "yomi": "サ、ル",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.octopus",
+      "text": "た・こ",
+      "yomi": "タ、コ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.onigiri",
+      "text": "お・に・ぎ・り",
+      "yomi": "オ、ニ、ギ、リ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.peach",
+      "text": "も・も",
+      "yomi": "モ、モ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.pencil",
+      "text": "え・ん・ぴ・つ",
+      "yomi": "エ、ン、ピ、ツ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.scissors",
+      "text": "は・さ・み",
+      "yomi": "ハ、サ、ミ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.ship",
+      "text": "ふ・ね",
+      "yomi": "フ、ネ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.turtle",
+      "text": "か・め",
+      "yomi": "カ、メ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.slow.watermelon",
+      "text": "す・い・か",
+      "yomi": "ス、イ、カ",
+      "speed": 0.75
+    },
+    {
+      "key": "kana.split.ant",
+      "text": "あ・りの あ",
+      "yomi": "ア、リの 「ア」"
+    },
+    {
+      "key": "kana.split.apple",
+      "text": "り・ん・ごの り",
+      "yomi": "リ、ン、ゴの 「リ」"
+    },
+    {
+      "key": "kana.split.bear",
+      "text": "く・まの く",
+      "yomi": "ク、マの 「ク」"
+    },
+    {
+      "key": "kana.split.bird",
+      "text": "と・りの と",
+      "yomi": "ト、リの 「ト」"
+    },
+    {
+      "key": "kana.split.cat",
+      "text": "ね・この ね",
+      "yomi": "ネ、コの 「ネ」"
+    },
+    {
+      "key": "kana.split.chick",
+      "text": "ひ・よ・この ひ",
+      "yomi": "ヒ、ヨ、コの 「ヒ」"
+    },
+    {
+      "key": "kana.split.cow",
+      "text": "う・しの う",
+      "yomi": "ウ、シの 「ウ」"
+    },
+    {
+      "key": "kana.split.dog",
+      "text": "い・ぬの い",
+      "yomi": "イ、ヌの 「イ」"
+    },
+    {
+      "key": "kana.split.eggplant",
+      "text": "な・すの な",
+      "yomi": "ナ、スの 「ナ」"
+    },
+    {
+      "key": "kana.split.fox",
+      "text": "き・つ・ねの き",
+      "yomi": "キ、ツ、ネの 「キ」"
+    },
+    {
+      "key": "kana.split.mikan",
+      "text": "み・か・んの み",
+      "yomi": "ミ、カ、ンの 「ミ」"
+    },
+    {
+      "key": "kana.split.monkey",
+      "text": "さ・るの さ",
+      "yomi": "サ、ルの 「サ」"
+    },
+    {
+      "key": "kana.split.octopus",
+      "text": "た・この た",
+      "yomi": "タ、コの 「タ」"
+    },
+    {
+      "key": "kana.split.onigiri",
+      "text": "お・に・ぎ・りの お",
+      "yomi": "オ、ニ、ギ、リの 「オ」"
+    },
+    {
+      "key": "kana.split.peach",
+      "text": "も・もの も",
+      "yomi": "モ、モの 「モ」"
+    },
+    {
+      "key": "kana.split.pencil",
+      "text": "え・ん・ぴ・つの え",
+      "yomi": "エ、ン、ピ、ツの 「エ」"
+    },
+    {
+      "key": "kana.split.scissors",
+      "text": "は・さ・みの は",
+      "yomi": "ハ、サ、ミの 「ハ」"
+    },
+    {
+      "key": "kana.split.ship",
+      "text": "ふ・ねの ふ",
+      "yomi": "フ、ネの 「フ」"
+    },
+    {
+      "key": "kana.split.turtle",
+      "text": "か・めの か",
+      "yomi": "カ、メの 「カ」"
+    },
+    {
+      "key": "kana.split.watermelon",
+      "text": "す・い・かの す",
+      "yomi": "ス、イ、カの 「ス」"
+    },
+    {
+      "key": "kana.that-is",
+      "text": "それは"
+    },
+    {
+      "key": "math.add-came",
+      "text": "きたよ"
+    },
+    {
+      "key": "math.add-more",
+      "text": "もう"
+    },
+    {
+      "key": "math.add-none",
+      "text": "もう ひとつも こなかったよ"
+    },
+    {
+      "key": "math.all-splits",
+      "text": "ぜんぶの わけかたが でたね"
+    },
+    {
+      "key": "math.aru",
+      "text": "あるよ"
+    },
+    {
+      "key": "math.datta",
+      "text": "だったね。"
+    },
+    {
+      "key": "math.hint-count",
+      "text": "えを ひとつずつ かぞえて みよう"
+    },
+    {
+      "key": "math.hint-picture",
+      "text": "えで みて たしかめて みよう"
+    },
+    {
+      "key": "math.hint-split-1",
+      "text": "ゆびで さわって、おさらに のせて みよう"
+    },
+    {
+      "key": "math.hint-split-2",
+      "text": "どちらの おさらにも、ひとつは いれてね"
+    },
+    {
+      "key": "math.hint-together",
+      "text": "いっしょに かぞえて みよう"
+    },
+    {
+      "key": "math.ikutsu",
+      "text": "いくつ？"
+    },
+    {
+      "key": "math.intro-count",
+      "text": "えを ゆびで さわると、かぞえられるよ"
+    },
+    {
+      "key": "math.intro-formula",
+      "text": "しきの こたえを えらんでね。わからない ときは、えで みて みよう"
+    },
+    {
+      "key": "math.intro-split",
+      "text": "たべものを ゆびで さわると、おさらに のるよ。ふたつの おさらに わけて みよう"
+    },
+    {
+      "key": "math.item-ga.apple",
+      "text": "りんごが"
+    },
+    {
+      "key": "math.item-ga.banana",
+      "text": "バナナが"
+    },
+    {
+      "key": "math.item-ga.egg",
+      "text": "たまごが"
+    },
+    {
+      "key": "math.item-ga.mikan",
+      "text": "みかんが"
+    },
+    {
+      "key": "math.item-ga.strawberry",
+      "text": "いちごが"
+    },
+    {
+      "key": "math.item-wa.apple",
+      "text": "りんごは"
+    },
+    {
+      "key": "math.item-wa.banana",
+      "text": "バナナは"
+    },
+    {
+      "key": "math.item-wa.egg",
+      "text": "たまごは"
+    },
+    {
+      "key": "math.item-wa.mikan",
+      "text": "みかんは"
+    },
+    {
+      "key": "math.item-wa.strawberry",
+      "text": "いちごは"
+    },
+    {
+      "key": "math.ko-to.1",
+      "text": "いっこと"
+    },
+    {
+      "key": "math.ko-to.2",
+      "text": "にこと"
+    },
+    {
+      "key": "math.ko-to.3",
+      "text": "さんこと"
+    },
+    {
+      "key": "math.ko-to.4",
+      "text": "よんこと"
+    },
+    {
+      "key": "math.kocchi",
+      "text": "こっちに"
+    },
+    {
+      "key": "math.minus",
+      "text": "ひく"
+    },
+    {
+      "key": "math.none",
+      "text": "ひとつも ないよ"
+    },
+    {
+      "key": "math.other-split",
+      "text": "ほかの わけかたも ある かな？"
+    },
+    {
+      "key": "math.plus",
+      "text": "たす"
+    },
+    {
+      "key": "math.q-all",
+      "text": "ぜんぶで なんこ？"
+    },
+    {
+      "key": "math.q-other",
+      "text": "あっちは なんこ？"
+    },
+    {
+      "key": "math.q-rest",
+      "text": "のこりは なんこ？"
+    },
+    {
+      "key": "math.q-split",
+      "text": "ふたつの おさらに わけよう"
+    },
+    {
+      "key": "math.same-split",
+      "text": "さっきと おなじ わけかただね"
+    },
+    {
+      "key": "math.split-need",
+      "text": "ぜんぶ のせて、ふたつの おさらに いれてね"
+    },
+    {
+      "key": "math.tabeta",
+      "text": "たべたよ"
+    },
+    {
+      "key": "math.to",
+      "text": "と"
+    },
+    {
       "key": "math.variant.add",
       "text": "たす"
     },
@@ -376,6 +1392,232 @@
     {
       "key": "math.variant.sub",
       "text": "ひく"
+    },
+    {
+      "key": "math.wa",
+      "text": "は",
+      "yomi": "わ"
+    },
+    {
+      "key": "math.wa-q",
+      "text": "は？",
+      "yomi": "わ"
+    },
+    {
+      "key": "math.zenbu",
+      "text": "ぜんぶで"
+    },
+    {
+      "key": "mem.answer",
+      "text": "こたえは これだよ"
+    },
+    {
+      "key": "mem.first.airplane",
+      "text": "ひこうきが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.ant",
+      "text": "ありが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.apple",
+      "text": "りんごが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.ball",
+      "text": "ボールが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.banana",
+      "text": "バナナが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.bear",
+      "text": "くまが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.bicycle",
+      "text": "じてんしゃが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.bird",
+      "text": "とりが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.bread",
+      "text": "パンが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.bus-yellow",
+      "text": "バスが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.car-red",
+      "text": "くるまが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.carrot",
+      "text": "にんじんが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.cat",
+      "text": "ねこが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.chick",
+      "text": "ひよこが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.cow",
+      "text": "うしが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.cucumber",
+      "text": "きゅうりが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.dog",
+      "text": "いぬが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.egg",
+      "text": "たまごが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.eggplant",
+      "text": "なすが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.elephant",
+      "text": "ぞうが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.flower",
+      "text": "おはなが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.fox",
+      "text": "きつねが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.frog",
+      "text": "かえるが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.green-pepper",
+      "text": "ピーマンが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.leaf",
+      "text": "はっぱが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.lemon",
+      "text": "レモンが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.mikan",
+      "text": "みかんが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.monkey",
+      "text": "さるが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.octopus",
+      "text": "たこが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.onigiri",
+      "text": "おにぎりが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.peach",
+      "text": "ももが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.pencil",
+      "text": "えんぴつが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.rabbit",
+      "text": "うさぎが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.scissors",
+      "text": "はさみが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.ship",
+      "text": "ふねが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.strawberry",
+      "text": "いちごが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.tomato",
+      "text": "トマトが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.train",
+      "text": "でんしゃが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.turtle",
+      "text": "かめが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.umbrella",
+      "text": "かさが いちばん だったよ"
+    },
+    {
+      "key": "mem.first.watermelon",
+      "text": "すいかが いちばん だったよ"
+    },
+    {
+      "key": "mem.group.animal",
+      "text": "どうぶつ だったよ"
+    },
+    {
+      "key": "mem.group.food",
+      "text": "たべもの だったよ"
+    },
+    {
+      "key": "mem.group.thing",
+      "text": "もの だったよ"
+    },
+    {
+      "key": "mem.group.vehicle",
+      "text": "のりもの だったよ"
+    },
+    {
+      "key": "mem.hint-review",
+      "text": "もういちど みても いいよ"
+    },
+    {
+      "key": "mem.look",
+      "text": "よく みてね。おぼえたら おぼえたを おしてね"
+    },
+    {
+      "key": "mem.look-again",
+      "text": "もういちど よく みてね"
+    },
+    {
+      "key": "mem.order",
+      "text": "じゅんばんに ならべよう"
+    },
+    {
+      "key": "mem.where",
+      "text": "どこに あったかな"
+    },
+    {
+      "key": "mem.which",
+      "text": "どれだったかな"
+    },
+    {
+      "key": "mem.which2",
+      "text": "どれと どれだったかな"
     },
     {
       "key": "num.0",
@@ -470,12 +1712,300 @@
       "text": "さいごまで なぞれたね"
     },
     {
+      "key": "road.arrived",
+      "text": "にんじんに ついたよ"
+    },
+    {
+      "key": "road.decorated",
+      "text": "みちを かざったよ"
+    },
+    {
+      "key": "road.free-intro",
+      "text": "すきな みちを つくろう。できたら かざるを おしてね"
+    },
+    {
+      "key": "road.free-prompt",
+      "text": "すきな みちを つくろう"
+    },
+    {
+      "key": "road.free-stopped",
+      "text": "ここで とまったよ。つづきを つくって みよう"
+    },
+    {
+      "key": "road.hint-start",
+      "text": "いえから にんじんまで、みちを つなげて みよう"
+    },
+    {
+      "key": "road.hint1",
+      "text": "うさぎが とまった ところから つづきを つくろう"
+    },
+    {
+      "key": "road.hint2",
+      "text": "ここを つなぐと よさそうだよ"
+    },
+    {
+      "key": "road.how1",
+      "text": "みちを えらんで、あいている ますを タップしてね"
+    },
+    {
+      "key": "road.how2",
+      "text": "おいた みちを タップすると、まわるよ"
+    },
+    {
+      "key": "road.how3",
+      "text": "できたら しゅっぱつを おしてね"
+    },
+    {
+      "key": "road.intro",
+      "text": "うさぎさんが にんじんの ところへ いくよ。みちを つくろう"
+    },
+    {
+      "key": "road.prompt",
+      "text": "みちを つなごう"
+    },
+    {
+      "key": "road.tool.corner",
+      "text": "まがりかど"
+    },
+    {
+      "key": "road.tool.erase",
+      "text": "けす"
+    },
+    {
+      "key": "road.tool.straight",
+      "text": "まっすぐ"
+    },
+    {
+      "key": "road.tool.tee",
+      "text": "わかれみち"
+    },
+    {
       "key": "road.variant.free",
       "text": "じゆうに つくる"
     },
     {
       "key": "road.variant.puzzle",
       "text": "もんだい"
+    },
+    {
+      "key": "shape.answer",
+      "text": "こたえは これだよ"
+    },
+    {
+      "key": "shape.feat.circle",
+      "text": "まるい かたちだよ。かどは ないね"
+    },
+    {
+      "key": "shape.feat.heart",
+      "text": "まるい ところが ふたつ。したは とがっているよ"
+    },
+    {
+      "key": "shape.feat.rect",
+      "text": "かどが よっつ。ながい へんが あるよ"
+    },
+    {
+      "key": "shape.feat.rtriangle",
+      "text": "かどが みっつ。ひとつは しかくい かどだよ"
+    },
+    {
+      "key": "shape.feat.semicircle",
+      "text": "はんぶんの まるだよ。まっすぐな へんが あるよ"
+    },
+    {
+      "key": "shape.feat.square",
+      "text": "かどが よっつ。どの へんも おなじ ながさだよ"
+    },
+    {
+      "key": "shape.feat.star",
+      "text": "とがった かどが いつつ あるよ"
+    },
+    {
+      "key": "shape.feat.triangle",
+      "text": "かどが みっつ あるよ"
+    },
+    {
+      "key": "shape.fit",
+      "text": "ぴったり はいったね"
+    },
+    {
+      "key": "shape.here",
+      "text": "ここに いれて みよう"
+    },
+    {
+      "key": "shape.here-find",
+      "text": "ここに はいる かたちを さがそう"
+    },
+    {
+      "key": "shape.how",
+      "text": "かたちを おして、いれたい ところを おしてね"
+    },
+    {
+      "key": "shape.how-sample",
+      "text": "みほんを みて、おなじに なるように いれてね"
+    },
+    {
+      "key": "shape.how-turn",
+      "text": "まわすを おすと、かたちの むきが かわるよ"
+    },
+    {
+      "key": "shape.made.airplane",
+      "text": "ひこうきが できたね"
+    },
+    {
+      "key": "shape.made.balloon",
+      "text": "ふうせんが できたね"
+    },
+    {
+      "key": "shape.made.butterfly",
+      "text": "ちょうちょが できたね"
+    },
+    {
+      "key": "shape.made.cake",
+      "text": "ケーキが できたね"
+    },
+    {
+      "key": "shape.made.car",
+      "text": "くるまが できたね"
+    },
+    {
+      "key": "shape.made.carrot",
+      "text": "にんじんが できたね"
+    },
+    {
+      "key": "shape.made.castle",
+      "text": "おしろが できたね"
+    },
+    {
+      "key": "shape.made.cat",
+      "text": "ねこが できたね"
+    },
+    {
+      "key": "shape.made.chick",
+      "text": "ひよこが できたね"
+    },
+    {
+      "key": "shape.made.desk",
+      "text": "つくえが できたね"
+    },
+    {
+      "key": "shape.made.fish",
+      "text": "さかなが できたね"
+    },
+    {
+      "key": "shape.made.flower",
+      "text": "はなが できたね"
+    },
+    {
+      "key": "shape.made.ghost",
+      "text": "おばけが できたね"
+    },
+    {
+      "key": "shape.made.house",
+      "text": "いえが できたね"
+    },
+    {
+      "key": "shape.made.icecream",
+      "text": "アイスが できたね"
+    },
+    {
+      "key": "shape.made.mountain",
+      "text": "やまが できたね"
+    },
+    {
+      "key": "shape.made.mushroom",
+      "text": "きのこが できたね"
+    },
+    {
+      "key": "shape.made.robot",
+      "text": "ロボットが できたね"
+    },
+    {
+      "key": "shape.made.rocket",
+      "text": "ロケットが できたね"
+    },
+    {
+      "key": "shape.made.ship",
+      "text": "ふねが できたね"
+    },
+    {
+      "key": "shape.made.snail",
+      "text": "かたつむりが できたね"
+    },
+    {
+      "key": "shape.made.snowman",
+      "text": "ゆきだるまが できたね"
+    },
+    {
+      "key": "shape.made.tree",
+      "text": "きが できたね"
+    },
+    {
+      "key": "shape.made.truck",
+      "text": "トラックが できたね"
+    },
+    {
+      "key": "shape.made.umbrella",
+      "text": "かさが できたね"
+    },
+    {
+      "key": "shape.made.yacht",
+      "text": "ヨットが できたね"
+    },
+    {
+      "key": "shape.name.circle",
+      "text": "まる"
+    },
+    {
+      "key": "shape.name.heart",
+      "text": "ハート"
+    },
+    {
+      "key": "shape.name.rect",
+      "text": "ながしかく"
+    },
+    {
+      "key": "shape.name.rtriangle",
+      "text": "ちょっかくさんかく"
+    },
+    {
+      "key": "shape.name.semicircle",
+      "text": "はんえん"
+    },
+    {
+      "key": "shape.name.square",
+      "text": "しかく"
+    },
+    {
+      "key": "shape.name.star",
+      "text": "ほし"
+    },
+    {
+      "key": "shape.name.triangle",
+      "text": "さんかく"
+    },
+    {
+      "key": "shape.pick-first",
+      "text": "さきに かたちを えらんでね"
+    },
+    {
+      "key": "shape.q-make",
+      "text": "かたちを いれて えを つくろう"
+    },
+    {
+      "key": "shape.q-same",
+      "text": "おなじ かたちは どれかな"
+    },
+    {
+      "key": "shape.q-sample",
+      "text": "みほんと おなじ えを つくろう"
+    },
+    {
+      "key": "shape.rotated",
+      "text": "むきを かえたら はいったね"
+    },
+    {
+      "key": "shape.try-turn",
+      "text": "むきを かえて みよう"
     },
     {
       "key": "shop.answer",
@@ -606,6 +2136,86 @@
       "text": "ぜんぶで"
     },
     {
+      "key": "sort.and",
+      "text": "と"
+    },
+    {
+      "key": "sort.by-color",
+      "text": "いろで わけよう"
+    },
+    {
+      "key": "sort.by-kind",
+      "text": "なかまで わけよう"
+    },
+    {
+      "key": "sort.how",
+      "text": "えを タップして、はこを タップしてね"
+    },
+    {
+      "key": "sort.is.animal",
+      "text": "これは どうぶつ だね"
+    },
+    {
+      "key": "sort.is.food",
+      "text": "これは たべもの だね"
+    },
+    {
+      "key": "sort.is.green",
+      "text": "これは みどり だね"
+    },
+    {
+      "key": "sort.is.red",
+      "text": "これは あか だね"
+    },
+    {
+      "key": "sort.is.vehicle",
+      "text": "これは のりもの だね"
+    },
+    {
+      "key": "sort.is.yellow",
+      "text": "これは きいろ だね"
+    },
+    {
+      "key": "sort.look-color",
+      "text": "いろを みてね"
+    },
+    {
+      "key": "sort.look-kind",
+      "text": "なかまを みてね"
+    },
+    {
+      "key": "sort.pick-first",
+      "text": "さきに えを タップしてね"
+    },
+    {
+      "key": "sort.then-color",
+      "text": "こんどは いろで わけなおそう"
+    },
+    {
+      "key": "sort.val.animal",
+      "text": "どうぶつ"
+    },
+    {
+      "key": "sort.val.food",
+      "text": "たべもの"
+    },
+    {
+      "key": "sort.val.green",
+      "text": "みどり"
+    },
+    {
+      "key": "sort.val.red",
+      "text": "あか"
+    },
+    {
+      "key": "sort.val.vehicle",
+      "text": "のりもの"
+    },
+    {
+      "key": "sort.val.yellow",
+      "text": "きいろ"
+    },
+    {
       "key": "title.compare",
       "text": "くらべっこ"
     },
@@ -640,6 +2250,94 @@
     {
       "key": "title.trace",
       "text": "なぞって あそぼう"
+    },
+    {
+      "key": "trace.from-green",
+      "text": "みどりの まるから かこう"
+    },
+    {
+      "key": "trace.hint.next",
+      "text": "つぎの みどりの まるから はじめよう"
+    },
+    {
+      "key": "trace.hint.resume",
+      "text": "とまった ところから つづけよう"
+    },
+    {
+      "key": "trace.hint.start",
+      "text": "みどりの まるから はじめよう"
+    },
+    {
+      "key": "trace.hint.watch",
+      "text": "おてほんを もういちど みてね"
+    },
+    {
+      "key": "trace.letter.chi",
+      "text": "ちを なぞろう"
+    },
+    {
+      "key": "trace.letter.he",
+      "text": "へを なぞろう"
+    },
+    {
+      "key": "trace.letter.hi",
+      "text": "ひを なぞろう"
+    },
+    {
+      "key": "trace.letter.i",
+      "text": "いを なぞろう"
+    },
+    {
+      "key": "trace.letter.ko",
+      "text": "こを なぞろう"
+    },
+    {
+      "key": "trace.letter.ku",
+      "text": "くを なぞろう"
+    },
+    {
+      "key": "trace.letter.no",
+      "text": "のを なぞろう"
+    },
+    {
+      "key": "trace.letter.ri",
+      "text": "りを なぞろう"
+    },
+    {
+      "key": "trace.letter.ro",
+      "text": "ろを なぞろう"
+    },
+    {
+      "key": "trace.letter.ru",
+      "text": "るを なぞろう"
+    },
+    {
+      "key": "trace.letter.shi",
+      "text": "しを なぞろう"
+    },
+    {
+      "key": "trace.letter.so",
+      "text": "そを なぞろう"
+    },
+    {
+      "key": "trace.letter.te",
+      "text": "てを なぞろう"
+    },
+    {
+      "key": "trace.letter.tsu",
+      "text": "つを なぞろう"
+    },
+    {
+      "key": "trace.letter.u",
+      "text": "うを なぞろう"
+    },
+    {
+      "key": "trace.prompt.line",
+      "text": "みどりの まるから ほしまで なぞろう"
+    },
+    {
+      "key": "trace.prompt.maze",
+      "text": "みちを とおって ほしまで いこう"
     },
     {
       "key": "trace.variant.letters",

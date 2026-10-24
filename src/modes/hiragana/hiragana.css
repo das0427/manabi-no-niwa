@@ -1,0 +1,244 @@
+﻿/* ひらがな。舞台の下部 100u × 48.25u を使う */
+.hira {
+  position: absolute;
+  inset: 0;
+}
+
+/* 音が出ない環境: 問題文を大きな文字で出す */
+.hira-bigtext {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 0.4);
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 4.6);
+  line-height: 1.2;
+}
+.hira-parent-note {
+  position: absolute;
+  left: calc(var(--u) * 13);
+  right: calc(var(--u) * 13);
+  bottom: calc(var(--u) * 1.2);
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-small);
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* ---- 選ぶ（H1〜H3） ---- */
+.hira-choices {
+  position: absolute;
+  top: calc(var(--u) * 8);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 6);
+}
+.hira--first .hira-choices {
+  left: calc(var(--u) * 42);
+  right: calc(var(--u) * 4);
+}
+.hira-choices--3 {
+  gap: calc(var(--u) * 5);
+}
+.hira-card {
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 20);
+}
+.hira-choices--3 .hira-card {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+}
+.hira-card .choice__letter {
+  font-size: calc(var(--u) * 12);
+}
+.hira-choices.is-waiting .hira-card:disabled {
+  opacity: 0.5;
+}
+.hira-picture {
+  position: absolute;
+  left: calc(var(--u) * 12);
+  top: calc(var(--u) * 7);
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
+  padding: calc(var(--u) * 1);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.hira-picture__illust {
+  width: 100%;
+  height: 100%;
+}
+
+/* ヒントの手がかり（例語の絵・言葉の区切り） */
+.hira-clue {
+  position: absolute;
+  left: calc(var(--u) * 20);
+  bottom: calc(var(--u) * 7.5);
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+.hira-clue__illust {
+  width: calc(var(--u) * 10);
+  height: calc(var(--u) * 10);
+}
+.hira-clue__label {
+  font-size: var(--text-label);
+}
+.hira-split {
+  position: absolute;
+  left: calc(var(--u) * 14);
+  bottom: calc(var(--u) * 7.5);
+  display: flex;
+  gap: calc(var(--u) * 1.6);
+}
+.hira-split__char {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-family: var(--font-letter);
+  font-weight: 600;
+  font-size: calc(var(--u) * 5);
+  line-height: 1;
+}
+.hira-bubble-slot {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+}
+.hira-bubble-slot--pick,
+.hira-bubble-slot--first {
+  left: calc(var(--u) * 42);
+  right: calc(var(--u) * 4);
+  bottom: calc(var(--u) * 7.5);
+  justify-content: center;
+}
+.hira-bubble-slot--build {
+  left: calc(var(--u) * 20);
+  right: calc(var(--u) * 20);
+  top: calc(var(--u) * 0.2);
+  justify-content: center;
+}
+.hira--pick .hira-bubble-slot {
+  left: calc(var(--u) * 30);
+  right: calc(var(--u) * 4);
+}
+
+/* ---- 言葉を作る（H4・H5） ---- */
+.hira-picture--build {
+  left: calc(var(--u) * 6);
+  top: calc(var(--u) * 9);
+  width: calc(var(--u) * 15);
+  height: calc(var(--u) * 15);
+  padding: calc(var(--u) * 0.6);
+}
+.hira-cells {
+  position: absolute;
+  left: calc(var(--u) * 27);
+  top: calc(var(--u) * 10);
+  display: flex;
+  gap: calc(var(--u) * 2);
+}
+.hira-cell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+  border: var(--outline) dashed var(--ink-soft);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+.hira-cell.is-filled {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--white);
+}
+.hira-cell[data-state='wrong'] {
+  border-style: solid;
+  border-color: var(--ink);
+  background: var(--white);
+}
+.hira-cell__letter {
+  font-family: var(--font-letter);
+  font-weight: 600;
+  font-size: calc(var(--u) * 9);
+  line-height: 1;
+}
+.hira-clue--build {
+  left: auto;
+  right: calc(var(--u) * 5);
+  top: calc(var(--u) * 10);
+  bottom: auto;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.4);
+}
+.hira-tiles {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 27.5);
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.hira-tiles .hira-card {
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
+}
+.hira-tiles .hira-card .choice__letter {
+  font-size: calc(var(--u) * 10);
+}
+.hira-tile-slot {
+  display: block;
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
+}
+
+/* ---- 下の操作 ---- */
+.hira-bottom {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: calc(var(--u) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ---- 完了画面の並び ---- */
+.hira-showcase {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.hira-showcase__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+}
+.hira-showcase__pic {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+}
+.hira-showcase__letter {
+  font-family: var(--font-letter);
+  font-weight: 600;
+  font-size: calc(var(--u) * 7);
+  line-height: 1;
+}
+
+.hira-showcase__letter.is-word {
+  font-size: calc(var(--u) * 5);
+}

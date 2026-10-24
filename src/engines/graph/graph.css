@@ -67,6 +67,50 @@
   stroke: var(--ink);
   stroke-width: 3;
 }
+/* 2本目の折れ線: 破線＋■（白）。1本目（実線＋●）と線の種類・点の形で分ける */
+.gr-line--2 {
+  stroke-dasharray: 14 8;
+}
+.gr-dot2 {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+/* 凡例 */
+.gr-series {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.4) calc(var(--u) * 2.4);
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+}
+.gr-series li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+}
+/* 2本の折れ線: 単位と凡例を同じ行に（高さを使わない） */
+.gr-chart--series {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: end;
+}
+.gr-chart--series > .gr-title,
+.gr-chart--series > .gr-xy {
+  grid-column: 1 / -1;
+}
+.gr-chart--series > .gr-series {
+  justify-content: flex-end;
+}
+.gr-series__mark {
+  width: calc(var(--u) * 5.4);
+  height: calc(var(--u) * 2);
+  overflow: visible;
+}
 /* 正答（revealed）: 点線の輪郭 */
 .gr-ghost {
   fill: none;
@@ -174,9 +218,19 @@
 .gr-ratio--band {
   flex-direction: column;
 }
+/* 円: 22u まで。横がせまいときは 16u まで縮める（凡例の名前を折り返さない） */
 .gr-pie {
   width: calc(var(--u) * 22);
-  height: calc(var(--u) * 22);
+  min-width: calc(var(--u) * 16);
+  height: auto;
+  aspect-ratio: 1;
+  flex: 0 1 auto;
+}
+.gr-ratio .gr-legend {
+  flex-shrink: 0;
+}
+.gr-legend li {
+  white-space: nowrap;
 }
 .gr-band {
   width: 100%;
@@ -312,6 +366,14 @@
 .eng-graph__nummain {
   flex-direction: row;
   gap: calc(var(--u) * 2.4);
+}
+/* 数を答える問題: 図の横に欄が並ぶので、図を少し低く（縦 16u）・項目名を 1.8u（小3〜の補助の文字の最小）にして
+   作業領域（26.25u）に収める。2本の折れ線は凡例の分も入る */
+.eng-graph__nummain .gr-xy {
+  max-width: calc(var(--u) * 16 * 720 / 360);
+}
+.eng-graph__nummain .gr-xlabel {
+  font-size: calc(var(--u) * 1.8);
 }
 .eng-graph__nummain .mnp-fields {
   flex-direction: column;

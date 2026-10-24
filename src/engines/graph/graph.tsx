@@ -43,6 +43,13 @@ export interface GraphData {
   illust?: string;
   /** グラフの題 */
   title?: RichText;
+  /**
+   * 折れ線の2本目（kind 'line' の読む問題だけ）。凡例を出す。
+   * 1本目は実線と ●、2本目は破線と ■（色だけで区別しない: DESINGN 17章）
+   */
+  series2?: { name: RichText; values: number[] };
+  /** 1本目の名前（series2 があるとき凡例に出す。必須） */
+  name?: RichText;
 }
 
 export type GraphTask =
@@ -151,7 +158,7 @@ export function judgeGraph(item: GraphItem, res: GraphResponse): Judgement {
 function axisOf(d: GraphData): { min: number; max: number; step: number; n: number } {
   const step = d.scaleStep ?? 1;
   const min = d.kind === 'line' ? (d.min ?? 0) : 0;
-  const rawMax = d.max ?? Math.max(...d.values, min + step);
+  const rawMax = d.max ?? Math.max(...d.values, ...(d.series2?.values ?? []), min + step);
   const n = Math.max(1, Math.ceil((rawMax - min) / step - EPS));
   return { min, max: min + n * step, step, n };
 }
@@ -179,6 +186,21 @@ export function checkGraph(item: GraphItem): string[] {
   }
   if (d.kind === 'table' && item.task.kind === 'make')
     errs.push('表は作る問題にしない（表の空欄は number で）');
+  if (d.series2) {
+    const s = d.series2;
+    if (d.kind !== 'line') errs.push('series2（2本目）は折れ線（line）だけ');
+    if (item.task.kind === 'make') errs.push('2本の折れ線は作る問題にしない（読むだけ）');
+    if (s.values.length !== d.labels.length) errs.push('2本目の値の数が項目の数と違う');
+    if (s.values.some((v) => !Number.isFinite(v))) errs.push('2本目の値が数でない');
+    if (d.name === undefined || plainText(d.name) === '' || plainText(s.name) === '')
+      errs.push('2本の折れ線は 1本目の name と 2本目の name（凡例）を書く');
+    else if (plainText(d.name) === plainText(s.name)) errs.push('2本の折れ線の名前が同じ');
+    if (d.kind === 'line') {
+      const ax = axisOf(d);
+      if (s.values.some((v) => v < ax.min - EPS || v > ax.max + EPS))
+        errs.push('2本目の値が目盛りの範囲の外');
+    }
+  }
   const t = item.task;
   if (t.kind === 'choice') {
     const nCorrect = t.options.filter((o) => o.correct).length;
@@ -205,6 +227,12 @@ export function checkGraph(item: GraphItem): string[] {
         !t.keys?.includes('decimal')
       )
         errs.push('小数の答えなのに小数点キーが無い');
+      // 図のエンジンの数字キー（NumPad）は 10字まで
+      if (f.maxLength !== undefined || f.digitGroup !== undefined)
+        errs.push('graph の欄では maxLength・digitGroup を使えない（10字まで）');
+      const a = f.answer;
+      if ((a.kind === 'fraction' ? `${a.num}/${a.den}` : String(a.value)).length > 10)
+        errs.push('graph の欄の答えは 10字まで');
     }
     for (const w of t.wrongAnswers ?? []) {
       const parts = w.value.split('|');
@@ -238,6 +266,16 @@ export function checkGraph(item: GraphItem): string[] {
   return errs;
 }
 
+/** 欄の答えの値（欄の後ろに単位 unit があるときは quantity の単位を重ねない） */
+function fieldValueText(f: NumberField): string {
+  const a = f.answer;
+  return a.kind === 'fraction'
+    ? `[[${a.num}/${a.den}]]`
+    : a.kind === 'quantity' && !f.unit
+      ? `${a.value}${a.unit}`
+      : String(a.value);
+}
+
 export function graphAnswerText(item: GraphItem): RichText {
   const t = item.task;
   if (t.kind === 'choice')
@@ -248,13 +286,7 @@ export function graphAnswerText(item: GraphItem): RichText {
   if (t.kind === 'number')
     return t.fields
       .map((f) => {
-        const a = f.answer;
-        const v =
-          a.kind === 'fraction'
-            ? `[[${a.num}/${a.den}]]`
-            : a.kind === 'quantity'
-              ? `${a.value}${a.unit}`
-              : String(a.value);
+        const v = fieldValueText(f) + (f.unit ? ` ${f.unit}` : '');
         return f.label ? `${f.label} ${v}` : v;
       })
       .join('、');
@@ -376,6 +408,25 @@ function XYChart({
               .join(' ')}
             className="gr-line"
           />
+          {/* 2本目（読むだけ）: 破線と ■。1本目の ● はこの後に描いて上に重ねる */}
+          {d.series2 && item.task.kind !== 'make' ? (
+            <g data-testid="series2">
+              <polyline
+                points={d.series2.values.map((v, i) => `${cx(i)},${Y(v)}`).join(' ')}
+                className="gr-line gr-line--2"
+              />
+              {d.series2.values.map((v, i) => (
+                <rect
+                  key={i}
+                  x={cx(i) - 9}
+                  y={Y(v) - 9}
+                  width={18}
+                  height={18}
+                  className="gr-dot2"
+                />
+              ))}
+            </g>
+          ) : null}
           {placed.map(({ v, i }) => (
             <circle
               key={i}
@@ -720,8 +771,28 @@ function ReadChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
       );
     default:
       return (
-        <div className="gr-chart">
+        <div className={d.series2 && d.kind === 'line' ? 'gr-chart gr-chart--series' : 'gr-chart'}>
           {head}
+          {d.series2 && d.kind === 'line' ? (
+            <ul className="gr-series" data-testid="series-legend">
+              {[
+                { name: d.name ?? '', cls: '' },
+                { name: d.series2.name, cls: 'gr-line--2' },
+              ].map((s, i) => (
+                <li key={i}>
+                  <svg viewBox="0 0 64 24" className="gr-series__mark" aria-hidden>
+                    <line x1={2} y1={12} x2={62} y2={12} className={`gr-line ${s.cls}`} />
+                    {i === 0 ? (
+                      <circle cx={32} cy={12} r={8} className="gr-dot" />
+                    ) : (
+                      <rect x={24} y={4} width={16} height={16} className="gr-dot2" />
+                    )}
+                  </svg>
+                  <Rt text={s.name} ctx={ctx} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <div className="gr-xy">
             <XYChart
               item={item}
@@ -826,13 +897,11 @@ function NumberReadView({
         <ReadChart item={item} ctx={ctx} />
         <NumFields
           entry={entry}
-          fields={t.fields.map((f) => ({ label: f.label }))}
+          fields={t.fields.map((f) => ({ label: f.label, unit: f.unit }))}
           ctx={ctx}
           wrong={!!wrongMark}
           revealed={revealed}
-          answers={t.fields.map((f) =>
-            graphAnswerText({ ...item, task: { ...t, fields: [{ ...f, label: undefined }] } }),
-          )}
+          answers={t.fields.map(fieldValueText)}
         />
       </div>
       <NumKeys
@@ -958,8 +1027,14 @@ export function graphTexts(item: GraphItem): RichText[] {
   const t: RichText[] = [...d.labels, ...(d.header ?? [])];
   if (d.unit) t.push(d.unit);
   if (d.title) t.push(d.title);
+  if (d.name) t.push(d.name);
+  if (d.series2) t.push(d.series2.name);
   if (item.task.kind === 'choice') for (const o of item.task.options) if (o.label) t.push(o.label);
-  if (item.task.kind === 'number') for (const f of item.task.fields) if (f.label) t.push(f.label);
+  if (item.task.kind === 'number')
+    for (const f of item.task.fields) {
+      if (f.label) t.push(f.label);
+      if (f.unit) t.push(f.unit);
+    }
   return t;
 }
 

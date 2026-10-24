@@ -88,4 +88,90 @@ export const graphSamples: GraphItem[] = [
     task: { kind: 'make' },
     misconceptions: { scaleAsOne: 'mis-scale-as-one' },
   },
+  {
+    // 小4: 2本の折れ線を読む（凡例。実線と●／破線と■）
+    id: 'graph-sample:line2-diff',
+    engine: 'graph',
+    objective: 'read-line2',
+    level: 1,
+    prompt: '7がつの きおんの ちがいは なんど？',
+    hints: [
+      'どちらの せんか、はんれいで たしかめよう',
+      '7がつの ところで 2つの てんを よもう',
+      '29どと 21どの ちがいを もとめよう',
+    ],
+    explain: 'なはは 29ど、さっぽろは 21ど。ちがいは 8ど だよ',
+    identity: 'line2:diff:7',
+    data: {
+      kind: 'line',
+      labels: ['4月《がつ》', '5月《がつ》', '6月《がつ》', '7月《がつ》', '8月《がつ》', '9月《がつ》'],
+      values: [22, 25, 27, 29, 29, 28],
+      name: 'なは',
+      series2: { name: 'さっぽろ', values: [7, 13, 17, 21, 22, 18] },
+      scaleStep: 1,
+      labelEvery: 5,
+      max: 30,
+      unit: 'ど',
+    },
+    task: {
+      kind: 'number',
+      fields: [{ label: 'ちがい', answer: { kind: 'int', value: 8 }, unit: 'ど' }],
+      wrongAnswers: [{ value: '29', misconception: 'mis-read-one-line' }],
+    },
+  },
+  {
+    // 小5: 円グラフの割合を読む（% を欄の後ろに）
+    id: 'graph-sample:pie-percent',
+    engine: 'graph',
+    objective: 'read-pie',
+    level: 1,
+    prompt: 'あげパンは ぜんたいの なん%？',
+    hints: [
+      'あげパンは ②の ぶぶん',
+      'めもりは 1めもり 1%',
+      '40%の ところから 65%の ところまで',
+    ],
+    explain: '②は 40%から 65%まで。65 − 40 ＝ 25 で 25% だよ',
+    identity: 'pie:read:25',
+    data: {
+      kind: 'pie',
+      labels: ['カレー', 'あげパン', 'ラーメン', 'その他《た》'],
+      values: [40, 25, 20, 15],
+      title: 'すきな きゅうしょく',
+    },
+    task: {
+      kind: 'number',
+      fields: [{ label: 'あげパン', answer: { kind: 'int', value: 25 }, unit: '%' }],
+      wrongAnswers: [{ value: '65', misconception: 'mis-read-cumulative' }],
+    },
+  },
+  {
+    // 小5: 帯グラフで いちばん多い項目を選ぶ
+    id: 'graph-sample:band-most',
+    engine: 'graph',
+    objective: 'read-band',
+    level: 1,
+    prompt: 'いちばん おおいのは どれ？',
+    hints: [
+      'おびの ながさを くらべよう',
+      'めもりで それぞれの わりあいを よもう',
+      '①は 35%、②は 30%',
+    ],
+    explain: '①の いぬが 35%で いちばん おおいよ',
+    identity: 'band:most:35',
+    data: {
+      kind: 'band',
+      labels: ['いぬ', 'ねこ', 'とり', 'その他《た》'],
+      values: [35, 30, 20, 15],
+      title: 'かいたい どうぶつ',
+    },
+    task: {
+      kind: 'choice',
+      options: [
+        { label: 'いぬ', correct: true },
+        { label: 'ねこ', misconception: 'mis-not-longest' },
+        { label: 'その他《た》', misconception: 'mis-other-as-item' },
+      ],
+    },
+  },
 ];

@@ -121,6 +121,41 @@ describe('check', () => {
       ).join(),
     ).toMatch('重複');
   });
+  it('2本の折れ線（series2）の検査', () => {
+    const line2 = (over: Partial<GraphItem['data']>, task?: GraphItem['task']) =>
+      checkGraph(
+        bar({
+          data: {
+            kind: 'line',
+            labels: ['a', 'b'],
+            values: [10, 15],
+            scaleStep: 5,
+            max: 20,
+            name: 'x',
+            series2: { name: 'y', values: [5, 10] },
+            ...over,
+          },
+          task: task ?? { kind: 'number', fields: [{ answer: { kind: 'int', value: 5 } }] },
+        }),
+      ).join();
+    expect(line2({})).toBe('');
+    expect(line2({ name: undefined })).toMatch('name');
+    expect(line2({ series2: { name: 'x', values: [5, 10] } })).toMatch('同じ');
+    expect(line2({ series2: { name: 'y', values: [5] } })).toMatch('2本目の値の数');
+    expect(line2({ series2: { name: 'y', values: [5, 25] } })).toMatch('範囲の外');
+    expect(line2({ kind: 'bar' })).toMatch('折れ線');
+    expect(line2({}, { kind: 'make' })).toMatch('作る問題');
+  });
+  it('欄の後ろの単位: 正答の文に付け、quantity の単位と重ねない', () => {
+    const it1 = bar({
+      task: {
+        kind: 'number',
+        fields: [{ label: 'あ', answer: { kind: 'quantity', value: 25, unit: '%' }, unit: '%' }],
+      },
+    });
+    expect(graphAnswerText(it1)).toBe('あ 25 %');
+    expect(judgeGraph(it1, { fields: ['25'] }).result).toBe('correct');
+  });
   it('見本の問題に誤りが無い', () => {
     for (const s of graphSamples) expect(checkGraph(s), s.id).toEqual([]);
   });

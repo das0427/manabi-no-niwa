@@ -68,15 +68,23 @@ try:
     packs = {k: v for k, v in j.items() if isinstance(v, dict) and "files" in v}
 except Exception:
     packs = {}
+import re
+def zip_of(pid):
+    # scripts/package-release.ts の分け方と同じ（学年ごとの音声 zip）
+    m = re.match(r"^g(\d)-", pid) or re.search(r"-g(\d)", pid)
+    n = 5 if pid == "prog-g16" else int(m.group(1)) if m else 0
+    return "audio-g1-g2" if n <= 2 else "audio-g3-g4" if n <= 4 else "audio-g5-g6"
+need = set()
 for pid, p in sorted(packs.items()):
-    n = sum(1 for f in p.get("files", []) if not os.path.isfile(os.path.join(d, f)))
-    if n:
-        print(f"{pid}（{n} ファイル）")
+    if any(not os.path.isfile(os.path.join(d, f)) for f in p.get("files", [])):
+        need.add(zip_of(pid))
+for z in sorted(need):
+    print(f"  manabi-no-niwa-<版>-{z}.zip")
 PY
 )
 if [ -n "$MISSING" ]; then
-  echo "エラー: 教材パックのファイルが足りません。配布 zip（本体と audio-g1-g2・audio-g3-g4・audio-g5-g6）をすべて同じ場所に展開してから、もういちど実行してください。" >&2
-  echo "足りないパック:" >&2
+  echo "エラー: 教材の音声が足りません（ダウンロードした zip が足りないか、途中で止まっています）。" >&2
+  echo "次の zip をダウンロードし直して、ほかの zip と同じ場所に置いてから、もういちど同じ手順を行ってください:" >&2
   echo "$MISSING" >&2
   exit 1
 fi

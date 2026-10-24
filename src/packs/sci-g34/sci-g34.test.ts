@@ -116,6 +116,91 @@ describe('sci-g34 の教材検査（curriculum-matrix 1.8）', () => {
     }
   });
 
+  /** ふりがな・空白・記号を除いた文 */
+  const plain = (t: unknown): string =>
+    typeof t === 'string' ? t.replace(/《[^》]*》/g, '').replace(/[\s「」、。（）]/g, '') : '';
+  const allItems = (): Item[] =>
+    pack.units.flatMap((u) => (u.source.kind === 'items' ? u.source.items : []));
+
+  it('さいごの ヒントが 正解の 選択肢を そのまま 言わない（pack-brief: どの段も答えを書かない）', () => {
+    const bad: string[] = [];
+    for (const it of allItems()) {
+      if (it.engine !== 'choice' || it.multi) continue;
+      const right = plain(it.options.find((o) => o.correct)?.label);
+      if (right.length < 3) continue;
+      const last = plain(it.hints[it.hints.length - 1]);
+      if (last.includes(right)) bad.push(`${it.id}: ${right}`);
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('ヒント③で 答えを 言って いた 問題が もどって いない（内容レビュー sci-g34）', () => {
+    const lastHint = (id: string) => {
+      const it = allItems().find((x) => x.id === id);
+      expect(it, id).toBeDefined();
+      return plain(it!.hints[2]);
+    };
+    const leaks: [string, RegExp][] = [
+      ['in-parts', /その間/],
+      ['in-legs', /3本が2つ分/],
+      ['gr-dragonfly', /すぐせい虫/],
+      ['gr-sort-pupa', /すぐせい虫/],
+      ['at-scissors', /鉄でできた/],
+      ['at-sort', /鉄でできたもの/],
+      ['po-reach-pull', /1つのきょくをかえ/],
+      ['po-reach-push', /同じきょくにしよう/],
+      ['sh-east', /東と西/],
+      ['sh-north', /南と北は反対/],
+      ['mv-compass', /文字ばんの北/],
+      ['wm-touch', /かわく/],
+      ['lp-term', /回る道と書く/],
+      ['ft-sort', /はずれる・切れる・ゆるい/],
+      ['st-magnitude', /小さいほど明るい/],
+    ];
+    for (const [id, re] of leaks) expect(lastHint(id), id).not.toMatch(re);
+  });
+
+  it('誤答の 誤概念が 選択肢の 中身と 合って いる（内容レビュー sci-g34）', () => {
+    const misOf = (id: string, wrong: string) => {
+      const it = allItems().find((x) => x.id === id);
+      if (!it || it.engine !== 'choice') throw new Error(id);
+      const o = it.options.find((x) => plain(x.label).includes(wrong));
+      expect(o, `${id} ${wrong}`).toBeDefined();
+      return o!.misconception;
+    };
+    expect(misOf('con-which-series', '＋極どうしだけ')).toBe('cur-shape');
+    expect(misOf('con-which-parallel', '1こだけ')).toBe('cur-shape');
+    expect(misOf('rs-short', 'なにもおきない')).toBe('cur-short');
+    expect(misOf('mv-table', '南のほう')).not.toBe('sg-same-side');
+    expect(misOf('me-same-place', '1かいだけ')).not.toBe('w-change-place');
+    expect(misOf('gr-table', '11時')).not.toBe('w-noon-peak');
+    expect(misOf('re-why-rainy', 'こわれる')).not.toBe('w-anywhere');
+    // 気温の はかり方の 分類: 「地面の すぐ 上」「手で にぎる」に 日光の 説明（w-sun-direct）を 返さない
+    const sortItem = allItems().find((x) => x.id === 'me-sort');
+    if (!sortItem || sortItem.engine !== 'sort') throw new Error('me-sort');
+    for (const c of sortItem.cards)
+      if (/地面|手/.test(plain(c.label)))
+        for (const w of c.wrongBoxes ?? [])
+          expect(w.misconception, plain(c.label)).not.toBe('w-sun-direct');
+  });
+
+  it('正解が 2つ 成り立つ 問い方を しない: じしゃくに つく ものの きまり（金ぞく も 当てはまって しまう）', () => {
+    const it = allItems().find((x) => x.id === 'at-which-kind');
+    expect(plain(it?.prompt)).toMatch(/分ける/);
+  });
+
+  it('並べ替えない 選択肢（fixedOrder・あ/い の 記号だけ）で 正解が いつも 先頭に ならない', () => {
+    const SYMBOL = /^[あいうえおかきくけこ①-⑳]$/;
+    for (const it of allItems()) {
+      if (it.engine !== 'choice') continue;
+      const labels = it.options.map((o) => (typeof o.label === 'string' ? o.label : ''));
+      if (labels.every((l) => SYMBOL.test(l)))
+        expect(labels, it.id).toEqual([...labels].sort((a, b) => a.localeCompare(b, 'ja')));
+      if (it.fixedOrder)
+        expect(it.options[0]?.correct, `${it.id} は fixedOrder で 正解が 先頭`).toBeFalsy();
+    }
+  });
+
   it('火・薬品・コンセントを家で使う手順を書いていない', () => {
     for (const unit of pack.units) {
       for (const t of textsOf([unit.intro, sampleItems(unit, 5)]))

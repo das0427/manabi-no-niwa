@@ -84,7 +84,7 @@ const HINT_ONE: Record<Kind, [string, string, string]> = {
   ],
   extra: [
     'うごかして、キャラクターが どこで ぶつかるか みよう。',
-    'ゴールを すぎて すすんで いないかな。',
+    'まがる まえに、すすみすぎて いないかな。',
     'すすむ ふだが ひとつ おおいよ。どの ならびから ひとつ へらすと いいかな。',
   ],
 };
@@ -131,7 +131,17 @@ const oneItems = ONES.map(([id, level, dir, rows, kind, idx]) => {
   const l = layout(rows, dir);
   const sol = shortest(l)!;
   const { prog } = mutateOne(sol, kind, idx);
-  return debugPuzzle(`one-${id}`, 'one-card', level, rows, dir, sol, prog, HINT_ONE[kind], WHY_ONE[kind]);
+  return debugPuzzle(
+    `one-${id}`,
+    'one-card',
+    level,
+    rows,
+    dir,
+    sol,
+    prog,
+    HINT_ONE[kind],
+    WHY_ONE[kind],
+  );
 });
 
 // ---- order ----
@@ -198,10 +208,38 @@ const s4 = stairs(4);
 const s3 = stairs(3);
 const COUNTS: Cn[] = [
   { id: 'c1', level: 1, dir: 'right', rows: ['S....G'], sol: [rep(5, F)], bad: [rep(4, F)] },
-  { id: 'c2', level: 1, dir: 'down', rows: ['S.', '..', '..', 'G.'], sol: [rep(3, F)], bad: [rep(2, F)] },
-  { id: 'c3', level: 2, dir: 'right', rows: ['S....', '....G'], sol: [rep(4, F), R, F], bad: [rep(3, F), R, F] },
-  { id: 'c4', level: 2, dir: 'right', rows: s3.rows, sol: [rep(3, ...s3.body)], bad: [rep(2, ...s3.body)] },
-  { id: 'c5', level: 2, dir: 'right', rows: s4.rows, sol: [rep(4, ...s4.body)], bad: [rep(3, ...s4.body)] },
+  {
+    id: 'c2',
+    level: 1,
+    dir: 'down',
+    rows: ['S.', '..', '..', 'G.'],
+    sol: [rep(3, F)],
+    bad: [rep(2, F)],
+  },
+  {
+    id: 'c3',
+    level: 2,
+    dir: 'right',
+    rows: ['S....', '....G'],
+    sol: [rep(4, F), R, F],
+    bad: [rep(3, F), R, F],
+  },
+  {
+    id: 'c4',
+    level: 2,
+    dir: 'right',
+    rows: s3.rows,
+    sol: [rep(3, ...s3.body)],
+    bad: [rep(2, ...s3.body)],
+  },
+  {
+    id: 'c5',
+    level: 2,
+    dir: 'right',
+    rows: s4.rows,
+    sol: [rep(4, ...s4.body)],
+    bad: [rep(3, ...s4.body)],
+  },
   { id: 'c6', level: 2, dir: 'left', rows: ['G.....S'], sol: [rep(6, F)], bad: [rep(5, F)] },
   {
     id: 'c7',
@@ -268,7 +306,11 @@ function spotItem(opt: {
     figure: stripsColumn(
       [
         gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 5.5 }),
-        stripFigure(opt.bad, { label: `うまく いかない てじゅん: ${cmdText(opt.bad)}`, hU: 5, numbered: true }),
+        stripFigure(opt.bad, {
+          label: `うまく いかない てじゅん: ${cmdText(opt.bad)}`,
+          hU: 5,
+          numbered: true,
+        }),
       ],
       0.8,
     ),
@@ -289,7 +331,16 @@ function altOne(id: string, level: number, rows: string[], dir: Dir, kind: Kind,
   const { prog, at } = mutateOne(good, kind, idx);
   if (reaches(l, prog)) throw new Error(`${id}: 誤った列が動いてしまう`);
   // drop は「ふだが たりない」ので、足りない場所のとなりの札を答えにする
-  return spotItem({ id, obj: 'one-card', level, rows, dir, bad: prog, good, at: Math.min(at, prog.length - 1) });
+  return spotItem({
+    id,
+    obj: 'one-card',
+    level,
+    rows,
+    dir,
+    bad: prog,
+    good,
+    at: Math.min(at, prog.length - 1),
+  });
 }
 const altOnes = [
   altOne('one-alt-a1', 0, ['S..', '..G'], 'right', 'turn', 2),
@@ -313,7 +364,15 @@ const altOrders = [
   altOrder('order-alt-a3', 2, ['S...#', '.##.G'], 'right', 3),
 ];
 
-function altCount(id: string, level: number, rows: string[], dir: Dir, good: Cmd[], bad: Cmd[], at: number) {
+function altCount(
+  id: string,
+  level: number,
+  rows: string[],
+  dir: Dir,
+  good: Cmd[],
+  bad: Cmd[],
+  at: number,
+) {
   const l = layout(rows, dir);
   if (!reaches(l, good) || reaches(l, bad)) throw new Error(`${id}: 手順の正誤が合わない`);
   return spotItem({ id, obj: 'count', level, rows, dir, bad, good, at });
@@ -393,5 +452,3 @@ export const debug: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）プログラミング的思考（誤りを考え、修正する）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-

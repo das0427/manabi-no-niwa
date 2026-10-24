@@ -192,9 +192,7 @@ export function mapCmds(p: readonly Cmd[], f: (c: Cmd) => Cmd): Cmd[] {
 
 /** みぎ・ひだり を入れ替えた列 */
 export function swapLR(p: readonly Cmd[]): Cmd[] {
-  return mapCmds(p, (c) =>
-    c.op === 'turnRight' ? L : c.op === 'turnLeft' ? R : c,
-  );
+  return mapCmds(p, (c) => (c.op === 'turnRight' ? L : c.op === 'turnLeft' ? R : c));
 }
 
 /** くりかえす の回数を 1 つだけ ±1 した列の一覧 */
@@ -205,7 +203,8 @@ export function repeatVariants(p: readonly Cmd[]): Cmd[][] {
       const replace = (nc: Cmd) => rebuild(cmds.map((x, j) => (j === i ? nc : x)));
       if (c.op === 'repeat') {
         if (typeof c.times === 'number')
-          for (const d of [-1, 1]) if (c.times + d >= 1) out.push(replace({ ...c, times: c.times + d }));
+          for (const d of [-1, 1])
+            if (c.times + d >= 1) out.push(replace({ ...c, times: c.times + d }));
         walk(c.body, (nb) => replace({ ...c, body: nb }));
       } else if (c.op === 'if') {
         walk(c.body, (nb) => replace({ ...c, body: nb }));
@@ -300,7 +299,7 @@ export function cmdText(p: readonly Cmd[]): string {
 /** 同じ札が続くところをまとめた言い方（「すすむ」を 3かい） */
 export function phrases(p: readonly Cmd[]): string[] {
   const out: string[] = [];
-  for (let i = 0; i < p.length; ) {
+  for (let i = 0; i < p.length;) {
     const c = p[i]!;
     if (c.op === 'repeat' || c.op === 'if') {
       out.push(`「${cmdText([c])}」`);
@@ -552,7 +551,9 @@ export interface ChoiceSpec {
  * - それ以外: 正解と 誤り1つの 2つにする（図なしで 12字までなら よこに、それ以外は たてに）
  */
 export function promptLineCount(prompt: string): number {
-  return prompt.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(plainText(l).length / 30)), 0);
+  return prompt
+    .split('\n')
+    .reduce((n, l) => n + Math.max(1, Math.ceil(plainText(l).length / 30)), 0);
 }
 
 export interface FitChoice {
@@ -569,7 +570,8 @@ export function fitChoice(
   wrongs: readonly (readonly [string, string?])[],
   hasFigure: boolean,
 ): FitChoice {
-  const mk = (rs: readonly (readonly [string, string?])[]): ChoiceOption[] => opts({ right, wrongs: rs });
+  const mk = (rs: readonly (readonly [string, string?])[]): ChoiceOption[] =>
+    opts({ right, wrongs: rs });
   const all = [right, ...wrongs.map((w) => w[0])];
   const max = Math.max(...all.map((x) => plainText(x).length));
   if (max <= 7) return { prompt, options: mk(wrongs), layout: 'row' };
@@ -760,7 +762,8 @@ export function compareItem(s: CompareSpec): ChoiceItem {
     id: s.id,
     obj: s.obj,
     level: s.level,
-    prompt: s.prompt ?? 'ふだの ならべかたが ちがう てじゅんが あるよ。ゴールに つくのは どれかな。',
+    prompt:
+      s.prompt ?? 'ふだの ならべかたが ちがう てじゅんが あるよ。ゴールに つくのは どれかな。',
     figure: gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 7.5 }),
     right: cmdText(good),
     // 作業領域に入る数: ながい 手順は 2つ（よこに ならべる）
@@ -797,7 +800,10 @@ function permutations(n: number): number[][] {
     }
     rest.forEach((v, i) => rec([...cur, v], [...rest.slice(0, i), ...rest.slice(i + 1)]));
   };
-  rec([], Array.from({ length: n }, (_, i) => i));
+  rec(
+    [],
+    Array.from({ length: n }, (_, i) => i),
+  );
   return out;
 }
 
@@ -806,7 +812,8 @@ export function orderItem(s: OrderSpec): OrderItem {
   const l = layout(s.rows, s.dir);
   const good = s.prog ?? shortest(l);
   if (!good || !reaches(l, good)) throw new Error(`${s.id}: 正しい手順がゴールに着かない`);
-  if (good.length < 3 || good.length > 6) throw new Error(`${s.id}: 札は 3〜6 まい（今 ${good.length}）`);
+  if (good.length < 3 || good.length > 6)
+    throw new Error(`${s.id}: 札は 3〜6 まい（今 ${good.length}）`);
   const label = (c: Cmd) => CARD_NAME[c.op]!;
   const keyOf = (idx: number[]) => idx.map((i) => label(good[i]!)).join('|');
   const canon = good.map((_, i) => i);
@@ -815,7 +822,10 @@ export function orderItem(s: OrderSpec): OrderItem {
   for (const p of permutations(good.length)) {
     const k = keyOf(p);
     if (seen.has(k)) continue;
-    const ok = reaches(l, p.map((i) => good[i]!));
+    const ok = reaches(
+      l,
+      p.map((i) => good[i]!),
+    );
     if (ok) {
       seen.add(k);
       alsoAccept.push(p);
@@ -828,7 +838,13 @@ export function orderItem(s: OrderSpec): OrderItem {
       const q = [...canon];
       [q[i], q[i + 1]] = [q[i + 1]!, q[i]!];
       const k = keyOf(q);
-      if (!seen.has(k) && !reaches(l, q.map((v) => good[v]!))) {
+      if (
+        !seen.has(k) &&
+        !reaches(
+          l,
+          q.map((v) => good[v]!),
+        )
+      ) {
         seen.add(k);
         wrongOrders.push({ order: q, misconception: s.mis.order });
       }
@@ -861,7 +877,16 @@ export function baseUnit(
   stage: 'g1' | 'g2' | 'g3' | 'g4' | 'g5' | 'g6',
 ): Pick<
   UnitSpec,
-  'id' | 'stage' | 'subject' | 'domain' | 'kind' | 'priority' | 'status' | 'icon' | 'review' | 'revised'
+  | 'id'
+  | 'stage'
+  | 'subject'
+  | 'domain'
+  | 'kind'
+  | 'priority'
+  | 'status'
+  | 'icon'
+  | 'review'
+  | 'revised'
 > {
   return {
     id,
@@ -891,8 +916,7 @@ export const BASE_MIS = [
   },
   {
     id: 'turn',
-    explain:
-      'みぎと ひだりを まちがえたのかな。キャラクターから みて、みぎ・ひだり を きめよう。',
+    explain: 'みぎと ひだりを まちがえたのかな。キャラクターから みて、みぎ・ひだり を きめよう。',
   },
 ] as const;
 
@@ -934,7 +958,14 @@ export function spiral(w: number, h: number): string[] {
   for (let y = 0; y < h; y++) {
     let row = '';
     for (let x = 0; x < w; x++)
-      row += x === 0 && y === 0 ? 'S' : x === goal[0] && y === goal[1] ? 'G' : seen.has(`${x},${y}`) ? '.' : '#';
+      row +=
+        x === 0 && y === 0
+          ? 'S'
+          : x === goal[0] && y === goal[1]
+            ? 'G'
+            : seen.has(`${x},${y}`)
+              ? '.'
+              : '#';
     rows.push(row);
   }
   return rows;
@@ -954,15 +985,15 @@ export function addDecoys(
   const rng = createRng(hashSeed('decoy', seed));
   let cur = [...rows];
   const base = layout(cur, dir);
-  const baseTrail = run(base, rule).trail.map((c) => c.join(',')).join(';');
+  const baseTrail = run(base, rule)
+    .trail.map((c) => c.join(','))
+    .join(';');
   const baseLen = shortest(base)!.length;
   const walls = rng.shuffle(base.walls);
   let made = 0;
   for (const [x, y] of walls) {
     if (made >= count) break;
-    const next = cur.map((r, yy) =>
-      yy === y ? r.slice(0, x) + '.' + r.slice(x + 1) : r,
-    );
+    const next = cur.map((r, yy) => (yy === y ? r.slice(0, x) + '.' + r.slice(x + 1) : r));
     const l = layout(next, dir);
     const r = run(l, rule);
     if (r.outcome !== 'goal') continue;
@@ -976,7 +1007,7 @@ export function addDecoys(
 /** 同じ札が3つ以上つづくところを「くりかえす」にまとめる（6回まで） */
 export function compressRuns(cmds: readonly Cmd[]): Cmd[] {
   const out: Cmd[] = [];
-  for (let i = 0; i < cmds.length; ) {
+  for (let i = 0; i < cmds.length;) {
     const c = cmds[i]!;
     let j = i;
     while (j < cmds.length && cmds[j]!.op === c.op && c.op !== 'repeat' && c.op !== 'if') j++;
@@ -1155,10 +1186,12 @@ export interface BestSpec {
 /** 「ゴールに つく てじゅんの うち、ふだが いちばん すくないのは どれ？」（手順の文をよこに2つならべる） */
 export function bestChoice(s: BestSpec): ChoiceItem {
   const l = layout(s.rows, s.dir);
-  for (const p of s.progs) if (!reaches(l, p.prog)) throw new Error(`${s.id}: ゴールに着かない手順がある`);
+  for (const p of s.progs)
+    if (!reaches(l, p.prog)) throw new Error(`${s.id}: ゴールに着かない手順がある`);
   const vals = s.progs.map((p) => measureOf(l, p.prog, 'cards'));
   const min = Math.min(...vals);
-  if (vals.filter((v) => v === min).length !== 1) throw new Error(`${s.id}: いちばんが1つに決まらない`);
+  if (vals.filter((v) => v === min).length !== 1)
+    throw new Error(`${s.id}: いちばんが1つに決まらない`);
   const bi = vals.indexOf(min);
   return letterChoice({
     id: s.id,
@@ -1168,7 +1201,11 @@ export function bestChoice(s: BestSpec): ChoiceItem {
     prompt: 'どちらの てじゅんも ゴールに つくよ。ふだが 少《すく》ない のは どちらかな。',
     figure: stripsColumn(
       s.progs.map((p, i) =>
-        stripFigure(p.prog, { label: `${'AB'[i]}の てじゅん: ${cmdText(p.prog)}`, hU: 5, letter: 'AB'[i] }),
+        stripFigure(p.prog, {
+          label: `${'AB'[i]}の てじゅん: ${cmdText(p.prog)}`,
+          hU: 5,
+          letter: 'AB'[i],
+        }),
       ),
       1.2,
     ),
@@ -1192,12 +1229,7 @@ const ROUTE_STYLE = [
 const ROUTE_LETTER = ['A', 'B', 'C'] as const;
 
 /** 地図に いくつかの みちを かいた 図（線の しゅるいと 文字 A・B・C で見わける） */
-export function routesFigure(
-  l: Layout,
-  trails: Cell[][],
-  label: string,
-  hU = 9,
-): Figure {
+export function routesFigure(l: Layout, trails: Cell[][], label: string, hU = 9): Figure {
   const W = l.w * CELL + PAD * 2;
   const H = l.h * CELL + PAD * 2;
   const cx = (x: number) => PAD + x * CELL + CELL / 2;
@@ -1212,7 +1244,9 @@ export function routesFigure(
     }
   trails.forEach((tr, i) => {
     const off = (i - (trails.length - 1) / 2) * 5;
-    const pts = tr.map((c) => `${(cx(c[0]) + off).toFixed(1)},${(cy(c[1]) + off).toFixed(1)}`).join(' ');
+    const pts = tr
+      .map((c) => `${(cx(c[0]) + off).toFixed(1)},${(cy(c[1]) + off).toFixed(1)}`)
+      .join(' ');
     const st = ROUTE_STYLE[i]!;
     body += `<polyline points="${pts}" fill="none" stroke="${st.color}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"${st.dash ? ` stroke-dasharray="${st.dash}"` : ''}/>`;
   });
@@ -1247,10 +1281,12 @@ export interface FasterSpec {
 /** 「ゴールまで いちばん はやく つくのは どれ？」（みちを 地図に かいて、A・B・C から選ぶ） */
 export function fasterChoice(s: FasterSpec): ChoiceItem {
   const l = layout(s.rows, s.dir);
-  for (const p of s.progs) if (!reaches(l, p.prog)) throw new Error(`${s.id}: ゴールに着かない手順がある`);
+  for (const p of s.progs)
+    if (!reaches(l, p.prog)) throw new Error(`${s.id}: ゴールに着かない手順がある`);
   const vals = s.progs.map((p) => measureOf(l, p.prog, 'moves'));
   const min = Math.min(...vals);
-  if (vals.filter((v) => v === min).length !== 1) throw new Error(`${s.id}: いちばんが1つに決まらない`);
+  if (vals.filter((v) => v === min).length !== 1)
+    throw new Error(`${s.id}: いちばんが1つに決まらない`);
   const bi = vals.indexOf(min);
   const trails = s.progs.map((p) => run(l, p.prog).trail);
   const names = ROUTE_LETTER.slice(0, s.progs.length);
@@ -1260,7 +1296,12 @@ export function fasterChoice(s: FasterSpec): ChoiceItem {
     level: s.level,
     alt: s.alt,
     prompt: `ゴールまで ${names.join('・')} の みちが あるよ。すすむ マスが いちばん 少《すく》ないのは どれかな。`,
-    figure: routesFigure(l, trails, `ますの ず。${names.join('・')} の みちが ある。ほしが ゴール`, 9),
+    figure: routesFigure(
+      l,
+      trails,
+      `ますの ず。${names.join('・')} の みちが ある。ほしが ゴール`,
+      9,
+    ),
     letters: [...names],
     correct: bi,
     mis: s.progs.map((p) => p.mis),
@@ -1384,4 +1425,3 @@ export function stripFigure(
 export function stripsColumn(figs: Figure[], gap = 1.2): Figure {
   return { kind: 'column', items: figs, gap };
 }
-

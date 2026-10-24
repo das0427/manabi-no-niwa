@@ -32,7 +32,10 @@ function Standing({ cx, cy }: { cx: number; cy: number }) {
   return (
     <g>
       <circle cx={cx} cy={cy - 9} r="3.4" fill={P.white} />
-      <path d={`M${cx} ${cy - 4} L${cx} ${cy + 5} M${cx - 6} ${cy - 1} L${cx + 6} ${cy - 1} M${cx} ${cy + 5} L${cx - 4} ${cy + 12} M${cx} ${cy + 5} L${cx + 4} ${cy + 12}`} {...WHITE_LINE} />
+      <path
+        d={`M${cx} ${cy - 4} L${cx} ${cy + 5} M${cx - 6} ${cy - 1} L${cx + 6} ${cy - 1} M${cx} ${cy + 5} L${cx - 4} ${cy + 12} M${cx} ${cy + 5} L${cx + 4} ${cy + 12}`}
+        {...WHITE_LINE}
+      />
     </g>
   );
 }
@@ -41,7 +44,10 @@ function Walking({ cx, cy }: { cx: number; cy: number }) {
   return (
     <g>
       <circle cx={cx + 1} cy={cy - 9} r="3.4" fill={P.white} />
-      <path d={`M${cx} ${cy - 4} L${cx - 1} ${cy + 5} M${cx} ${cy - 1} L${cx - 6} ${cy + 4} M${cx} ${cy - 1} L${cx + 6} ${cy + 1} M${cx - 1} ${cy + 5} L${cx - 6} ${cy + 12} M${cx - 1} ${cy + 5} L${cx + 5} ${cy + 12}`} {...WHITE_LINE} />
+      <path
+        d={`M${cx} ${cy - 4} L${cx - 1} ${cy + 5} M${cx} ${cy - 1} L${cx - 6} ${cy + 4} M${cx} ${cy - 1} L${cx + 6} ${cy + 1} M${cx - 1} ${cy + 5} L${cx - 6} ${cy + 12} M${cx - 1} ${cy + 5} L${cx + 5} ${cy + 12}`}
+        {...WHITE_LINE}
+      />
     </g>
   );
 }
@@ -80,15 +86,29 @@ const blossom = (cx: number, cy: number, r: number) => (
     {[0, 72, 144, 216, 288].map((a) => {
       const x = cx + Math.cos(((a - 90) * Math.PI) / 180) * r;
       const y = cy + Math.sin(((a - 90) * Math.PI) / 180) * r;
-      return <circle key={a} cx={x} cy={y} r={r * 0.78} fill={P.pink} {...line} strokeWidth="2.5" />;
+      return (
+        <circle key={a} cx={x} cy={y} r={r * 0.78} fill={P.pink} {...line} strokeWidth="2.5" />
+      );
     })}
     <circle cx={cx} cy={cy} r={r * 0.5} fill={P.yellow} {...line} strokeWidth="2" />
   </g>
 );
 const cherry = def('life-cherry', 'さくらの えだ', () => (
   <g>
-    <path d="M6 82 C26 70 38 52 52 44 C66 36 78 30 94 24" fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round" />
-    <path d="M6 82 C26 70 38 52 52 44 C66 36 78 30 94 24" fill="none" stroke={P.brown} strokeWidth="4" strokeLinecap="round" />
+    <path
+      d="M6 82 C26 70 38 52 52 44 C66 36 78 30 94 24"
+      fill="none"
+      stroke={INK}
+      strokeWidth="9"
+      strokeLinecap="round"
+    />
+    <path
+      d="M6 82 C26 70 38 52 52 44 C66 36 78 30 94 24"
+      fill="none"
+      stroke={P.brown}
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
     {blossom(30, 52, 9)}
     {blossom(60, 30, 9)}
     {blossom(76, 54, 8)}
@@ -103,7 +123,13 @@ const redleaf = def('life-redleaf', 'もみじの は', () => (
       fill={P.red}
       {...line}
     />
-    <path d="M50 70 L50 30 M50 62 L30 48 M50 62 L70 48" fill="none" stroke={P.redDark} strokeWidth="2.5" strokeLinecap="round" />
+    <path
+      d="M50 70 L50 30 M50 62 L30 48 M50 62 L70 48"
+      fill="none"
+      stroke={P.redDark}
+      strokeWidth="2.5"
+      strokeLinecap="round"
+    />
   </g>
 ));
 
@@ -125,8 +151,22 @@ const snowflake = def('life-snowflake', 'ゆきの けっしょう', () => {
   return (
     <g>
       <circle cx="50" cy="50" r="46" fill={P.sky} {...line} />
-      <path d={d} fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={d} fill="none" stroke={P.white} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d={d}
+        fill="none"
+        stroke={INK}
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d={d}
+        fill="none"
+        stroke={P.white}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </g>
   );
 });
@@ -143,9 +183,29 @@ const snowman = def('life-snowman', 'ゆきだるま', () => (
     <circle cx="50" cy="60" r="2.6" fill={INK} />
     <circle cx="50" cy="70" r="2.6" fill={INK} />
     <circle cx="50" cy="80" r="2.6" fill={INK} />
-    <path d="M28 62 L12 52 M72 62 L88 52" fill="none" stroke={INK} strokeWidth="9" strokeLinecap="round" />
-    <path d="M28 62 L12 52 M72 62 L88 52" fill="none" stroke={P.brown} strokeWidth="4" strokeLinecap="round" />
-    <ellipse cx="42" cy="58" rx="4" ry="6" transform="rotate(30 42 58)" fill={HIGHLIGHT} opacity="0.5" />
+    <path
+      d="M28 62 L12 52 M72 62 L88 52"
+      fill="none"
+      stroke={INK}
+      strokeWidth="9"
+      strokeLinecap="round"
+    />
+    <path
+      d="M28 62 L12 52 M72 62 L88 52"
+      fill="none"
+      stroke={P.brown}
+      strokeWidth="4"
+      strokeLinecap="round"
+    />
+    <ellipse
+      cx="42"
+      cy="58"
+      rx="4"
+      ry="6"
+      transform="rotate(30 42 58)"
+      fill={HIGHLIGHT}
+      opacity="0.5"
+    />
   </g>
 ));
 
@@ -160,22 +220,38 @@ const swimring = def('life-swimring', 'うきわ', () => (
     {[0, 90, 180, 270].map((a) => {
       const x = 50 + Math.cos((a * Math.PI) / 180) * 31;
       const y = 50 + Math.sin((a * Math.PI) / 180) * 31;
-      return <ellipse key={a} cx={x} cy={y} rx="7" ry="7" fill={P.white} {...line} strokeWidth="2.5" />;
+      return (
+        <ellipse key={a} cx={x} cy={y} rx="7" ry="7" fill={P.white} {...line} strokeWidth="2.5" />
+      );
     })}
   </g>
 ));
 
 // ---- 植物 ----
-const soil = (
-  <path d="M10 92 C10 80 26 74 50 74 C74 74 90 80 90 92 Z" fill={P.brown} {...line} />
-);
+const soil = <path d="M10 92 C10 80 26 74 50 74 C74 74 90 80 90 92 Z" fill={P.brown} {...line} />;
 const seed = def('life-seed', 'たね', () => (
   <g>
     {soil}
     <ellipse cx="38" cy="58" rx="9" ry="13" transform="rotate(-25 38 58)" fill={P.tan} {...line} />
     <ellipse cx="62" cy="60" rx="9" ry="13" transform="rotate(25 62 60)" fill={P.tan} {...line} />
-    <ellipse cx="35" cy="54" rx="2.5" ry="5" transform="rotate(-25 35 54)" fill={HIGHLIGHT} opacity="0.7" />
-    <ellipse cx="59" cy="56" rx="2.5" ry="5" transform="rotate(25 59 56)" fill={HIGHLIGHT} opacity="0.7" />
+    <ellipse
+      cx="35"
+      cy="54"
+      rx="2.5"
+      ry="5"
+      transform="rotate(-25 35 54)"
+      fill={HIGHLIGHT}
+      opacity="0.7"
+    />
+    <ellipse
+      cx="59"
+      cy="56"
+      rx="2.5"
+      ry="5"
+      transform="rotate(25 59 56)"
+      fill={HIGHLIGHT}
+      opacity="0.7"
+    />
   </g>
 ));
 const sprout = def('life-sprout', 'め（ふたば）', () => (
@@ -213,8 +289,18 @@ const bud = def('life-bud', 'つぼみ', () => (
     {leafShape(50, 66, -70, 0.9)}
     {leafShape(50, 66, 70, 0.9)}
     <path d="M50 38 C34 34 34 12 50 8 C66 12 66 34 50 38 Z" fill={P.pink} {...line} />
-    <path d="M50 38 C40 34 38 22 42 16 C46 22 50 28 50 38 Z" fill={P.green} {...line} strokeWidth="2.5" />
-    <path d="M50 38 C60 34 62 22 58 16 C54 22 50 28 50 38 Z" fill={P.green} {...line} strokeWidth="2.5" />
+    <path
+      d="M50 38 C40 34 38 22 42 16 C46 22 50 28 50 38 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="2.5"
+    />
+    <path
+      d="M50 38 C60 34 62 22 58 16 C54 22 50 28 50 38 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="2.5"
+    />
   </g>
 ));
 const wateringCan = def('life-watering-can', 'じょうろ', () => (
@@ -225,7 +311,13 @@ const wateringCan = def('life-watering-can', 'じょうろ', () => (
     <path d="M24 46 C4 46 4 74 24 74" fill="none" {...line} strokeWidth="5" />
     <ellipse cx="43" cy="40" rx="23" ry="6" fill={P.sky} {...line} />
     <rect x="30" y="52" width="6" height="26" rx="3" fill={HIGHLIGHT} opacity="0.6" />
-    <path d="M92 44 L88 52 M98 46 L95 56" fill="none" stroke={P.sky} strokeWidth="3" strokeLinecap="round" />
+    <path
+      d="M92 44 L88 52 M98 46 L95 56"
+      fill="none"
+      stroke={P.sky}
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
   </g>
 ));
 const pot = def('life-pot', 'うえきばち', () => (
@@ -234,8 +326,18 @@ const pot = def('life-pot', 'うえきばち', () => (
     <rect x="22" y="42" width="56" height="12" rx="4" fill={P.orange} {...line} />
     <ellipse cx="50" cy="42" rx="26" ry="4" fill={P.brown} {...line} strokeWidth="2.5" />
     <path d="M50 42 L50 26" fill="none" {...line} strokeWidth="4.5" />
-    <path d="M50 28 C40 30 32 24 30 14 C40 12 48 18 50 28 Z" fill={P.green} {...line} strokeWidth="3" />
-    <path d="M50 28 C60 30 68 24 70 14 C60 12 52 18 50 28 Z" fill={P.green} {...line} strokeWidth="3" />
+    <path
+      d="M50 28 C40 30 32 24 30 14 C40 12 48 18 50 28 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="3"
+    />
+    <path
+      d="M50 28 C60 30 68 24 70 14 C60 12 52 18 50 28 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="3"
+    />
     <rect x="34" y="60" width="5" height="22" rx="2.5" fill={HIGHLIGHT} opacity="0.5" />
   </g>
 ));
@@ -277,20 +379,44 @@ const signBread = (
       {...line}
       strokeWidth="9"
     />
-    <path d="M34 48 L46 36 M54 50 L66 38" fill="none" stroke={P.cream} strokeWidth="9" strokeLinecap="round" />
+    <path
+      d="M34 48 L46 36 M54 50 L66 38"
+      fill="none"
+      stroke={P.cream}
+      strokeWidth="9"
+      strokeLinecap="round"
+    />
   </g>
 );
 const signPlus = (
-  <path d="M0 -8 L0 8 M-8 0 L8 0" fill="none" stroke={P.green} strokeWidth="5.5" strokeLinecap="round" />
+  <path
+    d="M0 -8 L0 8 M-8 0 L8 0"
+    fill="none"
+    stroke={P.green}
+    strokeWidth="5.5"
+    strokeLinecap="round"
+  />
 );
 const signBook = (
   <g transform="scale(0.2) translate(-50 -50)">
-    <path d="M50 30 C38 22 22 22 10 28 L10 76 C22 70 38 70 50 78 C62 70 78 70 90 76 L90 28 C78 22 62 22 50 30 Z" fill={P.sky} {...line} strokeWidth="9" />
+    <path
+      d="M50 30 C38 22 22 22 10 28 L10 76 C22 70 38 70 50 78 C62 70 78 70 90 76 L90 28 C78 22 62 22 50 30 Z"
+      fill={P.sky}
+      {...line}
+      strokeWidth="9"
+    />
     <path d="M50 30 L50 78" fill="none" {...line} strokeWidth="9" />
   </g>
 );
 const signClock = (
-  <path d="M0 -8 L0 0 L6 4" fill="none" stroke={INK} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  <path
+    d="M0 -8 L0 0 L6 4"
+    fill="none"
+    stroke={INK}
+    strokeWidth="3"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
 );
 const signLamp = (
   <g transform="translate(0 -2)">
@@ -314,18 +440,44 @@ const signFlower = (
 );
 const signCarrot = (
   <g transform="scale(0.2) translate(-50 -50)">
-    <path d="M24 40 L80 60 C84 70 78 78 70 76 L22 56 C18 48 20 42 24 40 Z" fill={P.orange} {...line} strokeWidth="9" />
-    <path d="M20 44 L6 32 M16 52 L2 54" fill="none" stroke={P.green} strokeWidth="10" strokeLinecap="round" />
+    <path
+      d="M24 40 L80 60 C84 70 78 78 70 76 L22 56 C18 48 20 42 24 40 Z"
+      fill={P.orange}
+      {...line}
+      strokeWidth="9"
+    />
+    <path
+      d="M20 44 L6 32 M16 52 L2 54"
+      fill="none"
+      stroke={P.green}
+      strokeWidth="10"
+      strokeLinecap="round"
+    />
   </g>
 );
 
-const bakery = def('life-bakery', 'パンやさん', () => building({ wall: P.cream, roof: P.red, sign: signBread, awning: P.orange }));
-const hospital = def('life-hospital', 'びょういん', () => building({ wall: P.white, roof: P.sky, sign: signPlus }));
-const library = def('life-library', 'としょかん', () => building({ wall: P.tan, roof: P.brown, sign: signBook }));
-const station = def('life-station', 'えき', () => building({ wall: P.cream, roof: P.blue, sign: signClock }));
-const police = def('life-police', 'こうばん', () => building({ wall: P.white, roof: P.blue, sign: signLamp, plaque: false }));
-const flowerShop = def('life-flowershop', 'おはなやさん', () => building({ wall: P.pink, roof: P.green, sign: signFlower, awning: P.white }));
-const vegeShop = def('life-vegeshop', 'やおやさん', () => building({ wall: P.cream, roof: P.greenDark, sign: signCarrot, awning: P.green }));const fireStation = def('life-firestation', 'しょうぼうしょ', () => (
+const bakery = def('life-bakery', 'パンやさん', () =>
+  building({ wall: P.cream, roof: P.red, sign: signBread, awning: P.orange }),
+);
+const hospital = def('life-hospital', 'びょういん', () =>
+  building({ wall: P.white, roof: P.sky, sign: signPlus }),
+);
+const library = def('life-library', 'としょかん', () =>
+  building({ wall: P.tan, roof: P.brown, sign: signBook }),
+);
+const station = def('life-station', 'えき', () =>
+  building({ wall: P.cream, roof: P.blue, sign: signClock }),
+);
+const police = def('life-police', 'こうばん', () =>
+  building({ wall: P.white, roof: P.blue, sign: signLamp, plaque: false }),
+);
+const flowerShop = def('life-flowershop', 'おはなやさん', () =>
+  building({ wall: P.pink, roof: P.green, sign: signFlower, awning: P.white }),
+);
+const vegeShop = def('life-vegeshop', 'やおやさん', () =>
+  building({ wall: P.cream, roof: P.greenDark, sign: signCarrot, awning: P.green }),
+);
+const fireStation = def('life-firestation', 'しょうぼうしょ', () => (
   <g>
     <rect x="12" y="44" width="76" height="46" fill={P.red} {...line} />
     <rect x="62" y="12" width="22" height="34" fill={P.red} {...line} />

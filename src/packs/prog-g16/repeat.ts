@@ -191,13 +191,48 @@ interface Ln {
 const T6 = [2, 3, 4, 5, 6];
 const LINES: Ln[] = [
   { id: 'l1', level: 0, dir: 'right', rows: ['S.....G'], sol: [rep(6, F)], times: T6 },
-  { id: 'l2', level: 0, dir: 'down', rows: ['S.', '..', '..', '..', 'G.'], sol: [rep(4, F)], times: T6 },
+  {
+    id: 'l2',
+    level: 0,
+    dir: 'down',
+    rows: ['S.', '..', '..', '..', 'G.'],
+    sol: [rep(4, F)],
+    times: T6,
+  },
   { id: 'l3', level: 0, dir: 'left', rows: ['G.....S'], sol: [rep(6, F)], times: T6 },
   { id: 'l4', level: 1, dir: 'right', rows: ['S....', '....G'], sol: [rep(4, F), R, F], times: T6 },
-  { id: 'l5', level: 1, dir: 'down', rows: ['S.', '..', '..', '.G'], sol: [rep(3, F), L, F], times: T6 },
-  { id: 'l6', level: 1, dir: 'up', rows: ['....G', '.....', 'S....'], sol: [rep(2, F), R, rep(4, F)], times: T6 },
-  { id: 'l7', level: 2, dir: 'right', rows: ['S...', '###.', 'G...'], sol: [rep(3, F), R, rep(2, F), R, rep(3, F)], times: T6 },
-  { id: 'l8', level: 2, dir: 'right', rows: ['S...', '###.', '###G'], sol: [rep(3, F), R, rep(2, F)], times: T6 },
+  {
+    id: 'l5',
+    level: 1,
+    dir: 'down',
+    rows: ['S.', '..', '..', '.G'],
+    sol: [rep(3, F), L, F],
+    times: T6,
+  },
+  {
+    id: 'l6',
+    level: 1,
+    dir: 'up',
+    rows: ['....G', '.....', 'S....'],
+    sol: [rep(2, F), R, rep(4, F)],
+    times: T6,
+  },
+  {
+    id: 'l7',
+    level: 2,
+    dir: 'right',
+    rows: ['S...', '###.', 'G...'],
+    sol: [rep(3, F), R, rep(2, F), R, rep(3, F)],
+    times: T6,
+  },
+  {
+    id: 'l8',
+    level: 2,
+    dir: 'right',
+    rows: ['S...', '###.', '###G'],
+    sol: [rep(3, F), R, rep(2, F)],
+    times: T6,
+  },
 ];
 
 function repeatHints(sol: Cmd[], maxCards: number): [string, string, string] {
@@ -224,7 +259,8 @@ function repeatPuzzle(
   const l = layout(rows, dir);
   const raw = shortest(l)!;
   const maxCards = Math.min(cardCount(sol) + (cardCount(sol) >= 5 ? 0 : 1), raw.length - 1);
-  if (raw.length <= maxCards || maxCards < cardCount(sol)) throw new Error(`${id}: くりかえしを使わなくても解ける（${raw.length} ≦ ${maxCards}）`);
+  if (raw.length <= maxCards || maxCards < cardCount(sol))
+    throw new Error(`${id}: くりかえしを使わなくても解ける（${raw.length} ≦ ${maxCards}）`);
   if (!reaches(l, sol)) throw new Error(`${id}: 正答の例がゴールに着かない`);
   return puzzle({
     id,
@@ -351,7 +387,8 @@ const patternItems = PATTERNS.map((q) => {
 });
 
 /** 同じ値の誤答例が2つ以上あるときは、先のものだけ残す */
-const uniq = <T extends { value: string }>(xs: T[]): T[] => xs.filter((x, i) => xs.findIndex((y) => y.value === x.value) === i);
+const uniq = <T extends { value: string }>(xs: T[]): T[] =>
+  xs.filter((x, i) => xs.findIndex((y) => y.value === x.value) === i);
 
 // 別例: くりかえす中身のふだの数をこたえる
 interface Bc {
@@ -378,7 +415,7 @@ const bodyItems: NumberItem[] = BODIES.map((q) => {
     objective: 'pattern',
     level: q.level,
     alt: true,
-    prompt: `かいだんを のぼる てじゅんを つくるよ。「くりかえす ${q.n}かい」の なかには、ふだが なんまい はいるかな。`,
+    prompt: `かいだんの みちを いく てじゅんを つくるよ。「くりかえす ${q.n}かい」の なかには、ふだが なんまい はいるかな。`,
     figure: gridFigure(l, { label: 'ますの ず。かいだんの ような みち。ほしが ゴール', hU: 10 }),
     fields: [{ label: 'まい', answer: { kind: 'int', value: len } }],
     wrongAnswers: uniq([
@@ -388,11 +425,11 @@ const bodyItems: NumberItem[] = BODIES.map((q) => {
       { value: String(len * q.n), misconception: 'forget-body' },
     ]).filter((w) => w.value !== String(len)),
     hints: [
-      'かいだんの ひとだんを のぼる ふだを かんがえよう。',
+      'かいだんの ひとだん ぶん すすむ ふだを かんがえよう。',
       'みちは「すすんで、まがって、すすんで、もとの むきに もどる」の くりかえしだよ。',
-      'ひとだん ぶんの ふだの 数《かず》を かぞえよう。すすむ・まがる・すすむ・まがる、のように。',
+      'ひとだんで「すすむ」は なんまい、まがる ふだは なんまい いるかな。たして かぞえよう。',
     ],
-    explain: `ひとだんを のぼる ふだは「${cmdText(s.body)}」の ${len}まい。これを ${q.n}かい くりかえすと、かいだんを のぼれるよ。`,
+    explain: `ひとだん ぶんの ふだは「${cmdText(s.body)}」の ${len}まい。これを ${q.n}かい くりかえすと、かいだんの みちを すすめるよ。`,
     identity: `pattern-alt-${q.id}`,
   };
 });
@@ -450,7 +487,11 @@ export const repeat: UnitSpec = {
   intro: [
     {
       text: '「すすむ」を 3かい ならべる かわりに、「くりかえす 3かい」の なかに「すすむ」を いれても おなじだよ。',
-      figure: { kind: 'text', text: 'すすむ、すすむ、すすむ ＝ くりかえす 3かい（すすむ）', size: 'l' },
+      figure: {
+        kind: 'text',
+        text: 'すすむ、すすむ、すすむ ＝ くりかえす 3かい（すすむ）',
+        size: 'l',
+      },
     },
     {
       text: 'ふたつ いじょうの ふだの ひとくみも くりかえせるよ。',

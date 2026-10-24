@@ -14,7 +14,20 @@ import { efficient } from './efficient';
 
 const pack: PackContent = {
   packId: 'prog-g16',
-  units: [sequence, condition, repeat, debug, conditionCombo, decompose, prefectureFinder, drawShapes, polygon, debugPlan, sensor, efficient],
+  units: [
+    sequence,
+    condition,
+    repeat,
+    debug,
+    conditionCombo,
+    decompose,
+    prefectureFinder,
+    drawShapes,
+    polygon,
+    debugPlan,
+    sensor,
+    efficient,
+  ],
 };
 
 export default pack;

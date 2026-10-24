@@ -1,4 +1,4 @@
-﻿/**
+/**
  * g4.prog.prefecture-finder 特徴から県《けん》を見つける手順（条件の連鎖）（curriculum-matrix 3.6、手引B）。
  *
  * 地図は使えないので、10の県《けん》の「例のデータ」をふだ（県の名前と3つの○×）にして、「はい・いいえ」の質問で候補をしぼる形にした。
@@ -18,7 +18,7 @@ import { baseUnit } from './kit';
 
 // ---- 例のデータ ----
 type Key =
-  | 'hokkaido'
+  | 'ehime'
   | 'aomori'
   | 'tochigi'
   | 'nagano'
@@ -37,7 +37,7 @@ interface Pref {
 }
 /** 県の名前（ひらがな）・海に面している・県庁のある市と名前が同じ・本州にある（学習指導要領の4年「都道府県の様子」の範囲の例） */
 const FACTS: Record<Key, Pref> = {
-  hokkaido: { name: 'ほっかいどう', sea: true, same: false, honshu: false },
+  ehime: { name: 'えひめ', sea: true, same: false, honshu: false },
   aomori: { name: 'あおもり', sea: true, same: true, honshu: true },
   tochigi: { name: 'とちぎ', sea: false, same: false, honshu: true },
   nagano: { name: 'ながの', sea: false, same: true, honshu: true },
@@ -55,7 +55,7 @@ const ALL_Q: Q[] = ['sea', 'same', 'honshu'];
 const MARK: Record<Q, string> = { sea: 'A', same: 'B', honshu: 'C' };
 /** 順ならべのふだに書く ことば */
 const QWORD: Record<Q, string> = { sea: 'うみ', same: 'なまえ', honshu: 'ほんしゅう' };
-const answerOf =(k: Key, q: Q) => FACTS[k][q];
+const answerOf = (k: Key, q: Q) => FACTS[k][q];
 const mark = (b: boolean) => (b ? '○' : '×');
 const nameOf = (k: Key) => FACTS[k].name;
 
@@ -131,7 +131,8 @@ const rotate = <T>(xs: T[], seed: string): T[] => {
 };
 
 const qm = (q: Q) => `「${MARK[q]}」`;
-const condText = (steps: [Q, boolean][]) => steps.map(([q, a]) => `${qm(q)}が ${mark(a)}`).join('、');
+const condText = (steps: [Q, boolean][]) =>
+  steps.map(([q, a]) => `${qm(q)}が ${mark(a)}`).join('、');
 const READ = 'A・B・C の じゅんに ○か×が あるよ。';
 
 // ---- narrow ----
@@ -142,12 +143,63 @@ interface Nr {
   steps: [Q, boolean][];
 }
 const NARROWS: Nr[] = [
-  { id: 'n1', level: 0, pool: ['aomori', 'tochigi', 'aichi', 'nagano'], steps: [['sea', true], ['same', true]] },
-  { id: 'n2', level: 0, pool: ['hokkaido', 'aomori', 'tochigi', 'fukuoka'], steps: [['honshu', false], ['same', true]] },
-  { id: 'n3', level: 0, pool: ['aichi', 'nara', 'okinawa', 'tochigi'], steps: [['sea', false], ['same', true]] },
-  { id: 'n4', level: 1, pool: ['nagano', 'aichi', 'okinawa', 'yamanashi'], steps: [['honshu', true], ['sea', false], ['same', false]] },
-  { id: 'n5', level: 1, pool: ['hokkaido', 'aomori', 'nara', 'hyogo'], steps: [['sea', true], ['same', false], ['honshu', true]] },
-  { id: 'n6', level: 1, pool: ['fukuoka', 'hokkaido', 'aomori', 'nagano'], steps: [['sea', true], ['honshu', false], ['same', false]] },
+  {
+    id: 'n1',
+    level: 0,
+    pool: ['aomori', 'tochigi', 'aichi', 'nagano'],
+    steps: [
+      ['sea', true],
+      ['same', true],
+    ],
+  },
+  {
+    id: 'n2',
+    level: 0,
+    pool: ['ehime', 'aomori', 'tochigi', 'fukuoka'],
+    steps: [
+      ['honshu', false],
+      ['same', true],
+    ],
+  },
+  {
+    id: 'n3',
+    level: 0,
+    pool: ['aichi', 'nara', 'okinawa', 'tochigi'],
+    steps: [
+      ['sea', false],
+      ['same', true],
+    ],
+  },
+  {
+    id: 'n4',
+    level: 1,
+    pool: ['nagano', 'aichi', 'okinawa', 'yamanashi'],
+    steps: [
+      ['honshu', true],
+      ['sea', false],
+      ['same', false],
+    ],
+  },
+  {
+    id: 'n5',
+    level: 1,
+    pool: ['ehime', 'aomori', 'nara', 'hyogo'],
+    steps: [
+      ['sea', true],
+      ['same', false],
+      ['honshu', true],
+    ],
+  },
+  {
+    id: 'n6',
+    level: 1,
+    pool: ['fukuoka', 'ehime', 'aomori', 'nagano'],
+    steps: [
+      ['sea', true],
+      ['honshu', false],
+      ['same', false],
+    ],
+  },
 ];
 const narrowItems: ChoiceItem[] = NARROWS.map((n) => {
   const ans = remain(n.pool, n.steps);
@@ -177,7 +229,7 @@ const narrowItems: ChoiceItem[] = NARROWS.map((n) => {
 });
 
 // 別例: 条件に合う県の数を数える
-const POOL6: Key[] = ['hokkaido', 'aomori', 'tochigi', 'nagano', 'aichi', 'fukuoka'];
+const POOL6: Key[] = ['ehime', 'aomori', 'tochigi', 'nagano', 'aichi', 'fukuoka'];
 interface Nc {
   id: string;
   level: number;
@@ -185,14 +237,30 @@ interface Nc {
 }
 const NCOUNT: Nc[] = [
   { id: 'c1', level: 0, steps: [['sea', true]] },
-  { id: 'c2', level: 0, steps: [['sea', true], ['honshu', true]] },
-  { id: 'c3', level: 1, steps: [['honshu', true], ['sea', false]] },
+  {
+    id: 'c2',
+    level: 0,
+    steps: [
+      ['sea', true],
+      ['honshu', true],
+    ],
+  },
+  {
+    id: 'c3',
+    level: 1,
+    steps: [
+      ['honshu', true],
+      ['sea', false],
+    ],
+  },
 ];
 const countItems: NumberItem[] = NCOUNT.map((c) => {
   const left = remain(POOL6, c.steps);
   const first = remain(POOL6, [c.steps[0]!]);
   const wrongs = [
-    ...(first.length !== left.length ? [{ value: String(first.length), misconception: 'narrow-miss' }] : []),
+    ...(first.length !== left.length
+      ? [{ value: String(first.length), misconception: 'narrow-miss' }]
+      : []),
     { value: String(POOL6.length), misconception: 'narrow-miss' },
   ].filter((w) => w.value !== String(left.length));
   return {
@@ -238,7 +306,7 @@ const ORDERQ: Oq[] = [
   { id: 'o1', level: 1, pool: POOL6, target: 'aomori' },
   { id: 'o2', level: 1, pool: POOL6, target: 'tochigi' },
   { id: 'o3', level: 1, pool: POOL6, target: 'fukuoka' },
-  { id: 'o4', level: 2, pool: POOL6, target: 'hokkaido' },
+  { id: 'o4', level: 2, pool: POOL6, target: 'ehime' },
   { id: 'o5', level: 2, pool: POOL6, target: 'nagano' },
   { id: 'o6', level: 2, pool: POOL6, target: 'aichi' },
 ];
@@ -246,7 +314,8 @@ const orderItems: OrderItem[] = ORDERQ.map((o) => {
   const all = perms([...ALL_Q]).map((p) => ({ p, c: cost(o.pool, o.target, p) }));
   const best = Math.min(...all.map((x) => x.c));
   const bests = all.filter((x) => x.c === best);
-  if (bests.length > 3 || bests.length === all.length) throw new Error(`${o.id}: 最短の順が決まらない`);
+  if (bests.length > 3 || bests.length === all.length)
+    throw new Error(`${o.id}: 最短の順が決まらない`);
   const first = bests[0]!.p;
   const posOf = (q: Q) => first.indexOf(q);
   const also = bests.slice(1).map((b) => b.p.map(posOf));
@@ -275,7 +344,7 @@ const orderItems: OrderItem[] = ORDERQ.map((o) => {
 // 別例: 最初にする質問を選ぶ
 const FIRSTQ: Oq[] = [
   { id: 'f1', level: 1, pool: POOL6, target: 'tochigi' },
-  { id: 'f2', level: 2, pool: POOL6, target: 'hokkaido' },
+  { id: 'f2', level: 2, pool: POOL6, target: 'ehime' },
   { id: 'f3', level: 2, pool: POOL6, target: 'aichi' },
 ];
 const firstItems: ChoiceItem[] = FIRSTQ.map((f) => {
@@ -333,10 +402,15 @@ const identifies = (pool: Key[], target: Key, qs: Q[]) => {
 };
 const FEWER: Fw[] = [
   { id: 'w1', level: 2, pool: ['aomori', 'tochigi', 'aichi', 'fukuoka'], target: 'tochigi' },
-  { id: 'w2', level: 2, pool: ['hokkaido', 'aomori', 'tochigi', 'nagano', 'fukuoka'], target: 'hokkaido' },
+  {
+    id: 'w2',
+    level: 2,
+    pool: ['ehime', 'aomori', 'tochigi', 'nagano', 'fukuoka'],
+    target: 'ehime',
+  },
   { id: 'w3', level: 2, pool: ['aomori', 'nagano', 'aichi', 'fukuoka'], target: 'aomori' },
-  { id: 'w4', level: 2, pool: ['hokkaido', 'aomori', 'tochigi', 'nagano'], target: 'nagano' },
-  { id: 'w5', level: 2, pool: ['aomori', 'tochigi', 'aichi', 'fukuoka', 'hokkaido'], target: 'aichi' },
+  { id: 'w4', level: 2, pool: ['ehime', 'aomori', 'tochigi', 'nagano'], target: 'nagano' },
+  { id: 'w5', level: 2, pool: ['aomori', 'tochigi', 'aichi', 'fukuoka', 'ehime'], target: 'aichi' },
   { id: 'w6', level: 2, pool: ['aomori', 'tochigi', 'nagano', 'fukuoka'], target: 'fukuoka' },
 ];
 const fewerItems: NumberItem[] = FEWER.map((w) => {
@@ -349,7 +423,10 @@ const fewerItems: NumberItem[] = FEWER.map((w) => {
     objective: 'fewer',
     level: w.level,
     prompt: `${nameOf(w.target)}を さがすよ。しつもんは さいてい なんこ いるかな。`,
-    figure: col([legendFigure(), candidatesFigure(w.pool, `${w.pool.length}つの 県《けん》の ふだ`)], 0.8),
+    figure: col(
+      [legendFigure(), candidatesFigure(w.pool, `${w.pool.length}つの 県《けん》の ふだ`)],
+      0.8,
+    ),
     fields: [{ label: 'こ', answer: { kind: 'int', value: m } }],
     wrongAnswers: [
       ...(m > 1 ? [{ value: String(m - 1), misconception: 'not-enough' }] : []),
@@ -374,8 +451,8 @@ interface Fd {
 }
 const FOUND: Fd[] = [
   { id: 'd1', level: 1, target: 'tochigi', qs: ['sea', 'honshu'] },
-  { id: 'd2', level: 2, target: 'aomori', qs: ['sea', 'same'] },
-  { id: 'd3', level: 2, target: 'hokkaido', qs: ['sea', 'honshu'] },
+  { id: 'd2', level: 2, target: 'fukuoka', qs: ['honshu', 'same'] },
+  { id: 'd3', level: 2, target: 'ehime', qs: ['sea', 'honshu'] },
 ];
 const foundItems: ChoiceItem[] = FOUND.map((f) => {
   const steps = f.qs.map((q) => [q, answerOf(f.target, q)] as [Q, boolean]);
@@ -390,8 +467,12 @@ const foundItems: ChoiceItem[] = FOUND.map((f) => {
     prompt: `${nameOf(f.target)}を さがすよ。${f.qs.map(qm).join('と')}に こたえたよ。もう みつかったかな。`,
     figure: col([legendFigure(), candidatesFigure(POOL6, '6つの 県《けん》の ふだ')], 0.8),
     options: [
-      { label: 'みつかった', ...(found ? { correct: true } : { misconception: 'too-many-q' }) },
-      { label: 'まだ わからない', ...(found ? { misconception: 'not-enough' } : { correct: true }) },
+      // みつかっていないのに「みつかった」→ しつもんが たりない。みつかったのに「まだ」→ もう しつもんは いらない
+      { label: 'みつかった', ...(found ? { correct: true } : { misconception: 'not-enough' }) },
+      {
+        label: 'まだ わからない',
+        ...(found ? { misconception: 'too-many-q' } : { correct: true }),
+      },
     ],
     layout: 'row',
     fixedOrder: true,
@@ -470,9 +551,3 @@ export const prefectureFinder: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、社会 第4学年 (1)（都道府県の様子）、小学校プログラミング教育の手引（第三版）（条件による絞り込みの考え方。内容は本アプリで作成）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-
-
-
-

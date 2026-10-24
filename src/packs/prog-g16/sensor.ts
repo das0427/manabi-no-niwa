@@ -52,7 +52,8 @@ const RA: Ra[] = [
   {
     id: 'ra1',
     level: 0,
-    prompt: 'センサーライトは、まわりが くらくなると ひかるよ。この ライトの センサーは、なにを しらべて いるかな。',
+    prompt:
+      'センサーライトは、まわりが くらくなると ひかるよ。この ライトの センサーは、なにを しらべて いるかな。',
     right: '明《あか》るさ',
     wrongs: [
       ['おと', 'sensor-kind'],
@@ -68,7 +69,8 @@ const RA: Ra[] = [
   {
     id: 'ra2',
     level: 0,
-    prompt: 'じどうドアは、ひとが ちかづくと ひらくよ。ドアの センサーは、なにを しらべて いるかな。',
+    prompt:
+      'じどうドアは、ひとが ちかづくと ひらくよ。ドアの センサーは、なにを しらべて いるかな。',
     right: '人《ひと》が いるか どうか',
     wrongs: [
       ['明《あか》るさ', 'sensor-kind'],
@@ -84,7 +86,8 @@ const RA: Ra[] = [
   {
     id: 'ra3',
     level: 0,
-    prompt: 'エアコンは、へやが あつく なると れいぼうを はじめるよ。エアコンの センサーは、なにを しらべて いるかな。',
+    prompt:
+      'エアコンは、へやが あつく なると れいぼうを はじめるよ。エアコンの センサーは、なにを しらべて いるかな。',
     right: 'おんど',
     wrongs: [
       ['おと', 'sensor-kind'],
@@ -111,12 +114,14 @@ const RA: Ra[] = [
       'いまは「くらい」かな、「あかるい」かな。',
       'あてはまらない ときは、「つける」はたらきは おこらないよ。',
     ],
-    explain: '「くらい なら つける」だから、あかるい いまは つかないよ。条件《じょうけん》に あてはまった ときだけ はたらくんだね。',
+    explain:
+      '「くらい なら つける」だから、あかるい いまは つかないよ。条件《じょうけん》に あてはまった ときだけ はたらくんだね。',
   },
   {
     id: 'ra5',
     level: 1,
-    prompt: 'もし ひとが ちかづいたら ドアが ひらく。だれも ちかづかない とき、ドアは どうなるかな。',
+    prompt:
+      'もし ひとが ちかづいたら ドアが ひらく。だれも ちかづかない とき、ドアは どうなるかな。',
     right: 'しまったまま',
     wrongs: [
       ['ひらく', 'cond-ignore'],
@@ -127,12 +132,14 @@ const RA: Ra[] = [
       'だれも ちかづいて いないよ。',
       'あてはまらない ときは、ドアは そのままの すがただよ。',
     ],
-    explain: '人《ひと》が ちかづいた ときだけ ひらくから、だれも いない ときは しまった ままだよ。',
+    explain:
+      '人《ひと》が ちかづいた ときだけ ひらくから、だれも いない ときは しまった ままだよ。',
   },
   {
     id: 'ra6',
     level: 1,
-    prompt: 'もし へやが あつく なったら せんぷうきが まわる。いま、へやは すずしいよ。せんぷうきは どうなるかな。',
+    prompt:
+      'もし へやが あつく なったら せんぷうきが まわる。いま、へやは すずしいよ。せんぷうきは どうなるかな。',
     right: 'とまっている',
     wrongs: [
       ['まわる', 'cond-ignore'],
@@ -148,7 +155,8 @@ const RA: Ra[] = [
   {
     id: 'ra7',
     level: 1,
-    prompt: 'もし くらい なら ライトを つける。そうでなければ ライトを けす。いま、ひるまで あかるいよ。ライトは どうなるかな。',
+    prompt:
+      'もし くらい なら ライトを つける。そうでなければ ライトを けす。いま、ひるまで あかるいよ。ライトは どうなるかな。',
     right: 'きえている',
     wrongs: [
       ['ついている', 'ifelse-swap'],
@@ -159,7 +167,8 @@ const RA: Ra[] = [
       'ひるまは あかるいね。「くらい」には あてはまらないよ。',
       'あてはまらない ときは「そうでなければ」の ほうの はたらきを するよ。',
     ],
-    explain: 'あかるい ひるまは「くらい」に あてはまらないから、「そうでなければ けす」の ほうで、ライトは きえるよ。',
+    explain:
+      'あかるい ひるまは「くらい」に あてはまらないから、「そうでなければ けす」の ほうで、ライトは きえるよ。',
   },
   {
     id: 'ra8',
@@ -219,7 +228,8 @@ const FL: Fl[] = [
       '「もし」の ところには、まわりの ようすが はいるよ。',
       'つぎの ところには、ライトに させる ことが はいるよ。',
     ],
-    explain: '「もし まわりが くらいなら、ライトを つける」。ようすが くらい ときに ライトを つけるんだね。',
+    explain:
+      '「もし まわりが くらいなら、ライトを つける」。ようすが くらい ときに ライトを つけるんだね。',
   },
   {
     id: 'f2',
@@ -266,8 +276,16 @@ const flItems: FillItem[] = FL.map((q) => ({
   text: q.text,
   options: q.options,
   blanks: [
-    { answers: [q.answers[0]], options: [q.options[0], q.options[1]], wrong: [{ value: q.wrong[0][0], misconception: q.wrong[0][1] }] },
-    { answers: [q.answers[1]], options: [q.options[2], q.options[3]], wrong: [{ value: q.wrong[1][0], misconception: q.wrong[1][1] }] },
+    {
+      answers: [q.answers[0]],
+      options: [q.options[0], q.options[1]],
+      wrong: [{ value: q.wrong[0][0], misconception: q.wrong[0][1] }],
+    },
+    {
+      answers: [q.answers[1]],
+      options: [q.options[2], q.options[3]],
+      wrong: [{ value: q.wrong[1][0], misconception: q.wrong[1][1] }],
+    },
   ],
   hints: q.hints,
   explain: q.explain,
@@ -462,7 +480,10 @@ function timelineFig(sc: Scene, t: { c1: boolean[]; c2: boolean[] }): Figure {
         : `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="3 3"/>`;
     });
   });
-  const rows = [`${kana(sc.c1.name)}：${kana(sc.c1.yes)}`, `${kana(sc.c2.name)}：${kana(sc.c2.yes)}`];
+  const rows = [
+    `${kana(sc.c1.name)}：${kana(sc.c1.yes)}`,
+    `${kana(sc.c2.name)}：${kana(sc.c2.yes)}`,
+  ];
   rows.forEach((r, i) => {
     body += `<text x="${x0 - 22}" y="${39 + i * 24}" text-anchor="end" font-size="14" font-weight="700" fill="var(--ink)">${r}</text>`;
   });
@@ -503,7 +524,7 @@ const saveItems: ChoiceItem[] = SAVES.map(([id, level, key]) => {
     layout: 'row',
     hints: [
       'ひょうを 見《み》て、ひつよう な ときは いつか さがそう。●が 2つ そろった ところだよ。',
-      `ひつよう な のは、「${sc.c1.name}が ${sc.c1.yes}」と「${sc.c2.name}が ${sc.c2.yes}」の りょうほうが あてはまる ときだけだよ。`,
+      `「${sc.c1.name}だけ」の きまりだと、●が ひとつしか ない じかんにも はたらくよ。ひょうで たしかめよう。`,
       'ひとつの じょうけんだけだと、ひつよう ない ときにも はたらいて しまわないかな。',
     ],
     explain: `ひつよう な ときは 2つの じょうけんが そろった ときだけ。ひとつだけの きまりだと、ひつよう ない ときにも はたらいて、むだに なってしまうよ。`,
@@ -552,7 +573,9 @@ const items: Item[] = [
   ...saveAlts,
 ];
 
-const introGrid = gridFigure(layout(['S..', '..G'], 'right'), { label: 'ますの ず。ほしが ゴール' });
+const introGrid = gridFigure(layout(['S..', '..G'], 'right'), {
+  label: 'ますの ず。ほしが ゴール',
+});
 
 export const sensor: UnitSpec = {
   ...baseUnit('g6.prog.sensor', 'g6'),
@@ -597,7 +620,8 @@ export const sensor: UnitSpec = {
     },
     {
       id: 'repeat-count',
-      explain: 'くりかえす かいすうが ちがったのかな。「つくまで」を つかうと、かぞえなくても いいよ。',
+      explain:
+        'くりかえす かいすうが ちがったのかな。「つくまで」を つかうと、かぞえなくても いいよ。',
     },
     {
       id: 'too-many',
@@ -628,7 +652,3 @@ export const sensor: UnitSpec = {
     '小学校学習指導要領（平成29年告示）理科 第6学年 A(4)（電気の利用）、同 内容の取扱い（プログラミングを体験する学習の例）、小学校プログラミング教育の手引（第三版）A。他の教科（理科6年 g6.sci.electricity-use）と連携。program エンジンの「まえが かべ」を前センサーに見立てた',
   gradeIsAppProposal: false,
 };
-
-
-
-

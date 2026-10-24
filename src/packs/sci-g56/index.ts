@@ -10,6 +10,15 @@ import { electricityUse } from './electricity-use';
 
 const pack: PackContent = {
   packId: 'sci-g56',
-  units: [pendulum, dissolve, germination, weatherChange, lever, combustion, moonSun, electricityUse],
+  units: [
+    pendulum,
+    dissolve,
+    germination,
+    weatherChange,
+    lever,
+    combustion,
+    moonSun,
+    electricityUse,
+  ],
 };
 export default pack;

@@ -13,8 +13,7 @@ const MAX_CHOICES = 4;
  * 単元の学年より上でも使ってよい字（理科の用語で必要なもの。curriculum-matrix 2.1）。
  * 足すときは理由をコメントに書く。
  */
-const ALLOWED_OVER: ReadonlySet<string> = new Set([
-]);
+const ALLOWED_OVER: ReadonlySet<string> = new Set([]);
 
 const gradeOf = (unit: UnitSpec): number => Number(unit.stage.slice(1));
 
@@ -112,6 +111,67 @@ describe('sci-g56 の教材検査（curriculum-matrix 1.8）', () => {
       const intro = unit.intro.map((s) => s.text).join(' ');
       expect(intro, unit.id).toMatch(/たしかめて|かんさつして|しらべて/);
     }
+  });
+
+  it('ヒント③が 正解の 選択肢の 文を そのまま 言わない（6字以上の 正解）', () => {
+    const plain = (s: unknown) =>
+      String(s)
+        .replace(/《[^》]*》/g, '')
+        .replace(/\s+/g, '');
+    for (const unit of pack.units) {
+      if (unit.source.kind !== 'items') continue;
+      for (const it of unit.source.items) {
+        const opts =
+          it.engine === 'choice'
+            ? it.options
+            : it.engine === 'experiment' && it.task.kind === 'consider'
+              ? it.task.options
+              : [];
+        const h3 = plain(it.hints[2]);
+        for (const o of opts)
+          if (o.correct && plain(o.label).length >= 6)
+            expect(h3, `${unit.id} ${it.id}`).not.toContain(plain(o.label));
+      }
+    }
+  });
+
+  it('レビューで 直した 誤概念の 付け方・ヒント（再発防止）', () => {
+    const item = (unitId: string, id: string): Item => {
+      const unit = pack.units.find((u) => u.id === unitId)!;
+      if (unit.source.kind !== 'items') throw new Error(unitId);
+      const it = unit.source.items.find((x) => x.id === id);
+      if (!it) throw new Error(`${unitId} ${id}`);
+      return it;
+    };
+    const misOf = (unitId: string, id: string, label: string) => {
+      const it = item(unitId, id);
+      if (it.engine !== 'choice') throw new Error(id);
+      return it.options.find((o) => String(o.label).includes(label))?.misconception;
+    };
+    // 「酸素は火を消す」に 二酸化炭素の 説明を 付けない
+    expect(misOf('g6.sci.combustion', 'gs-o2-itself', '火《ひ》を 消《け》す')).toBe(
+      'cb-oxygen-role',
+    );
+    expect(misOf('g6.sci.combustion', 'fl-why-out', '暗《くら》く')).toBe('cb-flow-none');
+    expect(misOf('g5.sci.dissolve', 'am-left', 'もっと 入《い》れる')).toBe('dis-no-limit');
+    expect(misOf('g5.sci.dissolve', 'am-salt-temp', '少《すく》ない')).toBe('dis-temp-reverse');
+    expect(misOf('g5.sci.germination', 'cd-sun', 'どちらも 発芽《はつが》しない')).toBe(
+      'ger-cond-three',
+    );
+    expect(misOf('g5.sci.germination', 'sd-why-cotton', '土《つち》では')).toBe('ger-cond-three');
+    // 仕分け: 酸素を「ない」に 入れたら 酸素の はたらきの 説明、ちっ素・二酸化炭素は 両方を 説明する 誤概念
+    const gs = item('g6.sci.combustion', 'gs-alt-sort');
+    if (gs.engine !== 'sort') throw new Error('gs-alt-sort');
+    expect(gs.cards[0]!.wrongBoxes?.[0]?.misconception).toBe('cb-oxygen-role');
+    const comb = pack.units.find((u) => u.id === 'g6.sci.combustion')!;
+    expect(comb.misconceptions.find((m) => m.id === 'cb-co2-burns')!.explain).toMatch(/ちっ素/);
+    const cd = item('g5.sci.germination', 'cd-alt-sort');
+    if (cd.engine !== 'sort') throw new Error('cd-alt-sort');
+    for (const c of cd.cards)
+      for (const w of c.wrongBoxes ?? []) expect(w.misconception).toBe('ger-cond-three');
+    // ヒント③で 答えの 道具を 名指ししない
+    expect(String(item('g6.sci.combustion', 'gs-checker').hints[2])).not.toMatch(/管/);
+    expect(String(item('g6.sci.electricity-use', 'cv-heat').hints[2])).not.toMatch(/アイロン|しわ/);
   });
 
   it('火・薬品・コンセントを家で使う手順を書いていない', () => {

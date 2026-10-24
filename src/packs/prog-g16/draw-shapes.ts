@@ -52,7 +52,7 @@ const squareItems: Item[] = [
     id: 'sq-2',
     obj: 'square',
     level: 0,
-    prompt: `「すすむ 4、みぎに 90ど」を くりかえして ${SQN}を かくよ。なんかい くりかえすかな。`,
+    prompt: `「すすむ 4、みぎに 90ど」を くりかえして ${SQN}を ちょうど 1しゅう かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(SQ(4).slice(0, 4), '2つの へんまで かいた 図《ず》', { grid: true }),
     answer: 4,
     label: 'かい',
@@ -73,7 +73,7 @@ const squareItems: Item[] = [
     obj: 'square',
     level: 0,
     prompt: `${SQN}の かどは、ぜんぶ なんどの ${ANGLE}かな。「みぎに ◯ど」の ◯に はいる 数《かず》を いれよう。`,
-    figure: turtleFigure(SQ(3).slice(0, 2), 'かどで みぎに まがる ところ', { grid: true }),
+    figure: turtleFigure(SQ(3).slice(0, 3), 'かどで みぎに まがる ところ', { grid: true }),
     answer: 90,
     label: 'ど',
     wrongs: [
@@ -85,7 +85,7 @@ const squareItems: Item[] = [
     hints: [
       `${SQN}の かどを おもいだそう。たて と よこが まじわって いるよ。`,
       'さんかくじょうぎの ひとつの かどと おなじ 角《かど》だよ。',
-      'まっすぐ（180ど）の はんぶんより すこし 小《ちい》さい 角《かく》ではなく、ちょうど はんぶんだよ。',
+      'たてと よこが まじわる かどは「直角《ちょっかく》」。直角《ちょっかく》は なんど だったかな。',
     ],
     explain: `${SQN}の 4つの かどは ぜんぶ 90ど（ちょくかく）。だから「みぎに 90ど」と まがるよ。`,
   }),
@@ -94,7 +94,9 @@ const squareItems: Item[] = [
     obj: 'square',
     level: 1,
     prompt: `「すすむ 3、みぎに 90ど」を 3かい くりかえしたよ。\n${SQN}にするには、あと なんかい？`,
-    figure: turtleFigure(repeatSteps(3, FW(3), TR(90)), '3つの へんまで かいた 図形《ずけい》', { grid: true }),
+    figure: turtleFigure(repeatSteps(3, FW(3), TR(90)), '3つの へんまで かいた 図形《ずけい》', {
+      grid: true,
+    }),
     answer: 1,
     label: 'かい',
     wrongs: [
@@ -138,6 +140,7 @@ const squareItems: Item[] = [
       [repeatSteps(4, FW(3), TR(90)).slice(0, 4), 'count-wrong'],
     ],
     rot: 1,
+    grid: true,
     hints: [
       'ひとつの へんの ながさと、まがる 角度《かくど》を よもう。',
       'かどが 4つ できて、もとの ばしょに もどる 図形《ずけい》を さがそう。',
@@ -178,7 +181,15 @@ const squareItems: Item[] = [
       [repeatSteps(2, FW(2), TR(90), FW(3), TR(90)), 'side-wrong'],
     ],
     texts: (ss) => {
-      if (ss.length === 8 && 'f' in ss[0]! && ss[0].f === 2 && 't' in ss[1]! && ss[1].t === 90 && 'f' in ss[2]! && ss[2].f === 2)
+      if (
+        ss.length === 8 &&
+        'f' in ss[0]! &&
+        ss[0].f === 2 &&
+        't' in ss[1]! &&
+        ss[1].t === 90 &&
+        'f' in ss[2]! &&
+        ss[2].f === 2
+      )
         return repText(4, FW(2), TR(90));
       if (ss.length === 8 && 't' in ss[1]! && ss[1].t === 120) return repText(4, FW(2), TR(120));
       return repText(2, FW(2), TR(90), FW(3), TR(90));
@@ -220,8 +231,8 @@ const squareMatches: Item[] = [
       { steps: repeatSteps(2, FW(3), TR(90)), text: repText(2, FW(3), TR(90)) },
     ],
     hints: [
-      '図形《ずけい》ごとに、かどの 形《かたち》を みよう。90ど かな、それとも もっと せまい 角《かく》かな。',
-      '「みぎに 60ど」だと、かどが せまくなって とじないよ。',
+      '図形《ずけい》ごとに、かどの 形《かたち》を みよう。90ど かな、それとも もっと ひろい 角《かく》かな。',
+      '「みぎに 60ど」だと、まがり方《かた》が 小《ちい》さくて かどが ひろく なり、とじないよ。',
       '2かいだけ くりかえした 図形《ずけい》は 2つの へんで おわるよ。',
     ],
     explain: `90ど なら ${SQN}。60ど だと とじない ずけいに なるよ。かいすうが 2かいなら、へんは 2つだけだね。`,
@@ -262,7 +273,7 @@ const rectItems: Item[] = [
     hints: [
       `${RCN}は、ながい へんと みじかい へんが 2つずつ あるよ。`,
       'ずで、よこの へんと たての へんの ながさを かぞえよう。',
-      'よこが 4、たてが 2。それを ならべて 2かい くりかえす 命令《めいれい》を さがそう。',
+      'はじめに 右《みぎ》へ すすむ よこの へんの めもりを かぞえよう。それが □に はいるよ。',
     ],
     explain: `${RCN}は、ながい へん（4）と みじかい へん（2）が 2つずつ。「すすむ 4、みぎに 90ど、すすむ 2、みぎに 90ど」を 2かい くりかえすよ。`,
   }),
@@ -270,7 +281,7 @@ const rectItems: Item[] = [
     id: 'rc-2',
     obj: 'rect',
     level: 0,
-    prompt: `「すすむ 4、みぎに 90ど、すすむ 2、みぎに 90ど」を くりかえして ${RCN}を かくよ。なんかい くりかえすかな。`,
+    prompt: `「すすむ 4、みぎに 90ど、すすむ 2、みぎに 90ど」を くりかえして ${RCN}を 1しゅう かく。なんかい？`,
     figure: turtleFigure(RC(4, 2).slice(0, 4), '2つの へんまで かいた 図《ず》', { grid: true }),
     answer: 2,
     label: 'かい',
@@ -309,7 +320,8 @@ const rectItems: Item[] = [
     id: 'rc-4',
     obj: 'rect',
     level: 1,
-    prompt: `${RCN}に ならない ものは どれ？`,
+    // 正方形も 4つの かどが 直角なので「長方形に ならない もの」とは きかない（正方形に なる ものを きく）
+    prompt: `${SQN}に なる ものは どれ？`,
     right: repText(2, FW(3), TR(90), FW(3), TR(90)),
     wrongs: [
       [repText(2, FW(5), TR(90), FW(2), TR(90)), 'side-wrong'],
@@ -317,11 +329,11 @@ const rectItems: Item[] = [
     ],
     layout: 'column',
     hints: [
-      `${RCN}は、ながい へんと みじかい へんが あるよ。`,
+      `${SQN}は、4つの へんの ながさが ぜんぶ おなじだよ。`,
       '「すすむ ◯」の 数《かず》が 2つ ならんでいるね。ふたつを くらべよう。',
-      '2つの 数《かず》が おなじだと、4つの へんが ぜんぶ おなじに なるよ。',
+      '1つめの「すすむ」が よこ、2つめの「すすむ」が たての へんの ながさだよ。',
     ],
-    explain: `すすむ 数《かず》が おなじ（3と 3）だと、4つの へんが ぜんぶ 3になって ${SQN}に なるよ。${RCN}は ながい へんと みじかい へんが ちがう ながさだね。`,
+    explain: `すすむ 数《かず》が おなじ（3と 3）だと、4つの へんが ぜんぶ 3になって ${SQN}に なるよ。すすむ 数《かず》が ちがうと、ながい へんと みじかい へんが ある ${RCN}に なるね。`,
   }),
   num({
     id: 'rc-5',
@@ -353,6 +365,7 @@ const rectItems: Item[] = [
       [SQ(3), 'side-wrong'],
     ],
     rot: 2,
+    grid: true,
     hints: [
       '1つめの「すすむ」が よこの ながさ、2つめが たての ながさだよ。',
       'はじめは 右《みぎ》へ すすむから、よこが ながい 図形《ずけい》を さがそう。',
@@ -391,7 +404,11 @@ const rectItems: Item[] = [
       [2, 'side-wrong'],
       [8, 'side-wrong'],
     ],
-    hints: H_FIG,
+    hints: [
+      `${RCN}は、よこの へんと たての へんが 2つずつ あるよ。`,
+      'はじめの「すすむ 5」は よこの へん。□は まがった あとに すすむ たての へんだよ。',
+      'ずの たての へんの めもりを かぞえよう。',
+    ],
     explain: `はじめに 右《みぎ》へ 5 すすむから、よこが ながい ${RCN}。よこ 5、たて 3 だから「すすむ 5、みぎに 90ど、すすむ 3、みぎに 90ど」を 2かい くりかえすよ。`,
   }),
 ];
@@ -434,7 +451,10 @@ const rectMatches: Item[] = [
     level: 2,
     pairs: [
       { steps: RC(4, 1), text: repText(2, FW(4), TR(90), FW(1), TR(90)) },
-      { steps: repeatSteps(2, FW(4), TR(90), FW(1), TR(60)), text: repText(2, FW(4), TR(90), FW(1), TR(60)) },
+      {
+        steps: repeatSteps(2, FW(4), TR(90), FW(1), TR(60)),
+        text: repText(2, FW(4), TR(90), FW(1), TR(60)),
+      },
     ],
     extra: [repText(2, FW(1), TR(90), FW(4), TR(90))],
     hints: [
@@ -468,7 +488,7 @@ const shortItems: Item[] = [
     hints: [
       'おなじ ならびが なんかい でてくるか 数《かぞ》えよう。',
       '「すすむ 3、みぎに 90ど」の ならびが くりかえされて いるよ。',
-      'ならびは 4かい でてくるよ。かどは 90ど だね。',
+      `${SQN}の かどの 数《かず》と、ならびが でてくる かいすうを くらべよう。`,
     ],
     explain: `「すすむ 3、みぎに 90ど」が 4かい ならんでいるから「${repText(4, FW(3), TR(90))}」と みじかく かけるよ。`,
   }),
@@ -606,7 +626,8 @@ const shortItems: Item[] = [
     ],
     explain: `なかに 4まい（すすむ、まがる、すすむ、まがる）と、「くりかえす」の ふだ 1まいで、5まい。8まいより 3まい へったね。`,
   }),
-];const shortMatches: Item[] = [
+];
+const shortMatches: Item[] = [
   matchItem({
     id: 'sh-alt-1',
     obj: 'short',
@@ -693,7 +714,8 @@ export const drawShapes: UnitSpec = {
     },
     {
       id: 'open-shape',
-      explain: 'さいごまで かいていないのかな。もとの ばしょに もどって、図形《ずけい》が とじるまで くりかえそう。',
+      explain:
+        'さいごまで かいていないのかな。もとの ばしょに もどって、図形《ずけい》が とじるまで くりかえそう。',
     },
     {
       id: 'repeat-body',
@@ -707,7 +729,8 @@ export const drawShapes: UnitSpec = {
     },
     {
       id: 'not-shortest',
-      explain: 'もっと みじかく できるのかも。おなじ ならびが つづく ところは「くりかえす」で まとめよう。',
+      explain:
+        'もっと みじかく できるのかも。おなじ ならびが つづく ところは「くりかえす」で まとめよう。',
     },
     {
       id: 'shape-changed',
@@ -739,9 +762,3 @@ export const drawShapes: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、算数 第4学年 B（正方形《せいほうけい》・長方形《ちょうほうけい》の性質）、小学校プログラミング教育の手引（第三版）。program エンジンは格子の上を動くだけなので、線《せん》の図《ず》は命令から計算した図《ず》で出題。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-
-
-
-

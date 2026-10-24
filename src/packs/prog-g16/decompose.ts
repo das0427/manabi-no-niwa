@@ -151,10 +151,9 @@ function shownCards(cards: [string, string][]): [string, string][] {
   while (need.size < 4 && rest.length) need.add(rest.shift()!.i);
   return cards.filter((_, i) => need.has(i));
 }
-const sortItems = SORTS.map(
-  (s0): SortItem => {
-    const s = { ...s0, cards: shownCards(s0.cards as [string, string][]) };
-    return {
+const sortItems = SORTS.map((s0): SortItem => {
+  const s = { ...s0, cards: shownCards(s0.cards as [string, string][]) };
+  return {
     engine: 'sort',
     id: `daily-${s.id}`,
     objective: 'split-daily',
@@ -176,11 +175,18 @@ const sortItems = SORTS.map(
       'おなじ ねらいの しごとを ひとつの まとまりに しよう。',
       `「${s.boxes[0]}」は はじめの まとまり、「${s.boxes[1]}」は まんなか、「${s.boxes[2]}」は さいごの まとまりだよ。`,
     ],
-    explain: `${s.boxes.map((b, i) => `「${b}」は ${s.cards.filter(([, x]) => Number(x) === i).map(([c]) => c).join('、')}`).join('。')}。おおきな しごとは、ちいさな まとまりに わけると かんがえやすいね。`,
+    explain: `${s.boxes
+      .map(
+        (b, i) =>
+          `「${b}」は ${s.cards
+            .filter(([, x]) => Number(x) === i)
+            .map(([c]) => c)
+            .join('、')}`,
+      )
+      .join('。')}。おおきな しごとは、ちいさな まとまりに わけると かんがえやすいね。`,
     identity: `daily-${s.id}`,
-    };
-  },
-);
+  };
+});
 
 interface Od {
   id: string;
@@ -194,7 +200,12 @@ const ORDERS: Od[] = [
     id: 'bento',
     level: 0,
     topic: 'おべんとうを つくる',
-    parts: ['ざいりょうを じゅんびする', 'おかずを つくる', 'ごはんと おかずを つめる', 'かたづける'],
+    parts: [
+      'ざいりょうを じゅんびする',
+      'おかずを つくる',
+      'ごはんと おかずを つめる',
+      'かたづける',
+    ],
     hints: [
       'おおきな しごとの はじまりは なにかな。',
       'つめる まえに、おかずが できて いないと いけないね。',
@@ -205,7 +216,12 @@ const ORDERS: Od[] = [
     id: 'party',
     level: 0,
     topic: 'おたんじょうかいを ひらく',
-    parts: ['なにを するか かんがえる', 'かざりと おやつを よういする', 'みんなで たのしむ', 'かたづける'],
+    parts: [
+      'なにを するか かんがえる',
+      'かざりと おやつを よういする',
+      'みんなで たのしむ',
+      'かたづける',
+    ],
     hints: [
       'パーティーの まえと あとに することを わけて みよう。',
       'たのしむ のは、よういが おわって からだね。',
@@ -224,23 +240,21 @@ const ORDERS: Od[] = [
     ],
   },
 ];
-const orderItems = ORDERS.map(
-  (o): OrderItem => ({
-    engine: 'order',
-    id: `daily-alt-${o.id}`,
-    objective: 'split-daily',
-    level: o.level,
-    alt: true,
-    prompt: `「${o.topic}」を 4つの まとまりに わけたよ。じゅんばんに ならべよう。`,
-    cards: o.parts.map((label) => ({ label })),
-    layout: 'column',
-    ends: ['はじめ', 'おわり'],
-    reverseMisconception: 'order',
-    hints: o.hints,
-    explain: `${o.parts.join('、')}の じゅんだよ。まとまりごとに じゅんばんを かんがえると、おおきな しごとも すすめやすいね。`,
-    identity: `daily-alt-${o.id}`,
-  }),
-);
+const orderItems = ORDERS.map((o): OrderItem => ({
+  engine: 'order',
+  id: `daily-alt-${o.id}`,
+  objective: 'split-daily',
+  level: o.level,
+  alt: true,
+  prompt: `「${o.topic}」を 4つの まとまりに わけたよ。じゅんばんに ならべよう。`,
+  cards: o.parts.map((label) => ({ label })),
+  layout: 'column',
+  ends: ['はじめ', 'おわり'],
+  reverseMisconception: 'order',
+  hints: o.hints,
+  explain: `${o.parts.join('、')}の じゅんだよ。まとまりごとに じゅんばんを かんがえると、おおきな しごとも すすめやすいね。`,
+  identity: `daily-alt-${o.id}`,
+}));
 
 // ---- 道のり ----
 interface Route {
@@ -251,10 +265,34 @@ interface Route {
   marks: Cell[];
 }
 const ROUTES: Route[] = [
-  { id: 'ra', dir: 'right', rows: ['S....', '####.', 'G....'], marks: [[4, 0], [4, 2]] },
+  {
+    id: 'ra',
+    dir: 'right',
+    rows: ['S....', '####.', 'G....'],
+    marks: [
+      [4, 0],
+      [4, 2],
+    ],
+  },
   { id: 'rb', dir: 'right', rows: ['S.....', '#####.', '.....G'], marks: [[5, 0]] },
-  { id: 'rc', dir: 'right', rows: ['S..###', '##.###', '##...G'], marks: [[2, 0], [2, 2]] },
-  { id: 'rd', dir: 'right', rows: ['G....', '####.', 'S....'], marks: [[4, 2], [4, 0]] },
+  {
+    id: 'rc',
+    dir: 'right',
+    rows: ['S..###', '##.###', '##...G'],
+    marks: [
+      [2, 0],
+      [2, 2],
+    ],
+  },
+  {
+    id: 'rd',
+    dir: 'right',
+    rows: ['G....', '####.', 'S....'],
+    marks: [
+      [4, 2],
+      [4, 0],
+    ],
+  },
 ];
 
 function put(rows: readonly string[], at: Cell, ch: string): string[] {
@@ -333,14 +371,17 @@ function partCount(id: string, level: number, r: Route, upTo: number): NumberIte
     objective: 'split-route',
     level,
     alt: true,
-    prompt: 'みちを ふたつに わけたよ。はじめから ほしの ところまで、「すすむ」の ふだは ぜんぶで なんかい いるかな。',
+    prompt:
+      'みちを ふたつに わけたよ。はじめから ほしの ところまで、「すすむ」の ふだは ぜんぶで なんかい いるかな。',
     figure: gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 9 }),
     fields: [{ label: 'かい', answer: { kind: 'int', value: forwards } }],
     wrongAnswers: [
       { value: String(sol.length), misconception: 'count-turn' },
       { value: String(forwards - 1), misconception: 'count-miss' },
       { value: String(forwards + 1), misconception: 'count-miss' },
-    ].filter((w, i, a) => w.value !== String(forwards) && a.findIndex((x) => x.value === w.value) === i),
+    ].filter(
+      (w, i, a) => w.value !== String(forwards) && a.findIndex((x) => x.value === w.value) === i,
+    ),
     hints: [
       'はじめの やじるしから、ほしまで ゆびで たどろう。',
       'マスを ひとつ すすむ ごとに「すすむ」を 1かい つかうよ。まがる ところは すすまないよ。',
@@ -393,13 +434,7 @@ const joinItems = JOINS.map((j) => {
 });
 
 // 別例: つなげた手順でどこに着くか
-function joinLanding(
-  id: string,
-  level: number,
-  dir: Dir,
-  rows: string[],
-  parts: Cmd[][],
-) {
+function joinLanding(id: string, level: number, dir: Dir, rows: string[], parts: Cmd[][]) {
   return landingItem({
     id: `join-alt-${id}`,
     obj: 'join',
@@ -409,7 +444,8 @@ function joinLanding(
     dir,
     prog: parts.flat(),
     promptHead: `${parts.length}つの てじゅんを つなげたよ。どこに つくかな。`,
-    mis: { turn: 'forget-turn', short: 'short', count: 'repeat-count' },
+    // turn は みぎ・ひだりを 入れかえた 手順の 着く場所に つく（むきの かわり忘れではない）
+    mis: { turn: 'turn', short: 'short', count: 'repeat-count' },
     hints: [
       'てじゅん A から じゅんに たどろう。',
       'てじゅんと てじゅんの つなぎめで、キャラクターの むきが かわって いることに きを つけよう。',
@@ -418,9 +454,27 @@ function joinLanding(
   });
 }
 const joinAlts = [
-  joinLanding('a1', 0, 'right', ['......', '......', 'S.....', '......', '......'], [[rep(3, F)], [R], [F, F]]),
-  joinLanding('a2', 1, 'up', ['.....', '.....', '.....', '.....', 'S....'], [[rep(2, F)], [R], [rep(3, F)]]),
-  joinLanding('a3', 2, 'right', ['......', 'S.....', '......', '......'], [[F, F], [R], [F, F], [L], [F]]),
+  joinLanding(
+    'a1',
+    0,
+    'right',
+    ['......', '......', 'S.....', '......', '......'],
+    [[rep(3, F)], [R], [F, F]],
+  ),
+  joinLanding(
+    'a2',
+    1,
+    'up',
+    ['.....', '.....', '.....', '.....', 'S....'],
+    [[rep(2, F)], [R], [rep(3, F)]],
+  ),
+  joinLanding(
+    'a3',
+    2,
+    'right',
+    ['......', 'S.....', '......', '......'],
+    [[F, F], [R], [F, F], [L], [F]],
+  ),
 ];
 
 const items: Item[] = [
@@ -474,7 +528,8 @@ export const decompose: UnitSpec = {
     },
     {
       id: 'repeat-count',
-      explain: '「くりかえす」の かいすうを かぞえまちがえたのかな。マスを ひとつずつ たどって たしかめよう。',
+      explain:
+        '「くりかえす」の かいすうを かぞえまちがえたのかな。マスを ひとつずつ たどって たしかめよう。',
     },
     {
       id: 'too-many',
@@ -505,8 +560,3 @@ export const decompose: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）プログラミング的思考（動きの分割・組合せ）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-
-
-

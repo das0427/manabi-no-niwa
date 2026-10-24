@@ -60,7 +60,8 @@ function extraChecks(unit: UnitSpec): string[] {
     ...items.flatMap((it) => textsOf(it)),
   ];
   for (const t of texts)
-    for (const k of overGrade(t, grade)) errs.push(`${grade}年より上の漢字「${k}」: ${t.slice(0, 30)}`);
+    for (const k of overGrade(t, grade))
+      errs.push(`${grade}年より上の漢字「${k}」: ${t.slice(0, 30)}`);
   for (const it of items) {
     if (
       (it.engine === 'choice' || it.engine === 'listen' || it.engine === 'reading') &&
@@ -73,7 +74,8 @@ function extraChecks(unit: UnitSpec): string[] {
     if (grade <= 2)
       for (const t of textsOf(it)) {
         const plain = t.replace(/《[^》]*》/g, '');
-        if (/[ぁ-んァ-ヶー]{13,}/.test(plain)) errs.push(`[${it.id}] 分かち書きが長い: ${t.slice(0, 40)}`);
+        if (/[ぁ-んァ-ヶー]{13,}/.test(plain))
+          errs.push(`[${it.id}] 分かち書きが長い: ${t.slice(0, 40)}`);
       }
   }
   return [...new Set(errs)];

@@ -96,7 +96,9 @@ const diaryItems: ExplainItem[] = DIARY.map((d) =>
     obj: 'diary',
     level: d.level,
     prompt: d.prompt,
-    ...(d.reasons ? { reasons: d.reasons, multi: d.multi } : { canvas: { aspect: 4 / 3, guide: d.guide ?? 'none' } }),
+    ...(d.reasons
+      ? { reasons: d.reasons, multi: d.multi }
+      : { canvas: { aspect: 4 / 3, guide: d.guide ?? 'none' } }),
     hints: d.hints,
     explain: DIARY_EXPLAIN,
   }),
@@ -177,7 +179,8 @@ const GROWTH: Go[] = [
       'たねから でて きた ものは、ちいさな めだよ。',
       'はっぱが ふえて、さいごに はなが さくよ。',
     ],
-    explain: 'たね、め、はっぱ、はな の じゅんだよ。たねから めが でて、はっぱが ふえて、はなが さくね。',
+    explain:
+      'たね、め、はっぱ、はな の じゅんだよ。たねから めが でて、はっぱが ふえて、はなが さくね。',
   },
   {
     id: 'o2',
@@ -304,11 +307,12 @@ const growthAlts: ChoiceItem[] = [
     prompt: 'トマトの はなが さいた あとに できる ものは どれかな。',
     right: 'み',
     rightFigure: illust('tomato'),
+    // 「たね」は み の なかに できるので、誤りの選択肢に しない
     wrongs: [
-      ['たね', 'growth-order'],
+      ['つぼみ', 'growth-order'],
       ['め', 'growth-order'],
     ],
-    wrongFigures: [illust('life-seed'), illust('life-sprout')],
+    wrongFigures: [illust('life-bud'), illust('life-sprout')],
     layout: 'row',
     hints: [
       'トマトは、なにを たべるかな。',
@@ -344,7 +348,7 @@ const CARE: Cr[] = [
     hints: [
       'つちを さわって みよう。',
       'かわいて いると、しょくぶつは どうなるかな。',
-      'のどが かわいた ときに のむ ものを、あげよう。',
+      'あめが ふった あとの つちは、どうなって いるかな。',
     ],
     explain: 'つちが かわいて いたら、みずを あげるよ。しょくぶつは、みずを のんで そだつからね。',
   },
@@ -361,9 +365,10 @@ const CARE: Cr[] = [
     hints: [
       'しょくぶつは、ひかりを あびて そだつよ。',
       'くらくて さむい ところは、どうかな。',
-      'たいようが あたる ところを えらぼう。',
+      'ひかりが よく とどく ところは どこかな。',
     ],
-    explain: 'しょくぶつは、たいようの ひかりを あびて そだつよ。ひなたに おくと、げんきに なるね。',
+    explain:
+      'しょくぶつは、たいようの ひかりを あびて そだつよ。ひなたに おくと、げんきに なるね。',
   },
   {
     id: 'c3',
@@ -379,7 +384,8 @@ const CARE: Cr[] = [
       'みずが おおすぎると、いきが しにくく なるね。',
       'ほどよい りょうが だいじだよ。',
     ],
-    explain: 'みずを あげすぎると ねが いたんで、かれる ことが あるよ。つちが かわいてから あげると いいね。',
+    explain:
+      'みずを あげすぎると ねが いたんで、かれる ことが あるよ。つちが かわいてから あげると いいね。',
   },
   {
     id: 'c4',
@@ -393,15 +399,16 @@ const CARE: Cr[] = [
     hints: [
       'どんな むしか、よく みて みよう。',
       'ひとりで さわるのが あぶない むしも いるよ。',
-      'おとなに みて もらいながら、どうするか きめよう。',
+      'ひとりで きめないで、だれに そうだん すると いいかな。',
     ],
-    explain: 'おとなに いって、いっしょに たしかめよう。むしの なかには、さわると あぶない ものも いるからね。',
+    explain:
+      'おとなに いって、いっしょに たしかめよう。むしの なかには、さわると あぶない ものも いるからね。',
   },
   {
     id: 'c5',
     level: 2,
     prompt: 'はっぱが しおれて いるよ。まず どうするかな。',
-    fig: 'life-pot',
+    // 絵（life-pot）は はっぱが ぴんと した うえきばちで 問題文と あわないので つけない
     right: 'つちを さわって、かわいて いないか たしかめる',
     wrongs: [
       ['すぐに ひっこぬく', 'care-wrong'],
@@ -409,10 +416,11 @@ const CARE: Cr[] = [
     ],
     hints: [
       'しおれる わけは、いろいろ あるよ。',
-      'まず つちの ようすを みて みよう。',
-      'つちが かわいて いたら、みずが たりないのかも しれないね。',
+      'みずが たりない ときにも、はっぱは しおれるよ。',
+      'みずが たりて いるかは、どこを さわると わかるかな。',
     ],
-    explain: 'しおれて いたら、まず つちが かわいて いないか たしかめるよ。みずが たりない ことが おおいね。',
+    explain:
+      'しおれて いたら、まず つちが かわいて いないか たしかめるよ。みずが たりない ことが おおいね。',
   },
   {
     id: 'c6',
@@ -426,9 +434,10 @@ const CARE: Cr[] = [
     hints: [
       'つよい かぜが ふくと、うえきばちは どうなるかな。',
       'たおれたり、とばされたり する ことが あるね。',
-      'あんぜんな ばしょに うつして あげよう。',
+      'かぜが あたらない ところは どこかな。',
     ],
-    explain: 'つよい かぜの ひは、いえの なかに いれるよ。たおれたり、とばされたり しないように ね。',
+    explain:
+      'つよい かぜの ひは、いえの なかに いれるよ。たおれたり、とばされたり しないように ね。',
   },
 ];
 const careItems: ChoiceItem[] = CARE.map((c) =>
@@ -469,7 +478,8 @@ const careSorts = [
     ],
     mis: 'care-sort',
     hints: NEED_HINTS,
-    explain: 'みず・ひかり・つち は ひつよう。ジュース・おおきな おと・くつ は しょくぶつには いらないよ。',
+    explain:
+      'みず・ひかり・つち は ひつよう。ジュース・おおきな おと・くつ は しょくぶつには いらないよ。',
   }),
   sortItem({
     id: 'care-alt-s2',
@@ -488,7 +498,8 @@ const careSorts = [
     ],
     mis: 'care-sort',
     hints: NEED_HINTS,
-    explain: 'ようすを みて、ひなたに おいて、かわいたら みずを あげるのが せわだよ。むりに ひっぱったり、あげすぎたり しないよ。',
+    explain:
+      'ようすを みて、ひなたに おいて、かわいたら みずを あげるのが せわだよ。むりに ひっぱったり、あげすぎたり しないよ。',
   }),
   sortItem({
     id: 'care-alt-s3',
@@ -507,7 +518,8 @@ const careSorts = [
     ],
     mis: 'care-sort',
     hints: NEED_HINTS,
-    explain: 'やさしく さわって、てを あらい、かたづけるのが よい こと。つよく にぎる・ちぎる・ほうって おく のは よくないね。',
+    explain:
+      'やさしく さわって、てを あらい、かたづけるのが よい こと。つよく にぎる・ちぎる・ほうって おく のは よくないね。',
   }),
 ];
 
@@ -562,7 +574,13 @@ export const plantDiary: UnitSpec = {
       text: 'しょくぶつを そだてて、よく みて、わかった ことを かこう。たねから はなまでの じゅんばんも ならべて みよう。',
       figure: {
         kind: 'row',
-        items: [illust('life-seed'), illust('life-sprout'), illust('life-leaves'), illust('life-bud'), illust('flower')],
+        items: [
+          illust('life-seed'),
+          illust('life-sprout'),
+          illust('life-leaves'),
+          illust('life-bud'),
+          illust('flower'),
+        ],
         gap: 6,
       },
     },
@@ -579,11 +597,3 @@ export const plantDiary: UnitSpec = {
     '小学校学習指導要領（平成29年告示）生活 (7)（動物を飼ったり植物を育てたりする活動。2学年間継続）。学年の割当は本アプリの案（生活は第1・2学年のまとまり）。観察・栽培は実体験が本体で、本単元は記録・整理の補助',
   gradeIsAppProposal: true,
 };
-
-
-
-
-
-
-
-

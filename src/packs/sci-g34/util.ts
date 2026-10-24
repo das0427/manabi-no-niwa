@@ -200,7 +200,16 @@ export function baseSci(
   domain: 'A-matter' | 'B-life',
 ): Pick<
   UnitSpec,
-  'id' | 'stage' | 'subject' | 'domain' | 'priority' | 'status' | 'icon' | 'review' | 'revised' | 'kind'
+  | 'id'
+  | 'stage'
+  | 'subject'
+  | 'domain'
+  | 'priority'
+  | 'status'
+  | 'icon'
+  | 'review'
+  | 'revised'
+  | 'kind'
 > {
   return {
     id,

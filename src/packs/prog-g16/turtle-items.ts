@@ -71,9 +71,7 @@ export function cmdChoice(opt: {
     id: opt.id,
     obj: opt.obj,
     level: opt.level,
-    prompt:
-      opt.prompt ??
-      'この 図形《ずけい》を かく 命令《めいれい》は どれ？',
+    prompt: opt.prompt ?? 'この 図形《ずけい》を かく 命令《めいれい》は どれ？',
     figure: turtleFigure(opt.target, 'みどりの てんから 線《せん》を かいた 図形《ずけい》', {
       grid: opt.grid ?? true,
       hU: 4.8,
@@ -112,7 +110,11 @@ export function figChoice(opt: {
   for (let i = 0; i < 3; i++) if (!placed[i]) placed[i] = all[k++];
   const options: ChoiceOption[] = placed.map((p, i) => ({
     label: names[i]!,
-    figure: turtleFigure(p!.s, `${names[i]}の 図形《ずけい》`, { grid: false, box: 110, hU: 6.5 }),
+    figure: turtleFigure(p!.s, `${names[i]}の 図形《ずけい》`, {
+      grid: opt.grid ?? false,
+      box: 110,
+      hU: 6.5,
+    }),
     ...(i === opt.rot % 3 ? { correct: true } : { misconception: p!.m }),
   }));
   return {
@@ -147,7 +149,9 @@ export function matchItem(opt: {
   const compact = (s: string) => s.replace(/^「(.*)」を (\d+)かい くりかえす$/, '$2かい：$1');
   const right = [
     ...opt.pairs.map((p) => ({ label: compact(p.text) })),
-    ...(opt.pairs.length >= 3 ? [] : (opt.extra ?? []).slice(0, 1).map((label) => ({ label: compact(label) }))),
+    ...(opt.pairs.length >= 3
+      ? []
+      : (opt.extra ?? []).slice(0, 1).map((label) => ({ label: compact(label) }))),
   ];
   const mis = opt.wrongMis ?? 'side-wrong';
   return {
@@ -175,5 +179,3 @@ export function matchItem(opt: {
     identity: opt.id,
   };
 }
-
-

@@ -23,7 +23,8 @@ export function stepText(s: TStep): string {
 }
 export const stepsText = (ss: readonly TStep[]) => ss.map(stepText).join('、');
 /** 「すすむ 3、みぎに 90ど」を 4かい くりかえす */
-export const repText = (n: number, ...body: TStep[]) => `「${stepsText(body)}」を ${n}かい くりかえす`;
+export const repText = (n: number, ...body: TStep[]) =>
+  `「${stepsText(body)}」を ${n}かい くりかえす`;
 
 export interface Trace {
   pts: [number, number][];

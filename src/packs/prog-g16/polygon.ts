@@ -63,7 +63,7 @@ const repeatItems: Item[] = [
     id: 'rt-2',
     obj: 'repeat-turn',
     level: 0,
-    prompt: `「すすむ 3、みぎに 120ど」を くりかえして ${PN[3]}を かくよ。なんかい くりかえすかな。`,
+    prompt: `「すすむ 3、みぎに 120ど」を くりかえして ${PN[3]}を ちょうど 1しゅう かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(P(3, 3), PN[3]!, {}),
     answer: 3,
     label: 'かい',
@@ -98,7 +98,7 @@ const repeatItems: Item[] = [
     prompt: `つぎの 命令《めいれい》で かける 図形《ずけい》は どれかな。\n${repText(5, FW(2), TR(72))}`,
     right: P(5, 2),
     wrongs: [
-      [repeatSteps(5, FW(2), TR(60)), 'turn-interior'],
+      [repeatSteps(5, FW(2), TR(108)), 'turn-interior'],
       [repeatSteps(4, FW(2), TR(72)), 'repeat-count'],
     ],
     rot: 0,
@@ -153,7 +153,8 @@ const repeatItems: Item[] = [
     right: repText(5, FW(2), TR(72)),
     wrongs: [
       [repText(5, FW(2), TR(108)), 'turn-interior'],
-      [repText(6, FW(2), TR(72)), 'repeat-count'],
+      // 6かい だと 1つめの 辺を もう一度 なぞるだけで 同じ 正五角形に なるので、たりない 4かいを 誤りにする
+      [repText(4, FW(2), TR(72)), 'repeat-count'],
     ],
     layout: 'column',
     hints: [
@@ -365,7 +366,7 @@ const ruleExtra: Item[] = [
     prompt: `「すすむ 2、みぎに 50ど」を 6かいで ${PN[6]}を\nかいたら とじない。どう なおす？`,
     right: 'みぎに 60ど に する',
     wrongs: [
-      ['みぎに 40ど に する', 'turn-interior'],
+      ['みぎに 40ど に する', 'turn-sum'],
       ['くりかえす 数《かず》を 7かいに する', 'repeat-count'],
     ],
     layout: 'column',
@@ -396,7 +397,8 @@ const ruleSorts: SortItem[] = RS.map((r) => ({
   objective: 'rule',
   level: r.level,
   alt: true,
-  prompt: '「みぎに ◯ど」を くりかえして、ちょうど 1しゅう（360ど）で もとの むきに もどる 角度《かくど》と、もどらない 角度《かくど》に わけよう。',
+  prompt:
+    '「みぎに ◯ど」を くりかえして、ちょうど 1しゅう（360ど）で もとの むきに もどる 角度《かくど》と、もどらない 角度《かくど》に わけよう。',
   boxes: [{ label: 'ちょうど もどる' }, { label: 'もどらない' }],
   cards: r.cards.map((d) => {
     const ok = 360 % d === 0;
@@ -411,7 +413,10 @@ const ruleSorts: SortItem[] = RS.map((r) => ({
     'わりきれる とき、くりかえす 数《かず》が ちょうど 整数《せいすう》に なるよ。',
     'わりきれない 角度《かくど》は、1しゅう したところで もとの むきに ぴったりは もどらないよ。',
   ],
-  explain: `360 を わりきれる 角度《かくど》は ${r.cards.filter((d) => 360 % d === 0).map((d) => `${d}ど（${360 / d}かい）`).join('、')}。ほかは わりきれなくて、ちょうど 1しゅうで もどらないよ。`,
+  explain: `360 を わりきれる 角度《かくど》は ${r.cards
+    .filter((d) => 360 % d === 0)
+    .map((d) => `${d}ど（${360 / d}かい）`)
+    .join('、')}。ほかは わりきれなくて、ちょうど 1しゅうで もどらないよ。`,
   identity: r.id,
 }));
 
@@ -429,7 +434,10 @@ export const polygon: UnitSpec = {
   title: '正多角形《せいたかくけい》を かく 命令《めいれい》',
   prereq: ['g4.prog.draw-shapes'],
   objectives: [
-    { id: 'repeat-turn', title: '正多角形《せいたかくけい》の 辺《へん》の 数《かず》と くりかえす 数《かず》' },
+    {
+      id: 'repeat-turn',
+      title: '正多角形《せいたかくけい》の 辺《へん》の 数《かず》と くりかえす 数《かず》',
+    },
     { id: 'turn-angle', title: '回《まわ》る 角度《かくど》は 360 ÷ 辺《へん》の 数《かず》' },
     { id: 'rule', title: '角度《かくど》 × 回数《かいすう》 ＝ 360ど' },
   ],
@@ -448,6 +456,11 @@ export const polygon: UnitSpec = {
       id: 'repeat-count',
       explain:
         'くりかえす 数《かず》が ちがったのかな。正多角形《せいたかくけい》では、辺《へん》の 数《かず》と くりかえす 数《かず》は おなじだよ。',
+    },
+    {
+      id: 'turn-sum',
+      explain:
+        'まがる 角度《かくど》を くりかえす 数《かず》だけ たすと、360ど に なるかな。かけ算《ざん》で たしかめよう。',
     },
     {
       id: 'not-divisible',
@@ -479,5 +492,3 @@ export const polygon: UnitSpec = {
     '小学校学習指導要領（平成29年告示）算数 第5学年 B（正多角形）、同 内容の取扱い（プログラミングを体験する学習の例: 正多角形の作図）、小学校プログラミング教育の手引（第三版）A。program エンジンは格子の上を動くだけなので、線の図は命令から計算した図で出題',
   gradeIsAppProposal: false,
 };
-
-

@@ -29,7 +29,10 @@ function figureH(f: Figure | undefined): number {
       return m ? Number(m[1]) : 14;
     }
     case 'text':
-      return (f.size === 'xl' ? 9 : f.size === 'l' ? 6.5 : 4.8) * Math.max(1, Math.ceil(len(f.text) / (f.size === 'xl' ? 12 : f.size === 'l' ? 17 : 25)));
+      return (
+        (f.size === 'xl' ? 9 : f.size === 'l' ? 6.5 : 4.8) *
+        Math.max(1, Math.ceil(len(f.text) / (f.size === 'xl' ? 12 : f.size === 'l' ? 17 : 25)))
+      );
     case 'table':
       return (f.rows.length + 1) * 5.4;
     case 'illust':
@@ -51,7 +54,8 @@ function optionsH(item: Item & { engine: 'choice' }, shown: number): number {
     const lines = Math.ceil((n * 3.2) / (w - 4.8));
     return { w, h: Math.max(10, lines * 4.2 + 2.4) + (o.figure ? figureH(o.figure) : 0) };
   });
-  if ((item.layout ?? 'row') === 'column') return cells.reduce((s, c) => s + c.h, 0) + 2.4 * (cells.length - 1);
+  if ((item.layout ?? 'row') === 'column')
+    return cells.reduce((s, c) => s + c.h, 0) + 2.4 * (cells.length - 1);
   // よこに ならべて、あふれたら つぎの行
   let rowW = 0;
   let rowH = 0;
@@ -95,7 +99,10 @@ describe('prog-g16 の画面の高さ（見積もり）', () => {
       for (const it of unit.source.items) {
         const e = estimate(it);
         if (!e) continue;
-        if (e[0] - e[1] > 3) bad.push(`${it.id}: 必要 ${e[0].toFixed(1)}u ／ 使える ${e[1].toFixed(1)}u（問題文 ${promptLines(it.prompt)}行）`);
+        if (e[0] - e[1] > 3)
+          bad.push(
+            `${it.id}: 必要 ${e[0].toFixed(1)}u ／ 使える ${e[1].toFixed(1)}u（問題文 ${promptLines(it.prompt)}行）`,
+          );
       }
       if (bad.length) console.info(`[budget] ${unit.id}\n${bad.join('\n')}`);
       expect(bad).toEqual([]);

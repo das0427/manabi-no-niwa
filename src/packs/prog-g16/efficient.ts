@@ -93,8 +93,24 @@ const FC: Fc[] = [
   },
   { id: 'e4', level: 1, rows: st3b.rows, dir: st3b.dir, sol: st3b.sol },
   { id: 'e5', level: 1, rows: st3c.rows, dir: st3c.dir, sol: st3c.sol },
-  { id: 'e6', level: 2, rows: sp(7, 7).rows, dir: 'right', sol: rule('R'), times: TIMES, withIf: true },
-  { id: 'e7', level: 2, rows: sp(8, 6, true).rows, dir: 'left', sol: rule('L'), times: TIMES, withIf: true },
+  {
+    id: 'e6',
+    level: 2,
+    rows: sp(7, 7).rows,
+    dir: 'right',
+    sol: rule('R'),
+    times: TIMES,
+    withIf: true,
+  },
+  {
+    id: 'e7',
+    level: 2,
+    rows: sp(8, 6, true).rows,
+    dir: 'left',
+    sol: rule('L'),
+    times: TIMES,
+    withIf: true,
+  },
   { id: 'e8', level: 2, rows: st5v.rows, dir: st5v.dir, sol: st5v.sol },
   {
     id: 'e9',
@@ -135,7 +151,13 @@ const fcItems = FC.map((f) => {
 // 別例: 同じ動きの短い書き方を選ぶ
 const text = (c: Cmd): string => {
   if (c.op === 'repeat') return `くりかえす ${c.times}かい（${c.body.map(text).join('、')}）`;
-  return c.op === 'forward' ? 'すすむ' : c.op === 'turnRight' ? 'みぎを むく' : c.op === 'turnLeft' ? 'ひだりを むく' : c.op;
+  return c.op === 'forward'
+    ? 'すすむ'
+    : c.op === 'turnRight'
+      ? 'みぎを むく'
+      : c.op === 'turnLeft'
+        ? 'ひだりを むく'
+        : c.op;
 };
 interface Eq {
   id: string;
@@ -158,11 +180,12 @@ const EQ: Eq[] = [
   {
     id: 'a2',
     level: 1,
-    long: [F, R, F, R, F, R, F, R, F, R, F, R],
-    right: [rep(2, rep(3, F, R))],
+    // 「すすむ、みぎ」の くりかえしは 1だんの くりかえし（3まい）が いちばん みじかいので、入れ子が いきる 形に する
+    long: [F, F, F, F, L, F, F, F, F, L],
+    right: [rep(2, rep(4, F), L)],
     wrongs: [
-      [[rep(2, rep(3, F), R)], 'repeat-body'],
-      [[rep(2, rep(2, F, R))], 'repeat-count'],
+      [[rep(2, rep(4, F), R)], 'repeat-body'],
+      [[rep(2, rep(3, F), L)], 'repeat-count'],
     ],
   },
   {
@@ -197,7 +220,7 @@ const eqItems: ChoiceItem[] = EQ.map((q) => {
     ],
     explain: `「${tx(q.right)}」を ひらくと、もとの 手順《てじゅん》と おなじ うごきに なるよ。`,
   });
-});// ---- fewer-moves ----
+}); // ---- fewer-moves ----
 /** 上のまっすぐな道・まんなかの道・下の道が ある地図（よこ w マス、たて 5 マス）。A・B・C の 3つの みち */
 function around3(w: number): string[] {
   return [
@@ -291,7 +314,9 @@ function countAlt(opt: {
         ? 'ふだは ぜんぶで なんまい？\n（「くりかえす」の ふだも 1まい）'
         : 'キャラクターは ぜんぶで なんマス すすむ？',
     figure: stripFigure(opt.prog, { label: `てじゅんの ふだ: ${cmdTextOf(opt.prog)}`, hU: 6 }),
-    fields: [{ label: opt.kind === 'cards' ? 'まい' : 'マス', answer: { kind: 'int', value: answer } }],
+    fields: [
+      { label: opt.kind === 'cards' ? 'まい' : 'マス', answer: { kind: 'int', value: answer } },
+    ],
     wrongAnswers: (opt.kind === 'cards'
       ? [
           [moves, 'count-card'],
@@ -304,7 +329,7 @@ function countAlt(opt: {
           [answer + 1, 'count-move'],
         ]
     )
-      .filter(([v]) => v !== answer)
+      .filter(([v], i, a) => v !== answer && a.findIndex(([x]) => x === v) === i)
       .map(([v, m]) => ({ value: String(v), misconception: String(m) })),
     hints:
       opt.kind === 'cards'
@@ -391,7 +416,11 @@ const sortItems: ChoiceItem[] = SORTS.map((s) => {
     obj: 'sort-steps',
     level: s.level,
     prompt: 'くらべる 回数《かいすう》が 少《すく》ない 手順《てじゅん》は どれ？',
-    figure: { kind: 'column', items: [{ kind: 'text', text: s.cards.join('　'), size: 'm' }, STEP_DEFS], gap: 0.8 },
+    figure: {
+      kind: 'column',
+      items: [{ kind: 'text', text: s.cards.join('　'), size: 'm' }, STEP_DEFS],
+      gap: 0.8,
+    },
     right: rightLabel,
     wrongs: [
       [other, 'sort-wrong'],
@@ -450,12 +479,14 @@ const OS: Os[] = [
       'くらべた あとで、いれかえるか きめるよ。',
       'すすんでから、また くらべるために くりかえすよ。',
     ],
-    explain: 'くらべて、いれかえて、ひとつ すすむ。これを 右《みぎ》の はしまで くりかえすと 1しゅうだよ。',
+    explain:
+      'くらべて、いれかえて、ひとつ すすむ。これを 右《みぎ》の はしまで くりかえすと 1しゅうだよ。',
   },
   {
     id: 'o3',
     level: 2,
-    prompt: '1から 100までの 数《かず》を 当《あ》てる ゲームで、はやく 当《あ》てる 手順《てじゅん》を ならべよう。',
+    prompt:
+      '1から 100までの 数《かず》を 当《あ》てる ゲームで、はやく 当《あ》てる 手順《てじゅん》を ならべよう。',
     steps: [
       'まんなかの 数《かず》を 言《い》う',
       '大《おお》きいか 小《ちい》さいかを きく',
@@ -487,16 +518,11 @@ const osItems: OrderItem[] = OS.map((o) => ({
   identity: `sort-alt-${o.id}`,
 }));
 
-const items: Item[] = [
-  ...fcItems,
-  ...eqItems,
-  ...fmItems,
-  ...fmAlts,
-  ...sortItems,
-  ...osItems,
-];
+const items: Item[] = [...fcItems, ...eqItems, ...fmItems, ...fmAlts, ...sortItems, ...osItems];
 
-const introGrid = gridFigure(layout(st5.rows, st5.dir), { label: 'ますの ず。大《おお》きな かいだん' });
+const introGrid = gridFigure(layout(st5.rows, st5.dir), {
+  label: 'ますの ず。大《おお》きな かいだん',
+});
 
 export const efficient: UnitSpec = {
   ...baseUnit('g6.prog.efficient', 'g6'),
@@ -511,43 +537,53 @@ export const efficient: UnitSpec = {
     ...BASE_MIS,
     {
       id: 'repeat-count',
-      explain: 'くりかえす かいすうを 数《かぞ》えまちがえたのかな。みちの 長《なが》さや だんの 数《かず》を 数《かぞ》えて きめよう。',
+      explain:
+        'くりかえす かいすうを 数《かぞ》えまちがえたのかな。みちの 長《なが》さや だんの 数《かず》を 数《かぞ》えて きめよう。',
     },
     {
       id: 'repeat-body',
-      explain: '「くりかえす」の 中《なか》の ふだが ちがうのかな。外《そと》と 中《なか》の くりかえしを わけて 考《かんが》えよう。',
+      explain:
+        '「くりかえす」の 中《なか》の ふだが ちがうのかな。外《そと》と 中《なか》の くりかえしを わけて 考《かんが》えよう。',
     },
     {
       id: 'too-many',
-      explain: '札《ふだ》が おおすぎたのかな。「くりかえす」の 中《なか》に「くりかえす」を 入《い》れると へらせるよ。',
+      explain:
+        '札《ふだ》が おおすぎたのかな。「くりかえす」の 中《なか》に「くりかえす」を 入《い》れると へらせるよ。',
     },
     {
       id: 'not-shortest',
-      explain: 'もっと ふだが 少《すく》ない 手順《てじゅん》が あるよ。「くりかえす」の ふだも 1まいと 数《かぞ》えて くらべよう。',
+      explain:
+        'もっと ふだが 少《すく》ない 手順《てじゅん》が あるよ。「くりかえす」の ふだも 1まいと 数《かぞ》えて くらべよう。',
     },
     {
       id: 'not-fastest',
-      explain: 'ゴールまで すすむ マスの 数《かず》が 多《おお》い 手順《てじゅん》だよ。まわりみちや、むだな うごきが ないか たどってみよう。',
+      explain:
+        'ゴールまで すすむ マスの 数《かず》が 多《おお》い 手順《てじゅん》だよ。まわりみちや、むだな うごきが ないか たどってみよう。',
     },
     {
       id: 'count-card',
-      explain: '札《ふだ》の 数《かぞ》え方《かた》を まちがえたのかな。外《そと》と 中《なか》の「くりかえす」を 1まいずつ 数《かぞ》えて、中《なか》の ふだを たそう。',
+      explain:
+        '札《ふだ》の 数《かぞ》え方《かた》を まちがえたのかな。外《そと》と 中《なか》の「くりかえす」を 1まいずつ 数《かぞ》えて、中《なか》の ふだを たそう。',
     },
     {
       id: 'count-move',
-      explain: 'すすむ マスの 数《かず》の 数《かぞ》え方《かた》を まちがえたのかな。「すすむ」の 数《かず》に、くりかえす かいすうを かけよう。',
+      explain:
+        'すすむ マスの 数《かず》の 数《かぞ》え方《かた》を まちがえたのかな。「すすむ」の 数《かず》に、くりかえす かいすうを かけよう。',
     },
     {
       id: 'sort-wrong',
-      explain: 'くらべる 回数《かいすう》を 数《かぞ》えまちがえたのかな。1しゅうで くらべる 回数《かいすう》と、しゅう数《すう》を かけて 数《かぞ》えよう。',
+      explain:
+        'くらべる 回数《かいすう》を 数《かぞ》えまちがえたのかな。1しゅうで くらべる 回数《かいすう》と、しゅう数《すう》を かけて 数《かぞ》えよう。',
     },
     {
       id: 'sort-same',
-      explain: 'ならべる カードの ならびによって、くらべる 回数《かいすう》は かわるよ。ひとつずつ 数《かぞ》えて たしかめよう。',
+      explain:
+        'ならべる カードの ならびによって、くらべる 回数《かいすう》は かわるよ。ひとつずつ 数《かぞ》えて たしかめよう。',
     },
     {
       id: 'sort-order',
-      explain: '手順《てじゅん》の じゅんばんが ぎゃくだったのかな。さきに きめる こと、そのあと くらべる こと、さいごに くりかえす ことを 考《かんが》えよう。',
+      explain:
+        '手順《てじゅん》の じゅんばんが ぎゃくだったのかな。さきに きめる こと、そのあと くらべる こと、さいごに くりかえす ことを 考《かんが》えよう。',
     },
   ],
   levels: [
@@ -562,7 +598,11 @@ export const efficient: UnitSpec = {
     },
     {
       text: '「くりかえす」の 中《なか》に「くりかえす」を 入《い》れると、もっと みじかく 書《か》けるよ。',
-      figure: { kind: 'text', text: 'くりかえす 3かい（くりかえす 3かい（すすむ）、みぎを むく）', size: 'm' },
+      figure: {
+        kind: 'text',
+        text: 'くりかえす 3かい（くりかえす 3かい（すすむ）、みぎを むく）',
+        size: 'm',
+      },
     },
     {
       text: 'カードを 小《ちい》さい じゅんに ならべる 手順《てじゅん》にも、くらべる 回数《かいすう》が 少《すく》ない 手順《てじゅん》と 多《おお》い 手順《てじゅん》が あるよ。',
@@ -579,6 +619,3 @@ export const efficient: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）（よりよい手順《てじゅん》を考える）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-

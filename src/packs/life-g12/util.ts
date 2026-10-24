@@ -81,7 +81,12 @@ function buttonsHeight(opts: Opt[], layout: 'row' | 'column'): number {
   return total + rowH;
 }
 /** 作業領域のあふれ（u）。0 以下なら入る */
-function overflow(prompt: string, figure: Figure | undefined, opts: Opt[], layout: 'row' | 'column'): number {
+function overflow(
+  prompt: string,
+  figure: Figure | undefined,
+  opts: Opt[],
+  layout: 'row' | 'column',
+): number {
   const lines = promptLinesOf(prompt);
   const promptBottom = 8 + Math.max(7, lines * 4.8);
   const avail = STAGE_H - BAND - Math.max(15, promptBottom + 1);
@@ -120,7 +125,10 @@ function fitOptions(s: ChoiceSpec): Fit {
       over: overflow(
         fit.prompt,
         s.figure,
-        (fit.options as Opt[]).map((o) => ({ label: o.label, ...(o.figure ? { figure: o.figure } : {}) })),
+        (fit.options as Opt[]).map((o) => ({
+          label: o.label,
+          ...(o.figure ? { figure: o.figure } : {}),
+        })),
         fit.layout,
       ),
     });
@@ -312,7 +320,10 @@ export interface MatchSpec {
 }
 
 export function matchItem(s: MatchSpec): MatchItem {
-  const right = [...s.pairs.map((p) => ({ label: p[2] })), ...(s.extras ?? []).map((label) => ({ label }))];
+  const right = [
+    ...s.pairs.map((p) => ({ label: p[2] })),
+    ...(s.extras ?? []).map((label) => ({ label })),
+  ];
   return {
     engine: 'match',
     id: s.id,
@@ -360,4 +371,3 @@ export function baseLife(
     revised: REVISED,
   };
 }
-

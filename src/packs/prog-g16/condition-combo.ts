@@ -125,7 +125,9 @@ const WALL: [string, number, Mp][] = [
   ['t6', 1, sp(4, 4)],
   ['t7', 1, sp(5, 4, true)],
 ];
-const wallItems = WALL.map(([id, level, m]) => main(`wall-${id}`, 'wall-turn', level, m, hintsWall));
+const wallItems = WALL.map(([id, level, m]) =>
+  main(`wall-${id}`, 'wall-turn', level, m, hintsWall),
+);
 
 // 別例: かべの前で どちらに まがるか選ぶ
 function altWall(id: string, level: number, m: Mp) {
@@ -294,7 +296,9 @@ export const conditionCombo: UnitSpec = {
   intro: [
     {
       text: 'かべの まえで まがる ことを くりかえすと、まがりかどが いくつ あっても ぬけられるよ。',
-      figure: gridFigure(layout(['S...', '###.', 'G...'], 'right'), { label: 'ますの ず。ほしが ゴール' }),
+      figure: gridFigure(layout(['S...', '###.', 'G...'], 'right'), {
+        label: 'ますの ず。ほしが ゴール',
+      }),
     },
     {
       text: '「ずっと くりかえす」の なかに、「もし まえが かべなら みぎを むく」と「すすむ」を いれるよ。',
@@ -313,4 +317,3 @@ export const conditionCombo: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）プログラミング的思考（順序・分岐・反復の組合せ）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-

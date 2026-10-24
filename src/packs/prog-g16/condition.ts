@@ -153,7 +153,8 @@ const DAILY: Q[] = [
       'よばれたら、まず だれの ほうを むくかな。',
       'あつまる ばしょは どこかな。',
     ],
-    explain: '「もし せんせいが よんだら ちかくへ いく」。よばれたら、せんせいの ところへ あつまるよ。',
+    explain:
+      '「もし せんせいが よんだら ちかくへ いく」。よばれたら、せんせいの ところへ あつまるよ。',
   },
 ];
 
@@ -250,26 +251,25 @@ const MATCHES: Mt[] = [
       'おなかが すいた ときに ほしい ものと、ねむい ときに ほしい ものは ちがうね。',
       'よごれた ときは、きれいに する ことを かんがえよう。',
     ],
-    explain: 'おなかが すいたら たべる、ねむいなら ねる、てが よごれたら あらう。ようすに あう ことを えらぶよ。',
+    explain:
+      'おなかが すいたら たべる、ねむいなら ねる、てが よごれたら あらう。ようすに あう ことを えらぶよ。',
   },
 ];
-const matchItems = MATCHES.map(
-  (m): MatchItem => ({
-    engine: 'match',
-    id: `daily-alt-${m.id}`,
-    objective: 'if-daily',
-    level: m.level,
-    alt: true,
-    prompt: m.prompt,
-    left: m.left.map((label) => ({ label })),
-    right: m.right.map((label) => ({ label })),
-    pairs: m.pairs,
-    wrongPairs: m.wrong,
-    hints: m.hints,
-    explain: m.explain,
-    identity: `daily-alt-${m.id}`,
-  }),
-);
+const matchItems = MATCHES.map((m): MatchItem => ({
+  engine: 'match',
+  id: `daily-alt-${m.id}`,
+  objective: 'if-daily',
+  level: m.level,
+  alt: true,
+  prompt: m.prompt,
+  left: m.left.map((label) => ({ label })),
+  right: m.right.map((label) => ({ label })),
+  pairs: m.pairs,
+  wrongPairs: m.wrong,
+  hints: m.hints,
+  explain: m.explain,
+  identity: `daily-alt-${m.id}`,
+}));
 
 // ---- if-else ----
 // 画面の高さに入るように、きまり（1行）・いまの ようす（1行）・みじかい 選択肢（7字まで）にした。
@@ -298,7 +298,8 @@ const ELSE: Ie[] = [
       'はれて いるなら、「あめなら」は あてはまらないね。',
       '「あめ」に あてはまらない ときは、「そうでなければ」の ほうを よむよ。',
     ],
-    explain: 'はれて いるから「あめなら」は あてはまらないよ。「そうでなければ」の ぼうしを えらぶよ。',
+    explain:
+      'はれて いるから「あめなら」は あてはまらないよ。「そうでなければ」の ぼうしを えらぶよ。',
   },
   {
     id: 'shingou-aka',
@@ -328,7 +329,8 @@ const ELSE: Ie[] = [
       '「さむい」に あてはまるか どうか かんがえよう。',
       'あついなら、「さむいなら」では ないね。',
     ],
-    explain: 'いまは あついから「さむいなら」は あてはまらないよ。「そうでなければ」の ぬぐを えらぶよ。',
+    explain:
+      'いまは あついから「さむいなら」は あてはまらないよ。「そうでなければ」の ぬぐを えらぶよ。',
   },
   {
     id: 'gohan',
@@ -373,22 +375,24 @@ const ELSE: Ie[] = [
       'なっているなら、「もし」の ほうが あてはまるね。',
       '「もし」が あてはまるときは、そのあとの うごきを するよ。',
     ],
-    explain: 'いまは かみなりが なって いるよ。「もし」の ほうだから、うちに はいるよ。あぶない ときは そとから はなれよう。',
+    explain:
+      'いまは かみなりが なって いるよ。「もし」の ほうだから、うちに はいるよ。あぶない ときは そとから はなれよう。',
   },
   {
     id: 'ao-hare',
     level: 0,
-    rule: 'もし ひるまなら おひさま。そうでなければ ほしを みる。',
+    rule: 'もし ひるまなら そとで あそぶ。そうでなければ ほしを みる。',
     now: 'いま、まっくらで ほしが ひかって います。どう するかな。',
     right: 'ほしを みる',
-    wrong: 'おひさま',
+    wrong: 'そとで あそぶ',
     extra: 'ひなたぼっこ',
     hints: [
       'そらの ようすを みよう。ひるまかな、よるかな。',
       'くらい そらに ほしが ひかって いるね。「ひるま」に あてはまるかな。',
       '「ひるま」に あてはまらない ときは、「そうでなければ」を よむよ。',
     ],
-    explain: 'いまは よるだから「ひるまなら」は あてはまらないよ。「そうでなければ」の ほしを みるを えらぶよ。',
+    explain:
+      'いまは よるだから「ひるまなら」は あてはまらないよ。「そうでなければ」の ほしを みるを えらぶよ。',
   },
 ];
 const elseItems: ChoiceItem[] = ELSE.map((q) =>
@@ -430,7 +434,8 @@ const SORTS: Sr[] = [
       'ぬれない ために する ことは、あめの ひだね。',
       'そとで ひなたに でて する ことは、はれの ひだよ。',
     ],
-    explain: 'かさ・ながぐつ・かっぱは、ぬれない ための ものだから あめの ひ。ぼうし・せんたく・すなばは はれの ひだよ。',
+    explain:
+      'かさ・ながぐつ・かっぱは、ぬれない ための ものだから あめの ひ。ぼうし・せんたく・すなばは はれの ひだよ。',
   },
   {
     id: 'atsui-samui',
@@ -444,7 +449,8 @@ const SORTS: Sr[] = [
       'からだを ひやす ことは、あつい ひに したい ことだね。',
       'からだを あたためる ことは、さむい ひに したい ことだよ。',
     ],
-    explain: 'ひやす ものは あつい ひ、あたためる ものは さむい ひ。いまの ようすに あわせて えらんでいるよ。',
+    explain:
+      'ひやす ものは あつい ひ、あたためる ものは さむい ひ。いまの ようすに あわせて えらんでいるよ。',
   },
   {
     id: 'hiru-yoru',
@@ -458,32 +464,48 @@ const SORTS: Sr[] = [
       'そらに ほしが ひかるのは、いつかな。',
       'ふとんに はいって ねるのは、いつかな。',
     ],
-    explain: 'そとで あそんだり べんきょうしたり するのは ひるま、ほしを みたり ねたり するのは よるだよ。',
+    explain:
+      'そとで あそんだり べんきょうしたり するのは ひるま、ほしを みたり ねたり するのは よるだよ。',
   },
 ];
 /** 画面に入るよう、カードは 箱ごとに 文字の少ない 2枚だけ 出す（箱 13u ＋ カード 2段） */
 const fewest = (xs: string[]) => [...xs].sort((p, q) => p.length - q.length).slice(0, 2);
-const sortItems = SORTS.map(
-  (s): SortItem => ({
-    engine: 'sort',
-    id: `else-alt-${s.id}`,
-    objective: 'if-else',
-    level: s.level,
-    alt: true,
-    prompt: s.prompt,
-    boxes: s.boxes.map((label) => ({ label })),
-    cards: [
-      ...fewest(s.a).map((label) => ({ label, box: 0, wrongBoxes: [{ box: 1, misconception: 'ifelse-swap' }] })),
-      ...fewest(s.b).map((label) => ({ label, box: 1, wrongBoxes: [{ box: 0, misconception: 'ifelse-swap' }] })),
-    ],
-    hints: s.hints,
-    explain: s.explain,
-    identity: `else-alt-${s.id}`,
-  }),
-);
+const sortItems = SORTS.map((s): SortItem => ({
+  engine: 'sort',
+  id: `else-alt-${s.id}`,
+  objective: 'if-else',
+  level: s.level,
+  alt: true,
+  prompt: s.prompt,
+  boxes: s.boxes.map((label) => ({ label })),
+  cards: [
+    ...fewest(s.a).map((label) => ({
+      label,
+      box: 0,
+      wrongBoxes: [{ box: 1, misconception: 'ifelse-swap' }],
+    })),
+    ...fewest(s.b).map((label) => ({
+      label,
+      box: 1,
+      wrongBoxes: [{ box: 0, misconception: 'ifelse-swap' }],
+    })),
+  ],
+  hints: s.hints,
+  explain: s.explain,
+  identity: `else-alt-${s.id}`,
+}));
 
 // ---- if-read ----
-type Rd = [id: string, level: number, dir: Dir, rows: string[], a: number, turn: 'R' | 'L', b: number, bug: 'cond' | 'body'];
+type Rd = [
+  id: string,
+  level: number,
+  dir: Dir,
+  rows: string[],
+  a: number,
+  turn: 'R' | 'L',
+  b: number,
+  bug: 'cond' | 'body',
+];
 const READS: Rd[] = [
   ['r1', 1, 'right', ['S..', '..G'], 2, 'R', 1, 'cond'],
   ['r2', 1, 'left', ['..S', '...', 'G..'], 2, 'L', 2, 'body'],
@@ -577,7 +599,9 @@ const items: Item[] = [
   ...readLandings,
 ];
 
-const introGrid = gridFigure(layout(['S..', '..G'], 'right'), { label: 'ますの ず。ほしが ゴール' });
+const introGrid = gridFigure(layout(['S..', '..G'], 'right'), {
+  label: 'ますの ず。ほしが ゴール',
+});
 
 export const condition: UnitSpec = {
   ...baseUnit('g1.prog.condition', 'g1'),
@@ -634,7 +658,3 @@ export const condition: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）プログラミング的思考（条件分岐）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-
-

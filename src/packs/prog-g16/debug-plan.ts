@@ -68,7 +68,14 @@ const st3v = stair(3, 1, 1, true);
 const SHORTEN: Sh[] = [
   { id: 'h1', level: 0, rows: ['S......G'], dir: 'right', sol: [rep(7, F)], max: 3 },
   { id: 'h2', level: 0, rows: ['S....', '....G'], dir: 'right', sol: [rep(4, F), R, F], max: 4 },
-  { id: 'h3', level: 0, rows: ['S...', '###.', '###G'], dir: 'right', sol: [rep(3, F), R, rep(2, F)], max: 5 },
+  {
+    id: 'h3',
+    level: 0,
+    rows: ['S...', '###.', '###G'],
+    dir: 'right',
+    sol: [rep(3, F), R, rep(2, F)],
+    max: 5,
+  },
   { id: 'h4', level: 1, rows: st3.rows, dir: st3.dir, sol: st3.sol, max: 5 },
   { id: 'h5', level: 1, rows: st3v.rows, dir: st3v.dir, sol: st3v.sol, max: 5 },
   { id: 'h6', level: 1, rows: st4.rows, dir: st4.dir, sol: st4.sol, max: 5 },
@@ -144,7 +151,8 @@ const EQ: Eq[] = [
   },
 ];
 const eqItems: ChoiceItem[] = EQ.map((q) => {
-  if (flat([q.right]).join() !== flat(q.long).join()) throw new Error(`${q.id}: 正解が同じ動きでない`);
+  if (flat([q.right]).join() !== flat(q.long).join())
+    throw new Error(`${q.id}: 正解が同じ動きでない`);
   for (const [w] of q.wrongs)
     if (flat([w]).join() === flat(q.long).join()) throw new Error(`${q.id}: 誤りが同じ動き`);
   const text = (c: Cmd) => cmdTextOf([c]);
@@ -189,7 +197,8 @@ const mapFix = (id: string, level: number, m: Mp, bug: Bug, n: number): Fx => ({
   sol: rule(m.t),
   bad: bugged(m.t, bug, n),
   max: 4,
-  kind: bug,
+  // 回数の まちがいは、数では 直せない（選べる回数より道が長い）ので「つくまで」に導く
+  kind: bug === 'count' ? 'loop-count' : bug,
   withIf: true,
 });
 const FIXES: Fx[] = [
@@ -241,13 +250,18 @@ const FIXES: Fx[] = [
 const FIX_HINTS: Record<string, [string, string, string]> = {
   'turn-order': [
     'うごかして、どこで みちから はずれるか みよう。',
-    'かいだんは「すすむ、みぎ、すすむ、ひだり」の くりかえしだよ。ふだの じゅんばんを みよう。',
+    'かいだんの ひとだんめで、さいしょに どちらへ まがると みちに そって すすめるかな。',
     'ふたつの まがる ふだの むきが、みちと あっているか たしかめよう。',
   ],
   count: [
-    'うごかして、ゴールの てまえで とまらないか みよう。',
+    'うごかして、どこで うまく いかないか みよう。',
     '「くりかえす」の かいすうが たりないよ。',
     'みちの だんの 数《かず》や 長《なが》さを 数《かぞ》えて、かいすうを なおそう。',
+  ],
+  'loop-count': [
+    'うごかして、キャラクターが どこで とまるか みよう。',
+    '「くりかえす」の かいすうが たりないよ。みちは とても ながいね。',
+    'かいすうを 数《かぞ》えるのは たいへん。「つくまで」に かえると どうなるかな。',
   ],
   drop: [
     'うごかして、ゴールの てまえで ぶつからないか みよう。',
@@ -319,7 +333,11 @@ const fixAlts: ChoiceItem[] = [
     fixes: [
       { label: 'じょうけん', prog: rule('R') },
       { label: 'まがる むき', prog: [rep('goal', iff('open-ahead', L), F)], mis: 'turn' },
-      { label: 'くりかえす かいすう', prog: [rep(5, iff('open-ahead', R), F)], mis: 'repeat-count' },
+      {
+        label: 'くりかえす かいすう',
+        prog: [rep(5, iff('open-ahead', R), F)],
+        mis: 'repeat-count',
+      },
     ],
     explain:
       'かべに ぶつかりそうな ときだけ まがりたいから、じょうけんは「まえが かべなら」だよ。「あいていたら」だと すすめる ときも まがって しまうね。',
@@ -436,8 +454,12 @@ function countAlt(opt: {
         ? 'ふだは ぜんぶで なんまい？\n（「くりかえす」の ふだも 1まい）'
         : 'キャラクターは ぜんぶで なんマス すすむ？',
     figure: stripFigure(opt.prog, { label: `てじゅんの ふだ: ${cmdTextOf(opt.prog)}`, hU: 6 }),
-    fields: [{ label: opt.kind === 'cards' ? 'まい' : 'マス', answer: { kind: 'int', value: answer } }],
-    wrongAnswers: opt.wrongs.filter(([v]) => v !== answer).map(([v, m]) => ({ value: String(v), misconception: m })),
+    fields: [
+      { label: opt.kind === 'cards' ? 'まい' : 'マス', answer: { kind: 'int', value: answer } },
+    ],
+    wrongAnswers: opt.wrongs
+      .filter(([v]) => v !== answer)
+      .map(([v, m]) => ({ value: String(v), misconception: m })),
     hints:
       opt.kind === 'cards'
         ? [
@@ -517,7 +539,9 @@ const items: Item[] = [
   ...countAlts,
 ];
 
-const introGrid = gridFigure(layout(st3.rows, st3.dir), { label: 'ますの ず。かいだんの ような みち' });
+const introGrid = gridFigure(layout(st3.rows, st3.dir), {
+  label: 'ますの ず。かいだんの ような みち',
+});
 
 export const debugPlan: UnitSpec = {
   ...baseUnit('g5.prog.debug-plan', 'g5'),
@@ -537,31 +561,38 @@ export const debugPlan: UnitSpec = {
     },
     {
       id: 'repeat-body',
-      explain: '「くりかえす」の なかの ふだが ちがうのかな。くりかえす ひとまとまりを もう一度《いちど》 よく 見《み》よう。',
+      explain:
+        '「くりかえす」の なかの ふだが ちがうのかな。くりかえす ひとまとまりを もう一度《いちど》 よく 見《み》よう。',
     },
     {
       id: 'too-many',
-      explain: '札《ふだ》が おおすぎたのかな。おなじ ならびを「くりかえす」で まとめると へらせるよ。',
+      explain:
+        '札《ふだ》が おおすぎたのかな。おなじ ならびを「くりかえす」で まとめると へらせるよ。',
     },
     {
       id: 'wrong-spot',
-      explain: '別《べつ》の ところが まちがいだと 思《おも》ったのかな。うごかして、ゴールから はなれはじめる ところを さがしてみよう。',
+      explain:
+        '別《べつ》の ところが まちがいだと 思《おも》ったのかな。うごかして、ゴールから はなれはじめる ところを さがしてみよう。',
     },
     {
       id: 'not-shortest',
-      explain: 'もっと ふだが すくない 手順《てじゅん》が あるよ。「くりかえす」の ふだも 1まいと 数《かぞ》えて くらべよう。',
+      explain:
+        'もっと ふだが すくない 手順《てじゅん》が あるよ。「くりかえす」の ふだも 1まいと 数《かぞ》えて くらべよう。',
     },
     {
       id: 'not-fastest',
-      explain: 'ゴールまで すすむ マスの 数《かず》が 多《おお》い 手順《てじゅん》だよ。まわりみちや、むだな うごきが ないか 地図《ちず》で たどってみよう。',
+      explain:
+        'ゴールまで すすむ マスの 数《かず》が 多《おお》い 手順《てじゅん》だよ。まわりみちや、むだな うごきが ないか 地図《ちず》で たどってみよう。',
     },
     {
       id: 'count-card',
-      explain: '札《ふだ》の 数《かぞ》え方《かた》を まちがえたのかな。「くりかえす」の ふだ 1まいと、なかの ふだを たそう。',
+      explain:
+        '札《ふだ》の 数《かぞ》え方《かた》を まちがえたのかな。「くりかえす」の ふだ 1まいと、なかの ふだを たそう。',
     },
     {
       id: 'count-move',
-      explain: 'すすむ マスの 数《かず》の 数《かぞ》え方《かた》を まちがえたのかな。「すすむ」の 数《かず》に、くりかえす かいすうを かけよう。',
+      explain:
+        'すすむ マスの 数《かず》の 数《かぞ》え方《かた》を まちがえたのかな。「すすむ」の 数《かず》に、くりかえす かいすうを かけよう。',
     },
   ],
   levels: [
@@ -587,6 +618,3 @@ export const debugPlan: UnitSpec = {
     '小学校学習指導要領（平成29年告示）総則 第3の1(3)イ、小学校プログラミング教育の手引（第三版）（手順の改善・誤りの修正）。学年の割当は本アプリの案',
   gradeIsAppProposal: true,
 };
-
-
-

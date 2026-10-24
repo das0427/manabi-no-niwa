@@ -20,7 +20,8 @@ const PLACES = {
   hospital: ['life-hospital', 'びょういん', 'びょうきや けがを みる ひと'],
   library: ['life-library', 'としょかん', 'ほんを かしだす ひと'],
   station: ['life-station', 'えき', 'でんしゃの のりばを あんないする ひと'],
-  police: ['life-police', 'こうばん', 'まちの あんぜんを まもる ひと'],
+  // 「まちの あんぜんを まもる」は しょうぼうしょの ひとにも あてはまるので、みまわり・みちあんないで いう
+  police: ['life-police', 'こうばん', 'まちを みまわり、みちを おしえる ひと'],
   fire: ['life-firestation', 'しょうぼうしょ', 'かじを けす ひと'],
   flower: ['life-flowershop', 'おはなやさん', 'はなを うる ひと'],
   vege: ['life-vegeshop', 'やおやさん', 'やさいを うる ひと'],
@@ -45,8 +46,16 @@ const matchItems: MatchItem[] = MATCHES.map((m) =>
     id: `place-${m.id}`,
     obj: 'place-people',
     level: m.level,
-    prompt: 'まちの ばしょと、そこで はたらく ひとを、せんで むすぼう。（いっぱんてきな えの れいだよ）',
-    pairs: m.keys.map((k) => [illust(PLACES[k][0]), PLACES[k][1], PLACES[k][2]] as [ReturnType<typeof illust>, string, string]),
+    prompt:
+      'まちの ばしょと、そこで はたらく ひとを、せんで むすぼう。（いっぱんてきな えの れいだよ）',
+    pairs: m.keys.map(
+      (k) =>
+        [illust(PLACES[k][0]), PLACES[k][1], PLACES[k][2]] as [
+          ReturnType<typeof illust>,
+          string,
+          string,
+        ],
+    ),
     extras: m.extra.map((k) => PLACES[k][2]),
     mis: 'place-mix',
     hints: [
@@ -66,9 +75,27 @@ interface Pa {
   wrongs: [Pk, Pk];
 }
 const PALT: Pa[] = [
-  { id: 'a1', level: 0, prompt: 'パンを やく ひとが はたらく ところは どこかな。', right: 'bakery', wrongs: ['library', 'hospital'] },
-  { id: 'a2', level: 1, prompt: 'かじを けす ひとが はたらく ところは どこかな。', right: 'fire', wrongs: ['police', 'station'] },
-  { id: 'a3', level: 2, prompt: 'やさいを うって いる ひとが はたらく ところは どこかな。', right: 'vege', wrongs: ['flower', 'bakery'] },
+  {
+    id: 'a1',
+    level: 0,
+    prompt: 'パンを やく ひとが はたらく ところは どこかな。',
+    right: 'bakery',
+    wrongs: ['library', 'hospital'],
+  },
+  {
+    id: 'a2',
+    level: 1,
+    prompt: 'かじを けす ひとが はたらく ところは どこかな。',
+    right: 'fire',
+    wrongs: ['police', 'station'],
+  },
+  {
+    id: 'a3',
+    level: 2,
+    prompt: 'やさいを うって いる ひとが はたらく ところは どこかな。',
+    right: 'vege',
+    wrongs: ['flower', 'bakery'],
+  },
 ];
 const placeAlts: ChoiceItem[] = PALT.map((p) =>
   choiceItem({
@@ -98,6 +125,8 @@ interface Ur {
   prompt: string;
   right: string;
   wrongs: string[];
+  /** 誤りの選択肢の誤概念（省略すると public-break） */
+  mis?: string;
   hints: [string, string, string];
   explain: string;
 }
@@ -124,9 +153,10 @@ const RULES: Ur[] = [
     hints: [
       'かりた ほんは、としょかんの ものだよ。',
       'ほかの ひとも、よみたいと おもって いるかも しれないね。',
-      'きまった 日《ひ》に、もとの ところへ もどそう。',
+      'かりる ときに、なにが きまって いたかな。',
     ],
-    explain: 'かりた ほんは、きまりの 日《ひ》までに かえすよ。ほかの ひとも よめるように するためだよ。',
+    explain:
+      'かりた ほんは、きまりの 日《ひ》までに かえすよ。ほかの ひとも よめるように するためだよ。',
   },
   {
     id: 'u3',
@@ -137,7 +167,7 @@ const RULES: Ur[] = [
     hints: [
       'こうえんの ブランコは、みんなの ものだよ。',
       'のりたい ひとが たくさん いる ときは、どうしたら いいかな。',
-      'じゅんばんを きめて、かわりばんこに のろう。',
+      'まって いる ひとも のれる ように するには、どう すると いいかな。',
     ],
     explain: 'こうえんの ものは みんなの もの。じゅんばんに かわって つかうよ。',
   },
@@ -152,7 +182,8 @@ const RULES: Ur[] = [
       'ゆれた ときに、ころばない ように する ことも だいじだよ。',
       'こえの おおきさと、からだの ささえ かたを かんがえよう。',
     ],
-    explain: 'のりものでは しずかに して、たって いる ときは てすりに つかまるよ。ほかの ひとの めいわくに ならず、じぶんも あんぜんだね。',
+    explain:
+      'のりものでは しずかに して、たって いる ときは てすりに つかまるよ。ほかの ひとの めいわくに ならず、じぶんも あんぜんだね。',
   },
   {
     id: 'u5',
@@ -173,12 +204,14 @@ const RULES: Ur[] = [
     prompt: 'おもい にもつを もって、こまって いる ひとが いたよ。どうするかな。',
     right: '「もちましょうか」と こえを かける',
     wrongs: ['みなかった ふりを する', 'わらって みて いる'],
+    mis: 'help-skip',
     hints: [
       'こまって いる ひとを みたら、どう おもうかな。',
       'じぶんが こまった ときに、してほしい ことを かんがえよう。',
-      'こえを かけて、てつだえるか きいて みよう。',
+      'てつだいたい ときは、まず あいてに なんと いうと いいかな。',
     ],
-    explain: 'こまって いる ひとには「もちましょうか」と こえを かけるよ。むりな ときは、おとなを よぼうね。',
+    explain:
+      'こまって いる ひとには「もちましょうか」と こえを かけるよ。むりな ときは、おとなを よぼうね。',
   },
 ];
 const ruleItems: ChoiceItem[] = RULES.map((r) =>
@@ -188,7 +221,7 @@ const ruleItems: ChoiceItem[] = RULES.map((r) =>
     level: r.level,
     prompt: r.prompt,
     right: r.right,
-    wrongs: r.wrongs.map((w) => [w, 'public-break'] as [string, string]),
+    wrongs: r.wrongs.map((w) => [w, r.mis ?? 'public-break'] as [string, string]),
     layout: 'column',
     hints: r.hints,
     explain: r.explain,
@@ -217,7 +250,8 @@ const ruleSorts = [
     ],
     mis: 'public-sort',
     hints: GB_HINTS,
-    explain: 'しずかに よむ・たいせつに あつかう・かえす のは よい こと。らくがき・おおごえ・なげる のは よくないね。',
+    explain:
+      'しずかに よむ・たいせつに あつかう・かえす のは よい こと。らくがき・おおごえ・なげる のは よくないね。',
   }),
   sortItem({
     id: 'rule-alt-s2',
@@ -236,7 +270,8 @@ const ruleSorts = [
     ],
     mis: 'public-sort',
     hints: GB_HINTS,
-    explain: 'じゅんばん・ごみを すてる・ぶつからない のは よい こと。ごみを すてて かえる・はなを ちぎる・ひとりじめ は よくないね。',
+    explain:
+      'じゅんばん・ごみを すてる・ぶつからない のは よい こと。ごみを すてて かえる・はなを ちぎる・ひとりじめ は よくないね。',
   }),
   sortItem({
     id: 'rule-alt-s3',
@@ -255,7 +290,8 @@ const ruleSorts = [
     ],
     mis: 'public-sort',
     hints: GB_HINTS,
-    explain: 'しずかに する・ゆずる・つかまる のは よい こと。おおごえ・ひとりじめ・ドアで あそぶ のは よくないね。',
+    explain:
+      'しずかに する・ゆずる・つかまる のは よい こと。おおごえ・ひとりじめ・ドアで あそぶ のは よくないね。',
   }),
 ];
 
@@ -421,6 +457,11 @@ export const town: UnitSpec = {
         'じぶんの ことだけ かんがえたのかな。みんなで つかう ところは、ほかの ひとの ことも かんがえて つかうよ。',
     },
     {
+      id: 'help-skip',
+      explain:
+        'こまって いる ひとに きづいても、なにも しなかったのかな。こえを かけたり、じぶんで むりな ときは おとなを よんだり できるよ。',
+    },
+    {
       id: 'public-sort',
       explain:
         'よい ことと よくない ことが、いれかわったのかな。ほかの ひとが こまったり、あぶなく なったり する ことは よくない ことだよ。',
@@ -452,5 +493,3 @@ export const town: UnitSpec = {
     '小学校学習指導要領（平成29年告示）生活 (3)（地域と生活）、(4)（公共物・公共施設の利用）。学年の割当は本アプリの案（生活は第1・2学年のまとまり）。町の絵は一般的な例（特定の町・店の名前は使わない）。町たんけんの記録は採点しない explain',
   gradeIsAppProposal: true,
 };
-
-

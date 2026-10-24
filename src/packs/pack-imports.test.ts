@@ -1,5 +1,5 @@
 /**
- * 教材パックが値として import してよい本体のモジュールは、固定名のチャンク pack-runtime に入る3つだけ
+ * 教材パックが値として import してよい本体のモジュールは、固定名のチャンク pack-runtime に入る4つだけ
  * （vite.config.ts PACK_RUNTIME）。ほかの本体のモジュールを値で import すると、本体を更新するたびに
  * パックの版が変わり、オフラインで教材が開けなくなる（コードレビュー #2）。型の import は自由。
  */
@@ -11,10 +11,10 @@ const sources = import.meta.glob<string>(['./*/**/*.ts', '!./_*/**', '!./**/*.te
   eager: true,
 });
 
-const ALLOWED = ['core/util/rng', 'text/kanji-grades', 'text/rich'];
+const ALLOWED = ['core/util/rng', 'text/kanji-grades', 'text/rich', 'core/answer/number'];
 
 describe('教材パックの import', () => {
-  it('本体のモジュールを値で import するのは pack-runtime の3つだけ', () => {
+  it('本体のモジュールを値で import するのは pack-runtime の4つだけ', () => {
     const bad: string[] = [];
     for (const [path, src] of Object.entries(sources)) {
       for (const m of src.matchAll(/^import\s+(?!type\b)[^;]*?from\s+'((?:\.\.\/)+)([^']+)'/gm)) {

@@ -36,8 +36,9 @@ export const audio: AudioApi = createAudioEngine({
     return res.arrayBuffer();
   },
   speech: browserSpeech(),
-  baseUrl: import.meta.env.BASE_URL,
-  isDev: import.meta.env.DEV,
+  // Node のスクリプト（教材の台本の書き出し）から読み込まれても落ちないように
+  baseUrl: import.meta.env?.BASE_URL ?? '/',
+  isDev: import.meta.env?.DEV ?? false,
   watch: (cb) => watchPageHide(document, window, cb),
 });
 

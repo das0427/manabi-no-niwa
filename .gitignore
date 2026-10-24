@@ -13,3 +13,9 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .vitest/
+
+# 教材パックの音声（数万本）は git に入れず、リリースの zip にだけ同梱する（README「教材の音声」）。
+# 数の部品（num）と見本パックの音声は git に入れる
+public/audio/*/
+!public/audio/num/
+!public/audio/_sample-*/

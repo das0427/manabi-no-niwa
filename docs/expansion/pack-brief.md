@@ -34,6 +34,15 @@ curriculum-matrix.md の自分の担当の単元を、**子供が実際に学べ
 - **絵**: 既存の絵（`src/illust/` のID。`npm run dev` で `/gallery.html` を開くと一覧）を使う。足りない絵は `src/illust/content/<packId>.tsx` に既存と同じ画風（輪郭 #4A3B32・太さ 3.5・平塗り・`palette.ts` の色だけ・文字を描き込まない）で描き、`export const <packId>Illust: IllustGroup` として公開する（登録は統括）。図（数・図形・表・グラフ）は `figure`（src/engines/figure/types.ts）で書く。
 - **根拠**: 各単元の `basis` に学習指導要領の該当（例「算数 第1学年 A(2)」）、学年の割当が本アプリの案なら `gradeIsAppProposal: true`。
 
+## 第1陣で分かった注意（2026-10-24 追記）
+- **問題文は自動で読み上げられる**（小1・小2は既定で自動）。読む力を見る問題（字・語・文を読ませる）は、読ませたい字・語・文を問題文に書かず、図（`figure: { kind: 'text', … }`）か選択肢に出す。選択肢は自動では読み上げない。
+- **算数の図のエンジン（clock・measure・numberline・graph・geometry）には `figure` を付けない**（図はエンジンが描く）。
+- 単元ごとのテストに、学年より上の漢字を使っていないか・選択肢の数が上限以内か・id が重複しないか、の検査を足すとよい（g1-ja・g2-ja のテストを参照）。
+- 計算の単元は、正答で正解・誤答例で誤概念どおりに誤り、を全段階で確かめるテストを足す（g1-math のテストを参照）。
+- 定義域の大きさ（`domainSize`）は、同一性キーの数え方（交換を同じとみるか）と一致させる。学習内容によって交換を別の問題とする判断は、理由を basis かコメントに書く（g1-math add-carry の例）。
+- 書いた文は自分で一通り読み直す（「さらに」→「おさらに」のような誤りが見つかる）。
+- 単元を作り終えたら `npm run build:unit-index` を実行する（index.ts の無い作業中のパックは飛ばす）。
+
 ## 検査とコマンド（Windows PowerShell。各コマンドの前に PATH の設定）
 ```
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")

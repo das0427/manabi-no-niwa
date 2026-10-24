@@ -9,15 +9,7 @@ import { writeReport } from './write-report';
 
 const pack: PackContent = {
   packId: 'g4-ja',
-  units: [
-    okurigana,
-    idioms,
-    plainPoliteStyle,
-    infoCompare,
-    readSummary,
-    readFeelings,
-    writeReport,
-  ],
+  units: [okurigana, idioms, plainPoliteStyle, infoCompare, readSummary, readFeelings, writeReport],
 };
 
 export default pack;

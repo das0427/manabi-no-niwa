@@ -41,8 +41,26 @@ export function kanjiNumber(n: number): string {
 }
 
 /** 位の名前（右から 0: 一の位 … 7: 千万の位） */
-const PLACE8 = ['一《いち》', '十《じゅう》', '百《ひゃく》', '千《せん》', '一万《いちまん》', '十万《じゅうまん》', '百万《ひゃくまん》', '千万《せんまん》'];
-const UNIT8 = ['1', '10', '100', '1000', '1万《まん》', '10万《まん》', '100万《まん》', '1000万《まん》'];
+const PLACE8 = [
+  '一《いち》',
+  '十《じゅう》',
+  '百《ひゃく》',
+  '千《せん》',
+  '一万《いちまん》',
+  '十万《じゅうまん》',
+  '百万《ひゃくまん》',
+  '千万《せんまん》',
+];
+const UNIT8 = [
+  '1',
+  '10',
+  '100',
+  '1000',
+  '1万《まん》',
+  '10万《まん》',
+  '100万《まん》',
+  '1000万《まん》',
+];
 
 /** 5〜8けたの数（0の位を ふくむことが多い） */
 function pickBig(rng: Rng): number {
@@ -55,7 +73,10 @@ function pickBig(rng: Rng): number {
 function compose(level: number, rng: Rng, alt: boolean): NumberItem {
   const n = pickBig(rng);
   const ds = String(n).split('').reverse().map(Number);
-  const parts = ds.map((d, i) => [d, i] as const).filter(([d]) => d > 0).reverse();
+  const parts = ds
+    .map((d, i) => [d, i] as const)
+    .filter(([d]) => d > 0)
+    .reverse();
   const counts = parts.map(([d, i]) => `${UNIT8[i]}を ${d}こ`).join('、');
   const squeezed = Number(parts.map(([d]) => d).join(''));
   return {
@@ -63,7 +84,9 @@ function compose(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `compose${alt ? '-alt' : ''}:${n}`,
     objective: 'compose',
     level,
-    prompt: alt ? '漢字《かんじ》で 書《か》いた 数《かず》を、数字《すうじ》で 書《か》こう。' : `${counts} あわせた 数《かず》は？`,
+    prompt: alt
+      ? '漢字《かんじ》で 書《か》いた 数《かず》を、数字《すうじ》で 書《か》こう。'
+      : `${counts} あわせた 数《かず》は？`,
     figure: alt ? { kind: 'text', text: kanjiNumber(n), size: 'xl' } : undefined,
     hints: [
       `くらいの 表《ひょう》（${[...PLACE8].reverse().join('・')}）に 数字《すうじ》を 入《い》れて みよう。`,
@@ -141,7 +164,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       objective: 'compare',
       level,
       prompt: `□に あてはまる しるしは どれ？\n${left} □ ${right}`,
-      hints: ['まず けたの 数《かず》を くらべよう。', `${left}は ${String(left).length}けた、${right}は ${String(right).length}けた。`, 'けたの 多《おお》い ほうが 大《おお》きい。ひらいて いる ほうが 大《おお》きい 数《かず》だよ。'],
+      hints: [
+        'まず けたの 数《かず》を くらべよう。',
+        `${left}は ${String(left).length}けた、${right}は ${String(right).length}けた。`,
+        'けたの 多《おお》い ほうが 大《おお》きい。ひらいて いる ほうが 大《おお》きい 数《かず》だよ。',
+      ],
       explain: `${big}の ほうが けたが 多《おお》いので 大《おお》きい。${left} ${a ? '＞' : '＜'} ${right} です。`,
       identity: `compare:${big}:${short}`,
       alt: true,
@@ -159,14 +186,20 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     objective: 'compare',
     level,
     prompt: 'いちばん 大《おお》きい 数《かず》は どれ？',
-    hints: ['まず けたの 数《かず》を くらべよう。', 'けたの 数《かず》が おなじ ときは、上《うえ》の くらいから くらべよう。', 'いちばん 上《うえ》の くらいの 数字《すうじ》だけで きめないでね。'],
+    hints: [
+      'まず けたの 数《かず》を くらべよう。',
+      'けたの 数《かず》が おなじ ときは、上《うえ》の くらいから くらべよう。',
+      'いちばん 上《うえ》の くらいの 数字《すうじ》だけで きめないでね。',
+    ],
     explain: `${big}は ${len}けたで、いちばん けたが 多《おお》い（${lower !== null ? `おなじ けたの ${lower}より 上《うえ》から 2けためが 大《おお》きい` : 'ほかより 大《おお》きい'}）。いちばん 大《おお》きいのは ${big}です。`,
     identity: `compare:${big}:${short}`,
     alt: false,
     options: [
       { label: String(big), correct: true },
       { label: String(short), misconception: 'first-digit' },
-      ...(lower !== null && lower !== big ? [{ label: String(lower), misconception: 'lower-place' }] : []),
+      ...(lower !== null && lower !== big
+        ? [{ label: String(lower), misconception: 'lower-place' }]
+        : []),
       { label: String(Math.floor(short / 10) + 1), misconception: 'first-digit' },
     ],
   };
@@ -182,7 +215,9 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `times${alt ? '-alt' : ''}:${n}x${k}`,
     objective: 'times',
     level,
-    prompt: alt ? `1こ ${n}円《えん》の ものを ${k}こ 買《か》うと、何《なん》円《えん》ですか。` : `${n}を ${k}倍《ばい》した 数《かず》は？`,
+    prompt: alt
+      ? `1こ ${n}円《えん》の ものを ${k}こ 買《か》うと、何《なん》円《えん》ですか。`
+      : `${n}を ${k}倍《ばい》した 数《かず》は？`,
     figure: alt ? undefined : { kind: 'text', text: `${n} × ${k} ＝ {{}}`, size: 'xl' },
     hints: [
       `${k}倍《ばい》すると、くらいが ${z}つ 上《あ》がるよ。`,
@@ -209,9 +244,15 @@ function div10(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `div10${alt ? '-alt' : ''}:${n}`,
     objective: 'div10',
     level,
-    prompt: alt ? `${n}円《えん》を 10人《にん》で 同《おな》じ 金《きん》がくずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》円《えん》ですか。` : `${n}を 10で わった 数《かず》は？`,
+    prompt: alt
+      ? `${n}円《えん》を 10人《にん》で 同《おな》じ 金《きん》がくずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》円《えん》ですか。`
+      : `${n}を 10で わった 数《かず》は？`,
     figure: alt ? undefined : { kind: 'text', text: `${n} ÷ 10 ＝ {{}}`, size: 'xl' },
-    hints: ['10で わると、くらいが 1つ 下《さ》がるよ。', '一《いち》のくらいの 0を とった 数《かず》に なるよ。', `${n}の 右《みぎ》の 0を 1こ とると…`],
+    hints: [
+      '10で わると、くらいが 1つ 下《さ》がるよ。',
+      '一《いち》のくらいの 0を とった 数《かず》に なるよ。',
+      `${n}の 右《みぎ》の 0を 1こ とると…`,
+    ],
     explain: `10で わると くらいが 1つ 下《さ》がり、一《いち》のくらいの 0を とった 数《かず》に なります。${n} ÷ 10 ＝ ${ans}。`,
     identity: `div10:${n}`,
     alt,
@@ -313,7 +354,10 @@ export const largeNumbers: UnitSpec = {
   icon: 'subj-sansu',
   prereq: ['g2.math.numbers-10000'],
   objectives: [
-    { id: 'compose', title: '数《かず》の しくみ（万《まん》の くらい・漢字《かんじ》で 書《か》いた 数《かず》）' },
+    {
+      id: 'compose',
+      title: '数《かず》の しくみ（万《まん》の くらい・漢字《かんじ》で 書《か》いた 数《かず》）',
+    },
     { id: 'place', title: 'くらいの 数字《すうじ》' },
     { id: 'compare', title: '大《おお》きさくらべ' },
     { id: 'times', title: '10倍《ばい》・100倍《ばい》・1000倍《ばい》' },
@@ -323,44 +367,54 @@ export const largeNumbers: UnitSpec = {
   misconceptions: [
     {
       id: 'zero-missing',
-      explain: '何《なに》も ない くらいの 0を 書《か》きわすれたのかな。くらいの 表《ひょう》に 入《い》れて、空《あ》いた くらいに 0を 書《か》こう。',
+      explain:
+        '何《なに》も ない くらいの 0を 書《か》きわすれたのかな。くらいの 表《ひょう》に 入《い》れて、空《あ》いた くらいに 0を 書《か》こう。',
       figure: { kind: 'text', text: '3005万 → 30050000', size: 'l' },
     },
     {
       id: 'place-shift',
-      explain: 'くらいが 1つ ずれたのかな。右《みぎ》から 一《いち》・十《じゅう》・百《ひゃく》・千《せん》・一万《いちまん》…と 数《かぞ》えよう。',
+      explain:
+        'くらいが 1つ ずれたのかな。右《みぎ》から 一《いち》・十《じゅう》・百《ひゃく》・千《せん》・一万《いちまん》…と 数《かぞ》えよう。',
     },
     {
       id: 'place-left',
-      explain: '左《ひだり》から 数《かぞ》えたのかな。くらいは 右《みぎ》の 一《いち》のくらいから 数《かぞ》えるよ。',
+      explain:
+        '左《ひだり》から 数《かぞ》えたのかな。くらいは 右《みぎ》の 一《いち》のくらいから 数《かぞ》えるよ。',
     },
     {
       id: 'first-digit',
-      explain: 'いちばん 上《うえ》の 数字《すうじ》だけで くらべたのかな。まず けたの 数《かず》を くらべよう。けたが 多《おお》い ほうが 大《おお》きいよ。',
+      explain:
+        'いちばん 上《うえ》の 数字《すうじ》だけで くらべたのかな。まず けたの 数《かず》を くらべよう。けたが 多《おお》い ほうが 大《おお》きいよ。',
     },
     {
       id: 'lower-place',
-      explain: '下《した》の くらいから くらべたのかな。けたが おなじ ときは、上《うえ》の くらいから じゅんに くらべよう。',
+      explain:
+        '下《した》の くらいから くらべたのかな。けたが おなじ ときは、上《うえ》の くらいから じゅんに くらべよう。',
     },
     {
       id: 'sign-meaning',
-      explain: '＝ は おなじ 大《おお》きさの ときに つかうよ。大《おお》きい ほうに ひらいた ＞ ＜ を つかおう。',
+      explain:
+        '＝ は おなじ 大《おお》きさの ときに つかうよ。大《おお》きい ほうに ひらいた ＞ ＜ を つかおう。',
     },
     {
       id: 'zeros-count',
-      explain: '0の 数《かず》が あって いないのかな。10倍《ばい》で 0が 1こ、100倍《ばい》で 2こ、1000倍《ばい》で 3こ ふえるよ。10で わると 0が 1こ へるよ。',
+      explain:
+        '0の 数《かず》が あって いないのかな。10倍《ばい》で 0が 1こ、100倍《ばい》で 2こ、1000倍《ばい》で 3こ ふえるよ。10で わると 0が 1こ へるよ。',
     },
     {
       id: 'times-add',
-      explain: 'たし算《ざん》や ひき算《ざん》を したのかな。10倍《ばい》は おなじ 数《かず》を 10こ あつめる ことだよ。',
+      explain:
+        'たし算《ざん》や ひき算《ざん》を したのかな。10倍《ばい》は おなじ 数《かず》を 10こ あつめる ことだよ。',
     },
     {
       id: 'minor-as-one',
-      explain: '1めもりを 1と 数《かぞ》えたのかな。10めもりで いくつに なるかを 見《み》て、1めもりの 大《おお》きさを 先《さき》に きめよう。',
+      explain:
+        '1めもりを 1と 数《かぞ》えたのかな。10めもりで いくつに なるかを 見《み》て、1めもりの 大《おお》きさを 先《さき》に きめよう。',
     },
     {
       id: 'neighbor-tick',
-      explain: 'めもりを 1つ 数《かぞ》えまちがえたのかな。数字《すうじ》の ある めもりから 1つずつ 数《かぞ》えよう。',
+      explain:
+        'めもりを 1つ 数《かぞ》えまちがえたのかな。数字《すうじ》の ある めもりから 1つずつ 数《かぞ》えよう。',
     },
   ],
   levels: [
@@ -372,7 +426,20 @@ export const largeNumbers: UnitSpec = {
   intro: [
     {
       text: '1000を 10こ あつめた 数《かず》を 一万《いちまん》（10000）と いいます。一万《いちまん》が 10こで 十万《じゅうまん》、100こで 百万《ひゃくまん》、1000こで 千万《せんまん》。',
-      figure: { kind: 'table', header: ['千万《せんまん》', '百万《ひゃくまん》', '十万《じゅうまん》', '一万《いちまん》', '千《せん》', '百《ひゃく》', '十《じゅう》', '一《いち》'], rows: [['3', '0', '5', '0', '4', '0', '0', '0']] },
+      figure: {
+        kind: 'table',
+        header: [
+          '千万《せんまん》',
+          '百万《ひゃくまん》',
+          '十万《じゅうまん》',
+          '一万《いちまん》',
+          '千《せん》',
+          '百《ひゃく》',
+          '十《じゅう》',
+          '一《いち》',
+        ],
+        rows: [['3', '0', '5', '0', '4', '0', '0', '0']],
+      },
     },
     {
       text: 'この 数《かず》は 三千五十万四千《さんぜんごじゅうまんよんせん》。何《なに》も ない くらいには 0を 書《か》きます。',
@@ -388,6 +455,7 @@ export const largeNumbers: UnitSpec = {
     generate: ({ level, rng, index }) => generateLargeNumbers(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(1) 数の表し方（万の単位、10倍・100倍・1000倍、10でわった大きさ。1億に触れる）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(1) 数の表し方（万の単位、10倍・100倍・1000倍、10でわった大きさ。1億に触れる）',
   revised: '2026-10-24',
 };

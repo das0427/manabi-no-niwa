@@ -40,7 +40,17 @@ const ROWS: Row[] = [
 /** 清音の行（0〜9）と濁音・半濁音の行（10〜14） */
 const SEION_ROWS = 10;
 /** 清音 ↔ 濁音・半濁音 */
-const DAKU_PAIR: Record<number, number> = { 1: 10, 10: 1, 2: 11, 11: 2, 3: 12, 12: 3, 5: 13, 13: 5, 14: 13 };
+const DAKU_PAIR: Record<number, number> = {
+  1: 10,
+  10: 1,
+  2: 11,
+  11: 2,
+  3: 12,
+  12: 3,
+  5: 13,
+  13: 5,
+  14: 13,
+};
 
 interface KanaInfo {
   r: number;
@@ -73,12 +83,10 @@ const KUNREI: Record<string, string> = {
 const MACRON: Record<string, string> = { a: 'ā', i: 'ī', u: 'ū', e: 'ē', o: 'ō' };
 
 const isKata = (c: string) => /[ァ-ヶ]/.test(c);
-const toHira = (c: string) =>
-  isKata(c) ? String.fromCharCode(c.charCodeAt(0) - 0x60) : c;
+const toHira = (c: string) => (isKata(c) ? String.fromCharCode(c.charCodeAt(0) - 0x60) : c);
 const toKata = (c: string) => String.fromCharCode(c.charCodeAt(0) + 0x60);
 /** like の字種（ひらがな・カタカナ）にそろえる */
-const sameScript = (like: string, h: string) =>
-  isKata(like) ? [...h].map(toKata).join('') : h;
+const sameScript = (like: string, h: string) => (isKata(like) ? [...h].map(toKata).join('') : h);
 
 // ---- 語を音に分ける ----
 interface Syl {
@@ -137,7 +145,14 @@ function syllables(word: string): Syl[] {
       s = { kana: ch, at: i, ro, base: KANA.has(h) };
     }
     if (sokAt >= 0) {
-      s = { ...s, kana: w[sokAt]! + s.kana, at: sokAt, ro: s.ro[0]! + s.ro, sok: true, base: false };
+      s = {
+        ...s,
+        kana: w[sokAt]! + s.kana,
+        at: sokAt,
+        ro: s.ro[0]! + s.ro,
+        sok: true,
+        base: false,
+      };
       sokAt = -1;
     }
     out.push(s);
@@ -201,28 +216,29 @@ function featsOf(syls: Syl[]): Feat[] {
   return f;
 }
 const READ_FEAT: Record<Feat, string> = {
-  sok: '同《おな》じ 字《じ》が 2つ ならんで いる ところ（tt・pp など）は、小《ちい》さい「っ」が 入《はい》るよ。',
-  long: 'ō のように 上《うえ》に「ー」が ついた 字《じ》は、のばす 音《おと》だよ。',
-  yoon: 'kya・sho・ju のような 音《おと》は、小《ちい》さい「ゃ・ゅ・ょ」が つく 音《おと》だよ。',
-  nb: 'n の あとに 母音《ぼいん》が ない ときは「ん」だよ。',
+  sok: '同《おな》じ字《じ》が2つならんでいるところ（tt・pp など）は、小《ちい》さい「っ」が入《はい》るよ。',
+  long: 'ōのように上《うえ》に「ー」がついた字《じ》は、のばす音《おと》だよ。',
+  yoon: 'kya・sho・ju のような音《おと》は、小《ちい》さい「ゃ・ゅ・ょ」がつく音《おと》だよ。',
+  nb: 'n のあとに母音《ぼいん》がないときは「ん」だよ。',
   kunrei: 'shi は「し」、chi は「ち」、tsu は「つ」、fu は「ふ」、ji は「じ」だよ。',
-  plain: '子音《しいん》と 母音《ぼいん》を 組《く》み合《あ》わせて、1つの 音《おと》に しよう。',
+  plain: '子音《しいん》と母音《ぼいん》を組《く》み合《あ》わせて、1つの音《おと》にしよう。',
 };
 const WRITE_FEAT: Record<Feat, string> = {
-  sok: '小《ちい》さい「っ」は、つぎの 音《おと》の はじめの 字《じ》を 2つ かさねて 書《か》くよ。',
-  long: 'のばす 音《おと》は、ō のように 上《うえ》に「ー」を つけるか、母音《ぼいん》を ならべて 書《か》くよ（おう は ou）。',
-  yoon: '小《ちい》さい「ゃ・ゅ・ょ」が つく 音《おと》は、2つの かなで 1つの 音《おと》。ローマ字《じ》でも 1つに まとめて 書《か》くよ。',
-  nb: '「ん」は、b・m・p の 前《まえ》でも n と 書《か》くよ。',
-  kunrei: '「し」は shi、「ち」は chi、「つ」は tsu、「ふ」は fu、「じ」は ji と 書《か》くよ。',
-  plain: '1つの 音《おと》は、子音《しいん》（k・s・t など）と 母音《ぼいん》（a・i・u・e・o）で できて いるよ。',
+  sok: '小《ちい》さい「っ」は、つぎの音《おと》のはじめの字《じ》を2つかさねて書《か》くよ。',
+  long: 'のばす音《おと》は、ōのように上《うえ》に「ー」をつけるか、母音《ぼいん》をならべて書《か》くよ（おうは ou）。',
+  yoon: '小《ちい》さい「ゃ・ゅ・ょ」がつく音《おと》は、2つのかなで1つの音《おと》。ローマ字《じ》でも1つにまとめて書《か》くよ。',
+  nb: '「ん」は、b・m・p の前《まえ》でも n と書《か》くよ。',
+  kunrei: '「し」は shi、「ち」は chi、「つ」は tsu、「ふ」は fu、「じ」は ji と書《か》くよ。',
+  plain:
+    '1つの音《おと》は、子音《しいん》（k・s・t など）と母音《ぼいん》（a・i・u・e・o）でできているよ。',
 };
 const NOTE: Record<Feat, string> = {
-  sok: '小《ちい》さい「っ」は、つぎの 子音《しいん》を かさねて 書《か》きます。',
-  long: 'のばす 音《おと》は ō のように「ー」を つけます（ou・oo と 書《か》いても よい）。',
-  yoon: '小《ちい》さい「ゃ・ゅ・ょ」の つく 音《おと》は、まとめて 1つの 音《おと》で 書《か》きます。',
-  nb: '「ん」は b・m・p の 前《まえ》でも n です。',
-  kunrei: 'し・ち・つ・ふ・じ は shi・chi・tsu・fu・ji と 書《か》きます。',
-  plain: '子音《しいん》と 母音《ぼいん》の 組《く》み合《あ》わせで できて います。',
+  sok: '小《ちい》さい「っ」は、つぎの子音《しいん》をかさねて書《か》きます。',
+  long: 'のばす音《おと》はōのように「ー」をつけるか、aa・uu・ou のように母音《ぼいん》をならべて書《か》きます。',
+  yoon: '小《ちい》さい「ゃ・ゅ・ょ」のつく音《おと》は、まとめて1つの音《おと》で書《か》きます。',
+  nb: '「ん」は b・m・p の前《まえ》でも n です。',
+  kunrei: '「し・ち・つ・ふ・じ」は shi・chi・tsu・fu・ji と書《か》きます。',
+  plain: '子音《しいん》と母音《ぼいん》の組《く》み合《あ》わせでできています。',
 };
 
 // ---- 1. 音の表 ----
@@ -274,25 +290,30 @@ function tableReadItem(s: Sound): ChoiceItem {
     id: `table:read:${s.kana}`,
     objective: 'table',
     level: 0,
-    prompt: 'この ローマ字《じ》は、どの かなの 音《おと》かな。',
+    prompt: 'このローマ字《じ》は、どのかなの音《おと》かな。',
     figure: { kind: 'text', text: s.ro, size: 'xl' },
     options: opts(s.kana, soundWrongs(s)),
+    // ヒントは 表の 引き方を 教える（行や 母音を 名指しして 誤答を 消しきらない）
     hints: [
       vowelOnly
-        ? '1字《じ》だけの ときは、母音《ぼいん》（a・i・u・e・o）の 音《おと》だよ。'
-        : 'はじめの 字《じ》（子音《しいん》）と、さいごの 字《じ》（母音《ぼいん》）を 見《み》よう。',
-      s.yoon
-        ? '小《ちい》さい「ゃ・ゅ・ょ」が つく 音《おと》だよ。'
-        : `${gyo}の 音《おと》だよ。`,
-      s.yoon
-        ? `「${s.yoon}」に、小《ちい》さい「ゃ・ゅ・ょ」の どれかが つくよ。さいごの 母音《ぼいん》を 見《み》よう。`
-        : `${gyo}の 中《なか》で、母音《ぼいん》が ${'aiueo'[s.v]} の 音《おと》を えらぼう。`,
+        ? '1字《じ》だけのときは、母音《ぼいん》（a・i・u・e・o）の音《おと》だよ。'
+        : 'はじめの字《じ》（子音《しいん》）と、さいごの字《じ》（母音《ぼいん》）を見《み》よう。',
+      vowelOnly
+        ? 'a・i・u・e・o は、「あ・い・う・え・お」のじゅんにならんでいるよ。'
+        : s.yoon
+          ? '子音《しいん》のあとに y があるときは、小《ちい》さい「ゃ・ゅ・ょ」がつく音《おと》だよ。'
+          : `はじめの「${s.ro.slice(0, -1)}」で、何行《ぎょう》の音《おと》か考《かんが》えよう。`,
+      vowelOnly
+        ? 'その字《じ》が a・i・u・e・o のなんばんめか数《かぞ》えよう。'
+        : s.yoon
+          ? 'さいごの母音《ぼいん》が a なら「ゃ」、u なら「ゅ」、o なら「ょ」だよ。'
+          : '行《ぎょう》がわかったら、さいごの母音《ぼいん》で、表《ひょう》のどのだんかさがそう。',
     ],
     explain: s.yoon
-      ? `「${s.ro}」は「${s.kana}」。小《ちい》さい「${s.kana.slice(-1)}」が つく 音《おと》は、まとめて ${s.ro} と 書《か》きます。`
+      ? `「${s.ro}」は「${s.kana}」。小《ちい》さい「${s.kana.slice(-1)}」がつく音《おと》は、まとめて ${s.ro} と書《か》きます。`
       : vowelOnly
-        ? `「${s.ro}」は「${s.kana}」。母音《ぼいん》の 音《おと》です。`
-        : `「${s.ro}」は「${s.kana}」。${gyo}の 音《おと》で、母音《ぼいん》は ${'aiueo'[s.v]} です。${KUNREI[s.ro] ? `ローマ字《じ》では ${s.ro} と 書《か》きます。` : ''}`,
+        ? `「${s.ro}」は「${s.kana}」。母音《ぼいん》の音《おと》です。`
+        : `「${s.ro}」は「${s.kana}」。${gyo}の音《おと》で、母音《ぼいん》は ${'aiueo'[s.v]} です。${KUNREI[s.ro] ? `ローマ字《じ》では ${s.ro} と書《か》きます。` : ''}`,
     identity: `table:read:${s.kana}`,
   };
 }
@@ -302,7 +323,7 @@ const N_ITEM: ChoiceItem = {
   id: 'table:read:ん',
   objective: 'table',
   level: 0,
-  prompt: 'この ローマ字《じ》は、どの かなの 音《おと》かな。',
+  prompt: 'このローマ字《じ》は、どのかなの音《おと》かな。',
   figure: { kind: 'text', text: 'n', size: 'xl' },
   options: opts('ん', [
     ['な', 'romaji-n-alone'],
@@ -310,11 +331,12 @@ const N_ITEM: ChoiceItem = {
     ['む', 'romaji-n-as-m'],
   ]),
   hints: [
-    '字《じ》が 1つだけ。母音《ぼいん》（a・i・u・e・o）は ついて いるかな。',
-    'な・に・ぬ・ね・の は、n の あとに 母音《ぼいん》が つくよ。',
-    'n の あとに 母音《ぼいん》が ない 音《おと》は、な行《ぎょう》では ないよ。',
+    '字《じ》が1つだけ。母音《ぼいん》（a・i・u・e・o）はついているかな。',
+    '「な・に・ぬ・ね・の」は、n のあとに母音《ぼいん》がつくよ。',
+    'n のあとに母音《ぼいん》がない音《おと》は、な行《ぎょう》ではないよ。',
   ],
-  explain: '「n」だけの 音《おと》は「ん」です。n の あとに 母音《ぼいん》が つくと な行《ぎょう》の 音《おと》に なります。',
+  explain:
+    '「n」だけの音《おと》は「ん」です。n のあとに母音《ぼいん》がつくとな行《ぎょう》の音《おと》になります。',
   identity: 'table:read:ん',
 };
 
@@ -340,18 +362,18 @@ function tableWriteItem([kana, letters, wrong, mis]: (typeof TABLE_WRITE)[number
     id: `table:write:${kana}`,
     objective: 'table',
     level: 0,
-    prompt: `「${kana}」の 音《おと》を、1字《じ》ずつ ならべて ローマ字《じ》で 書《か》こう。`,
+    prompt: `「${kana}」の音《おと》を、1字《じ》ずつならべてローマ字《じ》で書《か》こう。`,
     tiles: [...letters],
     answer: { kind: 'romaji', kana },
     wrongAnswers: [{ value: wrong, misconception: mis }],
     hints: [
       yoon
-        ? '小《ちい》さい「ゃ・ゅ・ょ」が つく 音《おと》は、2つの かなで 1つの 音《おと》だよ。'
-        : 'この 音《おと》は、子音《しいん》が 2字《じ》か 1字《じ》で、とくべつな 書《か》き方《かた》を するよ。',
+        ? '小《ちい》さい「ゃ・ゅ・ょ」がつく音《おと》は、2つのかなで1つの音《おと》だよ。'
+        : 'この音《おと》は、子音《しいん》が2字《じ》か1字《じ》で、とくべつな書《か》き方《かた》をするよ。',
       yoon ? WRITE_FEAT.yoon : WRITE_FEAT.kunrei,
-      `はじめの 字《じ》は ${ro[0]} だよ。`,
+      `はじめの字《じ》は ${ro[0]} だよ。`,
     ],
-    explain: `「${kana}」は ${ro} と 書《か》きます。${yoon ? NOTE.yoon : NOTE.kunrei}`,
+    explain: `「${kana}」は ${ro} と書《か》きます。${yoon ? NOTE.yoon : NOTE.kunrei}`,
     identity: `table:write:${kana}`,
     alt: true,
   };
@@ -384,7 +406,16 @@ const SPECIAL = [
   'ひゃく', 'ぎゅうにゅう', 'でんしゃ', 'じゃがいも', 'ちょうちょ',
 ];
 /** 別例: 長音などの語を読む */
-const SPECIAL_READ = ['おかあさん', 'ノート', 'きって', 'サッカー', 'しんぶん', 'とんぼ', 'きんぎょ', 'びょういん'];
+const SPECIAL_READ = [
+  'おかあさん',
+  'ノート',
+  'きって',
+  'サッカー',
+  'しんぶん',
+  'とんぼ',
+  'きんぎょ',
+  'びょういん',
+];
 /** 地名・人名（語頭を大文字）。人名は よくある名前だけ */
 // prettier-ignore
 const NAMES: [kana: string, kind: '地名' | '名前'][] = [
@@ -434,15 +465,15 @@ function readItem(word: string, objective: 'read' | 'special', alt: boolean): Ch
     id: `word:read:${word}`,
     objective,
     level: objective === 'read' ? 1 : 3,
-    prompt: 'ローマ字《じ》で 書《か》いた ことばを 読《よ》もう。どれかな。',
+    prompt: 'ローマ字《じ》で書《か》いたことばを読《よ》もう。どれかな。',
     figure: { kind: 'text', text: ro, size: 'xl' },
     options: opts(word, readWrongs(word)),
     hints: [
-      'ローマ字《じ》を、1つの 音《おと》ずつ 区切《くぎ》って 読《よ》もう。',
+      'ローマ字《じ》を、1つの音《おと》ずつ区切《くぎ》って読《よ》もう。',
       READ_FEAT[f[0]!],
-      `はじめの 音《おと》は「${syls[0]!.kana}」だよ。`,
+      `はじめの音《おと》は「${syls[0]!.kana}」だよ。`,
     ],
-    explain: `「${ro}」は「${word}」と 読《よ》みます。${f.map((x) => NOTE[x]).join('')}`,
+    explain: `「${ro}」は「${word}」と読《よ》みます。${f.map((x) => NOTE[x]).join('')}`,
     identity: `word:read:${word}`,
     ...(alt ? { alt: true } : {}),
   };
@@ -491,7 +522,8 @@ function writeParts(word: string, capital: boolean) {
   const kI = syls.findIndex((s) => KUNREI[s.ro]);
   if (kI >= 0) extras.push(KUNREI[syls[kI]!.ro]!);
   if (wrongs.length === 0) {
-    const bases = syls.map((s, i) => ({ s, i })).filter(({ s }) => s.base);
+    // 母音を取りちがえた形が作れる音を、うしろから さがす（「わ」などは作れない）
+    const bases = syls.map((s, i) => ({ s, i })).filter(({ s }) => s.base && vowelMix(s.kana));
     const pick = bases[bases.length - 1];
     const mixed = pick ? vowelMix(pick.s.kana) : null;
     if (pick && mixed) {
@@ -520,16 +552,16 @@ function writeItem(word: string, objective: 'write' | 'special'): BuildItem {
     id: `word:write:${word}`,
     objective,
     level: objective === 'write' ? 2 : 3,
-    prompt: `「${word}」を ローマ字《じ》で 書《か》こう。`,
+    prompt: `「${word}」をローマ字《じ》で書《か》こう。`,
     tiles,
     answer: { kind: 'romaji', kana: word },
     wrongAnswers: wrongs,
     hints: [
-      `「${word}」を 1つずつの 音《おと》に 分《わ》けて みよう。`,
+      `「${word}」を1つずつの音《おと》に分《わ》けてみよう。`,
       WRITE_FEAT[f[0]!],
-      `はじめは ${head.map((s) => s.ro).join('')} で はじまるよ。`,
+      `はじめは ${head.map((s) => s.ro).join('')} ではじまるよ。`,
     ],
-    explain: `「${word}」は ${ro} と 書《か》きます。${f.map((x) => NOTE[x]).join('')}`,
+    explain: `「${word}」は ${ro} と書《か》きます。${f.map((x) => NOTE[x]).join('')}`,
     identity: `word:write:${word}`,
   };
 }
@@ -541,25 +573,25 @@ function letterItem(word: string): BuildItem {
   const mixed = vowelMix(last.kana)!;
   const mixedRo = KANA.get(mixed)!.ro;
   const wrong = ro.slice(0, ro.length - last.ro.length) + mixedRo;
-  const extra = mixedRo.slice(-1);
   const letters = [...ro];
-  if (!letters.includes(extra)) letters.push(extra);
+  // 誤答の つづりが タイルで 作れるように、足りない 字を 足す（みち→mitsu の s・u）
+  for (const c of mixedRo) if (!letters.includes(c)) letters.push(c);
   letters.push(ro.includes('k') ? 't' : 'k');
   return {
     engine: 'build',
     id: `word:letters:${word}`,
     objective: 'write',
     level: 2,
-    prompt: `「${word}」を、1字《じ》ずつ ならべて ローマ字《じ》で 書《か》こう。`,
+    prompt: `「${word}」を、1字《じ》ずつならべてローマ字《じ》で書《か》こう。`,
     tiles: letters,
     answer: { kind: 'romaji', kana: word },
     wrongAnswers: [{ value: wrong, misconception: 'romaji-vowel-mix' }],
     hints: [
-      `「${word}」は ${syls.length}つの 音《おと》だよ。1つの 音《おと》は 子音《しいん》と 母音《ぼいん》で できて いるよ。`,
+      `「${word}」は ${syls.length}つの音《おと》だよ。1つの音《おと》は子音《しいん》と母音《ぼいん》でできているよ。`,
       featsOf(syls).includes('kunrei') ? WRITE_FEAT.kunrei : WRITE_FEAT.plain,
-      `はじめの 音《おと》は ${syls[0]!.ro} だよ。`,
+      `はじめの音《おと》は ${syls[0]!.ro} だよ。`,
     ],
-    explain: `「${word}」は ${ro} と 書《か》きます。${syls.map((s) => `${s.kana}＝${s.ro}`).join('、')}。`,
+    explain: `「${word}」は ${ro} と書《か》きます。${syls.map((s) => `${s.kana}＝${s.ro}`).join('、')}。`,
     identity: `word:letters:${word}`,
     alt: true,
   };
@@ -569,33 +601,70 @@ function capitalItem([word, kind]: (typeof NAMES)[number]): BuildItem {
   const { syls, tiles, wrongs } = writeParts(word, true);
   const f = featsOf(syls).filter((x) => x !== 'plain');
   const ro = cap(canonical(word));
-  const what = kind === '地名' ? '地名《ちめい》' : '人《ひと》の 名前《なまえ》';
+  const what = kind === '地名' ? '地名《ちめい》' : '人《ひと》の名前《なまえ》';
   return {
     engine: 'build',
     id: `cap:write:${word}`,
     objective: 'capital',
     level: 4,
-    prompt: `${what}の「${word}」を ローマ字《じ》で 書《か》こう。`,
+    prompt: `${what}の「${word}」をローマ字《じ》で書《か》こう。`,
     tiles,
     answer: { kind: 'romaji', kana: word, capital: true },
     wrongAnswers: wrongs,
     hints: [
-      `「${word}」を 1つずつの 音《おと》に 分《わ》けて みよう。`,
-      `地名《ちめい》や 人《ひと》の 名前《なまえ》は、はじめの 字《じ》を 大文字《おおもじ》で 書《か》くよ。${f.length ? WRITE_FEAT[f[0]!] : ''}`,
-      `はじめは ${cap(syls[0]!.ro)} で はじまるよ。`,
+      `「${word}」を1つずつの音《おと》に分《わ》けてみよう。`,
+      `地名《ちめい》や人《ひと》の名前《なまえ》は、はじめの字《じ》を大文字《おおもじ》で書《か》くよ。${f.length ? WRITE_FEAT[f[0]!] : ''}`,
+      `はじめは ${cap(syls[0]!.ro)} ではじまるよ。`,
     ],
-    explain: `「${word}」は ${ro} と 書《か》きます。${what}なので、はじめの 字《じ》は 大文字《おおもじ》です。${f.map((x) => NOTE[x]).join('')}`,
+    explain: `「${word}」は ${ro} と書《か》きます。${what}なので、はじめの字《じ》は大文字《おおもじ》です。${f.map((x) => NOTE[x]).join('')}`,
     identity: `cap:write:${word}`,
   };
 }
 
 /** 別例: 名前の つづりを えらぶ（[かな, 正しい, 誤り…]） */
 const CAP_CHOOSE: [kana: string, ok: string, wrongs: Wrong[]][] = [
-  ['おおさか', 'Ōsaka', [['ōsaka', 'romaji-capital'], ['Osaka', 'romaji-long-vowel-missing']]],
-  ['きょうと', 'Kyōto', [['kyōto', 'romaji-capital'], ['Kiyōto', 'romaji-yoon-split'], ['Kyoto', 'romaji-long-vowel-missing']]],
-  ['とっとり', 'Tottori', [['tottori', 'romaji-capital'], ['Totori', 'romaji-sokuon-missing']]],
-  ['ぐんま', 'Gunma', [['gunma', 'romaji-capital'], ['Gumma', 'romaji-n-as-m']]],
-  ['しょうた', 'Shōta', [['shōta', 'romaji-capital'], ['Shiyōta', 'romaji-yoon-split'], ['Shota', 'romaji-long-vowel-missing']]],
+  [
+    'おおさか',
+    'Ōsaka',
+    [
+      ['ōsaka', 'romaji-capital'],
+      ['Osaka', 'romaji-long-vowel-missing'],
+    ],
+  ],
+  [
+    'きょうと',
+    'Kyōto',
+    [
+      ['kyōto', 'romaji-capital'],
+      ['Kiyōto', 'romaji-yoon-split'],
+      ['Kyoto', 'romaji-long-vowel-missing'],
+    ],
+  ],
+  [
+    'とっとり',
+    'Tottori',
+    [
+      ['tottori', 'romaji-capital'],
+      ['Totori', 'romaji-sokuon-missing'],
+    ],
+  ],
+  [
+    'ぐんま',
+    'Gunma',
+    [
+      ['gunma', 'romaji-capital'],
+      ['Gumma', 'romaji-n-as-m'],
+    ],
+  ],
+  [
+    'しょうた',
+    'Shōta',
+    [
+      ['shōta', 'romaji-capital'],
+      ['Shiyōta', 'romaji-yoon-split'],
+      ['Shota', 'romaji-long-vowel-missing'],
+    ],
+  ],
 ];
 
 function capChooseItem([kana, ok, wrongs]: (typeof CAP_CHOOSE)[number]): ChoiceItem {
@@ -604,14 +673,14 @@ function capChooseItem([kana, ok, wrongs]: (typeof CAP_CHOOSE)[number]): ChoiceI
     id: `cap:choose:${kana}`,
     objective: 'capital',
     level: 4,
-    prompt: `「${kana}」を ローマ字《じ》で 書《か》いた 名前《なまえ》の カードを 作《つく》ります。正《ただ》しい 書《か》き方《かた》は どれかな。`,
+    prompt: `「${kana}」をローマ字《じ》で書《か》いた名前《なまえ》のカードを作《つく》ります。正《ただ》しい書《か》き方《かた》はどれかな。`,
     options: opts(ok, wrongs),
     hints: [
-      '地名《ちめい》や 人《ひと》の 名前《なまえ》の、はじめの 字《じ》を 見《み》よう。',
-      'のばす 音《おと》・小《ちい》さい「っ」・小《ちい》さい「ゃ・ゅ・ょ」・「ん」の 書《か》き方《かた》も たしかめよう。',
-      'はじめの 字《じ》が 大文字《おおもじ》の ものの 中《なか》から えらぼう。',
+      '地名《ちめい》や人《ひと》の名前《なまえ》の、はじめの字《じ》を見《み》よう。',
+      'のばす音《おと》・小《ちい》さい「っ」・小《ちい》さい「ゃ・ゅ・ょ」・「ん」の書《か》き方《かた》もたしかめよう。',
+      'はじめの字《じ》が大文字《おおもじ》のものの中《なか》からえらぼう。',
     ],
-    explain: `「${kana}」は ${ok} と 書《か》きます。名前《なまえ》なので、はじめの 字《じ》は 大文字《おおもじ》です。`,
+    explain: `「${kana}」は ${ok} と書《か》きます。名前《なまえ》なので、はじめの字《じ》は大文字《おおもじ》です。`,
     identity: `cap:choose:${kana}`,
     alt: true,
   };
@@ -619,11 +688,51 @@ function capChooseItem([kana, ok, wrongs]: (typeof CAP_CHOOSE)[number]): ChoiceI
 
 /** 別例: 2語の句を読む（語の中 → 句の中） */
 const PHRASES: [ro: string, ok: string, wrongs: Wrong[]][] = [
-  ['ōkii inu', 'おおきい いぬ', [['おきい いぬ', 'romaji-long-vowel-missing'], ['おおきい いね', 'romaji-vowel-mix'], ['おおけい いぬ', 'romaji-vowel-mix']]],
-  ['chiisana kuruma', 'ちいさな くるま', [['しいさな くるま', 'romaji-consonant-mix'], ['ちいさな くろま', 'romaji-vowel-mix'], ['ちさな くるま', 'romaji-consonant-mix']]],
-  ['kitto dekiru', 'きっと できる', [['きと できる', 'romaji-sokuon-missing'], ['きっと でくる', 'romaji-vowel-mix'], ['きっと てきる', 'romaji-dakuon-mix']]],
-  ['kyō no tenki', 'きょうの てんき', [['きようの てんき', 'romaji-yoon-split'], ['きょの てんき', 'romaji-long-vowel-missing'], ['きょうの てんこ', 'romaji-vowel-mix']]],
-  ['shiroi kumo', 'しろい くも', [['ちろい くも', 'romaji-consonant-mix'], ['しろい くま', 'romaji-vowel-mix'], ['しるい くも', 'romaji-vowel-mix']]],
+  [
+    'ōkii inu',
+    'おおきい いぬ',
+    [
+      ['おきい いぬ', 'romaji-long-vowel-missing'],
+      ['おおきい いね', 'romaji-vowel-mix'],
+      ['おおけい いぬ', 'romaji-vowel-mix'],
+    ],
+  ],
+  [
+    'chiisana kuruma',
+    'ちいさな くるま',
+    [
+      ['しいさな くるま', 'romaji-consonant-mix'],
+      ['ちいさな くろま', 'romaji-vowel-mix'],
+      ['ちさな くるま', 'romaji-consonant-mix'],
+    ],
+  ],
+  [
+    'kitto dekiru',
+    'きっと できる',
+    [
+      ['きと できる', 'romaji-sokuon-missing'],
+      ['きっと でくる', 'romaji-vowel-mix'],
+      ['きっと てきる', 'romaji-dakuon-mix'],
+    ],
+  ],
+  [
+    'kyō no tenki',
+    'きょうの てんき',
+    [
+      ['きようの てんき', 'romaji-yoon-split'],
+      ['きょの てんき', 'romaji-long-vowel-missing'],
+      ['きょうの てんこ', 'romaji-vowel-mix'],
+    ],
+  ],
+  [
+    'shiroi kumo',
+    'しろい くも',
+    [
+      ['ちろい くも', 'romaji-consonant-mix'],
+      ['しろい くま', 'romaji-vowel-mix'],
+      ['しるい くも', 'romaji-vowel-mix'],
+    ],
+  ],
 ];
 
 function phraseItem([ro, ok, wrongs]: (typeof PHRASES)[number]): ChoiceItem {
@@ -632,15 +741,15 @@ function phraseItem([ro, ok, wrongs]: (typeof PHRASES)[number]): ChoiceItem {
     id: `phrase:read:${ro}`,
     objective: 'read',
     level: 1,
-    prompt: 'ローマ字《じ》で 書《か》いた ことばを 読《よ》もう。2つの ことばが あるよ。',
+    prompt: 'ローマ字《じ》で書《か》いたことばを読《よ》もう。2つのことばがあるよ。',
     figure: { kind: 'text', text: ro, size: 'l' },
     options: opts(ok, wrongs),
     hints: [
-      'あいて いる ところで、ことばが 分《わ》かれて いるよ。1つずつ 読《よ》もう。',
-      'のばす 音《おと》（ō）や、同《おな》じ 字《じ》が ならぶ ところ（tt）にも 気《き》を つけよう。',
-      `はじめの ことばは「${ok.split(' ')[0]!.slice(0, 2)}」で はじまるよ。`,
+      'あいているところで、ことばが分《わ》かれているよ。1つずつ読《よ》もう。',
+      'のばす音《おと》（ō）や、同《おな》じ字《じ》がならぶところ（tt）にも気《き》をつけよう。',
+      `はじめのことばは「${ok.split(' ')[0]!.slice(0, 2)}」ではじまるよ。`,
     ],
-    explain: `「${ro}」は「${ok}」と 読《よ》みます。`,
+    explain: `「${ro}」は「${ok}」と読《よ》みます。`,
     identity: `phrase:read:${ro}`,
     alt: true,
   };
@@ -662,7 +771,7 @@ const ITEMS: Item[] = [
 
 export const romaji: UnitSpec = {
   id: 'g3.ja.romaji',
-  title: 'ローマ字《じ》の 読《よ》み書《か》き',
+  title: 'ローマ字《じ》の読《よ》み書《か》き',
   stage: 'g3',
   subject: 'ja',
   domain: 'kotoba',
@@ -672,57 +781,68 @@ export const romaji: UnitSpec = {
   icon: 'subj-kokugo',
   prereq: ['g1.ja.special-kana'],
   objectives: [
-    { id: 'table', title: '1つの 音《おと》の ローマ字《じ》を 読《よ》み書《か》きする（音《おと》の 表《ひょう》）' },
-    { id: 'read', title: 'ローマ字《じ》で 書《か》いた ことばを 読《よ》む' },
-    { id: 'write', title: 'ことばを ローマ字《じ》で 書《か》く' },
-    { id: 'special', title: 'のばす 音《おと》・小《ちい》さい「っ」・「ん」・小《ちい》さい「ゃ・ゅ・ょ」を 書《か》く' },
-    { id: 'capital', title: '地名《ちめい》や 名前《なまえ》は はじめの 字《じ》を 大文字《おおもじ》で 書《か》く' },
+    {
+      id: 'table',
+      title:
+        '1つの音《おと》のローマ字《じ》を読《よ》み書《か》きする（音《おと》の表《ひょう》）',
+    },
+    { id: 'read', title: 'ローマ字《じ》で書《か》いたことばを読《よ》む' },
+    { id: 'write', title: 'ことばをローマ字《じ》で書《か》く' },
+    {
+      id: 'special',
+      title:
+        'のばす音《おと》・小《ちい》さい「っ」・「ん」・小《ちい》さい「ゃ・ゅ・ょ」を書《か》く',
+    },
+    {
+      id: 'capital',
+      title: '地名《ちめい》や名前《なまえ》ははじめの字《じ》を大文字《おおもじ》で書《か》く',
+    },
   ],
   misconceptions: [
     {
       id: 'romaji-vowel-mix',
       explain:
-        'さいごの 母音《ぼいん》（a・i・u・e・o）を ちがう 音《おと》と かんがえたのかな。子音《しいん》の あとの 母音《ぼいん》を よく 見《み》よう。',
+        'さいごの母音《ぼいん》（a・i・u・e・o）をちがう音《おと》とかんがえたのかな。子音《しいん》のあとの母音《ぼいん》をよく見《み》よう。',
     },
     {
       id: 'romaji-consonant-mix',
       explain:
-        'はじめの 子音《しいん》を ちがう 行《ぎょう》の 音《おと》と かんがえたのかな。k は か行《ぎょう》、s・sh は さ行《ぎょう》、t・ch・ts は た行《ぎょう》のように、行《ぎょう》を たしかめよう。',
+        'はじめの子音《しいん》をちがう行《ぎょう》の音《おと》とかんがえたのかな。k はか行《ぎょう》、s・sh はさ行《ぎょう》、t・ch・ts はた行《ぎょう》のように、行《ぎょう》をたしかめよう。',
     },
     {
       id: 'romaji-dakuon-mix',
       explain:
-        'にごる 音《おと》と にごらない 音《おと》を まちがえたのかな。g・z・d・b は にごる 音《おと》、p は「ぱ・ぴ・ぷ」の 音《おと》だよ。',
+        'にごる音《おと》とにごらない音《おと》をまちがえたのかな。g・z・d・b はにごる音《おと》、p は「ぱ・ぴ・ぷ」の音《おと》だよ。',
     },
     {
       id: 'romaji-sokuon-missing',
       explain:
-        '小《ちい》さい「っ」を わすれたのかな。「っ」は、つぎの 音《おと》の はじめの 字《じ》を 2つ かさねて 書《か》くよ（きって → kitte）。',
+        '小《ちい》さい「っ」をわすれたのかな。「っ」は、つぎの音《おと》のはじめの字《じ》を2つかさねて書《か》くよ（きって → kitte）。',
     },
     {
       id: 'romaji-long-vowel-missing',
       explain:
-        'のばす 音《おと》を 書《か》かなかったのかな。のばす 音《おと》は ō のように 上《うえ》に「ー」を つけるか、ou・aa のように 書《か》くよ。',
+        'のばす音《おと》を書《か》かなかったのかな。のばす音《おと》はōのように上《うえ》に「ー」をつけるか、ou・aa のように書《か》くよ。',
     },
     {
       id: 'romaji-yoon-split',
       explain:
-        '小《ちい》さい「ゃ・ゅ・ょ」を 大《おお》きい「や・ゆ・よ」と かんがえたのかな。「きょ」は kyo のように まとめて 書《か》くよ。kiyo は「きよ」に なるよ。',
+        '小《ちい》さい「ゃ・ゅ・ょ」を大《おお》きい「や・ゆ・よ」とかんがえたのかな。「きょ」は kyo のようにまとめて書《か》くよ。kiyo は「きよ」になるよ。',
     },
     {
       id: 'romaji-n-as-m',
       explain:
-        '「ん」を m と 書《か》いたのかな。あたらしい 書《か》き方《かた》では、b・m・p の 前《まえ》でも「ん」は n と 書《か》くよ（しんぶん → shinbun）。',
+        '「ん」を m と書《か》いたのかな。あたらしい書《か》き方《かた》では、b・m・p の前《まえ》でも「ん」は n と書《か》くよ（しんぶん → shinbun）。',
     },
     {
       id: 'romaji-n-alone',
       explain:
-        'n の あとに 母音《ぼいん》が あると かんがえたのかな。n だけで 母音《ぼいん》が ない ときは「ん」だよ。',
+        'n のあとに母音《ぼいん》があるとかんがえたのかな。n だけで母音《ぼいん》がないときは「ん」だよ。',
     },
     {
       id: 'romaji-capital',
       explain:
-        'はじめの 字《じ》を 小文字《こもじ》で 書《か》いたのかな。地名《ちめい》や 人《ひと》の 名前《なまえ》は、はじめの 字《じ》を 大文字《おおもじ》で 書《か》くよ。',
+        'はじめの字《じ》を小文字《こもじ》で書《か》いたのかな。地名《ちめい》や人《ひと》の名前《なまえ》は、はじめの字《じ》を大文字《おおもじ》で書《か》くよ。',
     },
   ],
   levels: [
@@ -734,10 +854,10 @@ export const romaji: UnitSpec = {
   ],
   intro: [
     {
-      text: 'これは 国語《こくご》の ローマ字《じ》の 読《よ》み書《か》きの 学習《がくしゅう》です。パソコンで 字《じ》を 打《う》つ ローマ字《じ》にゅうりょく（タイピング）とは べつの 学習《がくしゅう》だよ。',
+      text: 'これは国語《こくご》のローマ字《じ》の読《よ》み書《か》きの学習《がくしゅう》です。パソコンで字《じ》を打《う》つローマ字《じ》にゅうりょく（タイピング）とはべつの学習《がくしゅう》だよ。',
     },
     {
-      text: 'ローマ字《じ》の 1つの 音《おと》は、子音《しいん》（k・s・t など）と 母音《ぼいん》（a・i・u・e・o）で できて いるよ。k と a で ka（か）。',
+      text: 'ローマ字《じ》の1つの音《おと》は、子音《しいん》（k・s・t など）と母音《ぼいん》（a・i・u・e・o）でできているよ。k と a で ka（か）。',
       figure: {
         kind: 'table',
         header: ['', 'a', 'i', 'u', 'e', 'o'],
@@ -750,10 +870,10 @@ export const romaji: UnitSpec = {
       },
     },
     {
-      text: 'し は shi、ち は chi、つ は tsu、ふ は fu、じ は ji と 書《か》くよ（あたらしい 書《か》き方《かた》）。si・ti のように 書《か》くと「もう 一度《いちど》」に なるよ。',
+      text: '「し」は shi、「ち」は chi、「つ」は tsu、「ふ」は fu、「じ」は ji と書《か》くよ（あたらしい書《か》き方《かた》）。si・ti のように書《か》くと「もう一度《いちど》」になるよ。',
     },
     {
-      text: 'のばす 音《おと》は ō（ou）、小《ちい》さい「っ」は つぎの 字《じ》を かさねる（kitte）、「ん」は いつも n（shinbun）、小《ちい》さい「ゃ・ゅ・ょ」は kya・sho のように まとめて 書《か》くよ。地名《ちめい》や 名前《なまえ》は、はじめの 字《じ》を 大文字《おおもじ》に するよ（Ōsaka）。',
+      text: 'のばす音《おと》はō（ou）、小《ちい》さい「っ」はつぎの字《じ》をかさねる（kitte）、「ん」はいつも n（shinbun）、小《ちい》さい「ゃ・ゅ・ょ」は kya・sho のようにまとめて書《か》くよ。地名《ちめい》や名前《なまえ》は、はじめの字《じ》を大文字《おおもじ》にするよ（Ōsaka）。',
     },
   ],
   source: { kind: 'items', items: ITEMS },

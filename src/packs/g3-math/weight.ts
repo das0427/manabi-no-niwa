@@ -33,7 +33,11 @@ function scaleItem(level: number, rng: Rng, alt: boolean): MeasureItem {
       objective: 'scale',
       level,
       prompt: `はかりの はりを ${v >= 1000 ? `${Math.floor(v / 1000)}kg${v % 1000 === 0 ? '' : `${v % 1000}g`}` : `${v}g`}に あわせよう。`,
-      hints: [`いちばん 小《ちい》さい 1めもりは ${sc.minor}g だよ。`, `${majorText}の めもりを さがそう。`, `${majorText}から ${sc.minor}gずつ すすめよう。`],
+      hints: [
+        `いちばん 小《ちい》さい 1めもりは ${sc.minor}g だよ。`,
+        `${majorText}の めもりを さがそう。`,
+        `${majorText}から ${sc.minor}gずつ すすめよう。`,
+      ],
       explain: `1めもりは ${sc.minor}g。${majorText}から ${(v % sc.major) / sc.minor}めもりで ${v}gです。`,
       identity: `set:${sc.max}:${v}`,
       alt: true,
@@ -48,8 +52,14 @@ function scaleItem(level: number, rng: Rng, alt: boolean): MeasureItem {
     id: `scale:${sc.max}:${v}`,
     objective: 'scale',
     level,
-    prompt: kgField ? 'はりは 何《なん》kg何《なん》gを さして いますか。' : 'はりは 何《なん》gを さして いますか。',
-    hints: [`この はかりは ${sc.max >= 1000 ? `${sc.max / 1000}kg` : `${sc.max}g`}まで はかれるよ。いちばん 小《ちい》さい 1めもりは いくつかな。`, `1めもりは ${sc.minor}g。`, `${majorText}から 小《ちい》さい めもり いくつ分《ぶん》かな。`],
+    prompt: kgField
+      ? 'はりは 何《なん》kg何《なん》gを さして いますか。'
+      : 'はりは 何《なん》gを さして いますか。',
+    hints: [
+      `この はかりは ${sc.max >= 1000 ? `${sc.max / 1000}kg` : `${sc.max}g`}まで はかれるよ。いちばん 小《ちい》さい 1めもりは いくつかな。`,
+      `1めもりは ${sc.minor}g。`,
+      `${majorText}から 小《ちい》さい めもり いくつ分《ぶん》かな。`,
+    ],
     explain: `1めもりは ${sc.minor}g。${majorText}から ${(v % sc.major) / sc.minor}めもりで ${v}g${kgField ? ` ＝ ${Math.floor(v / 1000)}kg${v % 1000}g` : ''}です。`,
     identity: `scale:${sc.max}:${v}`,
     alt: false,
@@ -66,7 +76,12 @@ function scaleItem(level: number, rng: Rng, alt: boolean): MeasureItem {
     misconceptions: { minorAsOne: 'minor-as-one', fieldSwap: 'field-swap' },
     wrongAnswers:
       Math.floor(v / sc.major) * sc.major + (v % sc.major) / sc.minor !== v
-        ? [{ value: Math.floor(v / sc.major) * sc.major + (v % sc.major) / sc.minor, misconception: 'minor-as-one' }]
+        ? [
+            {
+              value: Math.floor(v / sc.major) * sc.major + (v % sc.major) / sc.minor,
+              misconception: 'minor-as-one',
+            },
+          ]
         : [],
   };
 }
@@ -83,7 +98,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           objective: 'convert',
           level,
           prompt: `トラックに ${t}tの 荷物《にもつ》を のせます。これは 何《なん》kgですか。`,
-          hints: ['とても 重《おも》い ものは t（トン）で あらわすよ。', '1t ＝ 1000kg。', `${t}tは 1000kgの ${t}こ分《ぶん》。`],
+          hints: [
+            'とても 重《おも》い ものは t（トン）で あらわすよ。',
+            '1tは、100kgの 10こ分《ぶん》。',
+            `${t}tは 1tの ${t}こ分《ぶん》。1tを kgに なおして 考《かんが》えよう。`,
+          ],
           explain: `1t ＝ 1000kg なので ${t}t ＝ ${t * 1000}kgです。`,
           identity: `t-kg:${t}`,
           alt: true,
@@ -96,7 +115,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           objective: 'convert',
           level,
           prompt: `${t * 1000}kgは 何《なん》tですか。`,
-          hints: ['1t ＝ 1000kg。', `${t * 1000}kgの 中《なか》に 1000kgは いくつ？`, `1000kgが ${t}こ。`],
+          hints: [
+            'tと kgの かんけいを 思《おも》い出《だ》そう。',
+            `${t * 1000}kgの 中《なか》に 1000kgは いくつ？`,
+            '1000kg、2000kg、3000kg、… と 1000kgずつ 数《かぞ》えよう。',
+          ],
           explain: `1000kg ＝ 1t なので ${t * 1000}kg ＝ ${t}tです。`,
           identity: `kg-t:${t}`,
           alt: true,
@@ -115,7 +138,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         level,
         prompt: '□に あてはまる 数《かず》は？',
         figure: { kind: 'text', text: `${k}kg${g}g ＝ {{}}g`, size: 'xl' },
-        hints: ['1kgは 1000g だよ。', `${k}kgは ${k * 1000}g。`, `${k * 1000}gと ${g}gを あわせよう。`],
+        hints: [
+          '1kgは 1000g だよ。',
+          `${k}kgは ${k * 1000}g。`,
+          `${k * 1000}gと ${g}gを あわせよう。`,
+        ],
         explain: `1kg ＝ 1000g なので ${k}kg ＝ ${k * 1000}g。${k * 1000} ＋ ${g} ＝ ${total}で ${total}gです。`,
         identity: `kg-g:${k}:${g}`,
         alt: false,
@@ -132,7 +159,11 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         level,
         prompt: '□に あてはまる 数《かず》は？',
         figure: { kind: 'text', text: `${total}g ＝ {{}}kg{{}}g`, size: 'xl' },
-        hints: ['1000gで 1kg だよ。', `${total}gの 中《なか》に 1000gは いくつ あるかな。`, `${k * 1000}gで ${k}kg。のこりは？`],
+        hints: [
+          '1000gで 1kg だよ。',
+          `${total}gの 中《なか》に 1000gは いくつ あるかな。`,
+          '1000gずつ まとめよう。まとめた 数《かず》が kg、のこりが g。',
+        ],
         explain: `${total}g ＝ ${k * 1000}g ＋ ${g}g ＝ ${k}kg${g}gです。`,
         identity: `g-kg:${total}`,
         alt: false,
@@ -153,12 +184,33 @@ interface Scene {
   text: (a: string, b: string) => string;
 }
 const SCENES: Scene[] = [
-  { id: 'basket', op: '＋', text: (a, b) => `${a}の かごに ${b}の みかんを 入《い》れました。全体《ぜんたい》の 重《おも》さは 何《なん》kg何《なん》gですか。` },
-  { id: 'bag', op: '＋', text: (a, b) => `${a}の ランドセルに ${b}の 本《ほん》を 入《い》れました。重《おも》さは 何《なん》kg何《なん》gに なりますか。` },
-  { id: 'cat', op: '−', text: (a, b) => `ねこを だいて 体重計《たいじゅうけい》に のると ${a}、ひとりで のると ${b}でした。ねこの 重《おも》さは 何《なん》kg何《なん》gですか。` },
-  { id: 'flour', op: '−', text: (a, b) => `${a}の こむぎこから ${b} 使《つか》いました。のこりは 何《なん》kg何《なん》gですか。` },
+  {
+    id: 'basket',
+    op: '＋',
+    text: (a, b) =>
+      `${a}の かごに ${b}の みかんを 入《い》れました。全体《ぜんたい》の 重《おも》さは 何《なん》kg何《なん》gですか。`,
+  },
+  {
+    id: 'bag',
+    op: '＋',
+    text: (a, b) =>
+      `${a}の ランドセルに ${b}の 本《ほん》を 入《い》れました。重《おも》さは 何《なん》kg何《なん》gに なりますか。`,
+  },
+  {
+    id: 'cat',
+    op: '−',
+    text: (a, b) =>
+      `ねこを だいて 体重計《たいじゅうけい》に のると ${a}、ひとりで のると ${b}でした。ねこの 重《おも》さは 何《なん》kg何《なん》gですか。`,
+  },
+  {
+    id: 'flour',
+    op: '−',
+    text: (a, b) =>
+      `${a}の こむぎこから ${b} 使《つか》いました。のこりは 何《なん》kg何《なん》gですか。`,
+  },
 ];
-const kgg = (v: number) => (v >= 1000 ? `${Math.floor(v / 1000)}kg${v % 1000 === 0 ? '' : `${v % 1000}g`}` : `${v}g`);
+const kgg = (v: number) =>
+  v >= 1000 ? `${Math.floor(v / 1000)}kg${v % 1000 === 0 ? '' : `${v % 1000}g`}` : `${v}g`;
 
 function calc(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = pickOne(rng, SCENES);
@@ -184,7 +236,10 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
   const text = sc.text(kgg(a), kgg(b));
   const K = Math.floor(ans / 1000);
   const G = ans % 1000;
-  const noCarry = sc.op === '＋' ? Math.floor(a / 1000) + Math.floor(b / 1000) : Math.floor(a / 1000) - Math.floor(b / 1000);
+  const noCarry =
+    sc.op === '＋'
+      ? Math.floor(a / 1000) + Math.floor(b / 1000)
+      : Math.floor(a / 1000) - Math.floor(b / 1000);
   return {
     engine: 'number',
     id: `calc${alt ? '-alt' : ''}:${sc.id}:${a}${sc.op}${b}`,
@@ -192,7 +247,11 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: alt ? `${text}\n（gに なおして 計算《けいさん》して みよう）` : text,
     figure: alt ? { kind: 'text', text: `${a}g ${sc.op} ${b}g ＝ □g`, size: 'l' } : undefined,
-    hints: ['kgと gを べつべつに 計算《けいさん》するか、全部《ぜんぶ》 gに なおそう。', `${kgg(a)} ＝ ${a}g、${kgg(b)} ＝ ${b}g。`, `${a} ${sc.op} ${b} を 計算《けいさん》して、1000gを 1kgに なおそう。`],
+    hints: [
+      'kgと gを べつべつに 計算《けいさん》するか、全部《ぜんぶ》 gに なおそう。',
+      `${kgg(a)} ＝ ${a}g、${kgg(b)} ＝ ${b}g。`,
+      `${a} ${sc.op} ${b} を 計算《けいさん》して、1000gを 1kgに なおそう。`,
+    ],
     explain: `${a}g ${sc.op} ${b}g ＝ ${ans}g ＝ ${K}kg${G}gです。`,
     identity: `${sc.id}:${a}${sc.op}${b}`,
     alt,
@@ -202,7 +261,12 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
     ],
     wrongAnswers: wrongList(`${K}|${G}`, 2, [
       [`${Math.floor(ans / 100)}|${ans % 100}`, 'kg-as-100'],
-      [noCarry !== K && noCarry >= 0 ? `${noCarry}|${sc.op === '＋' ? (a % 1000) + (b % 1000) : Math.abs((a % 1000) - (b % 1000))}` : null, 'g-carry'],
+      [
+        noCarry !== K && noCarry >= 0
+          ? `${noCarry}|${sc.op === '＋' ? (a % 1000) + (b % 1000) : Math.abs((a % 1000) - (b % 1000))}`
+          : null,
+        'g-carry',
+      ],
     ]),
   };
 }
@@ -226,11 +290,50 @@ const UNIT_ITEMS: { id: string; text: string; n: number; u: 'g' | 'kg' | 't' }[]
   { id: 'chair', text: '教室《きょうしつ》の いす 1きゃくの 重《おも》さ', n: 5, u: 'kg' },
 ];
 const FACTS = [
-  { id: 'kg', q: '1kgは 何《なん》gですか。', a: 1000, w: 100 },
-  { id: 't', q: '1tは 何《なん》kgですか。', a: 1000, w: 100 },
-  { id: '2kg', q: '2kgは 何《なん》gですか。', a: 2000, w: 200 },
-  { id: '3t', q: '3tは 何《なん》kgですか。', a: 3000, w: 300 },
-  { id: 'half', q: '1kgの 半分《はんぶん》は 何《なん》gですか。', a: 500, w: 50 },
+  {
+    id: 'kg',
+    q: '1kgは 何《なん》gですか。',
+    h: [
+      'kg の k（キロ）は、もとの たんいの 何倍《なんばい》を あらわすかな。',
+      '1kgは、100gの 10こ分《ぶん》。',
+    ],
+    a: 1000,
+    w: 100,
+  },
+  {
+    id: 't',
+    q: '1tは 何《なん》kgですか。',
+    h: [
+      '1tは とても 重《おも》い。kgで あらわすと 大《おお》きな 数《かず》に なるよ。',
+      '1tは、100kgの 10こ分《ぶん》。',
+    ],
+    a: 1000,
+    w: 100,
+  },
+  {
+    id: '2kg',
+    q: '2kgは 何《なん》gですか。',
+    h: ['まず 1kgが 何《なん》gか 思《おも》い出《だ》そう。', '2kgは 1kgの 2こ分《ぶん》。'],
+    a: 2000,
+    w: 200,
+  },
+  {
+    id: '3t',
+    q: '3tは 何《なん》kgですか。',
+    h: ['まず 1tが 何《なん》kgか 思《おも》い出《だ》そう。', '3tは 1tの 3こ分《ぶん》。'],
+    a: 3000,
+    w: 300,
+  },
+  {
+    id: 'half',
+    q: '1kgの 半分《はんぶん》は 何《なん》gですか。',
+    h: [
+      'まず 1kgが 何《なん》gか 思《おも》い出《だ》そう。',
+      '半分《はんぶん》は、2つに 同《おな》じように 分《わ》けた 1つ分《ぶん》。',
+    ],
+    a: 500,
+    w: 50,
+  },
 ] as const;
 
 function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberItem {
@@ -242,7 +345,7 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
       objective: 'unit',
       level,
       prompt: f.q,
-      hints: ['重《おも》さの たんいの かんけいを 思《おも》い出《だ》そう。', '1kg ＝ 1000g、1t ＝ 1000kg。', 'kg の k は「1000」の いみだよ。'],
+      hints: ['重《おも》さの たんいの かんけいを 思《おも》い出《だ》そう。', ...f.h],
       explain: `1kg ＝ 1000g、1t ＝ 1000kg。答《こた》えは ${f.a}です。`,
       identity: `fact:${f.id}`,
       alt: true,
@@ -257,12 +360,18 @@ function unitItem(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIte
     objective: 'unit',
     level,
     prompt: `${it.text}は およそ ${it.n} □です。□に あてはまる たんいは どれ？`,
-    hints: ['1g・1kg・1tの 重《おも》さを 思《おも》いうかべよう。', '1円玉《いちえんだま》 1まいが 1g、1Lの 水《みず》が 1kg、1tは 1000kg。', `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`],
+    hints: [
+      '1g・1kg・1tの 重《おも》さを 思《おも》いうかべよう。',
+      '1円玉《いちえんだま》 1まいが 1g、1Lの 水《みず》が 1kg、1tは 1000kg。',
+      `${it.n}を それぞれの たんいで 思《おも》いうかべて みよう。`,
+    ],
     explain: `${it.text}は およそ ${it.n}${it.u}です。`,
     identity: `unit:${it.id}`,
     alt: false,
     fixedOrder: true,
-    options: (['g', 'kg', 't'] as const).map((u) => (u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' })),
+    options: (['g', 'kg', 't'] as const).map((u) =>
+      u === it.u ? { label: u, correct: true } : { label: u, misconception: 'unit-sense' },
+    ),
   };
 }
 
@@ -309,16 +418,19 @@ export const weight: UnitSpec = {
   misconceptions: [
     {
       id: 'minor-as-one',
-      explain: '1めもりを 1gと 数《かぞ》えたのかな。はかりに よって 1めもりは 5g・10g・20gなど ちがうよ。数字《すうじ》の ある めもりの あいだを いくつに 分《わ》けて いるか 見《み》よう。',
+      explain:
+        '1めもりを 1gと 数《かぞ》えたのかな。はかりに よって 1めもりは 5g・10g・20gなど ちがうよ。数字《すうじ》の ある めもりの あいだを いくつに 分《わ》けて いるか 見《み》よう。',
       figure: { kind: 'text', text: '100gを 20めもり → 1めもり 5g', size: 'l' },
     },
     {
       id: 'field-swap',
-      explain: 'kgと gの 数《かず》を 入《い》れかえたのかな。左《ひだり》が kg、右《みぎ》が gだよ。',
+      explain:
+        'kgと gの 数《かず》を 入《い》れかえたのかな。左《ひだり》が kg、右《みぎ》が gだよ。',
     },
     {
       id: 'unit-place',
-      explain: 'kgと gの 数《かず》を ならべて 書《か》いたのかな。1kg ＝ 1000g。1kg30g は 1030g だよ。',
+      explain:
+        'kgと gの 数《かず》を ならべて 書《か》いたのかな。1kg ＝ 1000g。1kg30g は 1030g だよ。',
     },
     {
       id: 'kg-as-100',
@@ -326,11 +438,13 @@ export const weight: UnitSpec = {
     },
     {
       id: 'g-carry',
-      explain: 'gが 1000を こえたのに kgに くり上《あ》げなかったのかな（ひき算《ざん》なら kgから かりなかったのかな）。1000g ＝ 1kg だよ。',
+      explain:
+        'gが 1000を こえたのに kgに くり上《あ》げなかったのかな（ひき算《ざん》なら kgから かりなかったのかな）。1000g ＝ 1kg だよ。',
     },
     {
       id: 'unit-sense',
-      explain: 'その たんいだと 重《おも》すぎるか 軽《かる》すぎるかな。1円玉《いちえんだま》が 1g、1Lの 水《みず》が 1kg、1tは 1000kgだよ。',
+      explain:
+        'その たんいだと 重《おも》すぎるか 軽《かる》すぎるかな。1円玉《いちえんだま》が 1g、1Lの 水《みず》が 1kg、1tは 1000kgだよ。',
     },
   ],
   levels: [
@@ -358,6 +472,7 @@ export const weight: UnitSpec = {
     generate: ({ level, rng, index }) => generateWeight(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 C(1) 重さの単位（g、kg）と測定。内容の取扱いで t に触れる',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 C(1) 重さの単位（g、kg）と測定。内容の取扱いで t に触れる',
   revised: '2026-10-24',
 };

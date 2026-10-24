@@ -78,7 +78,8 @@ const ansText = (a: {
   if (a.kind !== 'fraction') return String(a.value);
   const n = a.num!;
   const d = a.den!;
-  if (a.allowImproper === false && n > d && n % d !== 0) return `${Math.floor(n / d)}と${n % d}/${d}`;
+  if (a.allowImproper === false && n > d && n % d !== 0)
+    return `${Math.floor(n / d)}と${n % d}/${d}`;
   return `${n}/${d}`;
 };
 

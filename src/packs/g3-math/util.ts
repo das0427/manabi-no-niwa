@@ -73,7 +73,12 @@ export function columnFigure(
   ansLen: number,
   extra: (number | string)[] = [],
 ): Figure {
-  const width = Math.max(String(a).length, String(b).length, ansLen, ...extra.map((x) => String(x).length));
+  const width = Math.max(
+    String(a).length,
+    String(b).length,
+    ansLen,
+    ...extra.map((x) => String(x).length),
+  );
   const cells = (n: number | string) =>
     String(n)
       .padStart(width, ' ')

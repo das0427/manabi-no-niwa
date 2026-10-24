@@ -35,7 +35,16 @@ function meaning(level: number, rng: Rng, alt: boolean): NumberItem | MeasureIte
       identity: `masu:${k}`,
       alt: true,
       instrument: 'masu',
-      scale: { unit: 'dL', min: 0, max: 10, minor: 1, mid: 5, major: 10, labelFactor: 10, labelUnit: 'L' },
+      scale: {
+        unit: 'dL',
+        min: 0,
+        max: 10,
+        minor: 1,
+        mid: 5,
+        major: 10,
+        labelFactor: 10,
+        labelUnit: 'L',
+      },
       task: 'read',
       value: k,
       fields: [{ unit: 'L', factor: 10 }],
@@ -55,7 +64,11 @@ function meaning(level: number, rng: Rng, alt: boolean): NumberItem | MeasureIte
         objective: 'meaning',
         level,
         prompt: `0.1を ${k}こ あつめた 数《かず》は？`,
-        hints: ['0.1を 10こ あつめると 1に なるよ。', `${k}こは、10こが ${Math.floor(k / 10)}つと ${k % 10}こ。`, `1が ${Math.floor(k / 10)}こと、0.1が ${k % 10}こ。`],
+        hints: [
+          '0.1を 10こ あつめると 1に なるよ。',
+          `${k}こは、10こが ${Math.floor(k / 10)}つと ${k % 10}こ。`,
+          `1が ${Math.floor(k / 10)}こと、0.1が ${k % 10}こ。`,
+        ],
         explain: `0.1が 10こで 1。0.1が ${k}こで ${tenths(k)}です。`,
         identity: `to:${k}`,
         alt: false,
@@ -72,7 +85,11 @@ function meaning(level: number, rng: Rng, alt: boolean): NumberItem | MeasureIte
         objective: 'meaning',
         level,
         prompt: `${tenths(k)}は、0.1を 何《なん》こ あつめた 数《かず》ですか。`,
-        hints: ['1は 0.1を 10こ あつめた 数《かず》だよ。', `${Math.floor(k / 10)}は 0.1が ${Math.floor(k / 10) * 10}こ。`, `それと 0.${k % 10}（0.1が ${k % 10}こ）を あわせよう。`],
+        hints: [
+          '1は 0.1を 10こ あつめた 数《かず》だよ。',
+          `${Math.floor(k / 10)}は 0.1が ${Math.floor(k / 10) * 10}こ。`,
+          `それと 0.${k % 10}（0.1が ${k % 10}こ）を あわせよう。`,
+        ],
         explain: `${Math.floor(k / 10)}は 0.1が ${Math.floor(k / 10) * 10}こ、0.${k % 10}は 0.1が ${k % 10}こ。あわせて ${k}こです。`,
         identity: `from:${k}`,
         alt: false,
@@ -145,7 +162,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       objective: 'compare',
       level,
       prompt: `□に あてはまる しるしは どれ？\n${tenths(x)} □ ${tenths(y)}`,
-      hints: ['まず 整数《せいすう》の ぶん（小数点《しょうすうてん》より 左《ひだり》）を くらべよう。', '整数《せいすう》の ぶんが おなじ ときは、小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を くらべよう。', `0.1が いくつ分《ぶん》かで くらべると、${x}こと ${y}こ。`],
+      hints: [
+        'まず 整数《せいすう》の ぶん（小数点《しょうすうてん》より 左《ひだり》）を くらべよう。',
+        '整数《せいすう》の ぶんが おなじ ときは、小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を くらべよう。',
+        `0.1が いくつ分《ぶん》かで くらべると、${x}こと ${y}こ。`,
+      ],
       explain: `0.1が ${x}こと ${y}こ なので、${tenths(x)} ${big ? '＞' : '＜'} ${tenths(y)} です。`,
       identity: `cmp:${Math.min(x, y)}:${Math.max(x, y)}`,
       alt: true,
@@ -167,7 +188,9 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     { label: tenths(X), correct: true as const },
     { label: tenths(Y), misconception: 'ignore-whole' },
     { label: tenths(V), misconception: 'decimal-compare' },
-    ...(U !== X && U !== Y && U !== V ? [{ label: tenths(U), misconception: 'decimal-compare' }] : []),
+    ...(U !== X && U !== Y && U !== V
+      ? [{ label: tenths(U), misconception: 'decimal-compare' }]
+      : []),
   ];
   return {
     engine: 'choice',
@@ -175,7 +198,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     objective: 'compare',
     level,
     prompt: 'いちばん 大《おお》きい 数《かず》は どれ？',
-    hints: ['まず 整数《せいすう》の ぶん（小数点《しょうすうてん》より 左《ひだり》）を くらべよう。', '整数《せいすう》の ぶんが おなじ ときは、小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を くらべよう。', '数直線《すうちょくせん》で いちばん 右《みぎ》に ある 数《かず》は どれかな。'],
+    hints: [
+      'まず 整数《せいすう》の ぶん（小数点《しょうすうてん》より 左《ひだり》）を くらべよう。',
+      '整数《せいすう》の ぶんが おなじ ときは、小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を くらべよう。',
+      '数直線《すうちょくせん》で いちばん 右《みぎ》に ある 数《かず》は どれかな。',
+    ],
     explain: `${tenths(X)}は 0.1が ${X}こ。いちばん 大《おお》きいのは ${tenths(X)}です。`,
     identity: `max:${X}:${U}`,
     alt: false,
@@ -229,7 +256,9 @@ function addSub(obj: 'add' | 'sub', level: number, rng: Rng, alt: boolean): Numb
     objective: obj,
     level,
     prompt: alt ? scene : '計算《けいさん》しよう。',
-    figure: alt ? undefined : { kind: 'text', text: `${tenths(a)} ${op} ${tenths(b)} ＝ {{}}`, size: 'xl' },
+    figure: alt
+      ? undefined
+      : { kind: 'text', text: `${tenths(a)} ${op} ${tenths(b)} ＝ {{}}`, size: 'xl' },
     hints: [
       '0.1が いくつ分《ぶん》かで 考《かんが》えよう。',
       `${tenths(a)}は 0.1が ${a}こ、${tenths(b)}は 0.1が ${b}こ。`,
@@ -289,41 +318,50 @@ export const decimals: UnitSpec = {
   misconceptions: [
     {
       id: 'tenth-count',
-      explain: '0.1の 数《かず》と 小数《しょうすう》を とりちがえたのかな。0.1が 10こで 1。0.1が 13こなら 1.3だよ。',
+      explain:
+        '0.1の 数《かず》と 小数《しょうすう》を とりちがえたのかな。0.1が 10こで 1。0.1が 13こなら 1.3だよ。',
       figure: { kind: 'text', text: '0.1 × 13こ ＝ 1.3', size: 'l' },
     },
     {
       id: 'minor-as-one',
-      explain: '1めもりを 1と 数《かぞ》えたのかな。0と 1の あいだを 10に 分《わ》けて いるので、1めもりは 0.1だよ。',
+      explain:
+        '1めもりを 1と 数《かぞ》えたのかな。0と 1の あいだを 10に 分《わ》けて いるので、1めもりは 0.1だよ。',
     },
     {
       id: 'neighbor-tick',
-      explain: 'めもりを 1つ 数《かぞ》えまちがえたのかな。数字《すうじ》の ある めもりから 1つずつ 数《かぞ》えよう。',
+      explain:
+        'めもりを 1つ 数《かぞ》えまちがえたのかな。数字《すうじ》の ある めもりから 1つずつ 数《かぞ》えよう。',
     },
     {
       id: 'ignore-whole',
-      explain: '小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》だけで くらべたのかな。まず 小数点《しょうすうてん》の 左《ひだり》（整数《せいすう》の ぶん）を くらべよう。',
+      explain:
+        '小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》だけで くらべたのかな。まず 小数点《しょうすうてん》の 左《ひだり》（整数《せいすう》の ぶん）を くらべよう。',
     },
     {
       id: 'decimal-compare',
-      explain: 'くらべ方《かた》を まちがえたのかな。0.1が いくつ分《ぶん》かに なおすと、くらべやすいよ。',
+      explain:
+        'くらべ方《かた》を まちがえたのかな。0.1が いくつ分《ぶん》かに なおすと、くらべやすいよ。',
     },
     {
       id: 'decimal-concat',
-      explain: '小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を たした 答《こた》えを そのまま 書《か》いたのかな。0.1が 10こで 1に なるので、1 くり上《あ》がるよ。',
+      explain:
+        '小数点《しょうすうてん》の 右《みぎ》の 数字《すうじ》を たした 答《こた》えを そのまま 書《か》いたのかな。0.1が 10こで 1に なるので、1 くり上《あ》がるよ。',
       figure: { kind: 'text', text: '0.7 ＋ 0.5 ＝ 1.2（0.12 では ない）', size: 'l' },
     },
     {
       id: 'carry-forget',
-      explain: 'くり上《あ》がりを わすれたのかな。0.1が 10こ できたら、1に して 整数《せいすう》の ぶんに たそう。',
+      explain:
+        'くり上《あ》がりを わすれたのかな。0.1が 10こ できたら、1に して 整数《せいすう》の ぶんに たそう。',
     },
     {
       id: 'align-right',
-      explain: '整数《せいすう》を 小数《しょうすう》のように あつかったのかな。3は 3.0。小数点《しょうすうてん》を たてに そろえて 計算《けいさん》しよう。',
+      explain:
+        '整数《せいすう》を 小数《しょうすう》のように あつかったのかな。3は 3.0。小数点《しょうすうてん》を たてに そろえて 計算《けいさん》しよう。',
     },
     {
       id: 'small-from-big',
-      explain: '小数《しょうすう》の ぶんで 大《おお》きい 数《かず》から 小《ちい》さい 数《かず》を ひいたのかな。ひけない ときは 1を 0.1が 10こに なおして かりよう。',
+      explain:
+        '小数《しょうすう》の ぶんで 大《おお》きい 数《かず》から 小《ちい》さい 数《かず》を ひいたのかな。ひけない ときは 1を 0.1が 10こに なおして かりよう。',
     },
     {
       id: 'wrong-op',
@@ -339,11 +377,25 @@ export const decimals: UnitSpec = {
   intro: [
     {
       text: '1Lを 10こに 分《わ》けた 1つ分《ぶん》（1dL）を 0.1Lと 書《か》き、「れい点《てん》一《いち》リットル」と 読《よ》みます。',
-      figure: { kind: 'numberline', min: 0, max: 1, step: 0.1, labelEvery: 10, marks: [{ at: 0.1, label: '0.1', tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 1,
+        step: 0.1,
+        labelEvery: 10,
+        marks: [{ at: 0.1, label: '0.1', tone: 'focus' }],
+      },
     },
     {
       text: '0.1を 13こ あつめると 1.3。「.」を 小数点《しょうすうてん》、1.3のような 数《かず》を 小数《しょうすう》と いいます。',
-      figure: { kind: 'numberline', min: 0, max: 2, step: 0.1, labelEvery: 10, marks: [{ at: 1.3, label: '1.3', tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 2,
+        step: 0.1,
+        labelEvery: 10,
+        marks: [{ at: 1.3, label: '1.3', tone: 'focus' }],
+      },
     },
     {
       text: '0.7 ＋ 0.5 は、0.1が 7 ＋ 5 ＝ 12こで 1.2。',
@@ -355,6 +407,7 @@ export const decimals: UnitSpec = {
     generate: ({ level, rng, index }) => generateDecimals(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(5) 小数の意味と表し方（小数第1位、小数第1位までの加法・減法）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(5) 小数の意味と表し方（小数第1位、小数第1位までの加法・減法）',
   revised: '2026-10-24',
 };

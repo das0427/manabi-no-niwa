@@ -11,7 +11,18 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { GeometryItem, Pt } from '../../engines/geometry/geometry';
 import type { ChoiceItem, Item, NumberItem, SortItem, UnitSpec } from '../../curriculum/types';
-import { finishUnit, KATA, opts, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  finishUnit,
+  KATA,
+  opts,
+  pick,
+  pickObj,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'classify' | 'props' | 'diag' | 'draw';
 type Kind = 'trap' | 'para' | 'rhombus' | 'quad' | 'kite';
@@ -99,7 +110,11 @@ function orient(ps: Pt[], o: number): Pt[] {
   return q.map(([x, y]) => [x - mx, y - my] as Pt);
 }
 
-const NAME: Record<'trap' | 'para' | 'rhombus', string> = { trap: '台形', para: '平行四辺形', rhombus: 'ひし形' };
+const NAME: Record<'trap' | 'para' | 'rhombus', string> = {
+  trap: '台形',
+  para: '平行四辺形',
+  rhombus: 'ひし形',
+};
 
 const ptsKey = (ps: Pt[]) => ps.map((p) => p.join(',')).join(' ');
 
@@ -112,7 +127,13 @@ function classify(level: number, rng: Rng, alt: boolean): Item {
       const mx = Math.max(...ps.map((p) => p[0]), 1);
       const my = Math.max(...ps.map((p) => p[1]), 1);
       const s = Math.max(mx, my);
-      return { kind: 'shape', shape: 'polygon', points: ps.map(([x, y]) => [(x / s) * 100, (y / s) * 100]), w: 100, h: 100 };
+      return {
+        kind: 'shape',
+        shape: 'polygon',
+        points: ps.map(([x, y]) => [(x / s) * 100, (y / s) * 100]),
+        w: 100,
+        h: 100,
+      };
     };
     const item: SortItem = {
       engine: 'sort',
@@ -140,7 +161,8 @@ function classify(level: number, rng: Rng, alt: boolean): Item {
         '平行な 辺が 1組なら 台形、2組なら 平行四辺形。',
         '4つの 辺の 長さが みんな 同じなら ひし形。',
       ],
-      explain: '向かい合う 1組の 辺が 平行な 四角形が 台形、2組とも 平行な 四角形が 平行四辺形、4つの 辺の 長さが 等しい 四角形が ひし形です。',
+      explain:
+        '向かい合う 1組の 辺が 平行な 四角形が 台形、2組とも 平行な 四角形が 平行四辺形、4つの 辺の 長さが 等しい 四角形が ひし形です。',
       identity: `classify-sort:${shapes.map(ptsKey).join('|')}`,
       alt: true,
     };
@@ -165,7 +187,10 @@ function classify(level: number, rng: Rng, alt: boolean): Item {
             ['trap', 'trap-par'],
           ];
   const right = orient(shapeOf(target, rng), rng.int(0, 7));
-  const wrongs = wrongKinds.map(([k, m]) => ({ shape: { points: orient(shapeOf(k, rng), rng.int(0, 7)) }, misconception: m }));
+  const wrongs = wrongKinds.map(([k, m]) => ({
+    shape: { points: orient(shapeOf(k, rng), rng.int(0, 7)) },
+    misconception: m,
+  }));
   const item: GeometryItem = {
     engine: 'geometry',
     id: `classify:${target}:${ptsKey(right)}:${wrongs.map((w) => ptsKey(w.shape.points)).join('|')}`,
@@ -199,7 +224,12 @@ function classify(level: number, rng: Rng, alt: boolean): Item {
 }
 
 /** 平行四辺形・ひし形の 図（辺の長さ・角の大きさの 文字つき） */
-function paraFig(a: number, b: number, deg: number, labels: { ab?: string; ad?: string; angA?: string }): Figure {
+function paraFig(
+  a: number,
+  b: number,
+  deg: number,
+  labels: { ab?: string; ad?: string; angA?: string },
+): Figure {
   const k = 22;
   const th = (deg * Math.PI) / 180;
   const x0 = 30;
@@ -227,12 +257,60 @@ function paraFig(a: number, b: number, deg: number, labels: { ab?: string; ad?: 
 function props(level: number, rng: Rng, alt: boolean): Item {
   if (alt) {
     const facts = [
-      { shape: '平行四辺形', right: '向かい合う 辺の 長さは 等しい', wrong: [['となり合う 辺の 長さは 等しい', 'opp-side'], ['4つの 角は みんな 直角', 'prop-confuse'], ['向かい合う 角の 大きさは ちがう', 'opp-angle']] },
-      { shape: '平行四辺形', right: '向かい合う 角の 大きさは 等しい', wrong: [['となり合う 角の 大きさは 等しい', 'opp-angle'], ['向かい合う 辺は 平行で ない', 'trap-par'], ['4つの 辺の 長さは みんな 等しい', 'rhombus-sides']] },
-      { shape: 'ひし形', right: '4つの 辺の 長さが みんな 等しい', wrong: [['4つの 角が みんな 直角', 'prop-confuse'], ['向かい合う 辺は 平行で ない', 'trap-par'], ['向かい合う 角の 大きさは ちがう', 'opp-angle']] },
-      { shape: 'ひし形', right: '向かい合う 辺は 平行', wrong: [['平行な 辺は 1組だけ', 'trap-par'], ['向かい合う 辺の 長さは ちがう', 'opp-side'], ['4つの 角が みんな 直角', 'prop-confuse']] },
-      { shape: '台形', right: '向かい合う 1組の 辺が 平行', wrong: [['向かい合う 2組の 辺が 平行', 'trap-par'], ['4つの 辺の 長さが みんな 等しい', 'rhombus-sides'], ['平行な 辺は ない', 'no-parallel']] },
-      { shape: '平行四辺形', right: 'となり合う 角を たすと 180°', wrong: [['となり合う 角を たすと 360°', 'opp-angle'], ['となり合う 角は 等しい', 'opp-angle'], ['向かい合う 角を たすと 90°', 'opp-angle']] },
+      {
+        shape: '平行四辺形',
+        right: '向かい合う 辺の 長さは 等しい',
+        wrong: [
+          ['となり合う 辺の 長さは 等しい', 'opp-side'],
+          ['4つの 角は みんな 直角', 'prop-confuse'],
+          ['向かい合う 角の 大きさは ちがう', 'opp-angle'],
+        ],
+      },
+      {
+        shape: '平行四辺形',
+        right: '向かい合う 角の 大きさは 等しい',
+        wrong: [
+          ['となり合う 角の 大きさは 等しい', 'opp-angle'],
+          ['向かい合う 辺は 平行で ない', 'trap-par'],
+          ['4つの 辺の 長さは みんな 等しい', 'rhombus-sides'],
+        ],
+      },
+      {
+        shape: 'ひし形',
+        right: '4つの 辺の 長さが みんな 等しい',
+        wrong: [
+          ['4つの 角が みんな 直角', 'prop-confuse'],
+          ['向かい合う 辺は 平行で ない', 'trap-par'],
+          ['向かい合う 角の 大きさは ちがう', 'opp-angle'],
+        ],
+      },
+      {
+        shape: 'ひし形',
+        right: '向かい合う 辺は 平行',
+        wrong: [
+          ['平行な 辺は 1組だけ', 'trap-par'],
+          ['向かい合う 辺の 長さは ちがう', 'opp-side'],
+          ['4つの 角が みんな 直角', 'prop-confuse'],
+        ],
+      },
+      {
+        shape: '台形',
+        right: '向かい合う 1組の 辺が 平行',
+        wrong: [
+          ['向かい合う 2組の 辺が 平行', 'trap-par'],
+          ['4つの 辺の 長さが みんな 等しい', 'rhombus-sides'],
+          ['平行な 辺は ない', 'no-parallel'],
+        ],
+      },
+      {
+        shape: '平行四辺形',
+        right: 'となり合う 角を たすと 180°',
+        wrong: [
+          ['となり合う 角を たすと 360°', 'opp-angle'],
+          ['となり合う 角は 等しい', 'opp-angle'],
+          ['向かい合う 角を たすと 90°', 'opp-angle'],
+        ],
+      },
     ];
     const f = pick(rng, facts);
     const item: ChoiceItem = {
@@ -249,7 +327,10 @@ function props(level: number, rng: Rng, alt: boolean): Item {
       explain: `${f.shape}は「${f.right}」。`,
       identity: `props-fact:${f.shape}:${f.right}`,
       alt: true,
-      options: opts(f.right, f.wrong.map(([l, m]) => [l, m])),
+      options: opts(
+        f.right,
+        f.wrong.map(([l, m]) => [l, m]),
+      ),
     };
     return item;
   }
@@ -278,12 +359,18 @@ function props(level: number, rng: Rng, alt: boolean): Item {
     q = '角ウは 何度ですか。';
     ans = deg;
     unit = '度';
-    wr = [[180 - deg, 'opp-angle'], [360 - deg, 'opp-angle']];
+    wr = [
+      [180 - deg, 'opp-angle'],
+      [360 - deg, 'opp-angle'],
+    ];
   } else {
     q = '角イは 何度ですか。';
     ans = 180 - deg;
     unit = '度';
-    wr = [[deg, 'opp-angle'], [90, 'opp-angle']];
+    wr = [
+      [deg, 'opp-angle'],
+      [90, 'opp-angle'],
+    ];
   }
   const answers = [{ kind: 'int' as const, value: ans }];
   const item: NumberItem = {
@@ -294,9 +381,23 @@ function props(level: number, rng: Rng, alt: boolean): Item {
     prompt: `四角形アイウエは ${name}です。${q}`,
     figure: paraFig(a, bb, deg, { ab: `${a}cm`, ad: rh ? undefined : `${bb}cm`, angA: `${deg}°` }),
     hints: [
-      ask <= 1 ? (rh ? 'ひし形は 4つの 辺の 長さが みんな 等しいよ。' : '平行四辺形の 向かい合う 辺の 長さは 等しいよ。') : '向かい合う 角の 大きさは 等しいよ。',
-      ask <= 1 ? `${ask === 0 ? '辺ウエ' : '辺イウ'}と 向かい合う 辺は どれかな。` : ask === 2 ? '角ウと 向かい合う 角は 角アだね。' : 'となり合う 角を たすと 180°に なるよ。',
-      ask === 3 ? `180 − ${deg}を 計算しよう。` : ask === 2 ? '角アの 大きさを 見よう。' : rh ? '辺アイの 長さを 見よう。' : `向かい合う 辺の 長さを 図から 読もう。`,
+      ask <= 1
+        ? rh
+          ? 'ひし形は 4つの 辺の 長さが みんな 等しいよ。'
+          : '平行四辺形の 向かい合う 辺の 長さは 等しいよ。'
+        : '向かい合う 角の 大きさは 等しいよ。',
+      ask <= 1
+        ? `${ask === 0 ? '辺ウエ' : '辺イウ'}と 向かい合う 辺は どれかな。`
+        : ask === 2
+          ? '角ウと 向かい合う 角は 角アだね。'
+          : 'となり合う 角を たすと 180°に なるよ。',
+      ask === 3
+        ? `180 − ${deg}を 計算しよう。`
+        : ask === 2
+          ? '角アの 大きさを 見よう。'
+          : rh
+            ? '辺アイの 長さを 見よう。'
+            : `向かい合う 辺の 長さを 図から 読もう。`,
     ],
     explain:
       ask <= 1
@@ -316,11 +417,51 @@ function props(level: number, rng: Rng, alt: boolean): Item {
 function diag(level: number, rng: Rng, alt: boolean): Item {
   if (alt) {
     const qs = [
-      { q: '対角線が 垂直に 交わる 四角形は どれ？（正方形の ほかに）', right: 'ひし形', wrong: [['長方形', 'diag-prop'], ['平行四辺形', 'diag-prop'], ['台形', 'diag-prop']] },
-      { q: '対角線の 長さが 等しい 四角形は どれ？（正方形の ほかに）', right: '長方形', wrong: [['ひし形', 'diag-prop'], ['平行四辺形', 'diag-prop'], ['台形', 'diag-prop']] },
-      { q: '対角線が 垂直に 交わり、長さも 等しい 四角形は どれ？', right: '正方形', wrong: [['ひし形', 'diag-prop'], ['長方形', 'diag-prop'], ['平行四辺形', 'diag-prop']] },
-      { q: '対角線が それぞれの まん中で 交わらない 四角形は どれ？', right: '台形', wrong: [['平行四辺形', 'diag-prop'], ['ひし形', 'diag-prop'], ['長方形', 'diag-prop']] },
-      { q: '対角線で 2つに 切ると、合同な 三角形が 2つ できない ことが ある 四角形は どれ？', right: '台形', wrong: [['平行四辺形', 'diag-prop'], ['ひし形', 'diag-prop'], ['長方形', 'diag-prop']] },
+      {
+        q: '対角線が 垂直に 交わる 四角形は どれ？（正方形の ほかに）',
+        right: 'ひし形',
+        wrong: [
+          ['長方形', 'diag-prop'],
+          ['平行四辺形', 'diag-prop'],
+          ['台形', 'diag-prop'],
+        ],
+      },
+      {
+        q: '対角線の 長さが 等しい 四角形は どれ？（正方形の ほかに）',
+        right: '長方形',
+        wrong: [
+          ['ひし形', 'diag-prop'],
+          ['平行四辺形', 'diag-prop'],
+          ['台形', 'diag-prop'],
+        ],
+      },
+      {
+        q: '対角線が 垂直に 交わり、長さも 等しい 四角形は どれ？',
+        right: '正方形',
+        wrong: [
+          ['ひし形', 'diag-prop'],
+          ['長方形', 'diag-prop'],
+          ['平行四辺形', 'diag-prop'],
+        ],
+      },
+      {
+        q: '対角線が それぞれの まん中で 交わらない 四角形は どれ？',
+        right: '台形',
+        wrong: [
+          ['平行四辺形', 'diag-prop'],
+          ['ひし形', 'diag-prop'],
+          ['長方形', 'diag-prop'],
+        ],
+      },
+      {
+        q: '対角線で 2つに 切ると、合同な 三角形が 2つ できない ことが ある 四角形は どれ？',
+        right: '台形',
+        wrong: [
+          ['平行四辺形', 'diag-prop'],
+          ['ひし形', 'diag-prop'],
+          ['長方形', 'diag-prop'],
+        ],
+      },
     ];
     const f = pick(rng, qs);
     const item: ChoiceItem = {
@@ -332,12 +473,21 @@ function diag(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         '向かい合う 頂点を 結んだ 直線が 対角線だよ。',
         'それぞれの 四角形に 対角線を かいて みよう。',
-        'ひし形は 垂直に、長方形は 同じ 長さで、平行四辺形は まん中で 交わるよ。',
+        [
+          '対角線が 交わる ところの 角が 直角に なるかを、三角じょうぎで たしかめよう。',
+          '2本の 対角線の 長さを、コンパスや ものさしで くらべよう。',
+          '「直角に 交わるか」と「長さが 等しいか」の 両方を たしかめよう。',
+          '向かい合う 辺が 2組とも 平行な 四角形は、対角線が まん中で 交わるよ。そう でない 四角形を さがそう。',
+          '向かい合う 辺が 2組とも 平行で 長さも 等しいと、2つの 三角形は ぴったり 重なるよ。そう でない 四角形を さがそう。',
+        ][qs.indexOf(f)]!,
       ],
       explain: `答えは ${f.right}。平行四辺形の 対角線は まん中で 交わり、長方形は 長さが 等しく、ひし形は 垂直に 交わります。正方形は その すべてです。`,
       identity: `diag-pick:${qs.indexOf(f)}`,
       alt: true,
-      options: opts(f.right, f.wrong.map(([l, m]) => [l, m])),
+      options: opts(
+        f.right,
+        f.wrong.map(([l, m]) => [l, m]),
+      ),
     };
     return item;
   }
@@ -366,7 +516,15 @@ function diag(level: number, rng: Rng, alt: boolean): Item {
   body += `<line x1="${P[0]![0]}" y1="${P[0]![1]}" x2="${P[2]![0]}" y2="${P[2]![1]}" ${STROKE} stroke-dasharray="6 5"/>`;
   body += `<line x1="${P[1]![0]}" y1="${P[1]![1]}" x2="${P[3]![0]}" y2="${P[3]![1]}" ${STROKE} stroke-dasharray="6 5"/>`;
   const names = ['ア', 'イ', 'ウ', 'エ'];
-  P.forEach((p, i) => (body += svgText(p[0] + (i === 0 ? -12 : i === 2 ? 12 : 0), p[1] + (p[1] > 90 ? 16 : -10), names[i]!, 16)));
+  P.forEach(
+    (p, i) =>
+      (body += svgText(
+        p[0] + (i === 0 ? -12 : i === 2 ? 12 : 0),
+        p[1] + (p[1] > 90 ? 16 : -10),
+        names[i]!,
+        16,
+      )),
+  );
   const O: [number, number] = [(P[0]![0] + P[2]![0]) / 2, (P[0]![1] + P[2]![1]) / 2];
   body += svgText(O[0], O[1] + 16, 'オ', 16);
   return {
@@ -380,7 +538,9 @@ function diag(level: number, rng: Rng, alt: boolean): Item {
     figure: svg(270, 185, body, `${name}と 対角線`),
     hints: [
       `${name}の 対角線は、それぞれの まん中で 交わるよ。`,
-      toWhole ? 'アオと オウの 長さは 等しいね。' : 'アオと オウの 長さは 等しいね。アウを 2つに 分けよう。',
+      toWhole
+        ? 'アオと オウの 長さは 等しいね。'
+        : 'アオと オウの 長さは 等しいね。アウを 2つに 分けよう。',
       toWhole ? `${half} × 2を 計算しよう。` : `${half * 2} ÷ 2を 計算しよう。`,
     ],
     explain: `${name}の 対角線は まん中で 交わるので、アオ ＝ オウ。${toWhole ? `アウ ＝ ${half} × 2 ＝ ${ans}cm` : `アオ ＝ ${half * 2} ÷ 2 ＝ ${ans}cm`}です。`,
@@ -401,8 +561,20 @@ function draw(level: number, rng: Rng, alt: boolean): GeometryItem {
     if (alt) {
       const a = rng.int(1, 3);
       const b = rng.int(0, 3);
-      u = pick(rng, [[a, b], [-a, b], [a, -b], [-a, -b]] as Pt[]);
-      v = pick(rng, [[b, a], [-b, a], [b, -a], [-b, -a], [a, -b], [-a, b]] as Pt[]);
+      u = pick(rng, [
+        [a, b],
+        [-a, b],
+        [a, -b],
+        [-a, -b],
+      ] as Pt[]);
+      v = pick(rng, [
+        [b, a],
+        [-b, a],
+        [b, -a],
+        [-b, -a],
+        [a, -b],
+        [-a, b],
+      ] as Pt[]);
     } else {
       u = [rng.int(-4, 4), rng.int(-3, 3)];
       v = [rng.int(-4, 4), rng.int(-3, 3)];
@@ -485,7 +657,8 @@ export const quadrilaterals: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'no-parallel',
-      explain: '平行な 辺が あるか、方がんの ますで たしかめよう。向かい合う 辺が 1組も 平行で なければ 台形でも ないよ。',
+      explain:
+        '平行な 辺が あるか、方がんの ますで たしかめよう。向かい合う 辺が 1組も 平行で なければ 台形でも ないよ。',
     },
     {
       id: 'trap-par',
@@ -493,15 +666,18 @@ export const quadrilaterals: UnitSpec = finishUnit({
     },
     {
       id: 'rhombus-sides',
-      explain: 'ひし形は 4つの 辺の 長さが みんな 等しいよ。向かい合う 辺だけ 等しいのは 平行四辺形だね。',
+      explain:
+        'ひし形は 4つの 辺の 長さが みんな 等しいよ。向かい合う 辺だけ 等しいのは 平行四辺形だね。',
     },
     {
       id: 'rhombus-kite',
-      explain: 'ひし形に 見えても、辺の 長さが ちがうかも。4つの 辺が みんな 同じ 長さか たしかめよう。',
+      explain:
+        'ひし形に 見えても、辺の 長さが ちがうかも。4つの 辺が みんな 同じ 長さか たしかめよう。',
     },
     {
       id: 'opp-side',
-      explain: '向かい合う 辺と、となり合う 辺を まちがえたのかな。平行四辺形で 長さが 等しいのは 向かい合う 辺だよ。',
+      explain:
+        '向かい合う 辺と、となり合う 辺を まちがえたのかな。平行四辺形で 長さが 等しいのは 向かい合う 辺だよ。',
     },
     {
       id: 'opp-angle',
@@ -510,7 +686,8 @@ export const quadrilaterals: UnitSpec = finishUnit({
     },
     {
       id: 'prop-confuse',
-      explain: 'ほかの 四角形の せいしつと まざったのかな。4つの 角が みんな 直角なのは 長方形と 正方形だよ。',
+      explain:
+        'ほかの 四角形の せいしつと まざったのかな。4つの 角が みんな 直角なのは 長方形と 正方形だよ。',
     },
     {
       id: 'diag-prop',
@@ -518,7 +695,8 @@ export const quadrilaterals: UnitSpec = finishUnit({
     },
     {
       id: 'diag-half',
-      explain: '対角線の 全体と 半分を まちがえたのかな。対角線が 交わる 点は、対角線の まん中だよ。',
+      explain:
+        '対角線の 全体と 半分を まちがえたのかな。対角線が 交わる 点は、対角線の まん中だよ。',
     },
   ],
   levels: [
@@ -529,7 +707,18 @@ export const quadrilaterals: UnitSpec = finishUnit({
   intro: [
     {
       text: '向かい合う 1組の 辺が 平行な 四角形を 台形と いいます。',
-      figure: { kind: 'shape', shape: 'polygon', points: [[0, 80], [25, 10], [65, 10], [100, 80]], w: 120, h: 80 },
+      figure: {
+        kind: 'shape',
+        shape: 'polygon',
+        points: [
+          [0, 80],
+          [25, 10],
+          [65, 10],
+          [100, 80],
+        ],
+        w: 120,
+        h: 80,
+      },
     },
     {
       text: '向かい合う 2組の 辺が それぞれ 平行な 四角形を 平行四辺形と いいます。向かい合う 辺の 長さ、向かい合う 角の 大きさは 等しいです。',
@@ -537,7 +726,18 @@ export const quadrilaterals: UnitSpec = finishUnit({
     },
     {
       text: '4つの 辺の 長さが みんな 等しい 四角形を ひし形と いいます。向かい合う 辺は 平行です。',
-      figure: { kind: 'shape', shape: 'polygon', points: [[0, 40], [35, 0], [70, 40], [35, 80]], w: 70, h: 80 },
+      figure: {
+        kind: 'shape',
+        shape: 'polygon',
+        points: [
+          [0, 40],
+          [35, 0],
+          [70, 40],
+          [35, 80],
+        ],
+        w: 70,
+        h: 80,
+      },
     },
     {
       text: '向かい合う 頂点を 結んだ 直線を 対角線と いいます。ひし形の 対角線は 垂直に 交わり、それぞれの まん中で 交わります。',
@@ -548,6 +748,7 @@ export const quadrilaterals: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateQuadrilaterals(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 B(1) 平面図形（平行四辺形・ひし形・台形、対角線）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 B(1) 平面図形（平行四辺形・ひし形・台形、対角線）',
   revised: REVISED,
 });

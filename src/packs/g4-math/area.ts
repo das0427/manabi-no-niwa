@@ -19,8 +19,10 @@ function cellsFig(cells: [number, number][], w: number, h: number): Figure {
   let body = '';
   for (const [x, y] of cells)
     body += `<rect x="${8 + x * C}" y="${8 + y * C}" width="${C}" height="${C}" fill="var(--sky)"/>`;
-  for (let x = 0; x <= w; x++) body += `<line x1="${8 + x * C}" y1="8" x2="${8 + x * C}" y2="${8 + h * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
-  for (let y = 0; y <= h; y++) body += `<line x1="8" y1="${8 + y * C}" x2="${8 + w * C}" y2="${8 + y * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
+  for (let x = 0; x <= w; x++)
+    body += `<line x1="${8 + x * C}" y1="8" x2="${8 + x * C}" y2="${8 + h * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
+  for (let y = 0; y <= h; y++)
+    body += `<line x1="8" y1="${8 + y * C}" x2="${8 + w * C}" y2="${8 + y * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
   return svg(w * C + 16, h * C + 16, body, '1ますが 1cm²の 方がん');
 }
 
@@ -63,7 +65,9 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     const a: [number, number, number, number] = [0, 0, rng.int(2, 5), rng.int(2, 4)];
     const b: [number, number, number, number] = [rng.int(0, 2), a[3], rng.int(1, 4), rng.int(1, 2)];
     const set = new Map<string, [number, number]>();
-    for (const [x0, y0, w, h] of [a, b]) for (let x = x0; x < x0 + w; x++) for (let y = y0; y < y0 + h; y++) set.set(`${x},${y}`, [x, y]);
+    for (const [x0, y0, w, h] of [a, b])
+      for (let x = x0; x < x0 + w; x++)
+        for (let y = y0; y < y0 + h; y++) set.set(`${x},${y}`, [x, y]);
     return [...set.values()];
   };
   if (alt) {
@@ -81,7 +85,11 @@ function count(level: number, rng: Rng, alt: boolean): Item {
       level,
       prompt: '左の 形が ア、右の 形が イです。広いのは どちら？（1ますは 1cm²）',
       figure: cellsFig(both, 13, 7),
-      hints: ['形が ちがうと、見た目では くらべにくいね。', '1cm²の ますが いくつ分かを 数えよう。', `アは ${s1.length}ます。イは いくつかな。`],
+      hints: [
+        '形が ちがうと、見た目では くらべにくいね。',
+        '1cm²の ますが いくつ分かを 数えよう。',
+        `アは ${s1.length}ます。イは いくつかな。`,
+      ],
       explain: `アは ${s1.length}cm²、イは ${s2.length}cm²。${big}の ほうが 広いです。`,
       identity: `count-cmp:${JSON.stringify(s1)}|${JSON.stringify(s2)}`,
       alt: true,
@@ -115,7 +123,11 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: '1ますは 1辺が 1cmの 正方形（1cm²）です。色の ついた 形の 面積は 何cm²ですか。',
     figure: cellsFig(cells, 7, 7),
-    hints: ['面積は、1cm²の 正方形が いくつ分かで 表すよ。', '長方形の 部分に 分けて 数えると 数えやすいよ。', '1だんずつ 数えて たそう。'],
+    hints: [
+      '面積は、1cm²の 正方形が いくつ分かで 表すよ。',
+      '長方形の 部分に 分けて 数えると 数えやすいよ。',
+      '1だんずつ 数えて たそう。',
+    ],
     explain: `1cm²の 正方形が ${n}こ 分なので、面積は ${n}cm²です。`,
     identity: `count:${JSON.stringify([...cells].sort())}`,
     alt: false,
@@ -174,7 +186,11 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'inverse',
       level,
       prompt: `面積が ${a * a}cm²の 正方形が あります。1辺の 長さは 何cmですか。`,
-      hints: ['正方形の 面積 ＝ 1辺 × 1辺', `□ × □ ＝ ${a * a}に なる □を さがそう。`, `九九や かけ算で、同じ数を 2回 かけて ${a * a}に なる 数は？`],
+      hints: [
+        '正方形の 面積 ＝ 1辺 × 1辺',
+        `□ × □ ＝ ${a * a}に なる □を さがそう。`,
+        `九九や かけ算で、同じ数を 2回 かけて ${a * a}に なる 数は？`,
+      ],
       explain: `${a} × ${a} ＝ ${a * a}なので、1辺は ${a}cmです。`,
       identity: `inverse-sq:${a}`,
       alt: true,
@@ -227,8 +243,8 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `compound-alt:${W}x${H}:${r}`,
       objective: 'compound',
       level,
-      prompt: `たて ${H}m、横 ${W}mの 花だんの まわりに、はば ${r}mの 道が あります（色の 部分）。道の 面積は 何m²ですか。`,
-      figure: svg(W * k + 50, H * k + 40, body, '花だんと まわりの 道'),
+      prompt: `たて ${H}m、横 ${W}mの 長方形の 土地の 内がわに そって、はば ${r}mの 道を つけました（色の 部分）。のこりは 花だんです。道の 面積は 何m²ですか。`,
+      figure: svg(W * k + 50, H * k + 40, body, '長方形の 土地と、内がわの まわりの 道'),
       hints: [
         '大きい 長方形から、中の 長方形を ひくと 求められるよ。',
         `中の 長方形の たては ${H} − ${r} × 2、横は ${W} − ${r} × 2。`,
@@ -305,11 +321,18 @@ function units(level: number, rng: Rng, alt: boolean): Item {
       objective: 'units',
       level,
       prompt: `${th.t}を 表すのに ちょうど よい 単位は どれ？`,
-      hints: ['1cm²は 指先くらい、1m²は 新聞紙を 2まい ならべたくらいの 広さだよ。', '1aは 1辺 10mの 正方形、1haは 1辺 100mの 正方形の 広さ。', '1km²は 1辺 1kmの 正方形の 広さだよ。'],
+      hints: [
+        '1cm²は 指先くらい、1m²は 新聞紙を 2まい ならべたくらいの 広さだよ。',
+        '1aは 1辺 10m、1haは 1辺 100m、1km²は 1辺 1kmの 正方形の 広さ。',
+        'その 広さを 正方形に したら、1辺は 何cm・何m・何kmくらいかな。いちばん 近い 単位を さがそう。',
+      ],
       explain: `${th.t}は ${th.u}で 表すと ちょうど よいです。`,
       identity: `units-pick:${th.t}`,
       alt: true,
-      options: opts(th.u, rng.sample(all, 3).map((x) => [x, 'unit-scale'])),
+      options: opts(
+        th.u,
+        rng.sample(all, 3).map((x) => [x, 'unit-scale']),
+      ),
     };
     return item;
   }
@@ -327,7 +350,11 @@ function units(level: number, rng: Rng, alt: boolean): Item {
     prompt: big ? `${given}${c.from}は 何${c.to}ですか。` : `${given}${c.to}は 何${c.from}ですか。`,
     hints: [
       `1${c.from} ＝ ${c.f}${c.to}だよ。`,
-      c.from === 'm²' ? '1m ＝ 100cmなので、1m²は 100 × 100。' : c.from === 'km²' ? '1km ＝ 1000mなので、1km²は 1000 × 1000。' : `${c.from === 'a' ? '1aは 1辺 10mの 正方形' : c.from === 'ha' ? '1haは 1辺 100mの 正方形' : '1km²は 1辺 1kmの 正方形'}の 面積だよ。`,
+      c.from === 'm²'
+        ? '1m ＝ 100cmなので、1m²は 100 × 100。'
+        : c.from === 'km²'
+          ? '1km ＝ 1000mなので、1km²は 1000 × 1000。'
+          : `${c.from === 'a' ? '1aは 1辺 10mの 正方形' : c.from === 'ha' ? '1haは 1辺 100mの 正方形' : '1km²は 1辺 1kmの 正方形'}の 面積だよ。`,
       big ? `${n} × ${c.f}を 計算しよう。` : `${given} ÷ ${c.f}を 計算しよう。`,
     ],
     explain: `1${c.from} ＝ ${c.f}${c.to}なので、${big ? `${n}${c.from} ＝ ${ans}${c.to}` : `${given}${c.to} ＝ ${ans}${c.from}`}です。`,
@@ -354,7 +381,11 @@ function large(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'large',
       level,
       prompt: `たて ${am}m、横 ${bcm}cmの 長方形の 面積は 何cm²ですか。`,
-      hints: ['長さの 単位を そろえてから かけよう。', `${am}m ＝ ${am * 100}cm`, `${am * 100} × ${bcm}を 計算しよう。`],
+      hints: [
+        '長さの 単位を そろえてから かけよう。',
+        `${am}m ＝ ${am * 100}cm`,
+        `${am * 100} × ${bcm}を 計算しよう。`,
+      ],
       explain: `${am}m ＝ ${am * 100}cm。${am * 100} × ${bcm} ＝ ${S}。面積は ${S}cm²です。`,
       identity: `large-mix:${am}m:${bcm}cm`,
       alt: true,
@@ -376,12 +407,19 @@ function large(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'large',
       level,
       prompt: `たて ${a}km、横 ${b}kmの 長方形の 土地の 面積は 何km²ですか。`,
-      hints: ['長方形の 面積 ＝ たて × 横', '単位が kmなら、面積の 単位は km²。', `${a} × ${b}を 計算しよう。`],
+      hints: [
+        '長方形の 面積 ＝ たて × 横',
+        '単位が kmなら、面積の 単位は km²。',
+        `${a} × ${b}を 計算しよう。`,
+      ],
       explain: `${a} × ${b} ＝ ${a * b}。面積は ${a * b}km²です。`,
       identity: `large:km:${Math.min(a, b)}x${Math.max(a, b)}`,
       alt: false,
       fields: [{ label: 'km²', answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, [[2 * (a + b), 'perimeter'], [a * b * 1000000, 'unit-convert']]),
+      wrongAnswers: wrongList(answers, [
+        [2 * (a + b), 'perimeter'],
+        [a * b * 1000000, 'unit-convert'],
+      ]),
     };
   }
   const step = kind === 'a' ? 10 : 100;
@@ -461,7 +499,8 @@ export const area: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'perimeter',
-      explain: 'まわりの 長さを 求めたのかな。面積は 広さ（1cm²の 正方形が いくつ分か）だよ。たて × 横で 求めよう。',
+      explain:
+        'まわりの 長さを 求めたのかな。面積は 広さ（1cm²の 正方形が いくつ分か）だよ。たて × 横で 求めよう。',
     },
     {
       id: 'add-sides',
@@ -469,11 +508,13 @@ export const area: UnitSpec = finishUnit({
     },
     {
       id: 'mult-instead',
-      explain: '面積から 横の 長さを 求める ときは、面積 ÷ たて だよ。たて × □ ＝ 面積 の □を 考えよう。',
+      explain:
+        '面積から 横の 長さを 求める ときは、面積 ÷ たて だよ。たて × □ ＝ 面積 の □を 考えよう。',
     },
     {
       id: 'half-area',
-      explain: '面積を 2で わったのかな。正方形は 1辺 × 1辺 なので、同じ数を 2回 かけて 面積に なる 数を さがそう。',
+      explain:
+        '面積を 2で わったのかな。正方形は 1辺 × 1辺 なので、同じ数を 2回 かけて 面積に なる 数を さがそう。',
     },
     {
       id: 'compound-whole',
@@ -489,7 +530,8 @@ export const area: UnitSpec = finishUnit({
     },
     {
       id: 'unit-100',
-      explain: '1m ＝ 100cmだけど、1m² ＝ 100cm²では ないよ。たても 横も 100倍なので、1m² ＝ 100 × 100 ＝ 10000cm²。',
+      explain:
+        '1m ＝ 100cmだけど、1m² ＝ 100cm²では ないよ。たても 横も 100倍なので、1m² ＝ 100 × 100 ＝ 10000cm²。',
     },
     {
       id: 'unit-convert',
@@ -501,7 +543,8 @@ export const area: UnitSpec = finishUnit({
     },
     {
       id: 'unit-scale',
-      explain: '広さの 大きさに 合わない 単位かも。1cm²は 指先、1m²は 新聞紙 2まい、1km²は 町の 一部くらいの 広さだよ。',
+      explain:
+        '広さの 大きさに 合わない 単位かも。1cm²は 指先、1m²は 新聞紙 2まい、1km²は 町の 一部くらいの 広さだよ。',
     },
     {
       id: 'looks-big',
@@ -540,6 +583,7 @@ export const area: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateArea(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 B(4) 面積（cm²・m²・km²、a・ha、長方形・正方形の求積）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 B(4) 面積（cm²・m²・km²、a・ha、長方形・正方形の求積）',
   revised: REVISED,
 });

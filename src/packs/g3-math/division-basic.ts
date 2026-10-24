@@ -52,7 +52,10 @@ const marbles = (D: number, d: number, grouped: boolean): Figure =>
   grouped
     ? {
         kind: 'row',
-        items: Array.from({ length: d }, () => ({ kind: 'illust', id: 'ball', count: D / d }) as Figure),
+        items: Array.from(
+          { length: d },
+          () => ({ kind: 'illust', id: 'ball', count: D / d }) as Figure,
+        ),
         gap: 8,
       }
     : { kind: 'illust', id: 'ball', count: D };
@@ -65,24 +68,88 @@ interface Scene {
 }
 /** 文章題の場面（等分除4・包含除4） */
 const SCENES: Scene[] = [
-  { id: 'candy', type: 'touwake', unit: 'こ', text: (D, d) => `あめが ${D}こ あります。${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》こですか。` },
-  { id: 'pencils', type: 'touwake', unit: '本《ぽん》', text: (D, d) => `えんぴつ ${D}本《ほん》を ${d}つの ふでばこに 同《おな》じ 数《かず》ずつ 入《い》れます。1つの ふでばこは 何《なん》本《ぼん》に なりますか。` },
-  { id: 'cards', type: 'touwake', unit: 'まい', text: (D, d) => `カード ${D}まいを ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けます。1人分《ひとりぶん》は 何《なん》まいですか。` },
-  { id: 'flowers', type: 'touwake', unit: '本《ぽん》', text: (D, d) => `花《はな》が ${D}本《ほん》 あります。${d}つの 花《か》びんに 同《おな》じ 数《かず》ずつ 分《わ》けて さします。1つの 花《か》びんは 何《なん》本《ぼん》ですか。` },
-  { id: 'cookies', type: 'hougan', unit: 'ふくろ', text: (D, d) => `クッキーが ${D}まい あります。1ふくろに ${d}まいずつ 入《い》れると、何《なん》ふくろ できますか。` },
-  { id: 'teams', type: 'hougan', unit: 'チーム', text: (D, d) => `${D}人《にん》が ${d}人《にん》ずつ チームを 作《つく》ります。何《なん》チーム できますか。` },
-  { id: 'ribbon', type: 'hougan', unit: '本《ぽん》', text: (D, d) => `${D}cmの リボンを ${d}cmずつ 切《き》ります。${d}cmの リボンは 何《なん》本《ぼん》 できますか。` },
-  { id: 'eggs', type: 'hougan', unit: 'パック', text: (D, d) => `たまごが ${D}こ あります。1パックに ${d}こずつ 入《い》れると、何《なん》パック できますか。` },
+  {
+    id: 'candy',
+    type: 'touwake',
+    unit: 'こ',
+    text: (D, d) =>
+      `あめが ${D}こ あります。${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》こですか。`,
+  },
+  {
+    id: 'pencils',
+    type: 'touwake',
+    unit: '本《ぽん》',
+    text: (D, d) =>
+      `えんぴつ ${D}本《ほん》を ${d}つの ふでばこに 同《おな》じ 数《かず》ずつ 入《い》れます。1つの ふでばこは 何《なん》本《ぼん》に なりますか。`,
+  },
+  {
+    id: 'cards',
+    type: 'touwake',
+    unit: 'まい',
+    text: (D, d) =>
+      `カード ${D}まいを ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けます。1人分《ひとりぶん》は 何《なん》まいですか。`,
+  },
+  {
+    id: 'flowers',
+    type: 'touwake',
+    unit: '本《ぽん》',
+    text: (D, d) =>
+      `花《はな》が ${D}本《ほん》 あります。${d}つの 花《か》びんに 同《おな》じ 数《かず》ずつ 分《わ》けて さします。1つの 花《か》びんは 何《なん》本《ぼん》ですか。`,
+  },
+  {
+    id: 'cookies',
+    type: 'hougan',
+    unit: 'ふくろ',
+    text: (D, d) =>
+      `クッキーが ${D}まい あります。1ふくろに ${d}まいずつ 入《い》れると、何《なん》ふくろ できますか。`,
+  },
+  {
+    id: 'teams',
+    type: 'hougan',
+    unit: 'チーム',
+    text: (D, d) =>
+      `${D}人《にん》が ${d}人《にん》ずつ チームを 作《つく》ります。何《なん》チーム できますか。`,
+  },
+  {
+    id: 'ribbon',
+    type: 'hougan',
+    unit: '本《ぽん》',
+    text: (D, d) =>
+      `${D}cmの リボンを ${d}cmずつ 切《き》ります。${d}cmの リボンは 何《なん》本《ぼん》 できますか。`,
+  },
+  {
+    id: 'eggs',
+    type: 'hougan',
+    unit: 'パック',
+    text: (D, d) =>
+      `たまごが ${D}こ あります。1パックに ${d}こずつ 入《い》れると、何《なん》パック できますか。`,
+  },
 ];
 
-function wordItem(obj: 'touwake' | 'hougan', level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
-  const sc = pickOne(rng, SCENES.filter((s) => s.type === obj));
+function wordItem(
+  obj: 'touwake' | 'hougan',
+  level: number,
+  rng: Rng,
+  alt: boolean,
+): NumberItem | ChoiceItem {
+  const sc = pickOne(
+    rng,
+    SCENES.filter((s) => s.type === obj),
+  );
   const [D, d] = pickOne(rng, KUKU);
   const q = D / d;
   const hints =
     obj === 'touwake'
-      ? ['同《おな》じ 数《かず》ずつ 分《わ》けて、1つ分《ぶん》の 数《かず》を もとめる わり算《ざん》だね。', `式《しき》は ${D} ÷ ${d}。`, `${d} × □ ＝ ${D} の □を 九九《くく》で さがそう（${d}の だん）。`]
-      : ['いくつずつ 分《わ》けると、いくつ分《ぶん》 できるかを もとめる わり算《ざん》だね。', `式《しき》は ${D} ÷ ${d}。`, `□ × ${d} ＝ ${D} の □を 九九《くく》で さがそう（${d}の だん）。`];
+      ? [
+          '同《おな》じ 数《かず》ずつ 分《わ》けて、1つ分《ぶん》の 数《かず》を もとめる わり算《ざん》だね。',
+          `式《しき》は ${D} ÷ ${d}。`,
+          `${d} × □ ＝ ${D} の □を 九九《くく》で さがそう（${d}の だん）。`,
+        ]
+      : [
+          'いくつずつ 分《わ》けると、いくつ分《ぶん》 できるかを もとめる わり算《ざん》だね。',
+          `式《しき》は ${D} ÷ ${d}。`,
+          `□ × ${d} ＝ ${D} の □を 九九《くく》で さがそう（${d}の だん）。`,
+        ];
   const explain = `式《しき》は ${D} ÷ ${d} ＝ ${q}。${obj === 'touwake' ? `${d} × ${q} ＝ ${D}` : `${q} × ${d} ＝ ${D}`} だから、答《こた》えは ${q}${sc.unit}です。`;
   if (alt)
     return {
@@ -92,7 +159,11 @@ function wordItem(obj: 'touwake' | 'hougan', level: number, rng: Rng, alt: boole
       level,
       prompt: `${sc.text(D, d)}\nこの もんだいに あう 式《しき》は どれ？`,
       figure: marbles(D, d, obj === 'touwake'),
-      hints: [hints[0]!, '同《おな》じ 数《かず》ずつ 分《わ》ける ときは わり算《ざん》。', `わられる数《かず》は 全部《ぜんぶ》の 数《かず》の ${D}。`],
+      hints: [
+        hints[0]!,
+        '同《おな》じ 数《かず》ずつ 分《わ》ける ときは わり算《ざん》。',
+        `わられる数《かず》は 全部《ぜんぶ》の 数《かず》の ${D}。`,
+      ],
       explain,
       identity: `${sc.id}:${D}÷${d}`,
       alt: true,
@@ -125,13 +196,19 @@ function kuku(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `kuku${alt ? '-alt' : ''}:${D}/${d}`,
     objective: 'kuku',
     level,
-    prompt: alt ? '□に あてはまる 数《かず》は？ わり算《ざん》の 答《こた》えを 九九《くく》で 見《み》つけよう。' : '計算《けいさん》しよう。',
+    prompt: alt
+      ? '□に あてはまる 数《かず》は？ わり算《ざん》の 答《こた》えを 九九《くく》で 見《み》つけよう。'
+      : '計算《けいさん》しよう。',
     figure: {
       kind: 'text',
       text: alt ? `${d} × {{}} ＝ ${D}  →  ${D} ÷ ${d} ＝ □` : `${D} ÷ ${d} ＝ {{}}`,
       size: 'xl',
     },
-    hints: [`わる数《かず》の ${d}の だんの 九九《くく》を つかおう。`, `${d} × □ ＝ ${D}。`, `${d}の だんを じゅんに: ${d}、${d * 2}、${d * 3}、…`],
+    hints: [
+      `わる数《かず》の ${d}の だんの 九九《くく》を つかおう。`,
+      `${d} × □ ＝ ${D}。`,
+      `${d}の だんを じゅんに: ${d}、${d * 2}、${d * 3}、…`,
+    ],
     explain: `${d} × ${q} ＝ ${D} だから、${D} ÷ ${d} ＝ ${q}です。`,
     identity: `${D}÷${d}`,
     alt,
@@ -160,9 +237,13 @@ function zeroOne(level: number, rng: Rng, alt: boolean): NumberItem {
       : '計算《けいさん》しよう。',
     figure: alt ? undefined : { kind: 'text', text: `${D} ÷ ${d} ＝ {{}}`, size: 'xl' },
     hints: [
-      kind === 'zero' ? '0こを 分《わ》けると…' : kind === 'one' ? '1人《り》で 分《わ》けると…' : 'おなじ 数《かず》で 分《わ》けると…',
+      kind === 'zero'
+        ? '0こを 分《わ》けると…'
+        : kind === 'one'
+          ? '1人《り》で 分《わ》けると…'
+          : 'おなじ 数《かず》で 分《わ》けると…',
       `${d} × □ ＝ ${D} を 考《かんが》えよう。`,
-      kind === 'zero' ? `${d} × 0 は いくつかな。` : kind === 'one' ? `1 × ${D} は いくつかな。` : `${d} × 1 は いくつかな。`,
+      '□に 小《ちい》さい 数《かず》から じゅんに 入《い》れて、九九《くく》の 答《こた》えが あうか たしかめよう。',
     ],
     explain: why,
     identity: `${D}÷${d}`,
@@ -188,14 +269,23 @@ function big(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `big${alt ? '-alt' : ''}:${D}/${d}`,
     objective: 'big',
     level,
-    prompt: alt ? `10の たばと ばらで 考《かんが》えよう。${D}本《ぽん》を ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》本《ぼん》？` : '計算《けいさん》しよう。',
-    figure: alt ? { kind: 'blocks', tens: x, ones: y } : { kind: 'text', text: `${D} ÷ ${d} ＝ {{}}`, size: 'xl' },
+    prompt: alt
+      ? `10の たばと ばらで 考《かんが》えよう。${D}本《ぽん》を ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》本《ぼん》？`
+      : '計算《けいさん》しよう。',
+    figure: alt
+      ? { kind: 'blocks', tens: x, ones: y }
+      : { kind: 'text', text: `${D} ÷ ${d} ＝ {{}}`, size: 'xl' },
     hints: [
       y === 0 ? `${D}は 10の たばが ${x}たば。` : `${D}を ${x * 10}と ${y}に 分《わ》けよう。`,
       `${x * 10} ÷ ${d} は、10の たばが ${x} ÷ ${d} ＝ ${x / d}たば。`,
-      y === 0 ? `10の たばが ${x / d}たばで いくつかな。` : `${y} ÷ ${d} ＝ ${y / d}。2つを あわせよう。`,
+      y === 0
+        ? `10の たばが ${x / d}たばで いくつかな。`
+        : `${y} ÷ ${d} ＝ ${y / d}。2つを あわせよう。`,
     ],
-    explain: y === 0 ? `10の たば ${x}たばを ${d}つに 分《わ》けると ${x / d}たば。${D} ÷ ${d} ＝ ${q}です。` : `${x * 10} ÷ ${d} ＝ ${(x / d) * 10}、${y} ÷ ${d} ＝ ${y / d}。あわせて ${q}。${D} ÷ ${d} ＝ ${q}です。`,
+    explain:
+      y === 0
+        ? `10の たば ${x}たばを ${d}つに 分《わ》けると ${x / d}たば。${D} ÷ ${d} ＝ ${q}です。`
+        : `${x * 10} ÷ ${d} ＝ ${(x / d) * 10}、${y} ÷ ${d} ＝ ${y / d}。あわせて ${q}。${D} ÷ ${d} ＝ ${q}です。`,
     identity: `${D}÷${d}`,
     alt,
     fields: [{ ...(alt ? { label: '本《ぽん》' } : {}), answer: { kind: 'int', value: q } }],
@@ -243,7 +333,10 @@ export const divisionBasic: UnitSpec = {
   icon: 'math-split',
   prereq: ['g2.math.times-tables'],
   objectives: [
-    { id: 'touwake', title: '同《おな》じ 数《かず》ずつ 分《わ》ける（1人分《ひとりぶん》を もとめる）' },
+    {
+      id: 'touwake',
+      title: '同《おな》じ 数《かず》ずつ 分《わ》ける（1人分《ひとりぶん》を もとめる）',
+    },
     { id: 'hougan', title: 'いくつずつ 分《わ》ける（いくつ分《ぶん》を もとめる）' },
     { id: 'kuku', title: '九九《くく》で わり算《ざん》の 答《こた》えを 見《み》つける' },
     { id: 'zero-one', title: '0や 1の わり算《ざん》' },
@@ -252,32 +345,39 @@ export const divisionBasic: UnitSpec = {
   misconceptions: [
     {
       id: 'wrong-row',
-      explain: 'ちがう だんの 九九《くく》を つかったのかな。わる数《かず》の だんの 九九《くく》で さがそう。24 ÷ 4 なら 4の だん（4 × 6 ＝ 24）。',
+      explain:
+        'ちがう だんの 九九《くく》を つかったのかな。わる数《かず》の だんの 九九《くく》で さがそう。24 ÷ 4 なら 4の だん（4 × 6 ＝ 24）。',
       figure: { kind: 'text', text: '24 ÷ 4 → 4 × □ ＝ 24', size: 'l' },
     },
     {
       id: 'neighbor',
-      explain: '九九《くく》を 1つ ずれて 思《おも》い出《だ》したのかな。わる数《かず》 × 答《こた》え が わられる数《かず》に なるか たしかめよう。',
+      explain:
+        '九九《くく》を 1つ ずれて 思《おも》い出《だ》したのかな。わる数《かず》 × 答《こた》え が わられる数《かず》に なるか たしかめよう。',
     },
     {
       id: 'zero-div',
-      explain: '0を わると わる数《かず》に なると 考《かんが》えたのかな。0こを 分《わ》けても 1人分《ひとりぶん》は 0こだよ。',
+      explain:
+        '0を わると わる数《かず》に なると 考《かんが》えたのかな。0こを 分《わ》けても 1人分《ひとりぶん》は 0こだよ。',
     },
     {
       id: 'one-div',
-      explain: '1で わる・おなじ 数《かず》で わる ところで まちがえたのかな。1人《り》で 分《わ》けると 全部《ぜんぶ》もらえる。おなじ 数《かず》で 分《わ》けると 1こずつ。',
+      explain:
+        '1で わる・おなじ 数《かず》で わる ところで まちがえたのかな。1人《り》で 分《わ》けると 全部《ぜんぶ》もらえる。おなじ 数《かず》で 分《わ》けると 1こずつ。',
     },
     {
       id: 'tens-drop',
-      explain: '10の たばの 数《かず》だけ 答《こた》えたのかな。60 ÷ 3 は 10の たば 6本《ぽん》を 3つに 分《わ》けて 2たば ＝ 20だよ。',
+      explain:
+        '10の たばを 分《わ》けた 数《かず》を、10の まとまりと 考《かんが》えずに 答《こた》えたのかな。60 ÷ 3 は 10の たば 6本《ぽん》を 3つに 分《わ》けて 2たば ＝ 20。48 ÷ 4 は 40 ÷ 4 ＝ 10 と 8 ÷ 4 ＝ 2 で 12だよ。',
     },
     {
       id: 'ones-forget',
-      explain: 'ばらの ぶんを わすれたのかな。10の たばと ばらを べつべつに 分《わ》けて、あわせよう。',
+      explain:
+        'ばらの ぶんを わすれたのかな。10の たばと ばらを べつべつに 分《わ》けて、あわせよう。',
     },
     {
       id: 'wrong-op',
-      explain: 'ひき算《ざん》や かけ算《ざん》を したのかな。同《おな》じ 数《かず》ずつ 分《わ》ける ときは わり算《ざん》だよ。',
+      explain:
+        'ひき算《ざん》や かけ算《ざん》を したのかな。同《おな》じ 数《かず》ずつ 分《わ》ける ときは わり算《ざん》だよ。',
     },
   ],
   levels: [
@@ -305,6 +405,7 @@ export const divisionBasic: UnitSpec = {
     generate: ({ level, rng, index }) => generateDivisionBasic(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(4) 除法（除法の意味、除数と商が共に1位数の除法、除数が1位数で商が2位数の簡単な場合）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(4) 除法（除法の意味、除数と商が共に1位数の除法、除数が1位数で商が2位数の簡単な場合）',
   revised: '2026-10-24',
 };

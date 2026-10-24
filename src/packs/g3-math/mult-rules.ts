@@ -34,7 +34,10 @@ function dots(rows: number, cols: number, split?: number): Figure {
 }
 
 function numItem(
-  p: Omit<NumberItem, 'engine' | 'fields' | 'wrongAnswers'> & { value: number; wrong: [number, string][] },
+  p: Omit<NumberItem, 'engine' | 'fields' | 'wrongAnswers'> & {
+    value: number;
+    wrong: [number, string][];
+  },
 ): NumberItem {
   const { value, wrong, ...rest } = p;
   return {
@@ -46,7 +49,8 @@ function numItem(
 }
 
 function zero(level: number, rng: Rng, alt: boolean): NumberItem {
-  const a = rng.int(0, 10);
+  // 玉入れの場面（alt）では「0こ 入りました」に ならないよう 1こ以上
+  const a = rng.int(alt ? 1 : 0, 10);
   const first = alt || rng.next() < 0.5; // 0 × a
   const expr = first ? `0 × ${a}` : `${a} × 0`;
   const key = first ? `0x${a}` : `${a}x0`;
@@ -63,7 +67,11 @@ function zero(level: number, rng: Rng, alt: boolean): NumberItem {
       ...common,
       id: `zero-alt:${a}`,
       prompt: `玉入《たまい》れで、0点《てん》の ところに 玉《たま》が ${a}こ 入《はい》りました。とく点《てん》は 何《なん》点《てん》ですか。`,
-      hints: ['1こ 入《はい》ると 何《なん》点《てん》かな。', `式《しき》は 0 × ${a}。`, '0点《てん》が いくつ あっても…'],
+      hints: [
+        '1こ 入《はい》ると 何《なん》点《てん》かな。',
+        `式《しき》は 0 × ${a}。`,
+        '0点《てん》が いくつ あっても…',
+      ],
       alt: true,
     });
   return numItem({
@@ -89,12 +97,12 @@ function ten(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'ten',
     level,
     identity: key,
-    explain: `${expr} ＝ ${a * 10}。10の かけ算《ざん》の 答《こた》えは、${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。${a} × 9 ＝ ${a * 9} より ${a} 大《おお》きい とも 考《かんが》えられます。`,
+    // 10 × a は「10が aこ」、a × 10 は「a × 9 より a 大きい」で説明する（交換の きまりは 後の 到達項目）
+    explain: first
+      ? `${expr} ＝ ${a * 10}。10 × ${a} は 10が ${a}こ分《ぶん》。10の まとまりが ${a}こで ${a * 10}です。答《こた》えは ${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。`
+      : `${expr} ＝ ${a * 10}。10の かけ算《ざん》の 答《こた》えは、${a}の 右《みぎ》に 0を 1こ つけた 数《かず》に なります。${a} × 9 ＝ ${a * 9} より ${a} 大《おお》きい とも 考《かんが》えられます。`,
     value: a * 10,
-    wrong: [
-      [a + 10, 'ten-add'] as [number, string],
-      [a * 100, 'ten-zeros'] as [number, string],
-    ],
+    wrong: [[a + 10, 'ten-add'] as [number, string], [a * 100, 'ten-zeros'] as [number, string]],
   };
   if (alt)
     return numItem({
@@ -109,11 +117,17 @@ function ten(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `ten:${key}`,
     prompt: '計算《けいさん》しよう。',
     figure: { kind: 'text', text: `${expr} ＝ {{}}`, size: 'xl' },
-    hints: [
-      '10の かけ算《ざん》だね。',
-      `${a} × 9 の 答《こた》えを 思《おも》い出《だ》そう。`,
-      `${a} × 9 ＝ ${a * 9}。かける数《かず》が 1 ふえると、答《こた》えは ${a} ふえるよ。`,
-    ],
+    hints: first
+      ? [
+          '10の かけ算《ざん》だね。',
+          `10 × ${a} は、10が ${a}こ分《ぶん》。`,
+          '10の まとまりが いくつ あるかを 考《かんが》えよう。',
+        ]
+      : [
+          '10の かけ算《ざん》だね。',
+          `${a} × 9 の 答《こた》えを 思《おも》い出《だ》そう。`,
+          `${a} × 9 ＝ ${a * 9}。かける数《かず》が 1 ふえると、答《こた》えは ${a} ふえるよ。`,
+        ],
     alt: false,
   });
 }
@@ -156,7 +170,11 @@ function next(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
     objective: 'next',
     level,
     prompt: '□に あてはまる 数《かず》は？',
-    figure: { kind: 'text', text: `${a} × ${b} ＝ ${a} × ${other} ${plus ? '＋' : '−'} {{}}`, size: 'xl' },
+    figure: {
+      kind: 'text',
+      text: `${a} × ${b} ＝ ${a} × ${other} ${plus ? '＋' : '−'} {{}}`,
+      size: 'xl',
+    },
     hints: [
       'かける数《かず》が いくつ ちがうかな。',
       `${a} × ${other} と ${a} × ${b} は、かける数《かず》が 1 ちがうね。`,
@@ -189,7 +207,9 @@ function swap(level: number, rng: Rng, alt: boolean): NumberItem {
     figure: alt ? dots(b, a) : { kind: 'text', text: `${a} × ${b} ＝ ${b} × {{}}`, size: 'xl' },
     hints: [
       'かける数《かず》と かけられる数《かず》を 入《い》れかえて みよう。',
-      alt ? 'たてに 見《み》ても、よこに 見《み》ても、●の 数《かず》は おなじ。' : `${a} × ${b} の 答《こた》えは ${a * b}。`,
+      alt
+        ? 'たてに 見《み》ても、よこに 見《み》ても、●の 数《かず》は おなじ。'
+        : `${a} × ${b} の 答《こた》えは ${a * b}。`,
       `${b} × □ ＝ ${a * b} に なる 数《かず》を さがそう。`,
     ],
     explain: `かけ算《ざん》では、かける数《かず》と かけられる数《かず》を 入《い》れかえても 答《こた》えは おなじです。${a} × ${b} ＝ ${b} × ${a} ＝ ${a * b}。`,
@@ -215,8 +235,19 @@ function split(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'split',
       level,
       prompt: `${n} × ${b} を、${n}を 10と ${r}に 分《わ》けて 計算《けいさん》しよう。答《こた》えは？`,
-      figure: { kind: 'tape', parts: [{ length: 10, label: '10', tone: 'a' }, { length: Math.max(r, 2), label: String(r), tone: 'b' }], total: String(n) },
-      hints: ['10の ところと のこりの ところに 分《わ》けよう。', `10 × ${b} と ${r} × ${b} を それぞれ 計算《けいさん》。`, `${10 * b} と ${r} × ${b} を たそう。`],
+      figure: {
+        kind: 'tape',
+        parts: [
+          { length: 10, label: '10', tone: 'a' },
+          { length: Math.max(r, 2), label: String(r), tone: 'b' },
+        ],
+        total: String(n),
+      },
+      hints: [
+        '10の ところと のこりの ところに 分《わ》けよう。',
+        `10 × ${b} と ${r} × ${b} を それぞれ 計算《けいさん》。`,
+        `${10 * b} と ${r} × ${b} を たそう。`,
+      ],
       explain: expl,
       identity: key,
       alt: true,
@@ -296,15 +327,18 @@ export const multRules: UnitSpec = {
   misconceptions: [
     {
       id: 'zero-same',
-      explain: '0を かけても 数《かず》が かわらないと 考《かんが》えたのかな。0こが いくつ あっても、いくつが 0こ あっても、答《こた》えは 0だよ。',
+      explain:
+        '0を かけても 数《かず》が かわらないと 考《かんが》えたのかな。0こが いくつ あっても、いくつが 0こ あっても、答《こた》えは 0だよ。',
     },
     {
       id: 'add-one',
-      explain: '答《こた》えが 1つ ずれたのかな。九九《くく》の 答《こた》えから、いくつ ふえるかを たしかめよう。',
+      explain:
+        '答《こた》えが 1つ ずれたのかな。九九《くく》の 答《こた》えから、いくつ ふえるかを たしかめよう。',
     },
     {
       id: 'ten-add',
-      explain: '10を たしたのかな。× 10 は 10を たすのでは なく、おなじ 数《かず》を 10こ あつめる ことだよ。',
+      explain:
+        '10を たしたのかな。× 10 は 10を たすのでは なく、おなじ 数《かず》を 10こ あつめる ことだよ。',
     },
     {
       id: 'ten-zeros',
@@ -318,23 +352,28 @@ export const multRules: UnitSpec = {
     },
     {
       id: 'next-direction',
-      explain: 'ふえるか へるかを 反対《はんたい》に したのかな。かける数《かず》が 大《おお》きく なると 答《こた》えも 大《おお》きく なるよ。',
+      explain:
+        'ふえるか へるかを 反対《はんたい》に したのかな。かける数《かず》が 大《おお》きく なると 答《こた》えも 大《おお》きく なるよ。',
     },
     {
       id: 'swap-copy',
-      explain: 'おなじ 数《かず》を 書《か》いたのかな。入《い》れかえると、かけられる数《かず》が かける数《かず》の ところへ うつるよ。',
+      explain:
+        'おなじ 数《かず》を 書《か》いたのかな。入《い》れかえると、かけられる数《かず》が かける数《かず》の ところへ うつるよ。',
     },
     {
       id: 'whole-product',
-      explain: 'かけ算《ざん》の 答《こた》えを 書《か》いたのかな。□は かける数《かず》の ところに ある 数《かず》だよ。',
+      explain:
+        'かけ算《ざん》の 答《こた》えを 書《か》いたのかな。□は かける数《かず》の ところに ある 数《かず》だよ。',
     },
     {
       id: 'split-whole',
-      explain: '分《わ》けた かたほうを まちがえたのかな。10と □を あわせると もとの 数《かず》に なるよ。',
+      explain:
+        '分《わ》けた かたほうを まちがえたのかな。10と □を あわせると もとの 数《かず》に なるよ。',
     },
     {
       id: 'split-forget',
-      explain: '分《わ》けた 数《かず》の 1つに かけるのを わすれたのかな。分《わ》けた 2つとも おなじ 数《かず》を かけよう。',
+      explain:
+        '分《わ》けた 数《かず》の 1つに かけるのを わすれたのかな。分《わ》けた 2つとも おなじ 数《かず》を かけよう。',
       figure: { kind: 'text', text: '13 × 4 ＝ 10 × 4 ＋ 3 × 4', size: 'l' },
     },
   ],
@@ -363,6 +402,7 @@ export const multRules: UnitSpec = {
     generate: ({ level, rng, index }) => generateMultRules(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（乗法に関して成り立つ性質、0の乗法、10の乗法）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（乗法に関して成り立つ性質、0の乗法、10の乗法）',
   revised: '2026-10-24',
 };

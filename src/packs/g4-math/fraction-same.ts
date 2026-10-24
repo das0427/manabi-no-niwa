@@ -32,12 +32,22 @@ function answerOf(v: number, d: number, form: Form): NumberAnswer {
     kind: 'fraction',
     num: v,
     den: d,
-    ...(form === 'mixed' ? { allowImproper: false } : form === 'improper' ? { allowMixed: false } : {}),
+    ...(form === 'mixed'
+      ? { allowImproper: false }
+      : form === 'improper'
+        ? { allowMixed: false }
+        : {}),
   };
 }
 
 const formText = (v: number, d: number, form: Form) =>
-  v % d === 0 || v < d ? '' : form === 'mixed' ? '答えは 帯分数で 書こう。' : form === 'improper' ? '答えは 仮分数で 書こう。' : '';
+  v % d === 0 || v < d
+    ? ''
+    : form === 'mixed'
+      ? '答えは 帯分数で 書こう。'
+      : form === 'improper'
+        ? '答えは 仮分数で 書こう。'
+        : '';
 
 interface Q {
   a: number; // 1/d の いくつ分
@@ -114,7 +124,10 @@ function wrongsOf(q: Q, v: number, form: Form) {
   const cands: [string | null, string][] = [];
   if (q.op === 'add') {
     // 分母どうしも たした
-    cands.push([q.ma || q.mb ? `${wa + wb}と${ra + rb}/${2 * d}` : `${ra + rb}/${2 * d}`, 'add-den']);
+    cands.push([
+      q.ma || q.mb ? `${wa + wb}と${ra + rb}/${2 * d}` : `${ra + rb}/${2 * d}`,
+      'add-den',
+    ]);
     // 帯分数の 整数部分を わすれた
     if (q.ma) cands.push([inp(ra + b, d, f), 'whole-drop']);
   } else {
@@ -136,7 +149,8 @@ function wrongsOf(q: Q, v: number, form: Form) {
 function calc(obj: Exclude<Obj, 'story'>, level: number, rng: Rng, alt: boolean): NumberItem {
   const q = makeQ(obj, rng);
   const v = q.op === 'add' ? q.a + q.b : q.a - q.b;
-  const form: Form = v <= q.d || v % q.d === 0 ? 'any' : pick(rng, ['mixed', 'improper', 'any'] as const);
+  const form: Form =
+    v <= q.d || v % q.d === 0 ? 'any' : pick(rng, ['mixed', 'improper', 'any'] as const);
   const sym = q.op === 'add' ? '＋' : '−';
   const borrow = q.op === 'sub' && q.a % q.d < q.b % q.d;
   const steps =
@@ -155,11 +169,11 @@ function calc(obj: Exclude<Obj, 'story'>, level: number, rng: Rng, alt: boolean)
     prompt: `${alt ? '[[1/' + q.d + ']]の いくつ分かを 考えて、' : ''}計算しよう。${formText(v, q.d, form)}`,
     figure: expr(`${exprText(q)} ＝ {{}}`),
     hints: [
-      alt ? `どの 数も [[1/${q.d}]]の いくつ分かで 表せるよ。` : '分母が 同じなので、分母は そのままで 計算するよ。',
+      alt
+        ? `どの 数も [[1/${q.d}]]の いくつ分かで 表せるよ。`
+        : '分母が 同じなので、分母は そのままで 計算するよ。',
       steps,
-      q.op === 'add'
-        ? `[[1/${q.d}]]が ${q.a + q.b}こ。${form === 'mixed' ? '帯分数に なおそう。' : form === 'improper' ? '仮分数の まま 書こう。' : ''}`
-        : `[[1/${q.d}]]が ${q.a} − ${q.b} ＝ ${v}こ。${form === 'mixed' ? '帯分数に なおそう。' : ''}`,
+      `${q.op === 'add' ? 'あわせて' : 'のこりは'} [[1/${q.d}]]が いくつ分かを 数えて、それを 分子に しよう。${form === 'mixed' ? '帯分数に なおそう。' : form === 'improper' ? '仮分数の まま 書こう。' : ''}`,
     ],
     explain: `${exprText(q)} ＝ ${show(v, q.d, form === 'improper' ? 'improper' : 'mixed')}${v > q.d && v % q.d !== 0 ? `（${show(v, q.d, form === 'improper' ? 'mixed' : 'improper')}）` : ''}。分母は そのままで、分子どうしを ${sym === '＋' ? 'たします' : 'ひきます'}。`,
     identity: `${keyOf(q)}${alt ? ':unit' : ''}`,
@@ -177,14 +191,54 @@ interface Scene {
   text: (a: string, b: string) => string;
 }
 const SCENES: Scene[] = [
-  { id: 'juice', op: 'add', unit: 'L', text: (a, b) => `ジュースが ${a}L、牛にゅうが ${b}L あります。あわせて 何Lですか。` },
-  { id: 'ribbon', op: 'add', unit: 'm', text: (a, b) => `赤い リボンが ${a}m、白い リボンが ${b}m あります。あわせて 何mですか。` },
-  { id: 'walk', op: 'add', unit: 'km', text: (a, b) => `午前に ${a}km、午後に ${b}km 歩きました。あわせて 何km 歩きましたか。` },
-  { id: 'flour', op: 'add', unit: 'kg', text: (a, b) => `こなが ${a}kg あります。${b}kg 買い足すと、何kgに なりますか。` },
-  { id: 'water', op: 'sub', unit: 'L', text: (a, b) => `水が ${a}L あります。${b}L 使うと、のこりは 何Lですか。` },
-  { id: 'rope', op: 'sub', unit: 'm', text: (a, b) => `ロープが ${a}m あります。${b}m 切り取ると、のこりは 何mですか。` },
-  { id: 'tape', op: 'sub', unit: 'm', text: (a, b) => `青い テープは ${a}m、黄色い テープは ${b}mです。ちがいは 何mですか。` },
-  { id: 'sand', op: 'sub', unit: 'kg', text: (a, b) => `すなが ${a}kg あります。${b}kg 運ぶと、のこりは 何kgですか。` },
+  {
+    id: 'juice',
+    op: 'add',
+    unit: 'L',
+    text: (a, b) => `ジュースが ${a}L、牛にゅうが ${b}L あります。あわせて 何Lですか。`,
+  },
+  {
+    id: 'ribbon',
+    op: 'add',
+    unit: 'm',
+    text: (a, b) => `赤い リボンが ${a}m、白い リボンが ${b}m あります。あわせて 何mですか。`,
+  },
+  {
+    id: 'walk',
+    op: 'add',
+    unit: 'km',
+    text: (a, b) => `午前に ${a}km、午後に ${b}km 歩きました。あわせて 何km 歩きましたか。`,
+  },
+  {
+    id: 'flour',
+    op: 'add',
+    unit: 'kg',
+    text: (a, b) => `こなが ${a}kg あります。${b}kg 買い足すと、何kgに なりますか。`,
+  },
+  {
+    id: 'water',
+    op: 'sub',
+    unit: 'L',
+    text: (a, b) => `水が ${a}L あります。${b}L 使うと、のこりは 何Lですか。`,
+  },
+  {
+    id: 'rope',
+    op: 'sub',
+    unit: 'm',
+    text: (a, b) => `ロープが ${a}m あります。${b}m 切り取ると、のこりは 何mですか。`,
+  },
+  {
+    id: 'tape',
+    op: 'sub',
+    unit: 'm',
+    text: (a, b) => `青い テープは ${a}m、黄色い テープは ${b}mです。ちがいは 何mですか。`,
+  },
+  {
+    id: 'sand',
+    op: 'sub',
+    unit: 'kg',
+    text: (a, b) => `すなが ${a}kg あります。${b}kg 運ぶと、のこりは 何kgですか。`,
+  },
 ];
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -217,7 +271,9 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
         }
       : undefined,
     hints: [
-      sc.op === 'add' ? 'あわせた 量を 求めるので たし算だね。' : 'のこりや ちがいを 求めるので ひき算だね。',
+      sc.op === 'add'
+        ? 'あわせた 量を 求めるので たし算だね。'
+        : 'のこりや ちがいを 求めるので ひき算だね。',
       `式は ${exprText(q)}。`,
       `[[1/${q.d}]]が ${q.a} ${sc.op === 'add' ? '＋' : '−'} ${q.b}こ。`,
     ],
@@ -280,7 +336,8 @@ export const fractionSame: UnitSpec = finishUnit({
     },
     {
       id: 'int-borrow',
-      explain: '整数から 1を 分数に したのに、分子に もどして いないのかな。1 ＝ [[4/4]]のように 分母と 同じ 分子の 分数に なおしてから ひこう。',
+      explain:
+        '整数から 1を 分数に したのに、分子に もどして いないのかな。1 ＝ [[4/4]]のように 分母と 同じ 分子の 分数に なおしてから ひこう。',
     },
   ],
   levels: [
@@ -311,6 +368,7 @@ export const fractionSame: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateFractionSame(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(7) 同分母の分数の加法・減法（帯分数を含む）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(7) 同分母の分数の加法・減法（帯分数を含む）',
   revised: REVISED,
 });

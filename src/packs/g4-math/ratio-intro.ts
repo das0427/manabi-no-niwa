@@ -21,7 +21,7 @@ interface Scene {
 }
 const SCENES: Scene[] = [
   { id: 'ribbon', a: '青い リボン', b: '赤い リボン', u: 'cm', step: 5 },
-  { id: 'plant', a: 'ひまわりの 先週の 高さ', b: 'ひまわりの 今週の 高さ', u: 'cm', step: 2 },
+  { id: 'plant', a: 'ひまわりの 1か月前の 高さ', b: 'ひまわりの いまの 高さ', u: 'cm', step: 2 },
   { id: 'price', a: 'えんぴつの ねだん', b: 'ノートの ねだん', u: '円', step: 10 },
   { id: 'water', a: '小さい 水とうに 入る 水', b: '大きい 水そうに 入る 水', u: 'dL', step: 1 },
   { id: 'book', a: 'きのう 読んだ ページ', b: 'きょう 読んだ ページ', u: 'ページ', step: 3 },
@@ -36,7 +36,15 @@ function tapeFig(base: string, n: number, total: string): Figure {
     gap: 1,
     items: [
       { kind: 'tape', parts: [{ length: 1, label: base, tone: 'a' }] },
-      { kind: 'tape', parts: Array.from({ length: n }, (_, i) => ({ length: 1, label: i === 0 ? base : '', tone: 'b' as const })), total },
+      {
+        kind: 'tape',
+        parts: Array.from({ length: n }, (_, i) => ({
+          length: 1,
+          label: i === 0 ? base : '',
+          tone: 'b' as const,
+        })),
+        total,
+      },
     ],
   };
 }
@@ -64,22 +72,47 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
     identity: `times:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
     fields: [{ label: '倍', answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, [[B - A, 'diff-compare'], [B * A, 'mult-instead']]),
+    wrongAnswers: wrongList(answers, [
+      [B - A, 'diff-compare'],
+      [B * A, 'mult-instead'],
+    ]),
   };
 }
 
 const C_SCENES = [
-  { id: 'rubber', what: 'ゴム', before: 'のばす 前', after: 'のばした あと', q: 'よく のびる', u: 'cm' },
+  {
+    id: 'rubber',
+    what: 'ゴム',
+    before: 'のばす 前',
+    after: 'のばした あと',
+    q: 'よく のびる',
+    u: 'cm',
+  },
   { id: 'plant', what: 'なえ', before: '1か月前', after: 'いま', q: 'よく そだった', u: 'cm' },
-  { id: 'price', what: '品物', before: '前の ねだん', after: 'いまの ねだん', q: 'ねだんの 上がり方が 大きい', u: '円' },
-  { id: 'bird', what: '池', before: '先月の 鳥の 数', after: '今月の 鳥の 数', q: '鳥の 数の ふえ方が 大きい', u: 'わ' },
+  {
+    id: 'price',
+    what: '品物',
+    before: '前の ねだん',
+    after: 'いまの ねだん',
+    q: 'ねだんの 上がり方が 大きい',
+    u: '円',
+  },
+  {
+    id: 'bird',
+    what: '池',
+    before: '先月の 鳥の 数',
+    after: '今月の 鳥の 数',
+    q: '鳥の 数の ふえ方が 大きい',
+    u: 'わ',
+  },
 ];
 
 /** 倍で くらべる（alt: 2つの 何倍を 計算して 大きい ほうの 倍を 答える） */
 function compare(level: number, rng: Rng, alt: boolean): Item {
   const sc = pick(rng, C_SCENES);
   for (;;) {
-    const a1 = rng.int(1, 6) * 10;
+    // アと イは 同じ 範囲から（正解が かたよらないように）
+    const a1 = rng.int(1, 9) * 10;
     const n1 = rng.int(2, 5);
     const a2 = rng.int(1, 9) * 10;
     const n2 = rng.int(2, 5);
@@ -87,7 +120,7 @@ function compare(level: number, rng: Rng, alt: boolean): Item {
     const d1 = a1 * (n1 - 1);
     const d2 = a2 * (n2 - 1);
     // 差で くらべると 反対の 答えに なる 組
-    if ((n1 > n2) === (d1 > d2) || d1 === d2) continue;
+    if (n1 > n2 === d1 > d2 || d1 === d2) continue;
     const win = n1 > n2 ? 'ア' : 'イ';
     const tbl: Figure = {
       kind: 'table',
@@ -106,12 +139,19 @@ function compare(level: number, rng: Rng, alt: boolean): Item {
         level,
         prompt: `${sc.q}と いえるのは、何倍に なった ほうです。ア・イの うち、大きい ほうは 何倍に なりましたか。`,
         figure: tbl,
-        hints: ['それぞれ、あとの 数が 前の 数の 何倍かを 計算しよう。', `アは ${a1 * n1} ÷ ${a1}、イは ${a2 * n2} ÷ ${a2}。`, 'くらべて 大きい ほうの 倍を 答えよう。'],
+        hints: [
+          'それぞれ、あとの 数が 前の 数の 何倍かを 計算しよう。',
+          `アは ${a1 * n1} ÷ ${a1}、イは ${a2 * n2} ÷ ${a2}。`,
+          'くらべて 大きい ほうの 倍を 答えよう。',
+        ],
         explain: `アは ${n1}倍、イは ${n2}倍。${win}の ${Math.max(n1, n2)}倍の ほうが 大きいです。`,
         identity: `compare-calc:${sc.id}:${a1}x${n1}:${a2}x${n2}`,
         alt: true,
         fields: [{ label: '倍', answer: answers[0]! }],
-        wrongAnswers: wrongList(answers, [[Math.min(n1, n2), 'diff-compare'], [Math.max(d1, d2), 'diff-compare']]),
+        wrongAnswers: wrongList(answers, [
+          [Math.min(n1, n2), 'diff-compare'],
+          [Math.max(d1, d2), 'diff-compare'],
+        ]),
       };
       return item;
     }
@@ -132,8 +172,12 @@ function compare(level: number, rng: Rng, alt: boolean): Item {
       identity: `compare:${sc.id}:${a1}x${n1}:${a2}x${n2}`,
       alt: false,
       options: [
-        win === 'ア' ? { label: 'ア', correct: true } : { label: 'ア', misconception: 'diff-compare' },
-        win === 'イ' ? { label: 'イ', correct: true } : { label: 'イ', misconception: 'diff-compare' },
+        win === 'ア'
+          ? { label: 'ア', correct: true }
+          : { label: 'ア', misconception: 'diff-compare' },
+        win === 'イ'
+          ? { label: 'イ', correct: true }
+          : { label: 'イ', misconception: 'diff-compare' },
         { label: '同じ', misconception: 'diff-compare' },
       ],
     };
@@ -154,12 +198,19 @@ function amount(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${sc.a}は ${A}${sc.u}です。${sc.b}は、${sc.a}の ${n}倍です。${sc.b}は 何${sc.u === '円' ? '円' : sc.u}ですか。`,
     figure: alt ? tapeFig(`${A}${sc.u}`, n, '？') : undefined,
-    hints: [`もとに する 量は ${A}${sc.u}。`, `その ${n}倍を 求めるよ。`, `${A} × ${n}を 計算しよう。`],
+    hints: [
+      `もとに する 量は ${A}${sc.u}。`,
+      `その ${n}倍を 求めるよ。`,
+      `${A} × ${n}を 計算しよう。`,
+    ],
     explain: `${A} × ${n} ＝ ${A * n}。${sc.b}は ${A * n}${sc.u}です。`,
     identity: `amount:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
     fields: [{ label: sc.u, answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, [[A + n, 'add-instead'], [A % n === 0 ? A / n : null, 'base-swap']]),
+    wrongAnswers: wrongList(answers, [
+      [A + n, 'add-instead'],
+      [A % n === 0 ? A / n : null, 'base-swap'],
+    ]),
   };
 }
 
@@ -177,12 +228,19 @@ function base(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${sc.b}は ${B}${sc.u}で、${sc.a}の ${n}倍です。${sc.a}は 何${sc.u === '円' ? '円' : sc.u}ですか。`,
     figure: alt ? tapeFig('？', n, `${B}${sc.u}`) : undefined,
-    hints: [`${sc.a}を □${sc.u}と すると、□ × ${n} ＝ ${B}。`, '□を 求めるには、わり算を 使うよ。', `${B} ÷ ${n}を 計算しよう。`],
+    hints: [
+      `${sc.a}を □${sc.u}と すると、□ × ${n} ＝ ${B}。`,
+      '□を 求めるには、わり算を 使うよ。',
+      `${B} ÷ ${n}を 計算しよう。`,
+    ],
     explain: `□ × ${n} ＝ ${B} なので、□ ＝ ${B} ÷ ${n} ＝ ${A}。${sc.a}は ${A}${sc.u}です。`,
     identity: `base:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
     fields: [{ label: sc.u, answer: answers[0]! }],
-    wrongAnswers: wrongList(answers, [[B * n, 'mult-instead'], [B - n, 'add-instead']]),
+    wrongAnswers: wrongList(answers, [
+      [B * n, 'mult-instead'],
+      [B - n, 'add-instead'],
+    ]),
   };
 }
 
@@ -233,7 +291,8 @@ export const ratioIntro: UnitSpec = finishUnit({
     },
     {
       id: 'mult-instead',
-      explain: 'かけ算と わり算を まちがえたのかな。何倍かや もとに する 量を 求める ときは わり算だよ。',
+      explain:
+        'かけ算と わり算を まちがえたのかな。何倍かや もとに する 量を 求める ときは わり算だよ。',
     },
     {
       id: 'add-instead',
@@ -241,7 +300,8 @@ export const ratioIntro: UnitSpec = finishUnit({
     },
     {
       id: 'base-swap',
-      explain: 'もとに する 量と くらべる 量を 入れかえたのかな。「〇の △倍」の 〇が もとに する 量だよ。',
+      explain:
+        'もとに する 量と くらべる 量を 入れかえたのかな。「〇の △倍」の 〇が もとに する 量だよ。',
     },
   ],
   levels: [
@@ -274,6 +334,7 @@ export const ratioIntro: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateRatioIntro(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 C(2) 簡単な場合についての割合（二つの数量の関係を割合で比べる）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 C(2) 簡単な場合についての割合（二つの数量の関係を割合で比べる）',
   revised: REVISED,
 });

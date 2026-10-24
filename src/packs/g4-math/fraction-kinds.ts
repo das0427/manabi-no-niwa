@@ -19,7 +19,11 @@ type Obj = 'kind' | 'nl' | 'toMixed' | 'toImproper' | 'equiv' | 'compare';
 
 const F = (n: number, d: number) => `[[${n}/${d}]]`;
 const M = (w: number, n: number, d: number) => `[[${w} ${n}/${d}]]`;
-const frac = (num: number, den: number, o: Partial<Extract<NumberAnswer, { kind: 'fraction' }>> = {}): NumberAnswer => ({
+const frac = (
+  num: number,
+  den: number,
+  o: Partial<Extract<NumberAnswer, { kind: 'fraction' }>> = {},
+): NumberAnswer => ({
   kind: 'fraction',
   num,
   den,
@@ -125,7 +129,9 @@ function kind(level: number, rng: Rng, alt: boolean): Item {
       target === 'mixed'
         ? '帯分数は、整数と 真分数を あわせた 形だよ。'
         : '分子が 分母より 小さいのが 真分数、分子が 分母と 同じか 大きいのが 仮分数。',
-      target === 'mixed' ? '分数の 部分が 1より 小さいかも 見よう。' : `分母は どれも ${den}。分子が ${den}より 小さいか 考えよう。`,
+      target === 'mixed'
+        ? '分数の 部分が 1より 小さいかも 見よう。'
+        : `分母は どれも ${den}。分子が ${den}より 小さいか 考えよう。`,
     ],
     explain: `${ans}が ${name}です。真分数は 1より 小さい 分数、仮分数は 1と 等しいか 1より 大きい 分数、帯分数は 整数と 真分数を あわせた 分数です。`,
     identity: `kind:${target}:${ans}:${options
@@ -165,7 +171,9 @@ function nl(level: number, rng: Rng, alt: boolean): NumberlineItem {
       prompt: `${asMixed ? M(w, r, den) : F(num, den)}を 数直線の 上に おこう。`,
       hints: [
         `0から 1までが ${den}こに 分けて あるよ。1めもりは ${F(1, den)}。`,
-        asMixed ? `${M(w, r, den)}は ${w}と ${F(r, den)}。` : `${F(num, den)}は ${F(1, den)}が ${num}こ。`,
+        asMixed
+          ? `${M(w, r, den)}は ${w}と ${F(r, den)}。`
+          : `${F(num, den)}は ${F(1, den)}が ${num}こ。`,
         `${w}から ${r}めもり 進んだ ところだよ。`,
       ],
       explain: `${F(num, den)}（${M(w, r, den)}）は ${w}より ${F(r, den)} 大きい ところです。`,
@@ -186,7 +194,9 @@ function nl(level: number, rng: Rng, alt: boolean): NumberlineItem {
     hints: [
       `0から 1までが ${den}こに 分けて あるよ。1めもりは ${F(1, den)}。`,
       want === 'mixed' ? `${w}より 何めもり 右かな。` : `0から 何めもり 進んだかな。`,
-      want === 'mixed' ? `${w}と、${r}めもり分の 分数だね。` : `${F(1, den)}が いくつ分かを 数えよう。`,
+      want === 'mixed'
+        ? `${w}と、${r}めもり分の 分数だね。`
+        : `${F(1, den)}が いくつ分かを 数えよう。`,
     ],
     explain: `${F(1, den)}が ${num}こで ${F(num, den)}。帯分数で 表すと ${M(w, r, den)}です。`,
     identity: `nl-read:${num}/${den}:${want}`,
@@ -217,18 +227,20 @@ function toMixed(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `toMixed${alt ? '-alt' : ''}:${num}/${den}`,
     objective: 'toMixed',
     level,
-    prompt: alt ? '色を ぬった 部分の 長さを 帯分数で 表そう（テープ 1本が 1）。' : `${F(num, den)}を 帯分数に しよう。`,
+    prompt: alt
+      ? '色を ぬった 部分の 長さを 帯分数で 表そう（テープ 1本が 1）。'
+      : `${F(num, den)}を 帯分数に しよう。`,
     figure: alt ? barsFig(w, r, den) : expr(F(num, den)),
     hints: alt
       ? [
           `テープ 1本は ${den}こに 分けて あるよ。`,
-          `ぜんぶ ぬった テープは ${w}本。`,
-          `のこりの テープは ${den}こ中 ${r}こ ぬって あるね。`,
+          'ぜんぶ ぬった テープが 何本 あるか 数えよう。それが 整数の 部分。',
+          `のこりの テープは、${den}こに 分けた うちの いくつ分を ぬって あるかな。それが 分子だよ。`,
         ]
       : [
           `${F(den, den)}で 1に なるよ。`,
           `${num} ÷ ${den} を 考えよう。`,
-          `${num} ÷ ${den} ＝ ${w} あまり ${r}。商が 整数の 部分、あまりが 分子だよ。`,
+          `わり算の 商が 整数の 部分、あまりが 分子に なるよ。分母は ${den}の まま。`,
         ],
     explain: `${num} ÷ ${den} ＝ ${w} あまり ${r}なので、${F(num, den)} ＝ ${M(w, r, den)}です。`,
     explainFigure: barsFig(w, r, den),
@@ -256,10 +268,16 @@ function toImproper(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `toImproper${alt ? '-alt' : ''}:${num}/${den}`,
     objective: 'toImproper',
     level,
-    prompt: alt ? '色を ぬった 部分の 長さを 仮分数で 表そう（テープ 1本が 1）。' : `${M(w, r, den)}を 仮分数に しよう。`,
+    prompt: alt
+      ? '色を ぬった 部分の 長さを 仮分数で 表そう（テープ 1本が 1）。'
+      : `${M(w, r, den)}を 仮分数に しよう。`,
     figure: alt ? barsFig(w, r, den) : expr(M(w, r, den)),
     hints: alt
-      ? [`1めもりは ${F(1, den)}。`, `ぬった めもりを ぜんぶ 数えよう。テープ 1本で ${den}こ。`, `${den} × ${w} ＋ ${r}を 計算しよう。`]
+      ? [
+          `1めもりは ${F(1, den)}。`,
+          `ぬった めもりを ぜんぶ 数えよう。テープ 1本で ${den}こ。`,
+          `${den} × ${w} ＋ ${r}を 計算しよう。`,
+        ]
       : [
           `1は ${F(den, den)}だよ。`,
           `${w}は ${F(1, den)}が ${den} × ${w}こ。`,
@@ -292,8 +310,20 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
     kind: 'column',
     gap: 1,
     items: [
-      { kind: 'numberline', min: 0, max: 1, step: 1 / d, marks: [{ at: n / d, label: F(n, d), tone: 'focus' }] },
-      { kind: 'numberline', min: 0, max: 1, step: 1 / D, marks: [{ at: N / D, label: '？', tone: 'focus' }] },
+      {
+        kind: 'numberline',
+        min: 0,
+        max: 1,
+        step: 1 / d,
+        marks: [{ at: n / d, label: F(n, d), tone: 'focus' }],
+      },
+      {
+        kind: 'numberline',
+        min: 0,
+        max: 1,
+        step: 1 / D,
+        marks: [{ at: N / D, label: '？', tone: 'focus' }],
+      },
     ],
   };
   if (alt) {
@@ -331,8 +361,12 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
     figure: expr(askNum ? `${F(n, d)} ＝ [[□/${D}]]` : `${F(n, d)} ＝ [[${N}/□]]`),
     hints: [
       '数直線を ならべると、大きさの 等しい 分数が 見つかるよ。',
-      askNum ? `分母は ${d}から ${D}に なったね。${D} ÷ ${d} ＝ ${k}。` : `分子は ${n}から ${N}に なったね。${N} ÷ ${n} ＝ ${k}。`,
-      askNum ? `分子にも 同じ数を かけよう。${n} × ${k}。` : `分母にも 同じ数を かけよう。${d} × ${k}。`,
+      askNum
+        ? `分母は ${d}から ${D}に なったね。${D} ÷ ${d} ＝ ${k}。`
+        : `分子は ${n}から ${N}に なったね。${N} ÷ ${n} ＝ ${k}。`,
+      askNum
+        ? `分子にも 同じ数を かけよう。${n} × ${k}。`
+        : `分母にも 同じ数を かけよう。${d} × ${k}。`,
     ],
     explain: `分母と 分子に 同じ数 ${k}を かけると、大きさの 等しい 分数に なります。${F(n, d)} ＝ ${F(N, D)}。`,
     explainFigure: lineFig,
@@ -359,7 +393,9 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
   const a = F(num, den);
   const b = M(w, r, den);
   const options = [
-    cmp > 0 ? { label: a, correct: true } : { label: a, misconception: num > r + w ? 'compare-num' : 'compare-form' },
+    cmp > 0
+      ? { label: a, correct: true }
+      : { label: a, misconception: num > r + w ? 'compare-num' : 'compare-form' },
     cmp < 0 ? { label: b, correct: true } : { label: b, misconception: 'compare-form' },
     cmp === 0 ? { label: '同じ', correct: true } : { label: '同じ', misconception: 'compare-form' },
   ];
@@ -368,12 +404,16 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     id: `compare${alt ? '-alt' : ''}:${num}/${den}:${w}-${r}`,
     objective: 'compare',
     level,
-    prompt: alt ? `${a}と ${b}を 数直線で くらべます。大きいのは どっち？` : `${a}と ${b}、大きいのは どっち？`,
+    prompt: alt
+      ? `${a}と ${b}を 数直線で くらべます。大きいのは どっち？`
+      : `${a}と ${b}、大きいのは どっち？`,
     figure: alt
       ? {
           kind: 'numberline',
           min: 0,
-          max: Math.ceil(Math.max(num, mixedVal) / den) + (Math.max(num, mixedVal) % den === 0 ? 1 : 0),
+          max:
+            Math.ceil(Math.max(num, mixedVal) / den) +
+            (Math.max(num, mixedVal) % den === 0 ? 1 : 0),
           step: 1 / den,
           labelEvery: den,
         }
@@ -381,8 +421,8 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     fixedOrder: true,
     hints: [
       '同じ 形に そろえて くらべよう。',
-      `${b}を 仮分数に すると、${den} × ${w} ＋ ${r}。`,
-      `${F(mixedVal, den)}と ${a}の 分子を くらべよう。`,
+      `${b}を 仮分数に なおそう。整数の ${w}は ${F(1, den)}が いくつ分かな。`,
+      `${den} × ${w} ＋ ${r}を 計算して、${a}の 分子の ${num}と くらべよう。`,
     ],
     explain: `${b} ＝ ${F(mixedVal, den)}。${cmp === 0 ? '同じ 大きさです。' : `${cmp > 0 ? a : b}の ほうが 大きいです。`}`,
     identity: `compare:${num}/${den}:${w}-${r}${alt ? ':line' : ''}`,
@@ -445,31 +485,38 @@ export const fractionKinds: UnitSpec = finishUnit({
     },
     {
       id: 'equal-one',
-      explain: '分子と 分母が 同じ 分数は 1と 同じ 大きさ。1より 小さくないので 仮分数の なかまだよ。',
+      explain:
+        '分子と 分母が 同じ 分数は 1と 同じ 大きさ。1より 小さくないので 仮分数の なかまだよ。',
     },
     {
       id: 'mixed-frac-big',
-      explain: '帯分数の 分数の 部分は、1より 小さい 真分数に するよ。1以上 あったら、整数の 部分に くり上げよう。',
+      explain:
+        '帯分数の 分数の 部分は、1より 小さい 真分数に するよ。1以上 あったら、整数の 部分に くり上げよう。',
     },
     {
       id: 'sub-whole',
-      explain: '分子から 整数の 数を ひいたのかな。1は 分母と 同じ数の 分子だよ。分子 ÷ 分母の 商が 整数、あまりが 分子に なるよ。',
+      explain:
+        '分子から 整数の 数を ひいたのかな。1は 分母と 同じ数の 分子だよ。分子 ÷ 分母の 商が 整数、あまりが 分子に なるよ。',
     },
     {
       id: 'div-miss',
-      explain: '分子 ÷ 分母の 商を まちがえたのかな。分母 × 整数の 部分 ＋ 分子で、もとの 分子に もどるか たしかめよう。',
+      explain:
+        '分子 ÷ 分母の 商を まちがえたのかな。分母 × 整数の 部分 ＋ 分子で、もとの 分子に もどるか たしかめよう。',
     },
     {
       id: 'swap-parts',
-      explain: '整数の 部分と 分子を 入れかえたのかな。分子 ÷ 分母の 商が 整数の 部分、あまりが 分子だよ。',
+      explain:
+        '整数の 部分と 分子を 入れかえたのかな。分子 ÷ 分母の 商が 整数の 部分、あまりが 分子だよ。',
     },
     {
       id: 'add-whole',
-      explain: '整数を そのまま 分子に たしたのかな。整数 1は 分母と 同じ数の 分子に なるので、分母 × 整数を たそう。',
+      explain:
+        '整数を そのまま 分子に たしたのかな。整数 1は 分母と 同じ数の 分子に なるので、分母 × 整数を たそう。',
     },
     {
       id: 'mult-wrong',
-      explain: 'かけ算と たし算の 組み合わせを まちがえたのかな。分母 × 整数の 部分 ＋ 分子 が 仮分数の 分子だよ。',
+      explain:
+        'かけ算と たし算の 組み合わせを まちがえたのかな。分母 × 整数の 部分 ＋ 分子 が 仮分数の 分子だよ。',
     },
     {
       id: 'forget-num',
@@ -477,7 +524,8 @@ export const fractionKinds: UnitSpec = finishUnit({
     },
     {
       id: 'add-same',
-      explain: '分母と 分子に 同じ数を たしたのかな。大きさの 等しい 分数は、分母と 分子に 同じ数を かけて 作るよ。',
+      explain:
+        '分母と 分子に 同じ数を たしたのかな。大きさの 等しい 分数は、分母と 分子に 同じ数を かけて 作るよ。',
     },
     {
       id: 'same-num',
@@ -493,7 +541,8 @@ export const fractionKinds: UnitSpec = finishUnit({
     },
     {
       id: 'compare-form',
-      explain: '仮分数か 帯分数の どちらかに そろえて くらべよう。そろえると 分子で くらべられるよ。',
+      explain:
+        '仮分数か 帯分数の どちらかに そろえて くらべよう。そろえると 分子で くらべられるよ。',
     },
     {
       id: 'scale-one',
@@ -521,7 +570,17 @@ export const fractionKinds: UnitSpec = finishUnit({
   intro: [
     {
       text: '[[2/3]]のように 1より 小さい 分数を 真分数、[[3/3]]や [[5/3]]のように 1と 等しいか 1より 大きい 分数を 仮分数と いいます。',
-      figure: { kind: 'numberline', min: 0, max: 2, step: 1 / 3, labelEvery: 3, marks: [{ at: 2 / 3, label: '[[2/3]]' }, { at: 5 / 3, label: '[[5/3]]', tone: 'focus' }] },
+      figure: {
+        kind: 'numberline',
+        min: 0,
+        max: 2,
+        step: 1 / 3,
+        labelEvery: 3,
+        marks: [
+          { at: 2 / 3, label: '[[2/3]]' },
+          { at: 5 / 3, label: '[[5/3]]', tone: 'focus' },
+        ],
+      },
     },
     {
       text: '[[5/3]]は 1と [[2/3]]を あわせた 数。これを [[1 2/3]]と 書き、帯分数と いいます。',
@@ -537,9 +596,27 @@ export const fractionKinds: UnitSpec = finishUnit({
         kind: 'column',
         gap: 1,
         items: [
-          { kind: 'numberline', min: 0, max: 1, step: 1 / 2, marks: [{ at: 0.5, label: '[[1/2]]' }] },
-          { kind: 'numberline', min: 0, max: 1, step: 1 / 4, marks: [{ at: 0.5, label: '[[2/4]]' }] },
-          { kind: 'numberline', min: 0, max: 1, step: 1 / 6, marks: [{ at: 0.5, label: '[[3/6]]' }] },
+          {
+            kind: 'numberline',
+            min: 0,
+            max: 1,
+            step: 1 / 2,
+            marks: [{ at: 0.5, label: '[[1/2]]' }],
+          },
+          {
+            kind: 'numberline',
+            min: 0,
+            max: 1,
+            step: 1 / 4,
+            marks: [{ at: 0.5, label: '[[2/4]]' }],
+          },
+          {
+            kind: 'numberline',
+            min: 0,
+            max: 1,
+            step: 1 / 6,
+            marks: [{ at: 0.5, label: '[[3/6]]' }],
+          },
         ],
       },
     },
@@ -549,7 +626,7 @@ export const fractionKinds: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateFractionKinds(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 A(7) 分数（真分数・仮分数・帯分数、大きさの等しい分数）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 A(7) 分数（真分数・仮分数・帯分数、大きさの等しい分数）',
   revised: REVISED,
 });
-

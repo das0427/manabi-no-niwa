@@ -59,6 +59,17 @@ function hintsOf(a: number, b: number): string[] {
   ];
 }
 
+/** 部分積を欄で答える問題のヒント（欄の答えの数は書かない） */
+function partialHints(a: number, b: number): string[] {
+  const b1 = b % 10;
+  const b10 = Math.floor(b / 10);
+  return [
+    `まず ${a} × ${b1}、つぎに ${a} × ${b10} を 計算《けいさん》しよう。`,
+    `${a} × ${b10} の 答《こた》えは、十《じゅう》のくらいから 書《か》くよ（1けた 左《ひだり》に ずらす）。`,
+    '1だんめと 2だんめを、くらいを そろえて たそう。',
+  ];
+}
+
 function tens(level: number, rng: Rng, alt: boolean): NumberItem {
   const a = rng.int(11, 99);
   const t = rng.int(2, 9);
@@ -80,7 +91,11 @@ function tens(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} × ${b} は ${a} × ${t} の 10倍《ばい》。${a} × ${t} ＝ ${a * t} なので、${a * b}です。`,
     identity: alt ? `pan:${a}x${b}` : `${a}x${b}`,
     alt,
-    fields: [alt ? { label: '円《えん》', answer: { kind: 'int', value: a * b } } : { answer: { kind: 'int', value: a * b } }],
+    fields: [
+      alt
+        ? { label: '円《えん》', answer: { kind: 'int', value: a * b } }
+        : { answer: { kind: 'int', value: a * b } },
+    ],
     wrongAnswers: wrongList(String(a * b), 1, [
       [a * t, 'zero-drop'],
       [a * t * 100, 'zero-drop'],
@@ -103,8 +118,16 @@ function partial(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'partial',
       level,
       prompt: `${a} × ${b} を、${b}を ${b10 * 10}と ${b1}に 分《わ》けて 計算《けいさん》します。□に あう 数《かず》は？`,
-      figure: { kind: 'text', text: `${a} × ${b1} ＝ {{}}\u3000${a} × ${b10 * 10} ＝ {{}}\u3000あわせて {{}}`, size: 'l' },
-      hints: hintsOf(a, b),
+      figure: {
+        kind: 'text',
+        text: `${a} × ${b1} ＝ {{}}\u3000${a} × ${b10 * 10} ＝ {{}}\u3000あわせて {{}}`,
+        size: 'l',
+      },
+      hints: [
+        `${b}は ${b10 * 10}と ${b1}。べつべつに かけて、あとで たそう。`,
+        `${a} × ${b10 * 10} は、${a} × ${b10} の 答《こた》えを 10倍《ばい》した 数《かず》。`,
+        '2つの 答《こた》えを、くらいを そろえて たそう。',
+      ],
       explain: explainOf(a, b),
       identity: `${a}x${b}`,
       alt: true,
@@ -124,8 +147,12 @@ function partial(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'partial',
     level,
     prompt: '筆算《ひっさん》の とちゅうの 数《かず》と 答《こた》えを 書《か》こう。',
-    figure: columnFigure(a, b, '×', String(ans).length, [String(p1), `${p2}\u3000`]),
-    hints: hintsOf(a, b),
+    // とちゅうの数は 欄で答えるので、図では ？ にして 位置（2だんめは 1けた ずらす）だけ 見せる
+    figure: columnFigure(a, b, '×', String(ans).length, [
+      '？'.repeat(String(p1).length),
+      `${'？'.repeat(String(p2).length)}\u3000`,
+    ]),
+    hints: partialHints(a, b),
     explain: explainOf(a, b),
     identity: `${a}x${b}`,
     alt: false,
@@ -150,7 +177,8 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
       id: `${obj}-alt:${a}x${b}`,
       objective: obj,
       level,
-      prompt: '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
+      prompt:
+        '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
       figure: { kind: 'text', text: `${a} × ${b} ＝ {{}}`, size: 'xl' },
       hints: hintsOf(a, b),
       explain: explainOf(a, b),
@@ -180,22 +208,74 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
 interface Scene {
   id: string;
   unit: string;
+  /** 1つ分の数の上限（場面の現実感） */
+  maxA: number;
   text: (a: number, b: number) => string;
 }
 const SCENES: Scene[] = [
-  { id: 'tickets', unit: '円《えん》', text: (a, b) => `1まい ${a}円《えん》の 入場《にゅうじょう》けんを ${b}まい 買《か》います。代金《だいきん》は 何《なん》円《えん》ですか。` },
-  { id: 'chairs', unit: 'きゃく', text: (a, b) => `1れつに ${a}きゃくずつ いすを ならべます。${b}れつ では、いすは 何《なん》きゃく ですか。` },
-  { id: 'eggs', unit: 'こ', text: (a, b) => `1はこに ${a}こ 入《はい》った たまごが ${b}はこ あります。たまごは 全部《ぜんぶ》で 何《なん》こですか。` },
-  { id: 'walk', unit: 'm', text: (a, b) => `1日《にち》に ${a}m ずつ 走《はし》ります。${b}日《にち》で 何《なん》m 走《はし》りますか。` },
-  { id: 'paper', unit: 'まい', text: (a, b) => `1人《り》に ${a}まいずつ 画用紙《がようし》を くばります。${b}人《にん》に くばるには、何《なん》まい いりますか。` },
-  { id: 'rope', unit: 'cm', text: (a, b) => `${a}cmの ロープの ${b}倍《ばい》の 長《なが》さは 何《なん》cmですか。` },
-  { id: 'bus', unit: '人《にん》', text: (a, b) => `1台《だい》に ${a}人《にん》 乗《の》れる バスが ${b}台《だい》 あります。全部《ぜんぶ》で 何《なん》人《にん》 乗《の》れますか。` },
-  { id: 'stamps', unit: '円《えん》', text: (a, b) => `1まい ${a}円《えん》の シールを ${b}まい 買《か》うと、何《なん》円《えん》に なりますか。` },
+  {
+    id: 'tickets',
+    maxA: 999,
+    unit: '円《えん》',
+    text: (a, b) =>
+      `1まい ${a}円《えん》の 入場《にゅうじょう》けんを ${b}まい 買《か》います。代金《だいきん》は 何《なん》円《えん》ですか。`,
+  },
+  {
+    id: 'chairs',
+    maxA: 40,
+    unit: 'きゃく',
+    text: (a, b) =>
+      `1れつに ${a}きゃくずつ いすを ならべます。${b}れつ では、いすは 何《なん》きゃく ですか。`,
+  },
+  {
+    id: 'eggs',
+    maxA: 30,
+    unit: 'こ',
+    text: (a, b) =>
+      `1はこに ${a}こ 入《はい》った たまごが ${b}はこ あります。たまごは 全部《ぜんぶ》で 何《なん》こですか。`,
+  },
+  {
+    id: 'walk',
+    maxA: 999,
+    unit: 'm',
+    text: (a, b) =>
+      `1日《にち》に ${a}m ずつ 走《はし》ります。${b}日《にち》で 何《なん》m 走《はし》りますか。`,
+  },
+  {
+    id: 'paper',
+    maxA: 30,
+    unit: 'まい',
+    text: (a, b) =>
+      `1人《り》に ${a}まいずつ 画用紙《がようし》を くばります。${b}人《にん》に くばるには、何《なん》まい いりますか。`,
+  },
+  {
+    id: 'rope',
+    maxA: 999,
+    unit: 'cm',
+    text: (a, b) => `${a}cmの ロープの ${b}倍《ばい》の 長《なが》さは 何《なん》cmですか。`,
+  },
+  {
+    id: 'bus',
+    maxA: 60,
+    unit: '人《にん》',
+    text: (a, b) =>
+      `1台《だい》に ${a}人《にん》 乗《の》れる バスが ${b}台《だい》 あります。全部《ぜんぶ》で 何《なん》人《にん》 乗《の》れますか。`,
+  },
+  {
+    id: 'stamps',
+    maxA: 999,
+    unit: '円《えん》',
+    text: (a, b) =>
+      `1まい ${a}円《えん》の シールを ${b}まい 買《か》うと、何《なん》円《えん》に なりますか。`,
+  },
 ];
 
 function word(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = SCENES[rng.int(0, SCENES.length - 1)]!;
-  const [a, b] = pick(rng, rng.next() < 0.6 ? 'two' : 'three');
+  // 場面に あう 大きさの 数だけ（1台に 999人の バス などを 出さない）
+  const kind = sc.maxA >= 100 && rng.next() >= 0.6 ? 'three' : 'two';
+  let [a, b] = pick(rng, kind);
+  while (a > sc.maxA) [a, b] = pick(rng, kind);
   const ans = a * b;
   return {
     engine: 'number',
@@ -203,8 +283,14 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'bunshou',
     level,
     prompt: sc.text(a, b),
-    figure: alt ? { kind: 'text', text: `1つ分《ぶん》 ${a} ／ いくつ分《ぶん》 ${b}`, size: 'l' } : undefined,
-    hints: ['1つ分《ぶん》の 数《かず》と、いくつ分《ぶん》かを 見《み》つけよう。', `式《しき》は ${a} × ${b}。`, hintsOf(a, b)[1]!],
+    figure: alt
+      ? { kind: 'text', text: `1つ分《ぶん》 ${a} ／ いくつ分《ぶん》 ${b}`, size: 'l' }
+      : undefined,
+    hints: [
+      '1つ分《ぶん》の 数《かず》と、いくつ分《ぶん》かを 見《み》つけよう。',
+      `式《しき》は ${a} × ${b}。`,
+      hintsOf(a, b)[1]!,
+    ],
     explain: `式《しき》は ${a} × ${b} ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`,
     explainFigure: columnFigure(a, b, '×', String(ans).length),
     identity: `${sc.id}:${a}x${b}`,
@@ -266,23 +352,28 @@ export const mult2digit: UnitSpec = {
     },
     {
       id: 'ones-only',
-      explain: '一《いち》のくらいの 数《かず》だけ かけたのかな。かける数《かず》の 十《じゅう》のくらいの 数《かず》も かけて、たそう。',
+      explain:
+        '一《いち》のくらいの 数《かず》だけ かけたのかな。かける数《かず》の 十《じゅう》のくらいの 数《かず》も かけて、たそう。',
     },
     {
       id: 'same-place',
-      explain: 'おなじ くらいどうしだけ かけたのかな。かける数《かず》の 一《いち》のくらいも 十《じゅう》のくらいも、かけられる数《かず》 ぜんぶに かけるよ。',
+      explain:
+        'おなじ くらいどうしだけ かけたのかな。かける数《かず》の 一《いち》のくらいも 十《じゅう》のくらいも、かけられる数《かず》 ぜんぶに かけるよ。',
     },
     {
       id: 'shift-zero',
-      explain: '2だんめに 0を つけたのかな。2だんめは かける数《かず》の 十《じゅう》のくらいの 数《かず》を かけた 答《こた》え（36 × 2 なら 72）。0は 書《か》かずに、1けた 左《ひだり》に ずらして 書《か》くよ。',
+      explain:
+        '2だんめに 0を つけたのかな。2だんめは かける数《かず》の 十《じゅう》のくらいの 数《かず》を かけた 答《こた》え（36 × 2 なら 72）。0は 書《か》かずに、1けた 左《ひだり》に ずらして 書《か》くよ。',
     },
     {
       id: 'zero-drop',
-      explain: '0の 数《かず》が あって いないのかな。× 30 は × 3 の 10倍《ばい》。答《こた》えの 右《みぎ》に 0を 1こ つけるよ。',
+      explain:
+        '0の 数《かず》が あって いないのかな。× 30 は × 3 の 10倍《ばい》。答《こた》えの 右《みぎ》に 0を 1こ つけるよ。',
     },
     {
       id: 'wrong-op',
-      explain: 'たし算《ざん》を したのかな。おなじ 数《かず》が いくつ分《ぶん》 あるときは かけ算《ざん》だよ。',
+      explain:
+        'たし算《ざん》を したのかな。おなじ 数《かず》が いくつ分《ぶん》 あるときは かけ算《ざん》だよ。',
     },
   ],
   levels: [
@@ -310,6 +401,7 @@ export const mult2digit: UnitSpec = {
     generate: ({ level, rng, index }) => generateMult2digit(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（2位数や3位数に2位数をかける乗法の計算と筆算）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(3) 乗法（2位数や3位数に2位数をかける乗法の計算と筆算）',
   revised: '2026-10-24',
 };

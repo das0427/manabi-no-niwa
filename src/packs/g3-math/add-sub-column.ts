@@ -12,7 +12,16 @@
  */
 import type { Rng } from '../../core/util/rng';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { columnFigure, digits, fromDigits, pickObj, placeFields, placeName, toFields, wrongList } from './util';
+import {
+  columnFigure,
+  digits,
+  fromDigits,
+  pickObj,
+  placeFields,
+  placeName,
+  toFields,
+  wrongList,
+} from './util';
 
 type Obj = 'add1' | 'addm' | 'sub1' | 'subz' | 'bunshou';
 
@@ -52,7 +61,8 @@ function addNoCarry(a: number, b: number): number {
   const da = digits(a);
   const db = digits(b);
   const out: number[] = [];
-  for (let i = 0; i < Math.max(da.length, db.length); i++) out.push(((da[i] ?? 0) + (db[i] ?? 0)) % 10);
+  for (let i = 0; i < Math.max(da.length, db.length); i++)
+    out.push(((da[i] ?? 0) + (db[i] ?? 0)) % 10);
   return fromDigits(out);
 }
 /** 位ごとに大きい方から小さい方をひいた答え */
@@ -126,9 +136,13 @@ function subSteps(a: number, b: number): string[] {
     if (bout && !(bin && x === 0)) notes.push(`となりから 10 かりて ${top}`);
     const d = top - y;
     if (i === da.length - 1 && d === 0 && i > 0) {
-      out.push(`${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}0に なるので 書《か》かない`);
+      out.push(
+        `${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}0に なるので 書《か》かない`,
+      );
     } else {
-      out.push(`${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}${top} − ${y} ＝ ${d}`);
+      out.push(
+        `${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}${top} − ${y} ＝ ${d}`,
+      );
     }
     bin = bout;
   }
@@ -149,7 +163,8 @@ function pickAdd(rng: Rng, kind: 'add1' | 'addm'): [number, number] {
     } else {
       const a = rng.int(1000, 9999);
       const b = rng.int(100, 9999);
-      if (carries(a, b) >= 1 && a + b < 10000) return rng.next() < 0.5 || b < 1000 ? [a, b] : [b, a];
+      if (carries(a, b) >= 1 && a + b < 10000)
+        return rng.next() < 0.5 || b < 1000 ? [a, b] : [b, a];
     }
   }
 }
@@ -187,7 +202,14 @@ function subWrongs(a: number, b: number, n: number): NumberItem['wrongAnswers'] 
   ]);
 }
 
-function calcItem(obj: Obj, level: number, a: number, b: number, op: '＋' | '−', alt: boolean): NumberItem {
+function calcItem(
+  obj: Obj,
+  level: number,
+  a: number,
+  b: number,
+  op: '＋' | '−',
+  alt: boolean,
+): NumberItem {
   const ans = op === '＋' ? a + b : a - b;
   const steps = op === '＋' ? addSteps(a, b) : subSteps(a, b);
   const key = op === '＋' ? addKey(a, b) : `${a}-${b}`;
@@ -205,7 +227,8 @@ function calcItem(obj: Obj, level: number, a: number, b: number, op: '＋' | '�
       id: `${obj}-alt:${a}${op}${b}`,
       objective: obj,
       level,
-      prompt: '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
+      prompt:
+        '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
       figure: { kind: 'text', text: `${a} ${op} ${b} ＝ {{}}`, size: 'xl' },
       hints,
       explain,
@@ -350,7 +373,10 @@ function wordItem(level: number, rng: Rng, alt: boolean): NumberItem {
         ? `「${sc.type}」場面《ばめん》だね。たし算《ざん》かな、ひき算《ざん》かな。`
         : `「${sc.type}」を もとめる 場面《ばめん》だね。たし算《ざん》かな、ひき算《ざん》かな。`,
       `式《しき》は ${a} ${sc.op} ${b}。筆算《ひっさん》で 計算《けいさん》しよう。`,
-      (sc.op === '＋' ? addSteps(a, b) : subSteps(a, b))[0]!.replace(/ ＝ .*$/, ' から はじめよう。'),
+      (sc.op === '＋' ? addSteps(a, b) : subSteps(a, b))[0]!.replace(
+        / ＝ .*$/,
+        ' から はじめよう。',
+      ),
     ],
     explain: `式《しき》は ${a} ${sc.op} ${b} ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`,
     explainFigure: columnFigure(a, b, sc.op, String(ans).length),
@@ -464,6 +490,7 @@ export const addSubColumn: UnitSpec = {
     generate: ({ level, rng, index }) => generateAddSubColumn(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第3学年 A(2) 加法・減法（3位数や4位数の加法・減法の筆算）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第3学年 A(2) 加法・減法（3位数や4位数の加法・減法の筆算）',
   revised: '2026-10-24',
 };

@@ -33,37 +33,79 @@ const DATA: DataSpec[] = [
     id: 'temp',
     title: 'ある 日の 気温（れいの データ）',
     labels: ['8時', '9時', '10時', '11時', '12時', '13時', '14時'],
-    unit: '度', step: 2, min: 0, start: [6, 9], delta: [-1, 2], lo: 3, hi: 15, time: '時',
+    unit: '度',
+    step: 2,
+    min: 0,
+    start: [6, 9],
+    delta: [-1, 2],
+    lo: 3,
+    hi: 15,
+    time: '時',
   },
   {
     id: 'plant',
     title: 'ヘチマの たけ（れいの データ）',
     labels: ['1週', '2週', '3週', '4週', '5週', '6週'],
-    unit: 'cm', step: 10, min: 0, start: [10, 30], delta: [0, 4], lo: 0, hi: 20, time: '週',
+    unit: 'cm',
+    step: 10,
+    min: 0,
+    start: [10, 30],
+    delta: [0, 4],
+    lo: 0,
+    hi: 20,
+    time: '週',
   },
   {
     id: 'water',
     title: '水を あたためた ときの 温度（れいの データ）',
     labels: ['0分', '2分', '4分', '6分', '8分', '10分'],
-    unit: '度', step: 10, min: 0, start: [2, 3], delta: [0, 3], lo: 1, hi: 10, time: '分',
+    unit: '度',
+    step: 10,
+    min: 0,
+    start: [2, 3],
+    delta: [0, 3],
+    lo: 1,
+    hi: 10,
+    time: '分',
   },
   {
     id: 'body',
     title: 'かぜを ひいた ときの 体温（れいの データ）',
     labels: ['6時', '9時', '12時', '15時', '18時', '21時'],
-    unit: '度', step: 0.5, min: 35, start: [72, 76], delta: [-2, 2], lo: 71, hi: 78, time: '時',
+    unit: '度',
+    step: 0.5,
+    min: 35,
+    start: [72, 76],
+    delta: [-2, 2],
+    lo: 71,
+    hi: 78,
+    time: '時',
   },
   {
     id: 'month',
     title: 'ある 町の 月ごとの 気温（れいの データ）',
     labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'],
-    unit: '度', step: 2, min: 0, start: [2, 4], delta: [-1, 3], lo: 1, hi: 15, time: '月',
+    unit: '度',
+    step: 2,
+    min: 0,
+    start: [2, 4],
+    delta: [-1, 3],
+    lo: 1,
+    hi: 15,
+    time: '月',
   },
   {
     id: 'puppy',
     title: '子犬の 体重（れいの データ）',
     labels: ['1か月', '2か月', '3か月', '4か月', '5か月', '6か月'],
-    unit: 'kg', step: 1, min: 0, start: [1, 3], delta: [0, 3], lo: 1, hi: 20, time: 'か月',
+    unit: 'kg',
+    step: 1,
+    min: 0,
+    start: [1, 3],
+    delta: [0, 3],
+    lo: 1,
+    hi: 20,
+    time: 'か月',
   },
 ];
 
@@ -105,7 +147,15 @@ function graphData(d: DataSpec, vals: number[]) {
 
 /** 値を 読む（alt: 0から 始まらない 目盛り＝波線の グラフを 読む） */
 function read(level: number, rng: Rng, alt: boolean): GraphItem {
-  const d = alt ? pick(rng, DATA.filter((x) => x.min > 0)) : pick(rng, DATA.filter((x) => x.min === 0));
+  const d = alt
+    ? pick(
+        rng,
+        DATA.filter((x) => x.min > 0),
+      )
+    : pick(
+        rng,
+        DATA.filter((x) => x.min === 0),
+      );
   const vals = series(d, rng);
   const i = rng.int(0, vals.length - 1);
   const ans = vals[i]!;
@@ -115,9 +165,11 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem {
     id: `read${alt ? '-alt' : ''}:${d.id}:${vals.join(',')}:${i}`,
     objective: 'read',
     level,
-    prompt: `${d.labels[i]}の ${d.id === 'plant' ? 'たけ' : d.id === 'puppy' ? '体重' : '温度'}は 何${d.unit}ですか。`,
+    prompt: `${d.labels[i]}の ${({ plant: 'たけ', puppy: '体重', body: '体温', temp: '気温', month: '気温' } as Record<string, string>)[d.id] ?? '温度'}は 何${d.unit}ですか。`,
     hints: [
-      alt ? `たての じくは ${d.min}${d.unit}から 始まって いるよ（とちゅうを 省いて いる しるしが あるね）。` : 'たての じくの 1めもりの 大きさを たしかめよう。',
+      alt
+        ? `たての じくは ${d.min}${d.unit}から 始まって いるよ（とちゅうを 省いて いる しるしが あるね）。`
+        : 'たての じくの 1めもりの 大きさを たしかめよう。',
       `1めもりは ${fmt(d.step)}${d.unit}。`,
       `${d.labels[i]}の 点から 左へ 横に たどって 目もりを 読もう。`,
     ],
@@ -127,7 +179,12 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, vals),
     task: {
       kind: 'number',
-      fields: [{ label: d.unit, answer: dec ? { kind: 'decimal', value: ans } : { kind: 'int', value: ans } }],
+      fields: [
+        {
+          label: d.unit,
+          answer: dec ? { kind: 'decimal', value: ans } : { kind: 'int', value: ans },
+        },
+      ],
       keys: dec ? ['decimal'] : undefined,
       wrongAnswers: wrongList(
         [dec ? { kind: 'decimal', value: ans } : { kind: 'int', value: ans }],
@@ -143,7 +200,10 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem {
 
 /** 変化の 大きさ（alt: 上がり方の 大きさを 数で） */
 function change(level: number, rng: Rng, alt: boolean): GraphItem {
-  const d = pick(rng, DATA.filter((x) => x.min === 0));
+  const d = pick(
+    rng,
+    DATA.filter((x) => x.min === 0),
+  );
   const vals = series(d, rng);
   const diffs = vals.slice(1).map((x, i) => x - vals[i]!);
   const k = diffs.indexOf(Math.max(...diffs));
@@ -155,7 +215,11 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
       objective: 'change',
       level,
       prompt: `${span(k)}の 間に、何${d.unit} 上がりましたか（ふえましたか）。`,
-      hints: ['2つの 点の 高さを それぞれ 読もう。', `${d.labels[k]}は ${fmt(vals[k]!)}${d.unit}。`, `${d.labels[k + 1]}の 数から ひこう。`],
+      hints: [
+        '2つの 点の 高さを それぞれ 読もう。',
+        `${d.labels[k]}は ${fmt(vals[k]!)}${d.unit}。`,
+        `${d.labels[k + 1]}の 数から ひこう。`,
+      ],
       explain: `${fmt(vals[k + 1]!)} − ${fmt(vals[k]!)} ＝ ${fmt(diffs[k]!)}。${fmt(diffs[k]!)}${d.unit} 上がりました。`,
       identity: `change-amt:${d.id}:${vals.join(',')}`,
       alt: true,
@@ -180,7 +244,9 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
   const others = diffs.map((_, j) => j).filter((j) => j !== k && j !== highSpan && j !== minD);
   const wrongs: [string, string][] = [];
   if (highSpan !== k) wrongs.push([span(highSpan), 'value-not-change']);
-  if (minD !== k && minD !== highSpan) wrongs.push([span(minD), 'down-vs-up']);
+  // 右下がりの 区間だけ down-vs-up（横ばい・右上がりは かたむきの 読みちがい）
+  if (minD !== k && minD !== highSpan)
+    wrongs.push([span(minD), diffs[minD]! < 0 ? 'down-vs-up' : 'slope-read']);
   for (const j of rng.shuffle(others)) wrongs.push([span(j), 'slope-read']);
   return {
     engine: 'graph',
@@ -188,7 +254,11 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
     objective: 'change',
     level,
     prompt: `${d.id === 'plant' || d.id === 'puppy' ? 'ふえ方' : '上がり方'}が いちばん 大きいのは、どこから どこまでの 間ですか。`,
-    hints: ['線の かたむきが 急な ところほど、変わり方が 大きいよ。', '右上がりで、いちばん 急な ところを さがそう。', 'となり どうしの 点の 高さの ちがいを くらべよう。'],
+    hints: [
+      '線の かたむきが 急な ところほど、変わり方が 大きいよ。',
+      '右上がりで、いちばん 急な ところを さがそう。',
+      'となり どうしの 点の 高さの ちがいを くらべよう。',
+    ],
     explain: `${span(k)}の 間が ${fmt(diffs[k]!)}${d.unit}で、いちばん 大きく ${d.id === 'plant' || d.id === 'puppy' ? 'ふえて' : '上がって'} います。線の かたむきが いちばん 急です。`,
     identity: `change:${d.id}:${vals.join(',')}`,
     alt: false,
@@ -199,7 +269,10 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
 
 /** 変わり方（上がる・下がる・変わらない）。alt: 文で 表した 変わり方に 合う グラフの 区間 */
 function trend(level: number, rng: Rng, alt: boolean): GraphItem {
-  const d = pick(rng, DATA.filter((x) => x.min === 0 && x.id !== 'plant' && x.id !== 'puppy' && x.id !== 'water'));
+  const d = pick(
+    rng,
+    DATA.filter((x) => x.min === 0 && x.id !== 'plant' && x.id !== 'puppy' && x.id !== 'water'),
+  );
   const vals = series(d, rng);
   const diffs = vals.slice(1).map((x, i) => x - vals[i]!);
   const j = rng.int(0, diffs.length - 1);
@@ -219,7 +292,11 @@ function trend(level: number, rng: Rng, alt: boolean): GraphItem {
       objective: 'trend',
       level,
       prompt: `温度が ${target === 'up' ? '上がって いる' : target === 'down' ? '下がって いる' : '変わらない'} 間は どれ？`,
-      hints: ['線が 右上がりなら 上がる、右下がりなら 下がる、横に まっすぐなら 変わらない。', '選たくしの 間の 線の 向きを 1つずつ 見よう。', '点の 高さを 2つ くらべても わかるよ。'],
+      hints: [
+        '線が 右上がりなら 上がる、右下がりなら 下がる、横に まっすぐなら 変わらない。',
+        '選たくしの 間の 線の 向きを 1つずつ 見よう。',
+        '点の 高さを 2つ くらべても わかるよ。',
+      ],
       explain: `${span(pickR.i)}の 間の 線は ${target === 'up' ? '右上がり' : target === 'down' ? '右下がり' : '横に まっすぐ'}です。`,
       identity: `trend-pick:${d.id}:${vals.join(',')}:${target}:${pickR.i}`,
       alt: true,
@@ -228,7 +305,9 @@ function trend(level: number, rng: Rng, alt: boolean): GraphItem {
         kind: 'choice',
         options: opts(
           span(pickR.i),
-          rng.sample(wrong, Math.min(3, wrong.length)).map((c) => [span(c.i), 'trend-read'] as [string, string]),
+          rng
+            .sample(wrong, Math.min(3, wrong.length))
+            .map((c) => [span(c.i), 'trend-read'] as [string, string]),
         ),
       },
     };
@@ -239,7 +318,11 @@ function trend(level: number, rng: Rng, alt: boolean): GraphItem {
     objective: 'trend',
     level,
     prompt: `${d.labels[j]}から ${d.labels[j + 1]}までの 温度の 変わり方は どれ？`,
-    hints: ['2つの 点を 結ぶ 線の 向きを 見よう。', '右上がりなら 上がる、右下がりなら 下がる、横なら 変わらない。', `${d.labels[j]}と ${d.labels[j + 1]}の 点の 高さを くらべよう。`],
+    hints: [
+      '2つの 点を 結ぶ 線の 向きを 見よう。',
+      '右上がりなら 上がる、右下がりなら 下がる、横なら 変わらない。',
+      `${d.labels[j]}と ${d.labels[j + 1]}の 点の 高さを くらべよう。`,
+    ],
     explain: `${d.labels[j]}は ${fmt(vals[j]!)}${d.unit}、${d.labels[j + 1]}は ${fmt(vals[j + 1]!)}${d.unit}。温度は ${w}。`,
     identity: `trend:${d.id}:${vals.join(',')}:${j}`,
     alt: false,
@@ -255,7 +338,10 @@ function trend(level: number, rng: Rng, alt: boolean): GraphItem {
 
 /** 点を 打って 折れ線グラフを かく（alt: まちがった 点を 1つ なおす） */
 function make(level: number, rng: Rng, alt: boolean): GraphItem {
-  const d = pick(rng, DATA.filter((x) => x.min === 0));
+  const d = pick(
+    rng,
+    DATA.filter((x) => x.min === 0),
+  );
   const vals = series(d, rng);
   const gd = graphData(d, vals);
   let initial: (number | null)[] | undefined;
@@ -273,8 +359,12 @@ function make(level: number, rng: Rng, alt: boolean): GraphItem {
       : '表の 数を 見て、点を 打って 折れ線グラフを かこう。',
     hints: [
       `たての じくの 1めもりは ${fmt(d.step)}${d.unit}だよ。`,
-      alt ? '表の 数と 点の 高さを 1つずつ くらべよう。' : `${d.labels[0]}は ${fmt(vals[0]!)}${d.unit}。その 高さに 点を 打とう。`,
-      alt ? 'ちがう 点を 正しい 高さに 動かそう。' : 'のこりも 表の 数の 高さに 点を 打とう。点は 自動で 線で 結ばれるよ。',
+      alt
+        ? '表の 数と 点の 高さを 1つずつ くらべよう。'
+        : `${d.labels[0]}は ${fmt(vals[0]!)}${d.unit}。その 高さに 点を 打とう。`,
+      alt
+        ? 'ちがう 点を 正しい 高さに 動かそう。'
+        : 'のこりも 表の 数の 高さに 点を 打とう。点は 自動で 線で 結ばれるよ。',
     ],
     explain: `${d.labels.map((l, i) => `${l} ${fmt(vals[i]!)}`).join('、')}の 高さに 点を 打って、線で 結びます。`,
     identity: `make:${d.id}:${vals.join(',')}${alt ? ':fix' : ''}`,
@@ -305,15 +395,30 @@ function twoFig(a: number[], b: number[], step: number, max: number): Figure {
   body += `<polyline points="${a.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" ${STROKE}/>`;
   body += `<polyline points="${b.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" ${STROKE} stroke-dasharray="7 5"/>`;
   a.forEach((v, i) => (body += `<circle cx="${X(i)}" cy="${Y(v)}" r="5" fill="var(--ink)"/>`));
-  b.forEach((v, i) => (body += `<rect x="${X(i) - 5}" y="${Y(v) - 5}" width="10" height="10" fill="var(--white)" ${STROKE}/>`));
+  b.forEach(
+    (v, i) =>
+      (body += `<rect x="${X(i) - 5}" y="${Y(v) - 5}" width="10" height="10" fill="var(--white)" ${STROKE}/>`),
+  );
   return svg(W, H, body, '2本の 折れ線グラフ');
 }
 
 /** 2本の 折れ線（alt: 折れ線グラフに 合う データを 選ぶ） */
 function two(level: number, rng: Rng, alt: boolean): ChoiceItem {
   if (alt) {
-    const right = pick(rng, ['1日の 気温の 変わり方', '1年間の 月ごとの 気温の 変わり方', '自分の 身長の 毎年の 変わり方', 'ヘチマの たけの 週ごとの のび方', '水を あたためた ときの 温度の 変わり方']);
-    const wrongPool = ['クラスで すきな くだものの 人数', '学年ごとの 図書館で かりた 本の 数', '町ごとの 小学生の 人数', 'すきな スポーツの 人数', '色ごとの 花の 本数'];
+    const right = pick(rng, [
+      '1日の 気温の 変わり方',
+      '1年間の 月ごとの 気温の 変わり方',
+      '自分の 身長の 毎年の 変わり方',
+      'ヘチマの たけの 週ごとの のび方',
+      '水を あたためた ときの 温度の 変わり方',
+    ]);
+    const wrongPool = [
+      'クラスで すきな くだものの 人数',
+      '学年ごとの 図書館で かりた 本の 数',
+      '町ごとの 小学生の 人数',
+      'すきな スポーツの 人数',
+      '色ごとの 花の 本数',
+    ];
     const ws = rng.sample(wrongPool, 3);
     return {
       engine: 'choice',
@@ -321,12 +426,19 @@ function two(level: number, rng: Rng, alt: boolean): ChoiceItem {
       objective: 'two',
       level,
       prompt: '折れ線グラフに 表すのに いちばん 合う ものは どれ？',
-      hints: ['折れ線グラフは、時間と ともに 変わる ようすを 表すのに 向いて いるよ。', '同じ ものを 時間を おって 調べた データは どれかな。', 'しゅるいごとの 数を くらべる ときは ぼうグラフが 向いて いるよ。'],
+      hints: [
+        '折れ線グラフは、時間と ともに 変わる ようすを 表すのに 向いて いるよ。',
+        '同じ ものを 時間を おって 調べた データは どれかな。',
+        'しゅるいごとの 数を くらべる ときは ぼうグラフが 向いて いるよ。',
+      ],
       explain: `「${right}」は 時間と ともに 変わる ようすなので、折れ線グラフが 合います。しゅるいごとの 数は ぼうグラフが 合います。`,
       identity: `two-kind:${right}:${[...ws].sort().join(',')}`,
       alt: true,
       layout: 'column',
-      options: opts(right, ws.map((x) => [x, 'graph-choice'])),
+      options: opts(
+        right,
+        ws.map((x) => [x, 'graph-choice']),
+      ),
     };
   }
   for (;;) {
@@ -350,9 +462,14 @@ function two(level: number, rng: Rng, alt: boolean): ChoiceItem {
       id: `two:${a.join(',')}:${b.join(',')}`,
       objective: 'two',
       level,
-      prompt: 'ア市（●と 実線）と イ市（■と 点線）の 1月〜6月の 気温を 1つの グラフに しました（れいの データ）。2つの 市の 気温の ちがいが いちばん 大きいのは 何月？',
+      prompt:
+        'ア市（●と 実線）と イ市（■と 点線）の 1月〜6月の 気温を 1つの グラフに しました（れいの データ）。2つの 市の 気温の ちがいが いちばん 大きいのは 何月？',
       figure: twoFig(a, b, 2, 28),
-      hints: ['2本の 線の 間が いちばん はなれて いる 月を さがそう。', '同じ 月の ●と ■の 高さの ちがいを くらべよう。', '線が 交わる ところは ちがいが 小さいよ。'],
+      hints: [
+        '2本の 線の 間が いちばん はなれて いる 月を さがそう。',
+        '同じ 月の ●と ■の 高さの ちがいを くらべよう。',
+        '線が 交わる ところは ちがいが 小さいよ。',
+      ],
       explain: `${k + 1}月は ア市 ${a[k]}度、イ市 ${b[k]}度で、ちがいが ${mx}度。2本の 線の 間が いちばん 広いです。`,
       identity: `two:${a.join(',')}:${b.join(',')}`,
       alt: false,
@@ -406,7 +523,8 @@ export const lineGraph: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'scale-one',
-      explain: '1めもりを 1と 読んだのかな。たての じくの 数字を 見て、1めもりの 大きさを たしかめよう。',
+      explain:
+        '1めもりを 1と 読んだのかな。たての じくの 数字を 見て、1めもりの 大きさを たしかめよう。',
     },
     {
       id: 'next-point',
@@ -414,11 +532,13 @@ export const lineGraph: UnitSpec = finishUnit({
     },
     {
       id: 'value-not-change',
-      explain: '数が いちばん 大きい ところと、変わり方が いちばん 大きい ところは ちがうよ。線の かたむきで 見よう。',
+      explain:
+        '数が いちばん 大きい ところと、変わり方が いちばん 大きい ところは ちがうよ。線の かたむきで 見よう。',
     },
     {
       id: 'down-vs-up',
-      explain: 'かたむきは 急でも、右下がりの 線は 下がって いるよ。上がり方を 聞かれたら 右上がりの 線を 見よう。',
+      explain:
+        'かたむきは 急でも、右下がりの 線は 下がって いるよ。上がり方を 聞かれたら 右上がりの 線を 見よう。',
     },
     {
       id: 'slope-read',
@@ -426,15 +546,18 @@ export const lineGraph: UnitSpec = finishUnit({
     },
     {
       id: 'trend-read',
-      explain: '線の 向きを たしかめよう。右上がりは 上がる、右下がりは 下がる、横に まっすぐは 変わらないだよ。',
+      explain:
+        '線の 向きを たしかめよう。右上がりは 上がる、右下がりは 下がる、横に まっすぐは 変わらないだよ。',
     },
     {
       id: 'two-gap',
-      explain: '2本の 線の 間の 広さを 見よう。同じ 月の 2つの 点の 高さの ちがいが 大きい ほど、間が 広いよ。',
+      explain:
+        '2本の 線の 間の 広さを 見よう。同じ 月の 2つの 点の 高さの ちがいが 大きい ほど、間が 広いよ。',
     },
     {
       id: 'graph-choice',
-      explain: 'しゅるいごとの 数を くらべる ときは ぼうグラフ、時間と ともに 変わる ようすは 折れ線グラフが 向いて いるよ。',
+      explain:
+        'しゅるいごとの 数を くらべる ときは ぼうグラフ、時間と ともに 変わる ようすは 折れ線グラフが 向いて いるよ。',
     },
   ],
   levels: [
@@ -445,7 +568,13 @@ export const lineGraph: UnitSpec = finishUnit({
   intro: [
     {
       text: '時間と ともに 変わる ようすは、折れ線グラフに 表すと わかりやすいです。',
-      figure: { kind: 'line', labels: ['9時', '10時', '11時', '12時', '13時'], values: [14, 16, 20, 22, 21], scaleStep: 2, unit: '度' },
+      figure: {
+        kind: 'line',
+        labels: ['9時', '10時', '11時', '12時', '13時'],
+        values: [14, 16, 20, 22, 21],
+        scaleStep: 2,
+        unit: '度',
+      },
     },
     {
       text: '線の かたむきが 急な ほど、変わり方が 大きい。右上がりは 上がって いる、右下がりは 下がって いる、横は 変わらない ことを 表します。',
@@ -462,6 +591,7 @@ export const lineGraph: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateLineGraph(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第4学年 D(1) データの分類整理（折れ線グラフ、変化の様子の読み取り）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第4学年 D(1) データの分類整理（折れ線グラフ、変化の様子の読み取り）',
   revised: REVISED,
 });

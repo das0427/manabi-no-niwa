@@ -50,7 +50,11 @@ export function backupFileName(now = new Date()): string {
 
 /** Blob と <a download> でファイルとして保存する */
 export function downloadText(text: string, fileName: string): number {
-  const blob = new Blob([text], { type: 'application/json' });
+  return downloadBlob(new Blob([text], { type: 'application/json' }), fileName);
+}
+
+/** Blob をファイルとして保存させる（端末内。外部へ送らない） */
+export function downloadBlob(blob: Blob, fileName: string): number {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

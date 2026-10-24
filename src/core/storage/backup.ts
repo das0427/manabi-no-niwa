@@ -294,17 +294,25 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
 export async function exportBackup(
   scope: { kind: 'all' } | { kind: 'profile'; profileId: string },
   appVersion: string,
+  /** artworks: false でおえかきの作品を入れない（大きいときは作品を zip に分ける。コードレビュー #5） */
+  opts: { artworks?: boolean } = {},
 ): Promise<BackupFile> {
+  const withArt = opts.artworks !== false;
   return strict(async () => {
     const names = DATA_KEYS.map((k) => STORE[k]);
     const raw = await runTx([...names], 'readonly', async (tx) => {
       const out: Record<string, unknown[]> = {};
-      for (const k of DATA_KEYS) out[k] = await r<unknown[]>(tx.objectStore(STORE[k]).getAll());
+      for (const k of DATA_KEYS) {
+        if (!withArt && (k === 'artworks' || k === 'artworkBlobs')) out[k] = [];
+        else out[k] = await r<unknown[]>(tx.objectStore(STORE[k]).getAll());
+      }
       return out;
     });
     // 画像は transaction の外で data URL にする（transaction 内で IndexedDB 以外を待つと自動で閉じる）
+    // プロフィール1人分の書き出しでは、その人の画像だけを変換する
     const blobs: ArtworkBlobFile[] = [];
     for (const b of raw.artworkBlobs as ArtworkBlobRecord[]) {
+      if (scope.kind === 'profile' && b.profileId !== scope.profileId) continue;
       blobs.push({
         key: b.key,
         artId: b.artId,

@@ -7,6 +7,7 @@ import { ConfirmDialog, Note, Section } from './ui';
 import {
   APP_VERSION,
   backupFileName,
+  downloadBlob,
   downloadText,
   formatBytes,
   formatIso,
@@ -34,6 +35,7 @@ export function DataTab() {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [confirmReplace, setConfirmReplace] = useState(false);
   const [persistMsg, setPersistMsg] = useState('');
+  const [artMsg, setArtMsg] = useState('');
   const health = useHealth();
   const loadStorage = useCallback(() => db.estimateStorage(), []);
   const { data: storage, reload: reloadStorage } = useLoad(loadStorage);
@@ -41,15 +43,34 @@ export function DataTab() {
   const doExport = async (scope: 'all' | 'profile'): Promise<void> => {
     setWarn('');
     try {
-      const file = await db.exportBackup(
+      const target =
         scope === 'all' || !app.profile
-          ? { kind: 'all' }
-          : { kind: 'profile', profileId: app.profile.id },
-        APP_VERSION,
-      );
+          ? ({ kind: 'all' } as const)
+          : ({ kind: 'profile', profileId: app.profile.id } as const);
+      let file = await db.exportBackup(target, APP_VERSION);
+      let text = JSON.stringify(file);
+      // 読み込みの上限（50MB）を超える大きさなら、おえかきの作品を外して、作品はプロフィールごとの zip に分ける
+      // （書き出せるが読み込めないファイルを作らない: コードレビュー #5、review-1 #16）
+      let zipped: string[] = [];
+      if (text.length > MAX_IMPORT_BYTES) {
+        file = await db.exportBackup(target, APP_VERSION, { artworks: false });
+        text = JSON.stringify(file);
+        const { exportArtworksZip } = await import('../drawing/index');
+        for (const p of file.data.profiles) {
+          const blob = await exportArtworksZip(p.id);
+          const zipName = `artworks-${p.name}-${backupFileName().replace(/\.json$/, '')}.zip`;
+          downloadBlob(blob, zipName);
+          zipped = [...zipped, zipName];
+        }
+      }
       const name = backupFileName();
-      const size = downloadText(JSON.stringify(file), name);
-      setMsg(`${name} を書き出しました（${formatBytes(size)}）。`);
+      const size = downloadText(text, name);
+      setMsg(
+        `${name} を書き出しました（${formatBytes(size)}）。` +
+          (zipped.length
+            ? `ファイルが大きいため、おえかきの作品は別のファイル（${zipped.join('、')}）に分けました。作品は「おえかきの作品を読み込む」で戻せます。`
+            : ''),
+      );
       if (size > WARN_BYTES) {
         setWarn(
           `ファイルが ${formatBytes(size)} あり、読み込みの上限（50MB）に近づいています。プロフィールごとに書き出す、または不要な作品を削除してください。`,
@@ -222,6 +243,53 @@ export function DataTab() {
             </Note>
           </div>
         ) : null}
+      </Section>
+
+      <Section title="おえかきの作品">
+        <div className="p-row">
+          <button
+            type="button"
+            disabled={!app.profile}
+            data-testid="art-export"
+            onClick={() => {
+              void (async () => {
+                if (!app.profile) return;
+                const { exportArtworksZip } = await import('../drawing/index');
+                const name = `artworks-${app.profile.name}-${backupFileName().replace(/\.json$/, '')}.zip`;
+                const size = downloadBlob(await exportArtworksZip(app.profile.id), name);
+                setArtMsg(`${name} を書き出しました（${formatBytes(size)}）。`);
+              })();
+            }}
+          >
+            「{app.profile?.name}」の作品を書き出す（.zip）
+          </button>
+        </div>
+        <label className="p-field">
+          おえかきの作品を読み込む（.zip。「{app.profile?.name}」の作品として追加します）
+          <input
+            type="file"
+            accept=".zip,application/zip"
+            data-testid="art-import"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (!f || !app.profile) return;
+              void (async () => {
+                const { importArtworksZip } = await import('../drawing/index');
+                const r = await importArtworksZip(f, app.profile!.id);
+                setArtMsg(r.ok ? `作品を ${r.added} 点 追加しました。` : r.reason);
+              })();
+            }}
+          />
+        </label>
+        {artMsg ? (
+          <p role="status" data-testid="art-message">
+            {artMsg}
+          </p>
+        ) : null}
+        <Note>
+          作品が多いと記録の書き出しが大きくなるため、作品はここから別のファイルに書き出せます（読み込みは500MBまで）。
+        </Note>
       </Section>
 
       <Section title="保存の状態">

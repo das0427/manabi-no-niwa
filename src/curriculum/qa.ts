@@ -55,6 +55,8 @@ const NON_TEXT_KEYS = new Set([
   'shape',
   'tone',
   'layout',
+  // trace の書く字（1字。ふりがなを付けられない・読み上げない）
+  'char',
 ]);
 
 /**

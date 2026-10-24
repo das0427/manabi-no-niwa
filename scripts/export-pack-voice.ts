@@ -30,6 +30,7 @@ const SKIP_KEYS = new Set([
   'key',
   'svg',
   'markup',
+  'char',
 ]);
 
 export function collectTexts(x: unknown, out: Set<string>, key = ''): void {

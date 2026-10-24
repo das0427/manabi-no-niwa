@@ -49,4 +49,22 @@
 - 2〜3歳: カードを `ux.maxChoices` に減らし、置き終わると自動で答える。2歳段階は誤答の「？」を出さない。
 - 幼児（`ctx.preschool`）: カードを押すと名前を読み上げる（読み上げ設定が off なら読まない）。
 
-<!-- 算数の図・量（clock, measure, numberline, graph, geometry）と、聞く・読む・書く・手順（listen, reading, trace, explain, program）は担当の完了後に統括が追記する -->
+## listen（聞いて選ぶ）
+- `audio: { text, key? } | { text, key? }[]`（`text` は鳴らす文。ふだん画面に出さず、正答を見せるときだけ出す。`hideTranscript: true` で出さない）。`key` を省くと教材の音声（`voice:packs` で生成）。**英字を含む文は `key` 必須**（英語の mp3 を `public/audio/<packId>/en/...` に用意。Kokoro）。`gapMs`（複数の音の間。既定 500）。
+- `options` 等は choice と同じ。最初の再生が終わるまで選べない（curriculum-matrix 1.7）。
+
+## reading（読解）
+- `passage: { id, genre: 'story'|'explain'|'record'|'letter'|'poem'|'chart', title?, paragraphs: RichText[][], numbered?, figure? }`（同じ本文を複数の設問で使い回す）。
+- `aspect: 'order'|'character'|'main-sentence'|'gist'|'detail'|'reason'|'feeling'`、`hintFocus: ({ p, s? } | null)[]`（ヒントの段ごとに本文の囲む場所。1始まり）、`evidence`（正答時に下線）。選択肢は choice と同じ。
+
+## trace（書く）
+- `char`（1字）、`mode: 'trace'`（書き順でなぞる。v1 と同じ判定）/`'free'`（自由に書いてお手本と見比べる。**採点しない**）/`'trace-free'`。かな・配当漢字は書き順データを自動で引く。英字は `'free'` だけ。
+- `tolerance?`（既定: 幼児 90・小学生のかな 75・1年の漢字 90・2〜6年の漢字 75）、`misconceptionIds?: { order?, direction? }`。
+
+## explain（かいてみよう。採点しない）
+- `canvas?: { aspect?, guide?: 'none'|'cross'|'lines', colors? }`、`reasons?: { label?, figure? }[]`、`multiReasons?`、`require?: { drawing?, reason? }`。常に正解（求めたものが空のときだけ「もう一度」）。
+
+## program（てじゅん）
+- `grid: { w, h, walls? }`（2〜8）、`start: { at: [x,y], dir }`、`goal: [x,y]`、`palette`（小学生: `forward`/`turnRight`/`turnLeft`、幼児: `up`/`down`/`left`/`right`、混ぜない。ほかに `repeat`/`if`）、`solution`（正答の例・必須）、`initial?`（デバッグ問題の誤った列）、`maxCards?`、`repeatTimes?`、`conds?: ('wall-ahead'|'open-ahead')[]`、`misconceptionIds?: { bump, short, turn, repeatCount, tooMany }`、絵 `character`/`goalIllust`/`wallIllust`。
+
+<!-- 算数の図・量（clock, measure, numberline, graph, geometry）は担当の完了後に統括が追記する -->

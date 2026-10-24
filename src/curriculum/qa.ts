@@ -40,11 +40,48 @@ export interface UnitReport {
   genericWrongShare: number;
 }
 
-function textsOf(it: Item): string[] {
-  const t = [it.prompt, it.explain, ...it.hints];
-  if (it.engine === 'choice') for (const o of it.options) if (o.label) t.push(o.label);
-  if (it.engine === 'number') for (const f of it.fields) if (f.label) t.push(f.label);
-  return t;
+/** 文として扱わない項目（ID・キー・絵の名前・SVG・ローマ字の答えなど） */
+const NON_TEXT_KEYS = new Set([
+  'id',
+  'identity',
+  'engine',
+  'objective',
+  'misconception',
+  'icon',
+  'key',
+  'svg',
+  'markup',
+  'kind',
+  'shape',
+  'tone',
+  'layout',
+]);
+
+/**
+ * 問題データの中の文を全部（エンジンの項目名に頼らない。どのエンジンでも漏れなく検査するため）。
+ * かな・漢字を含む文字列だけを文とみなす。
+ */
+export function textsOf(x: unknown, out: string[] = [], key = ''): string[] {
+  if (typeof x === 'string') {
+    if (!NON_TEXT_KEYS.has(key) && /[ぁ-ゖァ-ヺ一-鿿]/.test(x)) out.push(x);
+  } else if (Array.isArray(x)) {
+    for (const v of x) textsOf(v, out, key);
+  } else if (x && typeof x === 'object') {
+    for (const [k, v] of Object.entries(x)) if (typeof v !== 'function') textsOf(v, out, k);
+  }
+  return out;
+}
+
+/** 問題データの中の誤概念IDを全部（項目名 misconception / reverseMisconception） */
+export function misconceptionIdsOf(x: unknown, out: string[] = [], key = ''): string[] {
+  if (typeof x === 'string') {
+    if (key === 'misconception' || key === 'reverseMisconception') out.push(x);
+  } else if (Array.isArray(x)) {
+    for (const v of x) misconceptionIdsOf(v, out, key);
+  } else if (x && typeof x === 'object') {
+    for (const [k, v] of Object.entries(x)) misconceptionIdsOf(v, out, k);
+  }
+  return out;
 }
 
 /** 生成器なら seed 0..SEED_COUNT-1 × 各段階で生成した問題、手作りならその一覧 */
@@ -138,17 +175,16 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     for (const t of textsOf(it))
       for (const k of findBareKanji(t)) itemErr(`よみの無い漢字「${k}」`);
     for (const m of engineOf(it).check(it)) itemErr(m);
+    // 誤概念IDが定義にあるか（全エンジン共通）
+    for (const m of misconceptionIdsOf(it)) if (!misIds.has(m)) itemErr(`誤概念 ${m} が定義に無い`);
+    // 汎用の誤答応答の割合（誤りの選択肢を持つ choice で数える）
     if (it.engine === 'choice') {
       for (const o of it.options) {
         if (o.correct) continue;
         wrongOpts++;
         if (!o.misconception) genericWrong++;
-        else if (!misIds.has(o.misconception)) itemErr(`誤概念 ${o.misconception} が定義に無い`);
       }
     }
-    if (it.engine === 'number')
-      for (const w of it.wrongAnswers ?? [])
-        if (!misIds.has(w.misconception)) itemErr(`誤概念 ${w.misconception} が定義に無い`);
     keyCount.set(it.identity, (keyCount.get(it.identity) ?? 0) + 1);
     const o = perObj.get(it.objective) ?? { keys: new Set(), alt: new Set() };
     (it.alt ? o.alt : o.keys).add(it.identity);

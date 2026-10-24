@@ -4,14 +4,33 @@
  */
 import { numberReading, spokenReading } from './rich';
 
-/** 記号の読み */
+/**
+ * 記号の読み。文全体にかける（数字で切る前に。切った後では「−」の前後が分からない: review コード #1）。
+ * 「−」「－」は小学校の範囲では常に「ひく」（負の数を扱わない）。ASCII の「-」は数字にはさまれたときだけ。
+ */
 const SYMBOLS: [RegExp, string][] = [
+  [/□|{{}}/g, ' なに '],
   [/[＋+]/g, ' たす '],
-  [/[−\-－](?=\s*\d)/g, ' ひく '],
+  [/[−－]/g, ' ひく '],
+  [/(?<=\d\s*)-(?=\s*\d)/g, ' ひく '],
   [/[×✕]/g, ' かける '],
   [/[÷]/g, ' わる '],
   [/[＝=]/g, ' は '],
-  [/□|{{}}/g, ' なに '],
+];
+
+/** 「ひとつ」〜「とお」 */
+const TSU = [
+  '',
+  'ひとつ',
+  'ふたつ',
+  'みっつ',
+  'よっつ',
+  'いつつ',
+  'むっつ',
+  'ななつ',
+  'やっつ',
+  'ここのつ',
+  'とお',
 ];
 
 type Rule = (n: number) => string | null;
@@ -65,6 +84,9 @@ const COUNTERS: Record<string, { base: string; rule: Rule }> = {
   だい: { base: 'だい', rule: () => null },
   じ: { base: 'じ', rule: (d) => ({ 4: 'よじ', 7: 'しちじ', 9: 'くじ' })[d] ?? null },
   えん: { base: 'えん', rule: (d) => ({ 4: 'よえん' })[d] ?? null },
+  ばんめ: { base: 'ばんめ', rule: () => null },
+  // 「つ」は counterReading で特別に扱う（ひとつ〜とお）
+  つ: { base: 'つ', rule: () => null },
 };
 /** 助数詞の一覧（長いものから。音声の部品分けにも使う） */
 export const COUNTER_NAMES: string[] = Object.keys(COUNTERS).sort((a, b) => b.length - a.length);
@@ -78,6 +100,8 @@ const COUNTER_RE = new RegExp(
 
 /** 数＋助数詞の読み（例 1こ → いっこ、23びき → にじゅうさんびき、10ぷん → じゅっぷん） */
 export function counterReading(n: number, counter: string): string {
+  // ひとつ〜とお（11以上は「〜こ」と読むのがふつう）
+  if (counter === 'つ') return n >= 1 && n <= 10 ? TSU[n]! : counterReading(n, 'こ');
   const c = COUNTERS[counter];
   if (!c) return numberReading(n) + counter;
   // 1〜10 は表、11以上は「上の位の読み」＋最後の位の変化
@@ -96,11 +120,28 @@ export function counterReading(n: number, counter: string): string {
   return headRead + (special ?? numberReading(tail) + c.base);
 }
 
+/**
+ * 読み上げの前処理: 《よみ》・分数（「よんぶんの さん」）・記号を読みに変える。数字はそのまま残す
+ * （音声の部品分けは、この後に数字で切る: src/voice/speech.ts）。
+ */
+export function preSpeech(rich: string): string {
+  let s = spokenReading(rich);
+  for (const [re, rep] of SYMBOLS) s = s.replace(re, rep);
+  return s;
+}
+
+/** 空白と改行を整える */
+export function tidyYomi(s: string): string {
+  return s
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n+/g, '。')
+    .trim();
+}
+
 /** 画面の文（RichText）→ 読み上げのよみ（ひらがな） */
 export function speechYomi(rich: string): string {
-  let s = spokenReading(rich);
+  let s = preSpeech(rich);
   s = s.replace(COUNTER_RE, (_, d: string, ctr: string) => counterReading(Number(d), ctr));
-  for (const [re, rep] of SYMBOLS) s = s.replace(re, rep);
   s = s.replace(/\d+(\.\d+)?/g, (m) => {
     if (m.includes('.')) {
       const [i, f] = m.split('.');
@@ -108,8 +149,5 @@ export function speechYomi(rich: string): string {
     }
     return numberReading(Number(m));
   });
-  return s
-    .replace(/[ \t]+/g, ' ')
-    .replace(/\n+/g, '。')
-    .trim();
+  return tidyYomi(s);
 }

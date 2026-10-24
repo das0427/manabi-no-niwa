@@ -41,6 +41,33 @@ describe('文の部品分け', () => {
     ]);
     expect(p[1]!.key.startsWith('num/')).toBe(true);
   });
+  it('ひく・分数・〜つ を落とさない（レビュー #1 の回帰）', () => {
+    expect(speechParts('g1-math', '7−2 は いくつ？').map((x) => x.yomi)).toEqual([
+      'なな',
+      'ひく',
+      'に',
+      'は いくつ？',
+    ]);
+    expect(speechParts('g1-math', '7 − 3 ＝ 4').map((x) => x.yomi)).toEqual([
+      'なな',
+      'ひく',
+      'さん',
+      'は',
+      'よん',
+    ]);
+    expect(speechParts('g3-math', '大《おお》きい[[1/2]]').map((x) => x.yomi)).toEqual([
+      'おおきいにぶんの いち',
+    ]);
+    expect(speechParts('g1-math', 'りんごが 3つ あります。').map((x) => x.yomi)).toEqual([
+      'りんごが',
+      'みっつ',
+      'あります。',
+    ]);
+    expect(speechParts('g1-math', 'まえから 3ばんめ').map((x) => x.yomi)).toEqual([
+      'まえから',
+      'さんばんめ',
+    ]);
+  });
   it('同じ言い回しは数が違っても同じキー（台本が増えない）', () => {
     const a = speechParts('g1-math', '3 ＋ 5 ＝ {{}}').map((x) => x.key);
     const b = speechParts('g1-math', '4 ＋ 2 ＝ {{}}').map((x) => x.key);

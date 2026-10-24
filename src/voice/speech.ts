@@ -7,7 +7,7 @@
  * 生成スクリプト（scripts/voice）も同じ関数で台本を作るので、表示と音声がずれない。
  */
 import { numberReading } from '../text/rich';
-import { counterReading, COUNTER_NAMES, speechYomi } from '../text/yomi';
+import { counterReading, COUNTER_NAMES, preSpeech, speechYomi, tidyYomi } from '../text/yomi';
 import { yomiHash } from './hash';
 
 export interface SpeechPart {
@@ -58,12 +58,15 @@ export function decimalParts(s: string): string[] {
  * 数字の直後の助数詞は数の部品に含める（「1こ」→「いっこ」）。
  */
 export function speechParts(packId: string, rich: string): SpeechPart[] {
-  const yomiAll = speechYomi(rich);
-  if (!/\d/.test(rich))
+  // 記号・ふりがな・分数を先に読みに変え（数字は残す）、そのあと数字で切る
+  const pre = preSpeech(rich);
+  if (!/\d/.test(pre)) {
+    const yomiAll = speechYomi(rich);
     return [{ key: `${packId}/${yomiHash(yomiAll)}`, yomi: yomiAll, text: rich }];
+  }
   const out: SpeechPart[] = [];
   const counterRe = new RegExp(`^\\s*(${COUNTER_NAMES.join('|')})`);
-  let rest = rich;
+  let rest = pre;
   while (rest.length > 0) {
     const m = DIGITS.exec(rest);
     if (!m) {
@@ -81,8 +84,9 @@ export function speechParts(packId: string, rich: string): SpeechPart[] {
   return out;
 }
 
+/** 前処理済みの断片（数字を含まない読み）を言い回しの部品にする */
 function pushText(out: SpeechPart[], packId: string, s: string): void {
-  const yomi = speechYomi(s).trim();
+  const yomi = tidyYomi(s);
   // 句読点・記号だけの部品は読まない（音が空になる）
   if (!/[ぁ-ゖァ-ヺ一-鿿A-Za-z]/.test(yomi)) return;
   out.push({ key: `${packId}/${yomiHash(yomi)}`, yomi, text: s.trim() });

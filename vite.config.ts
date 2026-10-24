@@ -2,6 +2,13 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { packChunkName, precachePlugin } from './scripts/vite-plugin-precache.ts';
 
+/** パックが値として import してよい本体のモジュール（check-packs でも検査） */
+const PACK_RUNTIME = ['/src/core/util/rng.ts', '/src/text/kanji-grades.ts', '/src/text/rich.ts'];
+function packRuntimeName(id: string): string | null {
+  const p = id.replace(/\\/g, '/').split('?')[0] ?? '';
+  return PACK_RUNTIME.some((m) => p.endsWith(m)) ? 'pack-runtime' : null;
+}
+
 /**
  * 見本の教材パック（src/packs/_sample-*）をビルドに入れるか。E2E 用のビルドだけで '1' にする。
  * 既定（未設定）の本番ビルドには入らず、dist/packs.json にも出ない（docs/expansion/architecture.md 6章）。
@@ -22,8 +29,19 @@ export default defineConfig({
       output: {
         // 教材パックを assets/packs/<packId>/ のチャンクに閉じ込める（R#5。旧 manualChunks）
         codeSplitting: {
-          groups: [{ name: packChunkName, priority: 100 }],
+          groups: [
+            { name: packChunkName, priority: 100 },
+            // パックが値として使う本体の小さな部品（乱数・漢字の学年表・RichText）を固定名のチャンクに
+            // まとめる。本体を更新してもパックの import 先の名前が変わらず、パックの版（packs.json の hash）が
+            // 変わらない（コードレビュー #2: 更新のたびに全パックが outdated になるのを防ぐ）
+            { name: packRuntimeName, priority: 90 },
+          ],
         },
+        // パックと pack-runtime はファイル名に hash を付けない（版は packs.json の内容 hash で管理する）
+        chunkFileNames: (chunk) =>
+          chunk.name === 'pack-runtime' || chunk.name.startsWith('packs/')
+            ? 'assets/[name].js'
+            : 'assets/[name]-[hash].js',
       },
     },
   },

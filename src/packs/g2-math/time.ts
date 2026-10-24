@@ -34,6 +34,8 @@ function read(level: number, rng: Rng, alt: boolean): ClockItem {
   while (m % 5 === 0 && rng.next() < 0.5);
   const t = { h, m };
   const near = Math.floor(m / 5) * 5;
+  // 0ふん の めもりは「すうじ 12の めもり」と いう
+  const nearMark = near === 0 ? 'すうじ 12の めもり' : `${near}${fun(near)}の めもり`;
   if (alt)
     return {
       engine: 'clock',
@@ -45,7 +47,7 @@ function read(level: number, rng: Rng, alt: boolean): ClockItem {
         'ながい はりは「ふん」、みじかい はりは「じ」だよ。',
         m === near
           ? `ながい はりを すうじ ${m / 5 === 0 ? 12 : m / 5}の ところへ。`
-          : `ながい はりを ${near}${fun(near)}の ところから ${m - near}めもり すすめよう。`,
+          : `ながい はりを ${nearMark}から ${m - near}めもり すすめよう。`,
         `みじかい はりは ${h}と ${h === 12 ? 1 : h + 1}の あいだ。`,
       ],
       explain: `ながい はりが ${m}${fun(m)}、みじかい はりが ${h}と ${h === 12 ? 1 : h + 1}の あいだで ${tt(t)}です。`,
@@ -63,8 +65,13 @@ function read(level: number, rng: Rng, alt: boolean): ClockItem {
     prompt: 'なんじ なんぷん？',
     hints: [
       'みじかい はりで「なんじ」、ながい はりで「なんぷん」を よもう。',
-      `ながい はりは ${near}${fun(near)}の めもりから すこし すすんで いるよ。`,
-      `${near}${fun(near)}から ちいさい めもりを 1つずつ かぞえよう。`,
+      // 5ふん きざみ ちょうどの ときに「すこし すすんで いる」と 言わない
+      m === near
+        ? `ながい はりは すうじの ところに あるよ。すうじ 1つで 5ふん。`
+        : `ながい はりは ${nearMark}から すこし すすんで いるよ。`,
+      m === near
+        ? '12から すうじを 1つ すすむごとに 5ふんずつ ふやして かぞえよう。'
+        : `${nearMark}から ちいさい めもりを 1つずつ かぞえよう。`,
     ],
     explain: `みじかい はりは ${h}を すぎた ところ、ながい はりは ${m}${fun(m)}。${tt(t)}です。`,
     identity: `read:${h}:${m}`,
@@ -103,7 +110,9 @@ function after(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
       hints: [
         'ながい はりを ぎゃくに まわして かんがえよう。',
         borrow
-          ? `${tt(t)}から ${m}${fun(m)} もどると ${h}じ ちょうど。`
+          ? m === 0
+            ? `${h}じ ちょうどから もどると、じは ${h}じより まえに なるよ。`
+            : `${tt(t)}から ${m}${fun(m)} もどると ${h}じ ちょうど。`
           : `${m}${fun(m)}から ${d}${fun(d)} もどすと…`,
         borrow ? `${h}じから あと ${d - m}${fun(d - m)} もどると？` : `じは ${h}じの まま。`,
       ],
@@ -125,15 +134,18 @@ function after(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
     prompt: `${tt(t)}の ${d}${fun(d)}ごは なんじ なんぷん？`,
     hints: [
       'おびの したの とけいで、ながい はりを すすめて かんがえよう。',
-      m + d >= 60
+      // m ＋ d が ちょうど 60 の ときは「h+1じ ちょうど」が 答えなので 2段目で 言わない
+      m + d > 60
         ? `${tt(t)}から ${60 - m}${fun(60 - m)}で ${h + 1}じ ちょうど。`
-        : `${m}${fun(m)}から ${d}${fun(d)} すすむと…`,
-      m + d >= 60
+        : `${m === 0 ? `${h}じ ちょうど` : `${m}${fun(m)}`}から ${d}${fun(d)} すすむと…`,
+      m + d > 60
         ? `${h + 1}じから あと ${m + d - 60}${fun(m + d - 60)} すすむと？`
-        : `じは ${h}じの まま。`,
+        : m + d === 60
+          ? 'ながい はりが 12に きたら、じが 1 ふえるよ。'
+          : `じは ${h}じの まま。`,
     ],
     explain:
-      m + d >= 60
+      m + d > 60
         ? `${tt(t)}から ${60 - m}${fun(60 - m)}で ${h + 1}じ。あと ${m + d - 60}${fun(m + d - 60)}で ${tt(e)}です。60ぷんで 1じかん すすむよ。`
         : `${tt(t)}から ${d}${fun(d)} すすんで ${tt(e)}です。`,
     identity: `after:${h}:${m}+${d}`,
@@ -164,17 +176,18 @@ function duration(level: number, rng: Rng, alt: boolean): ClockItem {
       : `${tt(t)}から ${tt(e)}までの じかんは なんぷん？`,
     hints: [
       'はじめの とけいから おわりの とけいまで、ながい はりが どれだけ うごいたかな。',
-      m + d >= 60 && m !== 0
+      // おわりが ちょうど h+1じ（m ＋ d ＝ 60）の ときは、2段目が 答えに なるので わけない
+      m + d > 60 && m !== 0
         ? `${tt(t)}から ${h + 1}じまでで ${60 - m}${fun(60 - m)}。`
         : '5ふんずつ かぞえよう。',
       alt
         ? '60ぷんで 1じかん。60ぷんより おおい ぶんが のこりの ふん。'
-        : m + d >= 60 && m !== 0
+        : m + d > 60 && m !== 0
           ? `${h + 1}じから ${tt(e)}までは？`
           : 'ながい はりの めもりの すうじを くらべよう。',
     ],
     explain: alt
-      ? `${d}ぷん ＝ 1じかん${d - 60 === 0 ? '' : `${d - 60}${fun(d - 60)}`}。60ぷんで 1じかん です。`
+      ? `${d}${fun(d)} ＝ ${Math.floor(d / 60)}じかん${d % 60 === 0 ? '' : `${d % 60}${fun(d % 60)}`}。60ぷんで 1じかん です。`
       : `${tt(t)}から ${tt(e)}までは ${d}${fun(d)}です。`,
     identity: `duration:${h}:${m}+${d}`,
     alt,
@@ -302,11 +315,22 @@ function units(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
     prompt: q.q,
     figure: { kind: 'clock', h: 12, m: 0 },
     fields: [{ answer: { kind: 'int', value: q.a } }],
-    hints: [
-      'とけいの みじかい はりは、1にちに 2かい まわるよ。',
-      'ごぜん 12じかん、ごご 12じかん。1じかんは 60ぷん。',
-      'たして（かけて）かんがえよう。',
-    ],
+    // 問いに あう ヒントに する（かけ算は まだ 習って いないので「たして」）
+    hints: q.id.startsWith('hour')
+      ? [
+          'ながい はりが 1しゅう すると 1じかん。',
+          '1じかんは 60ぷん だよ。',
+          q.id === 'hour'
+            ? 'ながい はりは 1しゅうで なんぷん すすむかな。'
+            : '60ぷんを じかんの かずだけ たそう。',
+        ]
+      : [
+          'とけいの みじかい はりは、1にちに 2かい まわるよ。',
+          'ごぜんも ごごも、みじかい はりが 1しゅう する あいだ。',
+          q.id === 'day2'
+            ? '1にちの じかんを 2かい たそう。'
+            : 'みじかい はりが 1しゅうで なんじかん かな。',
+        ],
     explain: `1にち ＝ 24じかん（ごぜん 12じかん・ごご 12じかん）、1じかん ＝ 60ぷん。こたえは ${q.a}です。`,
     identity: `units:${q.id}`,
     alt: false,
@@ -321,13 +345,24 @@ function units(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
 /** ごぜん・ごごを つけて 時刻を いう */
 function ampm(level: number, rng: Rng, alt: boolean): ClockItem | ChoiceItem {
   const pm = rng.next() < 0.5;
-  const h = rng.int(1, 11);
+  // 場面と 時刻が 合うように、場面ごとに ありそうな 時（1〜11）の はんいを きめる
+  const scenes: [string, number, number][] = pm
+    ? [
+        ['おやつを たべた', 2, 4],
+        ['こうえんで あそんだ', 1, 5],
+        ['ゆうごはんを たべた', 6, 8],
+        ['おふろに はいった', 6, 9],
+      ]
+    : [
+        ['おきた', 5, 8],
+        ['がっこうに ついた', 7, 8],
+        ['あさごはんを たべた', 6, 8],
+        ['じゅぎょうが はじまった', 8, 11],
+      ];
+  const [sc, lo, hi] = scenes[rng.int(0, 3)]!;
+  const h = rng.int(lo, hi);
   const m = rng.int(0, 11) * 5;
   const H = pm ? h + 12 : h;
-  const scenes = pm
-    ? ['おやつを たべた', 'こうえんで あそんだ', 'ゆうごはんを たべた', 'おふろに はいった']
-    : ['おきた', 'がっこうに ついた', 'あさごはんを たべた', 'じゅぎょうが はじまった'];
-  const sc = scenes[rng.int(0, 3)]!;
   if (alt) {
     // 時刻の言い方を 選ぶ
     return {

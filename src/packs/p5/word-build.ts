@@ -125,6 +125,8 @@ function buildItem(word: string, illust: string | null): BuildItem {
   const si = di >= 0 ? di : cs.findIndex((c) => SIMILAR[c] && !cs.includes(SIMILAR[c]!));
   const trap = si >= 0 ? (di >= 0 ? plain(cs[si]!) : SIMILAR[cs[si]!]!) : null;
   const wrongValue = trap !== null ? cs.map((c, i) => (i === si ? trap : c)).join('') : null;
+  // 「か」→「が」のように 点の有無だけが ちがう 誤りは、形の誤りでなく 濁音の誤り
+  const dakutenTrap = trap !== null && plain(trap) === plain(cs[si]!);
   const extra = mix(
     `fill:${word}`,
     [...FILL].filter((c) => !cs.includes(c) && c !== trap),
@@ -145,7 +147,7 @@ function buildItem(word: string, illust: string | null): BuildItem {
     ...(wrongValue
       ? {
           wrongAnswers: [
-            { value: wrongValue, misconception: di >= 0 ? 'dakuten' : 'similar-shape' },
+            { value: wrongValue, misconception: dakutenTrap ? 'dakuten' : 'similar-shape' },
           ],
         }
       : {}),
@@ -153,7 +155,7 @@ function buildItem(word: string, illust: string | null): BuildItem {
       illust
         ? 'なまえを ゆっくり いって、はじめの おとを さがそう。'
         : 'ひだりの じから じゅんに さがそう。',
-      `はじめの じは「${cs[0]}」。${di >= 0 ? '「てんてん」や「まる」も よく みよう。' : ''}`,
+      `はじめの じは「${cs[0]}」。${dakutenTrap ? '「てんてん」や「まる」も よく みよう。' : ''}`,
     ],
     explain: `${cs.join('・')} で「${word}」。`,
     identity: `word:${word}`,

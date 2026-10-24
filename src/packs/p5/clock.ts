@@ -27,9 +27,10 @@ function pickItem(h: number): ClockItem {
     objective: 'pick',
     level: 0,
     prompt: `${h}じの とけいは どれ？`,
+    // さいごの ヒントで「みじかい はりが 3」と いうと こたえに なるので、よみかただけ いう
     hints: [
       'みじかい はりを みよう。',
-      `ながい はりが うえの 12を さして、みじかい はりが ${h}を さして いるのは どれかな。`,
+      'ながい はりが うえの 12を さして いる とけいで、みじかい はりの すうじを よもう。',
     ],
     explain: `みじかい はりが ${h}、ながい はりが 12で ${h}じ だよ。`,
     identity: `pick:${h}`,
@@ -46,7 +47,7 @@ function setItem(h: number): ClockItem {
     objective: 'set',
     level: 1,
     prompt: `はりを まわして ${h}じに しよう。`,
-    hints: ['ながい はりは 12の まま だよ。', `みじかい はりを ${h}に あわせよう。`],
+    hints: ['ながい はりは 12の まま だよ。', 'みじかい はりが さす すうじが「なんじ」だよ。'],
     explain: `みじかい はりが ${h}、ながい はりが 12で ${h}じ。`,
     identity: `set:${h}`,
     task: { kind: 'set', target: { h, m: 0 }, start, step: 60 },

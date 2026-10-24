@@ -14,6 +14,8 @@ interface Word {
 }
 const W = (illust: string, name: string): Word => ({ illust, name });
 const head = (w: Word) => [...w.name][0]!;
+/** 点・まるを取った字（「ば」「ぱ」→「は」） */
+const base = (c: string) => c.normalize('NFD')[0]!;
 
 /** 絵のある語（ひらがなで書く。はじめの字が 清音・濁音・半濁音 のもの） */
 const WORDS: Word[] = [
@@ -94,7 +96,10 @@ function sameItem(a: string, b: string, alt: boolean): Item {
     audio: { text: alt ? head(t) : t.name },
     hints: [
       'ことばの いちばん はじめの おとを ゆっくり いって みよう。',
-      `はじめの おとは「${head(t)}」だよ。`,
+      // 答えが 1おんの語（「き」）だと「はじめの おとは き」が 答えそのものに なる
+      [...c.name].length === 1
+        ? `「${t.name}」を ゆっくり いって、はじめの おとで とめて みよう。`
+        : `はじめの おとは「${head(t)}」だよ。`,
     ],
     explain: `「${t.name}」と「${c.name}」は どちらも「${head(t)}」で はじまるね。`,
     identity: id,
@@ -128,14 +133,19 @@ function letterItem(w: Word, level: number): Item {
     heads.filter((x) => x !== h && !similar(x, h)),
   ).slice(0, level === 1 ? 1 : 2);
   // 濁音の語は、点を取った字を誤りに入れる（「ば」→「は」）
-  const plain = h.normalize('NFD')[0]!;
+  const plain = base(h);
+  // 点・まるの有無だけが違う字（「は」に対する「ば」など）は dakuten の誤り
+  const mis = (x: string) => (base(x) === plain ? 'dakuten' : 'other-letter');
   const opts =
     plain !== h && level === 2
       ? [
           { label: plain, misconception: 'dakuten' },
-          ...wrong.slice(0, 1).map((x) => ({ label: x, misconception: 'other-letter' })),
+          ...wrong
+            .filter((x) => x !== plain)
+            .slice(0, 1)
+            .map((x) => ({ label: x, misconception: mis(x) })),
         ]
-      : wrong.map((x) => ({ label: x, misconception: 'other-letter' }));
+      : wrong.map((x) => ({ label: x, misconception: mis(x) }));
   const id = `letter:${w.name}`;
   return listenItem({
     id: `${id}:${level}`,
@@ -144,7 +154,11 @@ function letterItem(w: Word, level: number): Item {
     prompt: 'この ことばの はじめの おとの じは どれ？',
     figure: ill(w.illust),
     audio: { text: w.name },
-    hints: ['ことばの はじめの おとを ゆっくり いって みよう。', `「${h}…」と いって みよう。`],
+    // 2段めに 答えの字や 語の字を 書かない（字を見比べるだけで 答えが わかってしまう）
+    hints: [
+      'ことばの はじめの おとを ゆっくり いって みよう。',
+      'えの なまえを いって、いちばん はじめの おとで とめて みよう。',
+    ],
     explain: `「${w.name}」は「${h}」で はじまるよ。`,
     identity: id,
     correct: { label: h },

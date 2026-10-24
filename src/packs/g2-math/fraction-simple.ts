@@ -126,9 +126,10 @@ const UNEQ: Record<number, number[][]> = {
     [1, 2],
     [3, 2],
   ],
+  // ぬる 1つめが ちょうど もとの 1/k に ならない 比にする（[2, 1, 3] は 2/6 ＝ 1/3 に なって しまう）
   3: [
     [1, 2, 1],
-    [2, 1, 3],
+    [1, 3, 2],
   ],
   4: [
     [1, 2, 1, 3],
@@ -313,8 +314,7 @@ function motoItems(level: number): NumberItem[] {
         alt: false,
         wrongAnswers: wrongList(String(q), 1, [
           [k, 'den-as-answer'],
-          [n * k, 'den-as-answer'],
-          [n - 1, 'colored-count'],
+          [n * k, 'times-instead'],
         ]),
       });
     }
@@ -345,7 +345,7 @@ function motoItems(level: number): NumberItem[] {
       fields: [{ label: 'cm', answer: { kind: 'int', value: len / k } }],
       hints: [
         `${FR[k]}は おなじ ながさに ${k}つに わけた 1つ ぶん。`,
-        `${len / k}cmが ${k}つで ${len}cm に なるかな。`,
+        `${len}cmを おなじ ながさに ${k}つに わけよう。`,
         `□cmが ${k}つ ぶんで ${len}cm。`,
       ],
       explain: `${len}cmを おなじ ながさに ${k}つに わけると ${len / k}cm です。`,
@@ -353,7 +353,7 @@ function motoItems(level: number): NumberItem[] {
       alt: true,
       wrongAnswers: wrongList(String(len / k), 1, [
         [k, 'den-as-answer'],
-        [len * k, 'den-as-answer'],
+        [len * k, 'times-instead'],
       ]),
     });
   }
@@ -387,8 +387,8 @@ function motoItems(level: number): NumberItem[] {
       identity: `moto-whole:${k}:${part}`,
       alt: true,
       wrongAnswers: wrongList(String(part * k), 1, [
-        [part, 'den-as-answer'],
-        [part + k, 'den-as-answer'],
+        [part, 'part-as-whole'],
+        [part + k, 'add-instead'],
       ]),
     });
   }
@@ -442,12 +442,28 @@ export const fractionSimple: UnitSpec = {
     },
     {
       id: 'colored-count',
-      explain: 'いろを ぬった ところが 2つ あるね。[[1/4]]は わけた うちの 1つ ぶん だよ。',
+      explain:
+        'いろを ぬった ところが 2つ あるね。[[1/3]]や [[1/4]]は、わけた うちの 1つ ぶん だよ。',
     },
     {
       id: 'den-as-answer',
       explain:
         'わける かずと こたえを まぜたのかな。おなじ かずずつ わけて、1つ ぶんの かずを かぞえよう。',
+    },
+    {
+      id: 'times-instead',
+      explain:
+        'かけざんを したのかな。[[1/2]]や [[1/4]]は、おなじ おおきさに わけた 1つ ぶん。もとより ちいさく なるよ。',
+    },
+    {
+      id: 'part-as-whole',
+      explain:
+        'わけた 1つ ぶんの かずを そのまま かいたのかな。もとの おおきさは、その 1つ ぶんが いくつも あつまった ものだよ。',
+    },
+    {
+      id: 'add-instead',
+      explain:
+        'たしざんを したのかな。[[1/3]]なら 3つ ぶん、[[1/4]]なら 4つ ぶん あつまると もとの おおきさ だよ。',
     },
   ],
   levels: [

@@ -43,10 +43,11 @@ const SHAPES: Shape[] = [
     ],
   },
   {
+    // 直角に みえやすい かど（90°から 12°より ちかい かど）を つくらない（直角を さがす問題で まぎらわしい）
     id: 't3',
     kind: 'tri',
     points: [
-      [0, 3],
+      [0, 4],
       [1, 0],
       [5, 2],
     ],
@@ -160,7 +161,7 @@ const SHAPES: Shape[] = [
     points: [
       [0, 1],
       [3, 0],
-      [5, 3],
+      [6, 4],
       [1, 4],
     ],
   },
@@ -179,7 +180,7 @@ const SHAPES: Shape[] = [
     kind: 'quad',
     points: [
       [0, 0],
-      [4, 1],
+      [5, 1],
       [3, 4],
       [0, 3],
     ],
@@ -438,9 +439,10 @@ function parts(level: number, rng: Rng, alt: boolean): NumberItem {
       hints: [
         `${nm}の ${what}は いくつ かな。`,
         `1つの ${nm}に ${what}は ${n}つ。`,
-        `${n}が ${k}つ ぶん…`,
+        `${n}を ${k}かい たそう。`,
       ],
-      explain: `${nm} 1つに ${what}は ${n}つ。${n} × ${k} ＝ ${n * k}で ${n * k}こ です。`,
+      // かけ算は この単元の前に習うとは かぎらないので、たし算で 説明する
+      explain: `${nm} 1つに ${what}は ${n}つ。${Array.from({ length: k }, () => n).join(' ＋ ')} ＝ ${n * k}で ${n * k}こ です。`,
       identity: `parts-total:${kind}:${k}:${what}`,
       alt: true,
       wrongAnswers: wrongList(String(n * k), 1, [
@@ -499,7 +501,8 @@ function right(level: number, rng: Rng, alt: boolean): GeometryItem {
       hints: [
         'さんかくじょうぎの ちょっかくの かどを あてて みよう。',
         'ちょっかくさんかくけいは、ちょっかくの かどが ある さんかくけい。',
-        'さんかくけいの なかで、たてと よこの せんが まじわる かどを さがそう。',
+        // 傾いた 直角三角形（t6）も あるので「たてと よこ」とは 言わない
+        'さんかくけいの かどに、さんかくじょうぎを まわして あてて みよう。かたむいて いる かどにも あるよ。',
       ],
       explain: 'ちょっかくの かどが ある さんかくけいを ちょっかくさんかくけい と いいます。',
       identity: `right-one:${ids.join('-')}`,
@@ -525,7 +528,8 @@ function right(level: number, rng: Rng, alt: boolean): GeometryItem {
     hints: [
       'おりがみを 2かい おって できる かどが ちょっかく だよ。',
       'かどに さんかくじょうぎの ちょっかくを あてて、ぴったりか たしかめよう。',
-      'たてと よこの まっすぐな せんが まじわる かどを さがそう。',
+      // 傾いた 直角（t6・q5）も あるので「たてと よこ」とは 言わない
+      'かたむいて いる かどにも、さんかくじょうぎを まわして あてて みよう。',
     ],
     explain: 'さんかくじょうぎの ちょっかくと ぴったり かさなる かどが ちょっかく です。',
     identity: `right:${ids.join('-')}`,

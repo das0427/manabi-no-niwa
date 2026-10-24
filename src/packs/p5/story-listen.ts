@@ -46,7 +46,8 @@ const face = (f: Feel): Figure => {
 interface Who {
   q: string;
   right: [string, string];
-  wrong: [string, string][];
+  /** [絵, なまえ]。おはなしに でて くるが 役が ちがう ものは 3つめに 'in-story'（誤答の 説明を かえる） */
+  wrong: ([string, string] | [string, string, 'in-story'])[];
 }
 interface Story {
   id: string;
@@ -64,15 +65,16 @@ interface Story {
 const STORIES: Story[] = [
   {
     id: 'carrot',
-    title: 'おおきな にんじん',
+    // 定番教材（おおきな かぶ）の「ひっぱっても ぬけない」くりかえしに 似せない
+    title: 'うさぎの はたけ',
     lines: [
-      'うさぎが はたけで、おおきな にんじんを みつけました。',
-      'ひっぱっても、ひっぱっても ぬけません。',
-      'そこへ くまが きて、いっしょに ひっぱって くれました。',
-      'すぽん！ にんじんが ぬけて、ふたりで わけて たべました。',
+      'うさぎが はたけで、にんじんの はっぱを みつけました。',
+      'でも、つちが かたくて、ひとりでは ほれません。',
+      'そこへ くまが きて、いっしょに ほって くれました。',
+      'おおきな にんじんが でて きて、ふたりで わけて たべました。',
     ],
     who: {
-      q: 'いっしょに ひっぱって くれたのは だれ？',
+      q: 'いっしょに ほって くれたのは だれ？',
       right: ['bear', 'くま'],
       wrong: [
         ['fox', 'きつね'],
@@ -88,7 +90,7 @@ const STORIES: Story[] = [
       q: 'さいごに、うさぎは どんな きもち？',
       ans: 'happy',
       wrong: ['sad', 'angry'],
-      why: 'にんじんが ぬけて、いっしょに たべたからね。',
+      why: 'にんじんが でて きて、いっしょに たべたからね。',
     },
     obj: {
       q: 'うさぎが みつけた ものは なに？',
@@ -100,7 +102,7 @@ const STORIES: Story[] = [
     },
     reason: {
       q: 'うさぎは どうして うれしかったのかな？',
-      right: 'にんじんが ぬけたから',
+      right: 'にんじんが でて きたから',
       wrong: ['あめが ふったから', 'ひとりで たべたから'],
     },
   },
@@ -136,7 +138,8 @@ const STORIES: Story[] = [
       q: 'かえるが かして くれた ものは なに？',
       right: ['leaf', 'はっぱ'],
       wrong: [
-        ['umbrella', 'かさ'],
+        // 「かさ」は おはなしに でて くる（もって いない）ので、「おはなしに ない もの」には しない
+        ['p23-hat', 'ぼうし'],
         ['flower', 'はな'],
       ],
     },
@@ -188,7 +191,8 @@ const STORIES: Story[] = [
       q: 'ケーキを もらったのは だれ？',
       right: ['bear', 'くま'],
       wrong: [
-        ['fox', 'きつね'],
+        // きつねは おはなしに でて くるので、「おはなしに いない」誤答には しない
+        ['dog', 'いぬ'],
         ['monkey', 'さる'],
       ],
     },
@@ -254,7 +258,7 @@ const STORIES: Story[] = [
       right: ['bird', 'とり'],
       wrong: [
         ['cat', 'ねこ'],
-        ['chick', 'ひよこ'],
+        ['rabbit', 'うさぎ'],
       ],
     },
     events: [
@@ -299,7 +303,7 @@ const STORIES: Story[] = [
     reason: {
       q: 'かえるは どうして うれしかったのかな？',
       right: 'いしを とびこえられたから',
-      wrong: ['ころんだから', 'あめが ふったから'],
+      wrong: ['ともだちが きたから', 'あめが ふったから'],
     },
   },
   {
@@ -371,8 +375,8 @@ const STORIES: Story[] = [
       q: 'パンを やいたのは だれ？',
       right: ['cow', 'うし'],
       wrong: [
-        ['dog', 'いぬ'],
-        ['cat', 'ねこ'],
+        ['dog', 'いぬ', 'in-story'],
+        ['cat', 'ねこ', 'in-story'],
       ],
     },
     events: [
@@ -413,10 +417,10 @@ function whoItem(s: Story, w: Who, alt: boolean): Item {
     explain: `${w.right[1]}だね。`,
     identity: `${alt ? 'what' : 'who'}:${s.id}`,
     correct: { label: w.right[1], figure: ill(w.right[0]) },
-    wrong: w.wrong.map(([il, name]) => ({
+    wrong: w.wrong.map(([il, name, inStory]) => ({
       label: name,
       figure: ill(il),
-      misconception: 'not-in-story',
+      misconception: inStory ? 'other-role' : 'not-in-story',
     })),
   });
 }
@@ -455,9 +459,12 @@ function firstItem(s: Story): Item {
     explain: `はじめは「${s.events[0]![1]}」。`,
     identity: `first:${s.id}`,
     correct: { label: s.events[0]![1], figure: ill(s.events[0]![0]) },
-    wrong: s.events
-      .slice(1)
-      .map(([il, t]) => ({ label: t, figure: ill(il), misconception: 'order-middle' })),
+    // さいごの できごとを えらぶのは じゅんばんが はんたい、まんなかは じゅんばんの ずれ
+    wrong: s.events.slice(1).map(([il, t], i, rest) => ({
+      label: t,
+      figure: ill(il),
+      misconception: i === rest.length - 1 ? 'order-reverse' : 'order-middle',
+    })),
   });
 }
 
@@ -528,6 +535,11 @@ export const storyListen: UnitSpec = {
   ],
   misconceptions: [
     { id: 'not-in-story', explain: 'おはなしに なかった ことかな。もういちど きいて みよう。' },
+    {
+      id: 'other-role',
+      explain:
+        'おはなしに でて きたけど、ちがう ことを した ひとだね。だれが なにを したか きこう。',
+    },
     {
       id: 'order-reverse',
       explain: 'じゅんばんが はんたいかな。いちばん はじめから おもいだそう。',

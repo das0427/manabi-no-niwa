@@ -62,7 +62,8 @@ function numberOptions(
     if (w.v < 1 || w.v > 6 || w.v === ans || out.some((o) => o.label === String(w.v))) continue;
     if (out.length < 3) out.push({ label: String(w.v), misconception: w.mis });
   }
-  for (const v of [ans + 1, ans - 1, ans + 2]) {
+  // 足りないときは となりの数だけで補う（ans+2 を「ひとつ ずれ」と呼ぶのは誤り。足りなければ 2択で よい: 4歳は 2〜4）
+  for (const v of [ans + 1, ans - 1]) {
     if (out.length >= 3) break;
     if (v >= 1 && v <= 6 && !out.some((o) => o.label === String(v)))
       out.push({ label: String(v), misconception: 'off-by-one' });

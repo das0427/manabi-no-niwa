@@ -101,7 +101,7 @@ const WORDS: { illust: string; word: string; wrong: [string, string] }[] = [
   { illust: 'p5-rocket', word: 'ロケット', wrong: ['ロクット', 'ロケシト'] },
   { illust: 'p5-ribbon', word: 'リボン', wrong: ['リポン', 'リボソ'] },
   { illust: 'p5-cake', word: 'ケーキ', wrong: ['クーキ', 'ゲーキ'] },
-  { illust: 'p5-icecream', word: 'アイス', wrong: ['マイス', 'アイヌ'] },
+  { illust: 'p5-icecream', word: 'アイス', wrong: ['マイス', 'アイフ'] }, // 民族名と同じ語は 誤答の作り語に 使わない
   { illust: 'p5-tv', word: 'テレビ', wrong: ['チレビ', 'テレヒ'] },
   { illust: 'p23-spoon', word: 'スプーン', wrong: ['ヌプーン', 'スブーン'] },
   { illust: 'p23-cup', word: 'コップ', wrong: ['ユップ', 'コッブ'] },
@@ -140,7 +140,7 @@ const HEAR_WORDS: [string, string, string][] = [
   ['ゴリラ', 'コリラ', 'ゴリヲ'],
   ['パンダ', 'バンダ', 'パンタ'],
   ['コアラ', 'ユアラ', 'コマラ'],
-  ['カメラ', 'ガメラ', 'カヌラ'],
+  ['カメラ', 'カメヲ', 'カヌラ'], // 「ガメラ」は 実在の 作品名なので つかわない
   ['ピアノ', 'ビアノ', 'ピアメ'],
   ['ギター', 'キター', 'ギテー'],
   ['ジュース', 'シュース', 'ジュースー'],

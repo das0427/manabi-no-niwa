@@ -275,9 +275,9 @@ const OUT: Record<string, { label: string; fig: Figure }> = {
     ),
   },
   hexagon: {
-    label: 'ろっかくけい',
+    label: 'かどが 6つの かたち',
     fig: svgOf(
-      'ろっかくけい',
+      'かどが 6つの かたち',
       70,
       60,
       poly(
@@ -294,9 +294,9 @@ const OUT: Record<string, { label: string; fig: Figure }> = {
     ),
   },
   trapezoid: {
-    label: 'だいけい',
+    label: 'うえが みじかい しかく',
     fig: svgOf(
-      'だいけい',
+      'うえが みじかい しかく',
       90,
       40,
       poly(
@@ -331,7 +331,7 @@ const OUT: Record<string, { label: string; fig: Figure }> = {
 /** あわせる まえの ピース（並べて 離して描く） */
 const PIECES: Record<string, { label: string; svg: Figure }> = {
   tri2: {
-    label: 'ちょっかくの さんかく 2まい',
+    label: 'さんかく 2まい',
     svg: svgOf(
       'さんかく 2まい',
       130,
@@ -631,7 +631,8 @@ const SOLID: [keyof typeof Q, ObjKey, ObjKey, ObjKey][] = [
   ['roll', 'watermelon', 'box', 'book'],
   ['stack', 'box', 'ball', 'watermelon'],
   ['stack', 'book', 'ball', 'mikan'],
-  ['stack', 'box', 'can', 'ball'],
+  // つつは たてに すれば つみあげられるので、「つみあげやすい」の誤答には 入れない
+  ['stack', 'box', 'mikan', 'ball'],
   ['can', 'can', 'ball', 'box'],
   ['can', 'can', 'mikan', 'book'],
 ];

@@ -139,7 +139,8 @@ const SHIRI: [string, string, string][] = [
   ['ふね', 'ねこ', 'もも'],
   ['はな', 'なす', 'もも'],
   ['バナナ', 'なす', 'きつね'],
-  ['はさみ', 'みかん', 'ぞう'],
+  // 「ん」で おわる語（みかん など）は しりとりの つぎの語に しない（そこで おわって しまう）
+  ['おにぎり', 'りんご', 'ぞう'],
   ['ひこうき', 'きつね', 'かさ'],
   ['トマト', 'とり', 'はな'],
   ['ぞう', 'うさぎ', 'いちご'],
@@ -168,7 +169,7 @@ const SHIRI_BACK: [string, string, string][] = [
   ['りんご', 'とり', 'ねこ'],
   ['ねこ', 'きつね', 'かさ'],
   ['なす', 'はな', 'いぬ'],
-  ['みかん', 'はさみ', 'くま'],
+  ['すいか', 'なす', 'くま'],
 ];
 function shiriBackItem(next: string, prev: string, wrong: string): Item {
   const id = `shiri-back:${next}`;
@@ -254,7 +255,8 @@ function sakasaAltItem(word: string, other: string, idx: number): Item {
     fixedOrder: true,
     hints: [
       `「${word}」を うしろから いって みよう。`,
-      `はじめの おとは「${[...right][0]}」だよ。`,
+      // 「はじめの おとは〜」は 2つの 音の はじめが ちがうので 答えそのものに なる。手順だけ示す
+      `「${[...word].join('・')}」の おとを、うしろから ひとつずつ ならべて みよう。`,
     ],
     explain: `「${word}」を さかさに すると「${right}」。`,
     identity: `sakasa-pick:${word}`,

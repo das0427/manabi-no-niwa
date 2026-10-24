@@ -92,6 +92,8 @@ const SIMILAR = [
   'そん',
   'すむ',
   'けは',
+  // 形は ちがうが 音が おなじ（「を」は「お」と おなじ おと）。音から 字を 選ぶ 問題で 正解が 2つに なる
+  'をお',
 ];
 const similar = (a: string, b: string) => SIMILAR.some((g) => g.includes(a) && g.includes(b));
 
@@ -109,11 +111,12 @@ function item(c: string, level: number, n: number, ctx: boolean): Item {
     alt: ctx,
     prompt: ctx ? 'ことばの なかの この おとの じは どれ？' : 'きこえた おとの じは どれ？',
     audio: { text: ctx ? CONTEXT(c) : c },
+    // 2段めに 答えの字を 含む ことば（「あめ」など）を 書かない（字を見比べるだけで 答えが わかる）
     hints: [
       'もういちど きいて、まねして いって みよう。',
-      c === 'を' || c === 'ん'
+      ctx && (c === 'を' || c === 'ん')
         ? 'ことばの さいごの ほうを よく きこう。'
-        : `「${WORD[c]}」の はじめの おとだよ。`,
+        : 'じを ひとつずつ ゆびで さして、こえに だして よんで みよう。',
     ],
     explain: ctx
       ? `${CONTEXT(c)}。この じだよ。`

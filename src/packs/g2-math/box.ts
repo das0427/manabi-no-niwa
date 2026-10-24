@@ -180,7 +180,6 @@ function edges(level: number, rng: Rng, alt: boolean): NumberItem {
     wrongAnswers: wrongList(String(n), 1, [
       [form === 2 ? 7 : form === 1 ? 9 : null, 'edge-visible'],
       [form === 2 ? 4 : form === 1 ? 6 : n / 2, 'edge-visible'],
-      [form === 0 && n === 4 ? 1 : null, 'pair-faces'],
     ]),
   };
 }
@@ -251,7 +250,7 @@ function net(level: number, rng: Rng, alt: boolean): ChoiceItem {
     hints: [
       'はこの めんの へんの ながさは、たて・よこ・たかさの どれかと どれか だよ。',
       `めんは ${uniq.map((p) => `${p[0]}cmと ${p[1]}cm`).join('、')}の ${uniq.length}しゅるい。`,
-      'この 3しゅるいに ない かたちを さがそう。',
+      `この ${uniq.length}しゅるいに ない かたちを さがそう。`,
     ],
     explain: `この はこの めんは ${uniq.map((p) => `${p[0]}cmと ${p[1]}cm`).join('、')}の かたち。${fake[0]}cmと ${fake[1]}cmの めんは ありません。`,
     identity: `net:${dkey(d)}:${fake.join('x')}`,

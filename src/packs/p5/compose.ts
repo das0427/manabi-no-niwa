@@ -2,7 +2,7 @@
  * p5.math.compose いくつと いくつ（curriculum-matrix 3.3・4.1）: 2〜10 の合成と分解、「あと いくつで 10」。
  * v1 の「わける」（split: D1・D2。5まで）を 10まで広げた単元なので、進度は新しく始める（統括の判断6）。
  * D1（2つの皿に自由に分ける探索）は v1 の「さんすう」に残る。
- * 同一性キー: split:n:a（n を a と ? に分ける。順あり）、別例は blocks（10のわく）で split-frame:n:a、
+ * 同一性キー: split:n:a（n を a と ? に分ける。順あり）、別例は つみき（blocks。id は もとの まま）で split-frame:n:a、
  *   to10:a（あと いくつで 10）。定義域: 2〜10 の分け方 全45 ＋ 別例 45 ＋ あと いくつで10 9。
  */
 import type { Rng } from '../../core/util/rng';
@@ -11,6 +11,9 @@ import type { Figure } from '../../engines/figure/types';
 import { ill, mix } from './lib';
 
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+/** ゆびの かぞえかた（1ぽん・2ほん・3ぼん・6ぽん・8ぽん・10ぽん） */
+export const hon = (n: number) =>
+  `${n}${[1, 6, 8, 10].includes(n) ? 'ぽん' : n === 3 ? 'ぼん' : 'ほん'}`;
 const THINGS = [
   { id: 'apple', name: 'りんご' },
   { id: 'mikan', name: 'みかん' },
@@ -44,11 +47,18 @@ function opts(key: string, ans: number, n: number, a: number): ChoiceOption[] {
   return mix(key, out);
 }
 
-/** 見えている皿（a こ）と、ふせた皿 */
-const plates = (thing: string, a: number, frame: boolean): Figure =>
-  frame
-    ? { kind: 'blocks', ones: a, frame: true }
-    : { kind: 'row', items: [ill(thing, a), { kind: 'text', text: '？', size: 'xl' }], gap: 6 };
+/**
+ * 見えている皿（a こ）と、ふせた皿。別例は つみき a こ と「？」。
+ * 10のわくは 使わない（ぜんぶが 10でない ときに、あいた ますを「かくれて いる かず」と とりちがえるため）。
+ */
+const plates = (thing: string, a: number, frame: boolean): Figure => ({
+  kind: 'row',
+  items: [
+    frame ? { kind: 'blocks', ones: a } : ill(thing, a),
+    { kind: 'text', text: '？', size: 'xl' },
+  ],
+  gap: 6,
+});
 
 function make(t: Task, level: number, rng: Rng): Item {
   const th = rng.pick(THINGS);
@@ -65,7 +75,7 @@ function make(t: Task, level: number, rng: Rng): Item {
         : `10の はこに ${t.a}こ はいって いるよ。あと いくつで 10？`,
       figure: t.pic ? ill(th.id, t.a) : { kind: 'blocks', ones: t.a, frame: true },
       hints: t.pic
-        ? ['ゆびを 10ぽん だして みよう。', `${t.a}ほん おると、のこりの ゆびは いくつかな。`]
+        ? ['ゆびを 10ぽん だして みよう。', `${hon(t.a)} おると、のこりの ゆびは いくつかな。`]
         : ['あいて いる ところを かぞえよう。', 'うえの だんと したの だんで 5こずつ だよ。'],
       explain: `${t.a}と ${10 - t.a}で 10。あと ${10 - t.a}こ。`,
       explainFigure: { kind: 'blocks', ones: 10, frame: true },
@@ -87,12 +97,19 @@ function make(t: Task, level: number, rng: Rng): Item {
       : `${th.name}は ぜんぶで ${n}こ。こっちの おさらに ${a}こ。あっちの おさらは いくつ？`,
     figure: plates(th.id, a, frame),
     hints: [
-      `ぜんぶで ${n}こ だよ。ゆびを ${n}ぽん だして みよう。`,
-      `${a}ほん おると、のこりの ゆびは いくつかな。`,
+      `ぜんぶで ${n}こ だよ。ゆびを ${hon(n)} だして みよう。`,
+      `${hon(a)} おると、のこりの ゆびは いくつかな。`,
     ],
     explain: `${n}は ${a}と ${b}。`,
     explainFigure: frame
-      ? { kind: 'blocks', ones: n, frame: true }
+      ? {
+          kind: 'row',
+          items: [
+            { kind: 'blocks', ones: a },
+            { kind: 'blocks', ones: b, tone: 'muted' },
+          ],
+          gap: 6,
+        }
       : { kind: 'row', items: [ill(th.id, a), ill(th.id, b)], gap: 6 },
     identity: id,
     options: opts(id, b, n, a),

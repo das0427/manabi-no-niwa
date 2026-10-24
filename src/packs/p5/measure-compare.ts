@@ -134,7 +134,8 @@ const clips = (n: number, y: number) =>
 function unitsItem(n: number): Item {
   const t = THINGS[n % THINGS.length]!;
   const id = `units:${n}`;
-  const wrongs = [n + 1, n - 1, n + 2].filter((v) => v >= 1 && v <= 9);
+  // n+1: すきま（さかいめ）を かぞえた、n-1・n-2: かぞえ わすれ（skip-unit は すくなく なる誤り）
+  const wrongs = [n + 1, n - 1, n - 2].filter((v) => v >= 1 && v <= 10);
   return choiceItem({
     id,
     objective: 'units',

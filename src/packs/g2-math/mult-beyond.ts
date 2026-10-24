@@ -108,7 +108,7 @@ function split(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `split-alt:${a}x${b}`,
       objective: 'split',
       level,
-      prompt: `${a}この あめが ${b}ふくろ。ぜんぶで なんこ？`,
+      prompt: `あめが 1ふくろに ${a}こずつ はいって います。${b}ふくろでは ぜんぶで なんこ？`,
       figure: arrayFig(a, b),
       fields: [{ label: 'こ', answer: { kind: 'int', value: p } }],
       hints: [
@@ -140,7 +140,7 @@ function split(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: [
       `${a}を 10と ${o}に わけよう。`,
       `10 × ${b} は 10の ${b}つぶん。${o} × ${b} は くくで。`,
-      `${10 * b}と ${o * b}を たそう。`,
+      `10 × ${b} の こたえと ${o} × ${b} の こたえを たそう。`,
     ],
     explain: `10 × ${b} ＝ ${10 * b}、${o} × ${b} ＝ ${o * b}。あわせて ${a} × ${b} ＝ ${p} です。`,
     identity: `${a}x${b}`,

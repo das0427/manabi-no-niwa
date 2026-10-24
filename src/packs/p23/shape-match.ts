@@ -106,15 +106,17 @@ function shapeFig(s: ShapeId, tone: 'plain' | 'muted' | 'a' = 'a', deg = 0): Fig
     case 'heart':
       return { kind: 'shape', shape: 'polygon', points: rot(HEART, deg), tone };
     case 'diamond':
+      // たてに ほそながい ひしがた（よこ幅を たての 6割に。正方形を 45度 まわした形だと
+      // 「しかく」と 見分けられず、L2 の「まわった しかくの あな」とも 同じ形になる）
       return {
         kind: 'shape',
         shape: 'polygon',
         points: rot(
           [
             [50, 4],
-            [96, 50],
+            [78, 50],
             [50, 96],
-            [4, 50],
+            [22, 50],
           ],
           deg,
         ),

@@ -67,4 +67,29 @@
 ## program（てじゅん）
 - `grid: { w, h, walls? }`（2〜8）、`start: { at: [x,y], dir }`、`goal: [x,y]`、`palette`（小学生: `forward`/`turnRight`/`turnLeft`、幼児: `up`/`down`/`left`/`right`、混ぜない。ほかに `repeat`/`if`）、`solution`（正答の例・必須）、`initial?`（デバッグ問題の誤った列）、`maxCards?`、`repeatTimes?`、`conds?: ('wall-ahead'|'open-ahead')[]`、`misconceptionIds?: { bump, short, turn, repeatCount, tooMany }`、絵 `character`/`goalIllust`/`wallIllust`。
 
-<!-- 算数の図・量（clock, measure, numberline, graph, geometry）は担当の完了後に統括が追記する -->
+## 算数の図・量（clock, measure, numberline, graph, geometry）共通
+- **図はエンジンが描くので、これらの問題には `figure` を付けない**（作業領域の高さが足りなくなる）。
+- `misconceptions`: エンジンが自動で見つける誤り（キー）→ 誤概念ID の表。`wrongAnswers`: 決まった誤答の値 → 誤概念ID。
+- 置く・合わせる操作は「図を押すと一番近い目盛りへ吸着」＋「◀▶ で1目盛りずつ」。形式だけの違い（2cm15mm、0じかん75ふん 等）は「もう一度」。
+
+## clock（時計）
+- `task.kind`: `read`（`answerBy:'choice'` は `options` 時刻の配列＋`halfWord`、`'input'` は「□じ□ふん」・`hourOnly`）/ `pick`（時刻に合う時計を選ぶ。幼児）/ `set`（`target`・`start`・`step` 1/5/10/15/30/60）/ `elapsed`（`start`・`end`、`ask:'duration'`（`unit:'min'|'hm'`）か `'end'`（`answerBy:'input'|'set'`））。時刻は `{h:0〜23, m:0〜59}`。`minuteNumbers`、`dayHalf`。
+- 自動の誤り: swapHands・hourNext・hourPrev・minuteNumeral・noCarry・base100。
+
+## measure（ものさし・ます・はかり）
+- `instrument: 'ruler'|'masu'|'scale'`、`task: 'read'|'set'`、`scale: { unit, min?, max, minor, mid?, major, labelFactor?, labelUnit? }`（値は基準の単位）、`value`、`from?`、`object?: 'tape'|'pencil'|'line'`、`fields`（大きい単位から `{unit, factor}`）、`keys?: ['decimal']`、`tolerance?`。
+- 自動の誤り: fromEnd・fieldSwap・minorAsOne。
+
+## numberline（数直線）
+- `line: { min, max, minor（'1/5' と書けば分数の数直線）, midEvery?, majorEvery, labels?, labelAs? }`、`task: { kind:'read', at, answer?, unit?, keys? }` か `{ kind:'place', target, tolerance?, start? }`、`marks?`。数は `3` / `0.4` / `'2/5'`。
+- 自動の誤り: minorAsOne・neighborTick。
+
+## graph（表とグラフ）
+- `data: { kind: 'bar'|'picture'|'line'|'table'|'pie'|'band', labels, values, scaleStep?, labelEvery?, max?, min?, unit?, header?, illust?, title? }`（pie・band は % で合計100、読むだけ）。
+- `task: { kind:'choice', options, multi? }` / `{ kind:'number', fields, keys?, wrongAnswers? }` / `{ kind:'make', initial?, snap?, showTable? }`（make は `data.max` 必須）。
+- 自動の誤り: scaleAsOne。
+
+## geometry（図形）
+- `task: { kind:'pick', options: { shape?: { points }, figure?, label?, correct?, misconception? }[], multi? }` / `{ kind:'draw', grid: { w, h }, given?, target }` / `{ kind:'angle', degrees, base?, protractor?, tolerance? }`（既定 ±2度）。
+- draw の `target`: `exact` / `congruent`（allowFlip）/ `similar`（ratio）/ `reflect`（axis）/ `rotate180`（center）/ `shape`（shape・sides・exclusive）/ `perpendicular`・`parallel`（to・through）。格子は小2なら h≤4 を勧める（点の間隔を広く）。
+- 自動の誤り: translated・sameSize・wrongSides・wrongClass・swapPerpPar・notThrough・otherScale・reflexComplement。

@@ -19,6 +19,7 @@ import { register } from './register';
 import { again } from './again';
 import { house } from './house';
 import { speakerOff } from './speaker-off';
+import { explore } from './explore';
 
 export const iconIllust: IllustGroup = {
   home: home,
@@ -41,4 +42,5 @@ export const iconIllust: IllustGroup = {
   again: again,
   house: house,
   'speaker-off': speakerOff,
+  explore: explore,
 };

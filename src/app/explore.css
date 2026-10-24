@@ -1,0 +1,54 @@
+/* ほかの がくねん・きょうか（先取り・さかのぼり X-TG-03）。左に区分のタブ、右にその区分の札 */
+.explore-tabs {
+  position: absolute;
+  top: calc(var(--u) * 8);
+  left: var(--edge);
+  display: grid;
+  grid-template-columns: repeat(2, calc(var(--u) * 12.5));
+  grid-auto-rows: calc(var(--u) * 5.5);
+  gap: calc(var(--u) * 1) calc(var(--u) * 1);
+}
+.explore-tab {
+  font: inherit;
+  font-family: var(--font-child);
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--wood);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 0 var(--step) 0 var(--wood-dark);
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: nowrap;
+}
+.explore-tab:active {
+  transform: translateY(calc(var(--u) * 0.4));
+}
+/* 開いている区分: 太い輪郭＋帯（色だけにしない） */
+.explore-tab.is-current {
+  background: var(--surface);
+  outline: calc(var(--u) * 0.5) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+  box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
+}
+/* 子供のいまの区分: 下線（形で示す） */
+.explore-tab.is-own {
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--u) * 0.4);
+  text-underline-offset: calc(var(--u) * 0.6);
+}
+.explore-cards {
+  position: absolute;
+  top: calc(var(--u) * 8);
+  left: calc(var(--edge) + var(--u) * 28);
+  display: grid;
+  grid-template-columns: repeat(3, calc(var(--u) * 19));
+  grid-auto-rows: calc(var(--u) * 14);
+  gap: calc(var(--u) * 1.6);
+}
+.explore-empty {
+  position: absolute;
+  top: calc(var(--u) * 20);
+  left: calc(var(--edge) + var(--u) * 28);
+}

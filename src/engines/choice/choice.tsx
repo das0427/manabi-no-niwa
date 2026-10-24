@@ -3,8 +3,8 @@
  * 1つ選ぶ問題はタップでそのまま答える（v1 と同じ）。すべて選ぶ問題は「こたえあわせ」で答える。
  */
 import { useState } from 'react';
-import { createRng, hashSeed } from '../../core/util/rng';
 import type { ChoiceItem } from '../../curriculum/types';
+import { displayOrder as sharedOrder, displayPosition } from '../shared/order';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
@@ -32,28 +32,16 @@ export function visibleOptionIndices(
   return options.flatMap((_, i) => (keep.has(i) ? [i] : []));
 }
 
-/**
- * 選択肢を並べる順（元の番号）。fixedOrder でなければ問題の id で決まる順に並べ替える。
- * 教材の書き方で正解が先頭に偏っても、位置で当てられないようにする（漢字担当の要望）。
- * 同じ問題は何度描いても・再開しても同じ順。
- */
+const labelsOf = (item: Pick<ChoiceItem, 'options'>) =>
+  item.options.map((o) => (typeof o.label === 'string' ? o.label : undefined));
+
+/** 選択肢を並べる順（元の番号）。規則は engines/shared/order.ts */
 export function displayOrder(
-  item: Pick<ChoiceItem, 'id' | 'fixedOrder' | 'options'>,
+  item: Pick<ChoiceItem, 'id' | 'fixedOrder' | 'options'> &
+    Partial<Pick<ChoiceItem, 'prompt' | 'hints' | 'explain'>>,
   shown: number[],
 ): number[] {
-  if (item.fixedOrder || shown.length < 2) return shown;
-  // 絵だけの選択肢は「1ばん」…と番号で呼ぶ（解説・ヒントが番号で指す）ので並べ替えない
-  if (item.options.some((o) => o.label === undefined)) return shown;
-  // 図の「あ」「い」…を指す選択肢は記号の順のまま
-  if (item.options.every((o) => typeof o.label === 'string' && /^[あいうえおかき]$/.test(o.label)))
-    return shown;
-  const rng = createRng(hashSeed('choice-order', item.id));
-  const out = [...shown];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = rng.int(0, i);
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
+  return sharedOrder(item, shown, labelsOf(item));
 }
 
 export function judgeChoice(item: ChoiceItem, picked: ChoiceResponse): Judgement {
@@ -127,10 +115,10 @@ function ChoiceView({
       <div className={`eng-choice__options eng-choice__options--${item.layout ?? 'row'}`}>
         {shown
           .map((i) => ({ o: item.options[i]!, i }))
-          .map(({ o, i }) => (
+          .map(({ o, i }, pos) => (
             <Choice
               key={i}
-              label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
+              label={o.label !== undefined ? plainText(o.label) : `${pos + 1}ばん`}
               state={stateOf(i)}
               disabled={disabled || revealed}
               onPress={() => press(i)}
@@ -168,7 +156,10 @@ export const choiceEngine: EngineDef<ChoiceItem, ChoiceResponse> = {
   check: checkChoice,
   answerText: (item) =>
     item.options
-      .filter((o) => o.correct)
-      .map((o) => o.label ?? '')
+      .flatMap((o, i) =>
+        o.correct
+          ? [o.label ?? `${displayPosition(item, item.options.length, i, labelsOf(item))}ばん`]
+          : [],
+      )
       .join('、'),
 };

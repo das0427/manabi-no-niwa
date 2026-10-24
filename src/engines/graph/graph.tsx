@@ -17,6 +17,7 @@ import { Figure } from '../figure/Figure';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from '../numberline/NumPad';
 import type { Judgement, RenderCtx } from '../types';
+import { displayOrder } from '../shared/order';
 import './graph.css';
 
 export type GraphKind = 'bar' | 'picture' | 'line' | 'table' | 'pie' | 'band';
@@ -775,24 +776,30 @@ function ChoiceReadView({
         className="eng-graph__options"
         style={{ gridTemplateColumns: t.options.length > 3 ? 'repeat(2, auto)' : 'auto' }}
       >
-        {t.options.map((o, i) => (
-          <Choice
-            key={i}
-            label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
-            state={stateOf(i)}
-            disabled={disabled || revealed}
-            onPress={() => press(i)}
-            testId={`opt-${i}`}
-            className="eng-graph__opt"
-          >
-            {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-            {o.label !== undefined ? (
-              <span className="eng-graph__optlabel">
-                <Rt text={o.label} ctx={ctx} />
-              </span>
-            ) : null}
-          </Choice>
-        ))}
+        {displayOrder(
+          item,
+          t.options.map((_, i) => i),
+          t.options.map((o) => (typeof o.label === 'string' ? o.label : undefined)),
+        )
+          .map((i, pos) => ({ o: t.options[i]!, i, pos }))
+          .map(({ o, i, pos }) => (
+            <Choice
+              key={i}
+              label={o.label !== undefined ? plainText(o.label) : `${pos + 1}ばん`}
+              state={stateOf(i)}
+              disabled={disabled || revealed}
+              onPress={() => press(i)}
+              testId={`opt-${i}`}
+              className="eng-graph__opt"
+            >
+              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+              {o.label !== undefined ? (
+                <span className="eng-graph__optlabel">
+                  <Rt text={o.label} ctx={ctx} />
+                </span>
+              ) : null}
+            </Choice>
+          ))}
         {t.multi && !revealed ? (
           <button
             type="button"

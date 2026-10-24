@@ -17,6 +17,7 @@ import {
   type TapEngineDef,
   type TapProps,
 } from '../order/shared';
+import { displayOrder } from '../shared/order';
 import './fill.css';
 
 export interface FillBlank {
@@ -209,21 +210,28 @@ function FillView({
         </p>
         {!revealed ? (
           <div className="eng-fill__options" role="group" aria-label="いれる もの">
-            {opts.map((o, oi) => (
-              <button
-                key={oi}
-                type="button"
-                className="tk-card eng-fill__opt"
-                onClick={() => pressOption(o)}
-                disabled={locked || usedElsewhere(o)}
-                aria-label={plainText(o)}
-                data-testid={`opt-${oi}`}
-              >
-                <span className="tk-card__label">
-                  <Rt text={o} ctx={ctx} />
-                </span>
-              </button>
-            ))}
+            {displayOrder(
+              item,
+              opts.map((_, oi) => oi),
+              opts.map((o) => (typeof o === 'string' ? o : undefined)),
+              item.blanks[active]?.options ? String(active) : '',
+            )
+              .map((oi) => ({ o: opts[oi]!, oi }))
+              .map(({ o, oi }) => (
+                <button
+                  key={oi}
+                  type="button"
+                  className="tk-card eng-fill__opt"
+                  onClick={() => pressOption(o)}
+                  disabled={locked || usedElsewhere(o)}
+                  aria-label={plainText(o)}
+                  data-testid={`opt-${oi}`}
+                >
+                  <span className="tk-card__label">
+                    <Rt text={o} ctx={ctx} />
+                  </span>
+                </button>
+              ))}
           </div>
         ) : null}
       </div>

@@ -33,7 +33,7 @@
   stroke-dashoffset: 107;
 }
 .gate-key--holding .gate-key__ring circle {
-  stroke: var(--leaf);
+  stroke: var(--primary);
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 2s linear;
 }

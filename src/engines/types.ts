@@ -9,6 +9,10 @@ import type { Item, RichText } from '../curriculum/types';
 
 /** 表示に必要な学習者の情報（ふりがな・文字の大きさ・選択肢の数） */
 export interface RenderCtx {
+  /** 教材パックID（音声キー `registerRich(packId, 文)` に使う） */
+  packId: string;
+  /** 読み上げの設定（off のときは音を出さない） */
+  readAloud: SupportSettings['readAloud'];
   furigana: SupportSettings['furigana'];
   /** 在籍学年（就学前は 0） */
   learnerGrade: number;

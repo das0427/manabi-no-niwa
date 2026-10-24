@@ -119,14 +119,14 @@
     width var(--dur-move);
 }
 .math-cell--solved {
-  color: var(--leaf-dark);
+  color: var(--ink);
 }
 .math-cell--solved::after {
   content: '';
   position: absolute;
   width: calc(var(--u) * 8.5);
   height: calc(var(--u) * 8.5);
-  border: calc(var(--u) * 0.7) solid var(--leaf);
+  border: calc(var(--u) * 0.7) solid var(--correct);
   border-radius: 50%;
   pointer-events: none;
 }

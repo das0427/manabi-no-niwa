@@ -65,7 +65,7 @@
 }
 .cmp-slot--done {
   border-style: solid;
-  border-color: var(--leaf);
-  outline: calc(var(--u) * 0.6) solid var(--leaf);
+  border-color: var(--correct);
+  outline: calc(var(--u) * 0.6) solid var(--correct);
   outline-offset: calc(var(--u) * -0.9);
 }

@@ -16,7 +16,7 @@
   left: calc(var(--u) * 21);
 }
 .shp-board--done {
-  outline: calc(var(--u) * 0.8) solid var(--leaf);
+  outline: calc(var(--u) * 0.8) solid var(--correct);
   outline-offset: calc(var(--u) * 0.3);
   border-radius: calc(var(--u) * 1);
 }

@@ -136,13 +136,23 @@ function UnitRound({
   const support = settings.support;
   const ctx: RenderCtx = useMemo(
     () => ({
+      packId,
+      readAloud: support.readAloud,
       furigana: support.furigana,
       learnerGrade: profile.enrolledGrade ?? gradeOf(audience),
       preschool: gradeOf(audience) === 0,
       textScale: support.textScale,
       ux,
     }),
-    [support.furigana, support.textScale, profile.enrolledGrade, audience, ux],
+    [
+      packId,
+      support.readAloud,
+      support.furigana,
+      support.textScale,
+      profile.enrolledGrade,
+      audience,
+      ux,
+    ],
   );
   const level = Math.min(unit.levels.length - 1, progress.level);
   const [seed] = useState(() => freshSeed());

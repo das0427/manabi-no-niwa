@@ -27,22 +27,45 @@
 
 :root {
   /* 色 */
+  /* 色（版 2.0。値とコントラスト比は DESINGN.md 3.1 の表） */
   --paper: #fbf5e9;
   --paper-2: #f3e8d2;
   --ink: #4a3b32;
-  --ink-soft: #7a6a5e;
+  --ink-soft: #665649;
   --wood: #d9a86c;
   --wood-dark: #a8743e;
+  /* 主操作（つぎへ・こたえあわせ・はじめる）。文字は surface（5.62:1） */
+  --primary: #3b7243;
+  --primary-edge: #2a5530;
+  /* 装飾の緑（文字の背景・正解の印には使わない） */
   --leaf: #5e9e5b;
   --leaf-dark: #3f7440;
+  /* 正解の ○ */
+  --correct: #2e7a3b;
   --sun: #f2c14e;
   --sky: #8cc3e0;
   --sky-dark: #5a93b3;
+  --focus: #1f5a96;
+  --disabled: #8a7b70;
   --berry: #d9634f;
   --white: #fffdf8;
+  --surface: #fffdf8;
   --mat-red: #d9534a;
   --mat-yellow: #f2c230;
   --mat-green: #6baa4f;
+  /* 教科の色（色だけで区別しない: 絵と名前を併記） */
+  --subj-kokugo: #b5442f;
+  --subj-sansu: #2a61a8;
+  --subj-seikatsu: #a3561c;
+  --subj-rika: #2f7438;
+  --subj-shakai: #9a5a12;
+  --subj-eigo: #7a4596;
+  --subj-program: #1d6f73;
+  --subj-oekaki: #b23e6e;
+  /* おちついた表現 */
+  --paper-calm: #f7f4ee;
+  --ink-calm: #2e2a26;
+  --ink-soft-calm: #5c554d;
 
   /* 寸法の単位: 16:9 の舞台の幅の 1/100（実機で約 2.4〜2.76mm） */
   --u: max(5px, min(1vw, 1.7778vh));

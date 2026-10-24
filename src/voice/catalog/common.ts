@@ -83,7 +83,7 @@ export const commonVoice = {
   // 行動に基づく声かけ（learning-design.md「声かけの例と条件」）
   'praise.counted': 'ひとつずつ かぞえられたね',
   'praise.rotated': 'むきを かえたら つながったね',
-  'praise.self-fixed': 'じぶんで なおせたね',
+  'praise.self-fixed': 'もういちど やって できたね',
   'praise.traced': 'さいごまで なぞれたね',
   'praise.start-point': 'みどりの まるから かけたね',
   'praise.reviewed': 'もういちど みて たしかめたね',
@@ -93,6 +93,17 @@ export const commonVoice = {
   'praise.gathered': 'ちゅうもんどおりに そろえられたね',
   'praise.picture-checked': 'えで たしかめたね',
   'praise.finished': 'さいごまで できたね',
+  // 遊び方の名前（src/modes/registry.ts）
+  'road.variant.puzzle': 'もんだい',
+  'road.variant.free': 'じゆうに つくる',
+  'trace.variant.lines': 'せん',
+  'trace.variant.maze': 'めいろ',
+  'trace.variant.letters': 'もじ',
+  'math.variant.add': 'たす',
+  'math.variant.sub': 'ひく',
+  'math.variant.split': 'わける',
+  'math.variant.formula-add': 'しき たす',
+  'math.variant.formula-sub': 'しき ひく',
   // モード名
   'title.shopping': 'おかいものごっこ',
   'title.hiragana': 'ひらがな',

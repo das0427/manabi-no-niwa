@@ -1,0 +1,40 @@
+.notebook {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: calc(var(--u) * 2);
+}
+.notebook-day {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.2) 0;
+  border-bottom: calc(var(--u) * 0.25) dashed var(--paper-2);
+}
+.notebook-day__date {
+  flex: none;
+  width: calc(var(--u) * 16);
+  margin: 0;
+  font-size: var(--text-label);
+}
+.notebook-day__items {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+}
+.notebook-day__mode {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+}
+.notebook-day__work {
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  overflow: hidden;
+}

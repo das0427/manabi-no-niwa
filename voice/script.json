@@ -1,0 +1,657 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "key": "app.again",
+      "text": "もういっかい"
+    },
+    {
+      "key": "app.choose-variant",
+      "text": "どれで あそぶ？"
+    },
+    {
+      "key": "app.done",
+      "text": "おしまい"
+    },
+    {
+      "key": "app.gohome",
+      "text": "おうちに もどるよ"
+    },
+    {
+      "key": "app.home",
+      "text": "なにで あそぶ？"
+    },
+    {
+      "key": "app.lets-try",
+      "text": "やって みよう"
+    },
+    {
+      "key": "app.liked",
+      "text": "すきに したよ"
+    },
+    {
+      "key": "app.look-again",
+      "text": "よく みてね"
+    },
+    {
+      "key": "app.next",
+      "text": "つぎに いこう"
+    },
+    {
+      "key": "app.no-sound",
+      "text": "おとが でないみたい"
+    },
+    {
+      "key": "app.notebook",
+      "text": "がんばりノート"
+    },
+    {
+      "key": "app.ok",
+      "text": "そうだね"
+    },
+    {
+      "key": "app.parent-only",
+      "text": "ここは おとなの ひと ようだよ"
+    },
+    {
+      "key": "app.recommend",
+      "text": "きょうの おすすめ"
+    },
+    {
+      "key": "app.resume",
+      "text": "つづきから する？"
+    },
+    {
+      "key": "app.resume.no",
+      "text": "はじめから"
+    },
+    {
+      "key": "app.resume.yes",
+      "text": "つづきから"
+    },
+    {
+      "key": "app.right",
+      "text": "あってるね"
+    },
+    {
+      "key": "app.show-answer",
+      "text": "こたえは これだよ。つぎに いこう"
+    },
+    {
+      "key": "app.start",
+      "text": "はじめるを おしてね"
+    },
+    {
+      "key": "app.timeup",
+      "text": "きょうは ここまでに しよう。また あそぼうね"
+    },
+    {
+      "key": "app.try-again",
+      "text": "ちがうみたい。もういちど やって みよう"
+    },
+    {
+      "key": "app.welcome",
+      "text": "まなびのにわへ ようこそ"
+    },
+    {
+      "key": "app.who",
+      "text": "だれが あそぶ？"
+    },
+    {
+      "key": "count.hiki.0",
+      "text": "ぜろひき"
+    },
+    {
+      "key": "count.hiki.1",
+      "text": "いっぴき"
+    },
+    {
+      "key": "count.hiki.10",
+      "text": "じゅっぴき"
+    },
+    {
+      "key": "count.hiki.2",
+      "text": "にひき"
+    },
+    {
+      "key": "count.hiki.3",
+      "text": "さんびき"
+    },
+    {
+      "key": "count.hiki.4",
+      "text": "よんひき"
+    },
+    {
+      "key": "count.hiki.5",
+      "text": "ごひき"
+    },
+    {
+      "key": "count.hiki.6",
+      "text": "ろっぴき"
+    },
+    {
+      "key": "count.hiki.7",
+      "text": "ななひき"
+    },
+    {
+      "key": "count.hiki.8",
+      "text": "はっぴき"
+    },
+    {
+      "key": "count.hiki.9",
+      "text": "きゅうひき"
+    },
+    {
+      "key": "count.ko.0",
+      "text": "ぜろこ"
+    },
+    {
+      "key": "count.ko.1",
+      "text": "いっこ"
+    },
+    {
+      "key": "count.ko.10",
+      "text": "じゅっこ"
+    },
+    {
+      "key": "count.ko.2",
+      "text": "にこ"
+    },
+    {
+      "key": "count.ko.3",
+      "text": "さんこ"
+    },
+    {
+      "key": "count.ko.4",
+      "text": "よんこ"
+    },
+    {
+      "key": "count.ko.5",
+      "text": "ごこ"
+    },
+    {
+      "key": "count.ko.6",
+      "text": "ろっこ"
+    },
+    {
+      "key": "count.ko.7",
+      "text": "ななこ"
+    },
+    {
+      "key": "count.ko.8",
+      "text": "はっこ"
+    },
+    {
+      "key": "count.ko.9",
+      "text": "きゅうこ"
+    },
+    {
+      "key": "item.airplane",
+      "text": "ひこうき"
+    },
+    {
+      "key": "item.ant",
+      "text": "あり"
+    },
+    {
+      "key": "item.apple",
+      "text": "りんご"
+    },
+    {
+      "key": "item.ball",
+      "text": "ボール"
+    },
+    {
+      "key": "item.banana",
+      "text": "バナナ"
+    },
+    {
+      "key": "item.bear",
+      "text": "くま"
+    },
+    {
+      "key": "item.bicycle",
+      "text": "じてんしゃ"
+    },
+    {
+      "key": "item.bird",
+      "text": "とり"
+    },
+    {
+      "key": "item.bread",
+      "text": "パン"
+    },
+    {
+      "key": "item.bus-yellow",
+      "text": "バス"
+    },
+    {
+      "key": "item.car-red",
+      "text": "くるま"
+    },
+    {
+      "key": "item.carrot",
+      "text": "にんじん"
+    },
+    {
+      "key": "item.cat",
+      "text": "ねこ"
+    },
+    {
+      "key": "item.chick",
+      "text": "ひよこ"
+    },
+    {
+      "key": "item.cow",
+      "text": "うし"
+    },
+    {
+      "key": "item.cucumber",
+      "text": "きゅうり"
+    },
+    {
+      "key": "item.dog",
+      "text": "いぬ"
+    },
+    {
+      "key": "item.egg",
+      "text": "たまご"
+    },
+    {
+      "key": "item.eggplant",
+      "text": "なす"
+    },
+    {
+      "key": "item.elephant",
+      "text": "ぞう"
+    },
+    {
+      "key": "item.flower",
+      "text": "おはな"
+    },
+    {
+      "key": "item.fox",
+      "text": "きつね"
+    },
+    {
+      "key": "item.frog",
+      "text": "かえる"
+    },
+    {
+      "key": "item.green-pepper",
+      "text": "ピーマン"
+    },
+    {
+      "key": "item.leaf",
+      "text": "はっぱ"
+    },
+    {
+      "key": "item.lemon",
+      "text": "レモン"
+    },
+    {
+      "key": "item.mikan",
+      "text": "みかん"
+    },
+    {
+      "key": "item.monkey",
+      "text": "さる"
+    },
+    {
+      "key": "item.octopus",
+      "text": "たこ"
+    },
+    {
+      "key": "item.onigiri",
+      "text": "おにぎり"
+    },
+    {
+      "key": "item.peach",
+      "text": "もも"
+    },
+    {
+      "key": "item.pencil",
+      "text": "えんぴつ"
+    },
+    {
+      "key": "item.rabbit",
+      "text": "うさぎ"
+    },
+    {
+      "key": "item.rock",
+      "text": "いわ"
+    },
+    {
+      "key": "item.scissors",
+      "text": "はさみ"
+    },
+    {
+      "key": "item.ship",
+      "text": "ふね"
+    },
+    {
+      "key": "item.strawberry",
+      "text": "いちご"
+    },
+    {
+      "key": "item.tomato",
+      "text": "トマト"
+    },
+    {
+      "key": "item.train",
+      "text": "でんしゃ"
+    },
+    {
+      "key": "item.tree",
+      "text": "き"
+    },
+    {
+      "key": "item.turtle",
+      "text": "かめ"
+    },
+    {
+      "key": "item.umbrella",
+      "text": "かさ"
+    },
+    {
+      "key": "item.watermelon",
+      "text": "すいか"
+    },
+    {
+      "key": "math.variant.add",
+      "text": "たす"
+    },
+    {
+      "key": "math.variant.formula-add",
+      "text": "しき たす"
+    },
+    {
+      "key": "math.variant.formula-sub",
+      "text": "しき ひく"
+    },
+    {
+      "key": "math.variant.split",
+      "text": "わける"
+    },
+    {
+      "key": "math.variant.sub",
+      "text": "ひく"
+    },
+    {
+      "key": "num.0",
+      "text": "ぜろ"
+    },
+    {
+      "key": "num.1",
+      "text": "いち"
+    },
+    {
+      "key": "num.10",
+      "text": "じゅう"
+    },
+    {
+      "key": "num.2",
+      "text": "に"
+    },
+    {
+      "key": "num.3",
+      "text": "さん"
+    },
+    {
+      "key": "num.4",
+      "text": "よん"
+    },
+    {
+      "key": "num.5",
+      "text": "ご"
+    },
+    {
+      "key": "num.6",
+      "text": "ろく"
+    },
+    {
+      "key": "num.7",
+      "text": "なな"
+    },
+    {
+      "key": "num.8",
+      "text": "はち"
+    },
+    {
+      "key": "num.9",
+      "text": "きゅう"
+    },
+    {
+      "key": "praise.counted",
+      "text": "ひとつずつ かぞえられたね"
+    },
+    {
+      "key": "praise.finished",
+      "text": "さいごまで できたね"
+    },
+    {
+      "key": "praise.gathered",
+      "text": "ちゅうもんどおりに そろえられたね"
+    },
+    {
+      "key": "praise.other-split",
+      "text": "ちがう わけかたも みつけたね"
+    },
+    {
+      "key": "praise.picture-checked",
+      "text": "えで たしかめたね"
+    },
+    {
+      "key": "praise.reviewed",
+      "text": "もういちど みて たしかめたね"
+    },
+    {
+      "key": "praise.rotated",
+      "text": "むきを かえたら つながったね"
+    },
+    {
+      "key": "praise.self-fixed",
+      "text": "もういちど やって できたね"
+    },
+    {
+      "key": "praise.sorted-color",
+      "text": "いろで わけられたね"
+    },
+    {
+      "key": "praise.sorted-kind",
+      "text": "なかまで わけられたね"
+    },
+    {
+      "key": "praise.start-point",
+      "text": "みどりの まるから かけたね"
+    },
+    {
+      "key": "praise.traced",
+      "text": "さいごまで なぞれたね"
+    },
+    {
+      "key": "road.variant.free",
+      "text": "じゆうに つくる"
+    },
+    {
+      "key": "road.variant.puzzle",
+      "text": "もんだい"
+    },
+    {
+      "key": "shop.answer",
+      "text": "こたえは これだよ"
+    },
+    {
+      "key": "shop.basket-full",
+      "text": "かごが いっぱいだよ"
+    },
+    {
+      "key": "shop.count-to.1",
+      "text": "いっこと"
+    },
+    {
+      "key": "shop.count-to.2",
+      "text": "にこと"
+    },
+    {
+      "key": "shop.count-to.3",
+      "text": "さんこと"
+    },
+    {
+      "key": "shop.count-to.4",
+      "text": "よんこと"
+    },
+    {
+      "key": "shop.count-to.5",
+      "text": "ごこと"
+    },
+    {
+      "key": "shop.how",
+      "text": "できたら レジを おしてね"
+    },
+    {
+      "key": "shop.intro",
+      "text": "おみせやさんだよ。ちゅうもんの ものを かごに いれてね"
+    },
+    {
+      "key": "shop.item-ga.apple",
+      "text": "りんごが"
+    },
+    {
+      "key": "shop.item-ga.banana",
+      "text": "バナナが"
+    },
+    {
+      "key": "shop.item-ga.bread",
+      "text": "パンが"
+    },
+    {
+      "key": "shop.item-ga.carrot",
+      "text": "にんじんが"
+    },
+    {
+      "key": "shop.item-ga.egg",
+      "text": "たまごが"
+    },
+    {
+      "key": "shop.item-ga.mikan",
+      "text": "みかんが"
+    },
+    {
+      "key": "shop.item-ga.strawberry",
+      "text": "いちごが"
+    },
+    {
+      "key": "shop.item-ga.tomato",
+      "text": "トマトが"
+    },
+    {
+      "key": "shop.item-wo.apple",
+      "text": "りんごを"
+    },
+    {
+      "key": "shop.item-wo.banana",
+      "text": "バナナを"
+    },
+    {
+      "key": "shop.item-wo.bread",
+      "text": "パンを"
+    },
+    {
+      "key": "shop.item-wo.carrot",
+      "text": "にんじんを"
+    },
+    {
+      "key": "shop.item-wo.egg",
+      "text": "たまごを"
+    },
+    {
+      "key": "shop.item-wo.mikan",
+      "text": "みかんを"
+    },
+    {
+      "key": "shop.item-wo.strawberry",
+      "text": "いちごを"
+    },
+    {
+      "key": "shop.item-wo.tomato",
+      "text": "トマトを"
+    },
+    {
+      "key": "shop.kudasai",
+      "text": "ください"
+    },
+    {
+      "key": "shop.look-order",
+      "text": "ちゅうもんの えを みて みよう"
+    },
+    {
+      "key": "shop.many",
+      "text": "おおいみたい。かごの なかを かぞえて みよう"
+    },
+    {
+      "key": "shop.register",
+      "text": "これで おねがいします"
+    },
+    {
+      "key": "shop.short",
+      "text": "たりないみたい"
+    },
+    {
+      "key": "shop.thanks",
+      "text": "ありがとう。ちゅうもんどおりだね"
+    },
+    {
+      "key": "shop.total",
+      "text": "ぜんぶで"
+    },
+    {
+      "key": "title.compare",
+      "text": "くらべっこ"
+    },
+    {
+      "key": "title.hiragana",
+      "text": "ひらがな"
+    },
+    {
+      "key": "title.math",
+      "text": "さんすう"
+    },
+    {
+      "key": "title.memory",
+      "text": "おぼえて さがす"
+    },
+    {
+      "key": "title.road",
+      "text": "みちを つくろう"
+    },
+    {
+      "key": "title.shapes",
+      "text": "かたち パズル"
+    },
+    {
+      "key": "title.shopping",
+      "text": "おかいものごっこ"
+    },
+    {
+      "key": "title.sorting",
+      "text": "なかまわけ"
+    },
+    {
+      "key": "title.trace",
+      "text": "なぞって あそぼう"
+    },
+    {
+      "key": "trace.variant.letters",
+      "text": "もじ"
+    },
+    {
+      "key": "trace.variant.lines",
+      "text": "せん"
+    },
+    {
+      "key": "trace.variant.maze",
+      "text": "めいろ"
+    }
+  ]
+}

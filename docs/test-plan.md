@@ -47,6 +47,13 @@
 | core/storage/migrate | 移行の途中失敗で元データが残る、VersionError の扱い | DA-03 |
 | check:design | DESINGN.md 14章の自動検査 | BC-01, DESINGN |
 
+### 2.2 測定結果の記録
+
+- でたらめに押した場合に誤って段階が進む確率（src/core/progress/rules.test.ts のシミュレーション。1回4問×10回=40問、20000試行、操作のとまどいによる除外は考えない厳しめの条件）:
+  - 2択: 進む条件を「10件中8件」にすると 28.5%。偶然の確率が 0.34 を超える段階は「10件中9件」にした結果 **7.3%**
+  - 3択（10件中8件）: **2.4%**
+  - 誤って進んでも、戻る規則と保護者の固定で戻せる。連打は operationIssue として窓から除外されるため、実際の確率はこれより低い。
+
 ## 3. E2E（Playwright: Chromium・Firefox）
 
 本番ビルド（`vite build` → `vite preview --host 127.0.0.1`）に対して実行。

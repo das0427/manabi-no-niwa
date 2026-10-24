@@ -1,0 +1,38 @@
+/** 端末内保存（IndexedDB）の公開 API */
+export { SCHEMA_VERSION, DB_NAME, openStorage, getStorageHealth, onStorageHealth } from './db';
+export {
+  getAppRecord,
+  saveAppRecord,
+  listProfiles,
+  createProfile,
+  updateProfile,
+  deleteProfile,
+  getSettings,
+  saveSettings,
+  getProgress,
+  listProgress,
+  saveProgress,
+  addAttempt,
+  listAttempts,
+  addRound,
+  updateRound,
+  listRounds,
+  saveWork,
+  getWork,
+  listWorks,
+  deleteWork,
+  listMemos,
+  saveMemo,
+  deleteMemo,
+  getDraft,
+  saveDraft,
+  deleteDraft,
+  getFavorites,
+  saveFavorites,
+  clearProfileRecords,
+  estimateStorage,
+  requestPersist,
+  deleteAllData,
+} from './repo';
+export { exportBackup, parseBackup, migrateBackup, importBackup } from './backup';
+export type { BackupFile, BackupData, ParseResult, ImportPreview, ImportSummary } from './backup';

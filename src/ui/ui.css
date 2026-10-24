@@ -1,0 +1,249 @@
+/* 共通部品（DESINGN.md 7〜8章）。寸法は --u 基準。ぼかし影・グラデーションは使わない */
+
+/* ---- 木の札（押せるもの） ---- */
+.tap {
+  --face: var(--wood);
+  --edge-color: var(--wood-dark);
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.8);
+  min-width: var(--tap-main);
+  min-height: var(--tap-main);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--face);
+  color: var(--ink);
+  font-family: var(--font-child);
+  font-weight: 700;
+  font-size: var(--text-label);
+  line-height: 1.2;
+  box-shadow: 0 var(--step) 0 var(--edge-color);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    transform var(--dur-fast),
+    box-shadow var(--dur-fast);
+}
+.tap:active:not(:disabled) {
+  transform: translateY(calc(var(--u) * 0.4));
+  box-shadow: 0 calc(var(--u) * 0.2) 0 var(--edge-color);
+}
+.tap:focus-visible {
+  outline: calc(var(--u) * 0.4) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+}
+.tap:disabled {
+  opacity: 0.4;
+  box-shadow: none;
+  cursor: default;
+}
+.tap--main {
+  --face: var(--leaf);
+  --edge-color: var(--leaf-dark);
+  color: var(--white);
+}
+.tap--sky {
+  --face: var(--sky);
+  --edge-color: var(--sky-dark);
+}
+.tap--white {
+  --face: var(--white);
+  --edge-color: var(--paper-2);
+}
+.tap--aux {
+  min-width: var(--tap-aux);
+  min-height: var(--tap-aux);
+  padding: calc(var(--u) * 0.4);
+}
+.tap--big {
+  min-height: calc(var(--u) * 9);
+  padding: calc(var(--u) * 1) calc(var(--u) * 3);
+  font-size: var(--text-prompt);
+}
+.tap__icon {
+  width: calc(var(--u) * 4.2);
+  height: calc(var(--u) * 4.2);
+  flex: none;
+}
+.tap--aux .tap__icon {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+}
+
+/* ---- 状態（色だけにしない: 印・線・不透明度） ---- */
+.is-selected {
+  outline: calc(var(--u) * 0.6) solid var(--sun);
+  outline-offset: 0;
+  transform: translateY(calc(var(--u) * -1));
+}
+.is-wrong {
+  opacity: 0.45;
+}
+.is-hint {
+  outline: calc(var(--u) * 0.4) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.4);
+  background-color: color-mix(in srgb, var(--sun) 45%, var(--white));
+}
+.mark {
+  position: absolute;
+  pointer-events: none;
+  z-index: 2;
+}
+.mark--correct {
+  inset: calc(var(--u) * -0.8);
+  border: calc(var(--u) * 0.9) solid var(--leaf);
+  border-radius: 50%;
+}
+.mark--wrong {
+  top: calc(var(--u) * -1.6);
+  right: calc(var(--u) * -1.2);
+  width: calc(var(--u) * 3.6);
+  height: calc(var(--u) * 3.6);
+  border: var(--outline) solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--u) * 2.4);
+  line-height: 1;
+}
+
+/* ---- 選択肢のカード ---- */
+.choice {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: calc(var(--u) * 14);
+  min-height: calc(var(--u) * 14);
+  padding: calc(var(--u) * 1);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: var(--font-child);
+  color: var(--ink);
+  transition: transform var(--dur-fast);
+}
+.choice:active:not(:disabled) {
+  transform: translateY(calc(var(--u) * 0.4));
+}
+.choice:disabled {
+  cursor: default;
+}
+.choice__illust {
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+}
+.choice__text {
+  font-size: calc(var(--u) * 8);
+  line-height: 1;
+}
+.choice__letter {
+  font-family: var(--font-letter);
+  font-weight: 600;
+  font-size: calc(var(--u) * 9);
+  line-height: 1;
+}
+
+/* ---- ヘッダー ---- */
+.mode-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--u) * 8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1) var(--edge);
+  z-index: 5;
+}
+.mode-header__prompt {
+  flex: 1;
+  text-align: center;
+  font-size: var(--text-prompt);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+.listen-waves path {
+  transition: opacity var(--dur-fast);
+}
+.listen--speaking .listen-wave {
+  animation: wave 1.2s infinite;
+}
+.listen--speaking .listen-wave:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.listen--speaking .listen-wave:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes wave {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- 吹き出し（ヒント） ---- */
+.bubble {
+  position: absolute;
+  z-index: 6;
+  max-width: calc(var(--u) * 44);
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 2);
+  border: var(--outline) solid var(--ink);
+  border-radius: calc(var(--u) * 2);
+  background: var(--white);
+  font-size: var(--text-label);
+  line-height: 1.4;
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--u) * 3);
+  bottom: calc(var(--u) * -1.6);
+  width: calc(var(--u) * 2.4);
+  height: calc(var(--u) * 2.4);
+  background: var(--white);
+  border-right: var(--outline) solid var(--ink);
+  border-bottom: var(--outline) solid var(--ink);
+  transform: rotate(45deg) translate(-30%, -30%);
+}
+
+/* ---- 汎用レイアウト ---- */
+.screen {
+  position: absolute;
+  inset: 0;
+}
+.center-col {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.title-text {
+  font-size: calc(var(--u) * 4.2);
+  margin: 0;
+}
+.label-text {
+  font-size: var(--text-label);
+  margin: 0;
+}

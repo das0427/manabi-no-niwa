@@ -1,0 +1,148 @@
+/* おかいものごっこ。舞台の下部 100u × 48u を使う */
+.shop {
+  position: absolute;
+  inset: 0;
+}
+.shop-order {
+  position: absolute;
+  left: var(--edge);
+  top: calc(var(--u) * 1);
+  width: calc(var(--u) * 32);
+  min-height: calc(var(--u) * 12);
+  padding: calc(var(--u) * 1);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.6);
+}
+.shop-order__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 1);
+  border-radius: var(--radius);
+}
+.shop-order__pics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.2);
+}
+.shop-order__pic {
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 5);
+}
+.shop-order__num {
+  flex: none;
+  min-width: calc(var(--u) * 5);
+  font-size: calc(var(--u) * 5.5);
+  line-height: 1;
+  text-align: center;
+}
+.shop-register {
+  position: absolute !important;
+  right: var(--edge);
+  top: calc(var(--u) * 1);
+  width: calc(var(--u) * 20);
+  height: calc(var(--u) * 15);
+  flex-direction: column;
+}
+.shop-register .tap__icon {
+  width: calc(var(--u) * 7);
+  height: calc(var(--u) * 7);
+}
+.shop-register__text {
+  font-size: var(--text-small);
+  line-height: 1.15;
+  text-align: center;
+}
+.shop-shelf {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--u) * 17.5);
+  transform: translateX(-50%);
+  display: flex;
+  gap: calc(var(--u) * 3);
+  padding: calc(var(--u) * 1) calc(var(--u) * 2) calc(var(--u) * 1.6);
+  border-bottom: calc(var(--u) * 1.2) solid var(--wood);
+}
+.shop-shelf__item {
+  width: calc(var(--u) * 14);
+  height: calc(var(--u) * 14);
+}
+.shop-bottom {
+  position: absolute;
+  left: var(--edge);
+  right: var(--edge);
+  bottom: calc(var(--u) * 1.5);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+}
+.shop-basket {
+  flex: 1;
+  height: calc(var(--u) * 11);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.8);
+  padding: 0 calc(var(--u) * 2);
+  border: var(--outline) solid var(--ink);
+  border-radius: 0 0 calc(var(--u) * 3) calc(var(--u) * 3);
+  background: var(--wood);
+}
+.shop-basket--done {
+  outline: calc(var(--u) * 0.8) solid var(--leaf);
+}
+.shop-basket__empty {
+  color: var(--wood-dark);
+  font-size: var(--text-label);
+}
+.shop-basket__item {
+  position: relative;
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.shop-basket__pic {
+  width: 100%;
+  height: 100%;
+}
+.shop-basket__badge {
+  position: absolute;
+  top: calc(var(--u) * -1.2);
+  right: calc(var(--u) * -0.8);
+  width: calc(var(--u) * 3.4);
+  height: calc(var(--u) * 3.4);
+  border: var(--outline) solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--u) * 2.2);
+  color: var(--ink);
+}
+.shop-showcase {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.shop-showcase__group {
+  display: flex;
+  gap: calc(var(--u) * 0.4);
+}
+.shop-showcase__pic {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+}
+.shop-showcase__total {
+  font-size: calc(var(--u) * 5);
+  margin-left: calc(var(--u) * 2);
+}

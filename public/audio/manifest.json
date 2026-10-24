@@ -1,0 +1,821 @@
+{
+ "version": 1,
+ "voice": "mei_normal (MMDAgent Mei, CC BY 3.0 Nagoya Institute of Technology) via Open JTalk (pyopenjtalk-plus)",
+ "entries": {
+  "app.again": {
+   "file": "app.again.mp3",
+   "hash": "35ffedc6123f",
+   "ms": 984
+  },
+  "app.choose-variant": {
+   "file": "app.choose-variant.mp3",
+   "hash": "e5136145b343",
+   "ms": 1128
+  },
+  "app.done": {
+   "file": "app.done.mp3",
+   "hash": "43728cbd379a",
+   "ms": 744
+  },
+  "app.gohome": {
+   "file": "app.gohome.mp3",
+   "hash": "2457ca4a6968",
+   "ms": 1272
+  },
+  "app.home": {
+   "file": "app.home.mp3",
+   "hash": "98b0cc5ef20b",
+   "ms": 1152
+  },
+  "app.lets-try": {
+   "file": "app.lets-try.mp3",
+   "hash": "04e7be3f22c7",
+   "ms": 1008
+  },
+  "app.liked": {
+   "file": "app.liked.mp3",
+   "hash": "8edcf58aecdb",
+   "ms": 1080
+  },
+  "app.look-again": {
+   "file": "app.look-again.mp3",
+   "hash": "a9e0cae7a1ce",
+   "ms": 984
+  },
+  "app.next": {
+   "file": "app.next.mp3",
+   "hash": "4197db6eeb20",
+   "ms": 1056
+  },
+  "app.no-sound": {
+   "file": "app.no-sound.mp3",
+   "hash": "123f1fb2e372",
+   "ms": 1440
+  },
+  "app.notebook": {
+   "file": "app.notebook.mp3",
+   "hash": "d330f9a784e0",
+   "ms": 1152
+  },
+  "app.ok": {
+   "file": "app.ok.mp3",
+   "hash": "bb40363c32a7",
+   "ms": 840
+  },
+  "app.parent-only": {
+   "file": "app.parent-only.mp3",
+   "hash": "f29928d0fa02",
+   "ms": 2016
+  },
+  "app.recommend": {
+   "file": "app.recommend.mp3",
+   "hash": "15e6a2b80bf6",
+   "ms": 1296
+  },
+  "app.resume": {
+   "file": "app.resume.mp3",
+   "hash": "17d9466025ab",
+   "ms": 1344
+  },
+  "app.resume.no": {
+   "file": "app.resume.no.mp3",
+   "hash": "ea9798da6b09",
+   "ms": 984
+  },
+  "app.resume.yes": {
+   "file": "app.resume.yes.mp3",
+   "hash": "26022e165b36",
+   "ms": 1032
+  },
+  "app.right": {
+   "file": "app.right.mp3",
+   "hash": "6ec8df2f8fef",
+   "ms": 816
+  },
+  "app.show-answer": {
+   "file": "app.show-answer.mp3",
+   "hash": "26bc0af99c4a",
+   "ms": 2712
+  },
+  "app.start": {
+   "file": "app.start.mp3",
+   "hash": "5d4bd04a9295",
+   "ms": 1368
+  },
+  "app.timeup": {
+   "file": "app.timeup.mp3",
+   "hash": "7d8eae460259",
+   "ms": 3312
+  },
+  "app.try-again": {
+   "file": "app.try-again.mp3",
+   "hash": "1f3ed4d734c3",
+   "ms": 3000
+  },
+  "app.welcome": {
+   "file": "app.welcome.mp3",
+   "hash": "005d6a238eaa",
+   "ms": 1920
+  },
+  "app.who": {
+   "file": "app.who.mp3",
+   "hash": "9af39469414a",
+   "ms": 1104
+  },
+  "count.hiki.0": {
+   "file": "count.hiki.0.mp3",
+   "hash": "1b7d9059daee",
+   "ms": 720
+  },
+  "count.hiki.1": {
+   "file": "count.hiki.1.mp3",
+   "hash": "facc55b89765",
+   "ms": 648
+  },
+  "count.hiki.10": {
+   "file": "count.hiki.10.mp3",
+   "hash": "d24de812b7bd",
+   "ms": 648
+  },
+  "count.hiki.2": {
+   "file": "count.hiki.2.mp3",
+   "hash": "42b57eca6f95",
+   "ms": 600
+  },
+  "count.hiki.3": {
+   "file": "count.hiki.3.mp3",
+   "hash": "bb2c0149cb46",
+   "ms": 816
+  },
+  "count.hiki.4": {
+   "file": "count.hiki.4.mp3",
+   "hash": "0dc01e41349f",
+   "ms": 696
+  },
+  "count.hiki.5": {
+   "file": "count.hiki.5.mp3",
+   "hash": "a71e5c18adf8",
+   "ms": 672
+  },
+  "count.hiki.6": {
+   "file": "count.hiki.6.mp3",
+   "hash": "962144ce857e",
+   "ms": 672
+  },
+  "count.hiki.7": {
+   "file": "count.hiki.7.mp3",
+   "hash": "c8aa90996680",
+   "ms": 816
+  },
+  "count.hiki.8": {
+   "file": "count.hiki.8.mp3",
+   "hash": "a9625b8f6345",
+   "ms": 696
+  },
+  "count.hiki.9": {
+   "file": "count.hiki.9.mp3",
+   "hash": "4849b44dc088",
+   "ms": 696
+  },
+  "count.ko.0": {
+   "file": "count.ko.0.mp3",
+   "hash": "084fcb1279c9",
+   "ms": 672
+  },
+  "count.ko.1": {
+   "file": "count.ko.1.mp3",
+   "hash": "5869147824c2",
+   "ms": 672
+  },
+  "count.ko.10": {
+   "file": "count.ko.10.mp3",
+   "hash": "00d26e61030c",
+   "ms": 648
+  },
+  "count.ko.2": {
+   "file": "count.ko.2.mp3",
+   "hash": "386c59138c18",
+   "ms": 576
+  },
+  "count.ko.3": {
+   "file": "count.ko.3.mp3",
+   "hash": "2d86acb83ca5",
+   "ms": 744
+  },
+  "count.ko.4": {
+   "file": "count.ko.4.mp3",
+   "hash": "2f59fc8789ae",
+   "ms": 648
+  },
+  "count.ko.5": {
+   "file": "count.ko.5.mp3",
+   "hash": "c6fd34018150",
+   "ms": 552
+  },
+  "count.ko.6": {
+   "file": "count.ko.6.mp3",
+   "hash": "cac128d6190b",
+   "ms": 672
+  },
+  "count.ko.7": {
+   "file": "count.ko.7.mp3",
+   "hash": "afd38d7d1bed",
+   "ms": 696
+  },
+  "count.ko.8": {
+   "file": "count.ko.8.mp3",
+   "hash": "128aa816b0b4",
+   "ms": 696
+  },
+  "count.ko.9": {
+   "file": "count.ko.9.mp3",
+   "hash": "5352f0862fe0",
+   "ms": 648
+  },
+  "item.airplane": {
+   "file": "item.airplane.mp3",
+   "hash": "ec5ee87b27a1",
+   "ms": 744
+  },
+  "item.ant": {
+   "file": "item.ant.mp3",
+   "hash": "348911b35127",
+   "ms": 456
+  },
+  "item.apple": {
+   "file": "item.apple.mp3",
+   "hash": "ec0c855f5f11",
+   "ms": 600
+  },
+  "item.ball": {
+   "file": "item.ball.mp3",
+   "hash": "4661ef3babdb",
+   "ms": 528
+  },
+  "item.banana": {
+   "file": "item.banana.mp3",
+   "hash": "9b8129b0fa7c",
+   "ms": 600
+  },
+  "item.bear": {
+   "file": "item.bear.mp3",
+   "hash": "7a5177659942",
+   "ms": 504
+  },
+  "item.bicycle": {
+   "file": "item.bicycle.mp3",
+   "hash": "4703679b3aa4",
+   "ms": 792
+  },
+  "item.bird": {
+   "file": "item.bird.mp3",
+   "hash": "6eaff8e84688",
+   "ms": 456
+  },
+  "item.bread": {
+   "file": "item.bread.mp3",
+   "hash": "38300841e5a1",
+   "ms": 408
+  },
+  "item.bus-yellow": {
+   "file": "item.bus-yellow.mp3",
+   "hash": "1594f7c73a30",
+   "ms": 552
+  },
+  "item.car-red": {
+   "file": "item.car-red.mp3",
+   "hash": "c08c50f0c711",
+   "ms": 624
+  },
+  "item.carrot": {
+   "file": "item.carrot.mp3",
+   "hash": "bb940a8f2ddd",
+   "ms": 672
+  },
+  "item.cat": {
+   "file": "item.cat.mp3",
+   "hash": "b2293775d1dd",
+   "ms": 552
+  },
+  "item.chick": {
+   "file": "item.chick.mp3",
+   "hash": "2ac8de888b4e",
+   "ms": 720
+  },
+  "item.cow": {
+   "file": "item.cow.mp3",
+   "hash": "37d4311e4ee2",
+   "ms": 552
+  },
+  "item.cucumber": {
+   "file": "item.cucumber.mp3",
+   "hash": "95fc50ed400e",
+   "ms": 552
+  },
+  "item.dog": {
+   "file": "item.dog.mp3",
+   "hash": "b7f71d064e74",
+   "ms": 504
+  },
+  "item.egg": {
+   "file": "item.egg.mp3",
+   "hash": "aa762e771bf2",
+   "ms": 648
+  },
+  "item.eggplant": {
+   "file": "item.eggplant.mp3",
+   "hash": "e95634434951",
+   "ms": 576
+  },
+  "item.elephant": {
+   "file": "item.elephant.mp3",
+   "hash": "a9d273bea0ba",
+   "ms": 480
+  },
+  "item.flower": {
+   "file": "item.flower.mp3",
+   "hash": "1eed562c49c0",
+   "ms": 648
+  },
+  "item.fox": {
+   "file": "item.fox.mp3",
+   "hash": "842aa27a7810",
+   "ms": 600
+  },
+  "item.frog": {
+   "file": "item.frog.mp3",
+   "hash": "70039c02042d",
+   "ms": 528
+  },
+  "item.green-pepper": {
+   "file": "item.green-pepper.mp3",
+   "hash": "031d5a357399",
+   "ms": 648
+  },
+  "item.leaf": {
+   "file": "item.leaf.mp3",
+   "hash": "8c5d9a2cfab4",
+   "ms": 624
+  },
+  "item.lemon": {
+   "file": "item.lemon.mp3",
+   "hash": "8d9a393c26f5",
+   "ms": 552
+  },
+  "item.mikan": {
+   "file": "item.mikan.mp3",
+   "hash": "5f891adde823",
+   "ms": 648
+  },
+  "item.monkey": {
+   "file": "item.monkey.mp3",
+   "hash": "17eb13ea5aae",
+   "ms": 528
+  },
+  "item.octopus": {
+   "file": "item.octopus.mp3",
+   "hash": "0cd269167916",
+   "ms": 528
+  },
+  "item.onigiri": {
+   "file": "item.onigiri.mp3",
+   "hash": "3a964d1e2de9",
+   "ms": 744
+  },
+  "item.peach": {
+   "file": "item.peach.mp3",
+   "hash": "d4c479883c79",
+   "ms": 576
+  },
+  "item.pencil": {
+   "file": "item.pencil.mp3",
+   "hash": "f4b9e290abf3",
+   "ms": 672
+  },
+  "item.rabbit": {
+   "file": "item.rabbit.mp3",
+   "hash": "5be2e15d5737",
+   "ms": 672
+  },
+  "item.rock": {
+   "file": "item.rock.mp3",
+   "hash": "8585d6ef68b3",
+   "ms": 528
+  },
+  "item.scissors": {
+   "file": "item.scissors.mp3",
+   "hash": "159fe31a0256",
+   "ms": 696
+  },
+  "item.ship": {
+   "file": "item.ship.mp3",
+   "hash": "9137d15c4e57",
+   "ms": 528
+  },
+  "item.strawberry": {
+   "file": "item.strawberry.mp3",
+   "hash": "340f06375d65",
+   "ms": 744
+  },
+  "item.tomato": {
+   "file": "item.tomato.mp3",
+   "hash": "4c8fe5f60e23",
+   "ms": 672
+  },
+  "item.train": {
+   "file": "item.train.mp3",
+   "hash": "aca8a1b2e33d",
+   "ms": 624
+  },
+  "item.tree": {
+   "file": "item.tree.mp3",
+   "hash": "69a453cde356",
+   "ms": 360
+  },
+  "item.turtle": {
+   "file": "item.turtle.mp3",
+   "hash": "0fc226d24f6f",
+   "ms": 504
+  },
+  "item.umbrella": {
+   "file": "item.umbrella.mp3",
+   "hash": "bfb1c82f8f7b",
+   "ms": 552
+  },
+  "item.watermelon": {
+   "file": "item.watermelon.mp3",
+   "hash": "3db2e325feba",
+   "ms": 720
+  },
+  "math.variant.add": {
+   "file": "math.variant.add.mp3",
+   "hash": "290309d8fe81",
+   "ms": 528
+  },
+  "math.variant.formula-add": {
+   "file": "math.variant.formula-add.mp3",
+   "hash": "e59210728559",
+   "ms": 936
+  },
+  "math.variant.formula-sub": {
+   "file": "math.variant.formula-sub.mp3",
+   "hash": "90b4d5a59928",
+   "ms": 792
+  },
+  "math.variant.split": {
+   "file": "math.variant.split.mp3",
+   "hash": "9fea07ddeb50",
+   "ms": 624
+  },
+  "math.variant.sub": {
+   "file": "math.variant.sub.mp3",
+   "hash": "7d974fcdb6d0",
+   "ms": 528
+  },
+  "num.0": {
+   "file": "num.0.mp3",
+   "hash": "2a23b9abd3b2",
+   "ms": 528
+  },
+  "num.1": {
+   "file": "num.1.mp3",
+   "hash": "833b4506997b",
+   "ms": 528
+  },
+  "num.10": {
+   "file": "num.10.mp3",
+   "hash": "32cd43c49996",
+   "ms": 504
+  },
+  "num.2": {
+   "file": "num.2.mp3",
+   "hash": "65136ec40c71",
+   "ms": 360
+  },
+  "num.3": {
+   "file": "num.3.mp3",
+   "hash": "acb72bc056df",
+   "ms": 504
+  },
+  "num.4": {
+   "file": "num.4.mp3",
+   "hash": "052ba3178056",
+   "ms": 432
+  },
+  "num.5": {
+   "file": "num.5.mp3",
+   "hash": "15a8d66e6c8b",
+   "ms": 384
+  },
+  "num.6": {
+   "file": "num.6.mp3",
+   "hash": "f74bcd26b183",
+   "ms": 504
+  },
+  "num.7": {
+   "file": "num.7.mp3",
+   "hash": "16eb66abd576",
+   "ms": 480
+  },
+  "num.8": {
+   "file": "num.8.mp3",
+   "hash": "8138a0c2527d",
+   "ms": 528
+  },
+  "num.9": {
+   "file": "num.9.mp3",
+   "hash": "44c20f710a64",
+   "ms": 480
+  },
+  "praise.counted": {
+   "file": "praise.counted.mp3",
+   "hash": "b641d0e2ddc9",
+   "ms": 2016
+  },
+  "praise.finished": {
+   "file": "praise.finished.mp3",
+   "hash": "d1dca592767b",
+   "ms": 1512
+  },
+  "praise.gathered": {
+   "file": "praise.gathered.mp3",
+   "hash": "6178b234dffc",
+   "ms": 2208
+  },
+  "praise.other-split": {
+   "file": "praise.other-split.mp3",
+   "hash": "cbfc3a247b6a",
+   "ms": 2184
+  },
+  "praise.picture-checked": {
+   "file": "praise.picture-checked.mp3",
+   "hash": "358c511ab705",
+   "ms": 1368
+  },
+  "praise.reviewed": {
+   "file": "praise.reviewed.mp3",
+   "hash": "37d5f1da2aed",
+   "ms": 2160
+  },
+  "praise.rotated": {
+   "file": "praise.rotated.mp3",
+   "hash": "851baa5a9903",
+   "ms": 2232
+  },
+  "praise.self-fixed": {
+   "file": "praise.self-fixed.mp3",
+   "hash": "2d94ff45a7e1",
+   "ms": 1896
+  },
+  "praise.sorted-color": {
+   "file": "praise.sorted-color.mp3",
+   "hash": "41bcb4ea6715",
+   "ms": 1488
+  },
+  "praise.sorted-kind": {
+   "file": "praise.sorted-kind.mp3",
+   "hash": "8cd62b0ea776",
+   "ms": 1680
+  },
+  "praise.start-point": {
+   "file": "praise.start-point.mp3",
+   "hash": "13cc151f0cb4",
+   "ms": 2064
+  },
+  "praise.traced": {
+   "file": "praise.traced.mp3",
+   "hash": "d750929307f1",
+   "ms": 1704
+  },
+  "road.variant.free": {
+   "file": "road.variant.free.mp3",
+   "hash": "cef64e495203",
+   "ms": 1176
+  },
+  "road.variant.puzzle": {
+   "file": "road.variant.puzzle.mp3",
+   "hash": "5632112347d8",
+   "ms": 672
+  },
+  "shop.answer": {
+   "file": "shop.answer.mp3",
+   "hash": "dd1bec859638",
+   "ms": 1392
+  },
+  "shop.basket-full": {
+   "file": "shop.basket-full.mp3",
+   "hash": "b11b3b68c211",
+   "ms": 1464
+  },
+  "shop.count-to.1": {
+   "file": "shop.count-to.1.mp3",
+   "hash": "444fbf8b9245",
+   "ms": 792
+  },
+  "shop.count-to.2": {
+   "file": "shop.count-to.2.mp3",
+   "hash": "de23eb4f121e",
+   "ms": 744
+  },
+  "shop.count-to.3": {
+   "file": "shop.count-to.3.mp3",
+   "hash": "3f603294e8ec",
+   "ms": 912
+  },
+  "shop.count-to.4": {
+   "file": "shop.count-to.4.mp3",
+   "hash": "ee98ea6d96ae",
+   "ms": 840
+  },
+  "shop.count-to.5": {
+   "file": "shop.count-to.5.mp3",
+   "hash": "31136fd71c8e",
+   "ms": 720
+  },
+  "shop.how": {
+   "file": "shop.how.mp3",
+   "hash": "b6597c6169ae",
+   "ms": 1680
+  },
+  "shop.intro": {
+   "file": "shop.intro.mp3",
+   "hash": "c5cc7f563752",
+   "ms": 4008
+  },
+  "shop.item-ga.apple": {
+   "file": "shop.item-ga.apple.mp3",
+   "hash": "149cc13ed9c0",
+   "ms": 744
+  },
+  "shop.item-ga.banana": {
+   "file": "shop.item-ga.banana.mp3",
+   "hash": "8411f85bedea",
+   "ms": 744
+  },
+  "shop.item-ga.bread": {
+   "file": "shop.item-ga.bread.mp3",
+   "hash": "d9b88f74b513",
+   "ms": 552
+  },
+  "shop.item-ga.carrot": {
+   "file": "shop.item-ga.carrot.mp3",
+   "hash": "88bbaf8e095f",
+   "ms": 816
+  },
+  "shop.item-ga.egg": {
+   "file": "shop.item-ga.egg.mp3",
+   "hash": "8c5ec5c4e485",
+   "ms": 744
+  },
+  "shop.item-ga.mikan": {
+   "file": "shop.item-ga.mikan.mp3",
+   "hash": "49283948ddfb",
+   "ms": 792
+  },
+  "shop.item-ga.strawberry": {
+   "file": "shop.item-ga.strawberry.mp3",
+   "hash": "79b6e7997600",
+   "ms": 816
+  },
+  "shop.item-ga.tomato": {
+   "file": "shop.item-ga.tomato.mp3",
+   "hash": "1dafdc2f4e71",
+   "ms": 768
+  },
+  "shop.item-wo.apple": {
+   "file": "shop.item-wo.apple.mp3",
+   "hash": "76fe24074072",
+   "ms": 696
+  },
+  "shop.item-wo.banana": {
+   "file": "shop.item-wo.banana.mp3",
+   "hash": "2c485be326bf",
+   "ms": 744
+  },
+  "shop.item-wo.bread": {
+   "file": "shop.item-wo.bread.mp3",
+   "hash": "907e009e7ba1",
+   "ms": 504
+  },
+  "shop.item-wo.carrot": {
+   "file": "shop.item-wo.carrot.mp3",
+   "hash": "17d1fa9f9bb8",
+   "ms": 744
+  },
+  "shop.item-wo.egg": {
+   "file": "shop.item-wo.egg.mp3",
+   "hash": "495210c6c22c",
+   "ms": 768
+  },
+  "shop.item-wo.mikan": {
+   "file": "shop.item-wo.mikan.mp3",
+   "hash": "a8e09718c3ce",
+   "ms": 792
+  },
+  "shop.item-wo.strawberry": {
+   "file": "shop.item-wo.strawberry.mp3",
+   "hash": "23927eb5340d",
+   "ms": 768
+  },
+  "shop.item-wo.tomato": {
+   "file": "shop.item-wo.tomato.mp3",
+   "hash": "71043bdfee3e",
+   "ms": 792
+  },
+  "shop.kudasai": {
+   "file": "shop.kudasai.mp3",
+   "hash": "208653448419",
+   "ms": 672
+  },
+  "shop.look-order": {
+   "file": "shop.look-order.mp3",
+   "hash": "50c841da138d",
+   "ms": 1800
+  },
+  "shop.many": {
+   "file": "shop.many.mp3",
+   "hash": "0af3b69be145",
+   "ms": 3336
+  },
+  "shop.register": {
+   "file": "shop.register.mp3",
+   "hash": "1fd069800a81",
+   "ms": 1488
+  },
+  "shop.short": {
+   "file": "shop.short.mp3",
+   "hash": "710c10d1e0e4",
+   "ms": 1056
+  },
+  "shop.thanks": {
+   "file": "shop.thanks.mp3",
+   "hash": "7021a3e2b478",
+   "ms": 2520
+  },
+  "shop.total": {
+   "file": "shop.total.mp3",
+   "hash": "fe09126a180b",
+   "ms": 744
+  },
+  "title.compare": {
+   "file": "title.compare.mp3",
+   "hash": "a3a4e32e9c67",
+   "ms": 936
+  },
+  "title.hiragana": {
+   "file": "title.hiragana.mp3",
+   "hash": "3094a3d12c74",
+   "ms": 816
+  },
+  "title.math": {
+   "file": "title.math.mp3",
+   "hash": "cdb5d9fdbc3d",
+   "ms": 840
+  },
+  "title.memory": {
+   "file": "title.memory.mp3",
+   "hash": "fafd85be4bd3",
+   "ms": 1320
+  },
+  "title.road": {
+   "file": "title.road.mp3",
+   "hash": "efa2a83de488",
+   "ms": 1320
+  },
+  "title.shapes": {
+   "file": "title.shapes.mp3",
+   "hash": "523c6cbc68fd",
+   "ms": 1080
+  },
+  "title.shopping": {
+   "file": "title.shopping.mp3",
+   "hash": "ea6d11c87e73",
+   "ms": 1368
+  },
+  "title.sorting": {
+   "file": "title.sorting.mp3",
+   "hash": "971c9e84396b",
+   "ms": 960
+  },
+  "title.trace": {
+   "file": "title.trace.mp3",
+   "hash": "b790553949b6",
+   "ms": 1320
+  },
+  "trace.variant.letters": {
+   "file": "trace.variant.letters.mp3",
+   "hash": "4881010b5e35",
+   "ms": 576
+  },
+  "trace.variant.lines": {
+   "file": "trace.variant.lines.mp3",
+   "hash": "c6a49be9caaf",
+   "ms": 528
+  },
+  "trace.variant.maze": {
+   "file": "trace.variant.maze.mp3",
+   "hash": "9186c90097f7",
+   "ms": 648
+  }
+ }
+}

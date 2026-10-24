@@ -55,6 +55,8 @@ export function recommend(input: RecommendInput): Recommendation[] {
   const lastPlayed = new Map<ModeId, number>();
   const todayCount = new Map<ModeId, number>();
   for (const r of input.rounds) {
+    // 単元の回はここでは数えない（単元のおすすめは curriculum/review.ts pickReviews）
+    if (r.modeId === 'unit') continue;
     lastPlayed.set(r.modeId, Math.max(lastPlayed.get(r.modeId) ?? 0, r.startedAt));
     if (r.startedAt >= input.todayStart) {
       todayCount.set(r.modeId, (todayCount.get(r.modeId) ?? 0) + 1);

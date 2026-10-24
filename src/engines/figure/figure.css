@@ -1,0 +1,294 @@
+/* 図の部品。色は DESINGN.md のトークンのみ。tone は色に加えて線・模様でも区別する */
+.fig-text {
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+}
+.fig-text--m {
+  font-size: calc(var(--u) * 3.6);
+}
+.fig-text--l {
+  font-size: calc(var(--u) * 5.2);
+}
+.fig-text--xl {
+  font-size: calc(var(--u) * 7);
+}
+.fig-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.fig-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.fig-svgbox {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.fig-illust {
+  display: flex;
+  gap: calc(var(--u) * 2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.fig-illust__group {
+  display: flex;
+  gap: calc(var(--u) * 0.6);
+}
+
+/* ブロック */
+.blk {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.blk--h,
+.blk--t {
+  fill: var(--sky);
+}
+.blk--o {
+  fill: var(--sun);
+}
+.blk-grid {
+  stroke: var(--ink);
+  stroke-width: 0.5;
+}
+.blk-frame {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.fig-tone--b .blk--o {
+  fill: var(--sky);
+}
+.fig-tone--focus .blk {
+  stroke-width: 2.4;
+}
+.fig-tone--muted .blk {
+  fill: var(--white);
+  stroke-dasharray: 2 2;
+}
+
+/* テープ図 */
+.fig-tape-wrap {
+  width: 100%;
+  max-width: calc(var(--u) * 70);
+}
+.fig-tape {
+  display: flex;
+  height: calc(var(--u) * 6);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 0.6);
+  overflow: hidden;
+  background: var(--white);
+}
+.fig-tape__part {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+  border-right: calc(var(--u) * 0.3) solid var(--ink);
+}
+.fig-tape__part:last-child {
+  border-right: 0;
+}
+.fig-tape__part.fig-tone--a {
+  background: var(--sky);
+}
+/* tone b は色に加えて内側の破線の枠で区別する（色だけに頼らない。グラデーションは使わない） */
+.fig-tape__part.fig-tone--b {
+  background: var(--sun);
+  outline: calc(var(--u) * 0.3) dashed var(--ink);
+  outline-offset: calc(var(--u) * -0.9);
+}
+.fig-tape__part.fig-tone--muted {
+  border-style: dashed;
+}
+.fig-tape__total {
+  text-align: center;
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+  margin-top: calc(var(--u) * 0.6);
+}
+.fig-tape__brace {
+  display: block;
+  height: calc(var(--u) * 1.4);
+  border: calc(var(--u) * 0.25) solid var(--ink);
+  border-top: 0;
+  border-radius: 0 0 calc(var(--u) * 1) calc(var(--u) * 1);
+  margin-bottom: calc(var(--u) * 0.4);
+}
+
+/* 数直線 */
+.fig-nl {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--u) * 80);
+}
+.nl-axis,
+.nl-major {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.nl-minor {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.nl-arrow {
+  fill: var(--ink);
+}
+.nl-label {
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.nl-jump {
+  fill: none;
+  stroke: var(--sky-dark);
+  stroke-width: 5;
+  stroke-dasharray: 12 8;
+}
+.nl-mark {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.fig-nl__labels {
+  position: relative;
+  height: calc(var(--u) * 4);
+}
+.fig-nl__labels span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+}
+
+/* 時計 */
+.fig-clock {
+  width: calc(var(--u) * 26);
+}
+.clk-face {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.clk-tick {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.clk-tick-l {
+  stroke: var(--ink);
+  stroke-width: 3.5;
+}
+.clk-num {
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.clk-mnum {
+  font-size: 11px;
+  fill: var(--ink-soft);
+  text-anchor: middle;
+}
+.clk-hour {
+  stroke: var(--ink);
+  stroke-width: 9;
+  stroke-linecap: round;
+}
+.clk-min {
+  stroke: var(--sky-dark);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.clk-pin {
+  fill: var(--ink);
+}
+
+/* 表 */
+.fig-table {
+  border-collapse: collapse;
+  font-size: calc(var(--u) * 2.4);
+  background: var(--white);
+}
+.fig-table th,
+.fig-table td {
+  border: calc(var(--u) * 0.2) solid var(--ink);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  text-align: center;
+}
+.fig-table th {
+  font-weight: 700;
+}
+
+/* グラフ */
+.fig-chart {
+  width: 100%;
+  max-width: calc(var(--u) * 70);
+}
+.ch-grid {
+  stroke: var(--ink-soft);
+  stroke-width: 1;
+}
+.ch-axis {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.ch-ylabel {
+  font-size: 22px;
+  fill: var(--ink);
+  text-anchor: end;
+}
+.ch-bar {
+  fill: var(--sky);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.ch-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.ch-dot {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.fig-chart__labels {
+  display: flex;
+  justify-content: space-around;
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+}
+.fig-chart__unit {
+  font-size: calc(var(--u) * 2);
+  text-align: left;
+}
+
+/* 図形 */
+.fig-shape {
+  width: calc(var(--u) * 18);
+}
+.sh {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.fig-tone--a .sh {
+  fill: var(--sky);
+}
+.fig-tone--focus .sh {
+  stroke-width: 7;
+}
+.fig-svg :where(svg) {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}

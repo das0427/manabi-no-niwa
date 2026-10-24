@@ -214,6 +214,14 @@ export async function clickUntil(
   }).toPass({ timeout: 15_000, intervals: [100, 300, 500] });
 }
 
+/** 4歳のホームの札から、初期版のモードをそのまま使う単元（src/packs/p4） */
+const CLASSIC_UNIT_OF: Record<string, string> = {
+  hiragana: 'p4.ja.hiragana-classic',
+  math: 'p4.math.classic',
+  sorting: 'p4.think.sort',
+  trace: 'p4.hand.lines',
+};
+
 /**
  * ホームから遊びを開く。遊び方が複数あって選択画面が出たときだけ variantId を選ぶ
  * （解放前は1つしかなく、選択画面を飛ばして始まる）。
@@ -226,7 +234,22 @@ export async function openMode(
 ): Promise<void> {
   const modeScreen = page.getByTestId(`mode-${modeId}`).or(page.getByTestId('resume-prompt'));
   const picker = page.getByTestId('variant-picker');
-  await clickUntil(page, page.getByTestId(`home-mode-${modeId}`), modeScreen.or(picker), tap);
+  const chooser = page.locator('[data-testid^="card-chooser-"]');
+  await clickUntil(
+    page,
+    page.getByTestId(`home-mode-${modeId}`),
+    modeScreen.or(picker).or(chooser),
+    tap,
+  );
+  // 4歳のホーム: 札に単元が複数あるときは選ぶ画面が出る。初期版のモードを使う単元を選ぶ
+  if (await chooser.isVisible()) {
+    const unitId =
+      modeId === 'trace' && variantId === 'letters'
+        ? 'p4.hand.letters-classic'
+        : CLASSIC_UNIT_OF[modeId];
+    if (!unitId) throw new Error(`初期版の単元が無い: ${modeId}`);
+    await clickUntil(page, page.getByTestId(`card-unit-${unitId}`), modeScreen.or(picker), tap);
+  }
   if (variantId && (await picker.isVisible())) {
     await clickUntil(page, page.getByTestId(`variant-${variantId}`), modeScreen, tap);
   }

@@ -65,11 +65,20 @@ export function RecordsTab() {
   });
 
   // むずかしそうな問題（3回以上取り組んで自力0）
-  const items = new Map<string, { modeId: ModeId; itemKey: string; n: number; ind: number }>();
+  const items = new Map<
+    string,
+    { modeId: ModeId | 'unit'; unitId?: string; itemKey: string; n: number; ind: number }
+  >();
   for (const a of learning) {
     if (a.outcome === 'abandoned') continue;
-    const k = `${a.modeId}\u0000${a.itemKey}`;
-    const cur = items.get(k) ?? { modeId: a.modeId, itemKey: a.itemKey, n: 0, ind: 0 };
+    const k = `${a.modeId}\u0000${a.unitId ?? ''}\u0000${a.itemKey}`;
+    const cur = items.get(k) ?? {
+      modeId: a.modeId,
+      unitId: a.unitId,
+      itemKey: a.itemKey,
+      n: 0,
+      ind: 0,
+    };
     cur.n += 1;
     if (a.outcome === 'independent') cur.ind += 1;
     items.set(k, cur);
@@ -206,7 +215,7 @@ export function RecordsTab() {
             <tbody>
               {hardItems.map((x) => (
                 <tr key={`${x.modeId}-${x.itemKey}`}>
-                  <td>{modeTitle(x.modeId)}</td>
+                  <td>{modeTitle(x.modeId, x.unitId)}</td>
                   <td>{x.itemKey}</td>
                   <td>{x.n}</td>
                 </tr>
@@ -235,7 +244,7 @@ export function RecordsTab() {
               {learning.slice(0, 50).map((a, i) => (
                 <tr key={a.id ?? i}>
                   <td>{formatDateTime(a.at)}</td>
-                  <td>{modeTitle(a.modeId)}</td>
+                  <td>{modeTitle(a.modeId, a.unitId)}</td>
                   <td>{levelCode(a)}</td>
                   <td>{a.itemKey}</td>
                   <td>{OUTCOME_LABEL[a.outcome]}</td>
@@ -269,7 +278,7 @@ export function RecordsTab() {
               {issues.slice(0, 30).map((a, i) => (
                 <tr key={a.id ?? i}>
                   <td>{formatDateTime(a.at)}</td>
-                  <td>{modeTitle(a.modeId)}</td>
+                  <td>{modeTitle(a.modeId, a.unitId)}</td>
                   <td>{a.itemKey}</td>
                   <td>
                     {{ touch: '指', pen: 'ペン', mouse: 'マウス', unknown: '不明' }[a.inputKind]}

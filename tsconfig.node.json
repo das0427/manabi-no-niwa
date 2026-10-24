@@ -12,7 +12,8 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
-    "types": ["node"]
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"]
   },
   "include": ["vite.config.ts", "playwright.config.ts", "scripts/**/*.ts", "e2e/**/*.ts"]
 }

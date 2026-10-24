@@ -1,0 +1,106 @@
+/* 読解: 左に本文（作業領域の中でスクロール）、右に設問の選択肢。本文の文字は DESINGN.md 19章の表（本文 読解） */
+.unit__work--reading .unit__engine {
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+}
+.eng-reading {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 2.4);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.eng-reading__passage {
+  min-height: 0;
+  overflow-y: auto;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 2);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 1.2);
+  color: var(--ink);
+}
+.eng-reading__passage--l {
+  font-size: calc(var(--u) * 2.6);
+  line-height: 1.9;
+}
+.eng-reading__passage--m {
+  font-size: calc(var(--u) * 2.3);
+  line-height: 1.8;
+}
+.eng-reading__passage--s {
+  font-size: calc(var(--u) * 2.1);
+  line-height: 1.8;
+}
+.eng-reading__title {
+  margin: 0 0 calc(var(--u) * 0.6);
+  font-size: 1.1em;
+  font-weight: 700;
+  text-align: center;
+}
+.eng-reading__figure {
+  display: flex;
+  justify-content: center;
+  margin-bottom: calc(var(--u) * 0.8);
+}
+.eng-reading__para {
+  margin: 0 0 calc(var(--u) * 0.6);
+  text-indent: 1em;
+}
+.eng-reading__num {
+  display: inline-block;
+  text-indent: 0;
+  margin-right: 0.3em;
+  font-weight: 700;
+}
+.eng-reading__s {
+  border-radius: calc(var(--u) * 0.4);
+}
+/* ヒントの場所: 破線で囲む（DESINGN.md: 破線＝ヒント。色だけにしない） */
+.eng-reading__s.is-focus {
+  outline: calc(var(--u) * 0.3) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.15);
+  background: var(--paper-2);
+}
+/* 答えの根拠: 太い下線＋面 */
+.eng-reading__s.is-evidence {
+  text-decoration: underline;
+  text-decoration-thickness: calc(var(--u) * 0.35);
+  text-underline-offset: 0.25em;
+  background: var(--paper-2);
+}
+.eng-reading__side {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-reading__read {
+  align-self: flex-start;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
+}
+.eng-reading__read-text {
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+}
+.eng-reading__opts {
+  align-items: stretch;
+}
+.eng-reading__opts .eng-opts__list--column {
+  align-items: stretch;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-reading__opts .eng-opts__opt {
+  min-width: 0;
+  min-height: calc(var(--u) * 6);
+  align-items: flex-start;
+  text-align: left;
+}
+.eng-reading__opts .eng-opts__label {
+  font-size: calc(var(--u) * 2.2);
+  line-height: 1.5;
+}

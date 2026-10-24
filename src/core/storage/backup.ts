@@ -3,6 +3,8 @@
  */
 import type {
   AppRecord,
+  ArtworkBlobRecord,
+  ArtworkRecord,
   AttemptRecord,
   ChildSettings,
   FavoritesRecord,
@@ -10,13 +12,19 @@ import type {
   Profile,
   RoundRecord,
   SkillProgress,
+  UnitProgress,
   WorkRecord,
 } from '../types';
+import { profileAudience } from '../types';
 import { ALL_STORES, SCHEMA_VERSION, STORE, r, runTx, strict } from './db';
 import {
+  type ArtworkBlobFile,
   LIMITS,
   isObj,
   normalizeSettings,
+  validateArtwork,
+  validateArtworkBlobFile,
+  validateUnitProgress,
   validateAttempt,
   validateFavorites,
   validateMemo,
@@ -40,7 +48,15 @@ export interface BackupData {
   works: WorkRecord[];
   memos: MemoRecord[];
   favorites: FavoritesRecord[];
+  // ---- スキーマ2〜（古いファイルには無い → 空） ----
+  unitProgress: UnitProgress[];
+  artworks: ArtworkRecord[];
+  /** 画像は PNG の data URL にして入れる */
+  artworkBlobs: ArtworkBlobFile[];
 }
+
+/** 置き換え・消去の対象にしないストア（端末ごとの情報） */
+const DEVICE_STORES: string[] = [STORE.meta, STORE.app, STORE.packsMeta];
 
 export interface BackupFile {
   format: 'manabi-no-niwa-backup';
@@ -74,6 +90,9 @@ const DATA_KEYS = [
   'works',
   'memos',
   'favorites',
+  'unitProgress',
+  'artworks',
+  'artworkBlobs',
 ] as const;
 
 /**
@@ -89,6 +108,18 @@ export const migrations: Record<number, (f: BackupFile) => BackupFile> = {
       settings: (f.data.settings as unknown[]).map((s) =>
         isObj(s) && s.memoryAutoHideSec === undefined ? { ...s, memoryAutoHideSec: 0 } : s,
       ) as ChildSettings[],
+    },
+  }),
+  // 1→2: v1 のプロフィールは4歳向け。支援設定は normalizeSettings が4歳の既定で補う。
+  // 進度（progress）は変換しない（旧記録。新しい単元の習得済みにしない）
+  1: (f) => ({
+    ...f,
+    schemaVersion: 2,
+    data: {
+      ...f.data,
+      profiles: (f.data.profiles as unknown[]).map((p) =>
+        isObj(p) && p.audience === undefined ? { ...p, audience: 'p4' } : p,
+      ) as Profile[],
     },
   }),
 };
@@ -174,9 +205,11 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   if (profiles.length === 0) return bad('プロフィールが1つも入っていないファイルです。');
   const ids = new Set(profiles.map((p) => p.id));
   if (ids.size !== profiles.length) return bad('プロフィールのIDが重複しています。');
+  // 欠けた設定の項目は、そのプロフィールの区分の既定で補う（コードレビュー #9）
+  const audienceOf = (pid: string) => profileAudience(profiles.find((p) => p.id === pid) ?? {});
   const settings = mapAll(d.settings ?? [], (s) =>
     isObj(s) && typeof s.profileId === 'string'
-      ? normalizeSettings(s, s.profileId.slice(0, LIMITS.id), true)
+      ? normalizeSettings(s, s.profileId.slice(0, LIMITS.id), true, audienceOf(s.profileId))
       : null,
   );
   if (!settings) return bad('設定の情報が正しくありません。');
@@ -192,16 +225,38 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   if (!memos) return bad('メモの情報が正しくありません。メモは2000文字までです。');
   const favorites = mapAll(d.favorites ?? [], validateFavorites);
   if (!favorites) return bad('お気に入りの情報が正しくありません。');
+  const unitProgress = mapAll(d.unitProgress ?? [], validateUnitProgress);
+  if (!unitProgress) return bad('単元の進み具合の情報が正しくありません。');
+  const artworks = mapAll(d.artworks ?? [], validateArtwork);
+  if (!artworks) return bad('おえかきの作品の情報が正しくありません。');
+  const artworkBlobs = mapAll(d.artworkBlobs ?? [], validateArtworkBlobFile);
+  if (!artworkBlobs) return bad('おえかきの画像が正しくありません。');
 
-  const orphan = [settings, progress, attempts, rounds, works, memos, favorites].some((l) =>
-    l.some((x) => !ids.has(x.profileId)),
-  );
+  const orphan = [
+    settings,
+    progress,
+    attempts,
+    rounds,
+    works,
+    memos,
+    favorites,
+    unitProgress,
+    artworks,
+    artworkBlobs,
+  ].some((l) => l.some((x) => !ids.has(x.profileId)));
   if (orphan) return bad('プロフィールに属さない記録が含まれています。');
+  const artIds = new Set(artworks.map((a) => a.id));
   if (
     new Set(works.map((w) => w.id)).size !== works.length ||
-    new Set(memos.map((m) => m.id)).size !== memos.length
+    new Set(memos.map((m) => m.id)).size !== memos.length ||
+    artIds.size !== artworks.length ||
+    new Set(artworkBlobs.map((b) => b.key)).size !== artworkBlobs.length
   ) {
     return bad('作品またはメモのIDが重複しています。');
+  }
+  const artOwner = new Map(artworks.map((a) => [a.id, a.profileId]));
+  if (artworkBlobs.some((b) => artOwner.get(b.artId) !== b.profileId)) {
+    return bad('作品に属さない画像が含まれています。');
   }
 
   const file: BackupFile = {
@@ -210,13 +265,27 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
     appVersion: base.appVersion,
     exportedAt: base.exportedAt,
     scope: base.scope,
-    data: { profiles, settings, progress, attempts, rounds, works, memos, favorites },
+    data: {
+      profiles,
+      settings,
+      progress,
+      attempts,
+      rounds,
+      works,
+      memos,
+      favorites,
+      unitProgress,
+      artworks,
+      artworkBlobs,
+    },
   };
   const summary: ImportPreview = {
     profiles: profiles.map((p) => ({
       name: p.name,
       attempts: attempts.filter((a) => a.profileId === p.id).length,
-      works: works.filter((w) => w.profileId === p.id).length,
+      works:
+        works.filter((w) => w.profileId === p.id).length +
+        artworks.filter((a) => a.profileId === p.id).length,
     })),
     schemaVersion: ver,
     exportedAt: base.exportedAt,
@@ -228,14 +297,34 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
 export async function exportBackup(
   scope: { kind: 'all' } | { kind: 'profile'; profileId: string },
   appVersion: string,
+  /** artworks: false でおえかきの作品を入れない（大きいときは作品を zip に分ける。コードレビュー #5） */
+  opts: { artworks?: boolean } = {},
 ): Promise<BackupFile> {
+  const withArt = opts.artworks !== false;
   return strict(async () => {
     const names = DATA_KEYS.map((k) => STORE[k]);
-    const all = await runTx([...names], 'readonly', async (tx) => {
+    const raw = await runTx([...names], 'readonly', async (tx) => {
       const out: Record<string, unknown[]> = {};
-      for (const k of DATA_KEYS) out[k] = await r<unknown[]>(tx.objectStore(STORE[k]).getAll());
-      return out as unknown as BackupData;
+      for (const k of DATA_KEYS) {
+        if (!withArt && (k === 'artworks' || k === 'artworkBlobs')) out[k] = [];
+        else out[k] = await r<unknown[]>(tx.objectStore(STORE[k]).getAll());
+      }
+      return out;
     });
+    // 画像は transaction の外で data URL にする（transaction 内で IndexedDB 以外を待つと自動で閉じる）
+    // プロフィール1人分の書き出しでは、その人の画像だけを変換する
+    const blobs: ArtworkBlobFile[] = [];
+    for (const b of raw.artworkBlobs as ArtworkBlobRecord[]) {
+      if (scope.kind === 'profile' && b.profileId !== scope.profileId) continue;
+      blobs.push({
+        key: b.key,
+        artId: b.artId,
+        profileId: b.profileId,
+        kind: b.kind,
+        dataUrl: await blobToDataUrl(b.blob),
+      });
+    }
+    const all = { ...raw, artworkBlobs: blobs } as unknown as BackupData;
     let data = all;
     if (scope.kind === 'profile') {
       const pid = scope.profileId;
@@ -250,6 +339,9 @@ export async function exportBackup(
         works: keep(all.works),
         memos: keep(all.memos),
         favorites: keep(all.favorites),
+        unitProgress: keep(all.unitProgress),
+        artworks: keep(all.artworks),
+        artworkBlobs: keep(all.artworkBlobs),
       };
     }
     return {
@@ -304,6 +396,30 @@ export async function getReplaceSnapshot(): Promise<{ savedAt: number; file: Bac
   }
 }
 
+const PNG_PREFIX = 'data:image/png;base64,';
+
+async function blobToDataUrl(b: Blob): Promise<string> {
+  const bytes = new Uint8Array(await b.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return PNG_PREFIX + btoa(bin);
+}
+
+function blobFromFile(f: ArtworkBlobFile): ArtworkBlobRecord {
+  const bin = atob(f.dataUrl.slice(PNG_PREFIX.length));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return {
+    key: f.key,
+    artId: f.artId,
+    profileId: f.profileId,
+    kind: f.kind,
+    blob: new Blob([bytes], { type: 'image/png' }),
+  };
+}
+
 function uniqueName(name: string, taken: Set<string>): string {
   if (!taken.has(name)) return name;
   for (let n = 2; ; n++) {
@@ -325,9 +441,9 @@ export async function importBackup(
       // 置き換える前の全データを、端末内の別のデータベースに1世代だけ退避する（DA-06）。
       // 退避に失敗したら置き換えない（ダウンロードの成否に頼らない）。
       await saveSnapshot(await exportBackup({ kind: 'all' }, file.appVersion));
+      const blobs = d.artworkBlobs.map(blobFromFile);
       await runTx([...ALL_STORES], 'readwrite', async (tx) => {
-        for (const s of ALL_STORES)
-          if (s !== STORE.meta && s !== STORE.app) tx.objectStore(s).clear();
+        for (const s of ALL_STORES) if (!DEVICE_STORES.includes(s)) tx.objectStore(s).clear();
         const app = tx.objectStore(STORE.app);
         const cur = await r<AppRecord | undefined>(app.get('app'));
         app.put({ activeProfileId: null, parentPinHash: cur?.parentPinHash ?? null }, 'app');
@@ -343,11 +459,16 @@ export async function importBackup(
         put(STORE.works, d.works);
         put(STORE.memos, d.memos);
         put(STORE.favorites, d.favorites);
+        put(STORE.unitProgress, d.unitProgress);
+        put(STORE.artworks, d.artworks);
+        put(STORE.artworkBlobs, blobs);
       });
       return { addedProfiles: d.profiles.map((p) => p.name), replaced: true };
     }
 
     const added: string[] = [];
+    const artIdMap = new Map(d.artworks.map((a) => [a.id, crypto.randomUUID()]));
+    const addBlobs = d.artworkBlobs.map(blobFromFile);
     await runTx([...ALL_STORES], 'readwrite', async (tx) => {
       const existing = await r<Profile[]>(tx.objectStore(STORE.profiles).getAll());
       const taken = new Set(existing.map((p) => p.name));
@@ -363,7 +484,7 @@ export async function importBackup(
         tx.objectStore(STORE.profiles).put({ ...p, id, name, createdAt: now + i });
         const s = d.settings.find((x) => x.profileId === p.id);
         tx.objectStore(STORE.settings).put({
-          ...normalizeSettings(s ?? {}, id, false),
+          ...normalizeSettings(s ?? {}, id, false, profileAudience(p)),
           profileId: id,
         });
       });
@@ -388,6 +509,23 @@ export async function importBackup(
         });
       for (const x of d.favorites)
         tx.objectStore(STORE.favorites).put({ ...x, profileId: pid(x.profileId) });
+      for (const x of d.unitProgress)
+        tx.objectStore(STORE.unitProgress).put({ ...x, profileId: pid(x.profileId) });
+      for (const x of d.artworks)
+        tx.objectStore(STORE.artworks).put({
+          ...x,
+          id: artIdMap.get(x.id)!,
+          profileId: pid(x.profileId),
+        });
+      for (const x of addBlobs) {
+        const artId = artIdMap.get(x.artId)!;
+        tx.objectStore(STORE.artworkBlobs).put({
+          ...x,
+          key: `${artId}:${x.kind}`,
+          artId,
+          profileId: pid(x.profileId),
+        });
+      }
     });
     return { addedProfiles: added, replaced: false };
   });

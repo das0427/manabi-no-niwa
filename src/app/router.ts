@@ -12,14 +12,47 @@ export type Route =
   | { name: 'home' }
   | { name: 'mode'; modeId: ModeId; variantId?: string }
   | { name: 'notebook' }
-  | { name: 'parent'; tab: string };
+  | { name: 'parent'; tab: string }
+  /** 教科の単元の地図（grade: 表示する学年。省略時はプロフィールの学年） */
+  | { name: 'subject'; subject: string; grade?: string }
+  /** 単元の学習（UnitRunner） */
+  | { name: 'unit'; unitId: string }
+  /** v1 のモードを使う単元（ModeEntry を範囲を絞って開く） */
+  | { name: 'legacy'; unitId: string; variantId?: string }
+  /** 幼児ホームの札（単元が2つ以上のとき、選ぶ画面） */
+  | { name: 'card'; stage: string; cardId: string }
+  /** 開発用: エンジンの見本（開発時だけ） */
+  | { name: 'dev-engines' }
+  /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
+  | { name: 'draw'; artId?: string }
+  /** おえかきの作品一覧（さくひん） */
+  | { name: 'gallery' };
+
+const ART_ID = /^[A-Za-z0-9-]{1,100}$/;
+
+const UNIT_ID = /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/;
 
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
   const [a, b, c] = parts;
   if (a === 'home') return { name: 'home' };
   if (a === 'notebook') return { name: 'notebook' };
+  if (a === 'gallery') return { name: 'gallery' };
+  if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
+  if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
+  if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
+  if (a === 'legacy' && b && UNIT_ID.test(b))
+    // v1 の遊び方の id は formula_add のように _ を含む
+    return c && /^[a-z0-9_-]+$/.test(c)
+      ? { name: 'legacy', unitId: b, variantId: c }
+      : { name: 'legacy', unitId: b };
+  if (a === 'card' && b && c && /^(p23|p4|p5)$/.test(b) && /^[a-z0-9-]+$/.test(c))
+    return { name: 'card', stage: b, cardId: c };
+  if (a === 'subject' && b && /^[a-z]+$/.test(b))
+    return c && /^(p23|p4|p5|g[1-6])$/.test(c)
+      ? { name: 'subject', subject: b, grade: c }
+      : { name: 'subject', subject: b };
   if (a === 'play' && b && (MODE_IDS as readonly string[]).includes(b)) {
     return c
       ? { name: 'mode', modeId: b as ModeId, variantId: c }
@@ -40,6 +73,20 @@ export function routeToHash(r: Route): string {
       return `#/parent/${r.tab}`;
     case 'mode':
       return r.variantId ? `#/play/${r.modeId}/${r.variantId}` : `#/play/${r.modeId}`;
+    case 'subject':
+      return r.grade ? `#/subject/${r.subject}/${r.grade}` : `#/subject/${r.subject}`;
+    case 'unit':
+      return `#/unit/${r.unitId}`;
+    case 'legacy':
+      return r.variantId ? `#/legacy/${r.unitId}/${r.variantId}` : `#/legacy/${r.unitId}`;
+    case 'card':
+      return `#/card/${r.stage}/${r.cardId}`;
+    case 'dev-engines':
+      return '#/dev/engines';
+    case 'draw':
+      return r.artId ? `#/draw/${r.artId}` : '#/draw';
+    case 'gallery':
+      return '#/gallery';
   }
 }
 

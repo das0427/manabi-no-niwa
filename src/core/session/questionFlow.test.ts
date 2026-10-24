@@ -3,6 +3,7 @@ import {
   correct,
   hintButton,
   initialQuestion,
+  nudge,
   outcomeOf,
   praiseFor,
   review,
@@ -64,6 +65,30 @@ describe('questionFlow: 連打', () => {
     let s = initialQuestion();
     for (const t of [0, 1600, 3200, 4800]) s = tap(s, t).state;
     expect(s.operationIssue).toBe(false);
+  });
+});
+
+describe('questionFlow: nudge（誤答にしない「もう一度」）', () => {
+  it('誤答の回数もヒントも増やさず、結果は independent のまま', () => {
+    const { state, escalated } = nudge(initialQuestion());
+    expect(escalated).toBe(false);
+    expect(state).toMatchObject({ wrongTries: 0, hintLevel: 0, nudges: 1 });
+    expect(correct(state).outcome).toBe('independent');
+  });
+  it('3回目は誤答として扱う', () => {
+    let s = initialQuestion();
+    s = nudge(s).state;
+    s = nudge(s).state;
+    const third = nudge(s);
+    expect(third.escalated).toBe(true);
+    expect(third.state).toMatchObject({ wrongTries: 1, hintLevel: 1 });
+  });
+  it('古い中断データ（nudges なし）でも動く・確定後は変えない', () => {
+    const old = { ...initialQuestion() };
+    delete old.nudges;
+    expect(nudge(old).state.nudges).toBe(1);
+    const done = correct(initialQuestion());
+    expect(nudge(done).state).toBe(done);
   });
 });
 

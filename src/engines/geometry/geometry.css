@@ -1,0 +1,161 @@
+/* 図形（方眼・作図・分度器）。子がかいた線は太い ink、正答は点線、元の形は空色の面 */
+.unit__work--geometry .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.geo-svg {
+  height: calc(var(--u) * 26);
+  max-width: 100%;
+}
+.geo-svg.is-wrong .geo-mine {
+  stroke-dasharray: 12 8;
+}
+.geo-grid {
+  stroke: var(--ink-soft);
+  stroke-width: 1;
+}
+.geo-dot {
+  fill: var(--ink);
+}
+.geo-given {
+  fill: var(--sky);
+  fill-opacity: 0.5;
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.geo-given--line {
+  fill: none;
+  stroke-width: 5;
+}
+.geo-axis {
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-dasharray: 18 8 4 8;
+}
+.geo-center {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.geo-mine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 7;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.geo-mine.is-closed {
+  fill: var(--sun);
+  fill-opacity: 0.45;
+}
+.geo-mine--thin {
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+.geo-v {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+/* 最初の点（ここをもう一度タップで閉じる）: 二重の輪 */
+.geo-v--first {
+  fill: var(--white);
+  stroke-width: 6;
+}
+.geo-answer {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 5;
+  stroke-dasharray: 8 7;
+}
+.geo-name {
+  font-size: 26px;
+  font-weight: 700;
+  fill: var(--ink);
+}
+.eng-geo__side {
+  min-width: calc(var(--u) * 16);
+}
+
+/* 分度器 */
+.geo-angle {
+  height: calc(var(--u) * 19);
+  width: auto;
+  max-width: 100%;
+}
+.geo-prot {
+  fill: var(--paper-2);
+  fill-opacity: 0.7;
+  stroke: var(--ink-soft);
+  stroke-width: 2;
+}
+.geo-ptick {
+  stroke: var(--ink);
+  stroke-width: 1.2;
+}
+.geo-plabel {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.geo-plabel--in {
+  font-size: 13px;
+  fill: var(--ink-soft);
+}
+.geo-ray {
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+.geo-arc {
+  fill: none;
+  stroke: var(--sky-dark);
+  stroke-width: 5;
+}
+.geo-pin {
+  fill: var(--ink);
+}
+.geo-deg {
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+
+/* 形を選ぶ */
+.eng-geo--pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.eng-geo__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 2.4);
+  justify-content: center;
+}
+.eng-geo__opt {
+  min-width: calc(var(--u) * 15);
+  min-height: calc(var(--u) * 15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.6);
+}
+.geo-opt {
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+}
+.geo-optshape {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+.eng-geo__optlabel {
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+}

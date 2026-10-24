@@ -91,7 +91,7 @@
   background: var(--wood);
 }
 .shop-basket--done {
-  outline: calc(var(--u) * 0.8) solid var(--leaf);
+  outline: calc(var(--u) * 0.8) solid var(--correct);
 }
 .shop-basket__empty {
   color: var(--ink);

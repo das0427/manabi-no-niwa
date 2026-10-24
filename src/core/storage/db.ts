@@ -2,10 +2,11 @@
  * IndexedDB の接続・トランザクション補助・保存状態（health）。
  * 通常の保存は失敗しても例外にせず、health を更新して続行する（子供の操作を止めない）。
  */
+import { defaultSupport } from '../../audience/audience';
 import type { StorageHealth } from '../types';
 
 /** IndexedDB のバージョン（スキーマ版と同一） */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 export const DB_NAME = 'manabi-no-niwa';
 
 export const STORE = {
@@ -13,6 +14,7 @@ export const STORE = {
   app: 'app',
   profiles: 'profiles',
   settings: 'settings',
+  /** v1 のスキル進度（4歳の9モード）。スキーマ2以降は「旧記録」としても読む。変換しない */
   progress: 'progress',
   attempts: 'attempts',
   rounds: 'rounds',
@@ -20,6 +22,15 @@ export const STORE = {
   memos: 'memos',
   drafts: 'drafts',
   favorites: 'favorites',
+  // ---- スキーマ2 ----
+  /** 新しい単元の進度と復習（キー [profileId, unitId]） */
+  unitProgress: 'unitProgress',
+  /** おえかきの作品（メタと文書 JSON） */
+  artworks: 'artworks',
+  /** おえかきの画像（層の PNG・閲覧用・縮小）。キー `${artId}:${kind}` */
+  artworkBlobs: 'artworkBlobs',
+  /** 取得した教材パックの記録（packId → hash, bytes, at） */
+  packsMeta: 'packsMeta',
 } as const;
 
 export const ALL_STORES: string[] = Object.values(STORE);
@@ -32,6 +43,9 @@ export const RECORD_STORES = [
   STORE.memos,
   STORE.drafts,
   STORE.favorites,
+  STORE.unitProgress,
+  STORE.artworks,
+  STORE.artworkBlobs,
 ] as const;
 
 export class StorageUnavailableError extends Error {
@@ -94,7 +108,48 @@ export function getStorageProblem(): StorageProblem {
  */
 export const UPGRADES: Record<number, (db: IDBDatabase, tx: IDBTransaction) => void> = {
   1: (db, tx) => createStores(db, tx),
+  2: (db, tx) => upgradeTo2(db, tx),
 };
+
+/**
+ * スキーマ2（docs/expansion/architecture.md 9章）。追加だけで、既存の記録は消さず形も変えない。
+ * - ストア追加: unitProgress, artworks, artworkBlobs, packsMeta
+ * - profiles: audience が無ければ 'p4'（v1 は4歳向けとして作られた）
+ * - settings: support（支援設定）が無ければ4歳の既定値
+ * - progress（v1 のスキル進度）: そのまま。新しい単元の習得済みには変換しない（旧記録）
+ */
+function upgradeTo2(db: IDBDatabase, tx: IDBTransaction): void {
+  db.createObjectStore(STORE.unitProgress, { keyPath: ['profileId', 'unitId'] });
+  const arts = db.createObjectStore(STORE.artworks, { keyPath: 'id' });
+  arts.createIndex('profileId_updatedAt', ['profileId', 'updatedAt']);
+  arts.createIndex('profileId', 'profileId');
+  const blobs = db.createObjectStore(STORE.artworkBlobs, { keyPath: 'key' });
+  blobs.createIndex('profileId', 'profileId');
+  blobs.createIndex('artId', 'artId');
+  db.createObjectStore(STORE.packsMeta, { keyPath: 'packId' });
+
+  eachRecord(tx.objectStore(STORE.profiles), (v) =>
+    v.audience === undefined ? { ...v, audience: 'p4' } : null,
+  );
+  eachRecord(tx.objectStore(STORE.settings), (v) =>
+    v.support === undefined ? { ...v, support: defaultSupport('p4') } : null,
+  );
+}
+
+/** versionchange の中でカーソルを回して書き換える（null は変更なし） */
+function eachRecord(
+  store: IDBObjectStore,
+  fn: (v: Record<string, unknown>) => Record<string, unknown> | null,
+): void {
+  const req = store.openCursor();
+  req.onsuccess = () => {
+    const c = req.result;
+    if (!c) return;
+    const next = fn(c.value as Record<string, unknown>);
+    if (next) c.update(next);
+    c.continue();
+  };
+}
 
 export function runUpgrades(
   db: IDBDatabase,
@@ -346,6 +401,7 @@ export async function deleteProfileRecords(
       break;
     case STORE.progress:
     case STORE.drafts:
+    case STORE.unitProgress:
       store.delete(IDBKeyRange.bound([profileId], [profileId, []]));
       break;
     case STORE.attempts:

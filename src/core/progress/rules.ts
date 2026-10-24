@@ -40,12 +40,15 @@ export function emptyProgress(profileId: string, skillId: SkillId): SkillProgres
   };
 }
 
+/** 進度の共通部分（v1 のスキル進度と、新しい単元の進度 UnitProgress の両方に使う） */
+export type ProgressCore = Omit<SkillProgress, 'skillId'>;
+
 /** 1問の結果を窓に加える（段階は変えない） */
-export function addOutcome(
-  p: SkillProgress,
+export function addOutcome<P extends ProgressCore>(
+  p: P,
   outcome: Outcome,
   operationIssue = false,
-): SkillProgress {
+): P {
   const attempted = p.attempted || outcome !== 'abandoned';
   if (outcome === 'abandoned' || operationIssue) return { ...p, attempted };
   const window = [...p.window, outcome].slice(-RULES.windowSize);
@@ -68,8 +71,8 @@ export interface EvaluateOptions {
 
 export type Change = 'up' | 'down' | 'mastered' | null;
 
-export interface EvaluateResult {
-  next: SkillProgress;
+export interface EvaluateResult<P extends ProgressCore = SkillProgress> {
+  next: P;
   change: Change;
 }
 
@@ -78,7 +81,7 @@ function count(list: readonly Outcome[], ...kinds: Outcome[]): number {
 }
 
 /** ラウンドの終わりに呼ぶ。段階を上げる・下げる・そのまま を決める */
-export function evaluate(p: SkillProgress, opt: EvaluateOptions): EvaluateResult {
+export function evaluate<P extends ProgressCore>(p: P, opt: EvaluateOptions): EvaluateResult<P> {
   const top = opt.levelCount - 1;
   if (opt.locked !== undefined) {
     const level = Math.max(0, Math.min(top, opt.locked));

@@ -1,0 +1,67 @@
+/* 数直線（DESINGN.md 17章: 主目盛り・副目盛り。線は ink） */
+.unit__work--numberline .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.eng-nl .nl2-svg {
+  width: 100%;
+  max-height: calc(var(--u) * 17);
+}
+.nl2-axis,
+.nl2-major {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.nl2-mid {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.nl2-minor {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.nl2-arrow {
+  fill: var(--ink);
+}
+.nl2-label {
+  font-size: 36px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.nl2-label--frac {
+  font-size: 28px;
+}
+.nl2-fracbar {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.nl2-dot {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.nl2-pointer {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+/* 子が置いた印: 黄色＋太い輪郭。誤りは破線（色だけにしない） */
+.nl2-placed {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.nl2-placed.is-wrong {
+  fill: var(--white);
+  stroke-dasharray: 8 6;
+}
+/* 正答の印（revealed）: 空色＋二重の輪郭 */
+.nl2-answer {
+  fill: var(--sky);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.eng-nl__side {
+  min-width: calc(var(--u) * 16);
+}

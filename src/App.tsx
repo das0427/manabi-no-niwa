@@ -5,9 +5,24 @@ import { ModeEntry } from './app/ModeEntry';
 import { Notebook } from './app/Notebook';
 import { navigate, useRoute } from './app/router';
 import { StartScreen } from './app/StartScreen';
+import { SubjectMap } from './app/SubjectMap';
+import { CardChooser, LegacyEntry } from './app/UnitEntry';
 import './ui/ui.css';
 
 const ParentApp = lazy(() => import('./parent/index'));
+const DrawingScreen = lazy(() =>
+  import('./drawing/index').then((m) => ({ default: m.DrawingScreen })),
+);
+const GalleryScreen = lazy(() =>
+  import('./drawing/index').then((m) => ({ default: m.GalleryScreen })),
+);
+// 開発用（本番では読み込まれない: 経路が開発時だけ有効）
+const EngineGallery = lazy(() =>
+  import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })),
+);
+const UnitRunner = lazy(() =>
+  import('./units/UnitRunner').then((m) => ({ default: m.UnitRunner })),
+);
 
 function Routes() {
   const route = useRoute();
@@ -46,6 +61,42 @@ function Routes() {
         modeId={route.modeId}
         variantId={route.variantId}
       />
+    );
+  else if (route.name === 'legacy')
+    screen = (
+      <LegacyEntry
+        key={`${route.unitId}-${route.variantId ?? ''}`}
+        unitId={route.unitId}
+        variantId={route.variantId}
+      />
+    );
+  else if (route.name === 'dev-engines' && import.meta.env.DEV)
+    screen = (
+      <Suspense fallback={null}>
+        <EngineGallery />
+      </Suspense>
+    );
+  else if (route.name === 'card')
+    screen = <CardChooser key={route.cardId} stage={route.stage} cardId={route.cardId} />;
+  else if (route.name === 'subject')
+    screen = <SubjectMap key={route.subject} subject={route.subject} grade={route.grade} />;
+  else if (route.name === 'unit')
+    screen = (
+      <Suspense fallback={null}>
+        <UnitRunner key={route.unitId} unitId={route.unitId} />
+      </Suspense>
+    );
+  else if (route.name === 'draw')
+    screen = (
+      <Suspense fallback={null}>
+        <DrawingScreen key={route.artId ?? ''} artId={route.artId} />
+      </Suspense>
+    );
+  else if (route.name === 'gallery')
+    screen = (
+      <Suspense fallback={null}>
+        <GalleryScreen />
+      </Suspense>
     );
 
   return <div className="stage">{screen}</div>;

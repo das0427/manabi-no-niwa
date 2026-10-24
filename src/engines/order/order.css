@@ -1,0 +1,54 @@
+/* 並べ替え: 上（縦なら左）に並べる所、下（縦なら右）に おくもの。こたえあわせ は右 */
+.eng-order__track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-order__cell {
+  display: flex;
+}
+.eng-order__cell > * {
+  flex: 1;
+}
+.eng-order__pool {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+}
+/* 置いた後の おくもの の場所（並びが動かないように残す。押せない） */
+.eng-order__ghost {
+  min-width: calc(var(--u) * 7);
+  min-height: calc(var(--u) * 7);
+  opacity: 0.5;
+}
+
+/* 縦（文のカード）: 左に並べる所、右に おくもの。4枚まで */
+.eng-order__main--column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  column-gap: calc(var(--u) * 3);
+  width: 100%;
+}
+.eng-order__main--column .eng-order__track,
+.eng-order__main--column .eng-order__pool {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: calc(var(--u) * 1);
+}
+.eng-order__main--column .tk-card,
+.eng-order__main--column .tk-slot,
+.eng-order__main--column .eng-order__ghost {
+  min-height: calc(var(--u) * 6);
+  width: 100%;
+}
+.eng-order__main--column .tk-card__label {
+  font-size: calc(var(--u) * 2.2);
+  text-align: left;
+}

@@ -1,0 +1,362 @@
+/* 地図（日本地図・地図記号・方位）。地方は色と模様と番号で区別する（色だけにしない） */
+.unit__work--map .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.eng-map__side {
+  min-width: calc(var(--u) * 22);
+  max-width: calc(var(--u) * 40);
+}
+.map-svg {
+  height: calc(var(--u) * 26);
+  width: auto;
+  max-width: 100%;
+  /* 地方の図は範囲の外を描かない（.mk-svg は overflow: visible） */
+  overflow: hidden;
+  border: var(--outline) solid var(--ink);
+  border-radius: calc(var(--u) * 0.8);
+}
+.map-svg.is-tappable {
+  cursor: pointer;
+}
+.map-sea {
+  fill: var(--sky);
+  fill-opacity: 0.35;
+}
+.map-inset {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5px;
+  vector-effect: non-scaling-stroke;
+}
+.map-pref {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 1px;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.map-pref.is-dim {
+  fill: var(--paper-2);
+}
+.map-pref.is-target {
+  fill: var(--sun);
+  stroke-width: 3px;
+}
+.map-pref.is-selected {
+  fill: var(--sky-dark);
+  fill-opacity: 0.6;
+  stroke-width: 3px;
+}
+.map-pref.is-wrong {
+  stroke-width: 3px;
+  stroke-dasharray: 5 4;
+}
+/* 地方の色（模様と番号を重ねる） */
+.map-reg--hokkaido {
+  fill: var(--sky);
+}
+.map-reg--tohoku {
+  fill: var(--sun);
+}
+.map-reg--kanto {
+  fill: var(--berry);
+  fill-opacity: 0.55;
+}
+.map-reg--chubu {
+  fill: var(--mat-green);
+  fill-opacity: 0.6;
+}
+.map-reg--kinki {
+  fill: var(--wood);
+}
+.map-reg--chugoku {
+  fill: var(--sky-dark);
+  fill-opacity: 0.6;
+}
+.map-reg--shikoku {
+  fill: var(--subj-oekaki);
+  fill-opacity: 0.4;
+}
+.map-reg--kyushu {
+  fill: var(--paper-2);
+}
+.map-patfill {
+  stroke: none;
+  pointer-events: none;
+}
+.map-patline {
+  stroke: var(--ink);
+  stroke-width: 0.9;
+  stroke-opacity: 0.7;
+}
+.map-patdot {
+  fill: var(--ink);
+  fill-opacity: 0.7;
+}
+.map-patring {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.9;
+  stroke-opacity: 0.7;
+}
+.map-badge {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+.map-badge__no {
+  font-size: 18px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.map-pin__ring {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3px;
+  vector-effect: non-scaling-stroke;
+}
+.map-pin__dot {
+  fill: var(--ink);
+}
+.map-sel {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3px;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+.map-wrongmark {
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--white);
+  stroke-width: 4px;
+}
+.map-name {
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--white);
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.map-north path {
+  fill: var(--ink);
+}
+.map-north__label {
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+
+/* 選択肢の札 */
+.map-options {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.2);
+}
+.map-options--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.map-opt {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.map-opt__text {
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+}
+.map-opt__region {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+.map-swatch {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 4);
+  flex: none;
+}
+.map-symgrid .map-options--grid {
+  grid-template-columns: repeat(3, calc(var(--u) * 13));
+}
+.map-optsym {
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+}
+.map-bigsym {
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
+}
+.map-bigsym__svg {
+  width: 100%;
+  height: 100%;
+}
+.map-symsvg {
+  width: calc(var(--u) * 8);
+  height: calc(var(--u) * 8);
+}
+.map-sym {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 7;
+}
+.map-sym--station rect {
+  fill: var(--ink);
+}
+.map-sym--station line {
+  stroke: var(--white);
+}
+.map-sym__bg {
+  fill: var(--white);
+  stroke: none;
+}
+
+/* 方位 */
+.map-rose {
+  height: calc(var(--u) * 24);
+  width: auto;
+}
+.map-rose__ring {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.map-rose__spoke {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.map-rose__spoke--minor {
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+.map-rose__n {
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.map-rose__arrow {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.map-rose__pin {
+  fill: var(--ink);
+}
+.map-dirpad {
+  display: grid;
+  grid-template-columns: repeat(3, calc(var(--u) * 8.4));
+  grid-auto-rows: calc(var(--u) * 7.4);
+  gap: calc(var(--u) * 0.8);
+}
+.map-dirpad__center svg {
+  width: 100%;
+  height: 100%;
+}
+.map-dir {
+  min-width: 0;
+  min-height: calc(var(--u) * 6);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.map-dir.is-given {
+  background: var(--paper-2);
+}
+.map-dir__text {
+  font-size: calc(var(--u) * 2.3);
+  font-weight: 700;
+}
+.map-compass-only {
+  display: flex;
+  justify-content: center;
+}
+.map-count {
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* かなのタイル */
+.eng-map__spell {
+  max-width: calc(var(--u) * 44);
+}
+.map-spell__row,
+.map-spell__pool {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.8);
+  justify-content: center;
+}
+.map-spell__row {
+  min-height: calc(var(--u) * 6.4);
+  padding-bottom: calc(var(--u) * 0.8);
+  border-bottom: var(--outline) solid var(--ink-soft);
+}
+.map-tile,
+.map-slot {
+  min-width: calc(var(--u) * 6);
+  min-height: calc(var(--u) * 6);
+}
+
+/* 絵地図 */
+.map-town {
+  height: calc(var(--u) * 26);
+  width: auto;
+  max-width: 100%;
+  cursor: pointer;
+}
+.map-town__bg {
+  fill: var(--paper-2);
+}
+.map-road {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 22;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.map-rail {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 12;
+}
+.map-rail__dash {
+  fill: none;
+  stroke: var(--white);
+  stroke-width: 7;
+  stroke-dasharray: 22 22;
+}
+.map-town__from {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-dasharray: 10 6;
+}
+.map-town__ans {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.map-town__label {
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--paper-2);
+  stroke-width: 5px;
+}

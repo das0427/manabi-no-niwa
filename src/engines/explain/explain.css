@@ -1,0 +1,95 @@
+/* かいてみよう: 左に描く盤、右に理由・道具・できた */
+.unit__work--explain .unit__engine {
+  flex: 1;
+  min-height: 0;
+  align-self: stretch;
+}
+.eng-explain {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.eng-explain__board {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.eng-explain__side {
+  flex: 0 1 calc(var(--u) * 34);
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-explain--nopad .eng-explain__side {
+  flex: 0 1 calc(var(--u) * 60);
+}
+.eng-explain__reasons {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-explain__reason {
+  min-width: 0;
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(var(--u) * 1);
+  text-align: left;
+}
+.eng-explain__reason-label {
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.eng-explain__tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+}
+/* 色の札: 大きな丸（6u）。選んでいる色は二重の輪（DESINGN.md 20章） */
+.eng-explain__color {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+  border-radius: 50%;
+  border: calc(var(--u) * 0.35) solid var(--ink);
+  padding: 0;
+  cursor: pointer;
+}
+.eng-explain__color.is-on {
+  outline: calc(var(--u) * 0.5) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.4);
+  box-shadow: 0 0 0 calc(var(--u) * 0.4) var(--surface);
+}
+.eng-explain__color:disabled {
+  opacity: 0.4;
+}
+.eng-explain__color--ink {
+  background: var(--ink);
+}
+.eng-explain__color--berry {
+  background: var(--berry);
+}
+.eng-explain__color--sky {
+  background: var(--sky-dark);
+}
+.eng-explain__color--leaf {
+  background: var(--leaf-dark);
+}
+.eng-explain__done {
+  align-self: flex-start;
+  min-width: calc(var(--u) * 16);
+  font-size: calc(var(--u) * 2.6);
+}

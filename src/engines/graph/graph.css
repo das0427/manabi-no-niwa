@@ -1,0 +1,319 @@
+/* 表とグラフ（線は ink、補助線は ink-soft。部分は色に加えて番号①②で区別する） */
+.unit__work--graph .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.gr-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: calc(var(--u) * 54);
+  min-height: 0;
+}
+.gr-title {
+  text-align: center;
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+}
+.gr-unit {
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+}
+.gr-xy {
+  width: 100%;
+  /* 縦 18u に収まる幅（viewBox 720×360）。x の項目名を棒にそろえる */
+  max-width: calc(var(--u) * 18 * 720 / 360);
+  align-self: center;
+}
+.gr-svg {
+  width: 100%;
+  height: auto;
+}
+.gr-grid {
+  stroke: var(--ink-soft);
+  stroke-width: 1;
+}
+.gr-grid--l {
+  stroke-width: 2;
+}
+.gr-axis {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.gr-ylabel {
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: end;
+}
+.gr-bar {
+  fill: var(--sky);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.gr-bar.is-wrong,
+.gr-dot.is-wrong {
+  fill: var(--white);
+  stroke-dasharray: 9 6;
+}
+.gr-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.gr-dot {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+/* 正答（revealed）: 点線の輪郭 */
+.gr-ghost {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-dasharray: 6 6;
+}
+/* 選んでいる列: sun の薄い面＋破線（色だけにしない） */
+.gr-sel {
+  fill: var(--paper-2);
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+}
+.gr-xlabels {
+  display: flex;
+  justify-content: space-around;
+  gap: calc(var(--u) * 0.4);
+}
+.gr-xlabel {
+  flex: 1;
+  text-align: center;
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+}
+.gr-xlabel--btn {
+  min-height: calc(var(--u) * 6);
+  font: inherit;
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 1);
+  padding: 0 calc(var(--u) * 0.4);
+}
+.gr-xlabel--btn.is-on {
+  outline: calc(var(--u) * 0.5) solid var(--ink);
+  outline-offset: calc(var(--u) * 0.2);
+  background: var(--sun);
+}
+
+/* 絵グラフ */
+.gr-picture {
+  display: grid;
+  gap: calc(var(--u) * 1.2);
+  align-items: end;
+}
+.gr-piccol {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: calc(var(--u) * 0.6);
+}
+.gr-picstack {
+  display: grid;
+  height: calc(var(--u) * 19);
+  min-width: calc(var(--u) * 6);
+  border-bottom: calc(var(--u) * 0.4) solid var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.gr-picstack.is-on {
+  outline: calc(var(--u) * 0.3) dashed var(--ink);
+  outline-offset: calc(var(--u) * 0.3);
+  background: var(--paper-2);
+}
+.gr-picstack.is-wrong .gr-pic {
+  opacity: 0.45;
+}
+.gr-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.gr-pic {
+  height: 90%;
+  max-height: calc(var(--u) * 4);
+  aspect-ratio: 1;
+  width: auto;
+}
+.gr-pic--o {
+  box-sizing: border-box;
+  border: calc(var(--u) * 0.4) solid var(--ink);
+  border-radius: 50%;
+  background: var(--sun);
+}
+.gr-pic--ghost {
+  opacity: 0.6;
+  outline: calc(var(--u) * 0.25) dashed var(--ink);
+}
+.gr-pic--o.gr-pic--ghost {
+  background: var(--white);
+  border-style: dashed;
+  outline: none;
+}
+
+/* 円・帯グラフ */
+.gr-ratio {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.gr-ratio--band {
+  flex-direction: column;
+}
+.gr-pie {
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
+}
+.gr-band {
+  width: 100%;
+}
+.gr-sec {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.gr-sec--a {
+  fill: var(--sky);
+}
+.gr-sec--b {
+  fill: var(--sun);
+}
+.gr-sec--c {
+  fill: var(--white);
+}
+.gr-sec--d {
+  fill: var(--wood);
+}
+.gr-sec--e {
+  fill: var(--paper-2);
+}
+.gr-sec--f {
+  fill: var(--leaf);
+}
+.gr-secno {
+  font-size: 26px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.gr-rtick {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.gr-rlabel {
+  font-size: 20px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.gr-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.6) calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+}
+.gr-ratio:not(.gr-ratio--band) .gr-legend {
+  flex-direction: column;
+}
+.gr-legend li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+}
+.gr-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--u) * 3.2);
+  height: calc(var(--u) * 3.2);
+  border: calc(var(--u) * 0.25) solid var(--ink);
+  border-radius: calc(var(--u) * 0.4);
+  font-size: calc(var(--u) * 2);
+}
+.gr-swatch.gr-sec--a {
+  background: var(--sky);
+}
+.gr-swatch.gr-sec--b {
+  background: var(--sun);
+}
+.gr-swatch.gr-sec--c {
+  background: var(--white);
+}
+.gr-swatch.gr-sec--d {
+  background: var(--wood);
+}
+.gr-swatch.gr-sec--e {
+  background: var(--paper-2);
+}
+.gr-swatch.gr-sec--f {
+  background: var(--leaf);
+}
+
+/* 表 */
+.gr-table {
+  border-collapse: collapse;
+  font-size: calc(var(--u) * 2.2);
+  background: var(--white);
+  align-self: center;
+}
+.gr-table th {
+  white-space: nowrap;
+}
+.gr-table th,
+.gr-table td {
+  border: calc(var(--u) * 0.2) solid var(--ink);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
+  text-align: center;
+}
+
+/* 配置 */
+.eng-graph__options {
+  display: grid;
+  align-content: center;
+  gap: calc(var(--u) * 1.6);
+  max-height: 100%;
+}
+.eng-graph__opt {
+  min-width: calc(var(--u) * 18);
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
+}
+.eng-graph__optlabel {
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+}
+.eng-graph__makemain {
+  flex-direction: row;
+  gap: calc(var(--u) * 2);
+}
+.eng-graph__side {
+  min-width: calc(var(--u) * 16);
+}
+.eng-graph__options > .mk-btn--ok {
+  grid-column: 1 / -1;
+}
+.eng-graph__nummain {
+  flex-direction: row;
+  gap: calc(var(--u) * 2.4);
+}
+.eng-graph__nummain .mnp-fields {
+  flex-direction: column;
+  align-items: flex-end;
+}

@@ -1,0 +1,497 @@
+/* おえかき（DESINGN.md 19章）。寸法は --u 基準。色はトークンだけ。ぼかし影・グラデーションなし */
+
+.draw-screen,
+.gallery {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+}
+
+/* ---- 上の帯 ---- */
+.draw-top {
+  flex: none;
+  height: calc(var(--u) * 8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-min);
+  padding: calc(var(--u) * 1) var(--edge);
+}
+.draw-top__group {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-min);
+}
+.draw-state {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  min-height: var(--tap-aux);
+  margin: 0;
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 1.6);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  font-size: calc(var(--u) * 3);
+}
+.draw-state .tap__icon {
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+}
+.draw-save {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap-aux);
+  height: var(--tap-aux);
+}
+.draw-save__icon {
+  width: calc(var(--u) * 4.6);
+  height: calc(var(--u) * 4.6);
+}
+.draw-conflict {
+  margin: 0;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--sun);
+  font-size: var(--text-small);
+}
+
+/* ---- 本体（道具欄＋キャンバス）。利き手で左右を入れ替える ---- */
+.draw-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--gap-min);
+  padding: 0 var(--edge) var(--edge);
+}
+.draw-screen--left .draw-body {
+  flex-direction: row-reverse;
+}
+.draw-side {
+  flex: none;
+  display: flex;
+  gap: var(--gap-min);
+  padding: calc(var(--u) * 1);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+.draw-screen--left .draw-side {
+  flex-direction: row-reverse;
+}
+.draw-tools {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-main));
+  grid-auto-rows: var(--tap-main);
+  gap: var(--gap-min);
+  align-content: start;
+}
+.draw-tool {
+  min-width: var(--tap-main);
+  min-height: var(--tap-main);
+  padding: calc(var(--u) * 0.4);
+}
+.draw-tool .tap__icon {
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
+}
+.draw-props {
+  width: calc(var(--u) * 13.6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-min);
+}
+.draw-side--detailed .draw-props {
+  width: calc(var(--u) * 20.4);
+}
+.draw-prop-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-min);
+}
+
+/* 色の札: 大きな丸。選んでいる色は二重の輪（ink と surface） */
+.draw-colors {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-main));
+  gap: var(--gap-min);
+}
+.draw-side--detailed .draw-colors {
+  grid-template-columns: repeat(4, calc(var(--u) * 4.5));
+  gap: calc(var(--u) * 0.8);
+}
+.draw-color {
+  width: var(--tap-main);
+  height: var(--tap-main);
+  padding: 0;
+  border: var(--outline) solid var(--ink);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.draw-side--detailed .draw-color,
+.draw-colors--panel .draw-color {
+  width: calc(var(--u) * 4.5);
+  height: calc(var(--u) * 4.5);
+}
+.draw-color.is-selected {
+  outline: none;
+  transform: none;
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.45) var(--white),
+    0 0 0 calc(var(--u) * 0.95) var(--ink);
+}
+
+/* 太さ: 実際の線の太さを丸で見せる */
+.draw-widths {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-main));
+  gap: var(--gap-min);
+}
+.draw-side--detailed .draw-widths {
+  grid-template-columns: repeat(3, var(--tap-aux));
+}
+.draw-width {
+  padding: 0;
+}
+.draw-width__dot,
+.draw-size__dot {
+  display: block;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.draw-width__bar {
+  display: block;
+  width: calc(var(--u) * 4);
+  border-radius: calc(var(--u) * 0.4);
+  background: var(--ink);
+}
+
+/* はんこ・図形の見本 */
+.draw-preview-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.draw-stamp-preview {
+  display: grid;
+  place-items: center;
+  border: var(--outline) dashed var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.draw-stamp-preview img {
+  display: block;
+}
+.draw-preview-shape {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  border: var(--outline) dashed var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.draw-adjust {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--gap-min);
+}
+.draw-adjust--compact {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-main));
+}
+.draw-size {
+  padding: 0;
+}
+.draw-dock {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tap-main));
+  gap: var(--gap-min);
+}
+.draw-arrows {
+  display: grid;
+  grid-template-columns: repeat(3, var(--tap-aux));
+  grid-template-rows: repeat(3, var(--tap-aux));
+  gap: calc(var(--u) * 0.6);
+}
+.draw-arrow--up {
+  grid-area: 1 / 2;
+}
+.draw-arrow--left {
+  grid-area: 2 / 1;
+}
+.draw-arrow--right {
+  grid-area: 2 / 3;
+}
+.draw-arrow--down {
+  grid-area: 3 / 2;
+}
+
+/* ---- キャンバス ---- */
+.draw-canvas-wrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.draw-canvas {
+  display: block;
+  /* 描画領域だけスクロール・拡大を止める（architecture.md 7.2） */
+  touch-action: none;
+  background: var(--white);
+  outline: var(--outline) solid var(--ink);
+  cursor: crosshair;
+}
+
+/* ---- 選択枠・ハンドル・操作札（PNG には入らない） ---- */
+.draw-frame {
+  position: absolute;
+  z-index: 6;
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  box-shadow: 0 0 0 calc(var(--u) * 0.3) var(--white);
+  pointer-events: none;
+  transform-origin: center;
+}
+.draw-handle {
+  position: absolute;
+  width: var(--tap-aux);
+  height: var(--tap-aux);
+  margin: calc(var(--u) * -2.75) 0 0 calc(var(--u) * -2.75);
+  border: var(--outline) solid var(--ink);
+  border-radius: 50%;
+  background: var(--white);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+}
+.draw-handle--rotate {
+  background: var(--sky);
+}
+.draw-cards {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  gap: var(--gap-min);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper-2);
+}
+.draw-act {
+  padding: calc(var(--u) * 0.4);
+}
+
+/* 消しゴムで消えた物が縮む（動きを減らす設定では出さない） */
+.draw-shrink {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  transform: rotate(var(--rot)) scaleX(var(--flip, 1));
+  animation: draw-shrink 300ms ease-in forwards;
+}
+@keyframes draw-shrink {
+  to {
+    transform: rotate(var(--rot)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* ---- えらぶ板 ---- */
+.draw-panel {
+  position: absolute;
+  z-index: 8;
+  left: var(--edge);
+  right: var(--edge);
+  /* 上の帯も覆う（板を閉じるまで、えらぶことだけに集中する） */
+  top: var(--edge);
+  bottom: var(--edge);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-min);
+  padding: var(--gap-min);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+.draw-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-min);
+}
+.draw-tab {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  min-height: var(--tap-main);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-child);
+  font-weight: 700;
+  font-size: var(--text-small);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.draw-tab__icon {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+}
+.draw-panel__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: calc(var(--u) * 2);
+}
+.draw-stamp-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, calc(var(--u) * 9));
+  grid-auto-rows: calc(var(--u) * 9);
+  gap: var(--gap-min);
+  align-content: start;
+  overflow-y: auto;
+  padding: calc(var(--u) * 1.2);
+}
+.draw-stamp-cell {
+  width: calc(var(--u) * 9);
+  height: calc(var(--u) * 9);
+  padding: calc(var(--u) * 0.6);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.draw-stamp-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.draw-stamp-cell.is-selected,
+.draw-tab.is-selected {
+  transform: none;
+}
+.draw-panel__side {
+  flex: none;
+  width: calc(var(--u) * 30);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap-min);
+}
+.draw-panel__ok {
+  margin-top: auto;
+}
+.draw-shape-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 2);
+}
+.draw-shape-grid {
+  display: grid;
+  grid-template-columns: repeat(4, calc(var(--u) * 8));
+  grid-auto-rows: calc(var(--u) * 8);
+  gap: var(--gap-min);
+}
+.draw-shape-btn .tap__icon {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+}
+.draw-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--gap-min);
+}
+.draw-colors--panel {
+  grid-template-columns: repeat(6, calc(var(--u) * 4.5));
+  gap: calc(var(--u) * 0.8);
+}
+
+/* ---- 確認 ---- */
+.draw-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
+}
+.draw-confirm__box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 3);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.draw-confirm__icon {
+  width: calc(var(--u) * 10);
+  height: calc(var(--u) * 10);
+}
+
+/* ---- さくひん ---- */
+.gallery-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--gap-min);
+  align-content: start;
+  padding: 0 var(--edge) var(--edge);
+}
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.6);
+}
+.gallery-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  padding: 0;
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  overflow: hidden;
+  cursor: pointer;
+}
+.gallery-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.gallery-wip {
+  position: absolute;
+  left: calc(var(--u) * 0.6);
+  top: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.8);
+  border: calc(var(--u) * 0.25) solid var(--ink);
+  border-radius: calc(var(--u) * 0.8);
+  background: var(--sun);
+  font-size: var(--text-small);
+}
+.gallery-card__row {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+}
+.gallery-date {
+  flex: 1;
+  font-size: var(--text-small);
+}
+.gallery-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding-top: calc(var(--u) * 10);
+}

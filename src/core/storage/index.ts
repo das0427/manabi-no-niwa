@@ -43,6 +43,20 @@ export {
   deleteAllData,
 } from './repo';
 export {
+  emptyUnitProgress,
+  getUnitProgress,
+  listUnitProgress,
+  saveUnitProgress,
+  listArtworks,
+  getArtwork,
+  getArtworkBlob,
+  saveArtwork,
+  saveArtworkChecked,
+  listArtworkBlobKinds,
+  deleteArtwork,
+} from './repo-v2';
+export type { CheckedSaveResult } from './repo-v2';
+export {
   exportBackup,
   parseBackup,
   migrateBackup,

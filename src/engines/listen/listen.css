@@ -1,0 +1,43 @@
+/* 聞いて選ぶ: 左に「きく」の札、右に選択肢。選択肢の見た目は choice と同じ */
+.eng-listen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+  width: 100%;
+}
+.eng-listen__ear {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+  max-width: calc(var(--u) * 26);
+}
+.eng-listen__ear .tap {
+  min-width: calc(var(--u) * 16);
+  min-height: calc(var(--u) * 12);
+  flex-direction: column;
+  gap: calc(var(--u) * 0.6);
+}
+.eng-listen__ear .tap__icon {
+  width: calc(var(--u) * 6);
+  height: calc(var(--u) * 6);
+}
+.eng-listen__ear-text {
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+}
+.eng-listen__transcript {
+  margin: 0;
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.4);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) dashed var(--ink);
+  border-radius: calc(var(--u) * 1);
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+  text-align: center;
+}
+.eng-listen__said + .eng-listen__said::before {
+  content: '・';
+}

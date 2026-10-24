@@ -14,3 +14,6 @@ docs/
 licenses/
 scripts/strokes/preview.svg
 *.md
+src/packs/_data/strokes/*.json
+scripts/strokes/preview-*.svg
+src/engines/map/data/*.json

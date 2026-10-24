@@ -1,0 +1,21 @@
+# English voice pipeline (generate_en.py): Kokoro-82M via kokoro-onnx. Verified on Python 3.12 / Windows 11.
+# Direct deps: kokoro-onnx, soundfile, numpy (the rest are pinned transitive deps).
+# Shares the venv (.venv) with scripts/voice/requirements.txt; both files can be installed together.
+# Licenses of dev-time tools (NOT shipped with the app): kokoro-onnx MIT, onnxruntime MIT, phonemizer GPL-3.0,
+# espeakng-loader (bundles espeak-ng, GPL-3.0). Only the generated mp3 files are distributed; see docs/assets-pipeline.md.
+attrs==26.1.0
+cffi==2.1.1
+cloudpickle==3.1.2
+dlinfo==2.0.0
+espeakng-loader==0.2.4
+flatbuffers==25.12.19
+joblib==1.6.0
+kokoro-onnx==0.6.1
+numpy==2.5.4
+onnxruntime==1.31.0
+packaging==26.3
+phonemizer==3.4.0
+protobuf==7.36.2
+pycparser==3.12
+soundfile==0.14.0
+typing_extensions==4.16.0

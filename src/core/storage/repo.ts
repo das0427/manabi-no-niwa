@@ -4,6 +4,7 @@
  */
 import {
   defaultSettings,
+  profileAudience,
   type AppRecord,
   type AttemptRecord,
   type ChildSettings,
@@ -76,12 +77,25 @@ export async function listProfiles(): Promise<Profile[]> {
 }
 
 /** プロフィールを作る（既定の設定も同時に作成）。保存に失敗しても作成した値を返す */
-export async function createProfile(name: string, avatar: string): Promise<Profile> {
-  const p: Profile = { id: crypto.randomUUID(), name, avatar, createdAt: Date.now() };
+export async function createProfile(
+  name: string,
+  avatar: string,
+  opts: Pick<Profile, 'audience' | 'toddlerStage' | 'enrolledGrade' | 'ageGuide'> = {},
+): Promise<Profile> {
+  const p: Profile = {
+    id: crypto.randomUUID(),
+    name,
+    avatar,
+    createdAt: Date.now(),
+    audience: opts.audience ?? 'p4',
+  };
+  if (opts.toddlerStage !== undefined) p.toddlerStage = opts.toddlerStage;
+  if (opts.enrolledGrade !== undefined) p.enrolledGrade = opts.enrolledGrade;
+  if (opts.ageGuide !== undefined) p.ageGuide = opts.ageGuide;
   await safeWrite(() =>
     runTx([STORE.profiles, STORE.settings], 'readwrite', (tx) => {
       tx.objectStore(STORE.profiles).put(p);
-      tx.objectStore(STORE.settings).put(defaultSettings(p.id));
+      tx.objectStore(STORE.settings).put(defaultSettings(p.id, profileAudience(p)));
     }),
   );
   return p;
@@ -344,7 +358,7 @@ export async function deleteMemo(id: string): Promise<void> {
 /** 中断データを取得する */
 export async function getDraft(
   profileId: string,
-  modeId: ModeId,
+  modeId: ModeId | 'unit',
   variantId: string,
 ): Promise<DraftRecord | undefined> {
   return safeRead(
@@ -370,7 +384,7 @@ export async function saveDraft(d: DraftRecord): Promise<void> {
 /** 中断データを削除する */
 export async function deleteDraft(
   profileId: string,
-  modeId: ModeId,
+  modeId: ModeId | 'unit',
   variantId: string,
 ): Promise<void> {
   await safeWrite(() =>
@@ -437,7 +451,8 @@ export async function deleteAllData(): Promise<void> {
   if (!db) return;
   await strict(() =>
     runTx([...ALL_STORES], 'readwrite', (tx) => {
-      for (const s of ALL_STORES) tx.objectStore(s).clear();
+      // 教材パックの取得記録（packsMeta）は記録ではないので残す（教材の削除は別操作）
+      for (const s of ALL_STORES) if (s !== STORE.packsMeta) tx.objectStore(s).clear();
       tx.objectStore(STORE.meta).put(
         { schemaVersion: db.version, createdAt: Date.now(), lastAppVersion: '' },
         'meta',

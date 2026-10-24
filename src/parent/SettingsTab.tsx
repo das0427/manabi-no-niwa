@@ -8,9 +8,12 @@ import {
   SKILL_IDS,
   type ChildSettings,
   type SkillId,
+  type SupportSettings,
   type TraceTolerance,
 } from '../core/types';
 import { MODES, SKILLS, roundSizeFor } from '../modes/registry';
+import { UNIT_INDEX } from '../curriculum/unitIndex';
+import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
 import { modeTitle, useLoad } from './util';
 
@@ -229,6 +232,69 @@ function FullscreenSection() {
   );
 }
 
+/** 支援設定の項目（architecture.md 2章 SupportSettings） */
+const SUPPORT_FIELDS: {
+  key: keyof SupportSettings;
+  label: string;
+  options: [SupportSettings[keyof SupportSettings], string][];
+  note?: string;
+}[] = [
+  {
+    key: 'furigana',
+    label: 'ふりがな',
+    options: [
+      ['unlearned', '学年に合わせる'],
+      ['all', 'すべての漢字に付ける'],
+      ['none', '習った学年までの漢字には付けない'],
+    ],
+    note: '「学年に合わせる」は、在籍学年とそれより上の学年の漢字に付けます。上の学年の漢字には、どの設定でも付きます。',
+  },
+  {
+    key: 'readAloud',
+    label: '読み上げ',
+    options: [
+      ['always', '問題を開くと読む'],
+      ['button', '「きく」を押したときだけ'],
+      ['off', '読まない'],
+    ],
+  },
+  {
+    key: 'textScale',
+    label: '文字の大きさ',
+    options: [
+      [1, 'ふつう'],
+      [1.15, '少し大きく'],
+      [1.3, '大きく'],
+    ],
+  },
+  {
+    key: 'style',
+    label: '画面の表現',
+    options: [
+      ['gentle', 'やさしい'],
+      ['standard', 'ふつう'],
+      ['calm', 'おちついた（装飾と音を減らす）'],
+    ],
+  },
+  {
+    key: 'drawingTools',
+    label: 'おえかきの道具',
+    options: [
+      ['simple', 'かんたん'],
+      ['detailed', 'くわしく'],
+    ],
+  },
+  {
+    key: 'effects',
+    label: '声かけ・演出',
+    options: [
+      ['on', 'あり'],
+      ['quiet', '控えめ'],
+      ['off', 'なし'],
+    ],
+  },
+];
+
 export function SettingsTab() {
   const app = useApp();
   const s = app.settings;
@@ -273,6 +339,57 @@ export function SettingsTab() {
           />{' '}
           動きを減らす
         </label>
+      </Section>
+
+      <Section title="表示と支援">
+        <Note>
+          区分（プロフィール）とは別に変えられます。学年より前の単元を復習しても、この設定は変わりません。
+        </Note>
+        {SUPPORT_FIELDS.map((f) => (
+          <fieldset key={f.key} className="p-field">
+            <legend>{f.label}</legend>
+            {f.options.map(([v, text]) => (
+              <label key={String(v)} className="p-inline">
+                <input
+                  type="radio"
+                  name={`support-${f.key}`}
+                  checked={s.support[f.key] === v}
+                  onChange={() => update({ support: { ...s.support, [f.key]: v } })}
+                  data-testid={`setting-support-${f.key}-${String(v)}`}
+                />
+                {text}
+              </label>
+            ))}
+            {f.note ? <span className="p-muted">{f.note}</span> : null}
+          </fieldset>
+        ))}
+      </Section>
+
+      <Section title="はじめは かくれている単元">
+        <Note>
+          就学前の先取り（5歳の式・カタカナの書きなど）は、はじめは子供の画面に出しません。チェックすると出ます。
+        </Note>
+        {UNIT_INDEX.filter((u) => u.hiddenByDefault).length === 0 ? (
+          <p className="p-muted">対象の単元はまだありません。</p>
+        ) : (
+          UNIT_INDEX.filter((u) => u.hiddenByDefault).map((u) => (
+            <label key={u.id} className="p-inline" style={{ display: 'block' }}>
+              <input
+                type="checkbox"
+                checked={s.unitsOpened.includes(u.id)}
+                onChange={(e) =>
+                  update({
+                    unitsOpened: e.target.checked
+                      ? [...s.unitsOpened, u.id]
+                      : s.unitsOpened.filter((x) => x !== u.id),
+                  })
+                }
+                data-testid={`setting-open-${u.id}`}
+              />
+              {plainText(u.title)}（{u.id}）
+            </label>
+          ))
+        )}
       </Section>
 
       <Section title="利用時間・問題数">

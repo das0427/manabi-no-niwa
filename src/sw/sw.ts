@@ -11,6 +11,14 @@
  *  - activate: 現在と「直前の版」以外の `mnw-*` を削除。clients.claim() は使わない
  *  - fetch: 同一オリジンの GET のみ。現在の版 → 直前の版 → ネットワーク。ナビゲーションは index.html
  *  - message: SKIP_WAITING / GET_VERSION
+ *
+ * 教材パック（docs/expansion/architecture.md 6.3、R#4 R#26）:
+ *  - パックのキャッシュ `mnw-pack/<packId>@<hash>` はページが作る（src/core/offline/packs.ts）。
+ *    install はコアだけで完了し、cleanupCaches・「直前の版」の判定はパックのキャッシュを対象にしない。
+ *  - fetch: コア → 直前のコア → パックのキャッシュ（コアの packs.json の hash に合うもの → 他の版）→ ネットワーク。
+ *    他の版のパックも探すのは、更新前の画面（旧タブ）が自分の版のパックを読めるようにするため。
+ *    版の違うパックを開かない判断はページ側（src/packs/loader.ts）で行う。
+ *  - 要求ヘッダー X-Mnw-Pack-Download: 1 の要求（パックの取得）は、キャッシュを通さずネットワークへ。
  */
 import type { ClientToSwMessage, PrecacheProgressMessage, VersionReplyMessage } from './protocol';
 
@@ -57,6 +65,15 @@ const VERSION: string = __MNW_VERSION__;
 const FILES: readonly string[] = __MNW_FILES__;
 const CACHE_PREFIX = 'mnw-';
 const CACHE_NAME = CACHE_PREFIX + VERSION;
+/** 教材パックのキャッシュ（`mnw-` で始まるが、コアのキャッシュではない） */
+const PACK_CACHE_PREFIX = 'mnw-pack/';
+const PACKS_INDEX_PATH = 'packs.json';
+const PACK_DOWNLOAD_HEADER = 'x-mnw-pack-download';
+
+/** コアの版のキャッシュか（パックのキャッシュ `mnw-pack/…` を除く） */
+function isCoreCacheName(name: string): boolean {
+  return name.startsWith(CACHE_PREFIX) && !name.startsWith(PACK_CACHE_PREFIX);
+}
 /** 版のキャッシュが完成したことを示す記録（最後に書く）。「直前の版」の判定にも使う */
 const META_PATH = '__mnw-meta.json';
 const CONCURRENCY = 6;
@@ -175,7 +192,7 @@ async function readMeta(cacheName: string): Promise<CacheMeta | null> {
 async function findPreviousName(): Promise<string | null> {
   const mine = await readMeta(CACHE_NAME);
   if (!mine) return null;
-  const names = (await caches.keys()).filter((n) => n.startsWith(CACHE_PREFIX) && n !== CACHE_NAME);
+  const names = (await caches.keys()).filter((n) => isCoreCacheName(n) && n !== CACHE_NAME);
   let best: { name: string; at: number } | null = null;
   for (const name of names) {
     const meta = await readMeta(name);
@@ -202,12 +219,13 @@ function getPreviousName(): Promise<string | null> {
  *  - install 中（pending）で、開始から PENDING_GRACE_MS 以内のキャッシュ（別の版が作っている最中）
  *  - 自分より新しい版の、完成したキャッシュ（待機中の新版）
  * 消すのは、古い版、期限切れの作りかけ、完成記録のないキャッシュ。
+ * 教材パックのキャッシュ（mnw-pack/…）は対象外（ページが packs.json と packsMeta で整理する）。
  */
 async function cleanupCaches(): Promise<void> {
   const mine = await readMeta(CACHE_NAME);
   const previous = await findPreviousName();
   const now = Date.now();
-  const names = (await caches.keys()).filter((n) => n.startsWith(CACHE_PREFIX));
+  const names = (await caches.keys()).filter(isCoreCacheName);
   await Promise.all(
     names
       .filter((n) => n !== CACHE_NAME && n !== previous)
@@ -223,13 +241,75 @@ async function cleanupCaches(): Promise<void> {
 
 const MATCH_OPTIONS = { ignoreSearch: true, ignoreVary: true } as const;
 
+/** コアの packs.json から「パス → そのファイルを含むパックのキャッシュ名（コアに合う版）」を作る */
+let packOwnersPromise: Promise<Map<string, string[]>> | null = null;
+async function loadPackOwners(): Promise<Map<string, string[]>> {
+  const owners = new Map<string, string[]>();
+  try {
+    const res = await caches.match(scopeUrl(PACKS_INDEX_PATH), { cacheName: CACHE_NAME });
+    if (!res) return owners;
+    const index = (await res.json()) as Record<string, { files?: unknown; hash?: unknown }>;
+    for (const [packId, entry] of Object.entries(index)) {
+      if (typeof entry.hash !== 'string' || !Array.isArray(entry.files)) continue;
+      for (const file of entry.files) {
+        if (typeof file !== 'string') continue;
+        const list = owners.get(file) ?? [];
+        list.push(`${PACK_CACHE_PREFIX}${packId}@${entry.hash}`);
+        owners.set(file, list);
+      }
+    }
+  } catch {
+    // packs.json が無い・読めない: パックの持ち主は分からない（下の「他の版」の探索だけ）
+  }
+  return owners;
+}
+function getPackOwners(): Promise<Map<string, string[]>> {
+  packOwnersPromise ??= loadPackOwners();
+  return packOwnersPromise;
+}
+
+/** scope からの相対パス（packs.json の files と同じ形）。scope の外なら null */
+function relativePath(url: string): string | null {
+  const scope = sw.registration.scope;
+  if (!url.startsWith(scope)) return null;
+  const rel = url.slice(scope.length).split(/[?#]/)[0] ?? '';
+  try {
+    return decodeURIComponent(rel);
+  } catch {
+    return rel;
+  }
+}
+
+async function lookupPack(url: string): Promise<Response | undefined> {
+  const tried = new Set<string>();
+  const rel = relativePath(url);
+  if (rel !== null) {
+    for (const cacheName of (await getPackOwners()).get(rel) ?? []) {
+      tried.add(cacheName);
+      const hit = await caches.match(url, { ...MATCH_OPTIONS, cacheName });
+      if (hit) return hit;
+    }
+  }
+  // 他の版のパック（旧タブが自分の版のパックを読む場合）
+  for (const cacheName of await caches.keys()) {
+    if (!cacheName.startsWith(PACK_CACHE_PREFIX) || tried.has(cacheName)) continue;
+    const hit = await caches.match(url, { ...MATCH_OPTIONS, cacheName });
+    if (hit) return hit;
+  }
+  return undefined;
+}
+
 async function lookup(url: string): Promise<Response | undefined> {
   try {
     // caches.match + cacheName は、消えたキャッシュを空で作り直さない
     const current = await caches.match(url, { ...MATCH_OPTIONS, cacheName: CACHE_NAME });
     if (current) return current;
     const previous = await getPreviousName();
-    if (previous) return await caches.match(url, { ...MATCH_OPTIONS, cacheName: previous });
+    if (previous) {
+      const hit = await caches.match(url, { ...MATCH_OPTIONS, cacheName: previous });
+      if (hit) return hit;
+    }
+    return await lookupPack(url);
   } catch {
     // キャッシュが読めないときはネットワークへ
   }
@@ -303,6 +383,8 @@ sw.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== sw.location.origin) return;
   if (!url.href.startsWith(sw.registration.scope)) return;
+  // 教材パックの取得（ページの Cache API へ入れる）は、キャッシュを通さず配信元から取る
+  if (request.headers.get(PACK_DOWNLOAD_HEADER) === '1') return;
   event.respondWith(respond(request, url));
 });
 

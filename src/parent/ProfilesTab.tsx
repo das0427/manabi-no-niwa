@@ -1,8 +1,29 @@
 import { useState } from 'react';
 import { useApp } from '../app/AppState';
 import * as db from '../core/storage/index';
-import type { Profile } from '../core/types';
+import { defaultSupport } from '../audience/audience';
+import { profileAudience, type Profile } from '../core/types';
 import { Illust } from '../illust/Illust';
+import { AudienceFields, audienceLabel, type AudienceValue } from './AudienceFields';
+
+function pickAudience(p: Profile): AudienceValue {
+  return {
+    audience: profileAudience(p),
+    toddlerStage: p.toddlerStage,
+    enrolledGrade: p.enrolledGrade ?? null,
+    ageGuide: p.ageGuide,
+  };
+}
+
+/** 区分の項目を反映（未設定の項目は消す） */
+function withAudience(p: Profile, a: AudienceValue): Profile {
+  const out: Profile = { id: p.id, name: p.name, avatar: p.avatar, createdAt: p.createdAt };
+  out.audience = a.audience ?? 'p4';
+  if (a.toddlerStage !== undefined) out.toddlerStage = a.toddlerStage;
+  if (a.enrolledGrade !== undefined) out.enrolledGrade = a.enrolledGrade;
+  if (a.ageGuide !== undefined) out.ageGuide = a.ageGuide;
+  return out;
+}
 import { ConfirmDialog, Note, Section } from './ui';
 import { AVATARS, AVATAR_LABEL } from './util';
 
@@ -52,7 +73,10 @@ function ProfileRow({
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(p.name);
   const [avatar, setAvatar] = useState(p.avatar);
+  const [aud, setAud] = useState<AudienceValue>(pickAudience(p));
+  const [applySupport, setApplySupport] = useState(true);
   const valid = name.trim().length > 0 && name.trim().length <= NAME_MAX;
+  const audChanged = (aud.audience ?? 'p4') !== profileAudience(p);
   return (
     <li data-testid={`profile-${p.id}`}>
       <Illust id={p.avatar} decorative className="p-avatar" />
@@ -69,6 +93,19 @@ function ProfileRow({
             />
           </label>
           <AvatarPicker value={avatar} onChange={setAvatar} name={`avatar-${p.id}`} />
+          <AudienceFields value={aud} onChange={setAud} idPrefix={`profile-${p.id}`} />
+          {audChanged ? (
+            <label className="p-inline">
+              <input
+                type="checkbox"
+                checked={applySupport}
+                onChange={(e) => setApplySupport(e.target.checked)}
+                data-testid={`profile-apply-support-${p.id}`}
+              />
+              表示と支援の設定（ふりがな・読み上げ・画面の表現・おえかきの道具）を、この区分のおすすめにする
+            </label>
+          ) : null}
+          <p className="p-muted">区分を変えても、学習の記録・作品・できたことは変わりません。</p>
           <div className="p-row">
             <button
               type="button"
@@ -76,7 +113,11 @@ function ProfileRow({
               data-testid={`profile-save-${p.id}`}
               onClick={() => {
                 void (async () => {
-                  await db.updateProfile({ ...p, name: name.trim(), avatar });
+                  await db.updateProfile(withAudience({ ...p, name: name.trim(), avatar }, aud));
+                  if (audChanged && applySupport) {
+                    const s = await db.getSettings(p.id);
+                    await db.saveSettings({ ...s, support: defaultSupport(aud.audience ?? 'p4') });
+                  }
                   setEditing(false);
                   await app.reload();
                 })();
@@ -94,6 +135,10 @@ function ProfileRow({
           <span className="p-profile__name">
             {p.name}
             {app.profile?.id === p.id ? <span className="p-badge">表示中</span> : null}
+            <span className="p-muted" data-testid={`profile-audience-${p.id}`}>
+              {audienceLabel(p)}
+              {p.ageGuide ? `・${p.ageGuide.slice(1)}歳くらい（目安）` : ''}
+            </span>
           </span>
           <span className="p-row">
             <button
@@ -101,11 +146,13 @@ function ProfileRow({
               onClick={() => {
                 setName(p.name);
                 setAvatar(p.avatar);
+                setAud(pickAudience(p));
+                setApplySupport(true);
                 setEditing(true);
               }}
               data-testid={`profile-edit-${p.id}`}
             >
-              名前・絵を変える
+              名前・絵・区分を変える
             </button>
             <button type="button" onClick={onClear} data-testid={`profile-clear-${p.id}`}>
               記録だけ削除
@@ -130,6 +177,7 @@ export function ProfilesTab() {
   const app = useApp();
   const [newName, setNewName] = useState('');
   const [newAvatar, setNewAvatar] = useState<string>('rabbit');
+  const [newAud, setNewAud] = useState<AudienceValue>({ audience: 'p4', enrolledGrade: null });
   const [clear, setClear] = useState<Profile | null>(null);
   const [del, setDel] = useState<Profile | null>(null);
   const [msg, setMsg] = useState('');
@@ -183,13 +231,14 @@ export function ProfilesTab() {
           />
         </label>
         <AvatarPicker value={newAvatar} onChange={setNewAvatar} name="avatar-new" />
+        <AudienceFields value={newAud} onChange={setNewAud} idPrefix="profile-new" />
         <button
           type="button"
           disabled={newName.trim().length === 0}
           data-testid="profile-add"
           onClick={() => {
             void guard(async () => {
-              await db.createProfile(newName.trim(), newAvatar);
+              await db.createProfile(newName.trim(), newAvatar, newAud);
               setMsg(`「${newName.trim()}」を追加しました。`);
               setNewName('');
               await app.reload();

@@ -1,0 +1,14 @@
+/* 描く盤（explain・trace 共通）。描画領域だけ、ブラウザのスクロール・拡大・長押しメニューを止める */
+.drawpad {
+  display: block;
+  height: 100%;
+  max-width: 100%;
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: crosshair;
+}

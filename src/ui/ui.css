@@ -41,9 +41,10 @@
   cursor: default;
 }
 .tap--main {
-  --face: var(--leaf);
-  --edge-color: var(--leaf-dark);
-  color: var(--white);
+  /* 主操作（DESINGN.md 3.1 --primary。白文字 5.62:1） */
+  --face: var(--primary);
+  --edge-color: var(--primary-edge);
+  color: var(--surface);
 }
 .tap--sky {
   --face: var(--sky);
@@ -106,8 +107,12 @@
   max-height: calc(var(--u) * 20);
   aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  border: calc(var(--u) * 0.9) solid var(--leaf);
+  border: calc(var(--u) * 0.9) solid var(--correct);
   border-radius: 50%;
+  /* 木の札の上でも見えるよう、内外に surface の縁取り（DESINGN.md 3.1） */
+  box-shadow:
+    0 0 0 calc(var(--u) * 0.35) var(--surface),
+    inset 0 0 0 calc(var(--u) * 0.35) var(--surface);
 }
 /* 誤答の？: 小さな吹き出しの形（しっぽ付き）。札の中身と違って薄くならない */
 .mark--wrong {

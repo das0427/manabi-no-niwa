@@ -45,7 +45,12 @@ function createFakeCaches() {
   };
 }
 
-async function runSw(version: string, files: string[], fake: ReturnType<typeof createFakeCaches>) {
+async function runSw(
+  version: string,
+  files: string[],
+  fake: ReturnType<typeof createFakeCaches>,
+  fetchImpl: (req: Request | string) => Promise<Response> = async () => new Response('body'),
+) {
   const handlers = new Map<string, Handler>();
   const self = {
     location: { origin: 'http://127.0.0.1:1' },
@@ -54,15 +59,26 @@ async function runSw(version: string, files: string[], fake: ReturnType<typeof c
     skipWaiting: async () => undefined,
     addEventListener: (type: string, fn: Handler) => handlers.set(type, fn),
   };
-  const fakeFetch = async () => new Response('body');
   const code = renderServiceWorker(await transpileServiceWorker(), version, files);
-  new Function('self', 'caches', 'fetch', code)(self, fake.api, fakeFetch);
+  new Function('self', 'caches', 'fetch', code)(self, fake.api, fetchImpl);
   const fire = async (type: string) => {
     const waits: Promise<unknown>[] = [];
     handlers.get(type)?.({ waitUntil: (p: Promise<unknown>) => waits.push(p) });
     await Promise.all(waits);
   };
-  return { fire };
+  /** fetch イベントを送る。SW が respondWith しなければ null（ブラウザがそのままネットワークへ） */
+  const request = async (path: string, headers: Record<string, string> = {}) => {
+    let responded: Promise<Response> | null = null;
+    handlers.get('fetch')?.({
+      request: new Request(`${SCOPE}${path}`, { headers }),
+      respondWith: (r: Response | Promise<Response>) => {
+        responded = Promise.resolve(r);
+      },
+    });
+    const res = responded === null ? null : await (responded as Promise<Response>);
+    return res === null ? null : { status: res.status, text: await res.text() };
+  };
+  return { fire, request };
 }
 
 async function seed(
@@ -134,6 +150,21 @@ describe('sw.js の install / activate（キャッシュの整理）', () => {
     );
   });
 
+  it('教材パックのキャッシュ（mnw-pack/…）は activate で消さず、「直前の版」にも選ばない', async () => {
+    const fake = createFakeCaches();
+    await seed(fake, 'mnw-prev', { installedAt: 500 });
+    await seed(fake, 'mnw-oldest', { installedAt: 100 });
+    // 完成記録の無い・古い記録のパックのキャッシュ（コアの規則なら消える形）
+    await seed(fake, 'mnw-pack/g3-sansu@aaaa', null);
+    await seed(fake, 'mnw-pack/g3-kokugo@bbbb', { installedAt: 900 });
+    const sw = await runSw('cur', ['index.html'], fake);
+    await sw.fire('install');
+    await sw.fire('activate');
+    expect([...fake.store.keys()].sort()).toEqual(
+      ['mnw-cur', 'mnw-prev', 'mnw-pack/g3-sansu@aaaa', 'mnw-pack/g3-kokugo@bbbb'].sort(),
+    );
+  });
+
   it('作りかけの印のキャッシュは「直前の版」にならない', async () => {
     const fake = createFakeCaches();
     await seed(fake, 'mnw-done', { installedAt: 10 });
@@ -143,5 +174,60 @@ describe('sw.js の install / activate（キャッシュの整理）', () => {
     await sw.fire('install');
     await sw.fire('activate');
     expect([...fake.store.keys()].sort()).toEqual(['mnw-building', 'mnw-cur', 'mnw-done']);
+  });
+});
+
+describe('sw.js の fetch（教材パック）', () => {
+  const PACK_FILE = 'assets/packs/g3-sansu/g3-sansu-1.js';
+  const AUDIO = 'audio/g3-sansu/q1.mp3';
+
+  async function setup() {
+    const fake = createFakeCaches();
+    const net: string[] = [];
+    const sw = await runSw('cur', ['index.html', 'packs.json'], fake, async (req) => {
+      const url = typeof req === 'string' ? req : req.url;
+      net.push(url);
+      if (url.endsWith('packs.json')) {
+        return new Response(
+          JSON.stringify({ 'g3-sansu': { files: [PACK_FILE, AUDIO], bytes: 2, hash: 'h2' } }),
+        );
+      }
+      return new Response(`net:${url.slice(SCOPE.length)}`);
+    });
+    await sw.fire('install');
+    net.length = 0;
+    return { fake, sw, net };
+  }
+
+  it('コアの packs.json の hash に合うパックのキャッシュから返す（他の版より優先）', async () => {
+    const { fake, sw, net } = await setup();
+    await (
+      await fake.api.open('mnw-pack/g3-sansu@h1')
+    ).put(`${SCOPE}${AUDIO}`, new Response('old'));
+    await (
+      await fake.api.open('mnw-pack/g3-sansu@h2')
+    ).put(`${SCOPE}${AUDIO}`, new Response('new'));
+    expect(await sw.request(AUDIO)).toEqual({ status: 200, text: 'new' });
+    expect(net).toEqual([]);
+  });
+
+  it('合う版が無ければ他の版のパック（旧タブ用）、どこにも無ければネットワーク', async () => {
+    const { fake, sw, net } = await setup();
+    await (
+      await fake.api.open('mnw-pack/g3-sansu@h1')
+    ).put(`${SCOPE}${PACK_FILE}`, new Response('old-chunk'));
+    expect(await sw.request(PACK_FILE)).toEqual({ status: 200, text: 'old-chunk' });
+    expect(await sw.request(AUDIO)).toEqual({ status: 200, text: `net:${AUDIO}` });
+    expect(net).toEqual([`${SCOPE}${AUDIO}`]);
+  });
+
+  it('X-Mnw-Pack-Download: 1 の要求（パックの取得）はキャッシュを通さない（respondWith しない）', async () => {
+    const { fake, sw } = await setup();
+    await (
+      await fake.api.open('mnw-pack/g3-sansu@h2')
+    ).put(`${SCOPE}${AUDIO}`, new Response('new'));
+    expect(await sw.request(AUDIO, { 'X-Mnw-Pack-Download': '1' })).toBeNull();
+    expect(await sw.request('index.html', { 'X-Mnw-Pack-Download': '1' })).toBeNull();
+    expect(await sw.request('index.html')).toMatchObject({ status: 200 });
   });
 });

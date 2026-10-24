@@ -1,0 +1,36 @@
+/* タイルで作る: 上に答えの列（空いている枠は破線）、下にタイル。こたえあわせ は右 */
+.eng-build__answer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  min-height: calc(var(--u) * 7);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
+  border-bottom: calc(var(--u) * 0.35) solid var(--ink);
+}
+.eng-build__pool {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-build__tile {
+  min-width: calc(var(--u) * 6.4);
+  min-height: calc(var(--u) * 6.4);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.8);
+}
+.eng-build__tile .tk-card__label {
+  font-size: calc(var(--u) * 3.2);
+}
+.eng-build__slot {
+  min-width: calc(var(--u) * 6.4);
+  min-height: calc(var(--u) * 6.4);
+}
+.eng-build__ghost {
+  opacity: 0.5;
+}
+.eng-build__text {
+  font-size: calc(var(--u) * 3.6);
+  font-weight: 700;
+}

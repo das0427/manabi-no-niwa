@@ -1,15 +1,20 @@
 # まなびのにわ（manabi-no-niwa）
 
-4歳の子供が日本語で使える、オフラインのブラウザ学習アプリです。
-数・文字・分類・図形・記憶・比較・試行錯誤・運筆に、遊びながら親しめるように作りました。
+2歳から小学生までの子供が日本語で使える、オフラインのブラウザ学習アプリです。
 
-- 9つのあそび: おかいものごっこ / ひらがな / なかまわけ / かたち・パズル / おぼえてさがす / くらべっこ / みちをつくろう / なぞってあそぼう / さんすう
-- ひらがなが読めなくても、絵と日本語の音声で遊べます。
+- **2.0 は段階的に公開しています。** 段階1（2.0.0-beta.1）で使えるのは次のとおりです。
+  - 幼児: 2〜3歳（中で2歳段階・3歳段階に分かれる）、4歳、5歳
+  - 小学1〜4年の算数・国語、1・2年の漢字
+  - 小学5・6年、3〜6年の漢字、理科・社会・英語・生活・プログラミングは、これからの段階で足します（docs/expansion/progress.md）。
+- プロフィールごとに「年齢の目安」「在籍学年」「習熟」「支援の設定（ふりがな・読み上げ など）」を別々に持ちます。学年で教材を閉じ込めません（先取り・さかのぼりができます）。
+- 幼児は絵の札から遊びます。4歳のホームには初期版（1.0）の9つのあそびがそのまま入っています。小学生は教科 → 単元 → 問題の順に選びます。
+- 全年齢で「おえかき」（ペン・消しゴム・塗り・はんこ63種・図形・やり直し・自動保存・PNG 書き出し）が使えます。
+- ひらがなが読めなくても、絵と日本語の音声で遊べます。手書きや声を自動で採点することはありません。
 - 広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中にだけ保存します。
 - 罰・点数・ランキング・連続日数・ガチャはありません。1回は3〜5問の短い区切りです。
 
 > この アプリの 記録は、遊んだ内容の記録です。能力の測定では ありません。
-> 学習効果は検証していません（4歳児での観察もまだです）。
+> 学習効果は検証していません（子供での観察もまだです）。教材は自動検査と独立レビューを通していますが、学校の教科書・テストの代わりではありません。
 
 ## 導入と起動（Zorin OS）
 
@@ -33,7 +38,7 @@
    bash ~/manabi-no-niwa/deploy/zorin/install.sh --autostart
    ```
 4. デスクトップのアイコンを初めて開くときに「起動を許可」と出たら許可します。
-5. 初めて開くと、アプリの全ファイル（音声・絵・フォントを含む）をブラウザに保存します。保護者画面「このアプリについて」で「オフラインで つかえます」になったら完了です。初回は、準備が終わった後にもう一度開き直すと、オフラインでも開けるようになります。
+5. 初めて開くと、アプリの本体（音声・絵・フォントを含む）をブラウザに保存します。小学生の教材は学年ごとの「教材パック」に分かれていて、保護者画面「きょうざい」で準備します（通信は `127.0.0.1` だけ）。保護者画面「このアプリについて」で「オフラインで つかえます」になったら完了です。初回は、準備が終わった後にもう一度開き直すと、オフラインでも開けるようになります。
 
 ### 毎日の使い方
 - デスクトップ（またはアプリ一覧）の「まなびのにわ」を開くだけです。コマンドは要りません。
@@ -96,6 +101,9 @@ bash ~/.local/share/manabi-no-niwa/app/deploy/zorin/uninstall.sh
 | 日本語音声（public/audio） | Open JTalk（pyopenjtalk-plus）で生成。声は「Mei」HTS Voice（MMDAgent Project Team / 名古屋工業大学） | 声: CC BY 3.0（licenses/mei-voice-COPYRIGHT.txt, licenses/CC-BY-3.0-legalcode.txt）。Open JTalk・辞書: Modified BSD |
 | フォント | Zen Maru Gothic（© The Zen Maru Gothic Project Authors）、Klee One（© The Klee Project Authors） | SIL Open Font License 1.1（licenses/OFL-*.txt）。使う文字だけに絞って同梱 |
 | ひらがなの書き順データ（src/modes/trace/data/kana-strokes.json） | KanjiVG（© Ulrich Apel）を等間隔の点に変換 | CC BY-SA 3.0（licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt）。このファイルは CC BY-SA 3.0 で提供します |
+| かな・漢字の書き順データ（src/packs/_data/strokes/） | KanjiVG（© Ulrich Apel）から変換（licenses/KanjiVG-derived-data-NOTICE.txt） | CC BY-SA 3.0。これらのファイルは CC BY-SA 3.0 で提供します |
+| 日本地図（src/engines/map/data/japan.json） | Natural Earth 1:10m Admin 1 を簡略化 | パブリックドメイン（licenses/NaturalEarth-NOTICE.txt） |
+| 教材の文・問題 | このアプリのオリジナル（他社の教材・教科書の問題や文を写していません。昔話・古典は著作権の切れた原典から再話） | MIT（コードと同じ） |
 
 クレジット表記: 音声「Mei」(c) Nagoya Institute of Technology, CC BY 3.0 / 書き順 KanjiVG (c) Ulrich Apel, CC BY-SA 3.0 / フォント Zen Maru Gothic・Klee One, SIL OFL 1.1
 
@@ -103,6 +111,7 @@ bash ~/.local/share/manabi-no-niwa/app/deploy/zorin/uninstall.sh
 - 台本は `src/voice/catalog/common.ts` と各モードの `src/modes/<mode>/voice.ts` にあり、`npm run voice:script` で `voice/script.json`（全文の一覧）を出力します。
 - `npm run voice:build`（Windows）／`npm run voice:build:sh`（Linux）で Open JTalk により `public/audio/*.mp3` を作り直します（手順: docs/assets-pipeline.md）。実行時は音声合成を使いません。
 - 家庭で録音した声に差し替える場合は、`voice/script.json` の各キーと同じ名前の mp3 を `public/audio/` に置き、`public/audio/manifest.json` を更新してからビルドします（録音した声は公開リポジトリに含めないでください）。
+- **教材パックの音声**（`public/audio/<パック名>/`、数万本）は git に入れず、配布 zip にだけ同梱しています。リポジトリから自分でビルドするときは、`npm run voice:packs` で台本（`voice/packs/*.json`）を書き出し、パックごとに `python scripts/voice/generate.py --script voice/packs/<パック名>.json --out public/audio/<パック名>` で作ります（docs/assets-pipeline.md）。
 - 音声ファイルが無い場合だけ、ブラウザの日本語読み上げで代わりに読みます。どちらも無い場合は無音になり、保護者画面に「おとが でない」と表示します。
 
 ## 開発
@@ -130,6 +139,7 @@ npm run package      # release/ に配布用 zip
 - [docs/mode-guide.md](docs/mode-guide.md) モードの作り方
 - [docs/device-checklist.md](docs/device-checklist.md) 実機確認チェックリスト
 - [docs/assets-pipeline.md](docs/assets-pipeline.md) 音声・フォント・書き順データの作り方
+- [docs/expansion/](docs/expansion/) 2.0（対象年齢の拡張）の調査・要件・設計・単元対応表・計画・レビュー・進捗（[progress.md](docs/expansion/progress.md)）
 
 ## 保護者が子供と試すときの観察チェックリスト
 

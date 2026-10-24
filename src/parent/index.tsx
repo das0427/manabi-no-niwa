@@ -6,6 +6,7 @@ import { Illust } from '../illust/Illust';
 import { AboutTab } from './AboutTab';
 import { DataTab } from './DataTab';
 import { MemosTab } from './MemosTab';
+import { PacksTab } from './PacksTab';
 import { ProfilesTab } from './ProfilesTab';
 import { RecordsTab } from './RecordsTab';
 import { SettingsTab } from './SettingsTab';
@@ -19,6 +20,7 @@ const TABS = [
   { id: 'memos', label: 'メモ' },
   { id: 'profiles', label: 'プロフィール' },
   { id: 'data', label: 'データ' },
+  { id: 'packs', label: 'きょうざい' },
   { id: 'about', label: 'このアプリについて' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
@@ -39,6 +41,7 @@ export default function ParentApp({ tab }: { tab: string }) {
       memos: <MemosTab key={key} />,
       profiles: <ProfilesTab key={key} />,
       data: <DataTab key={key} />,
+      packs: <PacksTab key={key} />,
       about: <AboutTab key={key} />,
     }[current];
   }

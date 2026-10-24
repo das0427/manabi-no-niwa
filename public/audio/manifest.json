@@ -362,6 +362,141 @@
    "hash": "5352f0862fe0",
    "ms": 648
   },
+  "draw.color.black": {
+   "file": "draw.color.black.mp3",
+   "hash": "9195b24835f4",
+   "ms": 528
+  },
+  "draw.color.blue": {
+   "file": "draw.color.blue.mp3",
+   "hash": "86046a54f88b",
+   "ms": 480
+  },
+  "draw.color.brown": {
+   "file": "draw.color.brown.mp3",
+   "hash": "ab1b21ee598e",
+   "ms": 624
+  },
+  "draw.color.darkgray": {
+   "file": "draw.color.darkgray.mp3",
+   "hash": "26d7ecd0382a",
+   "ms": 984
+  },
+  "draw.color.darkgreen": {
+   "file": "draw.color.darkgreen.mp3",
+   "hash": "19353084ad19",
+   "ms": 840
+  },
+  "draw.color.darkred": {
+   "file": "draw.color.darkred.mp3",
+   "hash": "5d759982265a",
+   "ms": 744
+  },
+  "draw.color.gold": {
+   "file": "draw.color.gold.mp3",
+   "hash": "2d1157e8c423",
+   "ms": 648
+  },
+  "draw.color.gray": {
+   "file": "draw.color.gray.mp3",
+   "hash": "c909d37a018a",
+   "ms": 744
+  },
+  "draw.color.green": {
+   "file": "draw.color.green.mp3",
+   "hash": "24b171e0813e",
+   "ms": 576
+  },
+  "draw.color.lavender": {
+   "file": "draw.color.lavender.mp3",
+   "hash": "799f793e6bd8",
+   "ms": 816
+  },
+  "draw.color.lemon": {
+   "file": "draw.color.lemon.mp3",
+   "hash": "4d3cd44ac69f",
+   "ms": 816
+  },
+  "draw.color.lightbrown": {
+   "file": "draw.color.lightbrown.mp3",
+   "hash": "65dc7784e127",
+   "ms": 720
+  },
+  "draw.color.lightpink": {
+   "file": "draw.color.lightpink.mp3",
+   "hash": "6842e4027bdd",
+   "ms": 888
+  },
+  "draw.color.navy": {
+   "file": "draw.color.navy.mp3",
+   "hash": "173e75876cd2",
+   "ms": 432
+  },
+  "draw.color.orange": {
+   "file": "draw.color.orange.mp3",
+   "hash": "57cc924cd753",
+   "ms": 648
+  },
+  "draw.color.pink": {
+   "file": "draw.color.pink.mp3",
+   "hash": "0dc97baf93ad",
+   "ms": 768
+  },
+  "draw.color.purple": {
+   "file": "draw.color.purple.mp3",
+   "hash": "41d60aa57275",
+   "ms": 840
+  },
+  "draw.color.red": {
+   "file": "draw.color.red.mp3",
+   "hash": "20eefe3b73e2",
+   "ms": 504
+  },
+  "draw.color.skin": {
+   "file": "draw.color.skin.mp3",
+   "hash": "278bf0138519",
+   "ms": 720
+  },
+  "draw.color.sky": {
+   "file": "draw.color.sky.mp3",
+   "hash": "e59ae73770b5",
+   "ms": 792
+  },
+  "draw.color.teal": {
+   "file": "draw.color.teal.mp3",
+   "hash": "c5de83aeffae",
+   "ms": 792
+  },
+  "draw.color.white": {
+   "file": "draw.color.white.mp3",
+   "hash": "e3880d0f3805",
+   "ms": 624
+  },
+  "draw.color.yellow": {
+   "file": "draw.color.yellow.mp3",
+   "hash": "c67f60482eca",
+   "ms": 648
+  },
+  "draw.color.yellowgreen": {
+   "file": "draw.color.yellowgreen.mp3",
+   "hash": "2cd8e369383a",
+   "ms": 744
+  },
+  "draw.gallery": {
+   "file": "draw.gallery.mp3",
+   "hash": "5770a49bc2ff",
+   "ms": 768
+  },
+  "draw.other-tab": {
+   "file": "draw.other-tab.mp3",
+   "hash": "2a70b0144f9d",
+   "ms": 1944
+  },
+  "draw.title": {
+   "file": "draw.title.mp3",
+   "hash": "4826e93632c7",
+   "ms": 816
+  },
   "item.airplane": {
    "file": "item.airplane.mp3",
    "hash": "ec5ee87b27a1",

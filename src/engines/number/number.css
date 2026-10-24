@@ -1,0 +1,88 @@
+/* 数の入力。数字キーは右側（DESINGN.md 18章）。キーは主操作の寸法（6u 以上） */
+.eng-number {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: calc(var(--u) * 3);
+  width: 100%;
+}
+.eng-number__fields {
+  display: flex;
+  gap: calc(var(--u) * 2.4);
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.eng-number__field {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  font-size: calc(var(--u) * 3);
+  font-weight: 700;
+}
+.eng-number__box {
+  min-width: calc(var(--u) * 14);
+  min-height: calc(var(--u) * 8);
+  padding: 0 calc(var(--u) * 1.2);
+  font: inherit;
+  font-size: calc(var(--u) * 4.4);
+  color: var(--ink);
+  background: var(--white);
+  border: calc(var(--u) * 0.35) solid var(--ink);
+  border-radius: calc(var(--u) * 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.eng-number__box.is-active {
+  outline: calc(var(--u) * 0.5) solid var(--sun);
+  outline-offset: calc(var(--u) * 0.3);
+}
+.eng-number__box.is-wrong {
+  border-style: dashed;
+}
+.eng-number__pad {
+  display: grid;
+  grid-template-columns: repeat(4, calc(var(--u) * 6));
+  gap: calc(var(--u) * 0.8);
+}
+.numkey {
+  height: calc(var(--u) * 5.6);
+  white-space: nowrap;
+  font: inherit;
+  font-size: calc(var(--u) * 3.2);
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 1);
+  box-shadow: 0 calc(var(--u) * 0.4) 0 var(--wood-dark);
+}
+.numkey:disabled {
+  opacity: 0.5;
+}
+.numkey--fn {
+  font-size: calc(var(--u) * 2.2);
+}
+.numkey--ok {
+  grid-column: span 2;
+  font-size: calc(var(--u) * 2);
+  padding: 0;
+  background: var(--sun);
+}
+.num-frac-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15em;
+}
+.num-frac-show__f {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.7em;
+  line-height: 1.05;
+}
+.num-frac-show__f > span:first-child {
+  border-bottom: 0.08em solid currentColor;
+  padding: 0 0.15em;
+}

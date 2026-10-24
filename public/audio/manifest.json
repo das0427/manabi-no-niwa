@@ -2679,78 +2679,78 @@
   },
   "trace.letter.chi": {
    "file": "trace.letter.chi.mp3",
-   "hash": "8bf2b55ffc63",
+   "hash": "c6af09b6ef2f",
    "ms": 1008
   },
   "trace.letter.he": {
    "file": "trace.letter.he.mp3",
-   "hash": "529d0a698b7c",
-   "ms": 960
+   "hash": "ce1a881052f8",
+   "ms": 1008
   },
   "trace.letter.hi": {
    "file": "trace.letter.hi.mp3",
-   "hash": "2456eb3f157f",
+   "hash": "949fd733eb1f",
    "ms": 1032
   },
   "trace.letter.i": {
    "file": "trace.letter.i.mp3",
-   "hash": "eef6f61105b6",
+   "hash": "338d98611b2d",
    "ms": 984
   },
   "trace.letter.ko": {
    "file": "trace.letter.ko.mp3",
-   "hash": "6219a769068c",
+   "hash": "28fe4175d3b9",
    "ms": 984
   },
   "trace.letter.ku": {
    "file": "trace.letter.ku.mp3",
-   "hash": "d14f8baad3ba",
+   "hash": "1102550688dd",
    "ms": 1008
   },
   "trace.letter.no": {
    "file": "trace.letter.no.mp3",
-   "hash": "8b41f56df3a3",
+   "hash": "efcdd988652e",
    "ms": 984
   },
   "trace.letter.ri": {
    "file": "trace.letter.ri.mp3",
-   "hash": "154dcf5893f9",
+   "hash": "dd1895011497",
    "ms": 984
   },
   "trace.letter.ro": {
    "file": "trace.letter.ro.mp3",
-   "hash": "b078f0dd451f",
+   "hash": "edd334d99380",
    "ms": 984
   },
   "trace.letter.ru": {
    "file": "trace.letter.ru.mp3",
-   "hash": "a77092701037",
+   "hash": "ad53f71dee36",
    "ms": 984
   },
   "trace.letter.shi": {
    "file": "trace.letter.shi.mp3",
-   "hash": "23dce62cac31",
+   "hash": "27f2fe38a488",
    "ms": 1104
   },
   "trace.letter.so": {
    "file": "trace.letter.so.mp3",
-   "hash": "4d395fcf5b10",
+   "hash": "b30cdbf7224e",
    "ms": 1080
   },
   "trace.letter.te": {
    "file": "trace.letter.te.mp3",
-   "hash": "96ee66d18a9f",
+   "hash": "42202712b7c4",
    "ms": 984
   },
   "trace.letter.tsu": {
    "file": "trace.letter.tsu.mp3",
-   "hash": "2cb4c32ce6c3",
+   "hash": "472ad9bda3be",
    "ms": 1056
   },
   "trace.letter.u": {
    "file": "trace.letter.u.mp3",
-   "hash": "9e858715f60f",
-   "ms": 960
+   "hash": "c2ca958e7296",
+   "ms": 984
   },
   "trace.prompt.line": {
    "file": "trace.prompt.line.mp3",

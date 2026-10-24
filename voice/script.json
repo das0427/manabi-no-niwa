@@ -2273,63 +2273,78 @@
     },
     {
       "key": "trace.letter.chi",
-      "text": "ちを なぞろう"
+      "text": "ちを なぞろう",
+      "yomi": "チを なぞろう"
     },
     {
       "key": "trace.letter.he",
-      "text": "へを なぞろう"
+      "text": "へを なぞろう",
+      "yomi": "ヘを なぞろう"
     },
     {
       "key": "trace.letter.hi",
-      "text": "ひを なぞろう"
+      "text": "ひを なぞろう",
+      "yomi": "ヒを なぞろう"
     },
     {
       "key": "trace.letter.i",
-      "text": "いを なぞろう"
+      "text": "いを なぞろう",
+      "yomi": "イを なぞろう"
     },
     {
       "key": "trace.letter.ko",
-      "text": "こを なぞろう"
+      "text": "こを なぞろう",
+      "yomi": "コを なぞろう"
     },
     {
       "key": "trace.letter.ku",
-      "text": "くを なぞろう"
+      "text": "くを なぞろう",
+      "yomi": "クを なぞろう"
     },
     {
       "key": "trace.letter.no",
-      "text": "のを なぞろう"
+      "text": "のを なぞろう",
+      "yomi": "ノを なぞろう"
     },
     {
       "key": "trace.letter.ri",
-      "text": "りを なぞろう"
+      "text": "りを なぞろう",
+      "yomi": "リを なぞろう"
     },
     {
       "key": "trace.letter.ro",
-      "text": "ろを なぞろう"
+      "text": "ろを なぞろう",
+      "yomi": "ロを なぞろう"
     },
     {
       "key": "trace.letter.ru",
-      "text": "るを なぞろう"
+      "text": "るを なぞろう",
+      "yomi": "ルを なぞろう"
     },
     {
       "key": "trace.letter.shi",
-      "text": "しを なぞろう"
+      "text": "しを なぞろう",
+      "yomi": "シを なぞろう"
     },
     {
       "key": "trace.letter.so",
-      "text": "そを なぞろう"
+      "text": "そを なぞろう",
+      "yomi": "ソを なぞろう"
     },
     {
       "key": "trace.letter.te",
-      "text": "てを なぞろう"
+      "text": "てを なぞろう",
+      "yomi": "テを なぞろう"
     },
     {
       "key": "trace.letter.tsu",
-      "text": "つを なぞろう"
+      "text": "つを なぞろう",
+      "yomi": "ツを なぞろう"
     },
     {
       "key": "trace.letter.u",
-      "text": "うを なぞろう"
+      "text": "うを なぞろう",
+      "yomi": "ウを なぞろう"
     },
     {
       "key": "trace.prompt.line",

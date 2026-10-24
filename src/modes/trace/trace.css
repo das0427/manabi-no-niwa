@@ -1,0 +1,73 @@
+/* なぞって あそぼう。舞台の上 8u を除いた 100u × 48.25u を使う */
+.trace {
+  position: absolute;
+  inset: 0;
+}
+
+/* なぞり盤: 正方形（約 44u 角）を舞台の中央に */
+.trace-board {
+  position: absolute;
+  left: calc(var(--u) * 28);
+  top: calc(var(--u) * 2);
+  width: calc(var(--u) * 44);
+  height: calc(var(--u) * 44);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.trace-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: calc(var(--radius) - var(--outline));
+  /* 描画領域だけ、ブラウザのスクロール・拡大・長押しメニューを止める */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+/* 補助の札（みる・ヒント・ひとつ もどす・つぎへ）。左右の下に積む */
+.trace-aux {
+  position: absolute !important;
+  flex-direction: column;
+  gap: calc(var(--u) * 0.2);
+  min-width: calc(var(--u) * 12);
+  min-height: calc(var(--u) * 8.5);
+  bottom: calc(var(--u) * 1.5);
+}
+.trace-aux .tap__icon {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+}
+.trace-aux__text {
+  font-size: var(--text-small);
+  line-height: 1.1;
+  white-space: nowrap;
+}
+.trace-aux--left {
+  left: var(--edge);
+}
+.trace-aux--right {
+  right: var(--edge);
+}
+.trace-aux--upper {
+  bottom: calc(var(--u) * 11.6);
+}
+
+/* 完了画面に並べる作品 */
+.trace-showcase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+}
+.trace-showcase__item {
+  width: calc(var(--u) * 14);
+  height: calc(var(--u) * 14);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--white);
+}

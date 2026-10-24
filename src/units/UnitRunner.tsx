@@ -322,6 +322,7 @@ function UnitRound({
       data-testid={`unit-${unit.id}`}
       data-phase={s.phase}
       data-index={s.index}
+      style={{ ['--ts' as string]: String(ctx.textScale) }}
     >
       <ModeHeader
         promptText=""

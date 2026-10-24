@@ -11,6 +11,11 @@ import type { SortItem } from '../engines/sort/sort';
 import type { MatchItem } from '../engines/match/match';
 import type { FillItem } from '../engines/fill/fill';
 import type { BuildItem } from '../engines/build/build';
+import type { ListenItem } from '../engines/listen/listen';
+import type { ReadingItem } from '../engines/reading/reading';
+import type { TraceItem } from '../engines/trace/trace';
+import type { ExplainItem } from '../engines/explain/explain';
+import type { ProgramItem } from '../engines/program/program';
 
 /** 文の記法（src/text/rich.ts）。漢字は必ず《よみ》付き */
 export type RichText = string;
@@ -123,7 +128,12 @@ export type Item =
   | SortItem
   | MatchItem
   | FillItem
-  | BuildItem;
+  | BuildItem
+  | ListenItem
+  | ReadingItem
+  | TraceItem
+  | ExplainItem
+  | ProgramItem;
 export type EngineId = Item['engine'];
 
 // ---- 単元 ----

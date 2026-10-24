@@ -372,6 +372,7 @@ function UnitRound({
               ctx={ctx}
               revealed={s.phase === 'explain'}
               wrongMark={s.wrongMark}
+              hintsShown={s.hintsShown}
               disabled={s.phase !== 'question'}
               submit={submit}
             />

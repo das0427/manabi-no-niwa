@@ -39,6 +39,8 @@ export interface EngineProps<I extends Item, R> {
   disabled: boolean;
   /** 答えを出す（UnitRunner が judge を呼んで流れを進める） */
   submit(response: R): void;
+  /** 見せたヒントの段の数（reading の本文の囲み、trace の次の画の囲みなどに使う） */
+  hintsShown?: number;
 }
 
 export interface EngineDef<I extends Item = Item, R = unknown> {

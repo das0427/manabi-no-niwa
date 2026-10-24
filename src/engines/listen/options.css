@@ -1,0 +1,39 @@
+/* 選択肢（listen・reading 共通） */
+.eng-opts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+}
+.eng-opts__list {
+  display: flex;
+  gap: calc(var(--u) * 2.4);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.eng-opts__list--grid {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+}
+.eng-opts__list--column {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+.eng-opts__opt {
+  min-width: calc(var(--u) * 14);
+  min-height: calc(var(--u) * 10);
+  padding: calc(var(--u) * 1.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.6);
+}
+.eng-opts__label {
+  font-size: calc(var(--u) * 3.2);
+  font-weight: 700;
+}
+.eng-opts__check {
+  min-width: calc(var(--u) * 20);
+  font-size: calc(var(--u) * 2.8);
+}

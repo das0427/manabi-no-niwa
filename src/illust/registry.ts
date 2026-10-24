@@ -17,6 +17,24 @@ const groups: Record<string, IllustGroup> = {
   subject: subjectIllust,
 };
 
+/**
+ * 教材パックの担当が描いた絵（src/illust/content/<packId>.tsx が IllustGroup を export）。
+ * 自動で読み込む（担当ごとに登録表を編集しない）。Node のスクリプト（tsx）では import.meta.glob が無いので読まない。
+ */
+// Vite はこの呼び出しを静的に書き換える。Node（tsx）では呼び出しが失敗するので空にする
+let contentModules: Record<string, Record<string, unknown>> = {};
+try {
+  contentModules = import.meta.glob<Record<string, unknown>>('./content/*.tsx', { eager: true });
+} catch {
+  contentModules = {};
+}
+for (const [path, mod] of Object.entries(contentModules)) {
+  const name = /content\/(.+)\.tsx$/.exec(path)?.[1] ?? path;
+  for (const [exp, value] of Object.entries(mod)) {
+    if (value && typeof value === 'object') groups[`content:${name}:${exp}`] = value as IllustGroup;
+  }
+}
+
 export const ILLUST: Record<string, IllustDef> = {};
 for (const [g, defs] of Object.entries(groups)) {
   for (const [id, def] of Object.entries(defs)) {

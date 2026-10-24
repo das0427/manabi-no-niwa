@@ -42,6 +42,8 @@ export function displayOrder(
   shown: number[],
 ): number[] {
   if (item.fixedOrder || shown.length < 2) return shown;
+  // 絵だけの選択肢は「1ばん」…と番号で呼ぶ（解説・ヒントが番号で指す）ので並べ替えない
+  if (item.options.some((o) => o.label === undefined)) return shown;
   // 図の「あ」「い」…を指す選択肢は記号の順のまま
   if (item.options.every((o) => typeof o.label === 'string' && /^[あいうえおかき]$/.test(o.label)))
     return shown;

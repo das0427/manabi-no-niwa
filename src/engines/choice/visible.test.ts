@@ -17,6 +17,10 @@ describe('選択肢の並び', () => {
     expect(first / 400).toBeGreaterThan(0.2);
     expect(first / 400).toBeLessThan(0.47);
   });
+  it('絵だけの選択肢（番号で呼ぶ）は並べ替えない', () => {
+    const options = [{ correct: true }, {}, {}];
+    expect(displayOrder({ id: 'q:1', options }, [0, 1, 2])).toEqual([0, 1, 2]);
+  });
   it('fixedOrder と「あ・い」は並べ替えない', () => {
     expect(
       displayOrder({ id: 'q', fixedOrder: true, options: opts(['3', '2', '1']) }, [0, 1, 2]),

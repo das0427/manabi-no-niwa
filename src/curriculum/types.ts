@@ -16,6 +16,11 @@ import type { ReadingItem } from '../engines/reading/reading';
 import type { TraceItem } from '../engines/trace/trace';
 import type { ExplainItem } from '../engines/explain/explain';
 import type { ProgramItem } from '../engines/program/program';
+import type { ClockItem } from '../engines/clock/clock';
+import type { MeasureItem } from '../engines/measure/measure';
+import type { NumberlineItem } from '../engines/numberline/numberline';
+import type { GraphItem } from '../engines/graph/graph';
+import type { GeometryItem } from '../engines/geometry/geometry';
 
 /** 文の記法（src/text/rich.ts）。漢字は必ず《よみ》付き */
 export type RichText = string;
@@ -133,7 +138,12 @@ export type Item =
   | ReadingItem
   | TraceItem
   | ExplainItem
-  | ProgramItem;
+  | ProgramItem
+  | ClockItem
+  | MeasureItem
+  | NumberlineItem
+  | GraphItem
+  | GeometryItem;
 export type EngineId = Item['engine'];
 
 // ---- 単元 ----

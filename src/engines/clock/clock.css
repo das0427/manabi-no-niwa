@@ -1,0 +1,231 @@
+/* 時計（短針は ink で太く短い、長針は sky-dark で細く長い: 色だけでなく太さと長さで区別） */
+.unit__work--clock .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.eng-clock {
+  width: 100%;
+}
+.clk2-face {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.clk2.is-wrong .clk2-face {
+  stroke-dasharray: 14 9;
+}
+.clk2-tick {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.clk2-tick-l {
+  stroke: var(--ink);
+  stroke-width: 3.5;
+}
+.clk2-num {
+  font-size: 21px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.clk2-mnum {
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--ink-soft);
+  text-anchor: middle;
+}
+.clk2-hour {
+  stroke: var(--ink);
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+.clk2-min {
+  stroke: var(--sky-dark);
+  stroke-width: 6;
+  stroke-linecap: round;
+}
+/* 選んでいる針: 下に sun の太い帯と ink の破線の縁（色だけでなく形でも分かる） */
+.clk2-halo {
+  stroke: var(--sun);
+  stroke-width: 18;
+  stroke-linecap: round;
+}
+.clk2-halo-edge {
+  stroke: var(--ink);
+  stroke-width: 22;
+  stroke-linecap: round;
+  stroke-dasharray: 3 5;
+}
+.clk2-hands.is-wrong line {
+  stroke-dasharray: 10 6;
+}
+/* 正答の針（revealed）: 点線で重ねる */
+.clk2-ghost line {
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+}
+.clk2-handhit {
+  stroke: transparent;
+  stroke-width: 34;
+  stroke-linecap: round;
+  cursor: pointer;
+}
+.clk2-pin {
+  fill: var(--ink);
+}
+.clk2-q {
+  font-size: 64px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.eng-clock__big {
+  width: calc(var(--u) * 26);
+  height: calc(var(--u) * 26);
+}
+.eng-clock__mid {
+  width: calc(var(--u) * 17);
+  height: calc(var(--u) * 17);
+}
+.eng-clock__small {
+  width: calc(var(--u) * 13);
+  height: calc(var(--u) * 13);
+}
+.eng-clock__mini {
+  width: calc(var(--u) * 14);
+  height: calc(var(--u) * 14);
+  pointer-events: none;
+}
+.eng-clock__dayhalf {
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+}
+
+/* 選ぶ問題 */
+.eng-clock--read,
+.eng-clock--pick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 4);
+}
+.eng-clock__one {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.eng-clock__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 2.4);
+  justify-content: center;
+}
+.eng-clock--read .eng-clock__options {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+}
+.eng-clock__opt {
+  min-width: calc(var(--u) * 14);
+  min-height: calc(var(--u) * 8);
+}
+.eng-clock__optlabel {
+  font-size: calc(var(--u) * 3.2);
+  font-weight: 700;
+}
+
+/* 針を合わせる札 */
+.eng-clock__side {
+  width: calc(var(--u) * 34);
+}
+.eng-clock__hand {
+  white-space: nowrap;
+  font-size: calc(var(--u) * 2);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.2);
+}
+.eng-clock__handicon {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 2);
+}
+.eng-clock__handicon line {
+  stroke-linecap: round;
+}
+.eng-clock__handicon--minute line {
+  stroke: var(--sky-dark);
+  stroke-width: 4;
+}
+.eng-clock__handicon--hour line {
+  stroke: var(--ink);
+  stroke-width: 7;
+}
+.eng-clock__moves {
+  display: flex;
+  gap: calc(var(--u) * 1.2);
+  justify-content: center;
+}
+.eng-clock__moves > .mk-btn {
+  flex: 1;
+  font-size: calc(var(--u) * 2);
+}
+
+/* 時間の経過 */
+.eng-clock__pair {
+  display: flex;
+  gap: calc(var(--u) * 6);
+  justify-content: center;
+}
+.eng-clock__fig {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.eng-clock__fig figcaption {
+  font-size: calc(var(--u) * 2.2);
+  font-weight: 700;
+}
+.eng-clock--elapsed .mk__main {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-content: center;
+  column-gap: calc(var(--u) * 3);
+  row-gap: calc(var(--u) * 1);
+}
+.eng-clock--elapsed .mnp-fields {
+  flex-direction: column;
+  align-items: flex-end;
+}
+.eng-clock--elapsed .eng-clock__band {
+  grid-column: 1 / span 2;
+}
+.eng-clock__band {
+  width: 100%;
+  max-height: calc(var(--u) * 8.5);
+}
+.clk2-band-axis,
+.clk2-band-h {
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.clk2-band-m {
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}
+.clk2-band-bar {
+  fill: var(--sun);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.clk2-band-label,
+.clk2-band-dur {
+  font-size: 22px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}

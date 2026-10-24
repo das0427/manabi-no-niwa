@@ -12,6 +12,11 @@ import { readingEngine } from './reading/reading';
 import { traceEngine } from './trace/trace';
 import { explainEngine } from './explain/explain';
 import { programEngine } from './program/program';
+import { clockEngine } from './clock/clock';
+import { measureEngine } from './measure/measure';
+import { numberlineEngine } from './numberline/numberline';
+import { graphEngine } from './graph/graph';
+import { geometryEngine } from './geometry/geometry';
 import type { EngineDef } from './types';
 
 type Def<K extends EngineId> = EngineDef<Extract<Item, { engine: K }>, never>;
@@ -29,6 +34,11 @@ export const ENGINES: { [K in EngineId]: Def<K> } = {
   trace: traceEngine as unknown as Def<'trace'>,
   explain: explainEngine as unknown as Def<'explain'>,
   program: programEngine as unknown as Def<'program'>,
+  clock: clockEngine as unknown as Def<'clock'>,
+  measure: measureEngine as unknown as Def<'measure'>,
+  numberline: numberlineEngine as unknown as Def<'numberline'>,
+  graph: graphEngine as unknown as Def<'graph'>,
+  geometry: geometryEngine as unknown as Def<'geometry'>,
 };
 
 export function engineOf(item: Item): EngineDef<Item, unknown> {

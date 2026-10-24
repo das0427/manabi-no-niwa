@@ -1,0 +1,124 @@
+/* ものさし・ます・はかり（線は ink、目盛りは 長・中・短 の3段） */
+.unit__work--measure .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.eng-measure--ruler .ms-ruler {
+  width: 100%;
+  max-height: calc(var(--u) * 17);
+}
+.eng-measure--masu .ms-masu {
+  height: calc(var(--u) * 20);
+  max-width: 100%;
+}
+.eng-measure--scale .ms-dial {
+  height: calc(var(--u) * 21);
+  width: calc(var(--u) * 21);
+}
+.eng-measure__side {
+  min-width: calc(var(--u) * 16);
+}
+.ms-body {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.ms-tick {
+  stroke: var(--ink);
+}
+.ms-tick--major {
+  stroke-width: 4;
+}
+.ms-tick--mid {
+  stroke-width: 3;
+}
+.ms-tick--minor {
+  stroke-width: 1.8;
+}
+.ms-label {
+  font-size: 34px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.ms-label--left {
+  text-anchor: end;
+  font-size: 44px;
+}
+.ms-label--dial {
+  font-size: 27px;
+}
+.ms-unit {
+  font-size: 30px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: end;
+}
+.ms-unit--dial {
+  text-anchor: middle;
+}
+.ms-obj {
+  fill: var(--sky);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.ms-objline {
+  stroke: var(--ink);
+  stroke-width: 8;
+  stroke-linecap: butt;
+}
+/* 子が合わせた位置（太い線）。誤りは破線 */
+.ms-pointer {
+  stroke: var(--ink);
+  stroke-width: 6;
+}
+.ms-pointer.is-wrong,
+.ms-needle.is-wrong {
+  stroke-dasharray: 10 6;
+}
+/* 正答（revealed）: 点線 */
+.ms-ghost {
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-dasharray: 5 6;
+}
+.ms-water {
+  fill: var(--sky);
+}
+.ms-surface {
+  stroke: var(--sky-dark);
+  stroke-width: 5;
+}
+.ms-cup {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+.ms-masu.is-wrong .ms-surface {
+  stroke: var(--ink);
+  stroke-dasharray: 10 6;
+}
+.ms-plate {
+  fill: var(--wood);
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+.ms-dialbody {
+  fill: var(--paper-2);
+  stroke: var(--ink);
+  stroke-width: 5;
+}
+.ms-face {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+.ms-needle {
+  stroke: var(--berry);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.ms-pin {
+  fill: var(--ink);
+}

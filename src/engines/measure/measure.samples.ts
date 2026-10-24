@@ -1,0 +1,102 @@
+/** measure の見本の問題（統括が画面で確かめる用。checkMeasure が誤りを返さないこと） */
+import type { MeasureItem } from './measure';
+
+/** 基準 mm、cm の数字を書く 0〜12cm のものさし */
+const RULER_12 = {
+  unit: 'mm',
+  min: 0,
+  max: 120,
+  minor: 1,
+  mid: 5,
+  major: 10,
+  labelFactor: 10,
+  labelUnit: 'cm',
+} as const;
+
+export const measureSamples: MeasureItem[] = [
+  {
+    id: 'measure-sample:ruler-read-35',
+    engine: 'measure',
+    objective: 'cm-mm',
+    level: 0,
+    prompt: 'テープの ながさは なんcm なんmm？',
+    hints: [
+      'テープの ひだりはしは 0 に そろって いるよ',
+      'みぎはしの ちかくの 3cm の めもりを みよう',
+      '3cm から ちいさい めもり いくつ ぶん かな',
+    ],
+    explain: '3cm と、ちいさい めもり 5つで 5mm。3cm5mm だよ',
+    identity: 'ruler:35',
+    instrument: 'ruler',
+    scale: { ...RULER_12 },
+    task: 'read',
+    value: 35,
+    fields: [
+      { unit: 'cm', factor: 10 },
+      { unit: 'mm', factor: 1 },
+    ],
+    misconceptions: { fieldSwap: 'mis-unit-swap' },
+  },
+  {
+    id: 'measure-sample:ruler-set-73',
+    engine: 'measure',
+    objective: 'draw',
+    level: 1,
+    prompt: '7cm3mm の せんを ひこう。おわりの めもりを タップしてね',
+    hints: [
+      'せんは 0 から はじまるよ',
+      '7cm の ながい めもりを さがそう',
+      '7cm から ちいさい めもり 3つ ぶん すすもう',
+    ],
+    explain: '0 から 7cm と 3mm の ところまでで 7cm3mm だよ',
+    identity: 'ruler-set:73',
+    instrument: 'ruler',
+    scale: { ...RULER_12 },
+    task: 'set',
+    value: 73,
+    object: 'line',
+    misconceptions: { minorAsOne: 'mis-minor-as-one' },
+  },
+  {
+    id: 'measure-sample:masu-read-13',
+    engine: 'measure',
+    objective: 'l-dl',
+    level: 2,
+    prompt: 'みずの かさは なんL なんdL？',
+    hints: [
+      'いっぱいの ますは 1L だよ',
+      '2つめの ますの めもりを よもう',
+      '1L と、のこりは いくつの dL かな',
+    ],
+    explain: '1L ますが いっぱいで 1L、のこりが 3dL。1L3dL だよ',
+    identity: 'masu:13dL',
+    instrument: 'masu',
+    scale: { unit: 'dL', min: 0, max: 10, minor: 1, mid: 5, major: 5 },
+    task: 'read',
+    value: 13,
+    fields: [
+      { unit: 'L', factor: 10 },
+      { unit: 'dL', factor: 1 },
+    ],
+    wrongAnswers: [{ value: 31, misconception: 'mis-unit-swap' }],
+  },
+  {
+    id: 'measure-sample:scale-read-340',
+    engine: 'measure',
+    objective: 'g',
+    level: 3,
+    prompt: 'はりは なんg を さして いる？',
+    hints: [
+      'すうじの ついた めもりを みよう',
+      'ちいさい 1めもりは 20g だよ',
+      '300g から ちいさい めもり いくつ ぶん かな',
+    ],
+    explain: '300g から 20g の めもり 2つで 340g だよ',
+    identity: 'scale:340',
+    instrument: 'scale',
+    scale: { unit: 'g', min: 0, max: 1000, minor: 20, major: 100 },
+    task: 'read',
+    value: 340,
+    misconceptions: { minorAsOne: 'mis-minor-as-one' },
+  },
+];

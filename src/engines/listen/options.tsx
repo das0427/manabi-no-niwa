@@ -8,7 +8,12 @@ import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
-import { checkChoice, judgeChoice, type ChoiceResponse } from '../choice/choice';
+import {
+  checkChoice,
+  judgeChoice,
+  visibleOptionIndices,
+  type ChoiceResponse,
+} from '../choice/choice';
 import { Figure } from '../figure/Figure';
 import type { Judgement, RenderCtx } from '../types';
 import './options.css';
@@ -56,9 +61,9 @@ export function ChoiceOptions({
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
-  const opts = part.options.slice(
-    0,
-    Math.max(2, part.multi ? part.options.length : ctx.ux.maxChoices),
+  const shown = visibleOptionIndices(
+    part.options,
+    part.multi ? part.options.length : ctx.ux.maxChoices,
   );
   const stateOf = (i: number): TapState => {
     const o = part.options[i]!;
@@ -78,24 +83,26 @@ export function ChoiceOptions({
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
       <div className={`eng-opts__list eng-opts__list--${part.layout ?? 'row'}`}>
-        {opts.map((o, i) => (
-          <Choice
-            key={i}
-            label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
-            state={stateOf(i)}
-            disabled={locked || revealed}
-            onPress={() => press(i)}
-            testId={`opt-${i}`}
-            className="eng-opts__opt"
-          >
-            {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-            {o.label !== undefined ? (
-              <span className="eng-opts__label">
-                <Rt text={o.label} ctx={ctx} />
-              </span>
-            ) : null}
-          </Choice>
-        ))}
+        {shown
+          .map((i) => ({ o: part.options[i]!, i }))
+          .map(({ o, i }) => (
+            <Choice
+              key={i}
+              label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
+              state={stateOf(i)}
+              disabled={locked || revealed}
+              onPress={() => press(i)}
+              testId={`opt-${i}`}
+              className="eng-opts__opt"
+            >
+              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+              {o.label !== undefined ? (
+                <span className="eng-opts__label">
+                  <Rt text={o.label} ctx={ctx} />
+                </span>
+              ) : null}
+            </Choice>
+          ))}
       </div>
       {part.multi && !revealed ? (
         <button

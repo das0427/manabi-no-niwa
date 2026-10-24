@@ -15,6 +15,22 @@ import './choice.css';
 /** 答え: 選んだ選択肢の番号（multi は複数） */
 export type ChoiceResponse = number[];
 
+/**
+ * 区分の上限（ux.maxChoices）で選択肢を減らすときに出す選択肢の番号（元の番号・元の順）。
+ * 正解は必ず残し、誤りの選択肢を前から上限まで残す（位置で切ると正解が消えることがある: コードレビュー #3）。
+ */
+export function visibleOptionIndices(
+  options: readonly { correct?: boolean }[],
+  max: number,
+): number[] {
+  const limit = Math.max(2, max);
+  if (options.length <= limit) return options.map((_, i) => i);
+  const correct = options.flatMap((o, i) => (o.correct ? [i] : []));
+  const wrong = options.flatMap((o, i) => (o.correct ? [] : [i]));
+  const keep = new Set([...correct, ...wrong.slice(0, Math.max(0, limit - correct.length))]);
+  return options.flatMap((_, i) => (keep.has(i) ? [i] : []));
+}
+
 export function judgeChoice(item: ChoiceItem, picked: ChoiceResponse): Judgement {
   const correct = item.options.flatMap((o, i) => (o.correct ? [i] : []));
   if (item.multi) {
@@ -62,9 +78,9 @@ function ChoiceView({
 }: EngineProps<ChoiceItem, ChoiceResponse>) {
   const [picked, setPicked] = useState<number[]>([]);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
-  const opts = item.options.slice(
-    0,
-    Math.max(2, item.multi ? item.options.length : ctx.ux.maxChoices),
+  const shown = visibleOptionIndices(
+    item.options,
+    item.multi ? item.options.length : ctx.ux.maxChoices,
   );
   const stateOf = (i: number): TapState => {
     const o = item.options[i]!;
@@ -84,24 +100,26 @@ function ChoiceView({
   return (
     <div className="eng-choice">
       <div className={`eng-choice__options eng-choice__options--${item.layout ?? 'row'}`}>
-        {opts.map((o, i) => (
-          <Choice
-            key={i}
-            label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
-            state={stateOf(i)}
-            disabled={disabled || revealed}
-            onPress={() => press(i)}
-            testId={`opt-${i}`}
-            className="eng-choice__opt"
-          >
-            {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-            {o.label !== undefined ? (
-              <span className="eng-choice__label">
-                <Rt text={o.label} ctx={ctx} />
-              </span>
-            ) : null}
-          </Choice>
-        ))}
+        {shown
+          .map((i) => ({ o: item.options[i]!, i }))
+          .map(({ o, i }) => (
+            <Choice
+              key={i}
+              label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
+              state={stateOf(i)}
+              disabled={disabled || revealed}
+              onPress={() => press(i)}
+              testId={`opt-${i}`}
+              className="eng-choice__opt"
+            >
+              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+              {o.label !== undefined ? (
+                <span className="eng-choice__label">
+                  <Rt text={o.label} ctx={ctx} />
+                </span>
+              ) : null}
+            </Choice>
+          ))}
       </div>
       {item.multi && !revealed ? (
         <button

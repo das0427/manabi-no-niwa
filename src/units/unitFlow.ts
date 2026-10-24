@@ -47,7 +47,8 @@ export interface FlowState {
 
 export type FlowAction =
   | { type: 'intro-next'; introLength: number }
-  | { type: 'judged'; j: Judgement; misconceptionText?: RichText }
+  /** genericText: 誤概念の説明が無いときの声かけ（省略時 GENERIC_WRONG。2歳段階は「もういちど」） */
+  | { type: 'judged'; j: Judgement; misconceptionText?: RichText; genericText?: RichText }
   | { type: 'hint' }
   | { type: 'skip' }
   | { type: 'next' };
@@ -149,7 +150,7 @@ export function flowReducer(s: FlowState, a: FlowAction): FlowState {
         message:
           j.misconception && a.misconceptionText
             ? { kind: 'misconception', text: a.misconceptionText }
-            : { kind: 'generic-wrong', text: GENERIC_WRONG },
+            : { kind: 'generic-wrong', text: a.genericText ?? GENERIC_WRONG },
         wrongMark: j.mark ?? null,
         lastMisconception: j.misconception ?? s.lastMisconception,
       };

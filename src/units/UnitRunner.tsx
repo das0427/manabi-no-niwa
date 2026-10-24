@@ -9,7 +9,7 @@ import { audienceUx, gradeOf } from '../audience/audience';
 import { audio } from '../core/audio/index';
 import { addOutcome, evaluate } from '../core/progress/rules';
 import * as db from '../core/storage/index';
-import { profileAudience, type UnitProgress } from '../core/types';
+import { profileAudience, type Profile, type UnitProgress } from '../core/types';
 import { freshSeed } from '../core/util/rng';
 import {
   isReviewDue,
@@ -54,9 +54,21 @@ interface UnitDraft {
   review: boolean;
   count: number;
   flow: FlowDraft;
+  /** 中断前の回の記録の id（引き継ぐ） */
+  roundId?: number;
 }
 
 const DRAFT_TTL = 24 * 60 * 60 * 1000;
+/**
+ * この回の段階。2歳段階は常に段階0（2歳向け）。段階の自動判定をしないうえ、3歳段階で進んだ段階の問題\n * （3択など）を2歳段階で出さない（コードレビュー #3）。
+ */
+function roundLevel(unit: UnitSpec, progress: UnitProgress, profile: Profile): number {
+  if (profileAudience(profile) === 'toddler' && profile.toddlerStage === 2) return 0;
+  return Math.min(unit.levels.length - 1, progress.level);
+}
+
+/** 2歳段階の誤答の声かけ（正誤を強く出さない） */
+const SOFT_AGAIN = 'もういちど みてみよう。';
 
 type Loaded =
   | { kind: 'loading' }
@@ -100,7 +112,7 @@ export function UnitRunner({ unitId }: { unitId: string }) {
         // 中断データ: 24時間以内・段階と復習かどうかが同じときだけ使う（設定が変わると問題が作り直せないため）
         const d = await db.getDraft(profile.id, 'unit', unitId);
         const st = d?.state as UnitDraft | undefined;
-        const level = Math.min(unit.levels.length - 1, progress.level);
+        const level = roundLevel(unit, progress, profile);
         const draft =
           d && st && now - d.savedAt < DRAFT_TTL && st.level === level && st.review === review
             ? st
@@ -121,7 +133,7 @@ export function UnitRunner({ unitId }: { unitId: string }) {
     return () => {
       alive = false;
     };
-  }, [unitId, profile.id, roundKey]);
+  }, [unitId, profile, roundKey]);
 
   const home = () => navigate({ name: 'home' }, { force: true });
   if (loaded.kind === 'loading') return <div className="screen" data-testid="unit-loading" />;
@@ -240,7 +252,7 @@ export function UnitRound({
       ux,
     ],
   );
-  const level = Math.min(unit.levels.length - 1, progress.level);
+  const level = roundLevel(unit, progress, profile);
   const [seed] = useState(() => resume?.seed ?? freshSeed());
   const count = resume?.count ?? (review ? REVIEW_SIZE : (unit.roundSize ?? ux.roundSize));
   const items = useMemo(
@@ -295,9 +307,13 @@ export function UnitRound({
     [profile.id, unit.id, review],
   );
   const ensureRound = useCallback(() => {
-    roundId.current ??= db.addRound(roundRecord(0, false));
+    // 再開したときは中断前の回を引き継ぐ（回を二重に数えない: コードレビュー #4）
+    roundId.current ??=
+      resume?.roundId !== undefined
+        ? Promise.resolve(resume.roundId)
+        : db.addRound(roundRecord(0, false));
     return roundId.current;
-  }, [roundRecord]);
+  }, [roundRecord, resume]);
 
   // 1問が確定したら記録する
   // 再開したときは、前に記録した問題を記録し直さない
@@ -330,15 +346,18 @@ export function UnitRound({
         },
       });
     }
-    // 中断に備えて保存（最後の問題まで終えたら回の終わりで消す）
-    if (s.results.length > 0 && s.results.length < s.items.length) {
-      const state: UnitDraft = { seed, level, review, count, flow: draftOf(s) };
-      void db.saveDraft({
-        profileId: profile.id,
-        modeId: 'unit',
-        variantId: unit.id,
-        savedAt: Date.now(),
-        state,
+    // 中断に備えて保存（最後の問題の解説で離れても、その問題を二重に記録しない: コードレビュー #4）。
+    // 回の終わりの処理で消す
+    if (s.results.length > 0 && s.phase !== 'done') {
+      void ensureRound().then((rid) => {
+        const state: UnitDraft = { seed, level, review, count, flow: draftOf(s), roundId: rid };
+        return db.saveDraft({
+          profileId: profile.id,
+          modeId: 'unit',
+          variantId: unit.id,
+          savedAt: Date.now(),
+          state,
+        });
       });
     }
   }, [s, profile.id, unit.id, review, ensureRound, roundRecord, seed, level, count]);
@@ -377,6 +396,8 @@ export function UnitRound({
         // 2歳段階: 段階も正誤の記録も動かさない（遊んだことだけ）。review-1 #8
         p = { ...p, attempted: true };
       }
+      // 1問も答えずに終わった回（導入だけ）は、状態を「とりくみちゅう」にしない（コードレビュー #8）
+      if (s.results.length === 0) p = progress;
       await db.saveUnitProgress(p);
       void db.deleteDraft(profile.id, 'unit', unit.id);
       if (s.results.length > 0) {
@@ -407,8 +428,19 @@ export function UnitRound({
       const j: Judgement = engineOf(item).judge(item, response);
       if (j.result === 'correct') audio.sfx(ux.softJudgement ? 'place' : 'correct');
       else if (j.result === 'wrong' && !ux.softJudgement) audio.sfx('wrong');
-      const mt = j.result === 'wrong' ? misText(j.misconception) : undefined;
-      dispatch({ type: 'judged', j, misconceptionText: mt });
+      // 2歳段階は正誤を強く出さない（統括の判断1、コードレビュー #6）: 説明の代わりに「もういちど」
+      const mt =
+        j.result === 'wrong'
+          ? ux.softJudgement
+            ? SOFT_AGAIN
+            : misText(j.misconception)
+          : undefined;
+      dispatch({
+        type: 'judged',
+        j: ux.softJudgement && j.result === 'wrong' ? { ...j, misconception: undefined } : j,
+        misconceptionText: mt,
+        genericText: ux.softJudgement ? SOFT_AGAIN : undefined,
+      });
       if (j.result === 'wrong') say([mt ?? 'ちがったよ。もういちど かんがえて みよう。']);
       if (j.result === 'retry') say([j.message]);
     },

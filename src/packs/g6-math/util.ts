@@ -52,9 +52,9 @@ export function parseVal(s: string): Q | null {
   let m: RegExpExecArray | null;
   if ((m = /^(\d+)(?:と|\s)(\d+)\/(\d+)$/.exec(t)))
     return Number(m[3]) === 0 ? null : q(Number(m[1]) * Number(m[3]) + Number(m[2]), Number(m[3]));
-  if ((m = /^(\d+)\/(\d+)$/.exec(t))) return Number(m[2]) === 0 ? null : q(Number(m[1]), Number(m[2]));
-  if ((m = /^(\d*)\.(\d+)$/.exec(t)))
-    return q(Number(`${m[1] || '0'}${m[2]}`), 10 ** m[2]!.length);
+  if ((m = /^(\d+)\/(\d+)$/.exec(t)))
+    return Number(m[2]) === 0 ? null : q(Number(m[1]), Number(m[2]));
+  if ((m = /^(\d*)\.(\d+)$/.exec(t))) return q(Number(`${m[1] || '0'}${m[2]}`), 10 ** m[2]!.length);
   if (/^\d+$/.test(t)) return q(Number(t), 1);
   return null;
 }
@@ -152,7 +152,9 @@ export function dec(v: number, places: number): string {
 /** 小数の答え（値は dec と同じ持ち方） */
 export function decAns(v: number, places: number): NumberAnswer {
   const s = dec(v, places);
-  return s.includes('.') ? { kind: 'decimal', value: Number(s) } : { kind: 'int', value: Number(s) };
+  return s.includes('.')
+    ? { kind: 'decimal', value: Number(s) }
+    : { kind: 'int', value: Number(s) };
 }
 
 // ---- 選ぶ・選択肢 ----

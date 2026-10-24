@@ -11,7 +11,8 @@ import { expr, finishUnit, gcd, lcm, pick, pickObj, REVISED, wrongList } from '.
 
 type Obj = 'evenodd' | 'multiple' | 'divisor' | 'lcm' | 'gcd';
 
-const divisorsOf = (n: number) => Array.from({ length: n }, (_, i) => i + 1).filter((d) => n % d === 0);
+const divisorsOf = (n: number) =>
+  Array.from({ length: n }, (_, i) => i + 1).filter((d) => n % d === 0);
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
 /** 数直線（0〜max）に、ある数の倍数の印 */
@@ -56,7 +57,9 @@ function evenodd(level: number, rng: Rng, alt: boolean): Item {
       fixedOrder: true,
       layout: 'grid',
       options: uniq.map((x) =>
-        (x % 2 === 1) === wantOdd ? { label: String(x), correct: true } : { label: String(x), misconception: 'tens-digit' },
+        (x % 2 === 1) === wantOdd
+          ? { label: String(x), correct: true }
+          : { label: String(x), misconception: 'tens-digit' },
       ),
     };
     return item;
@@ -182,7 +185,14 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         `${n}を わりきる 整数が ${n}の 約数だよ。1と ${n}も 入るよ。`,
         `かけて ${n}に なる 組を 見つけよう。1 × ${n}、…`,
-        `組の 両方を 数えよう。（${ds.filter((d) => d * d <= n).map((d) => `${d} × ${n / d}`).join('、')}）`,
+        `組の 両方を 数えよう。（${ds
+          .filter((d) => d * d <= n)
+          .map((d) => `${d} × ${n / d}`)
+          .join('、')}）${
+          ds.some((d) => d * d === n)
+            ? `${Math.sqrt(n)} × ${Math.sqrt(n)}の ${Math.sqrt(n)}は 1こと 数えるよ。`
+            : ''
+        }`,
       ],
       explain: `${n}の 約数は ${ds.join('、')}の ${ds.length}こです。`,
       identity: `divisor-count:${n}`,
@@ -210,9 +220,16 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
     hints: [
       `${n}を わりきる 整数を さがそう。1と ${n}も 約数だよ。`,
       `かけて ${n}に なる 2つの 数の 組を 考えよう。1 × ${n}、…`,
-      `${ds.filter((d) => d * d <= n).slice(0, 2).map((d) => `${d} × ${n / d}`).join('、')}、… と 組を 見つけて、両方とも 選ぼう。`,
+      `${ds
+        .filter((d) => d * d <= n)
+        .slice(0, 2)
+        .map((d) => `${d} × ${n / d}`)
+        .join('、')}、… と 組を 見つけて、両方とも 選ぼう。`,
     ],
-    explain: `${n}の 約数は ${ds.join('、')}です。${ds.filter((d) => d * d <= n).map((d) => `${d} × ${n / d}`).join('、')}の 組で 見つけると 落としにくいよ。`,
+    explain: `${n}の 約数は ${ds.join('、')}です。${ds
+      .filter((d) => d * d <= n)
+      .map((d) => `${d} × ${n / d}`)
+      .join('、')}の 組で 見つけると 落としにくいよ。`,
     identity: `divisor:${n}`,
     alt: false,
     multi: true,
@@ -230,7 +247,8 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
 // ---- 公倍数・最小公倍数 ----
 /** 2つの数の組（a<b ≤ 15、どちらかが もう一方の 倍数でない組も 含む） */
 const LCM_PAIRS: [number, number][] = [];
-for (let a = 2; a <= 12; a++) for (let b = a + 1; b <= 15; b++) if (lcm(a, b) <= 120) LCM_PAIRS.push([a, b]);
+for (let a = 2; a <= 12; a++)
+  for (let b = a + 1; b <= 15; b++) if (lcm(a, b) <= 120) LCM_PAIRS.push([a, b]);
 
 const LCM_SCENES = [
   {
@@ -433,7 +451,9 @@ function gcdItem(level: number, rng: Rng, alt: boolean): Item {
       fixedOrder: true,
       layout: 'grid',
       options: all.map((x): ChoiceOption =>
-        commons.includes(x) ? { label: String(x), correct: true } : { label: String(x), misconception: 'not-common' },
+        commons.includes(x)
+          ? { label: String(x), correct: true }
+          : { label: String(x), misconception: 'not-common' },
       ),
     };
     return item;
@@ -504,11 +524,13 @@ export const multiplesDivisors: UnitSpec = finishUnit(
     misconceptions: [
       {
         id: 'even-odd-def',
-        explain: '偶数と 奇数を 反対に 覚えて いたのかな。2で わりきれる 整数が 偶数、わりきれない 整数が 奇数だよ。',
+        explain:
+          '偶数と 奇数を 反対に 覚えて いたのかな。2で わりきれる 整数が 偶数、わりきれない 整数が 奇数だよ。',
       },
       {
         id: 'tens-digit',
-        explain: '一の位 いがいの 数字を 見て 決めたのかな。偶数か 奇数かは、一の位の 数字だけで 決まるよ。',
+        explain:
+          '一の位 いがいの 数字を 見て 決めたのかな。偶数か 奇数かは、一の位の 数字だけで 決まるよ。',
       },
       {
         id: 'add-instead',
@@ -533,7 +555,8 @@ export const multiplesDivisors: UnitSpec = finishUnit(
       },
       {
         id: 'miss-ends',
-        explain: '1や その数 自身を 数えわすれたのかな。どの 整数も、1と その数 自身は かならず 約数だよ。',
+        explain:
+          '1や その数 自身を 数えわすれたのかな。どの 整数も、1と その数 自身は かならず 約数だよ。',
       },
       {
         id: 'half-pairs',
@@ -546,23 +569,28 @@ export const multiplesDivisors: UnitSpec = finishUnit(
       },
       {
         id: 'pick-larger',
-        explain: '大きい ほうの 数を そのまま 答えたのかな。小さい ほうの 数でも わりきれるか たしかめよう。',
+        explain:
+          '大きい ほうの 数を そのまま 答えたのかな。小さい ほうの 数でも わりきれるか たしかめよう。',
       },
       {
         id: 'pick-smaller',
-        explain: '小さい ほうの 数を そのまま 答えたのかな。大きい ほうの 数も わりきれるか たしかめよう。',
+        explain:
+          '小さい ほうの 数を そのまま 答えたのかな。大きい ほうの 数も わりきれるか たしかめよう。',
       },
       {
         id: 'not-greatest',
-        explain: '公約数では あるけれど、もっと 大きい 公約数が あるよ。いちばん 大きい ものを さがそう。',
+        explain:
+          '公約数では あるけれど、もっと 大きい 公約数が あるよ。いちばん 大きい ものを さがそう。',
       },
       {
         id: 'not-common',
-        explain: 'かたほうの 数しか わりきれない 数だよ。2つの 数の 両方を わりきれるか たしかめよう。',
+        explain:
+          'かたほうの 数しか わりきれない 数だよ。2つの 数の 両方を わりきれるか たしかめよう。',
       },
       {
         id: 'not-least',
-        explain: 'もっと 小さい 公倍数が あるよ。最小公倍数は 公倍数の 中で いちばん 小さい 数だよ。',
+        explain:
+          'もっと 小さい 公倍数が あるよ。最小公倍数は 公倍数の 中で いちばん 小さい 数だよ。',
       },
       {
         id: 'lcm-gcd-swap',

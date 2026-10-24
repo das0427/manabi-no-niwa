@@ -34,7 +34,16 @@ export function wrongList(
     const t = String(v);
     const parts = t.split('|');
     if (parts.length !== answers.length) continue;
-    if (parts.some((p) => p === '' || p.startsWith('-') || p.includes('NaN') || p.includes('Infinity') || !parseNumberInput(p)))
+    if (
+      parts.some(
+        (p) =>
+          p === '' ||
+          p.startsWith('-') ||
+          p.includes('NaN') ||
+          p.includes('Infinity') ||
+          !parseNumberInput(p),
+      )
+    )
       continue;
     if (!parts.some((p, i) => judgeNumber(answers[i]!, p).result === 'wrong')) continue;
     if (out.some((w) => w.value.split('|').every((p, i) => sameVal(p, parts[i]!)))) continue;
@@ -95,7 +104,9 @@ export function decFixed(v: number, places: number): string {
 /** 小数の答え（値は dec と同じ持ち方）。整数になるときは int */
 export const decAns = (v: number, places: number): NumberAnswer => {
   const s = dec(v, places);
-  return s.includes('.') ? { kind: 'decimal', value: Number(s) } : { kind: 'int', value: Number(s) };
+  return s.includes('.')
+    ? { kind: 'decimal', value: Number(s) }
+    : { kind: 'int', value: Number(s) };
 };
 
 /** 小数の桁数（'2.35' → 2） */
@@ -113,21 +124,30 @@ export function gcd(a: number, b: number): number {
 export const lcm = (a: number, b: number) => (a / gcd(a, b)) * b;
 
 /** 分数の表示（RichText）。帯分数にできるときは mixed で帯分数に */
-export function fracText(num: number, den: number, form: 'improper' | 'mixed' = 'improper'): string {
+export function fracText(
+  num: number,
+  den: number,
+  form: 'improper' | 'mixed' = 'improper',
+): string {
   if (num % den === 0) return String(num / den);
   if (form === 'mixed' && num > den) return `[[${Math.floor(num / den)} ${num % den}/${den}]]`;
   return `[[${num}/${den}]]`;
 }
 
 /** 分数の入力の形（"2と1/3"・"7/3"） */
-export function fracInput(num: number, den: number, form: 'improper' | 'mixed' = 'improper'): string {
+export function fracInput(
+  num: number,
+  den: number,
+  form: 'improper' | 'mixed' = 'improper',
+): string {
   if (num % den === 0) return String(num / den);
   if (form === 'mixed' && num > den) return `${Math.floor(num / den)}と${num % den}/${den}`;
   return `${num}/${den}`;
 }
 
 /** SVG の線の共通の属性 */
-export const STROKE = 'stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"';
+export const STROKE =
+  'stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"';
 
 /** SVG の文字（カタカナ・英字・数字だけ。漢字は書かない） */
 export const svgText = (x: number, y: number, s: string, size = 16, anchor = 'middle') =>
@@ -174,7 +194,7 @@ export function doubleLine(
   return svg(400, 128, body, label);
 }
 
-export const KATA =['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク'] as const;
+export const KATA = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク'] as const;
 
 /** 数を丸めて SVG の座標に（小数点以下1けた） */
 export const r1 = (x: number) => Math.round(x * 10) / 10;

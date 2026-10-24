@@ -8,7 +8,21 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, expr, finishUnit, opts, pick, pickObj, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  expr,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'regular' | 'pi' | 'circum' | 'diam';
 
@@ -35,7 +49,8 @@ function regFig(n: number, mark: string): Figure {
   });
   let body = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="2"/>`;
   body += `<polygon points="${pts.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
-  for (const p of pts) body += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  for (const p of pts)
+    body += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
   const t = -Math.PI / 2 + Math.PI / n;
   body += svgText(r1(cx + 24 * Math.cos(t)), r1(cy + 24 * Math.sin(t)), mark, 14);
   return svg(220, 200, body, `円の 中に かいた ${NAME[n] ?? '正多角形'}`);
@@ -65,14 +80,19 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
     const n = pick(rng, [5, 6, 7, 8, 9, 10, 12]);
     const R = 34;
     const shape = (pts: [number, number][], label: string): Figure =>
-      svg(90, 90, `<polygon points="${pts.map((p) => p.map(r1).join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`, label);
+      svg(
+        90,
+        90,
+        `<polygon points="${pts.map((p) => p.map(r1).join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`,
+        label,
+      );
     const ring = (k: (i: number) => number) =>
       Array.from({ length: n }, (_, i) => {
         const t = -Math.PI / 2 + (2 * Math.PI * i) / n;
         return [45 + R * k(i) * Math.cos(t), 45 + R * k(i) * Math.sin(t)] as [number, number];
       });
     const reg = ring(() => 1);
-    // 辺も 角も 等しくない（頂点を 中心から 近く・遠く した）形
+    // 角が 等しくない（頂点を 中心から 近く・遠く した）形。n が 偶数なら 辺は 等しい
     const bumpy = ring((i) => (i % 2 === 0 ? 1.1 : 0.72));
     // 角は 等しいが 辺が 等しくない 形（長方形）
     const rect: [number, number][] = [
@@ -155,7 +175,9 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
       identity: `regular:count:${n}`,
       alt: false,
       fields: [{ label: '角形', answer: answers[0]! }],
-      wrongAnswers: wrongList(answers, [[Number.isInteger(180 / ans) ? 180 / ans : null, 'use-180']]),
+      wrongAnswers: wrongList(answers, [
+        [Number.isInteger(180 / ans) ? 180 / ans : null, 'use-180'],
+      ]),
     };
     return item;
   }
@@ -169,7 +191,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
     figure: regFig(n, 'ア'),
     hints: [
       '円の 中心の まわりの 角は 全部で 何度かな。',
-      `中心の まわりの 360°を ${n}つに 等しく 分けるよ。`,
+      `中心の まわりの 360°を ${n}こに 等しく 分けるよ。`,
       `360 ÷ ${n}を 計算しよう。`,
     ],
     explain: `中心の まわりの 角 360°を ${n}等分するので、360 ÷ ${n} ＝ ${ans}°です。`,
@@ -199,7 +221,8 @@ function pi(level: number, rng: Rng, alt: boolean): ChoiceItem {
           '円周が 直径の 何倍に なって いるかを 表す 数だよ。',
           '円の 大きさが 変わると、円周も 直径も 同じように 変わるね。',
         ],
-        explain: 'どんな 大きさの 円でも、円周 ÷ 直径は 同じ 数（約3.14）に なります。この 数を 円周率と いいます。',
+        explain:
+          'どんな 大きさの 円でも、円周 ÷ 直径は 同じ 数（約3.14）に なります。この 数を 円周率と いいます。',
         identity: 'pi-ratio',
         alt: true,
         options: [
@@ -221,7 +244,9 @@ function pi(level: number, rng: Rng, alt: boolean): ChoiceItem {
         : '直径 2cmの 円が、1辺 2cmの 正方形の 中に ぴったり 入って います。正方形の まわりの 長さは 8cmです。円周に ついて 正しいのは どれ？',
       figure: hex ? regFig(6, '') : squareCircleFig(),
       hints: [
-        hex ? '円周は、中の 正六角形の まわりより 長いね。' : '円周は、外の 正方形の まわりより 短いね。',
+        hex
+          ? '円周は、中の 正六角形の まわりより 長いね。'
+          : '円周は、外の 正方形の まわりより 短いね。',
         hex ? '正六角形の まわりは 直径の 3倍。' : '正方形の まわりは 直径の 4倍。',
         '円周は 直径の 3倍と 4倍の 間に なるよ。',
       ],
@@ -238,8 +263,8 @@ function pi(level: number, rng: Rng, alt: boolean): ChoiceItem {
           ]
         : [
             { label: '8cmより 短い', correct: true },
-            { label: '8cmより 長い', misconception: 'pi-varies' },
-            { label: 'ちょうど 8cm', misconception: 'pi-varies' },
+            { label: '8cmより 長い', misconception: 'pi-four' },
+            { label: 'ちょうど 8cm', misconception: 'pi-four' },
           ],
     };
   }
@@ -297,7 +322,9 @@ function circum(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt,
     figure: form === 'fig' ? circleFig(`${v}cm`, useR ? 'r' : 'd') : undefined,
     hints: [
-      form === 'story' ? '1回転で 進む 長さは、車りんの 円周と 同じだよ。' : '円周 ＝ 直径 × 3.14（円周率）',
+      form === 'story'
+        ? '1回転で 進む 長さは、車りんの 円周と 同じだよ。'
+        : '円周 ＝ 直径 × 3.14（円周率）',
       useR ? `直径は 半径の 2倍。${v} × 2 ＝ ${d}cm。` : `直径は ${d}cm。`,
       `${d} × 3.14を 計算しよう。`,
     ],
@@ -333,7 +360,9 @@ function diam(level: number, rng: Rng, alt: boolean): NumberItem {
     figure: expr(alt ? `□ × 2 × 3.14 ＝ ${C}` : `□ × 3.14 ＝ ${C}`),
     hints: [
       '円周 ＝ 直径 × 3.14 の 式に あてはめよう。',
-      `直径を □として、□ × 3.14 ＝ ${C}。`,
+      alt
+        ? `半径を □と すると、直径は □ × 2。□ × 2 × 3.14 ＝ ${C}。`
+        : `直径を □として、□ × 3.14 ＝ ${C}。`,
       alt ? `${C} ÷ 3.14で 直径を 出してから、半径を 考えよう。` : `${C} ÷ 3.14を 計算しよう。`,
     ],
     explain: alt
@@ -392,18 +421,61 @@ export const polygonCircle: UnitSpec = finishUnit(
       { id: 'diam', title: '円周から 直径・半径を 求める' },
     ],
     misconceptions: [
-      { id: 'use-180', explain: '180°を 分けたのかな。円の 中心の まわりの 角は 1回転で 360°だよ。' },
-      { id: 'inner-angle', explain: '正多角形の 1つの 角を 求めたのかな。中心の 角は、360°を 頂点の 数で 等しく 分けた 角だよ。' },
-      { id: 'reg-sides-only', explain: '辺の 長さだけを 見たのかな。正多角形は、辺の 長さも 角の 大きさも みんな 等しい 形だよ。' },
-      { id: 'reg-looks', explain: '見た目が にて いる 形を 選んだのかな。正多角形は、辺の 長さも 角の 大きさも みんな 等しい 形だよ。' },
-    { id: 'reg-angles-only', explain: '角だけを 見たのかな。長方形は 角は 等しいけれど、辺の 長さが 等しく ないので 正多角形では ないよ。' },
-      { id: 'pi-varies', explain: '円の 大きさで 変わると 考えたのかな。円周 ÷ 直径は、どんな 大きさの 円でも 約3.14だよ。' },
-      { id: 'pi-two', explain: '円周は 直径の 3倍より 長いよ。円の 中の 正六角形の まわりが 直径の 3倍なので、円周は それより 長く なるね。' },
-      { id: 'r-d-swap', explain: '半径と 直径を 取りちがえたのかな。円周 ＝ 直径 × 3.14。半径が わかって いる ときは、2倍して 直径に してから かけよう。' },
+      {
+        id: 'use-180',
+        explain: '180°を 分けたのかな。円の 中心の まわりの 角は 1回転で 360°だよ。',
+      },
+      {
+        id: 'inner-angle',
+        explain:
+          '正多角形の 1つの 角を 求めたのかな。中心の 角は、360°を 頂点の 数で 等しく 分けた 角だよ。',
+      },
+      {
+        id: 'reg-sides-only',
+        explain:
+          '辺の 長さだけを 見たのかな。正多角形は、辺の 長さも 角の 大きさも みんな 等しい 形だよ。',
+      },
+      {
+        id: 'reg-looks',
+        explain:
+          '見た目が にて いる 形を 選んだのかな。正多角形は、辺の 長さも 角の 大きさも みんな 等しい 形だよ。',
+      },
+      {
+        id: 'reg-angles-only',
+        explain:
+          '角だけを 見たのかな。長方形は 角は 等しいけれど、辺の 長さが 等しく ないので 正多角形では ないよ。',
+      },
+      {
+        id: 'pi-varies',
+        explain:
+          '円の 大きさで 変わると 考えたのかな。円周 ÷ 直径は、どんな 大きさの 円でも 約3.14だよ。',
+      },
+      {
+        id: 'pi-two',
+        explain:
+          '円周は 直径の 3倍より 長いよ。円の 中の 正六角形の まわりが 直径の 3倍なので、円周は それより 長く なるね。',
+      },
+      {
+        id: 'pi-four',
+        explain:
+          '円周は 直径の 4倍より 短いよ。円が ぴったり 入る 正方形の まわりが 直径の 4倍なので、円周は それより 短く なるね。',
+      },
+      {
+        id: 'r-d-swap',
+        explain:
+          '半径と 直径を 取りちがえたのかな。円周 ＝ 直径 × 3.14。半径が わかって いる ときは、2倍して 直径に してから かけよう。',
+      },
       { id: 'pi-three', explain: '3を かけたのかな。円周率は 3.14を 使うよ。' },
       { id: 'add-pi', explain: '3.14を たしたのかな。円周は 直径の 3.14倍なので、かけ算だよ。' },
-      { id: 'point-place', explain: '小数点の 位置が ずれたのかな。3.14は [[1/100]]の位まで あるので、積の 小数点は 右から 2けたの ところだよ。' },
-      { id: 'mult-instead', explain: '3.14を かけたのかな。円周から 直径を 求める ときは、円周 ÷ 3.14 だよ。' },
+      {
+        id: 'point-place',
+        explain:
+          '小数点の 位置が ずれたのかな。3.14は [[1/100]]の位まで あるので、積の 小数点は 右から 2けたの ところだよ。',
+      },
+      {
+        id: 'mult-instead',
+        explain: '3.14を かけたのかな。円周から 直径を 求める ときは、円周 ÷ 3.14 だよ。',
+      },
     ],
     levels: [
       { label: '正多角形・円周率', chance: 0.02 },
@@ -429,8 +501,9 @@ export const polygonCircle: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generatePolygonCircle(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 正多角形、円周率（円周率は 3.14 を用いる）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 正多角形、円周率（円周率は 3.14 を用いる）',
     revised: REVISED,
   },
-  '入《はい》 短《みじか》 区切《くぎ》 結《むす》 交《まじ》わる 出《だ》 間《あいだ》 度《ど》 正六角形《せいろっかくけい》 正五角形《せいごかくけい》 正八角形《せいはっかくけい》 正九角形《せいきゅうかくけい》 正十角形《せいじっかくけい》 正十二角形《せいじゅうにかくけい》 十二角形《じゅうにかくけい》 車《しゃ》りん 回転《かいてん》 等分《とうぶん》 意味《いみ》 言《い》え 言《い》う 実際《じっさい》 正《せい》',
+  '何角形《なんかくけい》 角形《かくけい》 ひし形《がた》 正七角形《せいななかくけい》 入《はい》 短《みじか》 区切《くぎ》 結《むす》 交《まじ》わる 出《だ》 間《あいだ》 度《ど》 正六角形《せいろっかくけい》 正五角形《せいごかくけい》 正八角形《せいはっかくけい》 正九角形《せいきゅうかくけい》 正十角形《せいじっかくけい》 正十二角形《せいじゅうにかくけい》 十二角形《じゅうにかくけい》 車《しゃ》りん 回転《かいてん》 等分《とうぶん》 意味《いみ》 言《い》え 言《い》う 実際《じっさい》 正《せい》',
 );

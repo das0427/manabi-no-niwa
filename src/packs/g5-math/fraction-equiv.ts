@@ -8,7 +8,19 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { expr, finishUnit, gcd, lcm, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  expr,
+  finishUnit,
+  gcd,
+  lcm,
+  pick,
+  pickObj,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'equal' | 'reduce' | 'common' | 'compare';
 
@@ -24,7 +36,12 @@ function fracBox(top: string | null, bottom: string | null): Figure {
     s === null
       ? `<rect x="14" y="${y - 18}" width="36" height="36" rx="4" fill="none" ${STROKE}/>`
       : svgText(32, y, s, 26);
-  return svg(64, 100, `${part(top, 26)}<line x1="6" y1="50" x2="58" y2="50" ${STROKE}/>${part(bottom, 76)}`, '分数の くうらん');
+  return svg(
+    64,
+    100,
+    `${part(top, 26)}<line x1="6" y1="50" x2="58" y2="50" ${STROKE}/>${part(bottom, 76)}`,
+    '分数の くうらん',
+  );
 }
 
 /** テープ図: 上は b等分の a、下は n等分（色の部分は同じ長さ） */
@@ -44,7 +61,10 @@ function tapes(a: number, b: number, n: number): Figure {
 
 // ---- 等しい分数 ----
 function equal(level: number, rng: Rng, alt: boolean): NumberItem {
-  const [a, b] = pick(rng, PROPER.filter(([, d]) => d <= 9));
+  const [a, b] = pick(
+    rng,
+    PROPER.filter(([, d]) => d <= 9),
+  );
   const m = rng.int(2, alt ? Math.max(2, Math.floor(24 / b)) : 6);
   const B = b * m;
   const A = a * m;
@@ -84,14 +104,14 @@ function equal(level: number, rng: Rng, alt: boolean): NumberItem {
       ? [F(a, b), A, fracBox(null, String(B))]
       : [F(a, b), B, fracBox(String(A), null)];
   const answers = [{ kind: 'int' as const, value: ansV }];
-  const known = askNum ? (down ? `分母を ${B}から ${b}に` : `分母を ${b}から ${B}に`) : down ? `分子を ${A}から ${a}に` : `分子を ${a}から ${A}に`;
-  const addWrong = down
-    ? askNum
-      ? A - (B - b)
-      : B - (A - a)
-    : askNum
-      ? a + (B - b)
-      : b + (A - a);
+  const known = askNum
+    ? down
+      ? `分母を ${B}から ${b}に`
+      : `分母を ${b}から ${B}に`
+    : down
+      ? `分子を ${A}から ${a}に`
+      : `分子を ${a}から ${A}に`;
+  const addWrong = down ? (askNum ? A - (B - b) : B - (A - a)) : askNum ? a + (B - b) : b + (A - a);
   return {
     engine: 'number',
     id: `equal:${down ? 'down' : 'up'}:${askNum ? 'n' : 'd'}:${a}/${b}:${m}`,
@@ -133,13 +153,14 @@ function reduce(level: number, rng: Rng, alt: boolean): Item {
     ];
     const options: ChoiceItem['options'] = [{ label: F(a, b), correct: true }];
     for (const [l, mm] of cands)
-      if (l && options.length < 4 && !options.some((o) => o.label === l)) options.push({ label: l, misconception: mm });
+      if (l && options.length < 4 && !options.some((o) => o.label === l))
+        options.push({ label: l, misconception: mm });
     const item: ChoiceItem = {
       engine: 'choice',
       id: `reduce-alt:${A}/${B}`,
       objective: 'reduce',
       level,
-      prompt: `${F(A, B)}を 約分した 分数は どれ？`,
+      prompt: `${F(A, B)}を 約分して、いちばん かんたんな 分数に した ものは どれ？`,
       hints: [
         '約分は、分母と 分子を 同じ 数で わって、かんたんな 分数に する ことだよ。',
         `${A}と ${B}の 公約数を さがそう。いちばん 大きい 公約数で わると 1回で すむよ。`,
@@ -186,7 +207,11 @@ for (const p of PROPER)
 
 function common(level: number, rng: Rng, alt: boolean): Item {
   let [[a, b], [c, d]] = pick(rng, PAIRS);
-  if (rng.next() < 0.5) [[a, b], [c, d]] = [[c, d], [a, b]];
+  if (rng.next() < 0.5)
+    [[a, b], [c, d]] = [
+      [c, d],
+      [a, b],
+    ];
   const L = lcm(b, d);
   const A = (a * L) / b;
   const C = (c * L) / d;
@@ -261,14 +286,20 @@ for (const p of PROPER)
 
 function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
   if (alt) {
+    // 3つの 分母の 最小公倍数が 60まで（通分して くらべられる 大きさ）
     const fr: [number, number][] = [];
+    let L = 1;
     while (fr.length < 3) {
-      const f = pick(rng, PROPER.filter(([, d]) => d <= 9));
-      if (!fr.some(([x, y]) => x * f[1] === y * f[0])) fr.push(f);
+      const f = pick(
+        rng,
+        PROPER.filter(([, d]) => d <= 9),
+      );
+      if (fr.some(([x, y]) => x * f[1] === y * f[0]) || lcm(L, f[1]) > 60) continue;
+      fr.push(f);
+      L = lcm(L, f[1]);
     }
     const vals = fr.map(([x, y]) => x / y);
     const max = Math.max(...vals);
-    const L = fr.reduce((s, [, y]) => lcm(s, y), 1);
     const sorted = fr.map(([x, y]) => `${x}/${y}`).sort();
     const item: ChoiceItem = {
       engine: 'choice',
@@ -285,7 +316,9 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       identity: `compare3:${sorted.join(',')}`,
       alt: true,
       options: fr.map(([x, y], i) =>
-        vals[i] === max ? { label: F(x, y), correct: true } : { label: F(x, y), misconception: 'compare-look' },
+        vals[i] === max
+          ? { label: F(x, y), correct: true }
+          : { label: F(x, y), misconception: 'compare-look' },
       ),
     };
     return item;
@@ -296,7 +329,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     a = 1;
     c = 1;
   }
-  if (rng.next() < 0.5) [[a, b], [c, d]] = [[c, d], [a, b]];
+  if (rng.next() < 0.5)
+    [[a, b], [c, d]] = [
+      [c, d],
+      [a, b],
+    ];
   const L = lcm(b, d);
   const A = (a * L) / b;
   const C = (c * L) / d;
@@ -318,9 +355,15 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     alt: false,
     fixedOrder: true,
     options: [
-      big === 'p' ? { label: F(a, b), correct: true } : { label: F(a, b), misconception: misOf(b, d) },
-      big === 'q' ? { label: F(c, d), correct: true } : { label: F(c, d), misconception: misOf(d, b) },
-      big === 'eq' ? { label: '同じ', correct: true } : { label: '同じ', misconception: 'compare-look' },
+      big === 'p'
+        ? { label: F(a, b), correct: true }
+        : { label: F(a, b), misconception: misOf(b, d) },
+      big === 'q'
+        ? { label: F(c, d), correct: true }
+        : { label: F(c, d), misconception: misOf(d, b) },
+      big === 'eq'
+        ? { label: '同じ', correct: true }
+        : { label: '同じ', misconception: 'compare-look' },
     ],
   };
   return item;
@@ -379,11 +422,13 @@ export const fractionEquiv: UnitSpec = finishUnit(
       },
       {
         id: 'sub-instead',
-        explain: '分母と 分子から 同じ 数を ひいたのかな。約分は、分母と 分子を 同じ 数で わる ことだよ。',
+        explain:
+          '分母と 分子から 同じ 数を ひいたのかな。約分は、分母と 分子を 同じ 数で わる ことだよ。',
       },
       {
         id: 'not-lowest',
-        explain: 'まだ 約分できるよ。分母と 分子の 最大公約数で わると、いちばん かんたんな 分数に なるよ。',
+        explain:
+          'まだ 約分できるよ。分母と 分子の 最大公約数で わると、いちばん かんたんな 分数に なるよ。',
       },
       {
         id: 'not-lcm',
@@ -392,7 +437,8 @@ export const fractionEquiv: UnitSpec = finishUnit(
       },
       {
         id: 'num-only',
-        explain: '分母だけ そろえて、分子を そのままに したのかな。分母に かけた 数を、分子にも かけよう。',
+        explain:
+          '分母だけ そろえて、分子を そのままに したのかな。分母に かけた 数を、分子にも かけよう。',
       },
       {
         id: 'compare-den',
@@ -401,7 +447,8 @@ export const fractionEquiv: UnitSpec = finishUnit(
       },
       {
         id: 'compare-look',
-        explain: '数字の 見た目で くらべたのかな。分母が ちがう ときは、通分して 分母を そろえてから 分子で くらべよう。',
+        explain:
+          '数字の 見た目で くらべたのかな。分母が ちがう ときは、通分して 分母を そろえてから 分子で くらべよう。',
       },
     ],
     levels: [

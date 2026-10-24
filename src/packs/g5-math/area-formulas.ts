@@ -55,7 +55,8 @@ function draw(f: Fig, label: string): Figure {
     body += `<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>`;
   for (const p of f.right ?? [])
     body += `<polyline points="${X(p[0]) + 8},${Y(p[1])} ${X(p[0]) + 8},${Y(p[1]) - 8} ${X(p[0])},${Y(p[1]) - 8}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
-  for (const l of f.labels) body += svgText(X(l.at[0]) + (l.dx ?? 0), Y(l.at[1]) + (l.dy ?? 0), l.text, 13);
+  for (const l of f.labels)
+    body += svgText(X(l.at[0]) + (l.dx ?? 0), Y(l.at[1]) + (l.dy ?? 0), l.text, 13);
   return svg(W * k + pad * 2, H * k + pad, body, label);
 }
 
@@ -98,7 +99,9 @@ function triFig(b: number, x: number, h: number, s: number): Figure {
       right: [[x, 0]],
       labels: [
         { at: mid(A, B), text: `${b}cm`, dy: 16 },
-        outside ? { at: mid(B, C), text: `${s}cm`, dx: -26 } : { at: mid(A, C), text: `${s}cm`, dx: -24 },
+        outside
+          ? { at: mid(B, C), text: `${s}cm`, dx: -26 }
+          : { at: mid(A, C), text: `${s}cm`, dx: -24 },
         { at: [x, h / 2], text: `${h}cm`, dx: 24 },
       ],
     },
@@ -176,7 +179,10 @@ function formulaChoice(
     explain,
     identity: `${obj}-shiki:${key}`,
     alt: true,
-    options: [{ label: right, correct: true }, ...wrongs.slice(0, 3).map(([l, m]) => ({ label: l, misconception: m }))],
+    options: [
+      { label: right, correct: true },
+      ...wrongs.slice(0, 3).map(([l, m]) => ({ label: l, misconception: m })),
+    ],
   };
 }
 
@@ -196,11 +202,21 @@ function para(level: number, rng: Rng, alt: boolean): Item {
     ];
     const explain = `平行四辺形は 切って うつすと 長方形に なるので、面積 ＝ 底辺 × 高さ。${b} × ${h} ＝ ${S}で、${S}cm²です。`;
     if (form === 2)
-      return formulaChoice('para', level, key, '平行四辺形', fig, `${b} × ${h}`, [
-        [`${b} × ${s}`, 'slant-height'],
-        [`${b} × ${h} ÷ 2`, 'half-extra'],
-        [`(${b} ＋ ${s}) × 2`, 'perimeter'],
-      ], hints, explain);
+      return formulaChoice(
+        'para',
+        level,
+        key,
+        '平行四辺形',
+        fig,
+        `${b} × ${h}`,
+        [
+          [`${b} × ${s}`, 'slant-height'],
+          [`${b} × ${h} ÷ 2`, 'half-extra'],
+          [`(${b} ＋ ${s}) × 2`, 'perimeter'],
+        ],
+        hints,
+        explain,
+      );
     const answers = [{ kind: 'int' as const, value: S }];
     const item: NumberItem = {
       engine: 'number',
@@ -255,11 +271,21 @@ function tri(level: number, rng: Rng, alt: boolean): Item {
     ];
     const explain = `三角形は 同じ 形を 2つ 合わせると 平行四辺形に なるので、面積 ＝ 底辺 × 高さ ÷ 2。${b} × ${h} ÷ 2 ＝ ${S}で、${S}cm²です。`;
     if (form === 2)
-      return formulaChoice('tri', level, key, '三角形', fig, `${b} × ${h} ÷ 2`, [
-        [`${b} × ${h}`, 'no-half'],
-        [`${b} × ${s} ÷ 2`, 'slant-height'],
-        [`${b} ＋ ${h} ÷ 2`, 'add-sides'],
-      ], hints, explain);
+      return formulaChoice(
+        'tri',
+        level,
+        key,
+        '三角形',
+        fig,
+        `${b} × ${h} ÷ 2`,
+        [
+          [`${b} × ${h}`, 'no-half'],
+          [`${b} × ${s} ÷ 2`, 'slant-height'],
+          [`${b} ＋ ${h} ÷ 2`, 'add-sides'],
+        ],
+        hints,
+        explain,
+      );
     const answers = [{ kind: 'int' as const, value: S }];
     const item: NumberItem = {
       engine: 'number',
@@ -315,11 +341,21 @@ function trap(level: number, rng: Rng, alt: boolean): Item {
     ];
     const explain = `台形は 同じ 形を さかさに 2つ 合わせると 平行四辺形（底辺は 上底 ＋ 下底）に なるので、面積 ＝ （上底 ＋ 下底）× 高さ ÷ 2。（${a} ＋ ${b}）× ${h} ÷ 2 ＝ ${S}で、${S}cm²です。`;
     if (form === 2)
-      return formulaChoice('trap', level, key, '台形', fig, `（${a} ＋ ${b}）× ${h} ÷ 2`, [
-        [`（${a} ＋ ${b}）× ${h}`, 'no-half'],
-        [`${b} × ${h} ÷ 2`, 'trap-one-base'],
-        [`（${a} ＋ ${b}）× ${s} ÷ 2`, 'slant-height'],
-      ], hints, explain);
+      return formulaChoice(
+        'trap',
+        level,
+        key,
+        '台形',
+        fig,
+        `（${a} ＋ ${b}）× ${h} ÷ 2`,
+        [
+          [`（${a} ＋ ${b}）× ${h}`, 'no-half'],
+          [`${b} × ${h} ÷ 2`, 'trap-one-base'],
+          [`（${a} ＋ ${b}）× ${s} ÷ 2`, 'slant-height'],
+        ],
+        hints,
+        explain,
+      );
     const answers = [{ kind: 'int' as const, value: S }];
     const item: NumberItem = {
       engine: 'number',
@@ -341,7 +377,7 @@ function trap(level: number, rng: Rng, alt: boolean): Item {
         [intOr((b * h) / 2), 'trap-one-base'],
         [b * h, 'trap-one-base'],
         [form === 1 ? null : intOr(((a + b) * s) / 2), 'slant-height'],
-        [a * b * h, 'add-sides'],
+        [a + b + h, 'add-sides'],
       ]),
     };
     return item;
@@ -364,11 +400,21 @@ function rhombus(level: number, rng: Rng, alt: boolean): Item {
     ];
     const explain = `ひし形は、対角線の 長さを たて・横と する 長方形の ちょうど 半分なので、面積 ＝ 対角線 × 対角線 ÷ 2。${d1} × ${d2} ÷ 2 ＝ ${S}で、${S}cm²です。`;
     if (form === 2)
-      return formulaChoice('rhombus', level, key, 'ひし形', fig, `${d1} × ${d2} ÷ 2`, [
-        [`${d1} × ${d2}`, 'no-half'],
-        [`${d1} ＋ ${d2}`, 'add-sides'],
-        [`${d1} × ${d2} ÷ 4`, 'half-twice'],
-      ], hints, explain);
+      return formulaChoice(
+        'rhombus',
+        level,
+        key,
+        'ひし形',
+        fig,
+        `${d1} × ${d2} ÷ 2`,
+        [
+          [`${d1} × ${d2}`, 'no-half'],
+          [`${d1} ＋ ${d2}`, 'add-sides'],
+          [`${d1} × ${d2} ÷ 4`, 'half-twice'],
+        ],
+        hints,
+        explain,
+      );
     const answers = [{ kind: 'int' as const, value: S }];
     const item: NumberItem = {
       engine: 'number',
@@ -437,7 +483,10 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
       alt,
       fields: [alt ? { answer: answers[0]! } : { label: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
-        [shape === 'tri' ? intOr(S / known) : intOr(S / known / 2), shape === 'tri' ? 'inverse-half' : 'half-extra'],
+        [
+          shape === 'tri' ? intOr(S / known) : intOr(S / known / 2),
+          shape === 'tri' ? 'inverse-half' : 'half-extra',
+        ],
         [S * known, 'inverse-op'],
         [S - known, 'inverse-op'],
       ]),
@@ -502,15 +551,18 @@ export const areaFormulas: UnitSpec = finishUnit(
       },
       {
         id: 'half-extra',
-        explain: '平行四辺形は ÷ 2を しないよ。切って うつすと 長方形に なるので、底辺 × 高さ だけで 求められるよ。',
+        explain:
+          '平行四辺形は ÷ 2を しないよ。切って うつすと 長方形に なるので、底辺 × 高さ だけで 求められるよ。',
       },
       {
         id: 'trap-one-base',
-        explain: '上底か 下底の かたほうだけを 使ったのかな。台形は （上底 ＋ 下底）× 高さ ÷ 2。2つの 辺を 合わせて 使うよ。',
+        explain:
+          '上底か 下底の かたほうだけを 使ったのかな。台形は （上底 ＋ 下底）× 高さ ÷ 2。2つの 辺を 合わせて 使うよ。',
       },
       {
         id: 'add-sides',
-        explain: '長さを たしたのかな。面積は 広さなので、長さと 長さを かけて 求めるよ。公式を 思い出そう。',
+        explain:
+          '長さを たしたのかな。面積は 広さなので、長さと 長さを かけて 求めるよ。公式を 思い出そう。',
       },
       {
         id: 'half-twice',
@@ -563,7 +615,8 @@ export const areaFormulas: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateAreaFormulas(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(3) 平面図形の面積（三角形・平行四辺形・ひし形・台形の求積）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(3) 平面図形の面積（三角形・平行四辺形・ひし形・台形の求積）',
     revised: REVISED,
   },
   '思《おも》い出《だ》そう',

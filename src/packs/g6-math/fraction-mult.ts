@@ -35,7 +35,8 @@ type Obj = 'fxi' | 'fxf' | 'cancel' | 'mixed' | 'story';
 /** 真分数 [分子, 分母]（約分済み） */
 function proper(minD: number, maxD: number): [number, number][] {
   const out: [number, number][] = [];
-  for (let d = minD; d <= maxD; d++) for (let n = 1; n < d; n++) if (gcd(n, d) === 1) out.push([n, d]);
+  for (let d = minD; d <= maxD; d++)
+    for (let n = 1; n < d; n++) if (gcd(n, d) === 1) out.push([n, d]);
   return out;
 }
 const P9 = proper(2, 9);
@@ -62,7 +63,8 @@ const CANCEL: [number, number, number, number][] = [];
 }
 /** 整数×分数（約分がある）: [n, a, b] */
 const IXF: [number, number, number][] = [];
-for (const [a, b] of proper(3, 12)) for (let n = 2; n <= 16; n++) if (gcd(n, b) > 1) IXF.push([n, a, b]);
+for (const [a, b] of proper(3, 12))
+  for (let n = 2; n <= 16; n++) if (gcd(n, b) > 1) IXF.push([n, a, b]);
 
 /** 帯分数×真分数: [w, c, d, p, r] */
 const MXP: [number, number, number, number, number][] = [];
@@ -70,11 +72,11 @@ for (let w = 1; w <= 3; w++)
   for (const [c, d] of P6) for (const [p, r] of proper(2, 8)) MXP.push([w, c, d, p, r]);
 /** 帯分数×整数: [w, c, d, n] */
 const MXI: [number, number, number, number][] = [];
-for (let w = 1; w <= 3; w++) for (const [c, d] of P6) for (let n = 2; n <= 8; n++) MXI.push([w, c, d, n]);
+for (let w = 1; w <= 3; w++)
+  for (const [c, d] of P6) for (let n = 2; n <= 8; n++) MXI.push([w, c, d, n]);
 
 const mixedText = (w: number, c: number, d: number) => `[[${w} ${c}/${d}]]`;
 const key2 = (x: string, y: string) => [x, y].sort().join('×');
-
 
 /** 面積図（1m×1m の正方形を 縦 b 行・横 d 列に分け、a 行 × c 列 をぬる） */
 function areaFig(a: number, b: number, c: number, d: number): Figure {
@@ -177,7 +179,11 @@ function fxi(level: number, rng: Rng, alt: boolean): NumberItem {
     alt
       ? {
           kind: 'tape',
-          parts: Array.from({ length: n }, (_, i) => ({ length: 1, label: fr(a, b), tone: i % 2 ? 'b' : 'a' })),
+          parts: Array.from({ length: n }, (_, i) => ({
+            length: 1,
+            label: fr(a, b),
+            tone: i % 2 ? 'b' : 'a',
+          })),
           total: '？',
         }
       : undefined,
@@ -244,10 +250,7 @@ function cancel(level: number, rng: Rng, alt: boolean): NumberItem {
   const shown = `${fr(a, b)} × ${fr(c, d)}`;
   const g1 = gcd(a, d);
   const g2 = gcd(c, b);
-  const steps = [
-    g1 > 1 ? `${a}と ${d}を ${g1}で` : '',
-    g2 > 1 ? `${c}と ${b}を ${g2}で` : '',
-  ]
+  const steps = [g1 > 1 ? `${a}と ${d}を ${g1}で` : '', g2 > 1 ? `${c}と ${b}を ${g2}で` : '']
     .filter(Boolean)
     .join('、');
   return calcItem(
@@ -337,7 +340,8 @@ const SCENES: Scene[] = [
   {
     id: 'paint',
     unit: 'm²',
-    text: (x, y) => `1dLで ${x}m² ぬれる ペンキが あります。このペンキ ${y}dLでは 何m² ぬれますか。`,
+    text: (x, y) =>
+      `1dLで ${x}m² ぬれる ペンキが あります。このペンキ ${y}dLでは 何m² ぬれますか。`,
   },
   {
     id: 'bar',
@@ -347,7 +351,8 @@ const SCENES: Scene[] = [
   {
     id: 'field',
     unit: 'm²',
-    text: (x, y) => `縦《たて》 ${x}m、横《よこ》 ${y}mの 長方形の 花だんが あります。面積は 何m²ですか。`,
+    text: (x, y) =>
+      `縦《たて》 ${x}m、横《よこ》 ${y}mの 長方形の 花だんが あります。面積は 何m²ですか。`,
   },
   {
     id: 'milk',
@@ -363,7 +368,8 @@ const SCENES: Scene[] = [
   {
     id: 'times',
     unit: 'm',
-    text: (x, y) => `赤い テープは ${x}mです。青い テープの 長さは 赤い テープの ${y}倍です。青い テープは 何mですか。`,
+    text: (x, y) =>
+      `赤い テープは ${x}mです。青い テープの 長さは 赤い テープの ${y}倍です。青い テープは 何mですか。`,
   },
   {
     id: 'walk',
@@ -510,7 +516,8 @@ export const fractionMult: UnitSpec = finishUnit({
     },
     {
       id: 'whole-drop',
-      explain: '帯分数の 整数の 部分を 忘れたのかな。[[1 2/3]]は [[5/3]]だよ。仮分数に なおしてから かけよう。',
+      explain:
+        '帯分数の 整数の 部分を 忘れたのかな。[[1 2/3]]は [[5/3]]だよ。仮分数に なおしてから かけよう。',
     },
   ],
   levels: [

@@ -45,4 +45,3 @@ const pack: PackContent = {
 };
 
 export default pack;
-

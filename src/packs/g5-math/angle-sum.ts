@@ -8,7 +8,19 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { expr, finishUnit, opts, pick, pickObj, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  expr,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'tri' | 'special' | 'quad' | 'poly';
 type P = [number, number];
@@ -45,10 +57,30 @@ function polyFromAngles(angles: number[], lens: number[]): P[] | null {
 /** 角の しるし（文字）を 入れた 多角形の 図。labels[i] は 頂点 i の 角に 書く文字（'' なら 書かない） */
 function polyFig(angles: number[], labels: string[], title: string): Figure {
   const n = angles.length;
+  // 辺の 長さの 組を いくつも ためし、閉じる もののうち 辺の 長さの ばらつきが いちばん 小さい 形を 使う
+  // （決まった 組だけだと 閉じない 四角形が 多く、角の 大きさの ちがう 正方形に なって いた）
+  // 大きさは 自由なので 辺0 は 1。ほかは 0.2〜5 を 細かく（四角形で 閉じる 範囲が せまい 角の 組が ある）
+  const steps = n > 4 ? 8 : 120;
+  const VALS = Array.from({ length: steps + 1 }, (_, k) => 0.2 * 25 ** (k / steps));
+  let cands: number[][] = [[1]];
+  for (let i = 1; i < n - 2; i++) cands = cands.flatMap((c) => VALS.map((v) => [...c, v]));
   let pts: P[] | null = null;
-  for (const lens of [Array(n - 2).fill(1), Array(n - 2).fill(1.4), Array(n - 2).fill(0.7), [1.6, 0.6, 1, 1]])
-    if (!pts) pts = polyFromAngles(angles, lens.slice(0, n - 2));
-  if (!pts) pts = Array.from({ length: n }, (_, i) => [Math.cos((2 * Math.PI * i) / n), Math.sin((2 * Math.PI * i) / n)] as P);
+  let best = 0;
+  for (const lens of cands) {
+    const q = polyFromAngles(angles, lens);
+    if (!q) continue;
+    const sides = q.map((p, i) => Math.hypot(q[(i + 1) % n]![0] - p[0], q[(i + 1) % n]![1] - p[1]));
+    const score = Math.min(...sides) / Math.max(...sides);
+    if (score > best) {
+      best = score;
+      pts = q;
+    }
+  }
+  if (!pts)
+    pts = Array.from(
+      { length: n },
+      (_, i) => [Math.cos((2 * Math.PI * i) / n), Math.sin((2 * Math.PI * i) / n)] as P,
+    );
   const xs = pts.map((p) => p[0]);
   const ys = pts.map((p) => p[1]);
   const minX = Math.min(...xs);
@@ -93,7 +125,9 @@ function tri(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `tri${alt ? '-alt' : ''}:${a}-${b}`,
     objective: 'tri',
     level,
-    prompt: alt ? '図の 三角形で、アの 角は 何度ですか。' : `三角形の 2つの 角が ${a}°と ${b}°です。のこりの 角は 何度ですか。`,
+    prompt: alt
+      ? '図の 三角形で、アの 角は 何度ですか。'
+      : `三角形の 2つの 角が ${a}°と ${b}°です。のこりの 角は 何度ですか。`,
     figure: alt ? polyFig([a, b, c], [`${a}°`, `${b}°`, 'ア'], '三角形') : undefined,
     hints: [
       '三角形の 3つの 角の 大きさの 和は 何度だったかな。',
@@ -189,8 +223,9 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       alt: false,
       fields: [{ label: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
-        [180 - y, 'isos-pair'],
-        [(180 - y) / 2, 'isos-half'],
+        // 底辺の 角を 1つだけ ひいた（180 − y）／ 与えられた 角を 等しい 2辺の 間の 角と 取りちがえた（(180 − y) ÷ 2）
+        [180 - y, 'one-angle'],
+        [(180 - y) / 2, 'isos-pair'],
         [360 - 2 * y, 'use-360'],
       ]),
     };
@@ -250,7 +285,11 @@ function extFig(a: number, b: number): Figure {
 function quad(level: number, rng: Rng, alt: boolean): NumberItem {
   const [a, b, c] = ((): [number, number, number] => {
     for (;;) {
-      const t: [number, number, number] = [rng.int(8, 30) * 5, rng.int(8, 30) * 5, rng.int(8, 30) * 5];
+      const t: [number, number, number] = [
+        rng.int(8, 30) * 5,
+        rng.int(8, 30) * 5,
+        rng.int(8, 30) * 5,
+      ];
       const rest = 360 - t[0] - t[1] - t[2];
       if (rest >= 40 && rest <= 170) return t;
     }
@@ -262,7 +301,9 @@ function quad(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `quad${alt ? '-alt' : ''}:${a}-${b}-${c}`,
     objective: 'quad',
     level,
-    prompt: alt ? '図の 四角形で、アの 角は 何度ですか。' : `四角形の 3つの 角が ${a}°、${b}°、${c}°です。のこりの 角は 何度ですか。`,
+    prompt: alt
+      ? '図の 四角形で、アの 角は 何度ですか。'
+      : `四角形の 3つの 角が ${a}°、${b}°、${c}°です。のこりの 角は 何度ですか。`,
     figure: alt ? polyFig([a, b, c, d], [`${a}°`, `${b}°`, `${c}°`, 'ア'], '四角形') : undefined,
     hints: [
       '四角形は、対角線で 2つの 三角形に 分けられるよ。',
@@ -376,7 +417,8 @@ function poly(level: number, rng: Rng, alt: boolean): Item {
     fields: [{ label: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [360 / n, 'center-angle'],
-      [(n - 2) * 180, 'n-times-180'],
+      [(n - 2) * 180, 'sum-no-divide'],
+      // 180 × n ÷ n（三角形を 頂点の 数だけ 数えた）
       [180, 'n-times-180'],
     ]),
   };
@@ -424,17 +466,64 @@ export const angleSum: UnitSpec = finishUnit(
       { id: 'poly', title: '多角形の 角の 和' },
     ],
     misconceptions: [
-      { id: 'use-360', explain: '四角形の 360°を 使ったのかな。三角形の 3つの 角の 和は 180°だよ。' },
-      { id: 'use-180', explain: '三角形の 180°を 使ったのかな。四角形は 三角形 2つ分なので、4つの 角の 和は 360°だよ。' },
-      { id: 'one-angle', explain: 'わかって いる 角の 1つしか ひかなかったのかな。わかって いる 角を ぜんぶ たしてから、和から ひこう。' },
-      { id: 'add-only', explain: 'わかって いる 角を たしただけで 止まったのかな。その 和を、角の 和（180°や 360°）から ひこう。' },
-      { id: 'isos-half', explain: '2つの 等しい 角の 和を 出したところで 止まったのかな。2つの 角は 等しいので、2で わろう。' },
-      { id: 'isos-pair', explain: '等しい 角が どれかを 取りちがえたのかな。二等辺三角形で 等しいのは、底辺の 両はしの 2つの 角だよ。' },
-      { id: 'right-90', explain: '直角の 90°を 入れわすれたのかな。直角三角形には 90°の 角が 1つ あるよ。' },
-      { id: 'ext-inner', explain: '三角形の 中の 角を 答えたのかな。外がわの 角は、一直線の 180°から 中の 角を ひいた 大きさだよ。' },
-      { id: 'n-times-180', explain: '頂点の 数だけ 180°を かけたのかな。1つの 頂点から 対角線を ひくと、三角形の 数は 頂点の 数より 2 少ないよ。' },
-      { id: 'tri-count', explain: '三角形の 数を 1つ 多く 数えたのかな。図に かいて、三角形が いくつ できるか 数えよう。' },
-      { id: 'center-angle', explain: '円の 中心の まわりの 角（360° ÷ 頂点の 数）を 求めたのかな。正多角形の 1つの 角は、角の 和 ÷ 頂点の 数 だよ。' },
+      {
+        id: 'use-360',
+        explain: '四角形の 360°を 使ったのかな。三角形の 3つの 角の 和は 180°だよ。',
+      },
+      {
+        id: 'use-180',
+        explain:
+          '三角形の 180°を 使ったのかな。四角形は 三角形 2つ分なので、4つの 角の 和は 360°だよ。',
+      },
+      {
+        id: 'one-angle',
+        explain:
+          'わかって いる 角の 1つしか ひかなかったのかな。わかって いる 角を ぜんぶ たしてから、和から ひこう。',
+      },
+      {
+        id: 'add-only',
+        explain:
+          'わかって いる 角を たしただけで 止まったのかな。その 和を、角の 和（180°や 360°）から ひこう。',
+      },
+      {
+        id: 'isos-half',
+        explain:
+          '2つの 等しい 角の 和を 出したところで 止まったのかな。2つの 角は 等しいので、2で わろう。',
+      },
+      {
+        id: 'isos-pair',
+        explain:
+          '等しい 角が どれかを 取りちがえたのかな。二等辺三角形で 等しいのは、底辺の 両はしの 2つの 角だよ。',
+      },
+      {
+        id: 'right-90',
+        explain: '直角の 90°を 入れわすれたのかな。直角三角形には 90°の 角が 1つ あるよ。',
+      },
+      {
+        id: 'ext-inner',
+        explain:
+          '三角形の 中の 角を 答えたのかな。外がわの 角は、一直線の 180°から 中の 角を ひいた 大きさだよ。',
+      },
+      {
+        id: 'n-times-180',
+        explain:
+          '頂点の 数だけ 180°を かけたのかな。1つの 頂点から 対角線を ひくと、三角形の 数は 頂点の 数より 2 少ないよ。',
+      },
+      {
+        id: 'tri-count',
+        explain:
+          '三角形の 数を 1つ 多く 数えたのかな。図に かいて、三角形が いくつ できるか 数えよう。',
+      },
+      {
+        id: 'sum-no-divide',
+        explain:
+          '角の 和を 求めた ところで 止まったのかな。正多角形は 角が みんな 等しいので、角の 和を 頂点の 数で わろう。',
+      },
+      {
+        id: 'center-angle',
+        explain:
+          '円の 中心の まわりの 角（360° ÷ 頂点の 数）を 求めたのかな。正多角形の 1つの 角は、角の 和 ÷ 頂点の 数 だよ。',
+      },
     ],
     levels: [
       { label: '三角形', chance: 0.02 },
@@ -460,7 +549,8 @@ export const angleSum: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateAngleSum(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 平面図形の性質（三角形・四角形の内角の和、多角形）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 平面図形の性質（三角形・四角形の内角の和、多角形）',
     revised: REVISED,
   },
   '出《だ》 間《あいだ》 度《ど》 十二角形《じゅうにかくけい》 一直線《いっちょくせん》 外《そと》がわ 両《りょう》はし 等《ひと》しい 中《なか》 切《き》り取《と》って 正《せい》 頂点《ちょうてん》',

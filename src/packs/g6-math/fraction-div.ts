@@ -33,7 +33,8 @@ type Obj = 'fdi' | 'recip' | 'fdf' | 'mixdec' | 'story';
 
 function proper(minD: number, maxD: number): [number, number][] {
   const out: [number, number][] = [];
-  for (let d = minD; d <= maxD; d++) for (let n = 1; n < d; n++) if (gcd(n, d) === 1) out.push([n, d]);
+  for (let d = minD; d <= maxD; d++)
+    for (let n = 1; n < d; n++) if (gcd(n, d) === 1) out.push([n, d]);
   return out;
 }
 const P9 = proper(2, 9);
@@ -44,7 +45,8 @@ const FDI: [number, number, number][] = [];
 for (const [a, b] of P9) for (let n = 2; n <= 9; n++) FDI.push([a, b, n]);
 /** 分数÷分数: [a, b, c, d]（同じ分数どうしは除く） */
 const FDF: [number, number, number, number][] = [];
-for (const [a, b] of proper(2, 12)) for (const [c, d] of P9) if (a !== c || b !== d) FDF.push([a, b, c, d]);
+for (const [a, b] of proper(2, 12))
+  for (const [c, d] of P9) if (a !== c || b !== d) FDF.push([a, b, c, d]);
 
 /** 逆数の問題: 分数（真分数・仮分数）・整数・小数 */
 type RecipQ = { shown: string; val: Q; kind: 'frac' | 'int' | 'dec' | 'mixed' };
@@ -58,7 +60,8 @@ const RECIP_ALT: RecipQ[] = [];
 for (const t of [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 15, 25])
   RECIP_ALT.push({ shown: dec(t, 1), val: q(t, 10), kind: 'dec' });
 for (let w = 1; w <= 3; w++)
-  for (const [c, d] of P6) RECIP_ALT.push({ shown: `[[${w} ${c}/${d}]]`, val: q(w * d + c, d), kind: 'mixed' });
+  for (const [c, d] of P6)
+    RECIP_ALT.push({ shown: `[[${w} ${c}/${d}]]`, val: q(w * d + c, d), kind: 'mixed' });
 
 /** 小数・整数・分数のまじった式 */
 interface MixQ {
@@ -219,7 +222,9 @@ function recip(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: [
       'かけて 1に なる 数が 逆数だよ。',
       hint2,
-      r.kind === 'frac' ? `分母と 分子を 入れかえると、分母は ${r.val.n}。` : `${shownVal}の 分子と 分母を 入れかえよう。`,
+      r.kind === 'frac'
+        ? `分母と 分子を 入れかえると、分母は ${r.val.n}。`
+        : `${fr(r.val.n, r.val.d)}の 分子と 分母を 入れかえよう。`,
     ],
     explain: `${r.shown}${r.kind === 'frac' ? '' : `（${fr(r.val.n, r.val.d)}）`} × ${qText(ans)} ＝ 1 なので、逆数は ${qBoth(ans)}です。分子と 分母を 入れかえた 分数が 逆数です。`,
     identity: `recip:${r.shown}`,
@@ -230,7 +235,9 @@ function recip(level: number, rng: Rng, alt: boolean): NumberItem {
       [fracAns(ans)],
       [
         [inQ(r.val), 'recip-same'],
-        r.kind === 'mixed' ? [`${(r.val.n % r.val.d) === 0 ? 1 : r.val.d}/${r.val.n % r.val.d}`, 'whole-drop'] : null,
+        r.kind === 'mixed'
+          ? [`${r.val.n % r.val.d === 0 ? 1 : r.val.d}/${r.val.n % r.val.d}`, 'whole-drop']
+          : null,
       ].filter((x): x is [string, string] => x !== null),
     ),
   };
@@ -333,19 +340,22 @@ const SCENES: Scene[] = [
     id: 'speed',
     unit: 'km',
     type: 'part',
-    text: (x, y) => `${x}kmの 道のりを ${y}時間で 歩きました。1時間あたり 何km 歩いたことに なりますか。`,
+    text: (x, y) =>
+      `${x}kmの 道のりを ${y}時間で 歩きました。1時間あたり 何km 歩いたことに なりますか。`,
   },
   {
     id: 'field',
     unit: 'm',
     type: 'part',
-    text: (x, y) => `面積が ${x}m²で、横《よこ》の 長さが ${y}mの 長方形の 花だんが あります。縦《たて》の 長さは 何mですか。`,
+    text: (x, y) =>
+      `面積が ${x}m²で、横《よこ》の 長さが ${y}mの 長方形の 花だんが あります。縦《たて》の 長さは 何mですか。`,
   },
   {
     id: 'times',
     unit: '倍',
     type: 'times',
-    text: (x, y) => `赤い テープは ${x}m、青い テープは ${y}mです。赤い テープの 長さは 青い テープの 何倍ですか。`,
+    text: (x, y) =>
+      `赤い テープは ${x}m、青い テープは ${y}mです。赤い テープの 長さは 青い テープの 何倍ですか。`,
   },
   {
     id: 'bags',
@@ -379,10 +389,28 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
   const answer = fracAns(ans);
   const fig: Figure | undefined = alt
     ? sc.type === 'times'
-      ? { kind: 'table', header: ['', '青', '赤'], rows: [['長《なが》さ（m）', ys, xs], ['倍', '1', '？']] }
+      ? {
+          kind: 'table',
+          header: ['', '青', '赤'],
+          rows: [
+            ['長《なが》さ（m）', ys, xs],
+            ['倍', '1', '？'],
+          ],
+        }
       : sc.type === 'count'
-        ? { kind: 'table', header: ['', '1つ分', '全部'], rows: [[`量《りょう》（${sc.id === 'ribbon' ? 'm' : 'kg'}）`, ys, xs], ['いくつ分', '1', '？']] }
-        : { kind: 'table', header: ['', `${ys}`, '1'], rows: [[`量《りょう》（${sc.unit}）`, xs, '？']] }
+        ? {
+            kind: 'table',
+            header: ['', '1つ分', '全部'],
+            rows: [
+              [`量《りょう》（${sc.id === 'ribbon' ? 'm' : 'kg'}）`, ys, xs],
+              ['いくつ分', '1', '？'],
+            ],
+          }
+        : {
+            kind: 'table',
+            header: ['', `${ys}`, '1'],
+            rows: [[`量《りょう》（${sc.unit}）`, xs, '？']],
+          }
     : undefined;
   return {
     engine: 'number',
@@ -481,11 +509,13 @@ export const fractionDiv: UnitSpec = finishUnit({
     },
     {
       id: 'recip-same',
-      explain: 'もとの 数を そのまま 書いたのかな。逆数は 分子と 分母を 入れかえた 数だよ。かけて 1に なるか たしかめよう。',
+      explain:
+        'もとの 数を そのまま 書いたのかな。逆数は 分子と 分母を 入れかえた 数だよ。かけて 1に なるか たしかめよう。',
     },
     {
       id: 'whole-drop',
-      explain: '帯分数の 整数の 部分を 忘れたのかな。帯分数は 仮分数に なおしてから 分子と 分母を 入れかえよう。',
+      explain:
+        '帯分数の 整数の 部分を 忘れたのかな。帯分数は 仮分数に なおしてから 分子と 分母を 入れかえよう。',
     },
     {
       id: 'cancel-one',
@@ -526,6 +556,7 @@ export const fractionDiv: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateFractionDiv(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第6学年 A(1) 分数の除法（逆数）、小数・分数の混じった乗除',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第6学年 A(1) 分数の除法（逆数）、小数・分数の混じった乗除',
   revised: REVISED,
 });

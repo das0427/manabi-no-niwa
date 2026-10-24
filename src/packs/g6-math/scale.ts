@@ -8,7 +8,20 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { GeometryItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { finishUnit, fracAns, pick, pickObj, q, qText, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  finishUnit,
+  fracAns,
+  pick,
+  pickObj,
+  q,
+  qText,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 import { ptsKey, randomPoly } from './symmetry';
 
 type Obj = 'draw' | 'side' | 'ratio' | 'real';
@@ -79,8 +92,14 @@ function twoTriFig(
   const u2 = k >= 1 ? U * k : U;
   let body = '';
   let ox = 30;
-  const tri = (u: number, names: string[], lab: (string | undefined)[], ang: (string | undefined)[]) => {
-    const P = (p: Pt) => [r1(ox + (p[0] - Math.min(...xs)) * u), r1(30 + (p[1] - Math.min(...ys)) * u)] as const;
+  const tri = (
+    u: number,
+    names: string[],
+    lab: (string | undefined)[],
+    ang: (string | undefined)[],
+  ) => {
+    const P = (p: Pt) =>
+      [r1(ox + (p[0] - Math.min(...xs)) * u), r1(30 + (p[1] - Math.min(...ys)) * u)] as const;
     const ps = t.map(P);
     body += `<polygon points="${ps.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
     const cx = (ps[0]![0] + ps[1]![0] + ps[2]![0]) / 3;
@@ -108,8 +127,18 @@ function twoTriFig(
     });
     ox += w * u + 50;
   };
-  tri(u1, ['A', 'B', 'C'], [labels1.ab, labels1.bc, labels1.ca], [undefined, labels1.angB, labels1.angC]);
-  tri(u2, ['D', 'E', 'F'], [labels2.de, labels2.ef, labels2.fd], [undefined, labels2.angE, undefined]);
+  tri(
+    u1,
+    ['A', 'B', 'C'],
+    [labels1.ab, labels1.bc, labels1.ca],
+    [undefined, labels1.angB, labels1.angC],
+  );
+  tri(
+    u2,
+    ['D', 'E', 'F'],
+    [labels2.de, labels2.ef, labels2.fd],
+    [undefined, labels2.angE, undefined],
+  );
   const W = r1(ox - 20);
   const H = r1(h * Math.max(u1, u2) + 70);
   return svg(W, H, body, `三角形ABCと、その ${k >= 1 ? '拡大図' : '縮図'}の 三角形DEF`);
@@ -123,7 +152,8 @@ interface Tri {
 const TRIS: Tri[] = [];
 for (let a = 3; a <= 7; a++)
   for (let b = 3; b <= 7; b++)
-    for (let c = 2; c <= 6; c++) if (b < a + c - 1 && b > Math.abs(a - c) + 1 && !(a === b && b === c)) TRIS.push({ a, b, c });
+    for (let c = 2; c <= 6; c++)
+      if (b < a + c - 1 && b > Math.abs(a - c) + 1 && !(a === b && b === c)) TRIS.push({ a, b, c });
 const KS = [2, 3, 0.5];
 const kText = (k: number) => (k >= 1 ? `${k}倍の 拡大図` : `${qText(q(1, 1 / k))}の 縮図`);
 const mul = (x: number, k: number) => Math.round(x * k * 10) / 10;
@@ -136,7 +166,9 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
   const co = triCoords(t.a, t.b, t.c);
   if (alt) {
     // 角の 大きさ: 角Bの 大きさ（三角形の 形から 計算して 整数に）
-    const B = Math.round((Math.acos((t.a * t.a + t.c * t.c - t.b * t.b) / (2 * t.a * t.c)) * 180) / Math.PI);
+    const B = Math.round(
+      (Math.acos((t.a * t.a + t.c * t.c - t.b * t.b) / (2 * t.a * t.c)) * 180) / Math.PI,
+    );
     const answer = { kind: 'int' as const, value: B };
     return {
       engine: 'number',
@@ -144,7 +176,12 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'side',
       level,
       prompt: `三角形DEFは 三角形ABCの ${kText(k)}です。角Eの 大きさは 何度ですか。`,
-      figure: twoTriFig(co, k, { ab: `${t.c}cm`, bc: `${t.a}cm`, angB: `${B}°` }, { de: `${mul(t.c, k)}cm` }),
+      figure: twoTriFig(
+        co,
+        k,
+        { ab: `${t.c}cm`, bc: `${t.a}cm`, angB: `${B}°` },
+        { de: `${mul(t.c, k)}cm` },
+      ),
       hints: [
         '角Eに 対応する 角は どれか 考えよう。',
         '拡大図・縮図では、対応する 角の 大きさは どう なるかな。',
@@ -193,7 +230,8 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
       [answer],
       [
         [known + diff, 'add-not-mult'],
-        [k >= 1 ? known / k : known * 2, 'inverse-ratio'],
+        // 拡大を 縮小と 取りちがえた 答え（わり切れる ときだけ。割り切れない 小数は 入力されない）
+        [k >= 1 ? (known % k === 0 ? known / k : null) : known * 2, 'inverse-ratio'],
         [known, 'same-size'],
       ],
     ),
@@ -228,8 +266,15 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `ratio-alt:${w1}x${h1}:${w2}x${h2}`,
       objective: 'ratio',
       level,
-      prompt: big ? '長方形Bは 長方形Aの 何倍の 拡大図ですか。' : '長方形Bは 長方形Aの 何分の1の 縮図ですか。分数で 答えよう。',
-      figure: svg(r1(gw * U + 20), r1(gh * U + 20), body, `方眼に かいた 長方形Aと 長方形B。Aは 横 ${w1}ます・縦 ${h1}ます、Bは 横 ${w2}ます・縦 ${h2}ます`),
+      prompt: big
+        ? '長方形Bは 長方形Aの 何倍の 拡大図ですか。'
+        : '長方形Bは 長方形Aの 何分の1の 縮図ですか。分数で 答えよう。',
+      figure: svg(
+        r1(gw * U + 20),
+        r1(gh * U + 20),
+        body,
+        `方眼に かいた 長方形Aと 長方形B。Aは 横 ${w1}ます・縦 ${h1}ます、Bは 横 ${w2}ます・縦 ${h2}ます`,
+      ),
       hints: [
         '対応する 辺の ます目を 数えて くらべよう。',
         `Aの 横は ${w1}ます、Bの 横は ${w2}ます。`,
@@ -392,15 +437,18 @@ export const scale: UnitSpec = finishUnit({
     },
     {
       id: 'same-size',
-      explain: 'もとの 形と 同じ 大きさに したのかな。拡大図は 大きく、縮図は 小さく、辺の 長さを 同じ 倍に しよう。',
+      explain:
+        'もとの 形と 同じ 大きさに したのかな。拡大図は 大きく、縮図は 小さく、辺の 長さを 同じ 倍に しよう。',
     },
     {
       id: 'inverse-ratio',
-      explain: '拡大と 縮小を 反対に したのかな。もとに する 形は どちらか、大きく なるのか 小さく なるのか たしかめよう。',
+      explain:
+        '拡大と 縮小を 反対に したのかな。もとに する 形は どちらか、大きく なるのか 小さく なるのか たしかめよう。',
     },
     {
       id: 'angle-scale',
-      explain: '角の 大きさも 変えたのかな。拡大図・縮図では、対応する 角の 大きさは 変わらないよ。',
+      explain:
+        '角の 大きさも 変えたのかな。拡大図・縮図では、対応する 角の 大きさは 変わらないよ。',
     },
     {
       id: 'unit-conv',
@@ -417,7 +465,12 @@ export const scale: UnitSpec = finishUnit({
   intro: [
     {
       text: '形を 変えずに、対応する 辺の 長さを どれも 同じ 倍に のばした 図を 拡大図、縮めた 図を 縮図と いいます。',
-      figure: twoTriFig(triCoords(4, 3, 3), 2, { ab: '3cm', bc: '4cm', ca: '3cm' }, { de: '6cm', ef: '8cm', fd: '6cm' }),
+      figure: twoTriFig(
+        triCoords(4, 3, 3),
+        2,
+        { ab: '3cm', bc: '4cm', ca: '3cm' },
+        { de: '6cm', ef: '8cm', fd: '6cm' },
+      ),
     },
     { text: '拡大図・縮図では、対応する 角の 大きさは 等しく なります。' },
     {

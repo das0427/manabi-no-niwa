@@ -81,7 +81,12 @@ function commonWrongs(a: D, b: D, q: D, answers: NumberAnswer[]) {
 /** わりきれる（商は 整数 か 小数1けた）。alt: 筆算の 図で */
 function exact(level: number, rng: Rng, alt: boolean): NumberItem {
   const b = randDec(rng, level === 0 ? 1 : rng.int(1, 2), 11, 99);
-  const q = level === 0 ? { v: rng.int(2, 30), p: 0 } : rng.next() < 0.5 ? { v: rng.int(2, 60), p: 0 } : randDec(rng, 1, 11, 99);
+  const q =
+    level === 0
+      ? { v: rng.int(2, 30), p: 0 }
+      : rng.next() < 0.5
+        ? { v: rng.int(2, 60), p: 0 }
+        : randDec(rng, 1, 11, 99);
   const a = mul(q, b);
   const answers = [decAns(q.v, q.p)];
   const as = S(a);
@@ -193,7 +198,6 @@ function rem(level: number, rng: Rng, alt: boolean): NumberItem {
         wrongAnswers: wrongList(answers, [
           [q10 !== cut ? dec(cut, 1) : null, 'round-cut'],
           [dec(q100, 2), 'round-cut'],
-          [q10 !== cut ? null : dec(cut + 1, 1), 'round-cut'],
           [dec(q10, 0), 'point-q'],
         ]),
       };
@@ -222,10 +226,7 @@ function rem(level: number, rng: Rng, alt: boolean): NumberItem {
         { label: 'あまり', answer: answers[1]! },
       ],
       keys: ['decimal'],
-      wrongAnswers: wrongList(answers, [
-        [`${q}|${rShift}`, 'rem-point'],
-        [`${q}|${dec(R, pa + 1)}`, 'rem-point'],
-      ]),
+      wrongAnswers: wrongList(answers, [[`${q}|${rShift}`, 'rem-point']]),
     };
   }
 }
@@ -261,7 +262,8 @@ function bigger(level: number, rng: Rng, alt: boolean): Item {
     };
     return item;
   }
-  const bb: D = rng.next() < 0.7 ? randDec(rng, 1, 2, 9) : { v: pick(rng, [25, 75, 5, 15, 35, 45]), p: 2 };
+  const bb: D =
+    rng.next() < 0.7 ? randDec(rng, 1, 2, 9) : { v: pick(rng, [25, 75, 5, 15, 35, 45]), p: 2 };
   const q = rng.next() < 0.5 ? { v: rng.int(2, 60), p: 0 } : randDec(rng, 1, 11, 99);
   const a = mul(q, bb);
   const answers = [decAns(q.v, q.p)];
@@ -297,31 +299,95 @@ interface Scene {
   text: (a: string, b: string) => string;
   /** 答えが 整数（本数など） */
   intAns?: boolean;
+  /** count の 図で、全体と 1つ分の 量の 単位 */
+  qty?: string;
 }
 const SCENES: Scene[] = [
-  { id: 'wire', kind: 'part', unit: 'g', text: (a, b) => `${b}mで ${a}gの はり金が あります。この はり金 1mの 重さは 何gですか。` },
-  { id: 'paint', kind: 'part', unit: 'm²', text: (a, b) => `${b}dLの ペンキで ${a}m²の かべを ぬれました。1dLでは 何m² ぬれますか。` },
-  { id: 'cloth', kind: 'part', unit: '円', text: (a, b) => `${b}mで ${a}円の 布が あります。この 布 1mの ねだんは 何円ですか。` },
-  { id: 'field', kind: 'part', unit: 'kg', text: (a, b) => `${b}m²の 畑から ${a}kgの じゃがいもが とれました。1m²あたり 何kgですか。` },
-  { id: 'juice', kind: 'count', unit: '本', intAns: true, text: (a, b) => `${a}Lの ジュースを ${b}Lずつ びんに 入れます。びんは 何本 いりますか。` },
-  { id: 'ribbon', kind: 'count', unit: '本', intAns: true, text: (a, b) => `${a}mの リボンを ${b}mずつ 切ります。何本 できますか。` },
-  { id: 'times', kind: 'count', unit: '倍', text: (a, b) => `赤い テープは ${a}m、青い テープは ${b}mです。赤い テープの 長さは 青い テープの 何倍ですか。` },
-  { id: 'base', kind: 'part', unit: 'm', text: (a, b) => `青い テープの 長さは ${a}mで、これは 赤い テープの ${b}倍に あたります。赤い テープは 何mですか。` },
+  {
+    id: 'wire',
+    kind: 'part',
+    unit: 'g',
+    text: (a, b) => `${b}mで ${a}gの はり金が あります。この はり金 1mの 重さは 何gですか。`,
+  },
+  {
+    id: 'paint',
+    kind: 'part',
+    unit: 'm²',
+    text: (a, b) => `${b}dLの ペンキで ${a}m²の かべを ぬれました。1dLでは 何m² ぬれますか。`,
+  },
+  {
+    id: 'cloth',
+    kind: 'part',
+    unit: '円',
+    text: (a, b) => `${b}mで ${a}円の 布が あります。この 布 1mの ねだんは 何円ですか。`,
+  },
+  {
+    id: 'field',
+    kind: 'part',
+    unit: 'kg',
+    text: (a, b) => `${b}m²の 畑から ${a}kgの じゃがいもが とれました。1m²あたり 何kgですか。`,
+  },
+  {
+    id: 'juice',
+    kind: 'count',
+    unit: '本',
+    qty: 'L',
+    intAns: true,
+    text: (a, b) => `${a}Lの ジュースを ${b}Lずつ びんに 入れます。びんは 何本 いりますか。`,
+  },
+  {
+    id: 'ribbon',
+    kind: 'count',
+    unit: '本',
+    qty: 'm',
+    intAns: true,
+    text: (a, b) => `${a}mの リボンを ${b}mずつ 切ります。何本 できますか。`,
+  },
+  {
+    id: 'times',
+    kind: 'count',
+    unit: '倍',
+    qty: 'm',
+    text: (a, b) =>
+      `赤い テープは ${a}m、青い テープは ${b}mです。赤い テープの 長さは 青い テープの 何倍ですか。`,
+  },
+  {
+    id: 'base',
+    kind: 'part',
+    unit: 'm',
+    text: (a, b) =>
+      `青い テープの 長さは ${a}mで、これは 赤い テープの ${b}倍に あたります。赤い テープは 何mですか。`,
+  },
 ];
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = pick(rng, SCENES);
   // 答え q と わる数 b から 作る
   const b = randDec(rng, 1, sc.id === 'base' ? 11 : 2, sc.id === 'base' ? 39 : 49);
-  const q: D = sc.intAns ? { v: rng.int(3, 40), p: 0 } : sc.id === 'cloth' ? { v: rng.int(12, 98) * 10, p: 0 } : rng.next() < 0.5 ? { v: rng.int(2, 40), p: 0 } : randDec(rng, 1, 11, 99);
+  const q: D = sc.intAns
+    ? { v: rng.int(3, 40), p: 0 }
+    : sc.id === 'cloth'
+      ? { v: rng.int(12, 98) * 10, p: 0 }
+      : rng.next() < 0.5
+        ? { v: rng.int(2, 40), p: 0 }
+        : randDec(rng, 1, 11, 99);
   const a = mul(q, b);
   const answers = [decAns(q.v, q.p)];
   const as = S(a);
   const bs = S(b);
   const fig: Figure | undefined = alt
     ? sc.kind === 'part'
-      ? { kind: 'table', header: [sc.id === 'base' ? '倍' : 'いくつ分', '1', bs], rows: [[sc.id === 'base' ? 'm' : sc.unit, '？', as]] }
-      : { kind: 'table', header: ['1つ分', bs, as], rows: [['いくつ分', '1', '？']] }
+      ? {
+          kind: 'table',
+          header: [sc.id === 'base' ? '倍' : 'いくつ分', '1', bs],
+          rows: [[sc.id === 'base' ? 'm' : sc.unit, '？', as]],
+        }
+      : // 上の 行: 量（1つ分 bs と 全体 as）、下の 行: いくつ分（1 と ？）
+        {
+          kind: 'table',
+          header: [`量（${sc.qty ?? ''}）`, bs, as],
+          rows: [[sc.id === 'times' ? '倍' : 'いくつ分', '1', '？']],
+        }
     : undefined;
   return {
     engine: 'number',
@@ -331,11 +397,13 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt: sc.text(as, bs),
     figure: fig,
     hints: [
-      sc.kind === 'part'
-        ? '1あたりの 量を 求めるので、全体 ÷ いくつ分 だよ。いくつ分が 小数でも わり算。'
-        : sc.id === 'times'
-          ? '何倍かを 求めるときは、くらべる 量 ÷ もとに する 量 だよ。'
-          : '1つ分が いくつ 入るかを 求めるので、全体 ÷ 1つ分 だよ。',
+      sc.id === 'base'
+        ? 'もとに する 量（1倍に あたる 量）を 求めるので、くらべる 量 ÷ 何倍 だよ。何倍が 小数でも わり算。'
+        : sc.kind === 'part'
+          ? '1あたりの 量を 求めるので、全体 ÷ いくつ分 だよ。いくつ分が 小数でも わり算。'
+          : sc.id === 'times'
+            ? '何倍かを 求めるときは、くらべる 量 ÷ もとに する 量 だよ。'
+            : '1つ分が いくつ 入るかを 求めるので、全体 ÷ 1つ分 だよ。',
       `式は ${as} ÷ ${bs}。`,
       hintShift(b),
     ],
@@ -403,7 +471,8 @@ export const decimalDiv: UnitSpec = finishUnit(
       },
       {
         id: 'point-q',
-        explain: '商の 小数点の 位置が ずれたのかな。商の 小数点は、うつした あとの わられる数の 小数点に そろえて 打つよ。',
+        explain:
+          '商の 小数点の 位置が ずれたのかな。商の 小数点は、うつした あとの わられる数の 小数点に そろえて 打つよ。',
       },
       {
         id: 'rem-point',
@@ -412,15 +481,18 @@ export const decimalDiv: UnitSpec = finishUnit(
       },
       {
         id: 'stop-early',
-        explain: 'とちゅうで わるのを 止めたのかな。「わりきれるまで」の ときは、0を つけたして あまりが 0に なるまで わり進むよ。',
+        explain:
+          'とちゅうで わるのを 止めたのかな。「わりきれるまで」の ときは、0を つけたして あまりが 0に なるまで わり進むよ。',
       },
       {
         id: 'round-cut',
-        explain: '四捨五入を わすれたのかな。[[1/10]]の位までの がい数に するときは、[[1/100]]の位まで 計算して 四捨五入するよ。',
+        explain:
+          '四捨五入を わすれたのかな。[[1/10]]の位までの がい数に するときは、[[1/100]]の位まで 計算して 四捨五入するよ。',
       },
       {
         id: 'div-smaller',
-        explain: 'わり算を すると いつも 小さく なると 考えたのかな。1より 小さい 数で わると、商は わられる数より 大きく なるよ。',
+        explain:
+          'わり算を すると いつも 小さく なると 考えたのかな。1より 小さい 数で わると、商は わられる数より 大きく なるよ。',
       },
       {
         id: 'div-one',
@@ -428,7 +500,8 @@ export const decimalDiv: UnitSpec = finishUnit(
       },
       {
         id: 'div-swap',
-        explain: 'わる数と わられる数を 反対に したのかな。全体 ÷ いくつ分、くらべる 量 ÷ もとに する 量の じゅんに 式を 立てよう。',
+        explain:
+          'わる数と わられる数を 反対に したのかな。全体 ÷ いくつ分、くらべる 量 ÷ もとに する 量の じゅんに 式を 立てよう。',
       },
       {
         id: 'op-mult',
@@ -443,7 +516,11 @@ export const decimalDiv: UnitSpec = finishUnit(
     intro: [
       {
         text: '2.5mで 350円の 布。1mの ねだんは 350 ÷ 2.5。0.1mの ねだんを 考えると 350 ÷ 25 ＝ 14円、1mは その 10倍で 140円。',
-        figure: { kind: 'table', header: ['長さ（m）', '0.1', '1', '2.5'], rows: [['代金（円）', '14', '？', '350']] },
+        figure: {
+          kind: 'table',
+          header: ['長さ（m）', '0.1', '1', '2.5'],
+          rows: [['代金（円）', '14', '？', '350']],
+        },
       },
       {
         text: 'わる数と わられる数を 同じ 数だけ 倍しても 商は 変わりません。7.2 ÷ 0.9は、どちらも 10倍して 72 ÷ 9 ＝ 8。',
@@ -463,7 +540,8 @@ export const decimalDiv: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateDecimalDiv(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 A(3) 小数の除法（除数が小数の場合、あまりの大きさ）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 A(3) 小数の除法（除数が小数の場合、あまりの大きさ）',
     revised: REVISED,
   },
   '出《だ》そう 出《だ》す 出《で》る 出《で》た 打《う》 畑《はたけ》 はり金《がね》 重《おも》さ 布《ぬの》 赤《あか》い 青《あお》い 立《た》てよう 止《と》めた 倍《ばい》し',

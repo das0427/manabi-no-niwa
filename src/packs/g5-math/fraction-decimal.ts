@@ -36,11 +36,36 @@ interface QScene {
   text: (a: number, b: number) => string;
 }
 const QSCENES: QScene[] = [
-  { id: 'juice', unit: 'L', text: (a, b) => `${a}Lの ジュースを ${b}人で 同じ量ずつ 分けます。1人分は 何Lですか。分数で 答えましょう。` },
-  { id: 'ribbon', unit: 'm', text: (a, b) => `${a}mの リボンを ${b}人で 同じ長さずつ 分けます。1人分は 何mですか。分数で 答えましょう。` },
-  { id: 'sand', unit: 'kg', text: (a, b) => `${a}kgの すなを ${b}つの ふくろに 同じ重さずつ 入れます。1ふくろ 何kgですか。分数で 答えましょう。` },
-  { id: 'water', unit: 'dL', text: (a, b) => `${a}dLの 水を ${b}この コップに 同じ量ずつ 入れます。コップ 1こ 何dLですか。分数で 答えましょう。` },
-  { id: 'times', unit: '倍', text: (a, b) => `赤い テープは ${a}m、白い テープは ${b}mです。赤い テープの 長さは、白い テープの 何倍ですか。分数で 答えましょう。` },
+  {
+    id: 'juice',
+    unit: 'L',
+    text: (a, b) =>
+      `${a}Lの ジュースを ${b}人で 同じ量ずつ 分けます。1人分は 何Lですか。分数で 答えましょう。`,
+  },
+  {
+    id: 'ribbon',
+    unit: 'm',
+    text: (a, b) =>
+      `${a}mの リボンを ${b}人で 同じ長さずつ 分けます。1人分は 何mですか。分数で 答えましょう。`,
+  },
+  {
+    id: 'sand',
+    unit: 'kg',
+    text: (a, b) =>
+      `${a}kgの すなを ${b}つの ふくろに 同じ重さずつ 入れます。1ふくろ 何kgですか。分数で 答えましょう。`,
+  },
+  {
+    id: 'water',
+    unit: 'dL',
+    text: (a, b) =>
+      `${a}dLの 水を ${b}この コップに 同じ量ずつ 入れます。コップ 1こ 何dLですか。分数で 答えましょう。`,
+  },
+  {
+    id: 'times',
+    unit: '倍',
+    text: (a, b) =>
+      `赤い テープは ${a}m、白い テープは ${b}mです。赤い テープの 長さは、白い テープの 何倍ですか。分数で 答えましょう。`,
+  },
 ];
 
 function quotient(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -56,10 +81,10 @@ function quotient(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt: sc ? sc.text(a, b) : 'わり算の 商を 分数で 表しましょう。',
     figure: sc ? undefined : expr(`${a} ÷ ${b} ＝ {{}}`),
     hints: [
-      times ? '何倍かを 求める ときは、くらべる 長さ ÷ もとの 長さ だよ。' : 'わりきれない わり算の 商も、分数で 表せるよ。',
       times
-        ? `式は ${a} ÷ ${b}。`
-        : `${a} ÷ ${b}の 商は、${a}を ${b}等分した 1つ分。`,
+        ? '何倍かを 求める ときは、くらべる 長さ ÷ もとの 長さ だよ。'
+        : 'わりきれない わり算の 商も、分数で 表せるよ。',
+      times ? `式は ${a} ÷ ${b}。` : `${a} ÷ ${b}の 商は、${a}を ${b}等分した 1つ分。`,
       `□ ÷ ○ の 商は、分母が わる数の ○に なるよ。分子は どちらかな。`,
     ],
     explain: `${a} ÷ ${b} ＝ ${F(a, b)}。わり算の 商は、わられる数を 分子、わる数を 分母に した 分数で 表せます。${sc ? `答えは ${F(a, b)}${sc.unit}です。` : ''}`,
@@ -96,7 +121,9 @@ function toDecimal(level: number, rng: Rng, alt: boolean): Item {
       prompt: `${F(n, d)}を 小数に なおして、その 場所を タップしよう。`,
       hints: [
         `${F(n, d)}は ${n} ÷ ${d}。まず 小数に なおそう。`,
-        fine ? '0と 1の 間は 20に 分けて あるので、1目もりは 0.05。' : '0と 1の 間は 10に 分けて あるので、1目もりは 0.1。',
+        fine
+          ? '0と 1の 間は 20に 分けて あるので、1目もりは 0.05。'
+          : '0と 1の 間は 10に 分けて あるので、1目もりは 0.1。',
         `${n} ÷ ${d}の 商の 場所を さがそう。`,
       ],
       explain: `${F(n, d)} ＝ ${n} ÷ ${d} ＝ ${ds}。数直線で ${ds}の 場所です。`,
@@ -212,14 +239,19 @@ function toFraction(level: number, rng: Rng, alt: boolean): Item {
       prompt: '↓の 場所の 数は 小数で いくつかな。その 数を 分数で 答えよう。',
       hints: [
         '0と 1の 間が 10に 分けて あるよ。1目もりは 0.1、分数では [[1/10]]。',
-        `0から ${k}目もり すすんだ 場所だね。`,
+        '0から 目もりを 数えよう。0.5や 1の 長い 目もりから 数えると はやいよ。',
         '[[1/10]]が いくつ分かを 分数で 書こう。',
       ],
       explain: `1目もりは 0.1 ＝ [[1/10]]。${k}目もりで ${dec(k, 1)} ＝ ${F(k, 10)}です。`,
       identity: `toFraction-line:${k}/10`,
       alt: true,
       line: { min: 0, max: 2, minor: '1/10', midEvery: 5, majorEvery: 10 },
-      task: { kind: 'read', at: `${k}/10`, answer: { kind: 'fraction', num: k, den: 10 }, keys: ['fraction'] },
+      task: {
+        kind: 'read',
+        at: `${k}/10`,
+        answer: { kind: 'fraction', num: k, den: 10 },
+        keys: ['fraction'],
+      },
       misconceptions: { neighborTick: 'tick-read', minorAsOne: 'minor-as-one' },
       wrongAnswers: [{ value: k, misconception: 'minor-as-one' }],
     };
@@ -269,7 +301,11 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     while (other[0] * d === n * other[1]);
     let dv: number;
     do dv = rng.int(1, 19);
-    while (dv % 10 === 0 || Math.abs(dv / 10 - fv) < 1e-9 || Math.abs(dv / 10 - other[0] / other[1]) < 1e-9);
+    while (
+      dv % 10 === 0 ||
+      Math.abs(dv / 10 - fv) < 1e-9 ||
+      Math.abs(dv / 10 - other[0] / other[1]) < 1e-9
+    );
     const vals: [string, number][] = [
       [F(n, d), fv],
       [F(other[0], other[1]), other[0] / other[1]],
@@ -291,7 +327,9 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
       explain: `${F(n, d)} ＝ ${dec(v, k)}、${F(other[0], other[1])} ＝ ${dec(ov, ok)}。小数に そろえて くらべると、いちばん 大きいのは ${vals.find((x) => x[1] === max)![0]}です。`,
       identity: `compare3:${[`${n}/${d}`, `${other[0]}/${other[1]}`].sort().join(',')}:${dv}`,
       alt: true,
-      options: vals.map(([l, x]) => (x === max ? { label: l, correct: true } : { label: l, misconception: 'compare-look' })),
+      options: vals.map(([l, x]) =>
+        x === max ? { label: l, correct: true } : { label: l, misconception: 'compare-look' },
+      ),
     };
     return item;
   }
@@ -326,9 +364,13 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     alt: false,
     fixedOrder: true,
     options: [
-      big === 'f' ? { label: F(n, d), correct: true } : { label: F(n, d), misconception: 'compare-look' },
+      big === 'f'
+        ? { label: F(n, d), correct: true }
+        : { label: F(n, d), misconception: 'compare-look' },
       big === 'd' ? { label: ds, correct: true } : { label: ds, misconception: 'compare-look' },
-      big === 'eq' ? { label: '同じ', correct: true } : { label: '同じ', misconception: 'compare-look' },
+      big === 'eq'
+        ? { label: '同じ', correct: true }
+        : { label: '同じ', misconception: 'compare-look' },
     ],
   };
   return item;
@@ -436,7 +478,8 @@ export const fractionDecimal: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateFractionDecimal(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 A(4) 分数と小数・整数の関係（除法の結果の分数表示、分数と小数の相互の表し方）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 A(4) 分数と小数・整数の関係（除法の結果の分数表示、分数と小数の相互の表し方）',
     revised: REVISED,
   },
   '小数第一位《しょうすうだいいちい》 小数第二位《しょうすうだいにい》 等分《とうぶん》 赤《あか》い 白《しろ》い 場所《ばしょ》 間《あいだ》',

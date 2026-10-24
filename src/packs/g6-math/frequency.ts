@@ -18,24 +18,69 @@ interface Ctx {
   lo: number;
   w: number;
   k: number;
-  /** 大きいほど よい 記録か */
+  /** 大きいほど よい 記録か（順位を 数える 向き） */
   higherBetter: boolean;
+  /** 順位を 数える 向きの 言い方（「〜 ほうから r番目」） */
+  side: string;
 }
 const CTXS: Ctx[] = [
-  { id: 'throw', what: 'ソフトボール投げの 記録', unit: 'm', lo: 10, w: 5, k: 6, higherBetter: true },
-  { id: 'commute', what: '家から 学校までの 通学時間', unit: '分', lo: 0, w: 5, k: 6, higherBetter: false },
-  { id: 'jump', what: '1分間の なわとびの 回数', unit: '回', lo: 40, w: 10, k: 6, higherBetter: true },
-  { id: 'reading', what: '1週間の 読書《どくしょ》時間', unit: '分', lo: 0, w: 20, k: 6, higherBetter: true },
+  {
+    id: 'throw',
+    what: 'ソフトボール投げの 記録',
+    unit: 'm',
+    lo: 10,
+    w: 5,
+    k: 6,
+    higherBetter: true,
+    side: '記録が よい（大きい）',
+  },
+  {
+    id: 'commute',
+    what: '家から 学校までの 通学時間',
+    unit: '分',
+    lo: 0,
+    w: 5,
+    k: 6,
+    higherBetter: false,
+    side: '時間が 短い',
+  },
+  {
+    id: 'jump',
+    what: '1分間の なわとびの 回数',
+    unit: '回',
+    lo: 40,
+    w: 10,
+    k: 6,
+    higherBetter: true,
+    side: '回数が 多い',
+  },
+  {
+    id: 'reading',
+    what: '1週間の 読書《どくしょ》時間',
+    unit: '分',
+    lo: 0,
+    w: 20,
+    k: 6,
+    higherBetter: true,
+    side: '時間が 長い',
+  },
 ];
 const lab = (c: Ctx, i: number) => `${c.lo + i * c.w}〜${c.lo + (i + 1) * c.w}`;
 const labs = (c: Ctx) => Array.from({ length: c.k }, (_, i) => lab(c, i));
-const range = (c: Ctx, i: number) => `${c.lo + i * c.w}${c.unit}以上 ${c.lo + (i + 1) * c.w}${c.unit}未満`;
+const range = (c: Ctx, i: number) =>
+  `${c.lo + i * c.w}${c.unit}以上 ${c.lo + (i + 1) * c.w}${c.unit}未満`;
 
 /** 度数の並び（合計 n、各 0〜max） */
 function makeCounts(rng: Rng, k: number, n: number, max = 9): number[] {
   for (let t = 0; t < 200; t++) {
     const xs = Array.from({ length: k }, () => 0);
-    for (let i = 0; i < n; i++) xs[Math.min(k - 1, Math.max(0, Math.round((rng.next() + rng.next() + rng.next()) / 3 * k - 0.5)))]!++;
+    for (let i = 0; i < n; i++)
+      xs[
+        Math.min(
+          k - 1,
+          Math.max(0, Math.round(((rng.next() + rng.next() + rng.next()) / 3) * k - 0.5)),
+        )
+      ]!++;
     if (Math.max(...xs) <= max && xs.filter((x) => x > 0).length >= 4) return xs;
   }
   const base = Math.floor(n / k);
@@ -46,7 +91,10 @@ function freqTable(c: Ctx, cnt: number[]): Figure {
   return {
     kind: 'table',
     header: [`${c.what}（${c.unit}）`, '人数（人）'],
-    rows: [...cnt.map((v, i) => [`${lab(c, i)}`, String(v)]), ['合計', String(cnt.reduce((a, b) => a + b, 0))]],
+    rows: [
+      ...cnt.map((v, i) => [`${lab(c, i)}`, String(v)]),
+      ['合計', String(cnt.reduce((a, b) => a + b, 0))],
+    ],
   };
 }
 const NOTE = (c: Ctx) => `（「${lab(c, 0)}」は ${c.lo}以上 ${c.lo + c.w}未満の 階級です）`;
@@ -59,7 +107,9 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
     const cnt = makeCounts(rng, c.k, n);
     const i = rng.int(2, c.k - 2);
     const up = c.higherBetter;
-    const ans = up ? cnt.slice(i).reduce((a, b) => a + b, 0) : cnt.slice(0, i).reduce((a, b) => a + b, 0);
+    const ans = up
+      ? cnt.slice(i).reduce((a, b) => a + b, 0)
+      : cnt.slice(0, i).reduce((a, b) => a + b, 0);
     const answer = { kind: 'int' as const, value: ans };
     const edge = c.lo + i * c.w;
     return {
@@ -71,7 +121,9 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       figure: freqTable(c, cnt),
       hints: [
         `${up ? `${edge}${c.unit}以上` : `${edge}${c.unit}未満`}に 入る 階級を 全部 さがそう。`,
-        up ? `${lab(c, i)}の 階級から 下の 階級 全部だね。` : `${lab(c, i - 1)}の 階級から 上の 階級 全部だね。`,
+        up
+          ? `${lab(c, i)}の 階級から 下の 階級 全部だね。`
+          : `${lab(c, i - 1)}の 階級から 上の 階級 全部だね。`,
         'それらの 階級の 人数を たそう。',
       ],
       explain: `${up ? `${lab(c, i)}から ${lab(c, c.k - 1)}` : `${lab(c, 0)}から ${lab(c, i - 1)}`}の 階級の 人数を たして ${ans}人です。`,
@@ -94,7 +146,8 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
   const b = a + c.w;
   const top = c.lo + c.k * c.w;
   const xs: number[] = [a, b];
-  while (xs.length < n) xs.push(rng.int(c.lo, top - 1));
+  // 記録 0（通学時間 0分など）は 不自然なので 1から
+  while (xs.length < n) xs.push(rng.int(Math.max(c.lo, 1), top - 1));
   const shuffled = rng.shuffle(xs);
   const ans = shuffled.filter((x) => x >= a && x < b).length;
   const answer = { kind: 'int' as const, value: ans };
@@ -112,7 +165,10 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       `${a}、${a + 1}、…、${b - 1}の 記録を さがして 印を つけよう。`,
       `${b}${c.unit}の 人は 次の 階級に 入るよ。数えた 印の 数を たしかめよう。`,
     ],
-    explain: `${a}以上 ${b}未満の 記録は ${shuffled.filter((x) => x >= a && x < b).sort((p, q) => p - q).join('、')}の ${ans}人です。${b}${c.unit}は 入りません。`,
+    explain: `${a}以上 ${b}未満の 記録は ${shuffled
+      .filter((x) => x >= a && x < b)
+      .sort((p, q) => p - q)
+      .join('、')}の ${ans}人です。${b}${c.unit}は 入りません。`,
     identity: `table:${c.id}:${[...shuffled].sort((p, q) => p - q).join(',')}:${i}`,
     alt: false,
     fields: [{ label: '人', answer }],
@@ -140,16 +196,33 @@ function histItem(level: number, rng: Rng, alt: boolean): GraphItem {
       objective: 'hist',
       level,
       prompt: `度数分布表を 見て、柱状グラフを かこう。${NOTE(c)}`,
-      hints: ['横の じくは 階級、縦《たて》の じくは 人数だよ。', `縦《たて》の じくの 1めもりは ${step}人。`, '階級ごとに、人数の 高さまで 柱を のばそう。'],
-      explain: '階級ごとの 人数を 柱の 高さで 表します。柱状グラフでは、どの 階級に 人数が 多いか ひと目で 分かります。',
+      hints: [
+        '横の じくは 階級、縦《たて》の じくは 人数だよ。',
+        `縦《たて》の じくの 1めもりは ${step}人。`,
+        '階級ごとに、人数の 高さまで 柱を のばそう。',
+      ],
+      explain:
+        '階級ごとの 人数を 柱の 高さで 表します。柱状グラフでは、どの 階級に 人数が 多いか ひと目で 分かります。',
       identity: `hist:make:${c.id}:${c2.join(',')}`,
       alt: true,
-      data: { kind: 'bar', labels: labs(c), values: c2, scaleStep: step, max: Math.max(...c2) + 2 + (step === 2 ? 0 : 1), unit: '人', header: [`${c.what}（${c.unit}）`, '人数（人）'], title: c.what },
+      data: {
+        kind: 'bar',
+        labels: labs(c),
+        values: c2,
+        scaleStep: step,
+        max: Math.max(...c2) + 2 + (step === 2 ? 0 : 1),
+        unit: '人',
+        header: [`${c.what}（${c.unit}）`, '人数（人）'],
+        title: c.what,
+      },
       task: { kind: 'make', showTable: true },
       misconceptions: { scaleAsOne: 'scale-as-one' },
     };
   }
-  const i = pick(rng, cnt.map((v, k) => (v > 0 ? k : -1)).filter((k) => k >= 0));
+  const i = pick(
+    rng,
+    cnt.map((v, k) => (v > 0 ? k : -1)).filter((k) => k >= 0),
+  );
   const answer = { kind: 'int' as const, value: cnt[i]! };
   return {
     engine: 'graph',
@@ -157,11 +230,24 @@ function histItem(level: number, rng: Rng, alt: boolean): GraphItem {
     objective: 'hist',
     level,
     prompt: `柱状グラフは、${n}人の ${c.what}を 表して います。${range(c, i)}の 人は 何人ですか。`,
-    hints: [`${range(c, i)}は「${lab(c, i)}」の 柱だよ。`, `縦《たて》の じくの 1めもりは ${step}人。`, '柱の 上の はしから 左へ 進んで めもりを 読もう。'],
+    hints: [
+      `${range(c, i)}は「${lab(c, i)}」の 柱だよ。`,
+      `縦《たて》の じくの 1めもりは ${step}人。`,
+      '柱の 上の はしから 左へ 進んで めもりを 読もう。',
+    ],
     explain: `「${lab(c, i)}」の 柱の 高さを 読むと ${cnt[i]}人です。`,
     identity: `hist:${c.id}:${cnt.join(',')}:${i}:${step}`,
     alt: false,
-    data: { kind: 'bar', labels: labs(c), values: cnt, scaleStep: step, max: Math.max(...cnt) + (step === 2 ? 2 : 1), labelEvery: step === 1 ? 2 : 1, unit: '人', title: c.what },
+    data: {
+      kind: 'bar',
+      labels: labs(c),
+      values: cnt,
+      scaleStep: step,
+      max: Math.max(...cnt) + (step === 2 ? 2 : 1),
+      labelEvery: step === 1 ? 2 : 1,
+      unit: '人',
+      title: c.what,
+    },
     task: {
       kind: 'number',
       fields: [{ label: '人', answer }],
@@ -212,11 +298,13 @@ function classItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
         break;
       }
     }
-    prompt = `度数分布表は、${n}人の ${c.what}です。${c.higherBetter ? '記録が よい（大きい）' : '時間が 短い'} ほうから ${r}番目の 人は、どの 階級に 入りますか。${NOTE(c)}`;
+    prompt = `度数分布表は、${n}人の ${c.what}です。${c.side} ほうから ${r}番目の 人は、どの 階級に 入りますか。${NOTE(c)}`;
     hints = [
-      c.higherBetter ? 'いちばん 大きい 階級から 順に 人数を たして いこう。' : 'いちばん 小さい 階級から 順に 人数を たして いこう。',
+      c.higherBetter
+        ? 'いちばん 大きい 階級から 順に 人数を たして いこう。'
+        : 'いちばん 小さい 階級から 順に 人数を たして いこう。',
       `人数を たして いって、はじめて ${r}人 以上に なる 階級を さがそう。`,
-      `${order.slice(0, 2).map((k) => `${lab(c, k)}は ${cnt[k]}人`).join('、')}…`,
+      `表の ${c.higherBetter ? 'いちばん 大きい 階級（合計の すぐ 上）から 上へ' : 'いちばん 小さい 階級（表の いちばん 上）から 下へ'}、人数を たした 合計を 書きこんで いこう。`,
     ];
     explain = `${c.higherBetter ? '大きい' : '小さい'} 階級から 人数を たして いくと、「${lab(c, i)}」で はじめて ${r}人 以上に なるので、${r}番目の 人は この 階級に 入ります。`;
     wrongs = [
@@ -230,7 +318,11 @@ function classItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     tag = String(i);
     const v = c.lo + i * c.w;
     prompt = `${c.what}が ${v}${c.unit}の 人は、どの 階級に 入りますか。${NOTE(c)}`;
-    hints = ['「〜以上」は その 数を ふくみ、「〜未満」は ふくまないよ。', `「${lab(c, i - 1)}」は ${c.lo + (i - 1) * c.w}以上 ${v}未満。${v}は 入るかな。`, `${v}以上の 階級は どれかな。`];
+    hints = [
+      '「〜以上」は その 数を ふくみ、「〜未満」は ふくまないよ。',
+      `「${lab(c, i - 1)}」は ${c.lo + (i - 1) * c.w}以上 ${v}未満。${v}は 入るかな。`,
+      `${v}以上の 階級は どれかな。`,
+    ];
     explain = `${v}${c.unit}は「${v}以上」なので「${lab(c, i)}」の 階級に 入ります。「${lab(c, i - 1)}」は ${v}未満までです。`;
     wrongs = [
       [lab(c, i - 1), 'boundary'],
@@ -263,7 +355,9 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
   const cnt = makeCounts(rng, c.k, n, n === 50 ? 16 : 9);
   const i = rng.int(2, c.k - 2);
   const up = c.higherBetter;
-  const part = up ? cnt.slice(i).reduce((a, b) => a + b, 0) : cnt.slice(0, i).reduce((a, b) => a + b, 0);
+  const part = up
+    ? cnt.slice(i).reduce((a, b) => a + b, 0)
+    : cnt.slice(0, i).reduce((a, b) => a + b, 0);
   const pct = (part * 100) / n;
   const answer = { kind: 'int' as const, value: pct };
   const edge = c.lo + i * c.w;
@@ -275,7 +369,11 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: `${n}人の ${c.what}を 調べました。${cond}の 人は、全体の 何%ですか。${NOTE(c)}`,
     figure: alt ? undefined : freqTable(c, cnt),
-    hints: [`まず ${cond}の 人数を 求めよう。`, `${cond}の 人は ${part}人。`, `${part} ÷ ${n} × 100を 計算しよう。`],
+    hints: [
+      `まず ${cond}の 人数を 求めよう。`,
+      `${cond}の 人は ${part}人。`,
+      `${part} ÷ ${n} × 100を 計算しよう。`,
+    ],
     explain: `${cond}の 人は ${part}人。${part} ÷ ${n} ＝ ${part / n}、× 100で ${pct}%です。`,
     identity: `ratio:${c.id}:${cnt.join(',')}:${i}${alt ? ':graph' : ''}`,
     alt,
@@ -284,7 +382,12 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
       [answer],
       [
         [part, 'ratio-count'],
-        [((up ? cnt[i]! : cnt[i - 1]!) * 100) % n === 0 ? ((up ? cnt[i]! : cnt[i - 1]!) * 100) / n : null, 'cumulative'],
+        [
+          ((up ? cnt[i]! : cnt[i - 1]!) * 100) % n === 0
+            ? ((up ? cnt[i]! : cnt[i - 1]!) * 100) / n
+            : null,
+          'cumulative',
+        ],
       ],
     ),
   };
@@ -306,7 +409,16 @@ function ratioAlt(level: number, rng: Rng): GraphItem {
     explain: it.explain,
     identity: it.identity,
     alt: true,
-    data: { kind: 'bar', labels: labs(c), values: cnt, scaleStep: 1, max: Math.max(...cnt) + 1, labelEvery: 2, unit: '人', title: c.what },
+    data: {
+      kind: 'bar',
+      labels: labs(c),
+      values: cnt,
+      scaleStep: 1,
+      max: Math.max(...cnt) + 1,
+      labelEvery: 2,
+      unit: '人',
+      title: c.what,
+    },
     task: { kind: 'number', fields: it.fields, wrongAnswers: it.wrongAnswers },
   };
 }
@@ -357,10 +469,25 @@ export const frequency: UnitSpec = finishUnit({
       explain:
         '階級の 境目を まちがえたのかな。「10以上 15未満」は 10を ふくみ、15を ふくまないよ。15は 次の 階級に 入るね。',
     },
-    { id: 'cumulative', explain: '1つの 階級だけを 見たのかな。「〜以上」「〜未満」は、あてはまる 階級を 全部 合わせるよ。' },
-    { id: 'scale-as-one', explain: '1めもりを 1人と 読んだのかな。縦《たて》の じくの 1めもりが 何人かを 先に 調べよう。' },
-    { id: 'ratio-count', explain: '人数を そのまま 答えたのかな。割合（%）は、人数 ÷ 全体の 人数 × 100で 求めるよ。' },
-    { id: 'rank-reverse', explain: '反対の はしから 数えたのかな。「よい ほう から」は、どちらの はしから 数えるか たしかめよう。' },
+    {
+      id: 'cumulative',
+      explain:
+        '1つの 階級だけを 見たのかな。「〜以上」「〜未満」は、あてはまる 階級を 全部 合わせるよ。',
+    },
+    {
+      id: 'scale-as-one',
+      explain:
+        '1めもりを 1人と 読んだのかな。縦《たて》の じくの 1めもりが 何人かを 先に 調べよう。',
+    },
+    {
+      id: 'ratio-count',
+      explain: '人数を そのまま 答えたのかな。割合（%）は、人数 ÷ 全体の 人数 × 100で 求めるよ。',
+    },
+    {
+      id: 'rank-reverse',
+      explain:
+        '反対の はしから 数えたのかな。「よい ほう から」は、どちらの はしから 数えるか たしかめよう。',
+    },
   ],
   levels: [
     { label: '度数分布表・柱状グラフ', chance: 0.05 },
@@ -375,15 +502,24 @@ export const frequency: UnitSpec = finishUnit({
     },
     {
       text: '度数分布表を 柱の グラフに した ものを 柱状グラフ（ヒストグラム）と いいます。どの 階級に 多く 集まって いるか、ちらばりの 様子が 分かります。',
-      figure: { kind: 'bar', labels: labs(CTXS[0]!), values: [1, 3, 6, 5, 3, 2], scaleStep: 1, unit: '人' },
+      figure: {
+        kind: 'bar',
+        labels: labs(CTXS[0]!),
+        values: [1, 3, 6, 5, 3, 2],
+        scaleStep: 1,
+        unit: '人',
+      },
     },
-    { text: '「以上」は その 数を ふくみ、「未満」は ふくみません。15mの 記録は「15〜20」の 階級に 入ります。' },
+    {
+      text: '「以上」は その 数を ふくみ、「未満」は ふくみません。15mの 記録は「15〜20」の 階級に 入ります。',
+    },
   ],
   source: {
     kind: 'generator',
     generate: ({ level, rng, index }) => generateFrequency(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第6学年 D(1) 度数分布を表す表やグラフ（柱状グラフ）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第6学年 D(1) 度数分布を表す表やグラフ（柱状グラフ）',
   revised: REVISED,
 });

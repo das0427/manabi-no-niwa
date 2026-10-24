@@ -8,19 +8,43 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { decAns, dec, expr, finishUnit, opts, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  decAns,
+  dec,
+  expr,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'cuboid' | 'cube' | 'compound' | 'capacity' | 'units';
 
 /** 見取図（直方体: 横 a、おく行き b、高さ c）。ラベルは 数字と 単位だけ */
-function boxFig(a: number, b: number, c: number, unit: string, cubes = false): Figure {
+function boxFig(
+  a: number,
+  b: number,
+  c: number,
+  unit: string,
+  cubes = false,
+  label?: string,
+): Figure {
   const m = Math.max(a, b, c);
   const k = Math.max(8, Math.min(26, Math.floor(160 / m)));
   const ox = b * k * 0.5;
   const oy = b * k * 0.4;
-  const x0 = 30;
+  // 左の 高さの ラベル（右寄せで x0 − 18 まで）が 図の 外に はみ出さない 幅
+  const x0 = 56;
   const y0 = 14 + oy;
-  const P = (x: number, y: number, z: number): [number, number] => [x0 + x * k + y * 0.5 * k, y0 + (c - z) * k - y * 0.4 * k];
+  const P = (x: number, y: number, z: number): [number, number] => [
+    x0 + x * k + y * 0.5 * k,
+    y0 + (c - z) * k - y * 0.4 * k,
+  ];
   const L = (p: [number, number], q: [number, number], dash = false) =>
     `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" ${STROKE}${dash ? ' stroke-dasharray="5 5"' : ''}/>`;
   let body = '';
@@ -30,15 +54,24 @@ function boxFig(a: number, b: number, c: number, unit: string, cubes = false): F
   body += `<polygon points="${[P(0, 0, c), P(a, 0, c), P(a, b, c), P(0, b, c)].map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.2" ${STROKE}/>`;
   body += `<polygon points="${[P(a, 0, 0), P(a, b, 0), P(a, b, c), P(a, 0, c)].map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.5" ${STROKE}/>`;
   // 見えない 辺
-  body += L(P(0, b, 0), P(a, b, 0), true) + L(P(0, b, 0), P(0, 0, 0), true) + L(P(0, b, 0), P(0, b, c), true);
+  body +=
+    L(P(0, b, 0), P(a, b, 0), true) +
+    L(P(0, b, 0), P(0, 0, 0), true) +
+    L(P(0, b, 0), P(0, b, c), true);
   if (cubes) {
     // 1cm³ の ます目（正面と 上と 右）
-    for (let i = 1; i < a; i++) body += `<line x1="${P(i, 0, 0)[0]}" y1="${P(i, 0, 0)[1]}" x2="${P(i, 0, c)[0]}" y2="${P(i, 0, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
-    for (let i = 1; i < c; i++) body += `<line x1="${P(0, 0, i)[0]}" y1="${P(0, 0, i)[1]}" x2="${P(a, 0, i)[0]}" y2="${P(a, 0, i)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
-    for (let i = 1; i < b; i++) body += `<line x1="${P(0, i, c)[0]}" y1="${P(0, i, c)[1]}" x2="${P(a, i, c)[0]}" y2="${P(a, i, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
-    for (let i = 1; i < a; i++) body += `<line x1="${P(i, 0, c)[0]}" y1="${P(i, 0, c)[1]}" x2="${P(i, b, c)[0]}" y2="${P(i, b, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
-    for (let i = 1; i < b; i++) body += `<line x1="${P(a, i, 0)[0]}" y1="${P(a, i, 0)[1]}" x2="${P(a, i, c)[0]}" y2="${P(a, i, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
-    for (let i = 1; i < c; i++) body += `<line x1="${P(a, 0, i)[0]}" y1="${P(a, 0, i)[1]}" x2="${P(a, b, i)[0]}" y2="${P(a, b, i)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < a; i++)
+      body += `<line x1="${P(i, 0, 0)[0]}" y1="${P(i, 0, 0)[1]}" x2="${P(i, 0, c)[0]}" y2="${P(i, 0, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < c; i++)
+      body += `<line x1="${P(0, 0, i)[0]}" y1="${P(0, 0, i)[1]}" x2="${P(a, 0, i)[0]}" y2="${P(a, 0, i)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < b; i++)
+      body += `<line x1="${P(0, i, c)[0]}" y1="${P(0, i, c)[1]}" x2="${P(a, i, c)[0]}" y2="${P(a, i, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < a; i++)
+      body += `<line x1="${P(i, 0, c)[0]}" y1="${P(i, 0, c)[1]}" x2="${P(i, b, c)[0]}" y2="${P(i, b, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < b; i++)
+      body += `<line x1="${P(a, i, 0)[0]}" y1="${P(a, i, 0)[1]}" x2="${P(a, i, c)[0]}" y2="${P(a, i, c)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
+    for (let i = 1; i < c; i++)
+      body += `<line x1="${P(a, 0, i)[0]}" y1="${P(a, 0, i)[1]}" x2="${P(a, b, i)[0]}" y2="${P(a, b, i)[1]}" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="1"/>`;
   } else {
     const fa = P(a / 2, 0, 0);
     body += svgText(fa[0], fa[1] + 16, `${a}${unit}`, 13);
@@ -49,15 +82,24 @@ function boxFig(a: number, b: number, c: number, unit: string, cubes = false): F
   }
   const W = a * k + ox + x0 + 60;
   const H = c * k + oy + 40;
-  return svg(W, H, body, cubes ? '1cm³の 立方体を つみかさねた 直方体' : '直方体の 見取図');
+  return svg(
+    W,
+    H,
+    body,
+    label ?? (cubes ? '1cm³の 立方体を つみかさねた 直方体' : '直方体の 見取図'),
+  );
 }
 
 /** L字の 立体（正面の L字を おく行き d だけ のばした 形）。正面: 横 W・高さ H から 右上の w×h を 切りとる */
 function lFig(W: number, H: number, w: number, h: number, d: number): Figure {
   const k = Math.max(8, Math.min(18, Math.floor(160 / Math.max(W, H, d))));
-  const x0 = 34;
+  // 左の 高さの ラベル（中央が x0 − 24）が 図の 外に はみ出さない 幅
+  const x0 = 50;
   const y0 = 14 + d * 0.4 * k;
-  const P = (x: number, y: number, z: number): [number, number] => [x0 + x * k + y * 0.5 * k, y0 + (H - z) * k - y * 0.4 * k];
+  const P = (x: number, y: number, z: number): [number, number] => [
+    x0 + x * k + y * 0.5 * k,
+    y0 + (H - z) * k - y * 0.4 * k,
+  ];
   const front: [number, number][] = [
     [0, 0],
     [W, 0],
@@ -83,7 +125,12 @@ function lFig(W: number, H: number, w: number, h: number, d: number): Figure {
   body += t(W - w / 2, 0, H - h, `${w}cm`, 0, 14);
   body += t(W, 0, (H - h) / 2, `${H - h}cm`, 26, 6);
   body += t(W, d / 2, 0, `${d}cm`, 28, 4);
-  return svg(W * k + d * 0.5 * k + x0 + 70, H * k + d * 0.4 * k + 40, body, '2つの 直方体を 組み合わせた 形');
+  return svg(
+    W * k + d * 0.5 * k + x0 + 70,
+    H * k + d * 0.4 * k + 40,
+    body,
+    '2つの 直方体を 組み合わせた 形',
+  );
 }
 
 const sortKey = (...v: number[]) => [...v].sort((x, y) => x - y).join('x');
@@ -114,7 +161,8 @@ function cuboid(level: number, rng: Rng, alt: boolean): NumberItem {
         : form === 2
           ? 'この 直方体の 体積は 何cm³ですか。'
           : `たて ${b}cm、横 ${a}cm、高さ ${c}cmの 直方体の 体積は 何cm³ですか。`,
-    figure: form === 1 ? boxFig(a, b, c, 'cm', true) : form === 2 ? boxFig(a, b, c, 'cm') : undefined,
+    figure:
+      form === 1 ? boxFig(a, b, c, 'cm', true) : form === 2 ? boxFig(a, b, c, 'cm') : undefined,
     hints: [
       '直方体の 体積 ＝ たて × 横 × 高さ',
       form === 1
@@ -146,8 +194,10 @@ function cube(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `cube${alt ? '-alt' : ''}:${a}${unit}`,
     objective: 'cube',
     level,
-    prompt: alt ? `この 立方体の 体積は 何${unit}³ですか。` : `1辺が ${a}${unit}の 立方体の 体積は 何${unit}³ですか。`,
-    figure: alt ? boxFig(a, a, a, unit) : undefined,
+    prompt: alt
+      ? `この 立方体の 体積は 何${unit}³ですか。`
+      : `1辺が ${a}${unit}の 立方体の 体積は 何${unit}³ですか。`,
+    figure: alt ? boxFig(a, a, a, unit, false, '立方体の 見取図') : undefined,
     hints: [
       '立方体の 体積 ＝ 1辺 × 1辺 × 1辺',
       `${a}を 3回 かけるよ。${a} × ${a} ＝ ${a * a}。`,
@@ -278,7 +328,6 @@ function capacity(level: number, rng: Rng, alt: boolean): NumberItem {
     const c = rng.int(1, 4) * 5;
     const V = a * b * c;
     if (V % 100 !== 0) continue;
-    const L = V / 1000; // 小数 1けたまで
     const answers = [decAns(V / 100, 1)];
     const key = `${sortKey(a, b)}x${c}`;
     return {
@@ -299,7 +348,6 @@ function capacity(level: number, rng: Rng, alt: boolean): NumberItem {
       keys: ['decimal'],
       wrongAnswers: wrongList(answers, [
         [V, 'unit-convert'],
-        [L * 10, 'unit-100'],
         [dec(V, 2), 'unit-100'],
       ]),
     };
@@ -358,12 +406,13 @@ function units(level: number, rng: Rng, alt: boolean): Item {
       objective: 'units',
       level,
       prompt: `1${c.from}は 何${c.to}？`,
-      figure:
-        c.from === 'm³' && c.to === 'cm³'
-          ? boxFig(1, 1, 1, 'm')
-          : undefined,
+      figure: c.from === 'm³' && c.to === 'cm³' ? boxFig(1, 1, 1, 'm') : undefined,
       hints: [
-        c.from === 'm³' ? '1m³は 1辺が 1mの 立方体の 体積だよ。' : c.from === 'dL' ? '1L ＝ 10dL、1L ＝ 1000cm³だよ。' : '1Lは 1辺が 10cmの 立方体の 体積だよ。',
+        c.from === 'm³'
+          ? '1m³は 1辺が 1mの 立方体の 体積だよ。'
+          : c.from === 'dL'
+            ? '1L ＝ 10dL、1L ＝ 1000cm³だよ。'
+            : '1Lは 1辺が 10cmの 立方体の 体積だよ。',
         c.from === 'm³' && c.to === 'cm³'
           ? '1m ＝ 100cm。たて・横・高さが みんな 100cmだね。'
           : c.from === 'm³'
@@ -373,7 +422,11 @@ function units(level: number, rng: Rng, alt: boolean): Item {
               : c.to === 'mL'
                 ? '1mLは 1cm³と 同じ かさ。1L ＝ 10cm × 10cm × 10cmだね。'
                 : '10 × 10 × 10を 考えよう。',
-        c.from === 'm³' && c.to === 'cm³' ? '100 × 100 × 100を 計算しよう。' : '何こ 分かを かけ算で 求めよう。',
+        c.from === 'm³' && c.to === 'cm³'
+          ? '100 × 100 × 100を 計算しよう。'
+          : c.from === 'dL'
+            ? '1000 ÷ 10を 計算しよう。'
+            : '何こ 分かを かけ算で 求めよう。',
       ],
       explain: `1${c.from} ＝ ${c.f}${c.to}です。`,
       identity: `units-pick:${c.from}-${c.to}`,
@@ -412,7 +465,10 @@ function units(level: number, rng: Rng, alt: boolean): Item {
     fields: [{ label: up ? c.to : c.from, answer: answers[0]! }],
     wrongAnswers: wrongList(
       answers,
-      c.wrong.map((w) => [up ? n * w : given % w === 0 ? given / w : null, 'unit-100'] as [number | null, string]),
+      c.wrong.map(
+        (w) =>
+          [up ? n * w : given % w === 0 ? given / w : null, 'unit-100'] as [number | null, string],
+      ),
     ),
   };
 }
@@ -464,11 +520,13 @@ export const volume: UnitSpec = finishUnit(
     misconceptions: [
       {
         id: 'add-dims',
-        explain: '長さを たしたのかな。体積は 1cm³の 立方体が いくつ分かなので、たて × 横 × 高さの かけ算だよ。',
+        explain:
+          '長さを たしたのかな。体積は 1cm³の 立方体が いくつ分かなので、たて × 横 × 高さの かけ算だよ。',
       },
       {
         id: 'area-only',
-        explain: '2つの 長さしか かけて いないのかな。それは 面の 広さ（面積）だよ。高さも かけて、だんの 数だけ 重ねよう。',
+        explain:
+          '2つの 長さしか かけて いないのかな。それは 面の 広さ（面積）だよ。高さも かけて、だんの 数だけ 重ねよう。',
       },
       {
         id: 'surface',
@@ -476,7 +534,8 @@ export const volume: UnitSpec = finishUnit(
       },
       {
         id: 'compound-whole',
-        explain: '欠けた 部分（切りとった 部分）を ひきわすれたのかな。大きい 直方体から、ない 部分を ひこう。',
+        explain:
+          '欠けた 部分（切りとった 部分）を ひきわすれたのかな。大きい 直方体から、ない 部分を ひこう。',
       },
       {
         id: 'compound-overlap',
@@ -498,7 +557,8 @@ export const volume: UnitSpec = finishUnit(
       },
       {
         id: 'unit-mix',
-        explain: '長さの 単位を そろえずに かけたのかな。先に 同じ 単位（m）に そろえてから かけよう。',
+        explain:
+          '長さの 単位を そろえずに かけたのかな。先に 同じ 単位（m）に そろえてから かけよう。',
       },
     ],
     levels: [
@@ -533,7 +593,8 @@ export const volume: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateVolume(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(4) 立体図形の体積（cm³・m³、直方体・立方体の求積）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(4) 立体図形の体積（cm³・m³、直方体・立方体の求積）',
     revised: REVISED,
   },
   '重《かさ》ね 底《そこ》 木《き》 板《いた》 外《そと》のり 内《うち》がわ 深《ふか》さ 水《すい》そう 欠《か》けた 思《おも》い出《だ》そう 切《き》りとった 切《き》りとりました 切《き》りとる',

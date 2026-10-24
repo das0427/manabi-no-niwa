@@ -20,11 +20,36 @@ interface Theme {
   items: string[];
 }
 const THEMES: Theme[] = [
-  { id: 'fruit', title: 'すきな くだもの（れいの データ）', who: '人', items: ['りんご', 'みかん', 'いちご', 'バナナ', 'ぶどう', 'もも'] },
-  { id: 'book', title: '図書室で かりた 本の 種類（れいの データ）', who: 'さつ', items: ['物語', '図かん', 'まんが', '伝記', '絵本', '詩'] },
-  { id: 'trash', title: '学校の ごみの 種類（れいの データ）', who: 'kg', items: ['紙', 'プラスチック', '生ごみ', 'かん', 'びん', '木'] },
-  { id: 'sport', title: 'すきな スポーツ（れいの データ）', who: '人', items: ['サッカー', '野球', '水泳', 'バスケットボール', 'テニス', 'ダンス'] },
-  { id: 'come', title: '学校までの 来かた（れいの データ）', who: '人', items: ['歩き', '自転車', 'バス', '電車', '車'] },
+  {
+    id: 'fruit',
+    title: 'すきな くだもの（れいの データ）',
+    who: '人',
+    items: ['りんご', 'みかん', 'いちご', 'バナナ', 'ぶどう', 'もも'],
+  },
+  {
+    id: 'book',
+    title: '図書室で かりた 本の 種類（れいの データ）',
+    who: 'さつ',
+    items: ['物語', '図かん', 'まんが', '伝記', '絵本', '詩'],
+  },
+  {
+    id: 'trash',
+    title: '学校の ごみの 種類（れいの データ）',
+    who: 'kg',
+    items: ['紙', 'プラスチック', '生ごみ', 'かん', 'びん', '木'],
+  },
+  {
+    id: 'sport',
+    title: 'すきな スポーツ（れいの データ）',
+    who: '人',
+    items: ['サッカー', '野球', '水泳', 'バスケットボール', 'テニス', 'ダンス'],
+  },
+  {
+    id: 'come',
+    title: '学校までの 来かた（れいの データ）',
+    who: '人',
+    items: ['歩き', '自転車', 'バス', '電車', '車'],
+  },
 ];
 
 interface Data {
@@ -126,7 +151,14 @@ function timesItem(level: number, rng: Rng, alt: boolean): GraphItem {
         [{ kind: 'int', value: k }],
         [
           [small * k - small, 'diff-times'],
-          [cumEnd(d, ib) / small === k ? null : Number.isInteger(cumEnd(d, ib) / small) ? cumEnd(d, ib) / small : null, 'scale-read'],
+          [
+            cumEnd(d, ib) / small === k
+              ? null
+              : Number.isInteger(cumEnd(d, ib) / small)
+                ? cumEnd(d, ib) / small
+                : null,
+            'scale-read',
+          ],
         ],
       ),
     },
@@ -168,7 +200,10 @@ function amountItem(level: number, rng: Rng, alt: boolean): GraphItem {
           [
             [v, 'ratio-amount'],
             [total * v, 'ratio-amount'],
-            [i > 0 && (total * cumEnd(d, i)) % 100 === 0 ? (total * cumEnd(d, i)) / 100 : null, 'scale-read'],
+            [
+              i > 0 && (total * cumEnd(d, i)) % 100 === 0 ? (total * cumEnd(d, i)) / 100 : null,
+              'scale-read',
+            ],
           ],
         ),
       },
@@ -189,7 +224,10 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
     : {
         kind: 'table',
         header: ['種類', '割合（%）'],
-        rows: [...d.labels.map((l, j) => [l, j === i ? '？' : String(d.values[j])]), ['合計', '100']],
+        rows: [
+          ...d.labels.map((l, j) => [l, j === i ? '？' : String(d.values[j])]),
+          ['合計', '100'],
+        ],
       };
   const listText = d.labels
     .map((l, j) => (j === i ? null : `${l} ${d.values[j]}%`))
@@ -201,7 +239,7 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'missing',
     level,
     prompt: alt
-      ? `${d.theme.title}を 調べたら、${listText}で、のこりは「${d.labels[i]}」でした。「${d.labels[i]}」は 何%ですか。`
+      ? `${d.theme.title.replace('（れいの データ）', '')}を 調べたら（れいの データ）、${listText}で、のこりは「${d.labels[i]}」でした。「${d.labels[i]}」は 何%ですか。`
       : `${d.theme.title}の 割合の 表です。「${d.labels[i]}」は 何%ですか。`,
     figure,
     hints: [
@@ -245,7 +283,10 @@ function bands(rows: { vals: number[]; tag: string }[], letters: string[], label
 
 /** 割合と 量: 全体が ちがう 2つの 帯グラフ（alt: 表で） */
 function twoItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
-  const theme = pick(rng, THEMES.filter((t) => t.who === '人'));
+  const theme = pick(
+    rng,
+    THEMES.filter((t) => t.who === '人'),
+  );
   for (;;) {
     const n1 = pick(rng, [200, 250, 300, 400, 500]);
     const n2 = pick(rng, [200, 250, 300, 400, 500]);
@@ -257,7 +298,7 @@ function twoItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     const c2 = (n2 * p2) / 100;
     if (!Number.isInteger(c1) || !Number.isInteger(c2) || c1 === c2) continue;
     // 割合が 大きい ほうが 人数は 少ない 組だけ（割合と 量の ちがいを 見る）
-    if ((p1 > p2) === (c1 > c2)) continue;
+    if (p1 > p2 === c1 > c2) continue;
     const label = pick(rng, theme.items);
     const years: [number, number] = [2020, 2025];
     const rest1 = 100 - p1;
@@ -285,7 +326,11 @@ function twoItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
               ['A', 'B'],
               '2つの 年の 帯グラフ（数字は %）',
             ),
-            { kind: 'text', text: `A は ${label}、B は その他。調べた 人数は ${years[0]}年 ${n1}人、${years[1]}年 ${n2}人。`, size: 'm' },
+            {
+              kind: 'text',
+              text: `A は ${label}、B は その他。調べた 人数は ${years[0]}年 ${n1}人、${years[1]}年 ${n2}人。`,
+              size: 'm',
+            },
           ],
         };
     return {
@@ -369,7 +414,8 @@ export const pieBand: UnitSpec = finishUnit(
       },
       {
         id: 'ignore-total',
-        explain: '全体が 100%で ある ことを 使わなかったのかな。全部の 部分を たすと 100%に なるよ。のこりは 100から ひいて 求めよう。',
+        explain:
+          '全体が 100%で ある ことを 使わなかったのかな。全部の 部分を たすと 100%に なるよ。のこりは 100から ひいて 求めよう。',
       },
       {
         id: 'diff-times',
@@ -387,7 +433,11 @@ export const pieBand: UnitSpec = finishUnit(
       },
       {
         text: '目もりは 左から たした 割合です。A（りんご）40%、B（みかん）25%なら、みかんは 40の 目もりから 65の 目もりまで。65 − 40 ＝ 25%と 読みます。',
-        figure: bands([{ vals: [40, 25, 20, 15], tag: '' }], ['A', 'B', 'C', 'D'], '帯グラフ（数字は %）'),
+        figure: bands(
+          [{ vals: [40, 25, 20, 15], tag: '' }],
+          ['A', 'B', 'C', 'D'],
+          '帯グラフ（数字は %）',
+        ),
       },
       {
         text: '全体の 量が 分かれば、部分の 量は 全体 × 割合で 求められます。200人の 25%は 200 × 0.25 ＝ 50人。',
@@ -398,7 +448,8 @@ export const pieBand: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generatePieBand(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 D(1) 円グラフや帯グラフ、統計的な問題解決の方法',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 D(1) 円グラフや帯グラフ、統計的な問題解決の方法',
     revised: REVISED,
   },
   '物語《ものがたり》 図《ず》かん 伝記《でんき》 絵本《えほん》 詩《し》 生《なま》ごみ 野球《やきゅう》 水泳《すいえい》 来《き》かた 歩《ある》き 自転車《じてんしゃ》 電車《でんしゃ》 車《くるま》 図書室《としょしつ》 区切《くぎ》り 区切《くぎ》って 真上《まうえ》 右回《みぎまわ》り 最後《さいご》 その他《た》 年《ねん》 答《こた》えた',

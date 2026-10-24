@@ -28,14 +28,70 @@ interface Scene {
 }
 
 const SCENES: Scene[] = [
-  { id: 'egg', what: 'にわとりが うんだ たまごの 数', unit: 'こ', each: '日め', lo: 0, hi: 8, zero: true },
-  { id: 'page', what: '1日に 読んだ 本の ページ数', unit: 'ページ', each: '日め', lo: 0, hi: 30, zero: true },
-  { id: 'jump', what: '走りはばとびの 記録', unit: 'cm', each: '回め', lo: 250, hi: 320, zero: false },
-  { id: 'orange', what: 'みかん 1こ 1この 重さ', unit: 'g', each: 'こめ', lo: 80, hi: 120, zero: false },
-  { id: 'ball', what: 'ソフトボール投げの 記録', unit: 'm', each: '回め', lo: 15, hi: 35, zero: false },
-  { id: 'test', what: '10点 まんてんの 計算テストの 点数', unit: '点', each: '回め', lo: 4, hi: 10, zero: false },
+  {
+    id: 'egg',
+    what: 'にわとりが うんだ たまごの 数',
+    unit: 'こ',
+    each: '日め',
+    lo: 0,
+    hi: 8,
+    zero: true,
+  },
+  {
+    id: 'page',
+    what: '1日に 読んだ 本の ページ数',
+    unit: 'ページ',
+    each: '日め',
+    lo: 0,
+    hi: 30,
+    zero: true,
+  },
+  {
+    id: 'jump',
+    what: '走りはばとびの 記録',
+    unit: 'cm',
+    each: '回め',
+    lo: 250,
+    hi: 320,
+    zero: false,
+  },
+  {
+    id: 'orange',
+    what: 'みかん 1こ 1この 重さ',
+    unit: 'g',
+    each: 'こめ',
+    lo: 80,
+    hi: 120,
+    zero: false,
+  },
+  {
+    id: 'ball',
+    what: 'ソフトボール投げの 記録',
+    unit: 'm',
+    each: '回め',
+    lo: 15,
+    hi: 35,
+    zero: false,
+  },
+  {
+    id: 'test',
+    what: '10点 まんてんの 計算テストの 点数',
+    unit: '点',
+    each: '回め',
+    lo: 4,
+    hi: 10,
+    zero: false,
+  },
   { id: 'rain', what: '1日に ふった 雨の 量', unit: 'mm', each: '日め', lo: 0, hi: 20, zero: true },
-  { id: 'lend', what: '図書室で 1日に かりられた 本の 数', unit: 'さつ', each: '日め', lo: 0, hi: 12, zero: true },
+  {
+    id: 'lend',
+    what: '図書室で 1日に かりられた 本の 数',
+    unit: 'さつ',
+    each: '日め',
+    lo: 0,
+    hi: 12,
+    zero: true,
+  },
 ];
 
 const sum = (v: number[]) => v.reduce((s, x) => s + x, 0);
@@ -76,7 +132,7 @@ function meanWrongs(v: number[]): [string | number | null, string][] {
 
 const meanHints = (v: number[], u: string): string[] => [
   '平均 ＝ 合計 ÷ 個数',
-  `合計は ${v.join(' ＋ ')} ＝ ${sum(v)}${u}。個数は ${v.length}こ（0も 数に 入れる）。`,
+  `合計は ${v.join(' ＋ ')} ＝ ${sum(v)}${u}。個数は ${v.length}こ${v.includes(0) ? '（0も 数に 入れる）' : ''}。`,
   `${sum(v)} ÷ ${v.length}を 計算しよう。`,
 ];
 const meanExplain = (v: number[], u: string) =>
@@ -165,7 +221,10 @@ function mean(level: number, rng: Rng, alt: boolean): Item {
 
 /** 0 の ある 平均（表。alt: ぼうグラフ） */
 function zero(level: number, rng: Rng, alt: boolean): Item {
-  const sc = pick(rng, SCENES.filter((s) => s.zero));
+  const sc = pick(
+    rng,
+    SCENES.filter((s) => s.zero),
+  );
   const n = rng.int(4, 6);
   const v = values(rng, n, 0, sc.hi, true);
   const days = `${n}日間`;
@@ -222,9 +281,7 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       alt: true,
       fields: [{ label: 'm', answer: answers[0]! }],
       keys: ['decimal'],
-      wrongAnswers: wrongList(answers, [
-        [dec(w + steps * 100, 2), 'add-instead'],
-      ]),
+      wrongAnswers: wrongList(answers, [[dec(w + steps * 100, 2), 'add-instead']]),
     };
   }
   const sc = pick(rng, SCENES);
@@ -241,13 +298,17 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'total',
       level,
       prompt: `${n}${sc.each === '日め' ? '日間' : sc.each === '回め' ? '回' : 'こ'}の ${sc.what}の 平均は ${m}${sc.unit}でした。合計は 何${sc.unit}ですか。`,
-      hints: ['平均 ＝ 合計 ÷ 個数 だから、合計 ＝ 平均 × 個数。', `平均が ${m}、個数が ${n}だね。`, `${m} × ${n}を 計算しよう。`],
+      hints: [
+        '平均 ＝ 合計 ÷ 個数 だから、合計 ＝ 平均 × 個数。',
+        `平均が ${m}、個数が ${n}だね。`,
+        `${m} × ${n}を 計算しよう。`,
+      ],
       explain: `合計 ＝ 平均 × 個数 ＝ ${m} × ${n} ＝ ${T}。合計は ${T}${sc.unit}です。`,
       identity: `total:${sc.id}:${m}:${n}`,
       alt: false,
       fields: [{ label: sc.unit, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
-        [(m10 % n === 0) ? dec(m10 / n, 1) : null, 'op-swap'],
+        [m10 % n === 0 ? dec(m10 / n, 1) : null, 'op-swap'],
         [dec(m10 + n * 10, 1), 'add-instead'],
       ]),
     };
@@ -404,11 +465,13 @@ export const average: UnitSpec = finishUnit(
       },
       {
         id: 'mean-as-value',
-        explain: '平均と 同じ 点数を 答えたのかな。前の 回の 点が 平均より 低いと、のこりの 回で おぎなう 分が いるよ。合計から 考えよう。',
+        explain:
+          '平均と 同じ 点数を 答えたのかな。前の 回の 点が 平均より 低いと、のこりの 回で おぎなう 分が いるよ。合計から 考えよう。',
       },
       {
         id: 'total-only',
-        explain: '全部の 回の 合計を 答えたのかな。そこから これまでの 合計を ひくと、のこりの 1回の 点数に なるよ。',
+        explain:
+          '全部の 回の 合計を 答えたのかな。そこから これまでの 合計を ひくと、のこりの 1回の 点数に なるよ。',
       },
     ],
     levels: [
@@ -435,7 +498,8 @@ export const average: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateAverage(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 C(2) 測定値の平均（平均の意味・求め方、平均を用いた見積もり）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 D(2) 測定値の平均（平均の意味・求め方、平均を用いた見積もり）',
     revised: REVISED,
   },
   '走《はし》りはばとび 投《な》げ 点数《てんすう》 点《てん》 雨《あめ》 図書室《としょしつ》 歩《ほ》 歩《ある》いた 家《いえ》 公園《こうえん》 低《ひく》い 前《まえ》 回《かい》め 日《にち》め',

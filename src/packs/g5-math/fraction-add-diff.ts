@@ -71,7 +71,11 @@ function solve(q: Q) {
 function pickQ(rng: Rng, op: '+' | '−'): Q {
   if (op === '+') {
     let [[a, b], [c, d]] = pick(rng, ADD);
-    if (rng.next() < 0.5) [[a, b], [c, d]] = [[c, d], [a, b]];
+    if (rng.next() < 0.5)
+      [[a, b], [c, d]] = [
+        [c, d],
+        [a, b],
+      ];
     return { a, b, c, d, op };
   }
   const [[a, b], [c, d]] = pick(rng, SUB);
@@ -79,17 +83,28 @@ function pickQ(rng: Rng, op: '+' | '−'): Q {
 }
 
 const keyOf = (q: Q) =>
-  q.op === '+' ? [`${q.a}/${q.b}`, `${q.c}/${q.d}`].sort().join('+') : `${q.a}/${q.b}-${q.c}/${q.d}`;
+  q.op === '+'
+    ? [`${q.a}/${q.b}`, `${q.c}/${q.d}`].sort().join('+')
+    : `${q.a}/${q.b}-${q.c}/${q.d}`;
 
 function wrongsOf(q: Q, answers: NumberAnswer[]) {
-  const { L, N } = solve(q);
+  const { L } = solve(q);
   const add = q.op === '+';
   return wrongList(answers, [
-    [add ? `${q.a + q.c}/${q.b + q.d}` : q.a > q.c && q.b > q.d ? `${q.a - q.c}/${q.b - q.d}` : null, 'add-den'],
+    [
+      add
+        ? `${q.a + q.c}/${q.b + q.d}`
+        : q.a > q.c && q.b > q.d
+          ? `${q.a - q.c}/${q.b - q.d}`
+          : null,
+      'add-den',
+    ],
     [add ? `${q.a + q.c}/${L}` : q.a > q.c ? `${q.a - q.c}/${L}` : null, 'num-only'],
     [add ? `${q.a * q.d + q.c * q.b}/${q.b + q.d}` : null, 'add-den'],
-    [!add ? `${solve({ ...q, op: '+' }).N}/${L}` : `${Math.abs(solve({ ...q, op: '−' }).N)}/${L}`, 'op-swap'],
-    [N > 0 ? `${N}/${q.b * q.d === L ? L * 2 : q.b * q.d}` : null, 'num-only'],
+    [
+      !add ? `${solve({ ...q, op: '+' }).N}/${L}` : `${Math.abs(solve({ ...q, op: '−' }).N)}/${L}`,
+      'op-swap',
+    ],
   ]);
 }
 
@@ -125,7 +140,9 @@ function basic(obj: 'addP' | 'subP', level: number, rng: Rng, alt: boolean): Num
     figure: alt ? undefined : expr(`${F(q.a, q.b)} ${q.op} ${F(q.c, q.d)} ＝ {{}}`),
     hints: alt
       ? [
-          obj === 'addP' ? '「より 〜 大きい 数」は たし算で 求めるよ。' : '「差」は 大きい 数から 小さい 数を ひいて 求めるよ。',
+          obj === 'addP'
+            ? '「より 〜 大きい 数」は たし算で 求めるよ。'
+            : '「差」は 大きい 数から 小さい 数を ひいて 求めるよ。',
           ...hintsOf(q, obj === 'addP' ? 'たそう' : 'ひこう').slice(1),
         ]
       : hintsOf(q, obj === 'addP' ? 'たそう' : 'ひこう'),
@@ -244,14 +261,58 @@ interface Scene {
   text: (x: string, y: string) => string;
 }
 const SCENES: Scene[] = [
-  { id: 'juice', op: '+', unit: 'L', text: (x, y) => `ジュースを きのう ${x}L、きょう ${y}L 飲みました。合わせて 何L 飲みましたか。` },
-  { id: 'ribbon', op: '+', unit: 'm', text: (x, y) => `赤い リボンが ${x}m、青い リボンが ${y}m あります。合わせて 何mですか。` },
-  { id: 'walk', op: '+', unit: 'km', text: (x, y) => `家から 公園まで ${x}km、公園から 図書館まで ${y}kmです。家から 公園を 通って 図書館まで 何kmですか。` },
-  { id: 'sand', op: '+', unit: 'kg', text: (x, y) => `すなが ${x}kg 入った バケツに、${y}kgの すなを 入れました。すなは 全部で 何kgに なりましたか。` },
-  { id: 'water', op: '−', unit: 'L', text: (x, y) => `水が ${x}L あります。そのうち ${y}L 使いました。残りは 何Lですか。` },
-  { id: 'rope', op: '−', unit: 'm', text: (x, y) => `${x}mの ロープから ${y}m 切り取りました。残りは 何mですか。` },
-  { id: 'tape', op: '−', unit: 'm', text: (x, y) => `赤い テープは ${x}m、白い テープは ${y}mです。赤い テープは 白い テープより 何m 長いですか。` },
-  { id: 'study', op: '−', unit: '時間', text: (x, y) => `きのうは ${x}時間、きょうは ${y}時間 本を 読みました。きのうは きょうより 何時間 長く 読みましたか。` },
+  {
+    id: 'juice',
+    op: '+',
+    unit: 'L',
+    text: (x, y) => `ジュースを きのう ${x}L、きょう ${y}L 飲みました。合わせて 何L 飲みましたか。`,
+  },
+  {
+    id: 'ribbon',
+    op: '+',
+    unit: 'm',
+    text: (x, y) => `赤い リボンが ${x}m、青い リボンが ${y}m あります。合わせて 何mですか。`,
+  },
+  {
+    id: 'walk',
+    op: '+',
+    unit: 'km',
+    text: (x, y) =>
+      `家から 公園まで ${x}km、公園から 図書館まで ${y}kmです。家から 公園を 通って 図書館まで 何kmですか。`,
+  },
+  {
+    id: 'sand',
+    op: '+',
+    unit: 'kg',
+    text: (x, y) =>
+      `すなが ${x}kg 入った バケツに、${y}kgの すなを 入れました。すなは 全部で 何kgに なりましたか。`,
+  },
+  {
+    id: 'water',
+    op: '−',
+    unit: 'L',
+    text: (x, y) => `水が ${x}L あります。そのうち ${y}L 使いました。残りは 何Lですか。`,
+  },
+  {
+    id: 'rope',
+    op: '−',
+    unit: 'm',
+    text: (x, y) => `${x}mの ロープから ${y}m 切り取りました。残りは 何mですか。`,
+  },
+  {
+    id: 'tape',
+    op: '−',
+    unit: 'm',
+    text: (x, y) =>
+      `赤い テープは ${x}m、白い テープは ${y}mです。赤い テープは 白い テープより 何m 長いですか。`,
+  },
+  {
+    id: 'study',
+    op: '−',
+    unit: '時間',
+    text: (x, y) =>
+      `きのうは ${x}時間、きょうは ${y}時間 本を 読みました。きのうは きょうより 何時間 長く 読みましたか。`,
+  },
 ];
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -401,7 +462,8 @@ export const fractionAddDiff: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateFractionAddDiff(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 A(5) 分数の加法・減法（異分母の分数の加法及び減法）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 A(5) 分数の加法・減法（異分母の分数の加法及び減法）',
     revised: REVISED,
   },
   '入《はい》った 飲《の》みました 飲《の》 青《あお》い 赤《あか》い 白《しろ》い 図書館《としょかん》 記号《きごう》 切《き》り取《と》りました',

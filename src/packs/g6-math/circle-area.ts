@@ -8,7 +8,19 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, finishUnit, opts, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'formula' | 'radius' | 'diam' | 'part' | 'combo';
 
@@ -20,7 +32,8 @@ const A = (h: number) => dec(h, 2);
 const DASH = 'stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4"';
 function circleFig(label: string, kind: 'r' | 'd'): Figure {
   let body = `<circle cx="110" cy="100" r="80" fill="var(--sky)" ${STROKE}/><circle cx="110" cy="100" r="3.5" fill="var(--ink)"/>`;
-  if (kind === 'r') body += `<line x1="110" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(150, 86, label, 16);
+  if (kind === 'r')
+    body += `<line x1="110" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(150, 86, label, 16);
   else body += `<line x1="30" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(110, 86, label, 16);
   return svg(220, 200, body, kind === 'r' ? `半径が ${label}の 円` : `直径が ${label}の 円`);
 }
@@ -33,7 +46,8 @@ function halfFig(label: string): Figure {
 }
 function quarterFig(label: string): Figure {
   const body =
-    `<path d="M40 180 L40 30 A150 150 0 0 1 190 180 Z" fill="var(--sky)" ${STROKE}/>` + svgText(115, 196, label, 16);
+    `<path d="M40 180 L40 30 A150 150 0 0 1 190 180 Z" fill="var(--sky)" ${STROKE}/>` +
+    svgText(115, 196, label, 16);
   return svg(220, 210, body, `半径が ${label}の 円を 4等分した 形`);
 }
 function ringFig(R: number, r: number): Figure {
@@ -59,26 +73,41 @@ function squareQuarterFig(a: number): Figure {
     `<rect x="30" y="20" width="160" height="160" fill="var(--sky)" ${STROKE}/>` +
     `<path d="M30 180 L30 20 A160 160 0 0 1 190 180 Z" fill="var(--white)" ${STROKE}/>` +
     svgText(110, 196, `${a}cm`, 15);
-  return svg(220, 210, body, `1辺 ${a}cmの 正方形から、半径 ${a}cmの 円を 4等分した 形を 切り取った 残り`);
+  return svg(
+    220,
+    210,
+    body,
+    `1辺 ${a}cmの 正方形から、半径 ${a}cmの 円を 4等分した 形を 切り取った 残り`,
+  );
 }
 function leafFig(a: number): Figure {
   const body =
     `<rect x="30" y="20" width="160" height="160" fill="var(--white)" ${STROKE}/>` +
     `<path d="M30 180 A160 160 0 0 1 190 20 A160 160 0 0 1 30 180 Z" fill="var(--sky)" ${STROKE}/>` +
     svgText(110, 196, `${a}cm`, 15);
-  return svg(220, 210, body, `1辺 ${a}cmの 正方形の 中に、半径 ${a}cmの 円を 4等分した 形を 2つ 重ねて できた 葉の 形`);
+  return svg(
+    220,
+    210,
+    body,
+    `1辺 ${a}cmの 正方形の 中に、半径 ${a}cmの 円を 4等分した 形を 2つ 重ねて できた 葉の 形`,
+  );
 }
 function rearrangeFig(pieces: number): Figure {
+  // 上向きの おうぎ形 n こ と 下向きの おうぎ形 n こを たがいちがいに 並べる（上の 辺・下の 辺が それぞれ 円周の 半分）
   const n = pieces / 2;
-  const w = 200 / n;
-  let d = `M20 130`;
+  const w = 180 / n;
+  const top = (200 + w / 2).toFixed(1);
+  const left = (20 + w / 2).toFixed(1);
+  let zig = `M20 130`;
   for (let i = 0; i < n; i++) {
     const x = 20 + i * w;
-    d += ` L${(x + w / 2).toFixed(1)} 50 L${(x + w).toFixed(1)} 130`;
+    zig += ` L${(x + w / 2).toFixed(1)} 50 L${(x + w).toFixed(1)} 130`;
   }
+  zig += ` L${top} 50`;
   const body =
-    `<path d="${d} Z" fill="var(--sky)" ${STROKE}/>` +
-    `<line x1="20" y1="130" x2="220" y2="130" stroke="var(--ink)" stroke-width="3"/>` +
+    `<path d="M20 130 L200 130 L${top} 50 L${left} 50 Z" fill="var(--sky)" ${STROKE}/>` +
+    `<path d="${zig}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>` +
+    `<line x1="20" y1="130" x2="200" y2="130" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>` +
     `<line x1="232" y1="50" x2="232" y2="130" ${DASH}/>`;
   return svg(250, 150, body, `円を ${pieces}等分して、たがいちがいに 並べた 形`);
 }
@@ -126,10 +155,16 @@ function radiusItem(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     alt,
     `${r}`,
-    alt ? 'この 円の 面積は 何cm²ですか。円周率は 3.14と します。' : `半径 ${r}cmの 円の 面積は 何cm²ですか。円周率は 3.14と します。`,
+    alt
+      ? 'この 円の 面積は 何cm²ですか。円周率は 3.14と します。'
+      : `半径 ${r}cmの 円の 面積は 何cm²ですか。円周率は 3.14と します。`,
     alt ? circleFig(`${r}cm`, 'r') : undefined,
     area100(r),
-    ['円の 面積 ＝ 半径 × 半径 × 円周率 だね。', `${r} × ${r} × 3.14`, `${r} × ${r} ＝ ${r * r}。${r * r} × 3.14を 計算しよう。`],
+    [
+      '円の 面積 ＝ 半径 × 半径 × 円周率 だね。',
+      `${r} × ${r} × 3.14`,
+      `${r} × ${r} ＝ ${r * r}。${r * r} × 3.14を 計算しよう。`,
+    ],
     `${r} × ${r} × 3.14 ＝ ${A(area100(r))}（cm²）。`,
     [
       [r * 2 * 314, 'circumference'],
@@ -148,10 +183,16 @@ function diamItem(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     alt,
     `${d}`,
-    alt ? 'この 円の 面積は 何cm²ですか。円周率は 3.14と します。' : `直径 ${d}cmの 円の 面積は 何cm²ですか。円周率は 3.14と します。`,
+    alt
+      ? 'この 円の 面積は 何cm²ですか。円周率は 3.14と します。'
+      : `直径 ${d}cmの 円の 面積は 何cm²ですか。円周率は 3.14と します。`,
     alt ? circleFig(`${d}cm`, 'd') : undefined,
     area100(r),
-    ['公式で 使うのは 直径かな、半径かな。', `半径は ${d} ÷ 2 ＝ ${r}cm。`, `${r} × ${r} × 3.14を 計算しよう。`],
+    [
+      '公式で 使うのは 直径かな、半径かな。',
+      `半径は ${d} ÷ 2 ＝ ${r}cm。`,
+      `${r} × ${r} × 3.14を 計算しよう。`,
+    ],
     `半径は ${d} ÷ 2 ＝ ${r}cm。${r} × ${r} × 3.14 ＝ ${A(area100(r))}（cm²）。`,
     [
       [d * d * 314, 'diam-sq'],
@@ -205,7 +246,11 @@ function comboItem(level: number, rng: Rng, alt: boolean): NumberItem {
         `図のように、半径 ${R}cmの 円から、同じ 中心の 半径 ${r}cmの 円を 切り取りました。色の ついた 部分の 面積は 何cm²ですか。円周率は 3.14と します。`,
         ringFig(R, r),
         ans,
-        ['大きい 円の 面積から、小さい 円の 面積を ひこう。', `大きい 円は ${R} × ${R} × 3.14、小さい 円は ${r} × ${r} × 3.14。`, `(${R} × ${R} − ${r} × ${r}) × 3.14 と まとめて 計算しても よいよ。`],
+        [
+          '大きい 円の 面積から、小さい 円の 面積を ひこう。',
+          `大きい 円は ${R} × ${R} × 3.14、小さい 円は ${r} × ${r} × 3.14。`,
+          `(${R} × ${R} − ${r} × ${r}) × 3.14 と まとめて 計算しても よいよ。`,
+        ],
         `${R} × ${R} × 3.14 − ${r} × ${r} × 3.14 ＝ (${R * R} − ${r * r}) × 3.14 ＝ ${A(ans)}（cm²）。`,
         [
           [(R - r) * (R - r) * 314, 'ring-sub'],
@@ -223,7 +268,11 @@ function comboItem(level: number, rng: Rng, alt: boolean): NumberItem {
       `図のように、1辺 ${2 * r}cmの 正方形から、中に ぴったり 入る 円を 切り取りました。色の ついた 部分の 面積は 何cm²ですか。円周率は 3.14と します。`,
       squareCircleFig(r),
       ans,
-      ['正方形の 面積から、円の 面積を ひこう。', `円の 直径は 正方形の 1辺と 同じ ${2 * r}cm。半径は ${r}cm。`, `${2 * r} × ${2 * r} − ${r} × ${r} × 3.14`],
+      [
+        '正方形の 面積から、円の 面積を ひこう。',
+        `円の 直径は 正方形の 1辺と 同じ ${2 * r}cm。半径は ${r}cm。`,
+        `${2 * r} × ${2 * r} − ${r} × ${r} × 3.14`,
+      ],
       `${2 * r} × ${2 * r} − ${r} × ${r} × 3.14 ＝ ${4 * r * r} − ${A(area100(r))} ＝ ${A(ans)}（cm²）。`,
       [
         [4 * r * r * 100, 'forget-part'],
@@ -243,7 +292,11 @@ function comboItem(level: number, rng: Rng, alt: boolean): NumberItem {
       '色の ついた 部分の 面積は 何cm²ですか。円周率は 3.14と します。',
       squareQuarterFig(a),
       ans,
-      ['正方形から、円を 4等分した 形を ひいた 残りだね。', `円を 4等分した 形は ${a} × ${a} × 3.14 ÷ 4。`, `${a} × ${a} − ${A(quarter)}を 計算しよう。`],
+      [
+        '正方形から、円を 4等分した 形を ひいた 残りだね。',
+        `円を 4等分した 形は ${a} × ${a} × 3.14 ÷ 4。`,
+        `${a} × ${a} − ${A(quarter)}を 計算しよう。`,
+      ],
       `${a} × ${a} − ${a} × ${a} × 3.14 ÷ 4 ＝ ${a * a} − ${A(quarter)} ＝ ${A(ans)}（cm²）。`,
       [
         [quarter, 'forget-part'],
@@ -286,7 +339,11 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
       `半径 ${r}cmの 円を ${pieces}等分して、図のように 並べかえると 長方形に 近い 形に なります。この 形の 横の 長さ（太い 線）は 何cmですか。円周率は 3.14と します。`,
       rearrangeFig(pieces),
       ans,
-      ['太い 線は、円周の どれだけに あたるかな。', `円周の 半分だね。円周は ${r * 2} × 3.14。`, `${r * 2} × 3.14 ÷ 2 ＝ ${r} × 3.14`],
+      [
+        '太い 線は、円周の どれだけに あたるかな。',
+        `円周の 半分だね。円周は ${r * 2} × 3.14。`,
+        `${r * 2} × 3.14 ÷ 2 ＝ ${r} × 3.14`,
+      ],
       `横の 長さは 円周の 半分で、${r * 2} × 3.14 ÷ 2 ＝ ${A(ans)}（cm）。縦《たて》は 半径なので、面積は 半径 × 円周の 半分 ＝ 半径 × 半径 × 3.14 に なります。`,
       [
         [r * 2 * 314, 'half-circ'],
@@ -302,7 +359,7 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
       prompt: `${base}この 形の 縦《たて》の 長さ（点線）は、もとの 円の 何に あたりますか。`,
       correct: '半径',
       wrongs: [
-        ['直径', 'diam-sq'],
+        ['直径', 'half-circ'],
         ['円周の 半分', 'half-circ'],
         ['円周', 'half-circ'],
       ] as [string, string][],
@@ -313,8 +370,8 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
       correct: '円周の 半分',
       wrongs: [
         ['円周', 'half-circ'],
-        ['直径', 'diam-sq'],
-        ['半径', 'no-square'],
+        ['直径', 'half-circ'],
+        ['半径', 'half-circ'],
       ] as [string, string][],
       explain: '上と 下に 円周が 半分ずつ 分かれるので、横の 長さは 円周の 半分です。',
     },
@@ -326,7 +383,8 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
         ['半径 × 2 × 3.14', 'circumference'],
         ['円周 × 半径', 'half-circ'],
       ] as [string, string][],
-      explain: '長方形の 面積 ＝ 縦《たて》 × 横《よこ》 ＝ 半径 × 円周の 半分 ＝ 半径 × (直径 × 3.14 ÷ 2) ＝ 半径 × 半径 × 3.14 です。',
+      explain:
+        '長方形の 面積 ＝ 縦《たて》 × 横《よこ》 ＝ 半径 × 円周の 半分 ＝ 半径 × (直径 × 3.14 ÷ 2) ＝ 半径 × 半径 × 3.14 です。',
     },
   }[ask];
   const it: ChoiceItem = {
@@ -393,12 +451,34 @@ export const circleArea: UnitSpec = finishUnit({
     { id: 'combo', title: '組み合わせた 形' },
   ],
   misconceptions: [
-    { id: 'diam-sq', explain: '直径 × 直径で 計算したのかな。円の 面積は 半径 × 半径 × 3.14。直径の ときは まず 2で わって 半径に しよう。' },
-    { id: 'circumference', explain: '円周の 長さ（直径 × 3.14）を 求めたのかな。面積は 半径 × 半径 × 3.14 だよ。' },
-    { id: 'no-square', explain: '半径を 1回しか かけて いないのかな。半径 × 半径 × 3.14と、半径を 2回 かけるよ。' },
-    { id: 'forget-part', explain: '円全体（または 一部）の 面積の ままに したのかな。半円は ÷ 2、4等分した 形は ÷ 4。図の どこを 求めるか たしかめよう。' },
-    { id: 'ring-sub', explain: '半径どうしを ひいてから 面積を 求めたのかな。大きい 円の 面積 − 小さい 円の 面積 で 求めよう。' },
-    { id: 'half-circ', explain: '並べかえた 形の 横は 円周の 半分、縦《たて》は 半径だよ。円周は 上と 下に 半分ずつ 分かれて いるね。' },
+    {
+      id: 'diam-sq',
+      explain:
+        '直径 × 直径で 計算したのかな。円の 面積は 半径 × 半径 × 3.14。直径の ときは まず 2で わって 半径に しよう。',
+    },
+    {
+      id: 'circumference',
+      explain: '円周の 長さ（直径 × 3.14）を 求めたのかな。面積は 半径 × 半径 × 3.14 だよ。',
+    },
+    {
+      id: 'no-square',
+      explain: '半径を 1回しか かけて いないのかな。半径 × 半径 × 3.14と、半径を 2回 かけるよ。',
+    },
+    {
+      id: 'forget-part',
+      explain:
+        '円全体（または 一部）の 面積の ままに したのかな。半円は ÷ 2、4等分した 形は ÷ 4。図の どこを 求めるか たしかめよう。',
+    },
+    {
+      id: 'ring-sub',
+      explain:
+        '半径どうしを ひいてから 面積を 求めたのかな。大きい 円の 面積 − 小さい 円の 面積 で 求めよう。',
+    },
+    {
+      id: 'half-circ',
+      explain:
+        '並べかえた 形の 横は 円周の 半分、縦《たて》は 半径だよ。円周は 上と 下に 半分ずつ 分かれて いるね。',
+    },
   ],
   levels: [
     { label: '公式の わけ・半径', chance: 0.05 },

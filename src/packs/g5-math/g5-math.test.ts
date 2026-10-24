@@ -51,7 +51,8 @@ function extraChecks(unit: UnitSpec): string[] {
     const prev = ids.get(it.id);
     if (prev !== undefined && prev !== it.identity) errs.push(`id が別の問題と重複: ${it.id}`);
     ids.set(it.id, it.identity);
-    if (FIGURE_ENGINES.has(it.engine) && it.figure) errs.push(`[${it.id}] ${it.engine} に figure が付いている`);
+    if (FIGURE_ENGINES.has(it.engine) && it.figure)
+      errs.push(`[${it.id}] ${it.engine} に figure が付いている`);
   }
   const texts = [
     unit.title,
@@ -83,7 +84,8 @@ const ansText = (a: {
   if (a.kind !== 'fraction') return String(a.value);
   const n = a.num!;
   const d = a.den!;
-  if (a.allowImproper === false && n > d && n % d !== 0) return `${Math.floor(n / d)}と${n % d}/${d}`;
+  if (a.allowImproper === false && n > d && n % d !== 0)
+    return `${Math.floor(n / d)}と${n % d}/${d}`;
   return `${n}/${d}`;
 };
 

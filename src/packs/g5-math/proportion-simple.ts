@@ -26,15 +26,85 @@ interface Scene {
 }
 
 const SCENES: Scene[] = [
-  { id: 'tape', x: 'テープの 長さ □（m）', y: '代金 ○（円）', xu: 'm', yu: '円', ks: [20, 30, 40, 50, 60, 70, 80, 90], per: (k) => `1mの 代金は ${k}円` },
-  { id: 'water', x: '水を 入れる 時間 □（分《ふん》）', y: '水の 深さ ○（cm）', xu: '分《ふん》', yu: 'cm', ks: [2, 3, 4, 5, 6], per: (k) => `1分《ぷん》で ${k}cm ふかく なる` },
-  { id: 'square', x: '正方形の 1辺の 長さ □（cm）', y: 'まわりの 長さ ○（cm）', xu: 'cm', yu: 'cm', ks: [4], per: () => '正方形の まわりは 1辺の 4つ分' },
-  { id: 'note', x: 'ノートの さっ数 □（さつ）', y: '代金 ○（円）', xu: 'さつ', yu: '円', ks: [80, 90, 100, 110, 120, 130, 150], per: (k) => `1さつ ${k}円` },
-  { id: 'wire', x: 'はり金の 長さ □（m）', y: '重さ ○（g）', xu: 'm', yu: 'g', ks: [15, 20, 25, 30, 35, 40], per: (k) => `1mの 重さは ${k}g` },
-  { id: 'stairs', x: 'だんの 数 □（だん）', y: '高さ ○（cm）', xu: 'だん', yu: 'cm', ks: [12, 14, 15, 16, 18, 20], per: (k) => `1だんの 高さは ${k}cm` },
-  { id: 'bike', x: '走る 時間 □（分《ふん》）', y: '道のり ○（m）', xu: '分《ふん》', yu: 'm', ks: [150, 200, 250, 300], per: (k) => `1分《ぷん》で ${k}m 進む` },
-  { id: 'tri', x: '正三角形の 1辺の 長さ □（cm）', y: 'まわりの 長さ ○（cm）', xu: 'cm', yu: 'cm', ks: [3], per: () => '正三角形の まわりは 1辺の 3つ分' },
+  {
+    id: 'tape',
+    x: 'テープの 長さ □（m）',
+    y: '代金 ○（円）',
+    xu: 'm',
+    yu: '円',
+    ks: [20, 30, 40, 50, 60, 70, 80, 90],
+    per: (k) => `1mの 代金は ${k}円`,
+  },
+  {
+    id: 'water',
+    x: '水を 入れる 時間 □（分《ふん》）',
+    y: '水の 深さ ○（cm）',
+    xu: '分《ふん》',
+    yu: 'cm',
+    ks: [2, 3, 4, 5, 6],
+    per: (k) => `1分《ぷん》で ${k}cm ふかく なる`,
+  },
+  {
+    id: 'square',
+    x: '正方形の 1辺の 長さ □（cm）',
+    y: 'まわりの 長さ ○（cm）',
+    xu: 'cm',
+    yu: 'cm',
+    ks: [4],
+    per: () => '正方形の まわりは 1辺の 4つ分',
+  },
+  {
+    id: 'note',
+    x: 'ノートの さっ数《すう》 □（さつ）',
+    y: '代金 ○（円）',
+    xu: 'さつ',
+    yu: '円',
+    ks: [80, 90, 100, 110, 120, 130, 150],
+    per: (k) => `1さつ ${k}円`,
+  },
+  {
+    id: 'wire',
+    x: 'はり金の 長さ □（m）',
+    y: '重さ ○（g）',
+    xu: 'm',
+    yu: 'g',
+    ks: [15, 20, 25, 30, 35, 40],
+    per: (k) => `1mの 重さは ${k}g`,
+  },
+  {
+    id: 'stairs',
+    x: 'だんの 数 □（だん）',
+    y: '高さ ○（cm）',
+    xu: 'だん',
+    yu: 'cm',
+    ks: [12, 14, 15, 16, 18, 20],
+    per: (k) => `1だんの 高さは ${k}cm`,
+  },
+  {
+    id: 'bike',
+    x: '走る 時間 □（分《ふん》）',
+    y: '道のり ○（m）',
+    xu: '分《ふん》',
+    yu: 'm',
+    ks: [150, 200, 250, 300],
+    per: (k) => `1分《ぷん》で ${k}m 進む`,
+  },
+  {
+    id: 'tri',
+    x: '正三角形の 1辺の 長さ □（cm）',
+    y: 'まわりの 長さ ○（cm）',
+    xu: 'cm',
+    yu: 'cm',
+    ks: [3],
+    per: () => '正三角形の まわりは 1辺の 3つ分',
+  },
 ];
+
+/** 数と □ の 単位（「分」は 数で 読みが かわる: 3分《ぷん》・5分《ふん》） */
+const xn = (sc: Scene, n: number) =>
+  sc.xu.startsWith('分')
+    ? `${n}分《${'134680'.includes(String(n).slice(-1)) ? 'ぷん' : 'ふん'}》`
+    : `${n}${sc.xu}`;
 
 /** 表（見出しの 行と ○ の 行）。null の ところは 空ける、'？' は 問う ところ */
 function table(sc: Scene, xs: (number | string)[], ys: (number | string | null)[]): Figure {
@@ -62,7 +132,11 @@ function times(level: number, rng: Rng, alt: boolean): Item {
       objective: 'times',
       level,
       prompt: `${sc.x.replace(/ □.*$/, '')}が ${m}倍に なると、${sc.y.replace(/ ○.*$/, '')}は どう なりますか。（${sc.per(k)}）`,
-      figure: table(sc, [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6].map((x) => k * x)),
+      figure: table(
+        sc,
+        [1, 2, 3, 4, 5, 6],
+        [1, 2, 3, 4, 5, 6].map((x) => k * x),
+      ),
       hints: [
         '表を 横に 見て、□が 2倍の ところを さがそう。',
         `□が 1から 2に なると、○は ${k}から ${2 * k}に なるね。`,
@@ -91,7 +165,11 @@ function times(level: number, rng: Rng, alt: boolean): Item {
     objective: 'times',
     level,
     prompt: `${sc.x.replace(/ □.*$/, '')} □が ${a}から ${b}に なると、${sc.y.replace(/ ○.*$/, '')} ○は 何倍に なりますか。`,
-    figure: table(sc, xs, xs.map((x) => k * x)),
+    figure: table(
+      sc,
+      xs,
+      xs.map((x) => k * x),
+    ),
     hints: [
       '○の 数どうしを くらべよう。ひき算ではなく、何倍かを 考えるよ。',
       `○は ${k * a}から ${k * b}に なったね。`,
@@ -121,7 +199,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `fill-alt:${sc.id}:${k}:${a}:${t}`,
       objective: 'fill',
       level,
-      prompt: `${sc.y.replace(/ ○.*$/, '')}は ${sc.x.replace(/ □.*$/, '')}に 比例します。□が ${a}${sc.xu}の とき、○は ${k * a}${sc.yu}です。□が ${t}${sc.xu}の とき、○は 何${sc.yu}ですか。`,
+      prompt: `${sc.y.replace(/ ○.*$/, '')}は ${sc.x.replace(/ □.*$/, '')}に 比例します。□が ${xn(sc, a)}の とき、○は ${k * a}${sc.yu}です。□が ${xn(sc, t)}の とき、○は 何${sc.yu}ですか。`,
       hints: [
         '比例する ときは、□が 何倍に なると ○も 同じ 何倍に なるよ。',
         `□が 1の ときの ○を 先に 求めよう。${k * a} ÷ ${a}。`,
@@ -133,7 +211,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
       fields: [{ label: sc.yu, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [k * a + (t - a), 'add-not-mult'],
-        [k * a * t, 'k-swap'],
+        [k * a * t, 'skip-per-one'],
       ]),
     };
   }
@@ -177,7 +255,7 @@ function judge(level: number, rng: Rng, alt: boolean): ChoiceItem {
   if (alt) {
     const PROP = [
       '1本 60円の えんぴつの 本数と 代金',
-      '1さつ 3cmの あつさの 本を 重ねた ときの さっ数と 高さ',
+      '1さつ 3cmの あつさの 本を 重ねた ときの さっ数《すう》と 高さ',
       '正方形の 1辺の 長さと まわりの 長さ',
       '同じ 速さで 歩く ときの 時間と 道のり',
       '1mの 重さが 20gの はり金の 長さと 重さ',
@@ -187,7 +265,7 @@ function judge(level: number, rng: Rng, alt: boolean): ChoiceItem {
       ['姉と 妹の 年れい（姉は 3才 上）', 'not-proportional'],
       ['正方形の 1辺の 長さと 面積', 'not-proportional'],
       ['まわりの 長さが 20cmの 長方形の たてと 横の 長さ', 'not-proportional'],
-      ['30まいの 色紙から 使った まい数と のこりの まい数', 'not-proportional'],
+      ['30まいの 色紙から 使った まい数《すう》と のこりの まい数《すう》', 'not-proportional'],
       ['1日の 昼の 時間と 夜の 時間', 'not-proportional'],
     ] as const;
     const p = pick(rng, PROP);
@@ -204,10 +282,16 @@ function judge(level: number, rng: Rng, alt: boolean): ChoiceItem {
         '一方を 2倍に すると、もう一方が ちょうど 2倍に なるのは どれかな。',
       ],
       explain: `「${p}」は、一方が 2倍、3倍に なると もう一方も 2倍、3倍に なるので 比例します。ほかは 2倍に しても 2倍に ならないよ。`,
-      identity: `judge-alt:${p}:${ns.map((n) => n[0]).sort().join('|')}`,
+      identity: `judge-alt:${p}:${ns
+        .map((n) => n[0])
+        .sort()
+        .join('|')}`,
       alt: true,
       layout: 'column',
-      options: [{ label: p, correct: true }, ...ns.map(([l, m]) => ({ label: l, misconception: m }))],
+      options: [
+        { label: p, correct: true },
+        ...ns.map(([l, m]) => ({ label: l, misconception: m })),
+      ],
     };
   }
   const k = rng.int(2, 9);
@@ -216,7 +300,11 @@ function judge(level: number, rng: Rng, alt: boolean): ChoiceItem {
     const c = w.id === 'minus' ? rng.int(8, 15) : rng.int(1, 6);
     return { key: `${w.id}${c}`, ys: xs.map((x) => w.f(x, c)), id: w.id };
   });
-  const tbl = (ys: number[]): Figure => ({ kind: 'table', header: ['□', ...xs.map(String)], rows: [['○', ...ys.map(String)]] });
+  const tbl = (ys: number[]): Figure => ({
+    kind: 'table',
+    header: ['□', ...xs.map(String)],
+    rows: [['○', ...ys.map(String)]],
+  });
   return {
     engine: 'choice',
     id: `judge:${k}:${wrong.map((w) => w.key).join('|')}`,
@@ -229,7 +317,10 @@ function judge(level: number, rng: Rng, alt: boolean): ChoiceItem {
       'どの 列でも ○ ÷ □が 同じ 数に なる 表を さがそう。',
     ],
     explain: `比例する 表は、□が 2倍、3倍に なると ○も 2倍、3倍に なります。○ ÷ □が いつも ${k}に なる 表が 比例です。`,
-    identity: `judge:${k}:${wrong.map((w) => w.key).sort().join('|')}`,
+    identity: `judge:${k}:${wrong
+      .map((w) => w.key)
+      .sort()
+      .join('|')}`,
     alt: false,
     layout: 'grid',
     options: [
@@ -271,7 +362,17 @@ function formula(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'formula',
     level,
     prompt: '表を 見て、○ ＝ □ × きまった数 の 式に 表そう。きまった数は いくつですか。',
-    figure: { kind: 'column', items: [table(sc, xs, xs.map((x) => k * x)), expr('○ ＝ □ × {{}}')] },
+    figure: {
+      kind: 'column',
+      items: [
+        table(
+          sc,
+          xs,
+          xs.map((x) => k * x),
+        ),
+        expr('○ ＝ □ × {{}}'),
+      ],
+    },
     hints: [
       '○を □で わると、どの 列でも 同じ 数に なるよ。',
       `□が 2の とき ○は ${2 * k}。${2 * k} ÷ 2を 計算しよう。`,
@@ -304,12 +405,8 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
       ? `${sc.y.replace(/ ○.*$/, '')} ○は ${sc.x.replace(/ □.*$/, '')} □に 比例し、○ ＝ □ × ${k}です。○が ${y}${sc.yu}の とき、□は いくつですか。`
       : `表の ？に あてはまる 数を 求めよう。○は □に 比例します。`,
     figure: alt ? undefined : table(sc, xs, [k, 2 * k, 3 * k, '…', y]),
-    hints: [
-      `○ ＝ □ × ${k}の □を 求めるよ。`,
-      `□ × ${k} ＝ ${y}`,
-      `${y} ÷ ${k}を 計算しよう。`,
-    ],
-    explain: `□ × ${k} ＝ ${y}なので、□ ＝ ${y} ÷ ${k} ＝ ${t}。答えは ${t}${sc.xu}です。`,
+    hints: [`○ ＝ □ × ${k}の □を 求めるよ。`, `□ × ${k} ＝ ${y}`, `${y} ÷ ${k}を 計算しよう。`],
+    explain: `□ × ${k} ＝ ${y}なので、□ ＝ ${y} ÷ ${k} ＝ ${t}。答えは ${xn(sc, t)}です。`,
     identity: `inverse${alt ? '-alt' : ''}:${sc.id}:${k}:${t}`,
     alt,
     fields: [{ label: sc.xu, answer: answers[0]! }],
@@ -382,6 +479,11 @@ export const proportionSimple: UnitSpec = finishUnit(
         explain:
           'かけ算と わり算を 反対に したのかな。○ ＝ □ × きまった数。○から □を 求める ときは ○ ÷ きまった数 だよ。',
       },
+      {
+        id: 'skip-per-one',
+        explain:
+          '分かって いる ○を そのまま かけたのかな。それは □が 1の ときの ○では ないよ。先に ○ ÷ □で □が 1の ときの ○を 求めてから かけよう。',
+      },
     ],
     levels: [
       { label: '何倍に なるか・表の 空らん', chance: 0.05 },
@@ -408,7 +510,8 @@ export const proportionSimple: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateProportionSimple(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 C(1) 伴って変わる二つの数量の関係（簡単な場合についての比例の関係）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 C(1) 伴って変わる二つの数量の関係（簡単な場合についての比例の関係）',
     revised: REVISED,
   },
   'はり金《がね》 頭《あたま》 深《ふか》さ 深《ふか》く 深《ふか》 水《すい》そう 才《さい》 年《ねん》れい 色紙《いろがみ》 夜《よる》 昼《ひる》 姉《あね》 妹《いもうと》 重《かさ》ねた 走《はし》る 歩《ある》く 空《くう》らん 空《あ》いた 数《かず》 一方《いっぽう》 進《すす》む 本数《ほんすう》 列《れつ》',

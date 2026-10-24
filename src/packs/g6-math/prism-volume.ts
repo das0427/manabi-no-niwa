@@ -7,18 +7,36 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, finishUnit, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  finishUnit,
+  pick,
+  pickObj,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'base' | 'tri' | 'quad' | 'cyl';
 
 const HID = 'stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4" fill="none"';
 
 /** 角柱の見取図（底面の多角形を上下に描き、高さの辺でつなぐ）。base は 0〜1 の座標の底面 */
-function prismFig(base: [number, number][], labels: string[], hLabel: string, label: string, topLabel?: string): Figure {
+function prismFig(
+  base: [number, number][],
+  labels: string[],
+  hLabel: string,
+  label: string,
+  topLabel?: string,
+): Figure {
   const W = 150;
   const D = 60; // 奥行きの つぶし
   const H = 110;
-  const P = (p: [number, number], top: boolean) => [20 + p[0] * W, (top ? 0 : H) + 20 + D - p[1] * D] as const;
+  const P = (p: [number, number], top: boolean) =>
+    [20 + p[0] * W, (top ? 0 : H) + 20 + D - p[1] * D] as const;
   const bot = base.map((p) => P(p, false));
   const top = base.map((p) => P(p, true));
   let body = `<polygon points="${top.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
@@ -38,7 +56,13 @@ function prismFig(base: [number, number][], labels: string[], hLabel: string, la
     const b = bot[(i + 1) % bot.length]!;
     body += svgText((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 14, l, 14);
   });
-  if (topLabel) body += svgText(top.reduce((s, p) => s + p[0], 0) / top.length, top.reduce((s, p) => s + p[1], 0) / top.length, topLabel, 14);
+  if (topLabel)
+    body += svgText(
+      top.reduce((s, p) => s + p[0], 0) / top.length,
+      top.reduce((s, p) => s + p[1], 0) / top.length,
+      topLabel,
+      14,
+    );
   const right = Math.max(...bot.map((p) => p[0]));
   body += svgText(right + 26, 20 + D + H / 2, hLabel, 14);
   return svg(230, 230, body, label);
@@ -49,7 +73,9 @@ function cylFig(rLabel: string, hLabel: string, label: string, topLabel?: string
     `<path d="M30 50 L30 170 A70 22 0 0 0 170 170 L170 50" fill="var(--sky)" ${STROKE}/>` +
     `<ellipse cx="100" cy="50" rx="70" ry="22" fill="var(--sky)" ${STROKE}/>` +
     `<path d="M30 170 A70 22 0 0 1 170 170" ${HID}/>` +
-    (rLabel ? `<line x1="100" y1="50" x2="170" y2="50" ${STROKE}/>` + svgText(135, 38, rLabel, 14) : '') +
+    (rLabel
+      ? `<line x1="100" y1="50" x2="170" y2="50" ${STROKE}/>` + svgText(135, 38, rLabel, 14)
+      : '') +
     svgText(196, 110, hLabel, 14) +
     (topLabel ? svgText(100, 50, topLabel, 14) : '');
   return svg(230, 210, body, label);
@@ -106,10 +132,25 @@ function baseItem(level: number, rng: Rng, alt: boolean): NumberItem {
         ? cylFig('', `${h}cm`, `底面積 ${S}cm²、高さ ${h}cmの 円柱`, `${S}cm²`)
         : prismFig(
             solid === '三角柱'
-              ? [[0, 0], [1, 0], [0.4, 1]]
+              ? [
+                  [0, 0],
+                  [1, 0],
+                  [0.4, 1],
+                ]
               : solid === '四角柱'
-                ? [[0, 0], [0.8, 0], [1, 1], [0.2, 1]]
-                : [[0.1, 0], [0.9, 0], [1, 0.6], [0.5, 1], [0, 0.6]],
+                ? [
+                    [0, 0],
+                    [0.8, 0],
+                    [1, 1],
+                    [0.2, 1],
+                  ]
+                : [
+                    [0.1, 0],
+                    [0.9, 0],
+                    [1, 0.6],
+                    [0.5, 1],
+                    [0, 0.6],
+                  ],
             [],
             `${h}cm`,
             `底面積 ${S}cm²、高さ ${h}cmの ${solid}`,
@@ -118,7 +159,11 @@ function baseItem(level: number, rng: Rng, alt: boolean): NumberItem {
       : undefined,
     S * h,
     0,
-    ['角柱・円柱の 体積は、底面積 × 高さ で 求められるよ。', `底面積は ${S}cm²、高さは ${h}cm。`, `${S} × ${h}を 計算しよう。`],
+    [
+      '角柱・円柱の 体積は、底面積 × 高さ で 求められるよ。',
+      `底面積は ${S}cm²、高さは ${h}cm。`,
+      `${S} × ${h}を 計算しよう。`,
+    ],
     `${S} × ${h} ＝ ${S * h}（cm³）。角柱・円柱の 体積は 底面積 × 高さです。${alt ? '（図の 上の 面に 書いて ある 数が 底面積）' : ''}`,
     [
       [S + h, 'add-instead'],
@@ -142,10 +187,26 @@ function triItem(level: number, rng: Rng, alt: boolean): NumberItem {
     alt
       ? 'この 三角柱の 体積は 何cm³ですか。底面は 直角三角形です。'
       : `底面が、直角を はさむ 2つの 辺が ${a}cmと ${b}cmの 直角三角形で、高さが ${h}cmの 三角柱が あります。体積は 何cm³ですか。`,
-    alt ? prismFig([[0, 0], [1, 0], [0, 1]], [`${a}cm`, '', `${b}cm`], `${h}cm`, `底面が 直角三角形（直角を はさむ 辺 ${a}cmと ${b}cm）、高さ ${h}cmの 三角柱`) : undefined,
+    alt
+      ? prismFig(
+          [
+            [0, 0],
+            [1, 0],
+            // 奥の 頂点を 真上に 置くと、底面の 辺（b）が 手前の 高さの 辺と 重なって 高さと 見分けられないので ずらす
+            [0.25, 1],
+          ],
+          [`${a}cm`, '', `${b}cm`],
+          `${h}cm`,
+          `底面が 直角三角形（直角を はさむ 辺 ${a}cmと ${b}cm）、高さ ${h}cmの 三角柱`,
+        )
+      : undefined,
     S * h,
     0,
-    ['まず 底面の 三角形の 面積を 求めよう。', `底面積は ${a} × ${b} ÷ 2 ＝ ${S}cm²。`, `${S} × ${h}を 計算しよう。`],
+    [
+      'まず 底面の 三角形の 面積を 求めよう。',
+      `底面積は ${a} × ${b} ÷ 2 ＝ ${S}cm²。`,
+      `${S} × ${h}を 計算しよう。`,
+    ],
     `底面積は ${a} × ${b} ÷ 2 ＝ ${S}（cm²）。体積は ${S} × ${h} ＝ ${S * h}（cm³）。`,
     [
       [a * b * h, 'no-half'],
@@ -173,12 +234,15 @@ function quadItem(level: number, rng: Rng, alt: boolean): NumberItem {
       undefined,
       S * h,
       0,
-      ['まず 底面の 台形の 面積を 求めよう。', `台形の 面積は (上底 ＋ 下底) × 高さ ÷ 2。(${u} ＋ ${d}) × ${t} ÷ 2 ＝ ${S}cm²。`, `${S} × ${h}を 計算しよう。`],
+      [
+        'まず 底面の 台形の 面積を 求めよう。',
+        `台形の 面積は (上底 ＋ 下底) × 高さ ÷ 2。(${u} ＋ ${d}) × ${t} ÷ 2 ＝ ${S}cm²。`,
+        `${S} × ${h}を 計算しよう。`,
+      ],
       `底面積は (${u} ＋ ${d}) × ${t} ÷ 2 ＝ ${S}（cm²）。体積は ${S} × ${h} ＝ ${S * h}（cm³）。`,
       [
         [(u + d) * t * h, 'no-half'],
         [S + h, 'add-instead'],
-        [u * d * t * h, 'add-instead'],
       ],
     );
   }
@@ -196,7 +260,19 @@ function quadItem(level: number, rng: Rng, alt: boolean): NumberItem {
       ? `この 四角柱の 底面は、底辺 ${p}cm・高さ ${r}cmの 平行四辺形です。四角柱の 高さは ${h}cmです。体積は 何cm³ですか。`
       : `この 四角柱の 底面は、対角線が ${p}cmと ${r}cmの ひし形です。四角柱の 高さは ${h}cmです。体積は 何cm³ですか。`,
     prismFig(
-      para ? [[0, 0], [0.75, 0], [1, 1], [0.25, 1]] : [[0.5, 0], [1, 0.5], [0.5, 1], [0, 0.5]],
+      para
+        ? [
+            [0, 0],
+            [0.75, 0],
+            [1, 1],
+            [0.25, 1],
+          ]
+        : [
+            [0.5, 0],
+            [1, 0.5],
+            [0.5, 1],
+            [0, 0.5],
+          ],
       [],
       `${h}cm`,
       para ? `底面が 平行四辺形の 四角柱` : `底面が ひし形の 四角柱`,
@@ -204,7 +280,9 @@ function quadItem(level: number, rng: Rng, alt: boolean): NumberItem {
     S * h,
     0,
     [
-      para ? '平行四辺形の 面積は 底辺 × 高さ だね。' : 'ひし形の 面積は 対角線 × 対角線 ÷ 2 だね。',
+      para
+        ? '平行四辺形の 面積は 底辺 × 高さ だね。'
+        : 'ひし形の 面積は 対角線 × 対角線 ÷ 2 だね。',
       `底面積は ${para ? `${p} × ${r}` : `${p} × ${r} ÷ 2`} ＝ ${S}cm²。`,
       `${S} × ${h}を 計算しよう。`,
     ],
@@ -235,7 +313,9 @@ function cylItem(level: number, rng: Rng, alt: boolean): NumberItem {
     2,
     [
       '底面は 円。まず 底面積を 求めよう。',
-      alt ? `半径は ${d} ÷ 2 ＝ ${r}cm。底面積は ${r} × ${r} × 3.14 ＝ ${dec(S100, 2)}cm²。` : `底面積は ${r} × ${r} × 3.14 ＝ ${dec(S100, 2)}cm²。`,
+      alt
+        ? `半径は ${d} ÷ 2 ＝ ${r}cm。底面積は ${r} × ${r} × 3.14 ＝ ${dec(S100, 2)}cm²。`
+        : `底面積は ${r} × ${r} × 3.14 ＝ ${dec(S100, 2)}cm²。`,
       `${dec(S100, 2)} × ${h}を 計算しよう。`,
     ],
     `底面積は ${r} × ${r} × 3.14 ＝ ${dec(S100, 2)}（cm²）。体積は ${dec(S100, 2)} × ${h} ＝ ${dec(V, 2)}（cm³）。`,
@@ -288,12 +368,33 @@ export const prismVolume: UnitSpec = finishUnit({
     { id: 'cyl', title: '円柱の 体積' },
   ],
   misconceptions: [
-    { id: 'add-instead', explain: 'たし算を したのかな。体積は 底面積 × 高さ。底面の 上に 同じ 形が 高さの 分だけ 積み重なって いると 考えよう。' },
-    { id: 'no-half', explain: '底面積を 求める ときに ÷ 2を 忘れたのかな。三角形・台形・ひし形の 面積の 公式を たしかめよう。' },
-    { id: 'extra-half', explain: 'いらない ÷ 2（× 2）を したのかな。体積は 底面積 × 高さ だけで 求められるよ。' },
-    { id: 'diam-sq', explain: '直径を 半径の かわりに 使ったのかな。底面の 円の 面積は 半径 × 半径 × 3.14 だよ。' },
-    { id: 'circumference', explain: '底面の 円周の 長さを 使ったのかな。底面積（半径 × 半径 × 3.14）に 高さを かけよう。' },
-    { id: 'no-square', explain: '半径を 1回しか かけて いないのかな。底面積は 半径 × 半径 × 3.14 だよ。' },
+    {
+      id: 'add-instead',
+      explain:
+        'たし算を したのかな。体積は 底面積 × 高さ。底面の 上に 同じ 形が 高さの 分だけ 積み重なって いると 考えよう。',
+    },
+    {
+      id: 'no-half',
+      explain:
+        '底面積を 求める ときに ÷ 2を 忘れたのかな。三角形・台形・ひし形の 面積の 公式を たしかめよう。',
+    },
+    {
+      id: 'extra-half',
+      explain: 'いらない ÷ 2（× 2）を したのかな。体積は 底面積 × 高さ だけで 求められるよ。',
+    },
+    {
+      id: 'diam-sq',
+      explain: '直径を 半径の かわりに 使ったのかな。底面の 円の 面積は 半径 × 半径 × 3.14 だよ。',
+    },
+    {
+      id: 'circumference',
+      explain:
+        '底面の 円周の 長さを 使ったのかな。底面積（半径 × 半径 × 3.14）に 高さを かけよう。',
+    },
+    {
+      id: 'no-square',
+      explain: '半径を 1回しか かけて いないのかな。底面積は 半径 × 半径 × 3.14 だよ。',
+    },
   ],
   levels: [
     { label: '底面積 × 高さ・三角柱', chance: 0.05 },
@@ -307,7 +408,16 @@ export const prismVolume: UnitSpec = finishUnit({
     },
     {
       text: '角柱・円柱は、底面と 同じ 形が 高さの 分だけ 重なった 立体です。体積 ＝ 底面積 × 高さ で 求められます。',
-      figure: prismFig([[0, 0], [1, 0], [0.4, 1]], [], '5cm', '三角柱の 見取図'),
+      figure: prismFig(
+        [
+          [0, 0],
+          [1, 0],
+          [0.4, 1],
+        ],
+        [],
+        '5cm',
+        '三角柱の 見取図',
+      ),
     },
     {
       text: '円柱は、底面積（半径 × 半径 × 3.14）に 高さを かけます。半径 2cm、高さ 5cmなら 2 × 2 × 3.14 × 5 ＝ 62.8cm³。',

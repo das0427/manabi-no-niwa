@@ -35,7 +35,15 @@ const FRAC = ['', '[[1/10]]', '[[1/100]]', '[[1/1000]]'];
 
 /** 位の表（百の位 〜 1/1000の位）に数字を入れた図 */
 function placeTable(rows: [string, [number, number]][]): Figure {
-  const header = ['', '百の位', '十の位', '一の位', '[[1/10]]の位', '[[1/100]]の位', '[[1/1000]]の位'];
+  const header = [
+    '',
+    '百の位',
+    '十の位',
+    '一の位',
+    '[[1/10]]の位',
+    '[[1/100]]の位',
+    '[[1/1000]]の位',
+  ];
   return {
     kind: 'table',
     header,
@@ -87,16 +95,52 @@ function wrongs(v: number, p: number, s: number, ans: [number, number]) {
 }
 
 const SCENES_UP = [
-  { id: 'paper', text: (x: string, k: string) => `1まい ${x}gの 紙が ${k}まい あります。全部で 何gですか。`, unit: 'g' },
-  { id: 'juice', text: (x: string, k: string) => `1本 ${x}Lの ジュースが ${k}本 あります。全部で 何Lですか。`, unit: 'L' },
-  { id: 'tape', text: (x: string, k: string) => `1本 ${x}mの テープを ${k}本 つなぎます（重ならない）。全部で 何mですか。`, unit: 'm' },
-  { id: 'coin', text: (x: string, k: string) => `1まい ${x}gの メダルが ${k}まい あります。全部で 何gですか。`, unit: 'g' },
+  {
+    id: 'paper',
+    text: (x: string, k: string) => `1まい ${x}gの 紙が ${k}まい あります。全部で 何gですか。`,
+    unit: 'g',
+  },
+  {
+    id: 'juice',
+    text: (x: string, k: string) => `1本 ${x}Lの ジュースが ${k}本 あります。全部で 何Lですか。`,
+    unit: 'L',
+  },
+  {
+    id: 'tape',
+    text: (x: string, k: string) =>
+      `1本 ${x}mの テープを ${k}本 つなぎます（重ならない）。全部で 何mですか。`,
+    unit: 'm',
+  },
+  {
+    id: 'coin',
+    text: (x: string, k: string) => `1まい ${x}gの メダルが ${k}まい あります。全部で 何gですか。`,
+    unit: 'g',
+  },
 ];
 const SCENES_DOWN = [
-  { id: 'water', text: (x: string, k: string) => `${x}Lの 水を ${k}人で 同じ量ずつ 分けます。1人 何Lですか。`, unit: 'L' },
-  { id: 'rope', text: (x: string, k: string) => `${x}mの ロープを ${k}本に 同じ長さで 切ります。1本 何mですか。`, unit: 'm' },
-  { id: 'sand', text: (x: string, k: string) => `${x}kgの すなを ${k}ふくろに 同じ重さずつ 入れます。1ふくろ 何kgですか。`, unit: 'kg' },
-  { id: 'sheet', text: (x: string, k: string) => `${k}まい 重ねた 紙の あつさが ${x}cmでした。1まいの あつさは 何cmですか。`, unit: 'cm' },
+  {
+    id: 'water',
+    text: (x: string, k: string) => `${x}Lの 水を ${k}人で 同じ量ずつ 分けます。1人 何Lですか。`,
+    unit: 'L',
+  },
+  {
+    id: 'rope',
+    text: (x: string, k: string) =>
+      `${x}mの ロープを ${k}本に 同じ長さで 切ります。1本 何mですか。`,
+    unit: 'm',
+  },
+  {
+    id: 'sand',
+    text: (x: string, k: string) =>
+      `${x}kgの すなを ${k}ふくろに 同じ重さずつ 入れます。1ふくろ 何kgですか。`,
+    unit: 'kg',
+  },
+  {
+    id: 'sheet',
+    text: (x: string, k: string) =>
+      `${k}まい 重ねた 紙の あつさが ${x}cmでした。1まいの あつさは 何cmですか。`,
+    unit: 'cm',
+  },
 ];
 
 function shiftItem(obj: 'up' | 'down', level: number, rng: Rng, alt: boolean): NumberItem {
@@ -178,11 +222,13 @@ function factorItem(level: number, rng: Rng, alt: boolean): Item {
       identity: `factor-frac:${big}:${e}`,
       alt: true,
       fixedOrder: true,
-      options: [1, 2, 3].map((k) =>
-        k === e
-          ? { label: FRAC[k]!, correct: true }
-          : { label: FRAC[k]!, misconception: 'shift-count' },
-      ).concat([{ label: `${POW[e]}倍`, misconception: 'shift-dir' }]),
+      options: [1, 2, 3]
+        .map((k) =>
+          k === e
+            ? { label: FRAC[k]!, correct: true }
+            : { label: FRAC[k]!, misconception: 'shift-count' },
+        )
+        .concat([{ label: `${POW[e]}倍`, misconception: 'shift-dir' }]),
     };
     return item;
   }
@@ -289,6 +335,7 @@ export const decimalShift: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateDecimalShift(level, rng, index),
   },
   review: 'type',
-  basis: '小学校学習指導要領（平成29年告示）算数 第5学年 A(1) 整数・小数の記数法（10倍・100倍、1/10・1/100 などの大きさの数）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第5学年 A(1) 整数・小数の記数法（10倍・100倍、1/10・1/100 などの大きさの数）',
   revised: REVISED,
 });

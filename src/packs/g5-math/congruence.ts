@@ -10,19 +10,55 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { GeometryItem } from '../../engines/geometry/geometry';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, finishUnit, pick, pickObj, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  finishUnit,
+  pick,
+  pickObj,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'corr' | 'measure' | 'draw' | 'cond';
 type P = [number, number];
 
 /** 元の三角形（方眼の座標。3辺の長さが みな ちがう） */
 const TRIS: P[][] = [
-  [[0, 0], [5, 0], [1, 2]],
-  [[0, 0], [4, 0], [3, 3]],
-  [[0, 0], [6, 0], [2, 2]],
-  [[0, 0], [5, 0], [4, 2]],
-  [[0, 0], [3, 0], [0, 4]],
-  [[0, 0], [6, 0], [5, 3]],
+  [
+    [0, 0],
+    [5, 0],
+    [1, 2],
+  ],
+  [
+    [0, 0],
+    [4, 0],
+    [3, 3],
+  ],
+  [
+    [0, 0],
+    [6, 0],
+    [2, 2],
+  ],
+  [
+    [0, 0],
+    [5, 0],
+    [4, 2],
+  ],
+  [
+    [0, 0],
+    [3, 0],
+    [0, 4],
+  ],
+  [
+    [0, 0],
+    [6, 0],
+    [5, 3],
+  ],
 ];
 
 /** 動かし方（ずらす・回す・うら返す） */
@@ -89,7 +125,15 @@ function pairFig(pr: Pair, sideLab: string[] = [], angLab: string[] = [], other?
     const sp = ps.map(([x, y]) => [r1(ox + (x - mx) * K), r1(24 + (maxY - y) * K)] as P);
     const cx = sp.reduce((s, p) => s + p[0], 0) / 3;
     const cy = sp.reduce((s, p) => s + p[1], 0) / 3;
-    let s = `<polygon points="${sp.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
+    // 方がん（1ます 1cm。問題文・ヒントで ますを 数えるため）
+    const gw = Math.max(...xs) - mx;
+    const gh = maxY - Math.min(...ys);
+    let s = '';
+    for (let g = 0; g <= gw; g++)
+      s += `<line x1="${ox + g * K}" y1="24" x2="${ox + g * K}" y2="${24 + gh * K}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
+    for (let g = 0; g <= gh; g++)
+      s += `<line x1="${ox}" y1="${24 + g * K}" x2="${ox + gw * K}" y2="${24 + g * K}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
+    s += `<polygon points="${sp.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
     sp.forEach(([x, y], i) => {
       const dx = x - cx;
       const dy = y - cy;
@@ -153,10 +197,20 @@ function corr(level: number, rng: Rng, alt: boolean): ChoiceItem {
     let other = pr.b;
     if (!cong) {
       const l2s = (ps: P[]) =>
-        [0, 1, 2].map((i) => (ps[i]![0] - ps[(i + 1) % 3]![0]) ** 2 + (ps[i]![1] - ps[(i + 1) % 3]![1]) ** 2).sort((x, y) => x - y).join('-');
+        [0, 1, 2]
+          .map(
+            (i) => (ps[i]![0] - ps[(i + 1) % 3]![0]) ** 2 + (ps[i]![1] - ps[(i + 1) % 3]![1]) ** 2,
+          )
+          .sort((x, y) => x - y)
+          .join('-');
       for (;;) {
         const j = rng.int(0, 2);
-        const [dx, dy] = pick(rng, [[1, 0], [-1, 0], [0, 1], [0, -1]] as P[]);
+        const [dx, dy] = pick(rng, [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as P[]);
         const cand = pr.b.map((p, k) => (k === j ? ([p[0] + dx, p[1] + dy] as P) : p));
         const [p, q, r] = cand as [P, P, P];
         const area2 = Math.abs((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
@@ -181,7 +235,7 @@ function corr(level: number, rng: Rng, alt: boolean): ChoiceItem {
       ],
       explain: cong
         ? `右の 三角形は、左の 三角形を ${flip ? 'うら返して' : MOVES[pr.m]!.id === 'shift' ? 'ずらして' : '回して'} ぴったり 重なるので 合同です。`
-        : '辺の 長さが 1つ ちがうので、ぴったり 重なりません。合同では ありません。',
+        : '右の 三角形は、左の 三角形と 辺の 長さが ちがう ところが あるので、ぴったり 重なりません。合同では ありません。',
       identity: `same:${key(pr)}:${cong ? 'y' : 'n'}`,
       alt: true,
       fixedOrder: true,
@@ -220,18 +274,17 @@ function corr(level: number, rng: Rng, alt: boolean): ChoiceItem {
       explain: `右の 三角形を 動かして 重ねると、${L1[i]}と ${ans}が 重なります。${pre}${L1[i]}に 対応するのは ${pre}${ans}です。${q === 'angle' ? '対応する 角の 大きさは 等しいです。' : ''}`,
       identity: `corr:${key(pr)}:${q}${i}`,
       options: L2.map((l) =>
-        l === ans ? { label: `${pre}${l}`, correct: true } : { label: `${pre}${l}`, misconception: misOfVertex(pr, i, l) },
+        l === ans
+          ? { label: `${pre}${l}`, correct: true }
+          : { label: `${pre}${l}`, misconception: misOfVertex(pr, i, l) },
       ),
     };
   }
   // 辺: i → i+1
   const j = (i + 1) % 3;
   const ans = `辺${pr.name[i]}${pr.name[j]}`;
-  const sides = [0, 1, 2].map((s) => {
-    const a = pr.name[s]!;
-    const b = pr.name[(s + 1) % 3]!;
-    return { s, label: s === i ? ans : `辺${[a, b].sort().join('')}` };
-  });
+  // 選択肢は どれも 同じ 作り方（右の 頂点の 順）。正答だけ 名前の 並びが ちがうと 手がかりに なるため
+  const sides = [0, 1, 2].map((s) => ({ s, label: `辺${pr.name[s]!}${pr.name[(s + 1) % 3]!}` }));
   const pos = [samePlace(pr, i), samePlace(pr, j)].sort().join('');
   return {
     ...base,
@@ -248,7 +301,7 @@ function corr(level: number, rng: Rng, alt: boolean): ChoiceItem {
       if (s === i) return { label, correct: true };
       const ends = [s, (s + 1) % 3].sort().join('');
       const nameSide = [L2[i]!, L2[j]!].sort().join('');
-      const lab = label.slice(1);
+      const lab = [...label.slice(1)].sort().join('');
       const m = ends === pos ? 'by-position' : lab === nameSide ? 'name-order' : 'corr-check';
       return { label, misconception: m };
     }),
@@ -265,7 +318,9 @@ function anglesOf(ps: P[]): number[] {
     const c = ps[(i + 2) % 3]!;
     const v1 = [b[0] - a[0], b[1] - a[1]];
     const v2 = [c[0] - a[0], c[1] - a[1]];
-    const cos = (v1[0]! * v2[0]! + v1[1]! * v2[1]!) / (Math.hypot(v1[0]!, v1[1]!) * Math.hypot(v2[0]!, v2[1]!));
+    const cos =
+      (v1[0]! * v2[0]! + v1[1]! * v2[1]!) /
+      (Math.hypot(v1[0]!, v1[1]!) * Math.hypot(v2[0]!, v2[1]!));
     return (Math.acos(cos) * 180) / Math.PI;
   });
   const r = raw.map((x) => Math.round(x));
@@ -290,7 +345,11 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'measure',
       level,
       prompt: `2つの 三角形は 合同です。角${target}の 大きさは 何度ですか。`,
-      figure: pairFig(pr, [], ang.map((x) => `${x}°`)),
+      figure: pairFig(
+        pr,
+        [],
+        ang.map((x) => `${x}°`),
+      ),
       hints: [
         '合同な 図形では、対応する 角の 大きさが 等しいよ。',
         `角${target}に 対応する 左の 角を さがそう。`,
@@ -304,7 +363,17 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
         answers,
         [0, 1, 2]
           .filter((x) => x !== k)
-          .map((x) => [ang[x]!, samePlace(pr, x) === k ? 'by-position' : x === L2.indexOf(target) ? 'name-order' : 'corr-check'] as [number, string]),
+          .map(
+            (x) =>
+              [
+                ang[x]!,
+                samePlace(pr, x) === k
+                  ? 'by-position'
+                  : x === L2.indexOf(target)
+                    ? 'name-order'
+                    : 'corr-check',
+              ] as [number, string],
+          ),
       ),
     };
   }
@@ -320,7 +389,10 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'measure',
     level,
     prompt: `2つの 三角形は 合同です。辺${side}の 長さは 何cmですか。`,
-    figure: pairFig(pr, L.map((v) => `${dec(v, 1)}cm`)),
+    figure: pairFig(
+      pr,
+      L.map((v) => `${dec(v, 1)}cm`),
+    ),
     hints: [
       '合同な 図形では、対応する 辺の 長さが 等しいよ。',
       `頂点${a}と 頂点${b}に 対応する 左の 頂点を さがそう。`,
@@ -339,7 +411,12 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
           const place = [samePlace(pr, x), samePlace(pr, (x + 1) % 3)].sort().join('');
           const byName = [L2.indexOf(a), L2.indexOf(b)].sort().join('');
           const mine = [x, (x + 1) % 3].sort().join('');
-          const m = place === [s, (s + 1) % 3].sort().join('') ? 'by-position' : mine === byName ? 'name-order' : 'corr-check';
+          const m =
+            place === [s, (s + 1) % 3].sort().join('')
+              ? 'by-position'
+              : mine === byName
+                ? 'name-order'
+                : 'corr-check';
           return [dec(L[x]!, 1), m] as [string, string];
         }),
     ),
@@ -348,11 +425,36 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
 
 /** 合同な 三角形を かく（alt: 四角形） */
 const QUADS: P[][] = [
-  [[0, 1], [3, 0], [4, 3], [1, 4]],
-  [[0, 0], [4, 0], [3, 3], [1, 3]],
-  [[0, 0], [3, 0], [4, 3], [0, 2]],
-  [[1, 0], [4, 1], [3, 4], [0, 2]],
-  [[0, 0], [4, 1], [4, 4], [1, 3]],
+  [
+    [0, 1],
+    [3, 0],
+    [4, 3],
+    [1, 4],
+  ],
+  [
+    [0, 0],
+    [4, 0],
+    [3, 3],
+    [1, 3],
+  ],
+  [
+    [0, 0],
+    [3, 0],
+    [4, 3],
+    [0, 2],
+  ],
+  [
+    [1, 0],
+    [4, 1],
+    [3, 4],
+    [0, 2],
+  ],
+  [
+    [0, 0],
+    [4, 1],
+    [4, 4],
+    [1, 3],
+  ],
 ];
 
 function draw(level: number, rng: Rng, alt: boolean): GeometryItem {
@@ -371,7 +473,9 @@ function draw(level: number, rng: Rng, alt: boolean): GeometryItem {
     }
     // 同じ 形（合同）は 同じ 問題: 3辺の 長さの 2乗の 組
     const l2 = [0, 1, 2]
-      .map((i) => (pts[i]![0] - pts[(i + 1) % 3]![0]) ** 2 + (pts[i]![1] - pts[(i + 1) % 3]![1]) ** 2)
+      .map(
+        (i) => (pts[i]![0] - pts[(i + 1) % 3]![0]) ** 2 + (pts[i]![1] - pts[(i + 1) % 3]![1]) ** 2,
+      )
       .sort((x, y) => x - y);
     id = l2.join('-');
   }
@@ -383,7 +487,9 @@ function draw(level: number, rng: Rng, alt: boolean): GeometryItem {
     level,
     prompt: `左の ${name}と 合同な ${name}を、右の あいて いる ところに かこう。`,
     hints: [
-      alt ? '四角形は、対角線で 2つの 三角形に 分けて 考えると かけるよ。' : '合同な 三角形は、3つの 辺の 長さが 同じに なるように かけば よいよ。',
+      alt
+        ? '四角形は、対角線で 2つの 三角形に 分けて 考えると かけるよ。'
+        : '合同な 三角形は、3つの 辺の 長さが 同じに なるように かけば よいよ。',
       '1つの 辺を 同じ 長さで かいてから、のこりの 頂点を 決めよう。',
       'ますの 数を 横と たてで 数えて、頂点を 1つずつ うつそう。',
     ],
@@ -399,18 +505,26 @@ function draw(level: number, rng: Rng, alt: boolean): GeometryItem {
   };
 }
 
-/** 辺 BC＝a・CA＝b・AB＝c（cm）と 角 B・C（度） */
+/**
+ * 1つの 三角形ABCの 辺 BC＝a・CA＝b・AB＝c（cm）と 角 B・C（度。辺の 長さから 求めて 整数に まるめ、3つの 角の 和を 180 に そろえる）。
+ * 1問の 中で 辺と 角を いくつも 見せるので、同じ 三角形の 値に する（でたらめな 組だと、そんな 三角形が ない）。
+ */
 function condValues(rng: Rng): [number, number, number, number, number] {
+  const deg = (opp: number, p: number, q: number) =>
+    (Math.acos((p * p + q * q - opp * opp) / (2 * p * q)) * 180) / Math.PI;
   for (;;) {
     const a = rng.int(3, 9);
     const b = rng.int(3, 9);
     const c = rng.int(3, 9);
-    const B = rng.int(6, 22) * 5;
-    const C = rng.int(6, 22) * 5;
+    if (!(a + b > c && b + c > a && c + a > b) || new Set([a, b, c]).size !== 3) continue;
+    const r = [deg(a, b, c), deg(b, c, a), deg(c, a, b)].map((x) => Math.round(x));
+    const big = r.indexOf(Math.max(...r));
+    r[big] = r[big]! + 180 - r.reduce((s, x) => s + x, 0);
+    const [A, B, C] = r as [number, number, number];
+    if (Math.min(A, B, C) < 20) continue;
     // 辺AB・辺BC・角C で 形が 1つに 決まらない（2通り かける）ように: BC × sinC < AB < BC
     const amb = a * Math.sin((C * Math.PI) / 180) < c - 0.2 && c < a;
-    if (a + b > c && b + c > a && c + a > b && new Set([a, b, c]).size === 3 && 180 - B - C >= 20 && amb)
-      return [a, b, c, B, C];
+    if (amb) return [a, b, c, B, C];
   }
 }
 
@@ -441,7 +555,11 @@ function cond(level: number, rng: Rng, alt: boolean): ChoiceItem {
       hints: [
         '三角形が 1つに 決まる 3つの 場合を 思い出そう。',
         '3つの 辺／2つの 辺と その 間の 角／1つの 辺と その 両はしの 角。',
-        kind === 'ssa' ? '角Cは、辺ABと 辺BCの 間の 角かな。' : kind === 'aaa' ? '角だけで、辺の 長さは 決まるかな。' : 'どの 場合に あてはまるかを 見よう。',
+        kind === 'ssa'
+          ? '角Cは、辺ABと 辺BCの 間の 角かな。'
+          : kind === 'aaa'
+            ? '角だけで、辺の 長さは 決まるかな。'
+            : 'どの 場合に あてはまるかを 見よう。',
       ],
       explain: yes
         ? `${kind === 'sss' ? '3つの 辺の 長さ' : kind === 'sas' ? '2つの 辺と その 間の 角' : '1つの 辺と その 両はしの 角'}が 等しいので、合同と いえます。`
@@ -474,7 +592,8 @@ function cond(level: number, rng: Rng, alt: boolean): ChoiceItem {
     id: `cond:${kind}:${a}-${b}-${c}:${Bv}-${Cv}`,
     objective: 'cond',
     level,
-    prompt: '三角形ABCと 合同な 三角形を かきます。どれが わかれば、形が 1つに 決まって かけますか。',
+    prompt:
+      '三角形ABCと 合同な 三角形を かきます。どれが わかれば、形が 1つに 決まって かけますか。',
     hints: [
       '三角形は、3つの ことが わかれば かける 場合が あるよ。でも 何が わかっても よいわけでは ないよ。',
       '3つの 辺／2つの 辺と その 間の 角／1つの 辺と その 両はしの 角 の どれかだよ。',
@@ -542,16 +661,56 @@ export const congruence: UnitSpec = finishUnit(
       { id: 'cond', title: '三角形が 1つに 決まる 条件' },
     ],
     misconceptions: [
-      { id: 'by-position', explain: '見た目の 同じ 場所に ある ものを 選んだのかな。向きが 変わって いるので、辺の 長さや 角の 大きさで 対応を 見つけよう。' },
-      { id: 'name-order', explain: 'A→D、B→E のように 名前の 順で 決めたのかな。名前の 順と 対応は 同じとは かぎらないよ。重ねて 考えよう。' },
-      { id: 'corr-check', explain: '対応する ところを 取りちがえたのかな。同じ 長さの 辺、同じ 大きさの 角が 重なるように 考えよう。' },
-      { id: 'flip-not', explain: 'うら返した 形は 合同では ないと 考えたのかな。うら返して ぴったり 重なれば 合同だよ。' },
-      { id: 'turn-not', explain: '向きが ちがうと 合同では ないと 考えたのかな。回したり ずらしたり して ぴったり 重なれば 合同だよ。' },
-      { id: 'looks-same', explain: '形が にて いるので 合同と 考えたのかな。辺の 長さを ますで 数えて、ぴったり 重なるか たしかめよう。' },
-      { id: 'angles-only', explain: '3つの 角が わかれば かけると 考えたのかな。角が 同じでも、大きさの ちがう 三角形が かけるよ。' },
-      { id: 'not-included', explain: '2つの 辺と、その 間では ない 角を 選んだのかな。角は、2つの 辺の 間の 角で ないと 形が 1つに 決まらないよ。' },
-      { id: 'too-few', explain: '2つの 辺だけでは、間の 角を 変えると いろいろな 三角形が できるよ。もう1つ 何が 必要かな。' },
-      { id: 'cond-forget', explain: '三角形が 1つに 決まる 場合を 思い出そう。3つの 辺、2つの 辺と その 間の 角、1つの 辺と その 両はしの 角が 等しければ 合同だよ。' },
+      {
+        id: 'by-position',
+        explain:
+          '見た目の 同じ 場所に ある ものを 選んだのかな。向きが 変わって いるので、辺の 長さや 角の 大きさで 対応を 見つけよう。',
+      },
+      {
+        id: 'name-order',
+        explain:
+          'A→D、B→E のように 名前の 順で 決めたのかな。名前の 順と 対応は 同じとは かぎらないよ。重ねて 考えよう。',
+      },
+      {
+        id: 'corr-check',
+        explain:
+          '対応する ところを 取りちがえたのかな。同じ 長さの 辺、同じ 大きさの 角が 重なるように 考えよう。',
+      },
+      {
+        id: 'flip-not',
+        explain:
+          'うら返した 形は 合同では ないと 考えたのかな。うら返して ぴったり 重なれば 合同だよ。',
+      },
+      {
+        id: 'turn-not',
+        explain:
+          '向きが ちがうと 合同では ないと 考えたのかな。回したり ずらしたり して ぴったり 重なれば 合同だよ。',
+      },
+      {
+        id: 'looks-same',
+        explain:
+          '形が にて いるので 合同と 考えたのかな。辺の 長さを ますで 数えて、ぴったり 重なるか たしかめよう。',
+      },
+      {
+        id: 'angles-only',
+        explain:
+          '3つの 角が わかれば かけると 考えたのかな。角が 同じでも、大きさの ちがう 三角形が かけるよ。',
+      },
+      {
+        id: 'not-included',
+        explain:
+          '2つの 辺と、その 間では ない 角を 選んだのかな。角は、2つの 辺の 間の 角で ないと 形が 1つに 決まらないよ。',
+      },
+      {
+        id: 'too-few',
+        explain:
+          '2つの 辺だけでは、間の 角を 変えると いろいろな 三角形が できるよ。もう1つ 何が 必要かな。',
+      },
+      {
+        id: 'cond-forget',
+        explain:
+          '三角形が 1つに 決まる 場合を 思い出そう。3つの 辺、2つの 辺と その 間の 角、1つの 辺と その 両はしの 角が 等しければ 合同だよ。',
+      },
     ],
     levels: [
       { label: '対応する ところ', chance: 0.05 },
@@ -576,7 +735,8 @@ export const congruence: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateCongruence(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 平面図形の性質（図形の合同、合同な図形のかき方）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(1) 平面図形の性質（図形の合同、合同な図形のかき方）',
     revised: REVISED,
   },
   '決《き》 等《ひと》し 出《だ》 間《あいだ》 度《ど》 条件《じょうけん》 必《かなら》ず 必要《ひつよう》 重《かさ》ね合《あ》わせる 重《かさ》ね合《あ》わせた 重《かさ》 うら返《がえ》して うら返《がえ》した うら返《がえ》す うら返《がえ》し 回《まわ》したり 回《まわ》して 回《まわ》す 動《うご》かして 動《うご》かし 方《ほう》がん 両《りょう》はし 言《い》える 言《い》えます 場合《ばあい》 決《き》まって 決《き》まります 決《き》まらない 決《き》まる 決《き》めた 名前《なまえ》 一《ひと》つ',

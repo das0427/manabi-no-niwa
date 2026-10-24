@@ -23,12 +23,60 @@ interface Ctx {
   text: (k: number) => string;
 }
 const CTXS: Ctx[] = [
-  { id: 'ribbon', x: '長さ', xu: 'm', y: '代金', yu: '円', ks: [60, 80, 90, 120, 150], text: (k) => `1mの ねだんが ${k}円の リボンを 買います。` },
-  { id: 'tank', x: '時間', xu: '分', y: '水の 量', yu: 'L', ks: [2, 3, 4, 5, 6], text: (k) => `水そうに 1分間に ${k}Lずつ 水を 入れます。` },
-  { id: 'ball', x: 'こ数', xu: 'こ', y: '重さ', yu: 'g', ks: [20, 25, 30, 40, 50], text: (k) => `1こ ${k}gの ボールを 箱に 入れます。` },
-  { id: 'walk', x: '時間', xu: '分', y: '道のり', yu: 'm', ks: [50, 60, 70, 80], text: (k) => `分速 ${k}mで 歩きます。` },
-  { id: 'square', x: '1辺の 長さ', xu: 'cm', y: 'まわりの 長さ', yu: 'cm', ks: [4], text: () => '正方形の 1辺の 長さと まわりの 長さを 調べます。' },
-  { id: 'wire', x: '長さ', xu: 'm', y: '重さ', yu: 'g', ks: [6, 8, 12, 15, 18], text: (k) => `1mの 重さが ${k}gの 針金が あります。` },
+  {
+    id: 'ribbon',
+    x: '長さ',
+    xu: 'm',
+    y: '代金',
+    yu: '円',
+    ks: [60, 80, 90, 120, 150],
+    text: (k) => `1mの ねだんが ${k}円の リボンを 買います。`,
+  },
+  {
+    id: 'tank',
+    x: '時間',
+    xu: '分',
+    y: '水の 量',
+    yu: 'L',
+    ks: [2, 3, 4, 5, 6],
+    text: (k) => `水そうに 1分間に ${k}Lずつ 水を 入れます。`,
+  },
+  {
+    id: 'ball',
+    x: 'こ数',
+    xu: 'こ',
+    y: '重さ',
+    yu: 'g',
+    ks: [20, 25, 30, 40, 50],
+    text: (k) => `1こ ${k}gの ボールを 箱に 入れます。`,
+  },
+  {
+    id: 'walk',
+    x: '時間',
+    xu: '分',
+    y: '道のり',
+    yu: 'm',
+    ks: [50, 60, 70, 80],
+    text: (k) => `分速 ${k}mで 歩きます。`,
+  },
+  {
+    id: 'square',
+    x: '1辺の 長さ',
+    xu: 'cm',
+    y: 'まわりの 長さ',
+    yu: 'cm',
+    ks: [4],
+    text: () => '正方形の 1辺の 長さと まわりの 長さを 調べます。',
+  },
+  {
+    id: 'wire',
+    x: '長さ',
+    xu: 'm',
+    y: '重さ',
+    yu: 'g',
+    ks: [6, 8, 12, 15, 18],
+    text: (k) => `1mの 重さが ${k}gの 針金が あります。`,
+  },
 ];
 const head = (c: Ctx) => [`x ${c.x}（${c.xu}）`, `y ${c.y}（${c.yu}）`] as const;
 
@@ -49,8 +97,16 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'table',
       level,
       prompt: `${c.text(k)}${c.x}を x${c.xu}、${c.y}を y${c.yu}と します。x の 値が ${m}倍に なると、y の 値は どう なりますか。`,
-      figure: tableFig(c, [1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6].map((x) => x * k)),
-      hints: ['表で、x が 1から 2、3に なる ときの y の 変わり方を 見よう。', `x が 1の とき y は ${k}、x が ${m}の とき y は ${k * m}。`, `${k * m}は ${k}の 何倍かな。`],
+      figure: tableFig(
+        c,
+        [1, 2, 3, 4, 5, 6],
+        [1, 2, 3, 4, 5, 6].map((x) => x * k),
+      ),
+      hints: [
+        '表で、x が 1から 2、3に なる ときの y の 変わり方を 見よう。',
+        `x が 1の とき y は ${k}、x が ${m}の とき y は ${k * m}。`,
+        `${k * m}は ${k}の 何倍かな。`,
+      ],
       explain: `y は x に 比例して いるので、x が ${m}倍に なると、y も ${m}倍に なります。`,
       identity: `table:times:${c.id}:${k}:${m}`,
       alt: true,
@@ -70,8 +126,9 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
   ]);
   const asks = [4, 5, 6, 8, 9, 10, 12].filter((x) => !shown.includes(x));
   const ax = pick(rng, asks);
-  const xs = [...shown, ax];
-  const ys: (number | string)[] = [...shown.map((x) => x * k), '？'];
+  // 表の x は 小さい 順に 並べる（？の 列が 間に 入る ことも ある）
+  const xs = [...shown, ax].sort((a, b) => a - b);
+  const ys: (number | string)[] = xs.map((x) => (x === ax ? '？' : x * k));
   const ans = ax * k;
   const answer = { kind: 'int' as const, value: ans };
   const last = shown[shown.length - 1]!;
@@ -103,7 +160,10 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
 
 // ---- 式 ----
 function formulaItem(level: number, rng: Rng, alt: boolean): Item {
-  const c = pick(rng, CTXS.filter((x) => x.ks.length > 1));
+  const c = pick(
+    rng,
+    CTXS.filter((x) => x.ks.length > 1),
+  );
   const k = pick(rng, c.ks);
   if (alt) {
     const xs = pick(rng, [
@@ -119,8 +179,16 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'formula',
       level,
       prompt: `表の y は x に 比例して います。y ＝ 決まった数 × x の 式に 表す とき、決まった数は いくつですか。`,
-      figure: tableFig(c, xs, xs.map((x) => x * k)),
-      hints: ['決まった数は、y ÷ x で 求められるよ。', `x が ${xs[0]}の とき y は ${xs[0]! * k}。`, `${xs[0]! * k} ÷ ${xs[0]}を 計算しよう。ほかの 組でも たしかめよう。`],
+      figure: tableFig(
+        c,
+        xs,
+        xs.map((x) => x * k),
+      ),
+      hints: [
+        '決まった数は、y ÷ x で 求められるよ。',
+        `x が ${xs[0]}の とき y は ${xs[0]! * k}。`,
+        `${xs[0]! * k} ÷ ${xs[0]}を 計算しよう。ほかの 組でも たしかめよう。`,
+      ],
       explain: `y ÷ x ＝ ${xs[0]! * k} ÷ ${xs[0]} ＝ ${k}。式は y ＝ ${k} × x です。`,
       identity: `formula:k:${c.id}:${k}:${xs.join(',')}`,
       alt: true,
@@ -142,8 +210,16 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
     objective: 'formula',
     level,
     prompt: `${c.text(k)}${c.x}を x${c.xu}、${c.y}を y${c.yu}と して、x と yの 関係を 式に 表すと どれですか。`,
-    figure: tableFig(c, [1, 2, 3, 4], [1, 2, 3, 4].map((x) => x * k)),
-    hints: ['比例の 式は、y ＝ 決まった数 × x の 形だよ。', '決まった数は y ÷ x で 求められるね。', `${k * 2} ÷ 2 ＝ ${k}。`],
+    figure: tableFig(
+      c,
+      [1, 2, 3, 4],
+      [1, 2, 3, 4].map((x) => x * k),
+    ),
+    hints: [
+      '比例の 式は、y ＝ 決まった数 × x の 形だよ。',
+      '決まった数は y ÷ x で 求められるね。',
+      `${k * 2} ÷ 2 ＝ ${k}。`,
+    ],
     explain: `y ÷ x は いつも ${k}なので、y ＝ ${k} × x です。`,
     identity: `formula:${c.id}:${k}`,
     alt: false,
@@ -159,24 +235,40 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
 // ---- グラフ ----
 /** 縦の じくの 1めもり（k の 約数で、めもりが 20 以下に なる いちばん 小さい もの） */
 const STEP_OF = (k: number) =>
-  [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150].find((s) => k % s === 0 && (6 * k) / s <= 20) ?? k;
+  [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150].find(
+    (s) => k % s === 0 && (6 * k) / s <= 20,
+  ) ?? k;
 function graphItem(level: number, rng: Rng, alt: boolean): Item {
-  const c = pick(rng, CTXS.filter((x) => x.id !== 'square'));
+  const c = pick(
+    rng,
+    CTXS.filter((x) => x.id !== 'square'),
+  );
   const k = pick(rng, c.ks);
   if (alt) {
     // 比例の グラフを 選ぶ
     const d = rng.int(1, 3);
     const lab = ['0', '1', '2', '3', '4', '5'];
-    const lineFig = (vals: number[]): Figure => ({ kind: 'line', labels: lab, values: vals, scaleStep: 2 });
+    const lineFig = (vals: number[]): Figure => ({
+      kind: 'line',
+      labels: lab,
+      values: vals,
+      scaleStep: 2,
+    });
     const kk = pick(rng, [1, 2, 3]);
     const it: ChoiceItem = {
       engine: 'choice',
       id: `graph-alt:${kk}:${d}`,
       objective: 'graph',
       level,
-      prompt: 'y が x に 比例する ことを 表す グラフは どれですか。横の じくが x、縦《たて》の じくが y です。',
-      hints: ['比例の グラフは、どんな 形の 線に なるかな。', '比例では x が 0の とき、y も 0。', '0の 点を 通る まっすぐな 線を さがそう。'],
-      explain: '比例する 2つの 量の グラフは、0の 点（横の じくと 縦《たて》の じくが 交わる 点）を 通る 直線に なります。',
+      prompt:
+        'y が x に 比例する ことを 表す グラフは どれですか。横の じくが x、縦《たて》の じくが y です。',
+      hints: [
+        '比例の グラフは、どんな 形の 線に なるかな。',
+        '比例では x が 0の とき、y も 0。',
+        '0の 点を 通る まっすぐな 線を さがそう。',
+      ],
+      explain:
+        '比例する 2つの 量の グラフは、0の 点（横の じくと 縦《たて》の じくが 交わる 点）を 通る 直線に なります。',
       identity: `graph:pick:${kk}:${d}`,
       alt: true,
       layout: 'grid',
@@ -184,7 +276,10 @@ function graphItem(level: number, rng: Rng, alt: boolean): Item {
         { figure: lineFig(lab.map((_, i) => i * kk)), correct: true },
         { figure: lineFig(lab.map((_, i) => i * kk + d)), misconception: 'through-origin' },
         { figure: lineFig(lab.map((_, i) => 10 - i * 2)), misconception: 'inverse-confuse' },
-        { figure: lineFig([0, 0.5, 1.5, 3, 5, 7.5].map((v) => v + (d - 1) * 0.5 * (v > 0 ? 1 : 0))), misconception: 'not-straight' },
+        {
+          figure: lineFig([0, 0.5, 1.5, 3, 5, 7.5].map((v) => v + (d - 1) * 0.5 * (v > 0 ? 1 : 0))),
+          misconception: 'not-straight',
+        },
       ],
     };
     return it;
@@ -253,7 +348,8 @@ const USES: UseScene[] = [
     unitW: 'g',
     unitN: '本',
     text: (n, w, N) => `くぎ ${n}本の 重さは ${w}gでした。同じ くぎ ${N}本の 重さは 何gですか。`,
-    rev: (n, w, W) => `くぎ ${n}本の 重さは ${w}gでした。同じ くぎを 全部 はかると ${W}gでした。くぎは 全部で 何本ですか。`,
+    rev: (n, w, W) =>
+      `くぎ ${n}本の 重さは ${w}gでした。同じ くぎを 全部 はかると ${W}gでした。くぎは 全部で 何本ですか。`,
   },
   {
     id: 'paper',
@@ -263,7 +359,8 @@ const USES: UseScene[] = [
     unitW: 'g',
     unitN: '枚',
     text: (n, w, N) => `画用紙 ${n}枚の 重さは ${w}gです。同じ 画用紙 ${N}枚の 重さは 何gですか。`,
-    rev: (n, w, W) => `画用紙 ${n}枚の 重さは ${w}gです。同じ 画用紙の たばの 重さは ${W}gでした。画用紙は 何枚ですか。`,
+    rev: (n, w, W) =>
+      `画用紙 ${n}枚の 重さは ${w}gです。同じ 画用紙の たばの 重さは ${W}gでした。画用紙は 何枚ですか。`,
   },
   {
     id: 'tank',
@@ -272,8 +369,10 @@ const USES: UseScene[] = [
     make: (rng) => [pick(rng, [2, 3, 4, 5]), 0, 0],
     unitW: 'L',
     unitN: '分',
-    text: (n, w, N) => `水そうに 水を 入れると、${n}分間で ${w}L 入りました。同じ ように 入れると、${N}分間では 何L 入りますか。`,
-    rev: (n, w, W) => `水そうに 水を 入れると、${n}分間で ${w}L 入りました。同じ ように 入れて ${W}L に するには 何分 かかりますか。`,
+    text: (n, w, N) =>
+      `水そうに 水を 入れると、${n}分間で ${w}L 入りました。同じ ように 入れると、${N}分間では 何L 入りますか。`,
+    rev: (n, w, W) =>
+      `水そうに 水を 入れると、${n}分間で ${w}L 入りました。同じ ように 入れて ${W}L に するには 何分 かかりますか。`,
   },
   {
     id: 'walk',
@@ -282,8 +381,10 @@ const USES: UseScene[] = [
     make: (rng) => [pick(rng, [3, 4, 5]), 0, 0],
     unitW: 'm',
     unitN: '分',
-    text: (n, w, N) => `同じ 速さで 歩くと、${n}分間で ${w}m 進みました。${N}分間では 何m 進みますか。`,
-    rev: (n, w, W) => `同じ 速さで 歩くと、${n}分間で ${w}m 進みました。${W}m 進むには 何分 かかりますか。`,
+    text: (n, w, N) =>
+      `同じ 速さで 歩くと、${n}分間で ${w}m 進みました。${N}分間では 何m 進みますか。`,
+    rev: (n, w, W) =>
+      `同じ 速さで 歩くと、${n}分間で ${w}m 進みました。${W}m 進むには 何分 かかりますか。`,
   },
   {
     id: 'wire',
@@ -293,7 +394,8 @@ const USES: UseScene[] = [
     unitW: 'g',
     unitN: 'm',
     text: (n, w, N) => `針金 ${n}mの 重さは ${w}gです。同じ 針金 ${N}mの 重さは 何gですか。`,
-    rev: (n, w, W) => `針金 ${n}mの 重さは ${w}gです。同じ 針金の 重さが ${W}gの とき、長さは 何mですか。`,
+    rev: (n, w, W) =>
+      `針金 ${n}mの 重さは ${w}gです。同じ 針金の 重さが ${W}gの とき、長さは 何mですか。`,
   },
   {
     id: 'print',
@@ -302,8 +404,10 @@ const USES: UseScene[] = [
     make: (rng) => [pick(rng, [2, 3, 4]), 0, 0],
     unitW: '枚',
     unitN: '分',
-    text: (n, w, N) => `印刷機《いんさつき》で ${n}分間に ${w}枚 印刷《いんさつ》できます。${N}分間では 何枚 印刷《いんさつ》できますか。`,
-    rev: (n, w, W) => `印刷機《いんさつき》で ${n}分間に ${w}枚 印刷《いんさつ》できます。${W}枚 印刷《いんさつ》するには 何分 かかりますか。`,
+    text: (n, w, N) =>
+      `印刷機《いんさつき》で ${n}分間に ${w}枚 印刷《いんさつ》できます。${N}分間では 何枚 印刷《いんさつ》できますか。`,
+    rev: (n, w, W) =>
+      `印刷機《いんさつき》で ${n}分間に ${w}枚 印刷《いんさつ》できます。${W}枚 印刷《いんさつ》するには 何分 かかりますか。`,
   },
   {
     id: 'stack',
@@ -312,8 +416,10 @@ const USES: UseScene[] = [
     make: (rng) => [10, pick(rng, [2, 3, 4, 5]), pick(rng, [50, 100, 150, 200])],
     unitW: 'mm',
     unitN: '枚',
-    text: (n, w, N) => `同じ 紙を ${n}枚 重ねると、厚《あつ》さが ${w}mmでした。${N}枚 重ねると 何mmですか。`,
-    rev: (n, w, W) => `同じ 紙を ${n}枚 重ねると、厚《あつ》さが ${w}mmでした。厚《あつ》さが ${W}mmの とき、紙は 何枚ですか。`,
+    text: (n, w, N) =>
+      `同じ 紙を ${n}枚 重ねると、厚《あつ》さが ${w}mmでした。${N}枚 重ねると 何mmですか。`,
+    rev: (n, w, W) =>
+      `同じ 紙を ${n}枚 重ねると、厚《あつ》さが ${w}mmでした。厚《あつ》さが ${W}mmの とき、紙は 何枚ですか。`,
   },
   {
     id: 'rice',
@@ -322,7 +428,8 @@ const USES: UseScene[] = [
     make: (rng) => [pick(rng, [2, 3]), 0, 0],
     unitW: 'g',
     unitN: '合',
-    text: (n, w, N) => `お米 ${n}合《ごう》の 重さは ${w}gです。お米 ${N}合《ごう》の 重さは 何gですか。`,
+    text: (n, w, N) =>
+      `お米 ${n}合《ごう》の 重さは ${w}gです。お米 ${N}合《ごう》の 重さは 何gですか。`,
     rev: (n, w, W) => `お米 ${n}合《ごう》の 重さは ${w}gです。${W}gの お米は 何合《ごう》ですか。`,
   },
 ];
@@ -439,11 +546,29 @@ export const proportion: UnitSpec = finishUnit({
       explain:
         '「x が 増えた 分だけ y も 増える」と 考えたのかな。比例では、x が 2倍、3倍に なると y も 2倍、3倍に なるよ。たし算では なく かけ算で 考えよう。',
     },
-    { id: 'const-reverse', explain: 'わる 順番が 反対かな。決まった数は y ÷ x。何倍に なったかを 求める ときは、大きい 方 ÷ もとの 方 だよ。' },
-    { id: 'inverse-confuse', explain: '反比例と 取りちがえたのかな。比例では、x が 増えると y も 同じ 倍だけ 増えるよ。' },
-    { id: 'through-origin', explain: 'まっすぐな 線でも、0の 点を 通らないと 比例の グラフでは ないよ。x が 0の とき y も 0に なるか 見よう。' },
-    { id: 'not-straight', explain: '曲がった 線を 選んだのかな。比例の グラフは まっすぐな 線（直線）に なるよ。' },
-    { id: 'scale-read', explain: 'めもりの 数を そのまま 答えたのかな。縦《たて》の じくの 1めもりが いくつかを 先に 調べよう。' },
+    {
+      id: 'const-reverse',
+      explain:
+        'わる 順番が 反対かな。決まった数は y ÷ x。何倍に なったかを 求める ときは、大きい 方 ÷ もとの 方 だよ。',
+    },
+    {
+      id: 'inverse-confuse',
+      explain: '反比例と 取りちがえたのかな。比例では、x が 増えると y も 同じ 倍だけ 増えるよ。',
+    },
+    {
+      id: 'through-origin',
+      explain:
+        'まっすぐな 線でも、0の 点を 通らないと 比例の グラフでは ないよ。x が 0の とき y も 0に なるか 見よう。',
+    },
+    {
+      id: 'not-straight',
+      explain: '曲がった 線を 選んだのかな。比例の グラフは まっすぐな 線（直線）に なるよ。',
+    },
+    {
+      id: 'scale-read',
+      explain:
+        'めもりの 数を そのまま 答えたのかな。縦《たて》の じくの 1めもりが いくつかを 先に 調べよう。',
+    },
   ],
   levels: [
     { label: '表・式', chance: 0.05 },
@@ -456,10 +581,19 @@ export const proportion: UnitSpec = finishUnit({
       text: '水そうに 1分間に 3Lずつ 水を 入れます。時間 x分が 2倍、3倍…に なると、水の 量 yLも 2倍、3倍…に なります。このとき、y は x に 比例すると いいます。',
       figure: tableFig(CTXS[1]!, [1, 2, 3, 4, 5], [3, 6, 9, 12, 15]),
     },
-    { text: 'y ÷ x は いつも 3（決まった数）。だから 式は y ＝ 3 × x と 表せます。', figure: expr('y ＝ 3 × x') },
+    {
+      text: 'y ÷ x は いつも 3（決まった数）。だから 式は y ＝ 3 × x と 表せます。',
+      figure: expr('y ＝ 3 × x'),
+    },
     {
       text: '比例する 2つの 量の グラフは、0の 点を 通る まっすぐな 線（直線）に なります。',
-      figure: { kind: 'line', labels: ['0', '1', '2', '3', '4', '5'], values: [0, 3, 6, 9, 12, 15], scaleStep: 3, unit: 'L' },
+      figure: {
+        kind: 'line',
+        labels: ['0', '1', '2', '3', '4', '5'],
+        values: [0, 3, 6, 9, 12, 15],
+        scaleStep: 3,
+        unit: 'L',
+      },
     },
   ],
   source: {
@@ -467,6 +601,7 @@ export const proportion: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateProportion(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第6学年 C(1) 比例（表・式・グラフ、比例の関係を用いた問題解決）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第6学年 C(1) 比例（表・式・グラフ、比例の関係を用いた問題解決）',
   revised: REVISED,
 });

@@ -8,7 +8,19 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, finishUnit, opts, pick, pickObj, r1, REVISED, STROKE, svg, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  wrongList,
+} from './util';
 
 type Obj = 'name' | 'parts' | 'count' | 'net';
 type P = [number, number];
@@ -25,6 +37,8 @@ const KAKU: Record<number, string> = {
 };
 const prismName = (n: number) => `${KAKU[n]}柱`;
 const polyName = (n: number) => `${KAKU[n]}形`;
+/** 「7つ」「10こ」（10 からは「つ」で 数えない） */
+const tsu = (n: number) => (n < 10 ? `${n}つ` : `${n}こ`);
 
 /** 角柱の 見取図（shade: 色を ぬる 面） */
 function prismFig(n: number, tall: boolean, shade: 'top' | 'side' | null = null): Figure {
@@ -52,11 +66,17 @@ function prismFig(n: number, tall: boolean, shade: 'top' | 'side' | null = null)
   for (let i = 0; i < n; i++) {
     if (!front(i)) continue;
     const j = (i + 1) % n;
-    const fill = shade === 'side' && !shaded ? 'fill="var(--sky)" fill-opacity="0.8"' : 'fill="var(--sky)" fill-opacity="0.2"';
+    const fill =
+      shade === 'side' && !shaded
+        ? 'fill="var(--sky)" fill-opacity="0.8"'
+        : 'fill="var(--sky)" fill-opacity="0.2"';
     if (shade === 'side') shaded = true;
     body += `<polygon points="${[bot[i]!, bot[j]!, top[j]!, top[i]!].map((p) => p.join(',')).join(' ')}" ${fill} ${STROKE}/>`;
   }
-  const topFill = shade === 'top' ? 'fill="var(--sky)" fill-opacity="0.8"' : 'fill="var(--sky)" fill-opacity="0.2"';
+  const topFill =
+    shade === 'top'
+      ? 'fill="var(--sky)" fill-opacity="0.8"'
+      : 'fill="var(--sky)" fill-opacity="0.2"';
   body += `<polygon points="${top.map((p) => p.join(',')).join(' ')}" ${topFill} ${STROKE}/>`;
   return svg(200, r1(by + 0.38 * R + 16), body, `${prismName(n)}の 見取図`);
 }
@@ -117,8 +137,10 @@ function prismNet(n: number, kind: 'ok' | 'same' | 'fewer' | 'more'): Figure {
   const maxY = Math.max(...all.map((p) => p[1]));
   const T = (p: P) => `${r1(p[0] - minX + 8)},${r1(p[1] - minY + 8)}`;
   let body = '';
-  for (const r of rects) body += `<polygon points="${r.map(T).join(' ')}" fill="var(--sky)" fill-opacity="0.25" stroke="var(--ink)" stroke-width="2"/>`;
-  for (const pg of polys) body += `<polygon points="${pg.map(T).join(' ')}" fill="var(--sky)" fill-opacity="0.6" stroke="var(--ink)" stroke-width="2"/>`;
+  for (const r of rects)
+    body += `<polygon points="${r.map(T).join(' ')}" fill="var(--sky)" fill-opacity="0.25" stroke="var(--ink)" stroke-width="2"/>`;
+  for (const pg of polys)
+    body += `<polygon points="${pg.map(T).join(' ')}" fill="var(--sky)" fill-opacity="0.6" stroke="var(--ink)" stroke-width="2"/>`;
   return svg(r1(maxX - minX + 16), r1(maxY - minY + 16), body, '展開図');
 }
 
@@ -129,7 +151,8 @@ function cylNet(kind: 'ok' | 'short' | 'same'): Figure {
   const h = 50;
   const top = 2 * r + 8;
   let body = `<rect x="8" y="${top}" width="${w}" height="${h}" fill="var(--sky)" fill-opacity="0.25" stroke="var(--ink)" stroke-width="2"/>`;
-  const circle = (x: number, y: number) => `<circle cx="${x}" cy="${y}" r="${r}" fill="var(--sky)" fill-opacity="0.6" stroke="var(--ink)" stroke-width="2"/>`;
+  const circle = (x: number, y: number) =>
+    `<circle cx="${x}" cy="${y}" r="${r}" fill="var(--sky)" fill-opacity="0.6" stroke="var(--ink)" stroke-width="2"/>`;
   body += circle(8 + r, top - r);
   body += kind === 'same' ? circle(8 + 3 * r, top - r) : circle(r1(8 + w - r), top + h + r);
   return svg(r1(Math.max(w, 4 * r) + 16), top + h + 2 * r + 8, body, '展開図');
@@ -169,7 +192,10 @@ function nameItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
         '角柱の 名前は、底面の 形で 決まるよ。底面が 円なら 円柱。',
         n === 0 ? '底面が 円だね。' : `底面が ${polyName(n)}だね。`,
       ],
-      explain: n === 0 ? '底面が 円の 立体は 円柱です。' : `底面が ${polyName(n)}の 角柱なので ${correct}です。`,
+      explain:
+        n === 0
+          ? '底面が 円の 立体は 円柱です。'
+          : `底面が ${polyName(n)}の 角柱なので ${correct}です。`,
       identity: `name-text:${n}`,
       alt: true,
       options: opts(correct, wrongs),
@@ -187,7 +213,10 @@ function nameItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
       n === 0 ? '底面は 円かな、多角形かな。' : '底面の 頂点の 数を 数えよう。',
       '角柱は「底面の 形 ＋ 柱」で 名前を つけるよ。',
     ],
-    explain: n === 0 ? '底面が 円なので 円柱です。' : `底面が ${polyName(n)}なので ${correct}です。側面の 数は ${n}つです。`,
+    explain:
+      n === 0
+        ? '底面が 円なので 円柱です。'
+        : `底面が ${polyName(n)}なので ${correct}です。側面の 数は ${n}つです。`,
     identity: `name:${n}:${tall ? 't' : 's'}`,
     alt: false,
     options: opts(correct, wrongs),
@@ -197,14 +226,17 @@ function nameItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
 type PartQ = 'base' | 'side' | 'cylside' | 'rel' | 'perp';
 /** 定義域（問う所 × 立体）。円柱の 問いは 1つ */
 const PARTS_DOMAIN: [PartQ, number][] = [
-  ...(['base', 'side', 'rel', 'perp'] as const).flatMap((q) => [3, 4, 5, 6, 8].map((n) => [q, n] as [PartQ, number])),
+  ...(['base', 'side', 'rel', 'perp'] as const).flatMap((q) =>
+    [3, 4, 5, 6, 8].map((n) => [q, n] as [PartQ, number]),
+  ),
   ['cylside', 0],
 ];
 
 /** 底面・側面（形・関係）。alt: 色の ついた 面は 底面か 側面か */
 function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
   if (alt) {
-    const n = pick(rng, [0, 3, 4, 5, 6, 8]);
+    // 四角柱（直方体）は どの 向かい合う 面も 底面に なりうるので 出さない
+    const n = pick(rng, [0, 3, 5, 6, 8]);
     const which = rng.next() < 0.5 ? 'top' : 'side';
     const tall = rng.next() < 0.5;
     return {
@@ -216,8 +248,8 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
       figure: n === 0 ? cylFig(tall, which) : prismFig(n, tall, which),
       hints: [
         '角柱・円柱で、向かい合った 2つの 面を 底面と いうよ。',
-        'まわりの 面が 側面だよ。上に ある 面も 底面だね。',
-        '色の こい 面と 向かい合う 面は あるかな。',
+        '2つの 底面の まわりを かこむ 面を 側面と いうよ。',
+        '色の こい 面は、上と 下に ある 面かな、まわりを かこむ 面かな。',
       ],
       explain:
         which === 'top'
@@ -247,11 +279,16 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ...base,
         id: `parts:base:${n}`,
         prompt: `${nm}の 底面は どんな 形ですか。`,
-        hints: ['角柱の 名前は、底面の 形から つけるよ。', `${nm}の「${KAKU[n]}」が ヒントだよ。`, '側面ではなく、向かい合った 2つの 面の 形を 考えよう。'],
+        hints: [
+          '角柱の 名前は、底面の 形から つけるよ。',
+          `${nm}の「${KAKU[n]}」が ヒントだよ。`,
+          '側面ではなく、向かい合った 2つの 面の 形を 考えよう。',
+        ],
         explain: `${nm}の 底面は ${polyName(n)}です。側面は 長方形です。`,
         identity: `parts:base:${n}`,
+        // 四角柱の 底面は 長方形の ことも あるので、n = 4 では「長方形」を 誤りに しない
         options: opts(polyName(n), [
-          ['長方形', 'base-side'],
+          n === 4 ? [polyName(3), 'count-faces'] : ['長方形', 'base-side'],
           [polyName(n === 8 ? 6 : n + 1), 'count-faces'],
           ['円', 'prism-cyl'],
         ]),
@@ -261,7 +298,11 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ...base,
         id: `parts:side:${n}`,
         prompt: `${nm}の 側面は どんな 形ですか。`,
-        hints: ['側面は、2つの 底面の 間の まわりの 面だよ。', '底面と 底面を まっすぐ つなぐ 面を 思いうかべよう。', '側面の 角は みな 直角だよ。'],
+        hints: [
+          '側面は、2つの 底面の 間の まわりの 面だよ。',
+          '底面と 底面を まっすぐ つなぐ 面を 思いうかべよう。',
+          '側面の 角は みな 直角だよ。',
+        ],
         explain: `角柱の 側面は 長方形（または 正方形）です。${nm}には 側面が ${n}つ あります。`,
         identity: `parts:side:${n}`,
         options: opts('長方形', [
@@ -275,7 +316,11 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ...base,
         id: 'parts:cylside',
         prompt: '円柱の 側面は どんな 面ですか。',
-        hints: ['円柱の まわりを さわると どうなって いるかな。', '平らな 面か、曲がった 面か を 考えよう。', '曲がった 面を 曲面と いうよ。'],
+        hints: [
+          '円柱の まわりを さわると どうなって いるかな。',
+          '平らな 面か、曲がった 面か を 考えよう。',
+          '曲がった 面を 曲面と いうよ。',
+        ],
         explain: '円柱の 側面は 曲がった 面（曲面）です。2つの 底面は 合同な 円です。',
         identity: 'parts:cylside',
         options: opts('曲面', [
@@ -288,7 +333,11 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ...base,
         id: `parts:rel:${n}`,
         prompt: `${nm}の 2つの 底面は、どんな 関係に ありますか。`,
-        hints: ['2つの 底面は、向かい合って いるね。', '形と 大きさは 同じかな。', '向かい合った 2つの 面は、平行かな、垂直かな。'],
+        hints: [
+          '2つの 底面は、向かい合って いるね。',
+          '形と 大きさは 同じかな。',
+          '向かい合った 2つの 面は、平行かな、垂直かな。',
+        ],
         explain: '角柱の 2つの 底面は、平行で 合同です。',
         identity: `parts:rel:${n}`,
         options: opts('平行で、合同', [
@@ -302,7 +351,11 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ...base,
         id: `parts:perp:${n}`,
         prompt: `${nm}の 底面と 側面は、どんな 関係に ありますか。`,
-        hints: ['底面と 側面が 交わる ところの 角を 考えよう。', '側面は 底面に まっすぐ 立って いるね。', '直角に 交わる 2つの 面は どんな 関係かな。'],
+        hints: [
+          '底面と 側面が 交わる ところの 角を 考えよう。',
+          '側面は 底面に まっすぐ 立って いるね。',
+          '直角に 交わる 2つの 面は どんな 関係かな。',
+        ],
         explain: '角柱の 側面は 底面に 垂直です。',
         identity: `parts:perp:${n}`,
         options: opts('垂直', [
@@ -345,19 +398,21 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `count${alt ? '-alt' : ''}:${n}:${what}${alt ? `:${tall ? 't' : 's'}` : ''}`,
     objective: 'count',
     level,
-    prompt: alt ? `この ${nm}の ${word}の 数は いくつですか。` : `${nm}の ${word}の 数は いくつですか。`,
+    prompt: alt
+      ? `この ${nm}の ${word}の 数は いくつですか。`
+      : `${nm}の ${word}の 数は いくつですか。`,
     figure: alt ? prismFig(n, tall) : undefined,
     hints: [
       `${nm}の 底面は ${polyName(n)}で、2つ あるよ。`,
       what === 'side'
         ? '側面は、底面の 辺 1つに 1つずつ あるよ。'
         : what === 'face'
-          ? `側面は ${n}つ。底面も 数えよう。`
+          ? `側面は ${tsu(n)}。底面も 数えよう。`
           : what === 'edge'
             ? `上の 底面の 辺、下の 底面の 辺、それに たての 辺が あるよ。`
             : '頂点は、上の 底面と 下の 底面に あるよ。',
       what === 'side'
-        ? `底面の 辺の 数は ${n}。`
+        ? '底面の 辺の 数を 数えよう。側面の 数と 同じだよ。'
         : what === 'face'
           ? `${n} ＋ 2を 計算しよう。`
           : what === 'edge'
@@ -366,9 +421,9 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
     ],
     explain:
       what === 'side'
-        ? `${nm}の 側面は、底面の 辺の 数と 同じ ${n}つです。`
+        ? `${nm}の 側面は、底面の 辺の 数と 同じ ${tsu(n)}です。`
         : what === 'face'
-          ? `側面 ${n}つと 底面 2つで、面の 数は ${n} ＋ 2 ＝ ${ans}です。`
+          ? `側面 ${tsu(n)}と 底面 2つで、面の 数は ${n} ＋ 2 ＝ ${ans}です。`
           : what === 'edge'
             ? `上の 底面の 辺 ${n}本、下の 底面の 辺 ${n}本、たての 辺 ${n}本で、${n} × 3 ＝ ${ans}本です。`
             : `上の 底面に ${n}こ、下の 底面に ${n}こで、${n} × 2 ＝ ${ans}こです。`,
@@ -395,7 +450,8 @@ function net(level: number, rng: Rng, alt: boolean): Item {
           '側面の 長方形の 横の 長さは、底面の 円の まわりに ぴったり まきつく 長さだよ。',
           '円周は 直径の 約3.14倍。長方形の 横は 円の 直径より ずっと 長いね。',
         ],
-        explain: '円柱の 展開図は、側面の 長方形の 横の 長さが 底面の 円周と 等しく、2つの 円が 長方形の 上と 下に つきます。',
+        explain:
+          '円柱の 展開図は、側面の 長方形の 横の 長さが 底面の 円周と 等しく、2つの 円が 長方形の 上と 下に つきます。',
         identity: 'net-pick:cyl',
         alt: true,
         layout: 'grid',
@@ -502,19 +558,60 @@ export const prismCylinder: UnitSpec = finishUnit(
       { id: 'net', title: '展開図' },
     ],
     misconceptions: [
-      { id: 'count-faces', explain: '側面の 数や 底面の 頂点の 数を 数えまちがえたのかな。角柱の 名前は 底面の 形で 決まり、側面の 数は 底面の 辺の 数と 同じだよ。' },
-      { id: 'prism-cyl', explain: '角柱と 円柱を 取りちがえたのかな。底面が 多角形なら 角柱、円なら 円柱だよ。' },
-      { id: 'solid-plane', explain: '平面の 図形の 名前を 選んだのかな。立体の 名前は「〜柱」だよ。' },
-      { id: 'base-side', explain: '底面と 側面を 取りちがえたのかな。向かい合った 2つの 合同な 面が 底面、まわりの 面が 側面だよ。' },
-      { id: 'side-shape', explain: '角柱の 側面の 角は みんな 直角だよ。だから 側面は 長方形（または 正方形）だね。' },
-      { id: 'flat-side', explain: '円柱の 側面は 平らでは なく、曲がって いるよ。曲がった 面を 曲面と いうよ。' },
-      { id: 'base-rel', explain: '面と 面の 関係を 取りちがえたのかな。2つの 底面は 平行で 合同、底面と 側面は 垂直だよ。' },
-      { id: 'forget-base', explain: '底面を 数えわすれたのかな。側面の ほかに、上と 下の 底面が 2つ あるよ。' },
-      { id: 'edge-count', explain: '辺の 数え方を 見直そう。上の 底面の 辺、下の 底面の 辺、たての 辺の 3組 あるよ。' },
-      { id: 'vertex-count', explain: '頂点は、上の 底面と 下の 底面に 同じ 数ずつ あるよ。底面の 頂点の 数の 2倍だね。' },
-      { id: 'diam-width', explain: '側面の 長方形の 横の 長さは、底面の 円の まわりの 長さ（円周）と 同じだよ。直径 × 3.14 で 求めよう。' },
+      {
+        id: 'count-faces',
+        explain:
+          '側面の 数や 底面の 頂点の 数を 数えまちがえたのかな。角柱の 名前は 底面の 形で 決まり、側面の 数は 底面の 辺の 数と 同じだよ。',
+      },
+      {
+        id: 'prism-cyl',
+        explain: '角柱と 円柱を 取りちがえたのかな。底面が 多角形なら 角柱、円なら 円柱だよ。',
+      },
+      {
+        id: 'solid-plane',
+        explain: '平面の 図形の 名前を 選んだのかな。立体の 名前は「〜柱」だよ。',
+      },
+      {
+        id: 'base-side',
+        explain:
+          '底面と 側面を 取りちがえたのかな。向かい合った 2つの 合同な 面が 底面、まわりの 面が 側面だよ。',
+      },
+      {
+        id: 'side-shape',
+        explain: '角柱の 側面の 角は みんな 直角だよ。だから 側面は 長方形（または 正方形）だね。',
+      },
+      {
+        id: 'flat-side',
+        explain: '円柱の 側面は 平らでは なく、曲がって いるよ。曲がった 面を 曲面と いうよ。',
+      },
+      {
+        id: 'base-rel',
+        explain:
+          '面と 面の 関係を 取りちがえたのかな。2つの 底面は 平行で 合同、底面と 側面は 垂直だよ。',
+      },
+      {
+        id: 'forget-base',
+        explain: '底面を 数えわすれたのかな。側面の ほかに、上と 下の 底面が 2つ あるよ。',
+      },
+      {
+        id: 'edge-count',
+        explain: '辺の 数え方を 見直そう。上の 底面の 辺、下の 底面の 辺、たての 辺の 3組 あるよ。',
+      },
+      {
+        id: 'vertex-count',
+        explain: '頂点は、上の 底面と 下の 底面に 同じ 数ずつ あるよ。底面の 頂点の 数の 2倍だね。',
+      },
+      {
+        id: 'diam-width',
+        explain:
+          '側面の 長方形の 横の 長さは、底面の 円の まわりの 長さ（円周）と 同じだよ。直径 × 3.14 で 求めよう。',
+      },
       { id: 'r-d-swap', explain: '半径と 直径を 取りちがえたのかな。円周 ＝ 直径 × 3.14 だよ。' },
-      { id: 'net-overlap', explain: '組み立てると、2つの 底面が 同じ がわに 重なって しまうよ。底面は 上と 下に 1つずつ つけよう。' },
+      {
+        id: 'net-overlap',
+        explain:
+          '組み立てると、2つの 底面が 同じ がわに 重なって しまうよ。底面は 上と 下に 1つずつ つけよう。',
+      },
     ],
     levels: [
       { label: '名前・底面と 側面', chance: 0.05 },
@@ -540,8 +637,9 @@ export const prismCylinder: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generatePrismCylinder(level, rng, index),
     },
     review: 'objective',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 B(2) 立体図形の性質（角柱・円柱、見取図・展開図）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 B(2) 立体図形の性質（角柱・円柱、見取図・展開図）',
     revised: REVISED,
   },
-  '向《む》かい合《あ》って 向《む》かい合《あ》う 向《む》かい合《あ》った 七角柱《ななかくちゅう》 九角柱《きゅうかくちゅう》 十角柱《じっかくちゅう》 曲面《きょくめん》 曲《ま》がった 曲《ま》がって 平《たい》ら 丸《まる》める 柱《ちゅう》 間《あいだ》 組《く》み立《た》てる 組《く》み立《た》てた 組《く》み立《た》てると 色《いろ》の こい 立《た》って 交《まじ》わる 名前《なまえ》 平行《へいこう》 垂直《すいちょく》 本《ほん》 組《くみ》',
+  'ひし形《がた》 向《む》かい合《あ》って 向《む》かい合《あ》う 向《む》かい合《あ》った 七角柱《ななかくちゅう》 九角柱《きゅうかくちゅう》 十角柱《じっかくちゅう》 曲面《きょくめん》 曲《ま》がった 曲《ま》がって 平《たい》ら 丸《まる》める 柱《ちゅう》 間《あいだ》 組《く》み立《た》てる 組《く》み立《た》てた 組《く》み立《た》てると 色《いろ》の こい 立《た》って 交《まじ》わる 名前《なまえ》 平行《へいこう》 垂直《すいちょく》 本《ほん》 組《くみ》',
 );

@@ -8,18 +8,32 @@
  */
 import type { Rng } from '../../core/util/rng';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { divText, doubleLine, dec, decAns, finishUnit, opts, pick, pickObj, REVISED, wrongList } from './util';
+import {
+  divText,
+  doubleLine,
+  dec,
+  decAns,
+  finishUnit,
+  opts,
+  pick,
+  pickObj,
+  REVISED,
+  wrongList,
+} from './util';
 
 type Obj = 'ratio' | 'pct' | 'compare' | 'base' | 'sale';
 
 const BASES = [20, 25, 40, 50, 80, 100, 120, 125, 150, 200, 250, 300, 400, 500];
 
-/** もとにする量 B と 百分率 p（B × p ÷ 100 が 整数） */
-function pickBP(rng: Rng, pMax = 99): { B: number; p: number; C: number } {
+/** もとにする量 B（maxB まで）と 百分率 p（B × p ÷ 100 が 整数。100%は 答えが そのままなので 使わない） */
+function pickBP(rng: Rng, pMax = 99, maxB = Infinity): { B: number; p: number; C: number } {
   for (;;) {
-    const B = pick(rng, BASES);
+    const B = pick(
+      rng,
+      BASES.filter((b) => b <= maxB),
+    );
     const p = rng.int(1, pMax);
-    if ((B * p) % 100 !== 0) continue;
+    if ((B * p) % 100 !== 0 || p === 100) continue;
     return { B, p, C: (B * p) / 100 };
   }
 }
@@ -50,17 +64,44 @@ interface RatioScene {
   text: (B: number, C: number) => string;
   baseWord: string;
   cmpWord: string;
+  /** もとにする量の 上限（場面に 合う 大きさ） */
+  maxB?: number;
 }
 const RATIO_SCENES: RatioScene[] = [
-  { id: 'shoot', text: (B, C) => `シュートを ${B}回 うって、${C}回 入《はい》りました。入《はい》った 割合を 求めよう。`, baseWord: 'うった 回数', cmpWord: '入《はい》った 回数' },
-  { id: 'bus', text: (B, C) => `定員 ${B}人の バスに ${C}人 乗って います。定員を もとに した、乗って いる 人の 割合を 求めよう。`, baseWord: '定員', cmpWord: '乗って いる 人数' },
-  { id: 'seed', text: (B, C) => `たねを ${B}こ まいたら、${C}こが 芽《め》を 出しました。芽《め》が 出た 割合を 求めよう。`, baseWord: 'まいた 数', cmpWord: '芽《め》が 出た 数' },
-  { id: 'field', text: (B, C) => `${B}m²の 畑の うち、${C}m²に トマトを 植《う》えました。トマトを 植《う》えた 部分の 割合を 求めよう。`, baseWord: '畑の 広さ', cmpWord: 'トマトの 広さ' },
+  {
+    id: 'shoot',
+    text: (B, C) =>
+      `シュートを ${B}回 うって、${C}回 入《はい》りました。入《はい》った 割合を 求めよう。`,
+    baseWord: 'うった 回数',
+    cmpWord: '入《はい》った 回数',
+  },
+  {
+    id: 'bus',
+    text: (B, C) =>
+      `定員 ${B}人の バスに ${C}人 乗って います。定員を もとに した、乗って いる 人の 割合を 求めよう。`,
+    baseWord: '定員',
+    cmpWord: '乗って いる 人数',
+    maxB: 80,
+  },
+  {
+    id: 'seed',
+    text: (B, C) =>
+      `たねを ${B}こ まいたら、${C}こが 芽《め》を 出しました。芽《め》が 出た 割合を 求めよう。`,
+    baseWord: 'まいた 数',
+    cmpWord: '芽《め》が 出た 数',
+  },
+  {
+    id: 'field',
+    text: (B, C) =>
+      `${B}m²の 畑の うち、${C}m²に トマトを 植《う》えました。トマトを 植《う》えた 部分の 割合を 求めよう。`,
+    baseWord: '畑の 広さ',
+    cmpWord: 'トマトの 広さ',
+  },
 ];
 
 function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = pick(rng, RATIO_SCENES);
-  const { B, p, C } = pickBP(rng);
+  const { B, p, C } = pickBP(rng, 99, sc.maxB);
   const r = dec(p, 2);
   const answers = alt ? [{ kind: 'int' as const, value: p }] : [decAns(p, 2)];
   return {
@@ -142,7 +183,11 @@ function pctItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'pct',
       level,
       prompt: `${p}%と 同じ 割合を 表して いる 小数は どれ？`,
-      hints: ['百分率の 1%は、割合の 0.01だよ。', '100%が 1に あたるね。', `${p}%は 0.01が ${p}こ分だよ。`],
+      hints: [
+        '百分率の 1%は、割合の 0.01だよ。',
+        '100%が 1に あたるね。',
+        `${p}%は 0.01が ${p}こ分だよ。`,
+      ],
       explain: `${p}%は 0.01が ${p}こ分なので、小数で ${d}です。`,
       identity: `pct-pick:${p}`,
       alt: true,
@@ -163,7 +208,11 @@ function pctItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'pct',
       level,
       prompt: `割合 ${d}を 百分率で 表そう。`,
-      hints: ['割合の 1が 100%だよ。', '百分率は 割合を 100倍した 数。', `${d} × 100を 計算しよう。`],
+      hints: [
+        '割合の 1が 100%だよ。',
+        '百分率は 割合を 100倍した 数。',
+        `${d} × 100を 計算しよう。`,
+      ],
       explain: `${d} × 100 ＝ ${p}。${d}は ${p}%です。`,
       identity: `pct:d2p:${p}`,
       alt: false,
@@ -203,12 +252,33 @@ interface CmpScene {
   id: string;
   text: (B: number, rate: string) => string;
   unit: string;
+  /** もとにする量の 上限（場面に 合う 大きさ） */
+  maxB?: number;
 }
 const CMP_SCENES: CmpScene[] = [
-  { id: 'bus', text: (B, r) => `定員 ${B}人の バスに、定員の ${r}の 人が 乗って います。乗って いる 人は 何人ですか。`, unit: '人' },
-  { id: 'test', text: (B, r) => `${B}問の 問題の うち、${r}が 正かいでした。正かいした 問題は 何問ですか。`, unit: '問' },
-  { id: 'juice', text: (B, r) => `${B}mLの ジュースの ${r}が 果《か》じゅうです。果《か》じゅうは 何mLですか。`, unit: 'mL' },
-  { id: 'book', text: (B, r) => `図書室の 本 ${B}さつの うち、${r}が 物語の 本です。物語の 本は 何さつですか。`, unit: 'さつ' },
+  {
+    id: 'bus',
+    text: (B, r) =>
+      `定員 ${B}人の バスに、定員の ${r}の 人が 乗って います。乗って いる 人は 何人ですか。`,
+    unit: '人',
+    maxB: 80,
+  },
+  {
+    id: 'test',
+    text: (B, r) => `${B}問の 問題の うち、${r}が 正かいでした。正かいした 問題は 何問ですか。`,
+    unit: '問',
+    maxB: 100,
+  },
+  {
+    id: 'juice',
+    text: (B, r) => `${B}mLの ジュースの ${r}が 果《か》じゅうです。果《か》じゅうは 何mLですか。`,
+    unit: 'mL',
+  },
+  {
+    id: 'book',
+    text: (B, r) => `図書室の 本 ${B}さつの うち、${r}が 物語の 本です。物語の 本は 何さつですか。`,
+    unit: 'さつ',
+  },
 ];
 
 function compareItem(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -217,12 +287,15 @@ function compareItem(level: number, rng: Rng, alt: boolean): NumberItem {
   const { B, p, C } = alt
     ? (() => {
         for (;;) {
-          const B = pick(rng, BASES);
+          const B = pick(
+            rng,
+            BASES.filter((b) => b <= (sc.maxB ?? Infinity)),
+          );
           const p = rng.int(1, 9) * 10;
           if ((B * p) % 100 === 0) return { B, p, C: (B * p) / 100 };
         }
       })()
-    : pickBP(rng);
+    : pickBP(rng, 99, sc.maxB);
   const rate = alt ? `${p / 10}割` : `${p}%`;
   const answers = [{ kind: 'int' as const, value: C }];
   return {
@@ -261,9 +334,25 @@ interface BaseScene {
   over?: boolean;
 }
 const BASE_SCENES: BaseScene[] = [
-  { id: 'bike', text: (C, p) => `自転車で 通学《つうがく》する 人は ${C}人で、これは 全校の 人数の ${p}%です。全校の 人数は 何人ですか。`, unit: '人' },
-  { id: 'save', text: (C, p) => `ちょ金《きん》の ${p}%に あたる ${C}円で 本を 買いました。ちょ金《きん》は 何円 ありましたか。`, unit: '円' },
-  { id: 'visit', over: true, text: (C, p) => `今年《ことし》の 子ども会《かい》の 参加者《さんかしゃ》は ${C}人で、これは 去年《きょねん》の 参加者《さんかしゃ》の ${p}%です。去年《きょねん》は 何人でしたか。`, unit: '人' },
+  {
+    id: 'bike',
+    text: (C, p) =>
+      `自転車で 通学《つうがく》する 人は ${C}人で、これは 全校の 人数の ${p}%です。全校の 人数は 何人ですか。`,
+    unit: '人',
+  },
+  {
+    id: 'save',
+    text: (C, p) =>
+      `ちょ金《きん》の ${p}%に あたる ${C}円で 本を 買いました。ちょ金《きん》は 何円 ありましたか。`,
+    unit: '円',
+  },
+  {
+    id: 'visit',
+    over: true,
+    text: (C, p) =>
+      `今年《ことし》の 子ども会《かい》の 参加者《さんかしゃ》は ${C}人で、これは 去年《きょねん》の 参加者《さんかしゃ》の ${p}%です。去年《きょねん》は 何人でしたか。`,
+    unit: '人',
+  },
 ];
 
 function baseItem(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -305,6 +394,7 @@ function saleItem(level: number, rng: Rng, alt: boolean): NumberItem {
       const p = pick(rng, [10, 15, 20, 25, 30, 40, 50]);
       if ((X * p) % 100 !== 0) continue;
       const u = rng.next() < 0.5 ? 'g' : 'mL';
+      const thing = u === 'g' ? 'おかし' : 'ジュース';
       const ans = (X * (100 + p)) / 100;
       const answers = [{ kind: 'int' as const, value: ans }];
       return {
@@ -312,7 +402,7 @@ function saleItem(level: number, rng: Rng, alt: boolean): NumberItem {
         id: `sale-alt:${X}${u}:${p}`,
         objective: 'sale',
         level,
-        prompt: `ふだん ${X}${u}入りの おかしが、今日は ${p}% 増量して います。今日の 量は 何${u}ですか。`,
+        prompt: `ふだん ${X}${u}入りの ${thing}が、今日は ${p}% 増量して います。今日の 量は 何${u}ですか。`,
         figure: pctLine(String(X), '?', String(100 + p), 100 + p),
         hints: [
           `もとに する 量は ふだんの ${X}${u}。${p}% 増えるので、今日は ${100 + p}%に あたるよ。`,
@@ -462,7 +552,8 @@ export const percent: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generatePercent(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 C(3) 割合（百分率）。歩合は 内容の取扱いの範囲で 割・分まで',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 C(3) 割合（百分率）。歩合は 内容の取扱いの範囲で 割・分まで',
     revised: REVISED,
   },
   '自転車《じてんしゃ》 畑《はたけ》 芽《め》 出《だ》し 出《で》 植《う》えました 植《う》えた 乗《の》って 通学《つうがく》 全校《ぜんこう》 予定《よてい》 歩《ある》きました 図書室《としょしつ》 物語《ものがたり》 問《もん》 果《か》じゅう 今日《きょう》 入《い》り 引《び》き 引《ひ》き 引《ひ》かれる 引《ひ》く 正《せい》かい ちょ金《きん》 買《か》いました',

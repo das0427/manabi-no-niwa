@@ -7,7 +7,17 @@
  */
 import type { Rng } from '../../core/util/rng';
 import type { ChoiceItem, ChoiceOption, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { dec, decAns, divText, doubleLine, finishUnit, pick, pickObj, REVISED, wrongList } from './util';
+import {
+  dec,
+  decAns,
+  divText,
+  doubleLine,
+  finishUnit,
+  pick,
+  pickObj,
+  REVISED,
+  wrongList,
+} from './util';
 
 type Obj = 'crowd' | 'per1' | 'density' | 'price' | 'story';
 
@@ -38,7 +48,8 @@ const PER_SCENES: PerScene[] = [
   },
   {
     id: 'car',
-    text: (a, b) => `ガソリン ${a}Lで ${b}km 走る 車が あります。ガソリン 1Lあたり 何km 走りますか。`,
+    text: (a, b) =>
+      `ガソリン ${a}Lで ${b}km 走る 車が あります。ガソリン 1Lあたり 何km 走りますか。`,
     aUnit: 'L',
     bUnit: 'km',
     aWord: 'ガソリンの 量',
@@ -68,7 +79,8 @@ const PER_SCENES: PerScene[] = [
   },
   {
     id: 'copy',
-    text: (a, b) => `${a}分《ふん》間で ${b}まい 印《いん》さつ できる 機《き》械《かい》が あります。1分《ふん》間あたり 何まいですか。`,
+    text: (a, b) =>
+      `${a}分《ふん》間で ${b}まい 印《いん》さつ できる 機《き》械《かい》が あります。1分《ふん》間あたり 何まいですか。`,
     aUnit: '',
     bUnit: 'まい',
     aWord: '時間',
@@ -78,7 +90,8 @@ const PER_SCENES: PerScene[] = [
   },
   {
     id: 'water',
-    text: (a, b) => `じゃ口から ${a}分《ふん》間に ${b}Lの 水が 出ました。1分《ふん》間あたり 何Lですか。`,
+    text: (a, b) =>
+      `じゃ口から ${a}分《ふん》間に ${b}Lの 水が 出ました。1分《ふん》間あたり 何Lですか。`,
     aUnit: '',
     bUnit: 'L',
     aWord: '時間',
@@ -125,7 +138,9 @@ function per1(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `per1${alt ? '-alt' : ''}:${sc.id}:${a}:${b}`,
     objective: 'per1',
     level,
-    prompt: alt ? `${sc.text(a, String(b))}（上が ${sc.bWord}、下が ${sc.aWord}の 数直線で 考えよう）` : sc.text(a, String(b)),
+    prompt: alt
+      ? `${sc.text(a, String(b))}（上が ${sc.bWord}、下が ${sc.aWord}の 数直線で 考えよう）`
+      : sc.text(a, String(b)),
     figure: fig,
     hints: [
       `「1あたり」は、${sc.aWord}を 1に した ときの ${sc.bWord}だよ。`,
@@ -306,6 +321,9 @@ function density(level: number, rng: Rng, alt: boolean): Item {
       const top = dens.indexOf(Math.max(...dens));
       const bigPop = pops.indexOf(Math.max(...pops));
       if (top === bigPop) continue;
+      // のこりの 1つは 人口密度が いちばん 低い 町（それを 選ぶのは「向きを 反対に」くらべた 誤り）
+      const low = dens.indexOf(Math.min(...dens));
+      if (low === top || low === bigPop) continue;
       const options: ChoiceOption[] = TOWNS.map((t, i) =>
         i === top
           ? { label: t, correct: true }
@@ -432,17 +450,60 @@ interface UseScene {
   rUnit: string;
 }
 const USE_SCENES: UseScene[] = [
-  { id: 'rice', op: 'mul', text: (r, n) => `1aあたり ${r}kgの お米が とれる 田んぼが ${n}a あります。全部で 何kg とれますか。`, unit: 'kg', rUnit: 'kg' },
-  { id: 'car', op: 'mul', text: (r, n) => `ガソリン 1Lあたり ${r}km 走る 車が あります。${n}Lでは 何km 走りますか。`, unit: 'km', rUnit: 'km' },
-  { id: 'cloth', op: 'mul', text: (r, n) => `1mあたり ${r}円の 布《ぬの》を ${n}m 買います。代金は 何円ですか。`, unit: '円', rUnit: '円' },
-  { id: 'tap', op: 'div', text: (r, n) => `1分《ふん》間あたり ${r}Lの 水が 出る じゃ口で、${n}Lの 水を ためます。何分《ふん》 かかりますか。`, unit: '分《ふん》', rUnit: 'L' },
-  { id: 'paper', op: 'div', text: (r, n) => `1まいあたり ${r}gの 紙が あります。紙の 重さが 全部で ${n}gの とき、紙は 何まい ありますか。`, unit: 'まい', rUnit: 'g' },
-  { id: 'farm', op: 'div', text: (r, n) => `1aあたり ${r}kgの いもが とれる 畑で、${n}kgの いもを とるには 何aの 畑が いりますか。`, unit: 'a', rUnit: 'kg' },
+  {
+    id: 'rice',
+    op: 'mul',
+    text: (r, n) =>
+      `1aあたり ${r}kgの お米が とれる 田んぼが ${n}a あります。全部で 何kg とれますか。`,
+    unit: 'kg',
+    rUnit: 'kg',
+  },
+  {
+    id: 'car',
+    op: 'mul',
+    text: (r, n) => `ガソリン 1Lあたり ${r}km 走る 車が あります。${n}Lでは 何km 走りますか。`,
+    unit: 'km',
+    rUnit: 'km',
+  },
+  {
+    id: 'wire',
+    op: 'mul',
+    text: (r, n) => `1mあたりの 重さが ${r}gの はり金が ${n}m あります。全部の 重さは 何gですか。`,
+    unit: 'g',
+    rUnit: 'g',
+  },
+  {
+    id: 'tap',
+    op: 'div',
+    text: (r, n) =>
+      `1分《ふん》間あたり ${r}Lの 水が 出る じゃ口で、${n}Lの 水を ためます。何分《ふん》 かかりますか。`,
+    unit: '分《ふん》',
+    rUnit: 'L',
+  },
+  {
+    id: 'paper',
+    op: 'div',
+    text: (r, n) =>
+      `1まいあたり ${r}gの 紙が あります。紙の 重さが 全部で ${n}gの とき、紙は 何まい ありますか。`,
+    unit: 'まい',
+    rUnit: 'g',
+  },
+  {
+    id: 'farm',
+    op: 'div',
+    text: (r, n) =>
+      `1aあたり ${r}kgの いもが とれる 畑で、${n}kgの いもを とるには 何aの 畑が いりますか。`,
+    unit: 'a',
+    rUnit: 'kg',
+  },
 ];
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
   // alt: わり算（いくつ分を 求める）、ふだん: かけ算（全体を 求める）
-  const sc = pick(rng, USE_SCENES.filter((s) => (alt ? s.op === 'div' : s.op === 'mul')));
+  const sc = pick(
+    rng,
+    USE_SCENES.filter((s) => (alt ? s.op === 'div' : s.op === 'mul')),
+  );
   // 1あたり量 rv（10分の1 の いくつ分）と いくつ分 n
   const [rv, n] = ((): [number, number] => {
     for (;;) {
@@ -612,7 +673,8 @@ export const perUnit: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generatePerUnit(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 C(2) 単位量当たりの大きさ（こみぐあい、人口密度）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 C(2) 単位量当たりの大きさ（こみぐあい、人口密度）',
     revised: REVISED,
   },
   '部屋《へや》 小屋《ごや》 町《ちょう》 住《す》んで 植《う》えました 泳《およ》いで 布《ぬの》 田《た》んぼ 遊《あそ》んで 売《う》って 安《やす》い 間《かん》 金《がね》 口《ぐち》 車《くるま》 出《で》 畑《はたけ》',

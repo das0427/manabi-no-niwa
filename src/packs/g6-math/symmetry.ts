@@ -30,12 +30,16 @@ function reflect(p: Pt, a: Pt, b: Pt): Pt {
 export function symInfo(ps: Pt[]): { axes: number; point: boolean } {
   const n = ps.length;
   const c: Pt = [ps.reduce((s, p) => s + p[0], 0) / n, ps.reduce((s, p) => s + p[1], 0) / n];
-  const cands: Pt[] = [...ps, ...ps.map((p, i) => [(p[0] + ps[(i + 1) % n]![0]) / 2, (p[1] + ps[(i + 1) % n]![1]) / 2] as Pt)];
+  const cands: Pt[] = [
+    ...ps,
+    ...ps.map((p, i) => [(p[0] + ps[(i + 1) % n]![0]) / 2, (p[1] + ps[(i + 1) % n]![1]) / 2] as Pt),
+  ];
   const dirs: number[] = [];
   for (const q of cands) {
     if (samePt(q, c)) continue;
-    const ang = (((Math.atan2(q[1] - c[1], q[0] - c[0]) * 180) / Math.PI) % 180 + 180) % 180;
-    if (dirs.some((d) => Math.abs(d - ang) < 1e-4 || Math.abs(Math.abs(d - ang) - 180) < 1e-4)) continue;
+    const ang = ((((Math.atan2(q[1] - c[1], q[0] - c[0]) * 180) / Math.PI) % 180) + 180) % 180;
+    if (dirs.some((d) => Math.abs(d - ang) < 1e-4 || Math.abs(Math.abs(d - ang) - 180) < 1e-4))
+      continue;
     const img = ps.map((p) => reflect(p, c, q));
     // 辺のつながりも保つ（頂点の順が逆向きに対応する）
     if (hasAll(ps, img) && edgesKept(ps, img)) dirs.push(ang);
@@ -66,7 +70,8 @@ function shapesOf(kind: SymKind, list: [string, Pt[]][]): Shape[] {
   const out: Shape[] = [];
   for (const [key, pts] of list) {
     const s = symInfo(pts);
-    const k: SymKind = s.axes > 0 && s.point ? 'both' : s.axes > 0 ? 'line' : s.point ? 'point' : 'none';
+    const k: SymKind =
+      s.axes > 0 && s.point ? 'both' : s.axes > 0 ? 'line' : s.point ? 'point' : 'none';
     // 計算で確かめた分類と合うものだけ使う
     if (k === kind) out.push({ key, pts, kind });
   }
@@ -74,22 +79,77 @@ function shapesOf(kind: SymKind, list: [string, Pt[]][]): Shape[] {
 }
 const LINE_SHAPES: Shape[] = shapesOf('line', [
   ...[2, 4, 6].flatMap((w) =>
-    [2, 3, 4].map((h) => [`iso${w}x${h}`, [[0, h], [w / 2, 0], [w, h]]] as [string, Pt[]]),
+    [2, 3, 4].map(
+      (h) =>
+        [
+          `iso${w}x${h}`,
+          [
+            [0, h],
+            [w / 2, 0],
+            [w, h],
+          ],
+        ] as [string, Pt[]],
+    ),
   ),
   ...[1, 2].flatMap((k) =>
-    [3, 4, 5].map((h) => [`kite${k}x${h}`, [[k, 0], [2 * k, k], [k, h], [0, k]]] as [string, Pt[]]),
+    [3, 4, 5].map(
+      (h) =>
+        [
+          `kite${k}x${h}`,
+          [
+            [k, 0],
+            [2 * k, k],
+            [k, h],
+            [0, k],
+          ],
+        ] as [string, Pt[]],
+    ),
   ),
   ...[4, 5, 6].flatMap((w) =>
-    [2, 3].map((h) => [`itrap${w}x${h}`, [[1, 0], [w - 1, 0], [w, h], [0, h]]] as [string, Pt[]]),
+    [2, 3].map(
+      (h) =>
+        [
+          `itrap${w}x${h}`,
+          [
+            [1, 0],
+            [w - 1, 0],
+            [w, h],
+            [0, h],
+          ],
+        ] as [string, Pt[]],
+    ),
   ),
   ...[4, 6].flatMap((w) =>
-    [1, 2].map((k) => [`house${w}x${k}`, [[0, k], [w / 2, 0], [w, k], [w, k + 2], [0, k + 2]]] as [string, Pt[]]),
+    [1, 2].map(
+      (k) =>
+        [
+          `house${w}x${k}`,
+          [
+            [0, k],
+            [w / 2, 0],
+            [w, k],
+            [w, k + 2],
+            [0, k + 2],
+          ],
+        ] as [string, Pt[]],
+    ),
   ),
 ]);
 const POINT_SHAPES: Shape[] = shapesOf('point', [
   ...[1, 2].flatMap((a) =>
     [3, 4].flatMap((w) =>
-      [2, 3].map((h) => [`para${a}-${w}x${h}`, [[0, h], [a, 0], [a + w, 0], [w, h]]] as [string, Pt[]]),
+      [2, 3].map(
+        (h) =>
+          [
+            `para${a}-${w}x${h}`,
+            [
+              [0, h],
+              [a, 0],
+              [a + w, 0],
+              [w, h],
+            ],
+          ] as [string, Pt[]],
+      ),
     ),
   ),
   ...[
@@ -100,7 +160,17 @@ const POINT_SHAPES: Shape[] = shapesOf('point', [
     [1, 2, 3],
   ].map(
     ([p, r, t]) =>
-      [`shex${p}${r}${t}`, [[0, 0], [p!, 0], [p! + r!, r!], [p! + r!, r! + t!], [r!, r! + t!], [0, t!]]] as [string, Pt[]],
+      [
+        `shex${p}${r}${t}`,
+        [
+          [0, 0],
+          [p!, 0],
+          [p! + r!, r!],
+          [p! + r!, r! + t!],
+          [r!, r! + t!],
+          [0, t!],
+        ],
+      ] as [string, Pt[]],
   ),
 ]);
 const BOTH_SHAPES: Shape[] = shapesOf('both', [
@@ -109,38 +179,122 @@ const BOTH_SHAPES: Shape[] = shapesOf('both', [
     [4, 2],
     [5, 3],
     [2, 4],
-  ].map(([w, h]) => [`rect${w}x${h}`, [[0, 0], [w!, 0], [w!, h!], [0, h!]]] as [string, Pt[]]),
+  ].map(
+    ([w, h]) =>
+      [
+        `rect${w}x${h}`,
+        [
+          [0, 0],
+          [w!, 0],
+          [w!, h!],
+          [0, h!],
+        ],
+      ] as [string, Pt[]],
+  ),
   ...[
     [1, 2],
     [2, 3],
     [2, 1],
     [3, 2],
-  ].map(([k, m]) => [`rhom${k}x${m}`, [[k!, 0], [2 * k!, m!], [k!, 2 * m!], [0, m!]]] as [string, Pt[]]),
-  ...[2, 3].map((w) => [`sq${w}`, [[0, 0], [w, 0], [w, w], [0, w]]] as [string, Pt[]]),
+  ].map(
+    ([k, m]) =>
+      [
+        `rhom${k}x${m}`,
+        [
+          [k!, 0],
+          [2 * k!, m!],
+          [k!, 2 * m!],
+          [0, m!],
+        ],
+      ] as [string, Pt[]],
+  ),
+  ...[2, 3].map(
+    (w) =>
+      [
+        `sq${w}`,
+        [
+          [0, 0],
+          [w, 0],
+          [w, w],
+          [0, w],
+        ],
+      ] as [string, Pt[]],
+  ),
 ]);
 const NONE_SHAPES: Shape[] = shapesOf('none', [
   ...[
     [3, 2],
     [4, 3],
     [2, 4],
-  ].map(([w, h]) => [`rtri${w}x${h}`, [[0, 0], [0, h!], [w!, h!]]] as [string, Pt[]]),
+  ].map(
+    ([w, h]) =>
+      [
+        `rtri${w}x${h}`,
+        [
+          [0, 0],
+          [0, h!],
+          [w!, h!],
+        ],
+      ] as [string, Pt[]],
+  ),
   ...[
     [4, 1, 3],
     [5, 4, 3],
     [5, 1, 2],
-  ].map(([w, a, h]) => [`stri${w}-${a}x${h}`, [[0, h!], [w!, h!], [a!, 0]]] as [string, Pt[]]),
+  ].map(
+    ([w, a, h]) =>
+      [
+        `stri${w}-${a}x${h}`,
+        [
+          [0, h!],
+          [w!, h!],
+          [a!, 0],
+        ],
+      ] as [string, Pt[]],
+  ),
   ...[
     [2, 4, 3],
     [3, 5, 2],
-  ].map(([a, w, h]) => [`rtrap${a}-${w}x${h}`, [[0, 0], [a!, 0], [w!, h!], [0, h!]]] as [string, Pt[]]),
-  ['quad1', [[0, 0], [4, 1], [3, 4], [1, 3]]],
-  ['quad2', [[0, 1], [3, 0], [5, 3], [1, 4]]],
+  ].map(
+    ([a, w, h]) =>
+      [
+        `rtrap${a}-${w}x${h}`,
+        [
+          [0, 0],
+          [a!, 0],
+          [w!, h!],
+          [0, h!],
+        ],
+      ] as [string, Pt[]],
+  ),
+  [
+    'quad1',
+    [
+      [0, 0],
+      [4, 1],
+      [3, 4],
+      [1, 3],
+    ],
+  ],
+  [
+    'quad2',
+    [
+      [0, 1],
+      [3, 0],
+      [5, 3],
+      [1, 4],
+    ],
+  ],
 ]);
 
 function judgeItem(level: number, rng: Rng, alt: boolean): GeometryItem {
   const ask: 'line' | 'point' | 'both' = alt ? 'both' : rng.next() < 0.5 ? 'line' : 'point';
   const correctPool =
-    ask === 'line' ? [...LINE_SHAPES, ...BOTH_SHAPES] : ask === 'point' ? [...POINT_SHAPES, ...BOTH_SHAPES] : BOTH_SHAPES;
+    ask === 'line'
+      ? [...LINE_SHAPES, ...BOTH_SHAPES]
+      : ask === 'point'
+        ? [...POINT_SHAPES, ...BOTH_SHAPES]
+        : BOTH_SHAPES;
   const correct = pick(rng, correctPool);
   const wrongs: { s: Shape; m: string }[] =
     ask === 'line'
@@ -162,7 +316,12 @@ function judgeItem(level: number, rng: Rng, alt: boolean): GeometryItem {
           ];
   const uniq = wrongs.filter((w, i) => wrongs.findIndex((x) => x.s.key === w.s.key) === i);
   for (const w of uniq) if (w.s.kind === 'line' || w.s.kind === 'point') w.m = 'line-vs-point';
-  const name = ask === 'line' ? '線対称な 形' : ask === 'point' ? '点対称な 形' : '線対称でも あり、点対称でも ある 形';
+  const name =
+    ask === 'line'
+      ? '線対称な 形'
+      : ask === 'point'
+        ? '点対称な 形'
+        : '線対称でも あり、点対称でも ある 形';
   return {
     engine: 'geometry',
     id: `judge${alt ? '-alt' : ''}:${ask}:${correct.key}:${uniq.map((w) => w.s.key).join(',')}`,
@@ -216,7 +375,26 @@ interface Named {
   center?: Pt;
 }
 
+/** 3つ続く 頂点が 一直線に 並ぶ（頂点が 辺の 途中に なる）か */
+function hasStraight(pts: Pt[]): boolean {
+  const n = pts.length;
+  return pts.some((a, i) => {
+    const b = pts[(i + 1) % n]!;
+    const c = pts[(i + 2) % n]!;
+    return Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) < EPS;
+  });
+}
+
 function lineNamed(rng: Rng): Named {
+  // 頂点が 辺の 途中に ならない 形を 選ぶ（「頂点」の 名前が 直線の 上に 来ないように）
+  for (let t = 0; t < 50; t++) {
+    const nm = lineNamedOnce(rng);
+    if (!hasStraight(nm.pts)) return nm;
+  }
+  return lineNamedOnce(rng);
+}
+
+function lineNamedOnce(rng: Rng): Named {
   const c = 4;
   const k = rng.int(2, 3);
   const top = rng.next() < 0.5;
@@ -230,16 +408,31 @@ function lineNamed(rng: Rng): Named {
   ys.sort((a, b) => a - b);
   const left: Pt[] = ys.map((y) => [rng.int(0, 3), y]);
   // 左の列が 一直線に ならないように（3点が 縦に 並ぶと 辺の 途中の 点に なる）
-  if (k === 3 && left[0]![0] === left[1]![0] && left[1]![0] === left[2]![0]) left[1] = [left[1]![0] === 0 ? 1 : 0, left[1]![1]];
+  if (k === 3 && left[0]![0] === left[1]![0] && left[1]![0] === left[2]![0])
+    left[1] = [left[1]![0] === 0 ? 1 : 0, left[1]![1]];
   const pts: Pt[] = [];
   if (top) pts.push([c, 0]);
   pts.push(...left);
   if (bottom) pts.push([c, 6]);
-  pts.push(...left.slice().reverse().map(([x, y]) => [2 * c - x, y] as Pt));
+  pts.push(
+    ...left
+      .slice()
+      .reverse()
+      .map(([x, y]) => [2 * c - x, y] as Pt),
+  );
   const n = pts.length;
   const partner = (i: number) => pts.findIndex((p) => samePt(p, [2 * c - pts[i]![0], pts[i]![1]]));
   void n;
-  return { pts, kind: 'line', partner, key: pts.map((p) => p.join(',')).join(' '), axis: [[c, -0.6], [c, 6.6]] };
+  return {
+    pts,
+    kind: 'line',
+    partner,
+    key: pts.map((p) => p.join(',')).join(' '),
+    axis: [
+      [c, -0.6],
+      [c, 6.6],
+    ],
+  };
 }
 
 function pointNamed(rng: Rng): Named {
@@ -249,7 +442,13 @@ function pointNamed(rng: Rng): Named {
   const ys = s.pts.map((p) => p[1]);
   const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
   const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
-  return { pts: s.pts, kind: 'point', partner: (i) => (i + n / 2) % n, key: s.key, center: [cx, cy] };
+  return {
+    pts: s.pts,
+    kind: 'point',
+    partner: (i) => (i + n / 2) % n,
+    key: s.key,
+    center: [cx, cy],
+  };
 }
 
 function namedFig(nm: Named, label: string) {
@@ -273,7 +472,8 @@ function namedFig(nm: Named, label: string) {
   }
   if (nm.center) {
     const [x, y] = P(nm.center);
-    body += `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--ink)"/>` + svgText(x + 12, y - 10, 'O', 15);
+    body +=
+      `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--ink)"/>` + svgText(x + 12, y - 10, 'O', 15);
   }
   nm.pts.forEach((p, i) => {
     const dx = p[0] - cx;
@@ -334,17 +534,33 @@ function corrItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
       [o !== j && o !== i ? `点${nameOf(o)}` : null, 'line-vs-point'],
       [`点${nameOf((j + 1) % n)}`, 'corr-adjacent'],
       [`点${nameOf((j + n - 1) % n)}`, 'corr-adjacent'],
-    ].filter((w): w is [string, string] => w[0] !== null && w[0] !== `点${nameOf(i)}`);
+      // 4角形などで 選択肢が 2つに なる ときの 補い（問う 点の となり）
+      [`点${nameOf((i + 1) % n)}`, 'corr-adjacent'],
+      [`点${nameOf((i + n - 1) % n)}`, 'corr-adjacent'],
+    ].filter(
+      (w): w is [string, string] =>
+        w[0] !== null && w[0] !== `点${nameOf(i)}` && w[0] !== `点${nameOf(j)}`,
+    );
   } else {
     // 辺 i(i+1) に 対応する 辺
     const i2 = (i + 1) % n;
     const j2 = nm.partner(i2);
     asked = `辺${nameOf(i)}${nameOf(i2)}`;
     correct = `辺${nameOf(j)}${nameOf(j2)}`;
-    const side = (a: number) => `辺${nameOf(a)}${nameOf((a + 1) % n)}`;
+    // 線対称では 対応する 辺の 文字の 順が 逆向きに なる（辺BC ↔ 辺HG）。正解だけ 向きが ちがって
+    // 見分けが つかないように、ほかの 辺も 同じ 向きで 書く
+    const side = (a: number) =>
+      nm.kind === 'line'
+        ? `辺${nameOf((a + 1) % n)}${nameOf(a)}`
+        : `辺${nameOf(a)}${nameOf((a + 1) % n)}`;
     const same = (s: string) => {
       const t = s.slice(1);
-      const mine = [nameOf(j) + nameOf(j2), nameOf(j2) + nameOf(j), nameOf(i) + nameOf(i2), nameOf(i2) + nameOf(i)];
+      const mine = [
+        nameOf(j) + nameOf(j2),
+        nameOf(j2) + nameOf(j),
+        nameOf(i) + nameOf(i2),
+        nameOf(i2) + nameOf(i),
+      ];
       return mine.includes(t);
     };
     const lo = Math.min(j, j2);
@@ -420,7 +636,8 @@ export function randomPoly(rng: Rng, xr: [number, number], yr: [number, number],
 /** 4点の多角形が ねじれていないか（向かい合う辺が 交わらない） */
 function convexOrSimple(ps: Pt[]): boolean {
   const cross = (a: Pt, b: Pt, c: Pt, d: Pt) => {
-    const o = (p: Pt, q: Pt, r: Pt) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+    const o = (p: Pt, q: Pt, r: Pt) =>
+      Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
     return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0;
   };
   return !cross(ps[0]!, ps[1]!, ps[2]!, ps[3]!) && !cross(ps[1]!, ps[2]!, ps[3]!, ps[0]!);
@@ -431,7 +648,15 @@ export const ptsKey = (ps: Pt[]) => ps.map((p) => p.join(',')).join(' ');
 function drawLItem(level: number, rng: Rng, alt: boolean): GeometryItem {
   // 縦の軸（x ＝ 5）、別例は 横の軸（y ＝ 4）
   const grid = alt ? { w: 8, h: 8 } : { w: 10, h: 8 };
-  const axis: [Pt, Pt] = alt ? [[0, 4], [8, 4]] : [[5, 0], [5, 8]];
+  const axis: [Pt, Pt] = alt
+    ? [
+        [0, 4],
+        [8, 4],
+      ]
+    : [
+        [5, 0],
+        [5, 8],
+      ];
   const pts = alt ? randomPoly(rng, [0, 8], [0, 3]) : randomPoly(rng, [0, 4], [0, 8]);
   return {
     engine: 'geometry',
@@ -448,7 +673,12 @@ function drawLItem(level: number, rng: Rng, alt: boolean): GeometryItem {
       '線対称な 形では、対応する 点を 結ぶ 直線は 対称の 軸と 垂直に 交わり、軸から 対応する 点までの 長さは 等しく なります。',
     identity: `drawL:${alt ? 'h' : 'v'}:${ptsKey(pts)}`,
     alt,
-    task: { kind: 'draw', grid, given: [{ points: pts }], target: { kind: 'reflect', points: pts, axis } },
+    task: {
+      kind: 'draw',
+      grid,
+      given: [{ points: pts }],
+      target: { kind: 'reflect', points: pts, axis },
+    },
     misconceptions: { translated: 'translated' },
   };
 }
@@ -497,49 +727,144 @@ interface PolyFact {
   wrongAxes: [string, string][];
 }
 const POLYS: PolyFact[] = [
-  { id: 'tri', name: '正三角形', axes: 3, point: false, regular: 3, wrongAxes: [['1本', 'axis-count'], ['6本', 'axis-count']] },
-  { id: 'sq', name: '正方形', axes: 4, point: true, regular: 4, wrongAxes: [['2本', 'axis-diagonal'], ['8本', 'axis-count']] },
-  { id: 'pent', name: '正五角形', axes: 5, point: false, regular: 5, wrongAxes: [['10本', 'axis-count'], ['1本', 'axis-count']] },
-  { id: 'hex', name: '正六角形', axes: 6, point: true, regular: 6, wrongAxes: [['3本', 'axis-diagonal'], ['12本', 'axis-count']] },
-  { id: 'oct', name: '正八角形', axes: 8, point: true, regular: 8, wrongAxes: [['4本', 'axis-diagonal'], ['16本', 'axis-count']] },
+  {
+    id: 'tri',
+    name: '正三角形',
+    axes: 3,
+    point: false,
+    regular: 3,
+    wrongAxes: [
+      ['1本', 'axis-count'],
+      ['6本', 'axis-count'],
+    ],
+  },
+  {
+    id: 'sq',
+    name: '正方形',
+    axes: 4,
+    point: true,
+    regular: 4,
+    wrongAxes: [
+      ['2本', 'axis-diagonal'],
+      ['8本', 'axis-count'],
+    ],
+  },
+  {
+    id: 'pent',
+    name: '正五角形',
+    axes: 5,
+    point: false,
+    regular: 5,
+    wrongAxes: [
+      ['10本', 'axis-count'],
+      ['1本', 'axis-count'],
+    ],
+  },
+  {
+    id: 'hex',
+    name: '正六角形',
+    axes: 6,
+    point: true,
+    regular: 6,
+    wrongAxes: [
+      ['3本', 'axis-diagonal'],
+      ['12本', 'axis-count'],
+    ],
+  },
+  {
+    id: 'oct',
+    name: '正八角形',
+    axes: 8,
+    point: true,
+    regular: 8,
+    wrongAxes: [
+      ['4本', 'axis-diagonal'],
+      ['16本', 'axis-count'],
+    ],
+  },
   {
     id: 'rect',
     name: '長方形',
     axes: 2,
     point: true,
-    pts: [[0, 0], [5, 0], [5, 3], [0, 3]],
-    wrongAxes: [['4本', 'axis-diagonal'], ['1本', 'axis-count']],
+    pts: [
+      [0, 0],
+      [5, 0],
+      [5, 3],
+      [0, 3],
+    ],
+    wrongAxes: [
+      ['4本', 'axis-diagonal'],
+      ['1本', 'axis-count'],
+    ],
   },
   {
     id: 'rhom',
     name: 'ひし形',
     axes: 2,
     point: true,
-    pts: [[2, 0], [4, 3], [2, 6], [0, 3]],
-    wrongAxes: [['4本', 'axis-diagonal'], ['0本', 'axis-count']],
+    pts: [
+      [2, 0],
+      [4, 3],
+      [2, 6],
+      [0, 3],
+    ],
+    wrongAxes: [
+      ['4本', 'axis-diagonal'],
+      ['0本', 'axis-count'],
+    ],
   },
   {
     id: 'para',
     name: '平行四辺形',
     axes: 0,
     point: true,
-    pts: [[0, 3], [2, 0], [6, 0], [4, 3]],
-    wrongAxes: [['2本', 'axis-diagonal'], ['1本', 'looks-sym']],
+    pts: [
+      [0, 3],
+      [2, 0],
+      [6, 0],
+      [4, 3],
+    ],
+    wrongAxes: [
+      ['2本', 'axis-diagonal'],
+      ['1本', 'looks-sym'],
+    ],
   },
   {
     id: 'iso',
     name: '二等辺三角形',
     axes: 1,
     point: false,
-    pts: [[0, 4], [2, 0], [4, 4]],
-    wrongAxes: [['3本', 'axis-count'], ['0本', 'axis-count']],
+    pts: [
+      [0, 4],
+      [2, 0],
+      [4, 4],
+    ],
+    wrongAxes: [
+      ['3本', 'axis-count'],
+      ['0本', 'axis-count'],
+    ],
   },
-  { id: 'circle', name: '円', axes: 'many', point: true, wrongAxes: [['1本', 'axis-count'], ['4本', 'axis-count']] },
+  {
+    id: 'circle',
+    name: '円',
+    axes: 'many',
+    point: true,
+    wrongAxes: [
+      ['1本', 'axis-count'],
+      ['4本', 'axis-count'],
+    ],
+  },
 ];
 
 function polyFig(p: PolyFact) {
   if (p.id === 'circle')
-    return svg(200, 180, `<circle cx="100" cy="90" r="70" fill="var(--sky)" ${STROKE}/>`, '円の 図');
+    return svg(
+      200,
+      180,
+      `<circle cx="100" cy="90" r="70" fill="var(--sky)" ${STROKE}/>`,
+      '円の 図',
+    );
   let pts: [number, number][];
   if (p.regular) {
     const n = p.regular;
@@ -550,10 +875,21 @@ function polyFig(p: PolyFact) {
   } else {
     const xs = p.pts!.map((q) => q[0]);
     const ys = p.pts!.map((q) => q[1]);
-    const s = Math.min(150 / (Math.max(...xs) - Math.min(...xs)), 140 / (Math.max(...ys) - Math.min(...ys)));
-    pts = p.pts!.map((q) => [r1(25 + (q[0] - Math.min(...xs)) * s), r1(20 + (q[1] - Math.min(...ys)) * s)]);
+    const s = Math.min(
+      150 / (Math.max(...xs) - Math.min(...xs)),
+      140 / (Math.max(...ys) - Math.min(...ys)),
+    );
+    pts = p.pts!.map((q) => [
+      r1(25 + (q[0] - Math.min(...xs)) * s),
+      r1(20 + (q[1] - Math.min(...ys)) * s),
+    ]);
   }
-  return svg(200, 180, `<polygon points="${pts.map((q) => q.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`, `${p.name}の 図`);
+  return svg(
+    200,
+    180,
+    `<polygon points="${pts.map((q) => q.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`,
+    `${p.name}の 図`,
+  );
 }
 
 function polyItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
@@ -575,8 +911,14 @@ function polyItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
         '折って ぴったり 重なる 折り目の 線を、全部 さがそう。',
         p.regular
           ? `正多角形では、頂点と 中心を 通る 線や、辺の 真ん中と 中心を 通る 線が 軸に なるよ。`
-          : '対角線で 折っても 重なるか、たしかめよう。',
-        p.regular ? `正${p.regular === 3 ? '三' : p.regular === 4 ? '四' : p.regular === 5 ? '五' : p.regular === 6 ? '六' : '八'}角形の 頂点の 数と くらべて みよう。` : '縦《たて》・横《よこ》・ななめの 折り目を 1つずつ 調べよう。',
+          : p.axes === 'many'
+            ? '円の 中心を 通る 直線で 折ると、どう なるかな。'
+            : '対角線で 折っても 重なるか、たしかめよう。',
+        p.regular
+          ? `${p.name}の 頂点の 数と くらべて みよう。`
+          : p.axes === 'many'
+            ? '中心を 通る 直線は、何本 引けるかな。'
+            : '縦《たて》・横《よこ》・ななめの 折り目を 1つずつ 調べよう。',
       ],
       explain: `${p.name}の 対称の 軸は ${correct}${p.axes === 'many' ? '（中心を 通る 直線は すべて 対称の 軸）' : ''}。${p.regular ? '正多角形の 対称の 軸の 数は、頂点の 数と 同じです。' : ''}`,
       identity: `poly:${p.id}:axes${alt ? ':fig' : ''}`,
@@ -594,8 +936,12 @@ function polyItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     figure: alt ? polyFig(p) : undefined,
     hints: [
       '真ん中の 点を 中心に 180度 回して、ぴったり 重なるかな。',
-      '向かい合う 頂点が あるか 見よう。',
-      p.regular ? '頂点の 数が 偶数《ぐうすう》か 奇数《きすう》かで 考えよう。' : '向かい合う 辺が 平行で 同じ 長さかな。',
+      p.axes === 'many' ? '円の 真ん中の 点は どこかな。' : '向かい合う 頂点が あるか 見よう。',
+      p.regular
+        ? '頂点の 数が 偶数《ぐうすう》か 奇数《きすう》かで 考えよう。'
+        : p.axes === 'many'
+          ? '円の 上の 点を、中心を はさんで 反対側へ 同じ 長さだけ 進めた 点も、円の 上に あるかな。'
+          : '向かい合う 辺が 平行で 同じ 長さかな。',
     ],
     explain: p.point
       ? `${p.name}は 中心の まわりに 180度 回すと もとの 形に 重なるので、点対称な 形です。`
@@ -662,11 +1008,13 @@ export const symmetry: UnitSpec = finishUnit({
     },
     {
       id: 'looks-sym',
-      explain: 'ぱっと 見て 整って いるように 見えたのかな。実際に 折ったり 回したり して、ぴったり 重なるか たしかめよう。',
+      explain:
+        'ぱっと 見て 整って いるように 見えたのかな。実際に 折ったり 回したり して、ぴったり 重なるか たしかめよう。',
     },
     {
       id: 'corr-adjacent',
-      explain: 'となりの 頂点（辺）を 選んだのかな。軸で 折ったり 中心で 回したり した とき、ぴったり 重なる 点（辺）が 対応する 点（辺）だよ。',
+      explain:
+        'となりの 頂点（辺）を 選んだのかな。軸で 折ったり 中心で 回したり した とき、ぴったり 重なる 点（辺）が 対応する 点（辺）だよ。',
     },
     {
       id: 'translated',
@@ -694,11 +1042,20 @@ export const symmetry: UnitSpec = finishUnit({
       text: '1本の 直線で 折ると、両側が ぴったり 重なる 形を 線対称な 形と いい、その 直線を 対称の 軸と いいます。',
       figure: namedFig(
         {
-          pts: [[4, 0], [1, 2], [2, 5], [6, 5], [7, 2]],
+          pts: [
+            [4, 0],
+            [1, 2],
+            [2, 5],
+            [6, 5],
+            [7, 2],
+          ],
           kind: 'line',
           partner: (i) => [0, 4, 3, 2, 1][i]!,
           key: 'intro',
-          axis: [[4, -0.6], [4, 5.6]],
+          axis: [
+            [4, -0.6],
+            [4, 5.6],
+          ],
         },
         '線対称な 五角形と 対称の 軸',
       ),
@@ -707,7 +1064,12 @@ export const symmetry: UnitSpec = finishUnit({
       text: '1つの 点を 中心に 180度 回すと、もとの 形に ぴったり 重なる 形を 点対称な 形と いい、その 点を 対称の 中心と いいます。',
       figure: namedFig(
         {
-          pts: [[0, 3], [1, 0], [5, 0], [4, 3]],
+          pts: [
+            [0, 3],
+            [1, 0],
+            [5, 0],
+            [4, 3],
+          ],
           kind: 'point',
           partner: (i) => (i + 2) % 4,
           key: 'intro2',
@@ -725,6 +1087,7 @@ export const symmetry: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateSymmetry(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第6学年 B(1) 縮図や拡大図、対称な図形（線対称・点対称）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第6学年 B(1) 縮図や拡大図、対称な図形（線対称・点対称）',
   revised: REVISED,
 });

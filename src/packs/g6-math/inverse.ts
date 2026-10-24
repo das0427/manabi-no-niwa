@@ -12,7 +12,8 @@ import { expr, finishUnit, opts, pick, pickObj, REVISED, wrongList } from './uti
 
 type Obj = 'table' | 'formula' | 'judge' | 'use';
 
-const divisors = (c: number) => Array.from({ length: c }, (_, i) => i + 1).filter((d) => c % d === 0);
+const divisors = (c: number) =>
+  Array.from({ length: c }, (_, i) => i + 1).filter((d) => c % d === 0);
 
 interface Ctx {
   id: string;
@@ -24,10 +25,42 @@ interface Ctx {
   text: (c: number) => string;
 }
 const CTXS: Ctx[] = [
-  { id: 'rect', x: '縦《たて》の 長さ', xu: 'cm', y: '横の 長さ', yu: 'cm', cs: [12, 18, 20, 24, 30, 36, 48], text: (c) => `面積が ${c}cm²の 長方形の 縦《たて》と 横の 長さを 調べます。` },
-  { id: 'tank', x: '1分間に 入れる 水の 量', xu: 'L', y: 'かかる 時間', yu: '分', cs: [24, 30, 36, 40, 48, 60], text: (c) => `${c}Lの 水そうを 水で いっぱいに します。` },
-  { id: 'trip', x: '時速', xu: 'km', y: 'かかる 時間', yu: '時間', cs: [12, 18, 24, 30, 36, 60], text: (c) => `${c}kmの 道のりを 進みます。` },
-  { id: 'share', x: '人数', xu: '人', y: '1人分の 枚数《まいすう》', yu: '枚', cs: [24, 30, 36, 40, 48, 60, 72], text: (c) => `${c}枚の 色紙を 何人かで 同じ 数ずつ 分けます。` },
+  {
+    id: 'rect',
+    x: '縦《たて》の 長さ',
+    xu: 'cm',
+    y: '横の 長さ',
+    yu: 'cm',
+    cs: [12, 18, 20, 24, 30, 36, 48],
+    text: (c) => `面積が ${c}cm²の 長方形の 縦《たて》と 横の 長さを 調べます。`,
+  },
+  {
+    id: 'tank',
+    x: '1分間に 入れる 水の 量',
+    xu: 'L',
+    y: 'かかる 時間',
+    yu: '分',
+    cs: [24, 30, 36, 40, 48, 60],
+    text: (c) => `${c}Lの 水そうを 水で いっぱいに します。`,
+  },
+  {
+    id: 'trip',
+    x: '時速',
+    xu: 'km',
+    y: 'かかる 時間',
+    yu: '時間',
+    cs: [12, 18, 24, 30, 36, 60],
+    text: (c) => `${c}kmの 道のりを 進みます。`,
+  },
+  {
+    id: 'share',
+    x: '人数',
+    xu: '人',
+    y: '1人分の 枚数《まいすう》',
+    yu: '枚',
+    cs: [24, 30, 36, 40, 48, 60, 72],
+    text: (c) => `${c}枚の 色紙を 何人かで 同じ 数ずつ 分けます。`,
+  },
 ];
 const head = (t: Ctx) => [`x ${t.x}（${t.xu}）`, `y ${t.y}（${t.yu}）`] as const;
 function tableFig(t: Ctx, xs: number[], ys: (number | string)[]): Figure {
@@ -48,8 +81,16 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'table',
       level,
       prompt: `${t.text(c)}${t.x}を x${t.xu}、${t.y}を y${t.yu}と します。x の 値が ${m}倍に なると、y の 値は どう なりますか。`,
-      figure: tableFig(t, ds.slice(0, 5), ds.slice(0, 5).map((d) => c / d)),
-      hints: ['表で、x が 2倍に なる ところを さがして、y が どう なるか 見よう。', `x × y は いつも ${c}だね。`, `x が ${m}倍に なっても x × y は ${c}の まま。y は どう なるかな。`],
+      figure: tableFig(
+        t,
+        ds.slice(0, 5),
+        ds.slice(0, 5).map((d) => c / d),
+      ),
+      hints: [
+        '表で、x が 2倍に なる ところを さがして、y が どう なるか 見よう。',
+        `x × y は いつも ${c}だね。`,
+        `x が ${m}倍に なっても x × y は ${c}の まま。y は どう なるかな。`,
+      ],
       explain: `y は x に 反比例して いるので、x が ${m}倍に なると、y は [[1/${m}]]に なります。`,
       identity: `table:times:${t.id}:${c}:${m}`,
       alt: true,
@@ -75,7 +116,11 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
     objective: 'table',
     level,
     prompt: `${t.text(c)}y は x に 反比例します。表の ？に あてはまる 数を 求めよう。`,
-    figure: tableFig(t, xs, xs.map((x) => (x === ax ? '？' : c / x))),
+    figure: tableFig(
+      t,
+      xs,
+      xs.map((x) => (x === ax ? '？' : c / x)),
+    ),
     hints: [
       '反比例では、x が 2倍、3倍…に なると、y は [[1/2]]、[[1/3]]…に なるよ。',
       `x × y は いつも 同じ 数。${x1} × ${y1} ＝ ${c}。`,
@@ -108,9 +153,18 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
       id: `formula-alt:${t.id}:${c}:${xs.join(',')}`,
       objective: 'formula',
       level,
-      prompt: '表の y は x に 反比例して います。y ＝ 決まった数 ÷ x の 式に 表す とき、決まった数は いくつですか。',
-      figure: tableFig(t, xs, xs.map((x) => c / x)),
-      hints: ['反比例では、x × y が いつも 同じ 数に なるよ。', `x が ${xs[0]}の とき y は ${c / xs[0]!}。`, `${xs[0]} × ${c / xs[0]!}を 計算しよう。`],
+      prompt:
+        '表の y は x に 反比例して います。y ＝ 決まった数 ÷ x の 式に 表す とき、決まった数は いくつですか。',
+      figure: tableFig(
+        t,
+        xs,
+        xs.map((x) => c / x),
+      ),
+      hints: [
+        '反比例では、x × y が いつも 同じ 数に なるよ。',
+        `x が ${xs[0]}の とき y は ${c / xs[0]!}。`,
+        `${xs[0]} × ${c / xs[0]!}を 計算しよう。`,
+      ],
       explain: `x × y ＝ ${xs[0]} × ${c / xs[0]!} ＝ ${c}。式は y ＝ ${c} ÷ x です。`,
       identity: `formula:k:${t.id}:${c}:${xs.join(',')}`,
       alt: true,
@@ -131,8 +185,16 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
     objective: 'formula',
     level,
     prompt: `${t.text(c)}${t.x}を x${t.xu}、${t.y}を y${t.yu}と して、x と y の 関係を 式に 表すと どれですか。`,
-    figure: tableFig(t, ds.slice(0, 4), ds.slice(0, 4).map((d) => c / d)),
-    hints: ['反比例の 式は、y ＝ 決まった数 ÷ x の 形だよ。', '決まった数は x × y で 求められるね。', `${ds[1]} × ${c / ds[1]!} ＝ ${c}。`],
+    figure: tableFig(
+      t,
+      ds.slice(0, 4),
+      ds.slice(0, 4).map((d) => c / d),
+    ),
+    hints: [
+      '反比例の 式は、y ＝ 決まった数 ÷ x の 形だよ。',
+      '決まった数は x × y で 求められるね。',
+      `${ds[1]} × ${c / ds[1]!} ＝ ${c}。`,
+    ],
     explain: `x × y は いつも ${c}なので、y ＝ ${c} ÷ x です。`,
     identity: `formula:${t.id}:${c}`,
     alt: false,
@@ -147,23 +209,54 @@ function formulaItem(level: number, rng: Rng, alt: boolean): Item {
 
 // ---- 比例か 反比例か ----
 type Rel = '比例' | '反比例' | 'どちらでもない';
-const SCENES: { id: string; text: string; rel: Rel; mis: Partial<Record<Rel, string>> }[] = [
-  { id: 'oil', text: '1Lの ねだんが 決まって いる 油の、量 xLと 代金 y円', rel: '比例', mis: { 反比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'speed', text: '24kmの 道のりを 進む ときの、時速 xkmと かかる 時間 y時間', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'age', text: '同じ 人の、年れい x才と 身長 ycm', rel: 'どちらでもない', mis: { 比例: 'as-proportion', 反比例: 'as-proportion' } },
-  { id: 'area', text: '面積が 36cm²の 長方形の、縦《たて》 xcmと 横 ycm', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'candy', text: '1こ 50円の あめを 買う ときの、こ数 xこと 代金 y円', rel: '比例', mis: { 反比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'perim', text: 'まわりの 長さが 20cmの 長方形の、縦《たて》 xcmと 横 ycm', rel: 'どちらでもない', mis: { 反比例: 'sum-const', 比例: 'as-proportion' } },
-  { id: 'share', text: '60枚の 色紙を 同じ 数ずつ 分ける ときの、人数 x人と 1人分の 枚数《まいすう》 y枚', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'sqperim', text: '正方形の、1辺の 長さ xcmと まわりの 長さ ycm', rel: '比例', mis: { 反比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'book', text: '100ページの 本の、読んだ ページ数《すう》 xページと 残りの ページ数《すう》 yページ', rel: 'どちらでもない', mis: { 反比例: 'sum-const', 比例: 'as-proportion' } },
-  { id: 'fill', text: '決まった 量の 水を 入れる ときの、1分間に 入れる 量 xLと かかる 時間 y分', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'sqarea', text: '正方形の、1辺の 長さ xcmと 面積 ycm²', rel: 'どちらでもない', mis: { 比例: 'as-proportion', 反比例: 'as-proportion' } },
-  { id: 'circ', text: '円の、直径 xcmと 円周の 長さ ycm', rel: '比例', mis: { 反比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'para', text: '面積が 24cm²の 平行四辺形の、底辺 xcmと 高さ ycm', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'day', text: '1日の、昼の 長さ x時間と 夜の 長さ y時間', rel: 'どちらでもない', mis: { 反比例: 'sum-const', 比例: 'as-proportion' } },
-  { id: 'walk', text: '同じ 速さで 歩く ときの、歩いた 時間 x分と 道のり ym', rel: '比例', mis: { 反比例: 'as-proportion', どちらでもない: 'sum-const' } },
-  { id: 'gear', text: '歯数《はかず》が 決まった 歯車《はぐるま》と かみ合う、歯車《はぐるま》の 歯数《はかず》 xと 回る 回数 y', rel: '反比例', mis: { 比例: 'as-proportion', どちらでもない: 'sum-const' } },
+/**
+ * 見分ける問題の誤概念（正しい関係 × 選んだ関係）。
+ * 比例を反比例と、関係があるのに「どちらでもない」と、和が一定なのに反比例と…で説明を変える。
+ */
+function judgeMis(rel: Rel, chosen: Rel, sumConst: boolean): string {
+  if (rel === '比例') return chosen === '反比例' ? 'as-inverse' : 'missed-relation';
+  if (rel === '反比例') return chosen === '比例' ? 'as-proportion' : 'missed-relation';
+  return chosen === '反比例' && sumConst ? 'sum-const' : 'not-relation';
+}
+/** 和が 一定の 場面（「どちらでもない」のうち） */
+const SUM_CONST = new Set(['perim', 'book', 'day']);
+const SCENES: { id: string; text: string; rel: Rel }[] = [
+  { id: 'oil', text: '1Lの ねだんが 決まって いる 油の、量 xLと 代金 y円', rel: '比例' },
+  { id: 'speed', text: '24kmの 道のりを 進む ときの、時速 xkmと かかる 時間 y時間', rel: '反比例' },
+  { id: 'age', text: '同じ 人の、年れい x才と 身長 ycm', rel: 'どちらでもない' },
+  { id: 'area', text: '面積が 36cm²の 長方形の、縦《たて》 xcmと 横 ycm', rel: '反比例' },
+  { id: 'candy', text: '1こ 50円の あめを 買う ときの、こ数 xこと 代金 y円', rel: '比例' },
+  {
+    id: 'perim',
+    text: 'まわりの 長さが 20cmの 長方形の、縦《たて》 xcmと 横 ycm',
+    rel: 'どちらでもない',
+  },
+  {
+    id: 'share',
+    text: '60枚の 色紙を 同じ 数ずつ 分ける ときの、人数 x人と 1人分の 枚数《まいすう》 y枚',
+    rel: '反比例',
+  },
+  { id: 'sqperim', text: '正方形の、1辺の 長さ xcmと まわりの 長さ ycm', rel: '比例' },
+  {
+    id: 'book',
+    text: '100ページの 本の、読んだ ページ数《すう》 xページと 残りの ページ数《すう》 yページ',
+    rel: 'どちらでもない',
+  },
+  {
+    id: 'fill',
+    text: '決まった 量の 水を 入れる ときの、1分間に 入れる 量 xLと かかる 時間 y分',
+    rel: '反比例',
+  },
+  { id: 'sqarea', text: '正方形の、1辺の 長さ xcmと 面積 ycm²', rel: 'どちらでもない' },
+  { id: 'circ', text: '円の、直径 xcmと 円周の 長さ ycm', rel: '比例' },
+  { id: 'para', text: '面積が 24cm²の 平行四辺形の、底辺 xcmと 高さ ycm', rel: '反比例' },
+  { id: 'day', text: '1日の、昼の 長さ x時間と 夜の 長さ y時間', rel: 'どちらでもない' },
+  { id: 'walk', text: '同じ 速さで 歩く ときの、歩いた 時間 x分と 道のり ym', rel: '比例' },
+  {
+    id: 'gear',
+    text: '歯数《はかず》が 決まった 歯車《はぐるま》と かみ合う、歯車《はぐるま》の 歯数《はかず》 xと 回る 回数 y',
+    rel: '反比例',
+  },
 ];
 const RELS: Rel[] = ['比例', '反比例', 'どちらでもない'];
 
@@ -185,7 +278,11 @@ function judgeItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
       identity: `judge:${s.id}`,
       alt: false,
       fixedOrder: true,
-      options: RELS.map((r) => (r === s.rel ? { label: r, correct: true } : { label: r, misconception: s.mis[r] })),
+      options: RELS.map((r) =>
+        r === s.rel
+          ? { label: r, correct: true }
+          : { label: r, misconception: judgeMis(s.rel, r, SUM_CONST.has(s.id)) },
+      ),
     };
   }
   // 表の 数から 見分ける
@@ -194,7 +291,12 @@ function judgeItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
   const c = pick(rng, [12, 24, 36, 48, 60]);
   const s0 = rng.int(8, 14);
   const xs = [1, 2, 3, 4, 6];
-  const ys = rel === '比例' ? xs.map((x) => x * k) : rel === '反比例' ? xs.map((x) => c / x) : xs.map((x) => s0 - x);
+  const ys =
+    rel === '比例'
+      ? xs.map((x) => x * k)
+      : rel === '反比例'
+        ? xs.map((x) => c / x)
+        : xs.map((x) => s0 - x);
   const key = rel === '比例' ? `p${k}` : rel === '反比例' ? `i${c}` : `s${s0}`;
   return {
     engine: 'choice',
@@ -203,7 +305,11 @@ function judgeItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     level,
     prompt: '表の x と y の 関係は どれですか。',
     figure: { kind: 'table', header: ['x', ...xs.map(String)], rows: [['y', ...ys.map(String)]] },
-    hints: ['x が 1から 2、3に なると、y は どう 変わるかな。', 'y ÷ x が 一定なら 比例、x × y が 一定なら 反比例だよ。', `x ＝ 2の とき、y ÷ x ＝ ${ys[1]} ÷ 2、x × y ＝ 2 × ${ys[1]}。`],
+    hints: [
+      'x が 1から 2、3に なると、y は どう 変わるかな。',
+      'y ÷ x が 一定なら 比例、x × y が 一定なら 反比例だよ。',
+      `x ＝ 2の とき、y ÷ x ＝ ${ys[1]} ÷ 2、x × y ＝ 2 × ${ys[1]}。`,
+    ],
     explain:
       rel === '比例'
         ? `y ÷ x が いつも ${k}なので、y は x に 比例します。`
@@ -214,9 +320,7 @@ function judgeItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     alt: true,
     fixedOrder: true,
     options: RELS.map((r) =>
-      r === rel
-        ? { label: r, correct: true }
-        : { label: r, misconception: rel === 'どちらでもない' && r === '反比例' ? 'sum-const' : 'as-proportion' },
+      r === rel ? { label: r, correct: true } : { label: r, misconception: judgeMis(rel, r, true) },
     ),
   };
 }
@@ -273,7 +377,10 @@ function applyItem(level: number, rng: Rng, alt: boolean): NumberItem {
       const c = pick(rng, [120, 180, 240]);
       const ds = divisors(c).filter((d) => d >= 10 && d <= 60);
       x1 = pick(rng, ds);
-      x2 = pick(rng, ds.filter((d) => d !== x1));
+      x2 = pick(
+        rng,
+        ds.filter((d) => d !== x1),
+      );
       y1 = c / x1;
       text = `歯数《はかず》が ${x1}の 歯車《はぐるま》Aと、歯数《はかず》が ${x2}の 歯車《はぐるま》Bが かみ合って います。Aが ${y1}回 回る とき、Bは 何回 回りますか。`;
       unit = '回';
@@ -374,7 +481,26 @@ export const inverse: UnitSpec = finishUnit({
       explain:
         '「x が 増えた 分だけ y が 減る」と 考えたのかな。それは 和が 一定の 関係で、反比例では ないよ。反比例は x × y が 一定だね。',
     },
-    { id: 'formula-mult', explain: '式の 形を まちがえたのかな。反比例の 式は y ＝ 決まった数 ÷ x。決まった数は x × y で 求めるよ。' },
+    {
+      id: 'as-inverse',
+      explain:
+        '反比例と 取りちがえたのかな。x が 2倍、3倍に なると y も 2倍、3倍に なるのが 比例だよ。y ÷ x が いつも 同じか たしかめよう。',
+    },
+    {
+      id: 'missed-relation',
+      explain:
+        '比例か 反比例の 関係を 見のがしたのかな。y ÷ x が いつも 同じなら 比例、x × y が いつも 同じなら 反比例だよ。',
+    },
+    {
+      id: 'not-relation',
+      explain:
+        'x が 変わると y も 変わるけれど、決まった 倍の 関係では ないよ。y ÷ x も x × y も いつも 同じには ならないね。',
+    },
+    {
+      id: 'formula-mult',
+      explain:
+        '式の 形を まちがえたのかな。反比例の 式は y ＝ 決まった数 ÷ x。決まった数は x × y で 求めるよ。',
+    },
   ],
   levels: [
     { label: '表・見分ける', chance: 0.1 },
@@ -387,8 +513,13 @@ export const inverse: UnitSpec = finishUnit({
       text: '面積が 12cm²の 長方形の 縦《たて》 xcmと 横 ycm。x が 2倍、3倍に なると、y は [[1/2]]、[[1/3]]に なります。このとき、y は x に 反比例すると いいます。',
       figure: tableFig(CTXS[0]!, [1, 2, 3, 4, 6], [12, 6, 4, 3, 2]),
     },
-    { text: 'x × y は いつも 12（決まった数）。だから 式は y ＝ 12 ÷ x と 表せます。', figure: expr('y ＝ 12 ÷ x') },
-    { text: '比例は y ÷ x が 一定、反比例は x × y が 一定。和が 一定の 関係は どちらでも ありません。' },
+    {
+      text: 'x × y は いつも 12（決まった数）。だから 式は y ＝ 12 ÷ x と 表せます。',
+      figure: expr('y ＝ 12 ÷ x'),
+    },
+    {
+      text: '比例は y ÷ x が 一定、反比例は x × y が 一定。和が 一定の 関係は どちらでも ありません。',
+    },
   ],
   source: {
     kind: 'generator',

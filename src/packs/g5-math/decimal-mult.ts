@@ -31,11 +31,19 @@ function randDec(rng: Rng, p: number, min: number, max: number): D {
 /** 右を そろえた かけ算の筆算の形（積の欄は 空ける） */
 function mulFig(a: string, b: string): Figure {
   const w = Math.max(a.length, b.length) + 1;
-  const cells = (s: string) => s.padStart(w, ' ').split('').map((c) => (c === ' ' ? '' : c));
+  const cells = (s: string) =>
+    s
+      .padStart(w, ' ')
+      .split('')
+      .map((c) => (c === ' ' ? '' : c));
   return {
     kind: 'table',
     header: Array.from({ length: w + 1 }, () => ''),
-    rows: [['', ...cells(a)], ['×', ...cells(b)], ['', ...Array.from({ length: w }, () => '')]],
+    rows: [
+      ['', ...cells(a)],
+      ['×', ...cells(b)],
+      ['', ...Array.from({ length: w }, () => '')],
+    ],
   };
 }
 
@@ -71,6 +79,8 @@ function intdec(level: number, rng: Rng, alt: boolean): Item {
   const as = S(a);
   const bs = S(b);
   if (alt) {
+    // 1mの ねだんは 10円 単位に する（1けたの ねだんだと 代金が 円の 小数に なる。例 7円 × 3.7m ＝ 25.9円）
+    if (a.v < 10) return intdec(level, rng, alt);
     // 図: 1mの ねだんと 長さの 数直線（2本）。0.1m分を 考えて 整数に 直す
     const fig: Figure = {
       kind: 'table',
@@ -104,7 +114,13 @@ function intdec(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: '計算しよう。',
     figure: expr(`${as} × ${bs} ＝ {{}}`),
-    hints: hintsFor(a, b, P, q, `${bs}を 10倍して 整数に すると 計算できるよ。あとで 積を [[1/10]]に しよう。`),
+    hints: hintsFor(
+      a,
+      b,
+      P,
+      q,
+      `${bs}を 10倍して 整数に すると 計算できるよ。あとで 積を [[1/10]]に しよう。`,
+    ),
     explain: `${as} × ${bs}は、${as} × ${b.v} ＝ ${P}を [[1/10]]に して ${ans}です。`,
     identity: `${as}x${bs}`,
     alt: false,
@@ -135,7 +151,9 @@ function decdec(level: number, rng: Rng, alt: boolean): NumberItem {
       b,
       P,
       q,
-      alt ? '筆算は 右に そろえて 書き、小数点が ない ものとして 計算するよ。' : `${as}は ${zeros(a.p)}の ${a.v}こ分、${bs}は ${zeros(b.p)}の ${b.v}こ分だよ。`,
+      alt
+        ? '筆算は 右に そろえて 書き、小数点が ない ものとして 計算するよ。'
+        : `${as}は ${zeros(a.p)}の ${a.v}こ分、${bs}は ${zeros(b.p)}の ${b.v}こ分だよ。`,
     ),
     explain: `${a.v} × ${b.v} ＝ ${P}。積の 小数部分の けた数は ${a.p} ＋ ${b.p} ＝ ${q}けたなので、${as} × ${bs} ＝ ${ans}です。`,
     explainFigure: alt ? undefined : mulFig(as, bs),
@@ -192,7 +210,13 @@ function small(level: number, rng: Rng, alt: boolean): Item {
     level,
     prompt: `計算しよう。積は ${as}より 大きい？ 小さい？ 考えてから 答えよう。`,
     figure: expr(`${as} × ${bs} ＝ {{}}`),
-    hints: hintsFor(a, b, P, q, `かける数 ${bs}は 1より 小さいので、積は ${as}より 小さく なるよ。`),
+    hints: hintsFor(
+      a,
+      b,
+      P,
+      q,
+      `かける数 ${bs}は 1より 小さいので、積は ${as}より 小さく なるよ。`,
+    ),
     explain: `${a.v} × ${b.v} ＝ ${P}。小数部分は ${q}けたなので ${ans}。1より 小さい 数を かけたので、積は ${as}より 小さく なりました。`,
     identity: `${as}x${bs}`,
     alt: false,
@@ -210,14 +234,50 @@ interface Scene {
   aInt?: boolean;
 }
 const SCENES: Scene[] = [
-  { id: 'wire', unit: 'g', text: (a, b) => `1mの 重さが ${a}gの はり金が あります。この はり金 ${b}mの 重さは 何gですか。` },
-  { id: 'paint', unit: 'm²', text: (a, b) => `1dLで ${a}m² ぬれる ペンキが あります。${b}dLでは 何m² ぬれますか。` },
-  { id: 'field', unit: 'kg', text: (a, b) => `1m²あたり ${a}kgの じゃがいもが とれる 畑が あります。${b}m²では 何kg とれますか。` },
-  { id: 'tap', unit: 'L', text: (a, b) => `1分間《ふんかん》に ${a}Lの 水が 出る じゃ口が あります。${b}分間《ふんかん》では 何Lの 水が 出ますか。` },
-  { id: 'car', unit: 'km', text: (a, b) => `ガソリン 1Lで ${a}km 走る 車が あります。${b}Lでは 何km 走りますか。` },
-  { id: 'tape', unit: 'm', text: (a, b) => `赤い テープの 長さは ${a}mです。青い テープの 長さは、赤い テープの ${b}倍です。青い テープは 何mですか。` },
-  { id: 'flour', unit: 'g', text: (a, b) => `1カップ ${a}gの 小麦粉を ${b}カップ 使います。小麦粉は 何g ですか。` },
-  { id: 'cloth', unit: '円', aInt: true, text: (a, b) => `1mの ねだんが ${a}円の 布を ${b}m 買います。代金は 何円ですか。` },
+  {
+    id: 'wire',
+    unit: 'g',
+    text: (a, b) => `1mの 重さが ${a}gの はり金が あります。この はり金 ${b}mの 重さは 何gですか。`,
+  },
+  {
+    id: 'paint',
+    unit: 'm²',
+    text: (a, b) => `1dLで ${a}m² ぬれる ペンキが あります。${b}dLでは 何m² ぬれますか。`,
+  },
+  {
+    id: 'field',
+    unit: 'kg',
+    text: (a, b) =>
+      `1m²あたり ${a}kgの じゃがいもが とれる 畑が あります。${b}m²では 何kg とれますか。`,
+  },
+  {
+    id: 'tap',
+    unit: 'L',
+    text: (a, b) =>
+      `1分間《ふんかん》に ${a}Lの 水が 出る じゃ口が あります。${b}分間《ふんかん》では 何Lの 水が 出ますか。`,
+  },
+  {
+    id: 'car',
+    unit: 'km',
+    text: (a, b) => `ガソリン 1Lで ${a}km 走る 車が あります。${b}Lでは 何km 走りますか。`,
+  },
+  {
+    id: 'tape',
+    unit: 'm',
+    text: (a, b) =>
+      `赤い テープの 長さは ${a}mです。青い テープの 長さは、赤い テープの ${b}倍です。青い テープは 何mですか。`,
+  },
+  {
+    id: 'flour',
+    unit: 'g',
+    text: (a, b) => `1カップ ${a}gの 小麦粉を ${b}カップ 使います。小麦粉は 何g ですか。`,
+  },
+  {
+    id: 'cloth',
+    unit: '円',
+    aInt: true,
+    text: (a, b) => `1mの ねだんが ${a}円の 布を ${b}m 買います。代金は 何円ですか。`,
+  },
 ];
 
 /** a ÷ b（1/1000 の位までで わりきれるときだけ。わり算と 取りちがえた 誤答） */
@@ -229,7 +289,11 @@ function divided(a: D, b: D): string | null {
 
 function story(level: number, rng: Rng, alt: boolean): NumberItem {
   const sc = pick(rng, SCENES);
-  const a: D = sc.aInt ? { v: rng.int(12, 48) * 10, p: 0 } : rng.next() < 0.5 ? randDec(rng, 1, 11, 99) : { v: rng.int(2, 30), p: 0 };
+  const a: D = sc.aInt
+    ? { v: rng.int(12, 48) * 10, p: 0 }
+    : rng.next() < 0.5
+      ? randDec(rng, 1, 11, 99)
+      : { v: rng.int(2, 30), p: 0 };
   const b = randDec(rng, 1, 2, 49);
   const { P, ans, answers, wrongs } = product(a, b);
   const as = S(a);
@@ -340,7 +404,11 @@ export const decimalMult: UnitSpec = finishUnit(
     intro: [
       {
         text: '1mが 80円の リボンを 2.3m 買うと？ 2.3mは 0.1mの 23こ分。0.1mは 80 ÷ 10 ＝ 8円なので、8 × 23 ＝ 184円。',
-        figure: { kind: 'table', header: ['長さ（m）', '0.1', '1', '2.3'], rows: [['代金（円）', '8', '80', '？']] },
+        figure: {
+          kind: 'table',
+          header: ['長さ（m）', '0.1', '1', '2.3'],
+          rows: [['代金（円）', '8', '80', '？']],
+        },
       },
       {
         text: '2.4 × 0.3は、24 × 3 ＝ 72を 計算してから 小数点を 打ちます。小数部分の けた数は 1 ＋ 1 ＝ 2けたなので 0.72。',

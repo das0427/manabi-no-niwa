@@ -26,7 +26,12 @@ interface ExprScene {
   hint: string;
 }
 const tens = (rng: Rng, a: number, b: number) => rng.int(a, b) * 10;
-const POLY_NAME: Record<number, string> = { 3: '正三角形', 4: '正方形', 5: '正五角形', 6: '正六角形' };
+const POLY_NAME: Record<number, string> = {
+  3: '正三角形',
+  4: '正方形',
+  5: '正五角形',
+  6: '正六角形',
+};
 const EXPR_SCENES: ExprScene[] = [
   {
     id: 'bread',
@@ -160,7 +165,11 @@ function exprItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     prompt: alt
       ? `${sc.text(p)}${sc.what}を y${sc.yu}と して、x と yの 関係を 式に 表すと どれですか。`
       : `${sc.text(p)}${sc.what}を 表す 式は どれですか。`,
-    hints: [sc.hint, '分からない 数の ところに xを 入れて、言葉の式を 文字の式に しよう。', `${sc.what}の 求め方を、x を 使って 書いて みよう。`],
+    hints: [
+      sc.hint,
+      '分からない 数の ところに xを 入れて、言葉の式を 文字の式に しよう。',
+      `${sc.what}の 求め方を、x を 使って 書いて みよう。`,
+    ],
     explain: `${sc.what}は ${sc.correct(p)}で 表せます。${sc.hint.replace('だね。', 'です。').replace('ね。', '。')}`,
     identity: `expr:${sc.id}:${p.join(',')}${alt ? ':y' : ''}`,
     alt,
@@ -256,12 +265,22 @@ function readItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
   const base = '1本 x円の えんぴつと、1冊 y円の ノートが あります。';
   if (alt) {
     // 言葉の式 → 文字の式
-    const others = READS.filter((o) => o.key !== r.key && o.key.split(':')[0] !== r.key.split(':')[0]);
-    const near = READS.filter((o) => o.key !== r.key && o.key.split(':')[0] === r.key.split(':')[0]);
+    const others = READS.filter(
+      (o) => o.key !== r.key && o.key.split(':')[0] !== r.key.split(':')[0],
+    );
+    const near = READS.filter(
+      (o) => o.key !== r.key && o.key.split(':')[0] === r.key.split(':')[0],
+    );
     const w1 = near.length ? pick(rng, near) : pick(rng, others);
-    const w2 = pick(rng, others.filter((o) => o.ex !== w1.ex));
+    const w2 = pick(
+      rng,
+      others.filter((o) => o.ex !== w1.ex),
+    );
+    // 誤りの式と 正しい式の ちがいで 誤概念を 決める（( )の 有無 → paren、ひき算か どうか → op-swap、それ以外は 組の 取りちがえ）
+    const paren = (o: ReadQ) => o.key.startsWith('(x+y)');
+    const minus = (o: ReadQ) => o.key.startsWith('1000') || o.key === 'y-x';
     const kindOf = (o: ReadQ) =>
-      o.key.startsWith('(x+y)') ? 'paren' : o.key.startsWith('1000') ? 'drop-term' : 'term-swap';
+      paren(o) !== paren(r) ? 'paren' : minus(o) !== minus(r) ? 'op-swap' : 'term-swap';
     return {
       engine: 'choice',
       id: `read-alt:${r.key}`,
@@ -411,7 +430,11 @@ function solveItem(level: number, rng: Rng, alt: boolean): NumberItem {
       ? form === 'mul'
         ? {
             kind: 'tape',
-            parts: Array.from({ length: a }, (_, i) => ({ length: 1, label: i === 0 ? 'x' : '', tone: i === 0 ? 'focus' : 'a' })),
+            parts: Array.from({ length: a }, (_, i) => ({
+              length: 1,
+              label: i === 0 ? 'x' : '',
+              tone: i === 0 ? 'focus' : 'a',
+            })),
             total: `${b}円`,
           }
         : {
@@ -440,7 +463,9 @@ function solveItem(level: number, rng: Rng, alt: boolean): NumberItem {
             : form === 'div'
               ? `わり算の 反対は かけ算。${step}`
               : `まず ${c}を ひいて、${step}`,
-      form === 'two' ? `x × ${a} ＝ ${b - c} だから、x ＝ ${b - c} ÷ ${a}。` : `${step} を 計算しよう。`,
+      form === 'two'
+        ? `x × ${a} ＝ ${b - c} だから、x ＝ ${b - c} ÷ ${a}。`
+        : `${step} を 計算しよう。`,
     ],
     explain:
       form === 'two'
@@ -453,7 +478,7 @@ function solveItem(level: number, rng: Rng, alt: boolean): NumberItem {
       [answer],
       form === 'two'
         ? [
-            [(b + c) / a, 'inverse-miss'],
+            [(b + c) % a === 0 ? (b + c) / a : null, 'inverse-miss'],
             [b - c, 'drop-term'],
             [Math.floor(b / a) === b / a ? b / a : null, 'drop-term'],
           ]
@@ -505,24 +530,43 @@ export const letters: UnitSpec = finishUnit({
   misconceptions: [
     {
       id: 'op-swap',
-      explain: '計算の 記号を まちがえたのかな。「何こ分」は かけ算、「あわせて」は たし算、「残り」は ひき算だよ。場面を 言葉の式に してから 考えよう。',
+      explain:
+        '計算の 記号を まちがえたのかな。「何こ分」は かけ算、「あわせて」は たし算、「残り」は ひき算だよ。場面を 言葉の式に してから 考えよう。',
     },
     {
       id: 'reverse-order',
-      explain: 'ひく 数（わる 数）と ひかれる 数（わられる 数）を 反対に したのかな。ひき算・わり算は 順番を 入れかえると 意味が 変わるよ。',
+      explain:
+        'ひく 数（わる 数）と ひかれる 数（わられる 数）を 反対に したのかな。ひき算・わり算は 順番を 入れかえると 意味が 変わるよ。',
     },
     {
       id: 'paren',
-      explain: '( )の つけ方を まちがえたのかな。( )の 中は ひとまとまりで 先に 計算するよ。何を ひとまとまりと 見るか 場面で たしかめよう。',
+      explain:
+        '( )の つけ方を まちがえたのかな。( )の 中は ひとまとまりで 先に 計算するよ。何を ひとまとまりと 見るか 場面で たしかめよう。',
     },
     {
       id: 'term-swap',
       explain: 'かける 数を 入れかえたのかな。何の ねだんを 何こ 買ったのか、組を たしかめよう。',
     },
-    { id: 'area-perim', explain: '面積と まわりの 長さを 取りちがえたのかな。まわりの 長さは 辺の 長さを たし、面積は 縦《たて》 × 横《よこ》だよ。' },
-    { id: 'side-count', explain: '辺の 数を まちがえたのかな。正三角形は 3つ、正方形は 4つ、正五角形は 5つの 辺が あるよ。' },
-    { id: 'forget-half', explain: '三角形の 面積で ÷ 2を 忘れたのかな（長方形では ÷ 2は いらないよ）。形に 合う 公式を 使おう。' },
-    { id: 'order-ops', explain: 'たし算を 先に したのかな。かけ算と たし算が まじった 式は、かけ算を 先に 計算するよ。' },
+    {
+      id: 'area-perim',
+      explain:
+        '面積と まわりの 長さを 取りちがえたのかな。まわりの 長さは 辺の 長さを たし、面積は 縦《たて》 × 横《よこ》だよ。',
+    },
+    {
+      id: 'side-count',
+      explain:
+        '辺の 数を まちがえたのかな。正三角形は 3つ、正方形は 4つ、正五角形は 5つの 辺が あるよ。',
+    },
+    {
+      id: 'forget-half',
+      explain:
+        '三角形の 面積で ÷ 2を 忘れたのかな（長方形では ÷ 2は いらないよ）。形に 合う 公式を 使おう。',
+    },
+    {
+      id: 'order-ops',
+      explain:
+        'たし算を 先に したのかな。かけ算と たし算が まじった 式は、かけ算を 先に 計算するよ。',
+    },
     { id: 'drop-term', explain: '式の 一部を 計算し忘れたのかな。式の さいごまで 計算しよう。' },
     {
       id: 'inverse-miss',
@@ -558,6 +602,7 @@ export const letters: UnitSpec = finishUnit({
     generate: ({ level, rng, index }) => generateLetters(level, rng, index),
   },
   review: 'objective',
-  basis: '小学校学習指導要領（平成29年告示）算数 第6学年 A(2) 文字を用いた式（a、x などを用いた式）',
+  basis:
+    '小学校学習指導要領（平成29年告示）算数 第6学年 A(2) 文字を用いた式（a、x などを用いた式）',
   revised: REVISED,
 });

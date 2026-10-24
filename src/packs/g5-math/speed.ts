@@ -22,18 +22,87 @@ interface Scene {
 }
 /** 場面（8つ）。時間の単位ごとに 速さの 呼び方が 決まる */
 const SCENES: Scene[] = [
-  { id: 'car', who: '自動車', verb: '走る', dUnit: 'km', tUnit: '時間', sRange: [30, 80], tRange: [2, 6] },
-  { id: 'train', who: '電車', verb: '走る', dUnit: 'km', tUnit: '時間', sRange: [60, 150], tRange: [2, 5] },
-  { id: 'bike', who: '自転車', verb: '走る', dUnit: 'km', tUnit: '時間', sRange: [10, 20], tRange: [2, 5] },
-  { id: 'ship', who: '船', verb: '進む', dUnit: 'km', tUnit: '時間', sRange: [15, 40], tRange: [2, 8] },
-  { id: 'walk', who: '人《ひと》', verb: '歩く', dUnit: 'm', tUnit: '分', sRange: [50, 90], tRange: [5, 30] },
-  { id: 'bird', who: 'ハト', verb: '飛ぶ', dUnit: 'm', tUnit: '分', sRange: [60, 120], tRange: [2, 10] },
-  { id: 'swim', who: '人《ひと》', verb: '泳ぐ', dUnit: 'm', tUnit: '分', sRange: [30, 70], tRange: [2, 20] },
-  { id: 'run', who: '人《ひと》', verb: '走る', dUnit: 'm', tUnit: '秒', sRange: [3, 9], tRange: [10, 60] },
+  {
+    id: 'car',
+    who: '自動車',
+    verb: '走る',
+    dUnit: 'km',
+    tUnit: '時間',
+    sRange: [30, 80],
+    tRange: [2, 6],
+  },
+  {
+    id: 'train',
+    who: '電車',
+    verb: '走る',
+    dUnit: 'km',
+    tUnit: '時間',
+    sRange: [60, 150],
+    tRange: [2, 5],
+  },
+  {
+    id: 'bike',
+    who: '自転車',
+    verb: '走る',
+    dUnit: 'km',
+    tUnit: '時間',
+    sRange: [10, 20],
+    tRange: [2, 5],
+  },
+  {
+    id: 'ship',
+    who: '船',
+    verb: '進む',
+    dUnit: 'km',
+    tUnit: '時間',
+    sRange: [15, 40],
+    tRange: [2, 8],
+  },
+  {
+    id: 'walk',
+    who: '人《ひと》',
+    verb: '歩く',
+    dUnit: 'm',
+    tUnit: '分',
+    sRange: [50, 90],
+    tRange: [5, 30],
+  },
+  {
+    id: 'bird',
+    who: 'ハト',
+    verb: '飛ぶ',
+    dUnit: 'm',
+    tUnit: '分',
+    sRange: [60, 120],
+    tRange: [2, 10],
+  },
+  {
+    id: 'swim',
+    who: '人《ひと》',
+    verb: '泳ぐ',
+    dUnit: 'm',
+    tUnit: '分',
+    sRange: [30, 70],
+    tRange: [2, 20],
+  },
+  {
+    id: 'run',
+    who: '人《ひと》',
+    verb: '走る',
+    dUnit: 'm',
+    tUnit: '秒',
+    sRange: [3, 9],
+    tRange: [10, 60],
+  },
 ];
 
 /** 時間の 単位の 書き方（分・秒は 読みを 決めて書く） */
 const T = (u: Scene['tUnit']) => (u === '分' ? '分《ふん》' : u);
+/** 数の あとの 「分」の 読み（1・3・4・6・8・0 で 終わる 数は ぷん: いっぷん・じゅっぷん） */
+const minRead = (n: number) => ('134680'.includes(String(n).slice(-1)) ? 'ぷん' : 'ふん');
+/** 数と 時間の 単位（例 '10分《ぷん》'・'5分《ふん》'・'3時間'） */
+const TN = (n: number | string, u: Scene['tUnit']) =>
+  u === '分' && typeof n === 'number' ? `${n}分《${minRead(n)}》` : `${n}${T(u)}`;
 const SP = (u: Scene['tUnit']) => (u === '時間' ? '時速' : u === '分' ? '分速' : '秒速');
 /** 鳥は 分速 何十m（ハトは 分速 1km くらい）。10 倍して 使う */
 const sOf = (sc: Scene, rng: Rng) => rng.int(...sc.sRange) * (sc.id === 'bird' ? 10 : 1);
@@ -44,17 +113,22 @@ function base(sc: Scene, rng: Rng) {
   return { s, t, d: s * t };
 }
 
-const lineFig = (sc: Scene, s: string, t: string, d: string) =>
+/**
+ * 数直線（0・1・t を 下に、0・速さ・道のりを 上に）。1 の 位置は 1/t（t が 大きくて 0 と 重なる ときは 0.15）。
+ * tKnown が false（時間を 問う 図）の ときは 0.2 に おく（答えを 図の 長さから 読ませない）。
+ */
+const lineAt = (t: number, tKnown = true) => (tKnown ? Math.max(1 / t, 0.15) : 0.2);
+const lineFig = (sc: Scene, s: string, t: number, d: string, tKnown = true) =>
   doubleLine(
     [
       { at: 0, text: '0' },
-      { at: 0.2, text: s },
+      { at: lineAt(t, tKnown), text: s },
       { at: 1, text: d },
     ],
     [
       { at: 0, text: '0' },
-      { at: 0.2, text: '1' },
-      { at: 1, text: t },
+      { at: lineAt(t, tKnown), text: '1' },
+      { at: 1, text: tKnown ? String(t) : '?' },
     ],
     `上が 道のり（${sc.dUnit}）、下が 時間（${T(sc.tUnit)}）の 数直線`,
     sc.dUnit,
@@ -70,15 +144,15 @@ function speedItem(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `speed${alt ? '-alt' : ''}:${sc.id}:${d}:${t}`,
     objective: 'speed',
     level,
-    prompt: `${sc.who}が ${d}${sc.dUnit}を ${t}${T(sc.tUnit)}で ${sc.verb.replace(/る$|ぶ$|ぐ$|む$|く$/, (m) => ({ る: 'り', ぶ: 'び', ぐ: 'ぎ', む: 'み', く: 'き' })[m]!)}ました。${SP(sc.tUnit)}は 何${sc.dUnit}ですか。`,
-    figure: alt ? lineFig(sc, '?', String(t), String(d)) : undefined,
+    prompt: `${sc.who}が ${d}${sc.dUnit}を ${TN(t, sc.tUnit)}で ${sc.verb.replace(/る$|ぶ$|ぐ$|む$|く$/, (m) => ({ る: 'り', ぶ: 'び', ぐ: 'ぎ', む: 'み', く: 'き' })[m]!)}ました。${SP(sc.tUnit)}は 何${sc.dUnit}ですか。`,
+    figure: alt ? lineFig(sc, '?', t, String(d)) : undefined,
     hints: [
-      `${SP(sc.tUnit)}は、1${T(sc.tUnit)}あたりに 進む 道のりだよ。`,
+      `${SP(sc.tUnit)}は、${TN(1, sc.tUnit)}あたりに 進む 道のりだよ。`,
       '速さ ＝ 道のり ÷ 時間',
       `${d} ÷ ${t}を 計算しよう。`,
     ],
     explain: `${d} ÷ ${t} ＝ ${s}。${SP(sc.tUnit)} ${s}${sc.dUnit}です。`,
-    explainFigure: lineFig(sc, String(s), String(t), String(d)),
+    explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `speed:${sc.id}:${d}:${t}${alt ? ':line' : ''}`,
     alt,
     fields: [{ label: sc.dUnit, answer: answers[0]! }],
@@ -100,15 +174,15 @@ function distItem(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `dist${alt ? '-alt' : ''}:${sc.id}:${s}:${t}`,
     objective: 'dist',
     level,
-    prompt: `${SP(sc.tUnit)} ${s}${sc.dUnit}で ${sc.verb} ${sc.who}が、${t}${T(sc.tUnit)} 進むと、道のりは 何${sc.dUnit}ですか。`,
-    figure: alt ? lineFig(sc, String(s), String(t), '?') : undefined,
+    prompt: `${SP(sc.tUnit)} ${s}${sc.dUnit}で ${sc.verb} ${sc.who}が、${TN(t, sc.tUnit)} 進むと、道のりは 何${sc.dUnit}ですか。`,
+    figure: alt ? lineFig(sc, String(s), t, '?') : undefined,
     hints: [
-      `${SP(sc.tUnit)} ${s}${sc.dUnit}は、1${T(sc.tUnit)}に ${s}${sc.dUnit} 進む 速さだよ。`,
+      `${SP(sc.tUnit)} ${s}${sc.dUnit}は、${TN(1, sc.tUnit)}に ${s}${sc.dUnit} 進む 速さだよ。`,
       '道のり ＝ 速さ × 時間',
       `${s} × ${t}を 計算しよう。`,
     ],
     explain: `${s} × ${t} ＝ ${d}。道のりは ${d}${sc.dUnit}です。`,
-    explainFigure: lineFig(sc, String(s), String(t), String(d)),
+    explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `dist:${sc.id}:${s}:${t}${alt ? ':line' : ''}`,
     alt,
     fields: [{ label: sc.dUnit, answer: answers[0]! }],
@@ -131,15 +205,15 @@ function timeItem(level: number, rng: Rng, alt: boolean): NumberItem {
     id: `time${alt ? '-alt' : ''}:${sc.id}:${s}:${d}`,
     objective: 'time',
     level,
-    prompt: `${SP(sc.tUnit)} ${s}${sc.dUnit}で ${sc.verb} ${sc.who}が、${d}${sc.dUnit} 進むのに かかる 時間は 何${T(sc.tUnit)}ですか。`,
-    figure: alt ? lineFig(sc, String(s), '?', String(d)) : undefined,
+    prompt: `${SP(sc.tUnit)} ${s}${sc.dUnit}で ${sc.verb} ${sc.who}が、${d}${sc.dUnit} 進むのに かかる 時間は 何${sc.tUnit}ですか。`,
+    figure: alt ? lineFig(sc, String(s), t, String(d), false) : undefined,
     hints: [
-      `1${T(sc.tUnit)}に ${s}${sc.dUnit} 進むね。${d}${sc.dUnit}は ${s}${sc.dUnit}の いくつ分かな。`,
+      `${TN(1, sc.tUnit)}に ${s}${sc.dUnit} 進むね。${d}${sc.dUnit}は ${s}${sc.dUnit}の いくつ分かな。`,
       '時間 ＝ 道のり ÷ 速さ',
       `${d} ÷ ${s}を 計算しよう。`,
     ],
-    explain: `${d} ÷ ${s} ＝ ${t}。${t}${T(sc.tUnit)} かかります。`,
-    explainFigure: lineFig(sc, String(s), String(t), String(d)),
+    explain: `${d} ÷ ${s} ＝ ${t}。${TN(t, sc.tUnit)} かかります。`,
+    explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `time:${sc.id}:${s}:${d}${alt ? ':line' : ''}`,
     alt,
     fields: [{ label: T(sc.tUnit), answer: answers[0]! }],
@@ -177,9 +251,9 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
       [h * 60, 'unit-conv'],
       [h * 10, 'unit-conv'],
     ];
-    hint2 = `${h}km ＝ ${h * 1000}m。1時間 ＝ 60分《ふん》。`;
+    hint2 = `${h}km ＝ ${h * 1000}m。1時間 ＝ 60分《ぷん》。`;
     hint3 = `${h * 1000} ÷ 60を 計算しよう。`;
-    explain = `${h}km ＝ ${h * 1000}m。1時間（60分《ふん》）で ${h * 1000}m なので、1分《ふん》では ${h * 1000} ÷ 60 ＝ ${m}m。分速 ${m}mです。`;
+    explain = `${h}km ＝ ${h * 1000}m。1時間（60分《ぷん》）で ${h * 1000}m なので、1分《ぷん》では ${h * 1000} ÷ 60 ＝ ${m}m。分速 ${m}mです。`;
     key = `h2m:${h}`;
   } else if (kind === 'm2s') {
     const sv = rng.int(1, 25);
@@ -192,9 +266,9 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
       [divText(m, 100), 'unit-conv'],
       [divText(m, 10), 'unit-conv'],
     ];
-    hint2 = '1分《ふん》 ＝ 60秒。';
+    hint2 = '1分《ぷん》 ＝ 60秒。';
     hint3 = `${m} ÷ 60を 計算しよう。`;
-    explain = `1分《ふん》（60秒）で ${m}m なので、1秒では ${m} ÷ 60 ＝ ${sv}m。秒速 ${sv}mです。`;
+    explain = `1分《ぷん》（60秒）で ${m}m なので、1秒では ${m} ÷ 60 ＝ ${sv}m。秒速 ${sv}mです。`;
     key = `m2s:${m}`;
   } else if (kind === 's2m') {
     const sv = rng.int(2, 30);
@@ -206,9 +280,9 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
       [sv * 100, 'unit-conv'],
       [sv * 3600, 'unit-conv'],
     ];
-    hint2 = '1分《ふん》 ＝ 60秒。1分《ふん》間に 進む 道のりを 考えよう。';
+    hint2 = '1分《ぷん》 ＝ 60秒。1分《ぷん》間に 進む 道のりを 考えよう。';
     hint3 = `${sv} × 60を 計算しよう。`;
-    explain = `1秒で ${sv}m なので、1分《ふん》（60秒）では ${sv} × 60 ＝ ${sv * 60}m。分速 ${sv * 60}mです。`;
+    explain = `1秒で ${sv}m なので、1分《ぷん》（60秒）では ${sv} × 60 ＝ ${sv * 60}m。分速 ${sv * 60}mです。`;
     key = `s2m:${sv}`;
   } else {
     const k = rng.int(1, 30);
@@ -222,7 +296,7 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
       [divText(m, 1000), 'unit-conv'],
       [divText(m * 100, 1000), 'unit-conv'],
     ];
-    hint2 = '1時間 ＝ 60分《ふん》。1時間に 進む 道のりを mで 求めてから kmに なおそう。';
+    hint2 = '1時間 ＝ 60分《ぷん》。1時間に 進む 道のりを mで 求めてから kmに なおそう。';
     hint3 = `${m} × 60 ＝ ${m * 60}m。これは 何kmかな。`;
     explain = `${m} × 60 ＝ ${m * 60}m ＝ ${divText(m * 60, 1000)}km。時速 ${divText(m * 60, 1000)}kmです。`;
     key = `m2h:${m}`;
@@ -262,7 +336,7 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
     objective: 'convert',
     level,
     prompt: `${from}は、${to}ですか。`,
-    hints: ['時速は 1時間、分速は 1分《ふん》、秒速は 1秒あたりに 進む 道のりだよ。', hint2, hint3],
+    hints: ['時速は 1時間、分速は 1分《ぷん》、秒速は 1秒あたりに 進む 道のりだよ。', hint2, hint3],
     explain,
     identity: `convert:${key}`,
     alt: false,
@@ -299,8 +373,12 @@ function compareItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
         alt: true,
         fixedOrder: true,
         options: [
-          aFast ? { label: names[0], correct: true } : { label: names[0], misconception: 'unit-conv' },
-          aFast ? { label: names[1], misconception: 'unit-conv' } : { label: names[1], correct: true },
+          aFast
+            ? { label: names[0], correct: true }
+            : { label: names[0], misconception: 'unit-conv' },
+          aFast
+            ? { label: names[1], misconception: 'unit-conv' }
+            : { label: names[1], correct: true },
         ],
       };
     }
@@ -313,17 +391,18 @@ function compareItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     const aFast = a.s > b.s;
     const wrongLonger = aFast ? b.d > a.d : a.d > b.d;
     const mis = wrongLonger ? 'dist-only' : 'div-swap';
-    const names: [string, string] = sc.who === '人《ひと》' ? ['Aさん', 'Bさん'] : [`Aの ${sc.who}`, `Bの ${sc.who}`];
+    const names: [string, string] =
+      sc.who === '人《ひと》' ? ['Aさん', 'Bさん'] : [`Aの ${sc.who}`, `Bの ${sc.who}`];
     const key = [`${a.d}/${a.t}`, `${b.d}/${b.t}`].sort().join('|');
     return {
       engine: 'choice',
       id: `compare:${sc.id}:${a.d}/${a.t}|${b.d}/${b.t}`,
       objective: 'compare',
       level,
-      prompt: `${names[0]}は ${a.d}${sc.dUnit}を ${a.t}${T(sc.tUnit)}、${names[1]}は ${b.d}${sc.dUnit}を ${b.t}${T(sc.tUnit)}で 進みました。速いのは どちら？`,
+      prompt: `${names[0]}は ${a.d}${sc.dUnit}を ${TN(a.t, sc.tUnit)}、${names[1]}は ${b.d}${sc.dUnit}を ${TN(b.t, sc.tUnit)}で 進みました。速いのは どちら？`,
       hints: [
         '道のりも 時間も ちがうので、道のりだけ・時間だけでは くらべられないよ。',
-        `1${T(sc.tUnit)}あたりに 進む 道のり（速さ）を 求めよう。Aは ${a.d} ÷ ${a.t}。`,
+        `${TN(1, sc.tUnit)}あたりに 進む 道のり（速さ）を 求めよう。Aは ${a.d} ÷ ${a.t}。`,
         `Aは ${SP(sc.tUnit)} ${a.s}${sc.dUnit}。Bも 計算して くらべよう。`,
       ],
       explain: `Aは ${a.d} ÷ ${a.t} ＝ ${a.s}、Bは ${b.d} ÷ ${b.t} ＝ ${b.s}。${SP(sc.tUnit)}が 大きい ${aFast ? 'A' : 'B'}の ほうが 速いです。`,
@@ -385,7 +464,7 @@ export const speed: UnitSpec = finishUnit(
       {
         id: 'div-swap',
         explain:
-          'わる 数と わられる 数が 反対に なったのかな。速さは 1時間（1分《ふん》）あたりに 進む 道のりなので、道のり ÷ 時間。時間は 道のり ÷ 速さだよ。',
+          'わる 数と わられる 数が 反対に なったのかな。速さは 1時間（1分《ぷん》）あたりに 進む 道のりなので、道のり ÷ 時間。時間は 道のり ÷ 速さだよ。',
       },
       {
         id: 'formula-swap',
@@ -395,12 +474,12 @@ export const speed: UnitSpec = finishUnit(
       {
         id: 'unit-conv',
         explain:
-          '単位の なおし方が ちがったのかな。1時間 ＝ 60分《ふん》、1分《ふん》 ＝ 60秒（100では ないよ）。1km ＝ 1000m。時間と 道のりの 単位を 両方 そろえよう。',
+          '単位の なおし方が ちがったのかな。1時間 ＝ 60分《ぷん》、1分《ぷん》 ＝ 60秒（100では ないよ）。1km ＝ 1000m。時間と 道のりの 単位を 両方 そろえよう。',
       },
       {
         id: 'dist-only',
         explain:
-          '道のりの 長さだけで くらべたのかな。かかった 時間も ちがうので、1時間（1分《ふん》）あたりに 進む 道のりで くらべよう。',
+          '道のりの 長さだけで くらべたのかな。かかった 時間も ちがうので、1時間（1分《ぷん》）あたりに 進む 道のりで くらべよう。',
       },
     ],
     levels: [
@@ -427,7 +506,7 @@ export const speed: UnitSpec = finishUnit(
         ),
       },
       {
-        text: '速さは、単位時間あたりに 進む 道のりで 表します。速さ ＝ 道のり ÷ 時間。1時間あたりは 時速、1分《ふん》あたりは 分速、1秒あたりは 秒速。',
+        text: '速さは、単位時間あたりに 進む 道のりで 表します。速さ ＝ 道のり ÷ 時間。1時間あたりは 時速、1分《ぷん》あたりは 分速、1秒あたりは 秒速。',
       },
       {
         text: '道のり ＝ 速さ × 時間、時間 ＝ 道のり ÷ 速さ。時速 60km ＝ 分速 1000m（60 × 1000 ÷ 60）。',
@@ -438,7 +517,8 @@ export const speed: UnitSpec = finishUnit(
       generate: ({ level, rng, index }) => generateSpeed(level, rng, index),
     },
     review: 'type',
-    basis: '小学校学習指導要領（平成29年告示）算数 第5学年 C(2) 単位量当たりの大きさ（速さ）。速さは現行要領で5年（EJM 4-1）',
+    basis:
+      '小学校学習指導要領（平成29年告示）算数 第5学年 C(2) 単位量当たりの大きさ（速さ）。速さは現行要領で5年（EJM 4-1）',
     revised: REVISED,
   },
   '自動車《じどうしゃ》 電車《でんしゃ》 自転車《じてんしゃ》 船《ふね》 飛《と》 泳《およ》 歩《ある》 進《すす》 走《はし》 単位時間《たんいじかん》 間《かん》',

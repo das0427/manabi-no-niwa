@@ -18,9 +18,13 @@ export function recommendUnits(input: {
   stage: StageId;
   now: number;
   limit?: number;
+  /** 保護者が開いた単元（hiddenByDefault の単元はこれに含まれるときだけおすすめに出す） */
+  opened?: readonly string[];
 }): UnitRec[] {
   const limit = input.limit ?? 3;
-  const visible = input.index.filter((u) => u.status !== 'planned');
+  const visible = input.index.filter(
+    (u) => u.status !== 'planned' && (!u.hiddenByDefault || (input.opened ?? []).includes(u.id)),
+  );
   const byId = new Map(visible.map((u) => [u.id, u]));
   const prog = new Map(input.progress.map((p) => [p.unitId, p]));
   const dependents = (id: string) => visible.filter((u) => u.prereq.includes(id)).length;

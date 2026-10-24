@@ -36,9 +36,19 @@ export function judgeNumberItem(item: NumberItem, res: NumberResponse): Judgemen
   if (allCorrect) return { result: 'correct' };
   // 読めない入力・形式の違いだけなら「もう一度」
   if (firstRetry) return firstRetry;
-  const joined = res.map((s) => normalizeInput(s)).join('|');
-  const known = item.wrongAnswers?.find((w) => normalizeInput(w.value) === joined);
+  // 誤答の例と値で比べる（"08" と "8"、"0.50" と "0.5" を同じとみる: コードレビュー #16）
+  const known = item.wrongAnswers?.find((w) => {
+    const parts = w.value.split('|');
+    return parts.length === res.length && parts.every((p, i) => sameValue(p, res[i] ?? ''));
+  });
   return { result: 'wrong', misconception: known?.misconception, mark: true };
+}
+
+function sameValue(a: string, b: string): boolean {
+  const pa = parseNumberInput(a);
+  const pb = parseNumberInput(b);
+  if (pa && pb) return pa.value.n === pb.value.n && pa.value.d === pb.value.d;
+  return normalizeInput(a) === normalizeInput(b);
 }
 
 export function checkNumberItem(item: NumberItem): string[] {

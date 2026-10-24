@@ -60,7 +60,8 @@ describe('judgeRomaji', () => {
     expect(judgeRomaji('いぬ', 'neko')).toEqual({ result: 'wrong', canonical: 'inu' });
     expect(judgeRomaji('いぬ', '')).toMatchObject({ result: 'wrong' });
   });
-  it('未対応のかなは教材データの誤りとして例外', () => {
+  it('未対応のかな・長音の連続は教材データの誤りとして例外', () => {
     expect(() => canonicalRomaji('ゔ')).toThrow();
+    expect(() => canonicalRomaji('ラーー')).toThrow();
   });
 });

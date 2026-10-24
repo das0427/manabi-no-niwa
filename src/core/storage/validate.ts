@@ -276,6 +276,8 @@ export function validateArtworkBlobFile(x: unknown): ArtworkBlobFile | null {
   if (x.key !== `${x.artId}:${x.kind}`) return null;
   if (!str(x.dataUrl, LIMITS.artBlob) || !x.dataUrl.startsWith('data:image/png;base64,'))
     return null;
+  // base64 の文字だけ（読み込み時の atob の例外で保存状態を「エラー」にしない: コードレビュー #10）
+  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(x.dataUrl.slice('data:image/png;base64,'.length))) return null;
   return { key: x.key, artId: x.artId, profileId: x.profileId, kind: x.kind, dataUrl: x.dataUrl };
 }
 

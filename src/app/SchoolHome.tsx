@@ -36,8 +36,15 @@ export function SchoolHome() {
     };
   }, [profile.id]);
   const recs: UnitRec[] = useMemo(
-    () => recommendUnits({ index: UNIT_INDEX, progress, stage, now: Date.now() }),
-    [progress, stage],
+    () =>
+      recommendUnits({
+        index: UNIT_INDEX,
+        progress,
+        stage,
+        now: Date.now(),
+        opened: settings.unitsOpened,
+      }),
+    [progress, stage, settings.unitsOpened],
   );
   const ctx = { furigana: settings.support.furigana, learnerGrade: grade };
   const learningIn = (subject: string) =>

@@ -15,6 +15,7 @@ import type {
   UnitProgress,
   WorkRecord,
 } from '../types';
+import { profileAudience } from '../types';
 import { ALL_STORES, SCHEMA_VERSION, STORE, r, runTx, strict } from './db';
 import {
   type ArtworkBlobFile,
@@ -204,9 +205,11 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   if (profiles.length === 0) return bad('プロフィールが1つも入っていないファイルです。');
   const ids = new Set(profiles.map((p) => p.id));
   if (ids.size !== profiles.length) return bad('プロフィールのIDが重複しています。');
+  // 欠けた設定の項目は、そのプロフィールの区分の既定で補う（コードレビュー #9）
+  const audienceOf = (pid: string) => profileAudience(profiles.find((p) => p.id === pid) ?? {});
   const settings = mapAll(d.settings ?? [], (s) =>
     isObj(s) && typeof s.profileId === 'string'
-      ? normalizeSettings(s, s.profileId.slice(0, LIMITS.id), true)
+      ? normalizeSettings(s, s.profileId.slice(0, LIMITS.id), true, audienceOf(s.profileId))
       : null,
   );
   if (!settings) return bad('設定の情報が正しくありません。');
@@ -481,7 +484,7 @@ export async function importBackup(
         tx.objectStore(STORE.profiles).put({ ...p, id, name, createdAt: now + i });
         const s = d.settings.find((x) => x.profileId === p.id);
         tx.objectStore(STORE.settings).put({
-          ...normalizeSettings(s ?? {}, id, false),
+          ...normalizeSettings(s ?? {}, id, false, profileAudience(p)),
           profileId: id,
         });
       });

@@ -16,10 +16,15 @@ export function unitMeta(id: string): UnitMeta | undefined {
 }
 
 /** 子供画面に出す単元（planned は出さない） */
-export function visibleUnits(filter: { subject?: SubjectId; stage?: StageId } = {}): UnitMeta[] {
+export function visibleUnits(
+  filter: { subject?: SubjectId; stage?: StageId } = {},
+  /** 保護者が開いた単元（hiddenByDefault の単元はこれに含まれるときだけ出す） */
+  opened: readonly string[] = [],
+): UnitMeta[] {
   return UNIT_INDEX.filter(
     (u) =>
       u.status !== 'planned' &&
+      (!u.hiddenByDefault || opened.includes(u.id)) &&
       (filter.subject === undefined || u.subject === filter.subject) &&
       (filter.stage === undefined || u.stage === filter.stage),
   );

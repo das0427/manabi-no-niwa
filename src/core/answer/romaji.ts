@@ -119,6 +119,8 @@ function lengthen(prev: Seg, written: string | null): Seg {
   const out: Seg = [];
   for (const a of prev) {
     const v = lastVowel(a.s);
+    // 長音が続く（「ラーー」など）は教材データの誤り（コードレビュー #12）
+    if (!MACRON[v]) throw new Error(`romaji: 長音を伸ばせない（${a.s}）`);
     const stem = a.s.slice(0, -1);
     out.push({ s: stem + MACRON[v]!, kunrei: a.kunrei });
     out.push({ s: a.s + (written ?? v), kunrei: a.kunrei });

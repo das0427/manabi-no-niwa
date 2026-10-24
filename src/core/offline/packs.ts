@@ -388,7 +388,13 @@ async function doDownload(
         hashes.set(path, await sha256Hex(body));
         await cache.put(
           packFileUrl(path),
-          new Response(body, { status: 200, statusText: 'OK', headers }),
+          // 写すのは content-type だけ（圧縮配信の content-encoding / content-length を写すと、
+          // 復号済みの本文と食い違う: コードレビュー #11）
+          new Response(body, {
+            status: 200,
+            statusText: 'OK',
+            headers: { 'content-type': headers.get('content-type') ?? 'application/octet-stream' },
+          }),
         );
         progress.doneFiles++;
         progress.doneBytes += body.byteLength;

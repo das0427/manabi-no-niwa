@@ -72,6 +72,27 @@ export function textsOf(x: unknown, out: string[] = [], key = ''): string[] {
   return out;
 }
 
+/**
+ * 図（kind 'svg'）の中に、スクリプト・イベント属性・外部参照が無いか（コードレビュー #7）。
+ * 図は dangerouslySetInnerHTML で描くので、教材データの段階で止める（CSP は最後の防壁）。
+ */
+export function unsafeSvgsOf(x: unknown, out: string[] = []): string[] {
+  if (Array.isArray(x)) for (const v of x) unsafeSvgsOf(v, out);
+  else if (x && typeof x === 'object') {
+    const o = x as Record<string, unknown>;
+    if (o.kind === 'svg' && typeof o.markup === 'string') {
+      if (
+        /<script|<foreignObject|<iframe|<image|\son[a-z]+\s*=|javascript:|(?:xlink:)?href\s*=\s*["'](?!#)/i.test(
+          o.markup,
+        )
+      )
+        out.push(o.markup.slice(0, 60));
+    }
+    for (const v of Object.values(o)) if (typeof v !== 'function') unsafeSvgsOf(v, out);
+  }
+  return out;
+}
+
 /** 問題データの中の誤概念IDを全部（項目名 misconception / reverseMisconception） */
 export function misconceptionIdsOf(x: unknown, out: string[] = [], key = ''): string[] {
   if (typeof x === 'string') {
@@ -145,6 +166,8 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     unit.misconceptions.length < needMis
   )
     err(`誤概念が${needMis}つ未満`);
+  for (const s of unsafeSvgsOf([unit.intro, unit.misconceptions]))
+    err(`図の SVG に使えない要素・属性がある: ${s}`);
   for (const t of [
     unit.title,
     ...unit.intro.map((s) => s.text),
@@ -175,6 +198,7 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     for (const t of textsOf(it))
       for (const k of findBareKanji(t)) itemErr(`よみの無い漢字「${k}」`);
     for (const m of engineOf(it).check(it)) itemErr(m);
+    for (const s of unsafeSvgsOf(it)) itemErr(`図の SVG に使えない要素・属性がある: ${s}`);
     // 誤概念IDが定義にあるか（全エンジン共通）
     for (const m of misconceptionIdsOf(it)) if (!misIds.has(m)) itemErr(`誤概念 ${m} が定義に無い`);
     // 汎用の誤答応答の割合（誤りの選択肢を持つ choice で数える）

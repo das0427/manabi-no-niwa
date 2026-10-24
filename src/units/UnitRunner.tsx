@@ -422,9 +422,14 @@ export function UnitRound({
     exposeForTest({ unitId: unit.id, level, index: s.index, phase: s.phase, item });
   }, [unit.id, level, s.index, s.phase, item]);
 
+  // 連打で同じ答えを2回判定しない（効果音・読み上げが重ならないように: コードレビュー #15）
+  const lastSubmit = useRef(0);
   const submit = useCallback(
     (response: unknown) => {
-      if (!item) return;
+      if (!item || s.phase !== 'question') return;
+      const now = Date.now();
+      if (now - lastSubmit.current < 400) return;
+      lastSubmit.current = now;
       const j: Judgement = engineOf(item).judge(item, response);
       if (j.result === 'correct') audio.sfx(ux.softJudgement ? 'place' : 'correct');
       else if (j.result === 'wrong' && !ux.softJudgement) audio.sfx('wrong');
@@ -444,7 +449,7 @@ export function UnitRound({
       if (j.result === 'wrong') say([mt ?? 'ちがったよ。もういちど かんがえて みよう。']);
       if (j.result === 'retry') say([j.message]);
     },
-    [item, misText, say, ux.softJudgement],
+    [item, misText, say, ux.softJudgement, s.phase],
   );
 
   if (s.phase === 'done')

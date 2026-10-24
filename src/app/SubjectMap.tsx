@@ -81,7 +81,10 @@ export function SubjectMap({ subject, grade: gradeParam }: { subject: string; gr
   }, [profile.id]);
   if (!def) return null;
   const ctx = { furigana: settings.support.furigana, learnerGrade: learner };
-  const units = visibleUnits({ subject: subject as SubjectId, stage: `g${grade}` as StageId });
+  const units = visibleUnits(
+    { subject: subject as SubjectId, stage: `g${grade}` as StageId },
+    settings.unitsOpened,
+  );
   const now = Date.now();
   const markOf = (id: string) =>
     unitMark(progress.find((p) => p.unitId === id)?.review ?? initialReview, now);

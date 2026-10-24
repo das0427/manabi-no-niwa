@@ -20,7 +20,7 @@ import {
   REVIEW_SIZE,
 } from '../curriculum/review';
 import { buildRound } from '../curriculum/round';
-import type { Item, PackContent, UnitSpec } from '../curriculum/types';
+import type { Item, UnitSpec } from '../curriculum/types';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Figure } from '../engines/figure/Figure';
 import { engineOf } from '../engines/registry';
@@ -58,7 +58,7 @@ export function UnitRunner({ unitId }: { unitId: string }) {
         return;
       }
       try {
-        const pack = (await loadPack(meta.pack)) as unknown as PackContent;
+        const pack = await loadPack(meta.pack);
         const unit = pack.units.find((u) => u.id === unitId);
         if (!unit) throw new Error(`unit ${unitId} not in pack`);
         const now = Date.now();

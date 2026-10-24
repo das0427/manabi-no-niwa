@@ -5,6 +5,7 @@ import { vehicleIllust } from './vehicle/index';
 import { thingIllust } from './thing/index';
 import { iconIllust } from './icon/index';
 import { modeIllust } from './mode/index';
+import { subjectIllust } from './subject/index';
 
 const groups: Record<string, IllustGroup> = {
   food: foodIllust,
@@ -13,6 +14,7 @@ const groups: Record<string, IllustGroup> = {
   thing: thingIllust,
   icon: iconIllust,
   mode: modeIllust,
+  subject: subjectIllust,
 };
 
 export const ILLUST: Record<string, IllustDef> = {};

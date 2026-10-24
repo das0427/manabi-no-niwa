@@ -16,7 +16,13 @@ export type Route =
   /** 教科の単元の地図（grade: 表示する学年。省略時はプロフィールの学年） */
   | { name: 'subject'; subject: string; grade?: string }
   /** 単元の学習（UnitRunner） */
-  | { name: 'unit'; unitId: string };
+  | { name: 'unit'; unitId: string }
+  /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
+  | { name: 'draw'; artId?: string }
+  /** おえかきの作品一覧（さくひん） */
+  | { name: 'gallery' };
+
+const ART_ID = /^[A-Za-z0-9-]{1,100}$/;
 
 const UNIT_ID = /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/;
 
@@ -25,6 +31,8 @@ export function parseHash(hash: string): Route {
   const [a, b, c] = parts;
   if (a === 'home') return { name: 'home' };
   if (a === 'notebook') return { name: 'notebook' };
+  if (a === 'gallery') return { name: 'gallery' };
+  if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
   if (a === 'subject' && b && /^[a-z]+$/.test(b))
@@ -55,6 +63,10 @@ export function routeToHash(r: Route): string {
       return r.grade ? `#/subject/${r.subject}/${r.grade}` : `#/subject/${r.subject}`;
     case 'unit':
       return `#/unit/${r.unitId}`;
+    case 'draw':
+      return r.artId ? `#/draw/${r.artId}` : '#/draw';
+    case 'gallery':
+      return '#/gallery';
   }
 }
 

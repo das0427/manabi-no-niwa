@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { recommend, type Recommendation } from '../core/progress/recommend';
 import * as db from '../core/storage/index';
-import type { ModeId } from '../core/types';
+import { isPreschool } from '../audience/audience';
+import { profileAudience, type ModeId } from '../core/types';
+import { SchoolHome } from './SchoolHome';
 import { Illust } from '../illust/Illust';
 import { MODES, SKILLS } from '../modes/registry';
 import { useApp } from './AppState';
@@ -70,6 +72,8 @@ export function Home() {
   }, [profile, app.settings, app.favorites]);
 
   if (!profile || !app.settings) return null;
+  // 小学生の区分は教科のホーム（ux-by-age 2.2）
+  if (!isPreschool(profileAudience(profile))) return <SchoolHome />;
   const visible = (m: ModeId) =>
     app.settings!.homeDisplay === 'all' || app.settings!.visibleModes.includes(m);
 

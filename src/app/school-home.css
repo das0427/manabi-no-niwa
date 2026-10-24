@@ -1,0 +1,93 @@
+/* 小学生ホーム（ux-by-age 2.2）。教科の札: 19u×14u（幼児ホームの札と同じ大きさ）、教科の色は上の帯だけ */
+.school-subjects {
+  position: absolute;
+  left: var(--edge);
+  top: calc(var(--u) * 8);
+  display: grid;
+  grid-template-columns: repeat(3, calc(var(--u) * 19));
+  grid-auto-rows: calc(var(--u) * 14);
+  gap: calc(var(--u) * 1.6);
+}
+.school-subject {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.4);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 0.6) calc(var(--u) * 0.6);
+  border: var(--outline) solid var(--ink);
+  border-top: calc(var(--u) * 1.4) solid var(--subj);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: var(--font-child);
+  color: var(--ink);
+}
+.school-subject:active {
+  transform: translateY(calc(var(--u) * 0.4));
+}
+.school-subject__illust {
+  width: calc(var(--u) * 7);
+  height: calc(var(--u) * 7);
+}
+.school-subject__name {
+  font-size: calc(var(--u) * 2.4);
+  font-weight: 700;
+  line-height: 1.2;
+}
+/* とりくみちゅうの数: 半分ぬりの丸（単元の地図と同じ印）＋数 */
+.school-subject__count {
+  position: absolute;
+  top: calc(var(--u) * 0.6);
+  right: calc(var(--u) * 0.8);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+}
+.school-subject__half {
+  position: relative;
+  overflow: hidden;
+  width: calc(var(--u) * 2.2);
+  height: calc(var(--u) * 2.2);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+}
+.school-subject__half::before {
+  content: '';
+  position: absolute;
+  inset: 0 50% 0 0;
+  background: var(--ink);
+}
+.school-rec__tag {
+  display: inline-block;
+  margin-left: calc(var(--u) * 0.8);
+  padding: 0 calc(var(--u) * 0.6);
+  border: calc(var(--u) * 0.25) solid var(--ink);
+  border-radius: calc(var(--u) * 0.6);
+  font-size: calc(var(--u) * 1.8);
+  background: var(--surface);
+}
+.school-side__row {
+  display: flex;
+  gap: calc(var(--u) * 1.6);
+}
+/* 半分の幅の札は、絵の下に名前（縦に並べる） */
+.school-side__half {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--u) * 11);
+  flex-direction: column;
+  justify-content: center;
+  gap: calc(var(--u) * 0.4);
+  padding: calc(var(--u) * 0.6);
+  text-align: center;
+}
+.school-side__half .home-rec__name {
+  white-space: nowrap;
+}

@@ -22,6 +22,25 @@ import type { NumberlineItem } from '../engines/numberline/numberline';
 import type { GraphItem } from '../engines/graph/graph';
 import type { GeometryItem } from '../engines/geometry/geometry';
 
+/** 全エンジンの問題の型（教材パックはここから import してよい） */
+export type {
+  OrderItem,
+  SortItem,
+  MatchItem,
+  FillItem,
+  BuildItem,
+  ListenItem,
+  ReadingItem,
+  TraceItem,
+  ExplainItem,
+  ProgramItem,
+  ClockItem,
+  MeasureItem,
+  NumberlineItem,
+  GraphItem,
+  GeometryItem,
+};
+
 /** 文の記法（src/text/rich.ts）。漢字は必ず《よみ》付き */
 export type RichText = string;
 

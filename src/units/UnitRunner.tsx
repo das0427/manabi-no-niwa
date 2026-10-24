@@ -206,7 +206,7 @@ interface RoundProps {
   onHome(): void;
 }
 
-function UnitRound({
+export function UnitRound({
   unit,
   packId,
   progress,

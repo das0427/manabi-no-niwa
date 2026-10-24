@@ -40,7 +40,7 @@ export const buildSamples: BuildItem[] = [
     prompt: '「とき」の 字《じ》を つくる ぶひんを えらぼう。',
     tiles: ['日《ひ》', '寺《てら》', '月《つき》', '土《つち》'],
     answer: { kind: 'parts', parts: ['日《ひ》', '寺《てら》'] },
-    wrongAnswers: [{ value: '月+寺', misconception: 'parts-hi-tsuki' }],
+    wrongAnswers: [{ value: '月《つき》+寺《てら》', misconception: 'parts-hi-tsuki' }],
     hints: [
       'ひだりと みぎの 2つの ぶひんで できて いるよ。',
       'ひだりは おひさまの ぶひん だよ。',

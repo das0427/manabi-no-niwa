@@ -43,7 +43,7 @@
 
 ## build（タイルで作る）
 - `tiles`（2〜12。同じ字が2回要るなら2枚）、`answer`: `{ kind:'text', values, ignoreCase? }` / `{ kind:'parts', parts }`（部品の組・順不同）/ `{ kind:'romaji', kana, capital? }`（令和7年告示。訓令式は「もう一度」）。
-- `joiner?`（英語の語順は `' '`）、`fixedOrder?`、`hideLength?`、`wrongAnswers?: { value, misconception }[]`（parts は `'月+寺'`）。
+- `joiner?`（英語の語順は `' '`）、`fixedOrder?`、`hideLength?`、`wrongAnswers?: { value, misconception }[]`（parts は タイルと同じ書き方を + でつなぐ: `'月《つき》+寺《てら》'`。よみの無い漢字は qa の検査で誤りになる）。
 
 ## 年齢による違い（エンジンが自動で行う）
 - 2〜3歳: カードを `ux.maxChoices` に減らし、置き終わると自動で答える。2歳段階は誤答の「？」を出さない。

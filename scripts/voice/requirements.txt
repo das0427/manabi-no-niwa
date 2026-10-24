@@ -1,0 +1,18 @@
+# Asset pipeline (voice/fonts) requirements for manabi-no-niwa. Verified on Python 3.12 / Windows 11.
+# Direct deps: pyopenjtalk-plus, soundfile, numpy, fonttools, brotli (the rest are pinned transitive deps).
+# NOTE: pyopenjtalk-prebuilt has no wheel for Python 3.12 (sdist build only), so pyopenjtalk-plus
+# (same 'pyopenjtalk' module name, bundled dictionary) is used instead.
+annotated-types==0.8.0
+brotli==1.2.1
+cffi==2.1.1
+fonttools==4.67.0
+numpy==2.5.4
+pycparser==3.12
+pydantic==2.14.1
+pydantic_core==2.50.1
+pyopenjtalk-plus==0.4.1.post10
+soundfile==0.14.0
+sudachidict-core==20261015
+SudachiPy==0.7.0
+typing-inspection==0.4.4
+typing_extensions==4.16.0

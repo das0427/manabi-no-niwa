@@ -1,0 +1,86 @@
+/* デザイントークン（正本: DESINGN.md 2〜4章）。値を変えるときは DESINGN.md も更新する */
+
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  src: url('/fonts/zen-maru-gothic-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Zen Maru Gothic';
+  src: url('/fonts/zen-maru-gothic-700.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Klee One';
+  src: url('/fonts/klee-one-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Klee One';
+  src: url('/fonts/klee-one-600.woff2') format('woff2');
+  font-weight: 600;
+  font-display: swap;
+}
+
+:root {
+  /* 色 */
+  --paper: #fbf5e9;
+  --paper-2: #f3e8d2;
+  --ink: #4a3b32;
+  --ink-soft: #7a6a5e;
+  --wood: #d9a86c;
+  --wood-dark: #a8743e;
+  --leaf: #5e9e5b;
+  --leaf-dark: #3f7440;
+  --sun: #f2c14e;
+  --sky: #8cc3e0;
+  --sky-dark: #5a93b3;
+  --berry: #d9634f;
+  --white: #fffdf8;
+  --mat-red: #d9534a;
+  --mat-yellow: #f2c230;
+  --mat-green: #6baa4f;
+
+  /* 寸法の単位: 16:9 の舞台の幅の 1/100（実機で約 2.4〜2.76mm） */
+  --u: max(5px, min(1vw, 1.7778vh));
+  --u: max(5px, min(1vw, 1.7778dvh));
+
+  --tap-main: calc(var(--u) * 6);
+  --tap-aux: calc(var(--u) * 5.5);
+  --gap-min: calc(var(--u) * 1.6);
+  --edge: calc(var(--u) * 2);
+  --radius: calc(var(--u) * 1.2);
+  --outline: calc(var(--u) * 0.35);
+  --step: calc(var(--u) * 0.6);
+
+  --font-child: 'Zen Maru Gothic', 'Noto Sans CJK JP', 'Noto Sans JP', sans-serif;
+  --font-letter: 'Klee One', 'Zen Maru Gothic', serif;
+  --font-parent:
+    'Noto Sans CJK JP', 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo',
+    'Zen Maru Gothic', sans-serif;
+
+  --text-prompt: calc(var(--u) * 3);
+  --text-label: calc(var(--u) * 2.6);
+  --text-small: calc(var(--u) * 2.2);
+
+  --dur-fast: 200ms;
+  --dur-move: 350ms;
+}
+
+.reduce-motion,
+.reduce-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

@@ -1,0 +1,203 @@
+/**
+ * アプリ全体で共有する型。モード・保存・進度のすべてがここを基準にする。
+ * 変更は Opus（統括）が行う。各担当はここを編集しない。
+ */
+
+export const MODE_IDS = [
+  'shopping',
+  'hiragana',
+  'sorting',
+  'shapes',
+  'memory',
+  'compare',
+  'road',
+  'trace',
+  'math',
+] as const;
+export type ModeId = (typeof MODE_IDS)[number];
+
+export const SKILL_IDS = [
+  'shop',
+  'kana',
+  'sort',
+  'shape',
+  'memory',
+  'compare',
+  'road',
+  'trace',
+  'add',
+  'sub',
+  'split',
+  'formula_add',
+  'formula_sub',
+] as const;
+export type SkillId = (typeof SKILL_IDS)[number];
+
+/**
+ * 1問の結果の種類（requirements AD-05）。
+ * - independent: 最初の選択で正解。ヒント・見直しなし
+ * - self_corrected: 誤答 → ヒント1（注目させるだけ）→ 選び直して正解
+ * - after_hint: ヒント2（具体的なヒント）の後に正解
+ * - after_review: 見直し（もういちど みる／えで みる）を使って正解。戻る判定に数えない
+ * - skipped: 「つぎへ」で正解を見て次へ進んだ
+ * - abandoned: 途中で離れた。進度の判定には使わない
+ * 状態表は docs/architecture.md 4.3。
+ */
+export const OUTCOMES = [
+  'independent',
+  'self_corrected',
+  'after_hint',
+  'after_review',
+  'skipped',
+  'abandoned',
+] as const;
+export type Outcome = (typeof OUTCOMES)[number];
+
+export type InputKind = 'touch' | 'pen' | 'mouse' | 'unknown';
+
+export type TraceTolerance = 'wide' | 'normal' | 'narrow';
+
+export interface ChildSettings {
+  profileId: string;
+  /** 0〜1 */
+  volume: number;
+  sfx: boolean;
+  reduceMotion: boolean;
+  /** 利用時間の目安（分）。0 は「なし」 */
+  sessionMinutes: number;
+  /** 1回の問題数（3〜5） */
+  roundSize: 3 | 4 | 5;
+  homeDisplay: 'all' | 'selected';
+  visibleModes: ModeId[];
+  traceTolerance: Record<'touch' | 'pen' | 'mouse', TraceTolerance>;
+  /** おぼえてさがす: 0 = 子供が「おぼえた！」を押すまで。3/5/8 秒で自動で隠す */
+  memoryAutoHideSec: 0 | 3 | 5 | 8;
+  /** スキルごとの固定。値がないスキルは自動調整 */
+  levelLocks: Partial<Record<SkillId, number>>;
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  /** IllustId（プロフィールの絵） */
+  avatar: string;
+  createdAt: number;
+}
+
+export interface LevelChange {
+  from: number;
+  to: number;
+  reason: 'promote' | 'demote' | 'parent';
+  at: number;
+}
+
+export interface SkillProgress {
+  profileId: string;
+  skillId: SkillId;
+  level: number;
+  /** 現在の段階での直近の結果（古い順、最大10件。abandoned は含めない） */
+  window: Outcome[];
+  /** 最上段で「進む」条件を満たしたことがある */
+  mastered: boolean;
+  /** 一度でも取り組んだか（未実施と不得意の区別） */
+  attempted: boolean;
+  changedAt: number;
+  lastChange: LevelChange | null;
+}
+
+export interface AttemptRecord {
+  id?: number;
+  profileId: string;
+  modeId: ModeId;
+  variantId: string;
+  skillId: SkillId | null;
+  level: number;
+  /** 問題の内容を表す短いキー（保護者画面で読める形。例 "りんご×3"） */
+  itemKey: string;
+  outcome: Outcome;
+  wrongTries: number;
+  hintsUsed: number;
+  reviewsUsed: number;
+  /** 操作にとまどった（盤面外タップの多発など）。学力の記録とは分けて表示 */
+  operationIssue: boolean;
+  inputKind: InputKind;
+  at: number;
+  detail?: Record<string, string | number | boolean>;
+}
+
+export interface RoundRecord {
+  id?: number;
+  profileId: string;
+  modeId: ModeId;
+  variantId: string;
+  startedAt: number;
+  endedAt: number;
+  count: number;
+  completed: boolean;
+}
+
+export type WorkKind = 'trace' | 'road';
+
+export interface WorkRecord {
+  id: string;
+  profileId: string;
+  modeId: ModeId;
+  kind: WorkKind;
+  /** 保護者画面用の名前（例「し」「じゆうな みち」） */
+  title: string;
+  createdAt: number;
+  /** 再表示に必要なデータ（モードが定義。JSON 化できること） */
+  data: unknown;
+}
+
+export interface MemoRecord {
+  id: string;
+  profileId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  text: string;
+  createdAt: number;
+}
+
+export interface DraftRecord {
+  profileId: string;
+  modeId: ModeId;
+  variantId: string;
+  savedAt: number;
+  state: unknown;
+}
+
+export interface FavoritesRecord {
+  profileId: string;
+  modeIds: ModeId[];
+}
+
+export interface AppRecord {
+  activeProfileId: string | null;
+  /** SHA-256 hex。誤操作防止のためのもので強固な保護ではない */
+  parentPinHash: string | null;
+}
+
+export interface MetaRecord {
+  schemaVersion: number;
+  createdAt: number;
+  lastAppVersion: string;
+}
+
+export type StorageHealth = 'ok' | 'full' | 'error' | 'unavailable';
+
+export function defaultSettings(profileId: string): ChildSettings {
+  return {
+    profileId,
+    volume: 0.8,
+    sfx: true,
+    reduceMotion: false,
+    sessionMinutes: 10,
+    roundSize: 4,
+    homeDisplay: 'all',
+    visibleModes: [...MODE_IDS],
+    traceTolerance: { touch: 'wide', pen: 'wide', mouse: 'wide' },
+    memoryAutoHideSec: 0,
+    levelLocks: {},
+  };
+}

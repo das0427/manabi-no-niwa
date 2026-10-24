@@ -1,0 +1,14 @@
+node_modules/
+dist/
+release/
+.venv/
+.cache/
+coverage/
+test-results/
+playwright-report/
+scripts/voice/samples/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db

@@ -1,0 +1,16 @@
+dist/
+release/
+node_modules/
+.venv/
+.cache/
+public/
+coverage/
+test-results/
+playwright-report/
+package-lock.json
+src/modes/trace/data/*.json
+voice/script.json
+docs/
+licenses/
+scripts/strokes/preview.svg
+*.md

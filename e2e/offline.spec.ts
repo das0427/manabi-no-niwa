@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { chromium, expect, firefox, test } from '@playwright/test';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { CSP } from '../scripts/vite-plugin-precache.ts';
 import type { OfflineState } from '../src/core/offline/index';
 import { prepareDist } from './helpers/dist';
@@ -291,6 +291,67 @@ test.describe('オフライン再起動（E-10 / E-13 / OF-03）', () => {
   });
 });
 
+const MODE_IDS = [
+  'shopping',
+  'hiragana',
+  'sorting',
+  'shapes',
+  'memory',
+  'compare',
+  'road',
+  'trace',
+  'math',
+] as const;
+
+/** 画面遷移ボタンは直前の遷移から 400ms 以内の押下を無視する（OP-05）ため、目的の画面が出るまで押し直す */
+async function clickUntil(button: Locator, target: Locator): Promise<void> {
+  await expect(async () => {
+    if (await button.isVisible()) await button.click({ timeout: 2000 });
+    await expect(target).toBeVisible({ timeout: 1200 });
+  }).toPass({ timeout: 20_000, intervals: [100, 300, 500] });
+}
+
+test.describe('オフラインで全 9 モード（BC-04 / OF-03）', () => {
+  test('準備後に配信を止めても、ホームから全 9 モードを開始できる（部品の読み込み失敗なし）', async ({
+    context,
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    const external = watchExternal(context);
+    const pageErrors: string[] = [];
+    page.on('pageerror', (e) => pageErrors.push(e.message));
+
+    const d = await dist();
+    const server = await serve(d);
+    await page.goto(server.url);
+    await waitReady(page);
+    await page.reload();
+    await expect.poll(() => isControlled(page)).toBe(true);
+
+    // ---- 配信を止める。ここから先はキャッシュだけで動く ----
+    await server.stop();
+    await page.goto(`${server.url}?seed=1`);
+    expect(await isControlled(page)).toBe(true);
+    await expect(page.getByTestId('start-button')).toBeEnabled();
+    await clickUntil(page.getByTestId('start-button'), page.getByTestId('home'));
+
+    for (const id of MODE_IDS) {
+      const screen = page.getByTestId(`mode-${id}`);
+      const picker = page.getByTestId('variant-picker');
+      await clickUntil(page.getByTestId(`home-mode-${id}`), screen.or(picker));
+      // 遊び方の選択があるモード（road, trace, math）は最初の遊び方を選ぶ
+      if (await picker.isVisible()) {
+        await clickUntil(page.locator('button[data-testid^="variant-"]').first(), screen);
+      }
+      await expect(screen, `${id} の最初の問題`).toBeVisible();
+      await expect(page.getByTestId('chunk-error'), `${id}: 部品の読み込み失敗`).toHaveCount(0);
+      await clickUntil(page.getByTestId('home-button'), page.getByTestId('home'));
+    }
+
+    expect(pageErrors, '画面のエラー').toEqual([]);
+    expect(external, '外部ドメインへのリクエスト').toEqual([]);
+  });
+});
 test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
   test('旧版は動いたまま新版を準備 → 適用で切り替え。データは残り、旧タブは直前の版の部品を使える', async ({
     context,

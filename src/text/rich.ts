@@ -2,6 +2,7 @@
  * 教材の文の小さな記法（docs/expansion/architecture.md 4章）。純粋関数。
  *
  *   漢字《かんじ》     … よみ付きの語（ふりがなを出すかは表示側が決める）
+ *   漢字《!かんじ》    … 学習対象の字（よみは音声に使い、ふりがなは出さない。答えが漏れないように）
  *   [[3/4]]           … 分数   [[2 1/3]] … 帯分数
  *   **強い**          … 強調
  *   {{  }}            … 空欄（穴埋め）
@@ -10,7 +11,7 @@
  */
 export type Token =
   | { t: 'text'; s: string }
-  | { t: 'ruby'; base: string; reading: string }
+  | { t: 'ruby'; base: string; reading: string; hide?: true }
   | { t: 'frac'; whole?: number; num: number; den: number }
   | { t: 'strong'; children: Token[] }
   | { t: 'blank' };
@@ -65,7 +66,10 @@ export function parseRich(src: string): Token[] {
           const base = m[0];
           buf = buf.slice(0, buf.length - base.length);
           flush();
-          out.push({ t: 'ruby', base, reading: src.slice(i + 1, end) });
+          const raw = src.slice(i + 1, end);
+          // 《!よみ》: 学習対象の字。よみは音声に使うが、ふりがなとしては表示しない
+          if (raw.startsWith('!')) out.push({ t: 'ruby', base, reading: raw.slice(1), hide: true });
+          else out.push({ t: 'ruby', base, reading: raw });
           i = end + 1;
           continue;
         }

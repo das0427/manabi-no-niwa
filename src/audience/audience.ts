@@ -191,7 +191,9 @@ export function showFurigana(
   learnerGrade: number,
 ): boolean {
   if (mode === 'all') return true;
-  if (mode === 'none') return false;
+  // 就学前・配当外の字は、どの設定でも付ける（未習の漢字を裸で出さない: X-CU-08）
   if (learnerGrade <= 0 || kanjiGrade === null) return true;
+  // 'none' は習った学年までの字にだけ効く。上の学年の字には常に付ける（review-1 #12）
+  if (mode === 'none') return kanjiGrade > learnerGrade;
   return kanjiGrade >= learnerGrade;
 }

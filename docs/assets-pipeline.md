@@ -8,6 +8,7 @@
 | 音声 | `public/audio/<key>.mp3`, `public/audio/manifest.json` | `scripts/voice/generate.py` |
 | フォント | `public/fonts/*.woff2` (4 ファイル) | `scripts/fonts/subset.py` |
 | 書き順 | `src/modes/trace/data/kana-strokes.json` | `scripts/strokes/extract.py` |
+| 書き順(かな全部・漢字1026字) | `src/packs/_data/strokes/*.json` (3b 参照) | `scripts/strokes/extract_all.py` |
 
 ## 0. 共通準備 (Python 仮想環境)
 
@@ -156,6 +157,48 @@ OFL はフォントの改変(サブセット)・同梱再配布を許可する�
 ライセンス: CC BY-SA 3.0 (Ulrich Apel / KanjiVG) — `licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt`, `licenses/CC-BY-SA-3.0-legalcode.txt`。
 **ShareAlike**: `kana-strokes.json` は KanjiVG の改変物(翻案)なので CC BY-SA 3.0 で提供する必要がある。アプリ全体への波及範囲は要判断(データファイルを独立ファイルとして同ライセンスで明示するのが無難)。
 
+## 3b. 書き順データの拡張: かな全部と学年別漢字 1026 字 (`scripts/strokes/extract_all.py`)
+
+小学 1〜6 年への拡張用。ひらがな・カタカナ全部と、学年別漢字配当表の 1026 字を KanjiVG から作る。
+
+```powershell
+.\.venv\Scripts\python.exe -I scripts\strokes\extract_all.py            # 全ファイルと preview-*.svg を再生成
+.\.venv\Scripts\python.exe -I scripts\strokes\extract_all.py --step 3.0 # 点の間隔を粗く(容量を減らす)場合
+```
+- `extract.py` の関数(パス解析・サンプリング)を再利用するので、点の間隔・座標系は 3 章と同じ(1000 座標で約 18 単位、0〜1000 の整数)。
+- 漢字の学年は `src/text/kanji-grades.ts`(`KANJI_BY_GRADE`)を読む。配当表を直せば再生成で追随する。
+- 出力は `src/packs/_data/strokes/`(学年ごとに分けて遅延読み込みできるようにする)。形式は `kana-strokes.json` と同じで、`"set"` を足した:
+  `{"source":"KanjiVG","license":"CC BY-SA 3.0","version":"r20260714","size":1000,"set":"kanji-g3","chars":{"字":{"strokes":[[[x,y],...],...]}}}`
+
+| ファイル | 内容 | 字数 | 画数 | 大きさ | gzip |
+|---|---|---|---|---|---|
+| `kana.json` | ひらがな U+3041〜3094(ぁ〜ゔ)、カタカナ U+30A1〜30F6(ァ〜ヶ)、ー | 171 | 490 | 172,612 B | 約 51 KB |
+| `kanji-g1.json` | 1 年 | 80 | 400 | 118,150 B | 約 42 KB |
+| `kanji-g2.json` | 2 年 | 160 | 1,318 | 316,154 B | 約 111 KB |
+| `kanji-g3.json` | 3 年 | 200 | 1,881 | 433,320 B | 約 152 KB |
+| `kanji-g4.json` | 4 年 | 202 | 1,995 | 444,679 B | 約 156 KB |
+| `kanji-g5.json` | 5 年 | 193 | 2,047 | 443,458 B | 約 155 KB |
+| `kanji-g6.json` | 6 年 | 191 | 2,021 | 440,099 B | 約 154 KB |
+| 合計 | | 1,197 | | 約 2.37 MB | 約 820 KB |
+
+- KanjiVG に無い字・ストローク番号が連番でない字は無かった(全字抽出済み)。あれば出力から外して一覧表示し、終了コード 1 を返す。
+- 確認: `scripts/strokes/preview-kana.svg`, `preview-g1.svg` … `preview-g6.svg`(各学年から 10 字前後を抜粋。丸が始点、数字が書き順)。ブラウザで開いて目視する。
+- 単体テスト: `src/packs/_data/strokes/strokes-data.test.ts`(各ファイルの出典・ライセンス、全字が 1 画以上、各画 2 点以上、座標が 0〜1000 の整数、学年別ファイルの字が配当表と過不足なく一致、画数の目安)。
+- 容量を減らすなら `--step` を大きくする(3.0 で点がおよそ 2/3)。点の間隔を変えるとなぞり判定の許容に影響するので、変えるときは trace モードと合わせて確認する。
+- `.prettierignore` に `src/packs/_data/strokes/*.json` を足すこと(生成物。`format:check` が失敗する)。
+
+### 学年別漢字配当表 (`src/text/kanji-grades.ts`)
+- 出典: 小学校学習指導要領(平成29年告示)国語 別表「学年別漢字配当表」。https://www.mext.go.jp/content/1413522_001.pdf (確認日 2026-10-24)。80 / 160 / 200 / 202 / 193 / 191 字、計 1026 字(2020 年度からの表)。
+- この PDF の表は文字がアウトライン図形でテキスト抽出ができない。`scripts/kanji/extract_grades.py` で表を画像にして 1 字ずつ切り出し、目で 2 回読み取って確定した(自動の字形照合は UD デジタル教科書体との差で精度が足りず、補助としてだけ使った)。字数が表示の字数と一致し、重複が無いことをテストで検査している。
+- PDF は `.cache/mext-g/` に置く(git 管理外。再取得は上の URL)。
+
+### ライセンスと派生データの扱い
+- `kana-strokes.json`, `kana.json`, `kanji-g1〜g6.json` は KanjiVG(CC BY-SA 3.0)の翻案なので、**データファイルそのものを CC BY-SA 3.0 で提供する**。各 JSON に `"source"`, `"license"`, `"version"` を入れてあり、ファイル単体を取り出しても出所と条件が分かる。
+- 改変内容・対象ファイル・条件は `licenses/KanjiVG-derived-data-NOTICE.txt` に記載。原文は `licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt`、`licenses/CC-BY-SA-3.0-legalcode.txt`。
+- ShareAlike の範囲: 点列データを**独立した JSON ファイルとして配布し、コードから読み込むだけ**にして、アプリ全体のライセンスには波及しない(データを他のコンテンツに混ぜて 1 つの翻案にしない)という整理で運用する。ただしこれは設計上の整理で、法的な見解は**未確認**(必要なら専門家に確認する)。
+- 配布物(`dist/`, アプリ内の「このアプリについて」)には、帰属表示(4 章の文言)と上記 NOTICE を同梱する。`public/licenses/` に `licenses/` をコピーする運用が望ましい。
+- 学年別漢字配当表のデータ(`kanji-grades.ts`)は事実の一覧(文部科学省の告示の別表)で、KanjiVG の派生ではない。
+
 ## 4. クレジット表記(アプリの「このアプリについて」等に掲載する文言案)
 
 ```
@@ -169,7 +212,7 @@ Zen Maru Gothic — Copyright 2021 The Zen Maru Gothic Project Authors (https://
 Klee One — Copyright 2020 The Klee Project Authors (https://github.com/fontworks-fonts/Klee)
 いずれも SIL Open Font License 1.1 (https://openfontlicense.org)
 
-■ ひらがなの書き順
+■ かな・漢字の書き順
 KanjiVG — Copyright (C) 2009-2011 Ulrich Apel, Creative Commons Attribution-Share Alike 3.0 (CC BY-SA 3.0)
 https://kanjivg.tagaini.net / https://creativecommons.org/licenses/by-sa/3.0/
 本アプリでは座標を等間隔サンプリングして利用しています(改変あり)。

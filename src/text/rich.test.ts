@@ -28,6 +28,14 @@ describe('parseRich', () => {
       { t: 'blank' },
     ]);
   });
+  it('《!よみ》は表示しないよみ（学習対象の字）', () => {
+    expect(parseRich('山《!やま》')).toEqual([
+      { t: 'ruby', base: '山', reading: 'やま', hide: true },
+    ]);
+    expect(spokenReading('山《!やま》')).toBe('やま');
+    expect(plainText('山《!やま》')).toBe('山');
+    expect(findBareKanji('山《!やま》')).toEqual([]);
+  });
   it('閉じていない記号は文字のまま', () => {
     expect(plainText('a**b')).toBe('a**b');
     expect(plainText('[[x]]')).toBe('[[x]]');

@@ -238,7 +238,8 @@ describe('migrateBackup', () => {
       works: [],
       memos: [],
       favorites: [],
-    },
+      // 版0・1 のファイルにはスキーマ2の項目が無い（parseBackup が空で補う）
+    } as unknown as BackupFile['data'],
   });
 
   it('v0 は memoryAutoHideSec=0 を補い、v1→v2 でプロフィールを4歳向けにする（入力は変更しない）', () => {

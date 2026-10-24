@@ -54,6 +54,10 @@ describe('ふりがな（がくねんに あわせる）', () => {
   });
   it('すべて／なし', () => {
     expect(showFurigana('all', 1, 6)).toBe(true);
-    expect(showFurigana('none', 6, 1)).toBe(false);
+    // なし: 習った学年までの字には付けない。上の学年の字・就学前には付ける
+    expect(showFurigana('none', 3, 3)).toBe(false);
+    expect(showFurigana('none', 1, 6)).toBe(false);
+    expect(showFurigana('none', 6, 1)).toBe(true);
+    expect(showFurigana('none', 1, 0)).toBe(true);
   });
 });

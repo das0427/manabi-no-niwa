@@ -23,7 +23,7 @@ export type NumberAnswer =
       value: number;
       unit: string;
       /** 換算して受け入れる単位（factor: 1 その単位 = factor 基準単位） */
-      acceptUnits?: { unit: string; factor: number }[];
+      acceptUnits?: readonly { unit: string; factor: number }[];
       /** 許容誤差（概数・測定の単元だけ） */
       tolerance?: number;
     };

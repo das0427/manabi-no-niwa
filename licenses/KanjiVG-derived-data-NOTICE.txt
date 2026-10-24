@@ -1,0 +1,26 @@
+KanjiVG 派生データの表示（Notice for data derived from KanjiVG）
+
+対象ファイル（まなびのにわ）:
+  src/modes/trace/data/kana-strokes.json
+  src/packs/_data/strokes/kana.json
+  src/packs/_data/strokes/kanji-g1.json ... kanji-g6.json
+  （ビルドで配布物に含まれる場合は、その複製）
+
+元データ: KanjiVG (https://kanjivg.tagaini.net)
+  Copyright (C) 2009-2011 Ulrich Apel
+  Creative Commons Attribution-Share Alike 3.0 (CC BY-SA 3.0)
+  https://creativecommons.org/licenses/by-sa/3.0/
+  使用した版: KanjiVG リリース r20260714 (kanjivg-20260714-main.zip)
+  ライセンス全文: licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt, licenses/CC-BY-SA-3.0-legalcode.txt
+
+改変の内容（翻案にあたる）:
+  - SVG のパス（直線・ベジェ曲線・円弧）を、弧長で等間隔（1000 座標系で約 18 単位）の点列へ変換した。
+  - 座標を 109 座標系から 0〜1000 の整数へ拡大して丸めた。
+  - ストロークの順序（書き順）は KanjiVG のものをそのまま使った。部品（<g>）の階層・種別などの付加情報は除いた。
+  - 変換スクリプト: scripts/strokes/extract.py, scripts/strokes/extract_all.py
+
+これらの派生データファイルは、元データと同じ CC BY-SA 3.0 で提供する（ShareAlike）。
+上記のデータファイルを改変・再配布する場合は、同じ条件（CC BY-SA 3.0 または互換のライセンス）で、
+KanjiVG の帰属表示と、改変したことの表示を付けること。
+アプリのソースコード・その他の素材は、これらのデータファイルを独立したファイルとして読み込むだけで、
+本ファイルの条件の対象にはならない（ただし、法的な解釈は未確認。docs/assets-pipeline.md の「3b」を参照）。

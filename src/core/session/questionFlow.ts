@@ -25,7 +25,12 @@ export interface QuestionState {
   outcome: Outcome | null;
   /** 「つぎへ」を出してよいか（ヒント2の後） */
   canSkip: boolean;
+  /** 誤答にしない「もう一度」（値は合っているが形が違う 等）の回数。古い中断データには無い */
+  nudges?: number;
 }
+
+/** nudge は同じ問題でこの回数まで。超えたら誤答として扱う */
+export const MAX_NUDGES = 2;
 
 export const RAPID_TAPS = 3;
 export const RAPID_WINDOW_MS = 1500;
@@ -67,6 +72,18 @@ export function hintButton(s: QuestionState): QuestionState {
   if (s.done) return s;
   const hintLevel = (s.hintLevel >= 1 ? 2 : 1) as 1 | 2;
   return { ...s, hintLevel, hintsUsed: s.hintsUsed + 1, canSkip: s.canSkip || hintLevel === 2 };
+}
+
+/**
+ * 誤答にしない「もう一度」（例: 約分できる、訓令式のローマ字、単位の書き忘れ）。
+ * 誤答の回数もヒントも増やさず、結果の種類にも影響しない。MAX_NUDGES を超えたら wrong() と同じ。
+ * escalated が true のとき、モード側は誤答として扱う（説明とヒントを出す）。
+ */
+export function nudge(s: QuestionState): { state: QuestionState; escalated: boolean } {
+  if (s.done) return { state: s, escalated: false };
+  const n = (s.nudges ?? 0) + 1;
+  if (n > MAX_NUDGES) return { state: wrong({ ...s, nudges: n }), escalated: true };
+  return { state: { ...s, nudges: n }, escalated: false };
 }
 
 export function review(s: QuestionState): QuestionState {

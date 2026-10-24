@@ -1,0 +1,570 @@
+{
+  "version": 1,
+  "defaults": {
+    "speed": 0.85,
+    "voice": "af_heart",
+    "lang": "en-us"
+  },
+  "entries": [
+    {
+      "key": "en-g34.abc.a",
+      "text": "A"
+    },
+    {
+      "key": "en-g34.abc.b",
+      "text": "B"
+    },
+    {
+      "key": "en-g34.abc.c",
+      "text": "C"
+    },
+    {
+      "key": "en-g34.abc.d",
+      "text": "D"
+    },
+    {
+      "key": "en-g34.abc.e",
+      "text": "E"
+    },
+    {
+      "key": "en-g34.abc.f",
+      "text": "F"
+    },
+    {
+      "key": "en-g34.abc.g",
+      "text": "G"
+    },
+    {
+      "key": "en-g34.abc.h",
+      "text": "H"
+    },
+    {
+      "key": "en-g34.abc.i",
+      "text": "I"
+    },
+    {
+      "key": "en-g34.abc.j",
+      "text": "J"
+    },
+    {
+      "key": "en-g34.abc.k",
+      "text": "K"
+    },
+    {
+      "key": "en-g34.abc.l",
+      "text": "L"
+    },
+    {
+      "key": "en-g34.abc.m",
+      "text": "M"
+    },
+    {
+      "key": "en-g34.abc.n",
+      "text": "N"
+    },
+    {
+      "key": "en-g34.abc.o",
+      "text": "O"
+    },
+    {
+      "key": "en-g34.abc.p",
+      "text": "P"
+    },
+    {
+      "key": "en-g34.abc.q",
+      "text": "Q"
+    },
+    {
+      "key": "en-g34.abc.r",
+      "text": "R"
+    },
+    {
+      "key": "en-g34.abc.s",
+      "text": "S"
+    },
+    {
+      "key": "en-g34.abc.t",
+      "text": "T"
+    },
+    {
+      "key": "en-g34.abc.u",
+      "text": "U"
+    },
+    {
+      "key": "en-g34.abc.v",
+      "text": "V"
+    },
+    {
+      "key": "en-g34.abc.w",
+      "text": "W"
+    },
+    {
+      "key": "en-g34.abc.x",
+      "text": "X"
+    },
+    {
+      "key": "en-g34.abc.y",
+      "text": "Y"
+    },
+    {
+      "key": "en-g34.abc.z",
+      "text": "Z"
+    },
+    {
+      "key": "en-g34.ask.what-time-do-you-eat-dinner",
+      "text": "What time do you eat dinner?"
+    },
+    {
+      "key": "en-g34.ask.what-time-do-you-get-up",
+      "text": "What time do you get up?"
+    },
+    {
+      "key": "en-g34.ask.what-time-do-you-go-home",
+      "text": "What time do you go home?"
+    },
+    {
+      "key": "en-g34.ask.what-time-do-you-go-to-bed",
+      "text": "What time do you go to bed?"
+    },
+    {
+      "key": "en-g34.ask.what-time-do-you-go-to-school",
+      "text": "What time do you go to school?"
+    },
+    {
+      "key": "en-g34.color.black",
+      "text": "black"
+    },
+    {
+      "key": "en-g34.color.blue",
+      "text": "blue"
+    },
+    {
+      "key": "en-g34.color.brown",
+      "text": "brown"
+    },
+    {
+      "key": "en-g34.color.gray",
+      "text": "gray"
+    },
+    {
+      "key": "en-g34.color.green",
+      "text": "green"
+    },
+    {
+      "key": "en-g34.color.orange",
+      "text": "orange"
+    },
+    {
+      "key": "en-g34.color.pink",
+      "text": "pink"
+    },
+    {
+      "key": "en-g34.color.purple",
+      "text": "purple"
+    },
+    {
+      "key": "en-g34.color.red",
+      "text": "red"
+    },
+    {
+      "key": "en-g34.color.white",
+      "text": "white"
+    },
+    {
+      "key": "en-g34.color.yellow",
+      "text": "yellow"
+    },
+    {
+      "key": "en-g34.combo.a-blue-triangle",
+      "text": "a blue triangle"
+    },
+    {
+      "key": "en-g34.combo.a-brown-circle",
+      "text": "a brown circle"
+    },
+    {
+      "key": "en-g34.combo.a-green-square",
+      "text": "a green square"
+    },
+    {
+      "key": "en-g34.combo.a-pink-heart",
+      "text": "a pink heart"
+    },
+    {
+      "key": "en-g34.combo.a-purple-rectangle",
+      "text": "a purple rectangle"
+    },
+    {
+      "key": "en-g34.combo.a-red-circle",
+      "text": "a red circle"
+    },
+    {
+      "key": "en-g34.combo.a-white-diamond",
+      "text": "a white diamond"
+    },
+    {
+      "key": "en-g34.combo.a-yellow-star",
+      "text": "a yellow star"
+    },
+    {
+      "key": "en-g34.day.friday",
+      "text": "Friday"
+    },
+    {
+      "key": "en-g34.day.monday",
+      "text": "Monday"
+    },
+    {
+      "key": "en-g34.day.saturday",
+      "text": "Saturday"
+    },
+    {
+      "key": "en-g34.day.sunday",
+      "text": "Sunday"
+    },
+    {
+      "key": "en-g34.day.thursday",
+      "text": "Thursday"
+    },
+    {
+      "key": "en-g34.day.tuesday",
+      "text": "Tuesday"
+    },
+    {
+      "key": "en-g34.day.wednesday",
+      "text": "Wednesday"
+    },
+    {
+      "key": "en-g34.feel.im-angry",
+      "text": "I'm angry."
+    },
+    {
+      "key": "en-g34.feel.im-cold",
+      "text": "I'm cold."
+    },
+    {
+      "key": "en-g34.feel.im-fine",
+      "text": "I'm fine."
+    },
+    {
+      "key": "en-g34.feel.im-happy",
+      "text": "I'm happy."
+    },
+    {
+      "key": "en-g34.feel.im-hot",
+      "text": "I'm hot."
+    },
+    {
+      "key": "en-g34.feel.im-hungry",
+      "text": "I'm hungry."
+    },
+    {
+      "key": "en-g34.feel.im-sad",
+      "text": "I'm sad."
+    },
+    {
+      "key": "en-g34.feel.im-sleepy",
+      "text": "I'm sleepy."
+    },
+    {
+      "key": "en-g34.feel.im-thirsty",
+      "text": "I'm thirsty."
+    },
+    {
+      "key": "en-g34.feel.im-tired",
+      "text": "I'm tired."
+    },
+    {
+      "key": "en-g34.num.eight",
+      "text": "eight"
+    },
+    {
+      "key": "en-g34.num.eighteen",
+      "text": "eighteen"
+    },
+    {
+      "key": "en-g34.num.eleven",
+      "text": "eleven"
+    },
+    {
+      "key": "en-g34.num.fifteen",
+      "text": "fifteen"
+    },
+    {
+      "key": "en-g34.num.five",
+      "text": "five"
+    },
+    {
+      "key": "en-g34.num.four",
+      "text": "four"
+    },
+    {
+      "key": "en-g34.num.fourteen",
+      "text": "fourteen"
+    },
+    {
+      "key": "en-g34.num.nine",
+      "text": "nine"
+    },
+    {
+      "key": "en-g34.num.nineteen",
+      "text": "nineteen"
+    },
+    {
+      "key": "en-g34.num.one",
+      "text": "one"
+    },
+    {
+      "key": "en-g34.num.seven",
+      "text": "seven"
+    },
+    {
+      "key": "en-g34.num.seventeen",
+      "text": "seventeen"
+    },
+    {
+      "key": "en-g34.num.six",
+      "text": "six"
+    },
+    {
+      "key": "en-g34.num.sixteen",
+      "text": "sixteen"
+    },
+    {
+      "key": "en-g34.num.ten",
+      "text": "ten"
+    },
+    {
+      "key": "en-g34.num.thirteen",
+      "text": "thirteen"
+    },
+    {
+      "key": "en-g34.num.three",
+      "text": "three"
+    },
+    {
+      "key": "en-g34.num.twelve",
+      "text": "twelve"
+    },
+    {
+      "key": "en-g34.num.twenty",
+      "text": "twenty"
+    },
+    {
+      "key": "en-g34.num.two",
+      "text": "two"
+    },
+    {
+      "key": "en-g34.phrase.good-afternoon",
+      "text": "Good afternoon."
+    },
+    {
+      "key": "en-g34.phrase.good-evening",
+      "text": "Good evening."
+    },
+    {
+      "key": "en-g34.phrase.good-morning",
+      "text": "Good morning."
+    },
+    {
+      "key": "en-g34.phrase.good-night",
+      "text": "Good night."
+    },
+    {
+      "key": "en-g34.phrase.goodbye",
+      "text": "Goodbye."
+    },
+    {
+      "key": "en-g34.phrase.hello",
+      "text": "Hello."
+    },
+    {
+      "key": "en-g34.phrase.how-are-you",
+      "text": "How are you?"
+    },
+    {
+      "key": "en-g34.phrase.im-fine",
+      "text": "I'm fine."
+    },
+    {
+      "key": "en-g34.phrase.im-hungry",
+      "text": "I'm hungry."
+    },
+    {
+      "key": "en-g34.phrase.im-sorry",
+      "text": "I'm sorry."
+    },
+    {
+      "key": "en-g34.phrase.nice-to-meet-you",
+      "text": "Nice to meet you."
+    },
+    {
+      "key": "en-g34.phrase.nice-to-meet-you-too",
+      "text": "Nice to meet you, too."
+    },
+    {
+      "key": "en-g34.phrase.see-you",
+      "text": "See you."
+    },
+    {
+      "key": "en-g34.phrase.thank-you",
+      "text": "Thank you."
+    },
+    {
+      "key": "en-g34.phrase.thats-ok",
+      "text": "That's OK."
+    },
+    {
+      "key": "en-g34.phrase.youre-welcome",
+      "text": "You're welcome."
+    },
+    {
+      "key": "en-g34.plan.i-do-my-homework-at-four",
+      "text": "I do my homework at four."
+    },
+    {
+      "key": "en-g34.plan.i-eat-breakfast-at-seven",
+      "text": "I eat breakfast at seven."
+    },
+    {
+      "key": "en-g34.plan.i-eat-dinner-at-six",
+      "text": "I eat dinner at six."
+    },
+    {
+      "key": "en-g34.plan.i-eat-lunch-at-twelve",
+      "text": "I eat lunch at twelve."
+    },
+    {
+      "key": "en-g34.plan.i-get-up-at-six",
+      "text": "I get up at six."
+    },
+    {
+      "key": "en-g34.plan.i-go-home-at-three",
+      "text": "I go home at three."
+    },
+    {
+      "key": "en-g34.plan.i-go-to-bed-at-nine",
+      "text": "I go to bed at nine."
+    },
+    {
+      "key": "en-g34.plan.i-go-to-school-at-eight",
+      "text": "I go to school at eight."
+    },
+    {
+      "key": "en-g34.plan.i-take-a-bath-at-eight",
+      "text": "I take a bath at eight."
+    },
+    {
+      "key": "en-g34.shape.circle",
+      "text": "circle"
+    },
+    {
+      "key": "en-g34.shape.cross",
+      "text": "cross"
+    },
+    {
+      "key": "en-g34.shape.diamond",
+      "text": "diamond"
+    },
+    {
+      "key": "en-g34.shape.heart",
+      "text": "heart"
+    },
+    {
+      "key": "en-g34.shape.oval",
+      "text": "oval"
+    },
+    {
+      "key": "en-g34.shape.rectangle",
+      "text": "rectangle"
+    },
+    {
+      "key": "en-g34.shape.square",
+      "text": "square"
+    },
+    {
+      "key": "en-g34.shape.star",
+      "text": "star"
+    },
+    {
+      "key": "en-g34.shape.triangle",
+      "text": "triangle"
+    },
+    {
+      "key": "en-g34.time.its-eight-oclock",
+      "text": "It's eight o'clock."
+    },
+    {
+      "key": "en-g34.time.its-eight-thirty",
+      "text": "It's eight thirty."
+    },
+    {
+      "key": "en-g34.time.its-eleven-oclock",
+      "text": "It's eleven o'clock."
+    },
+    {
+      "key": "en-g34.time.its-eleven-thirty",
+      "text": "It's eleven thirty."
+    },
+    {
+      "key": "en-g34.time.its-five-oclock",
+      "text": "It's five o'clock."
+    },
+    {
+      "key": "en-g34.time.its-five-thirty",
+      "text": "It's five thirty."
+    },
+    {
+      "key": "en-g34.time.its-four-oclock",
+      "text": "It's four o'clock."
+    },
+    {
+      "key": "en-g34.time.its-nine-oclock",
+      "text": "It's nine o'clock."
+    },
+    {
+      "key": "en-g34.time.its-one-oclock",
+      "text": "It's one o'clock."
+    },
+    {
+      "key": "en-g34.time.its-seven-oclock",
+      "text": "It's seven o'clock."
+    },
+    {
+      "key": "en-g34.time.its-seven-thirty",
+      "text": "It's seven thirty."
+    },
+    {
+      "key": "en-g34.time.its-six-oclock",
+      "text": "It's six o'clock."
+    },
+    {
+      "key": "en-g34.time.its-six-thirty",
+      "text": "It's six thirty."
+    },
+    {
+      "key": "en-g34.time.its-ten-oclock",
+      "text": "It's ten o'clock."
+    },
+    {
+      "key": "en-g34.time.its-ten-thirty",
+      "text": "It's ten thirty."
+    },
+    {
+      "key": "en-g34.time.its-three-oclock",
+      "text": "It's three o'clock."
+    },
+    {
+      "key": "en-g34.time.its-three-thirty",
+      "text": "It's three thirty."
+    },
+    {
+      "key": "en-g34.time.its-twelve-oclock",
+      "text": "It's twelve o'clock."
+    },
+    {
+      "key": "en-g34.time.its-two-oclock",
+      "text": "It's two o'clock."
+    }
+  ]
+}

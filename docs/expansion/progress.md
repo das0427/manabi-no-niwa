@@ -14,6 +14,9 @@
 - [進行中] 調査の統合（research.md, design-benchmark.md）、単元対応表（curriculum-matrix.md）
 - [進行中] 要件・UX・アーキテクチャ・DESINGN.md 改訂・受入条件・計画
 
+- [完了] 英語のオフライン音声: Kokoro-82M（Apache-2.0）＋ kokoro-onnx（MIT）、声 af_heart、話速 0.85（scripts/voice/generate_en.py、docs/assets-pipeline.md 5節）。Piper lessac 系は学習データの許諾が研究限定のため不採用。**聴感の確認・Linux での生成は未実施**。
+- [完了] 基盤の純粋関数: RichText（src/text/rich.ts）、数の答えの判定（src/core/answer/number.ts）、ローマ字の判定（src/core/answer/romaji.ts）、復習の段階（src/curriculum/review.ts）
+
 ## 重要な判断（理由は各文書）
 - 2〜3歳は親子利用を前提に入口を1つにし、内部で2歳段階・3歳段階を分ける（research/early-childhood.md）。
 - はんこ・図形は「確定後も再編集できるオブジェクト」として保存する（要件。research/drawing.md の推奨案Cとは異なる判断）。

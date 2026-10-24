@@ -59,6 +59,28 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
+# 教材パックのファイル（学年ごとの音声 zip を含む）がそろっているか。足りないと、その学年の教材を準備できない
+MISSING=$(python3 - "$DIST_SRC" <<'PY'
+import json, os, sys
+d = sys.argv[1]
+try:
+    j = json.load(open(os.path.join(d, "packs.json"), encoding="utf-8"))
+    packs = {k: v for k, v in j.items() if isinstance(v, dict) and "files" in v}
+except Exception:
+    packs = {}
+for pid, p in sorted(packs.items()):
+    n = sum(1 for f in p.get("files", []) if not os.path.isfile(os.path.join(d, f)))
+    if n:
+        print(f"{pid}（{n} ファイル）")
+PY
+)
+if [ -n "$MISSING" ]; then
+  echo "エラー: 教材パックのファイルが足りません。配布 zip（本体と audio-g1-g2・audio-g3-g4・audio-g5-g6）をすべて同じ場所に展開してから、もういちど実行してください。" >&2
+  echo "足りないパック:" >&2
+  echo "$MISSING" >&2
+  exit 1
+fi
+
 echo "=== まなびのにわ 導入 ==="
 echo "これから次のことを行います（sudo・管理者権限は使いません）。"
 echo

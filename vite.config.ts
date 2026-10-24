@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { packChunkName, precachePlugin } from './scripts/vite-plugin-precache.ts';
@@ -23,6 +24,13 @@ function packRuntimeName(id: string): string | null {
  * 画面側は import.meta.env.VITE_MNW_SAMPLE_PACKS で同じ値を見る（src/packs/loader.ts）。
  */
 const samplePacks = process.env.VITE_MNW_SAMPLE_PACKS === '1';
+
+/** アプリの版。package.json の version をビルド時に埋め込む（保護者画面の表示と書き出しファイル） */
+const appVersion = (
+  JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+    version: string;
+  }
+).version;
 
 export default defineConfig({
   plugins: [react(), precachePlugin()],
@@ -54,7 +62,10 @@ export default defineConfig({
       },
     },
   },
-  define: { 'import.meta.env.VITE_MNW_SAMPLE_PACKS': JSON.stringify(samplePacks ? '1' : '') },
+  define: {
+    'import.meta.env.VITE_MNW_SAMPLE_PACKS': JSON.stringify(samplePacks ? '1' : ''),
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+  },
   server: { host: '127.0.0.1', port: 5173 },
   preview: { host: '127.0.0.1', port: 4173 },
   test: {

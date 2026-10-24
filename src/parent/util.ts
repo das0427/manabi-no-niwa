@@ -3,8 +3,11 @@ import { useCallback, useEffect, useState } from 'react';
 import type { ModeId, Outcome } from '../core/types';
 import { MODES } from '../modes/registry';
 
-/** アプリの版（package.json の version と同じ値。リリース時に合わせる） */
-export const APP_VERSION = '1.0.0';
+/**
+ * アプリの版。package.json の version をビルド時に埋め込む（vite.config.ts の define）。
+ * 以前は手で書いていたため、2.0.0・2.0.1 でも「1.0.0」と表示していた。
+ */
+export const APP_VERSION: string = import.meta.env.VITE_APP_VERSION || 'dev';
 
 export const OUTCOME_LABEL: Record<Outcome, string> = {
   independent: '自力でできた',

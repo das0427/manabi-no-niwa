@@ -93,3 +93,31 @@
 - `task: { kind:'pick', options: { shape?: { points }, figure?, label?, correct?, misconception? }[], multi? }` / `{ kind:'draw', grid: { w, h }, given?, target }` / `{ kind:'angle', degrees, base?, protractor?, tolerance? }`（既定 ±2度）。
 - draw の `target`: `exact` / `congruent`（allowFlip）/ `similar`（ratio）/ `reflect`（axis）/ `rotate180`（center）/ `shape`（shape・sides・exclusive）/ `perpendicular`・`parallel`（to・through）。格子は小2なら h≤4 を勧める（点の間隔を広く）。
 - 自動の誤り: translated・sameSize・wrongSides・wrongClass・swapPerpPar・notThrough・otherScale・reflexComplement。
+
+## map（地図: 都道府県・地図記号・方位）
+- **図はエンジンが描くので `figure` を付けない**。日本地図は Natural Earth（パブリックドメイン）を簡略化したもの（出典・離島の扱いは `docs/assets-pipeline.md` 6節）。都道府県はコード（1〜47）で書く。
+- `task.kind`:
+  - `name`: 印の都道府県の名前を選ぶ。`pref`、`options`（コード。pref を含む 2〜6）、`view?`、`nameStyle?: 'ruby'|'kana'|'kanji'`（kanji は漢字を学ぶ問題用。よみは音声だけ）
+  - `spell`: 印の都道府県の名前をかなのタイルで入れる。`tiles`（2〜12）、`withSuffix?`（既定は「ぎふ」「ぎふけん」どちらも正解）。判定は build と同じ
+  - `find`: 名前の都道府県を地図でタップ→こたえあわせ。`prefs`（2つ以上なら全部。順不同）、`view?`、`showRegions?`。**東京・大阪・香川・神奈川・佐賀などは全国の図では約 1u しかない**ので `view`（地方の図）を使う（小さい県は輪郭の少し外のタップも当たり）
+  - `region`: 印の都道府県の地方を選ぶ。`options`（RegionId 2〜8）、`showRegions?`（地方を色＋模様＋番号で塗る。見本の札にも模様と番号）
+  - `bearing`: `from` から見た `to` の方位（ピンの位置で測る）。`points?: 4|8`（既定 8）。方位の境目に近い組は check で止まる（八方位は境目から 7度以上）。囲み（沖縄など）の県は使えない
+  - `symbol`: `ask:'name'`（記号を見て名前）/`'pick'`（名前を見て記号）、`symbol`、`options`（2〜6）。記号は `SymbolId`（`symbols.tsx`。市役所・町村役場・学校・高等学校・警察署・交番・消防署・郵便局・病院・神社・寺・図書館・博物館・工場・発電所・田・畑・果樹園・茶畑・広葉樹林・針葉樹林・老人ホーム・温泉・城跡・灯台・港・駅）
+  - `town`: 絵地図（ます目 2〜8）。`places: { symbol, at:[x,y], label? }[]`、`roads?`・`rail?`（折れ線）、`answer`（場所の番号）。`from`＋`dir` で「駅の 北に ある もの」（その方位に場所が1つだけであることを check）。from・dir が無いときは答えの記号が1つだけ
+  - `compass`: `ask:'name'`（矢印の方位の名前を選ぶ）/`'point'`（方位の形に並んだ札から選ぶ。`given` の方位だけ名前を見せる）、`dir`、`points?: 4|8`（既定 4）
+- `view?: 'japan' | RegionId`（`hokkaido`・`tohoku`・`kanto`・`chubu`・`kinki`・`chugoku`・`shikoku`・`kyushu`）。地方の図に沖縄は出ない。
+- 自動の誤り（`misconceptions`）: neighbor（となりの県）・sameRegion（同じ地方の県）・opposite（反対の方位）・mirrorEW（東西の取り違え）・missing（ぜんぶ選ぶ問題で足りない）。`wrongAnswers: { value, misconception }[]`（value は コード・地方・記号・方位・場所の番号・かなの文字列）が先に効く。
+- 道具: `prefName(code, style)`・`prefsOfRegion(region)`・`prefBearing(from, to)`・`neighborsOf(code)`（`japan.ts`）。
+
+## experiment（実験のシミュレーション）
+- 条件の札を選ぶ →「やってみる」→ 結果の表に記録 → 設問。画面に「この アプリの せっていでは こう なるよ（じっけんの かわりでは ないよ）」を常に出す。結果は**例示**（単純な式か問題データの固定表）。火・薬品の手順は書かない。
+- `setup.kind`（候補の値が1つだけの条件は固定として1行にまとめて見せる）:
+  - `pendulum`: `length`（cm）・`weight`（g）・`amplitude`（度 1〜45）。1往復の時間 = 2π√(長さ/980) を 0.1秒に丸める（重さ・振れ幅では変わらない）。結果の key は `'1.4'` など
+  - `lever`: `leftPos`・`rightPos`（1〜6）・`leftWeight`・`rightWeight`（g。10g ごとにおもり1こを描く）。位置×重さを比べる。key は `'balance'|'left'|'right'`（下がる側）
+  - `circuit`: `device: 'bulb'|'motor'`、`cells`（1・2）、`connection`（`'series'|'parallel'`。1個のときは選べない）、`direction?`（モーターの向き）。key: 豆電球 `'bright'|'normal'`、モーター `'fast'|'normal'`（direction があれば `'fast-cw'` など）
+  - `table`: `factors: { id, label, values: { id, label }[] }[]`、`output`（結果の列名）、`rows: { when, result, key?, figure? }[]`（条件の組を**全部**1行ずつ。磁石・電気の利用・p5 の予想など）
+- `task.kind`:
+  - `consider`: 考察の設問。`options`（choice と同じ）・`multi?`・`minTrials?`（既定 2 回やると「こたえる」が押せる）
+  - `reach`: 結果が `target`（上の key）になる条件を作って「これで こたえる」。はじめの条件（`initial?`）でもう target になる問題は check で止まる。`wrongConditions?: { when, misconception }[]`
+  - `control`: 条件制御。`factor` だけを変えた2回の実験を記録して「こたえあわせ」
+- 自動の誤り（`misconceptions`）: weightOnly・distanceOnly（てこ: 重さだけ／位置だけそろえた）・seriesParallel（直列と並列の取り違え）・changedMany（2つ以上を同時に変えた）・notChanged（調べる条件を変えていない）。

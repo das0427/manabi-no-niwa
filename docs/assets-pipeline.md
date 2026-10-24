@@ -301,3 +301,32 @@ mp3 の再配布にクレジットは法的には必須とされていない(Apa
 - 基準話速 0.85 でも文によっては速めに感じる可能性がある(「What color do you like?」は約 4.7 音節/秒)。必要なら `defaults.speed` を 0.75〜0.8 に下げる
 - Kokoro の学習データの一部は「closed TTS provider 由来の合成音声」(モデルカードの記載)。モデルは Apache-2.0 で公開されているが、その合成元事業者の利用規約までは確認できていない(残余リスク)。個々の声(`af_heart`)のデータ来歴・ライセンスはモデルカード/VOICES.md に個別記載が無い
 - Linux 実行は未検証。Piper の予備案の音質は未検証
+## 6. 日本地図（map エンジン。`scripts/map/`）
+
+### 出典
+- **Natural Earth**（パブリックドメイン。https://www.naturalearthdata.com/about/terms-of-use/ 「All versions of Natural Earth raster + vector map data found on this website are in the public domain.」）
+- 1:10m Cultural Vectors — Admin 1 – States, Provinces（`ne_10m_admin_1_states_provinces.zip`、VERSION.txt の版 **5.1.1**）
+- 取得元: `https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip`（naturalearthdata.com の公式ダウンロードの配信先）、**取得日 2026-10-24**、SHA-256 `EFC59726337323058F9446210ADC96673179CD344E053666EE3D28CB58BA2B05`（14,909,524 バイト）
+- 表示: `licenses/NaturalEarth-NOTICE.txt`（帰属は不要だが、出典として記す）
+
+### 実行
+取得物は作業用の新しいフォルダに展開し、スクリプトはその外から `-I` で実行する（依存パッケージなし。標準ライブラリだけで .shp/.dbf を読む）。
+```powershell
+python -I scripts/map/build_japan_map.py <展開したフォルダ> src/engines/map/data/japan.json
+```
+
+### 処理と結果
+- 日本の47件（`iso_3166_2` = JP-01〜47）を取り出す。名前（漢字・よみ）と地方（8地方。沖縄は九州地方、三重は近畿地方）はスクリプトの表で付ける
+- 投影: 正距円筒（経度に cos 37.5° を掛ける。1度 = 縦60単位）。整数に丸める。全体の範囲 約 984×966
+- 簡略化: 隣の都道府県と共有する境界の分かれ目の頂点を固定し、その間の鎖ごとに Douglas–Peucker（許容 0.8 単位 ≒ 1.5km）。隣どうしの境界は同じ結果になり、すき間・重なりが出ない
+- 結果: 頂点 3,088・**31.7KB**（目安 200KB 以下。`map.test.ts` で検査）
+
+### 離島の扱い（本アプリの判断）
+- **沖縄県**と**鹿児島県の北緯29度より南**（奄美群島など）: 左上の囲み（本図と同じ縮尺）に移す。方位を問う問題（bearing）では囲みの中の県を使えない（check で止める）。地方の図（view: 'kyushu'）には沖縄県は出ない
+- **東京都の北緯32.5度より南**（小笠原諸島・沖ノ鳥島・南鳥島など）: 描かない。伊豆諸島は大きい島だけ
+- **面積 約27km² 未満の島**は描かない（各都道府県の最大の島は残す）。竹島・尖閣諸島などの小さな島はこの基準で図に出ない
+- **北方領土**（択捉島・国後島・色丹島・歯舞群島）: Natural Earth では RU-SAK に入っているため、その範囲の島を北海道に加えた（小学校社会の「我が国の領土」に合わせる。統括の確認が要る）
+
+### 未確認事項
+- 地図記号の絵（`src/engines/map/symbols.tsx`）は国土地理院の記号に倣って手で描いた。形（特に 病院・消防署・城跡・老人ホーム）を国土地理院「地図記号一覧」と人が見比べていない
+- 小さい島を描かない基準・北方領土の扱いを、教科書の地図と見比べていない

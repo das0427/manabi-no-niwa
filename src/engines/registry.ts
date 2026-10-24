@@ -17,6 +17,8 @@ import { measureEngine } from './measure/measure';
 import { numberlineEngine } from './numberline/numberline';
 import { graphEngine } from './graph/graph';
 import { geometryEngine } from './geometry/geometry';
+import { mapEngine } from './map/map';
+import { experimentEngine } from './experiment/experiment';
 import type { EngineDef } from './types';
 
 type Def<K extends EngineId> = EngineDef<Extract<Item, { engine: K }>, never>;
@@ -39,6 +41,8 @@ export const ENGINES: { [K in EngineId]: Def<K> } = {
   numberline: numberlineEngine as unknown as Def<'numberline'>,
   graph: graphEngine as unknown as Def<'graph'>,
   geometry: geometryEngine as unknown as Def<'geometry'>,
+  map: mapEngine as unknown as Def<'map'>,
+  experiment: experimentEngine as unknown as Def<'experiment'>,
 };
 
 export function engineOf(item: Item): EngineDef<Item, unknown> {

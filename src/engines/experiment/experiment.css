@@ -1,0 +1,349 @@
+/* 実験のシミュレーション: 左に道具の絵と「やってみる」、まん中に条件の札、右に記録の表 */
+.unit__work--experiment .unit__engine {
+  flex: 1;
+  min-height: 0;
+}
+.exp {
+  display: grid;
+  grid-template-columns: calc(var(--u) * 26) minmax(0, 1fr) calc(var(--u) * 29);
+  gap: calc(var(--u) * 1.6);
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.exp__stage,
+.exp__record {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  min-height: 0;
+  height: 100%;
+}
+.exp__apparatus {
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+}
+.exp-svg {
+  height: calc(var(--u) * 19);
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+}
+.exp-try {
+  align-self: center;
+  min-width: calc(var(--u) * 16);
+}
+.exp__panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* 条件の札 */
+.exp-factors {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+}
+/* 行ごとの札は1つの格子にそろえる（名前の列の幅は一番長い名前に合わせる） */
+.exp-factor {
+  display: contents;
+}
+.exp-fixed {
+  grid-column: 1 / -1;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+  color: var(--ink);
+}
+.exp-fixed__item {
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.8);
+  background: var(--paper-2);
+  border-radius: calc(var(--u) * 0.6);
+}
+.exp-factor__label {
+  max-width: calc(var(--u) * 12);
+  font-size: calc(var(--u) * 2);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.exp-factor.is-inactive .exp-factor__label {
+  color: var(--ink-soft);
+}
+.exp-factor__seg,
+.exp-factor__step {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+}
+.exp-factor__seg {
+  flex-wrap: wrap;
+}
+.exp-val {
+  flex: 1 0 auto;
+  white-space: nowrap;
+  min-width: calc(var(--u) * 6);
+  padding: 0 calc(var(--u) * 0.3);
+  font-size: calc(var(--u) * 2);
+  background: var(--white);
+}
+.exp-val.is-on {
+  background: var(--sun);
+}
+.exp-arrow {
+  width: calc(var(--u) * 6);
+  padding: 0;
+}
+.exp-factor__value,
+.exp-factor__fixed {
+  min-width: calc(var(--u) * 7);
+  text-align: center;
+  font-size: calc(var(--u) * 2.6);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 考察の選択肢 */
+.exp-options {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1);
+}
+.exp-opt {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.5) calc(var(--u) * 1.2);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: left;
+}
+.exp-opt__label {
+  font-size: calc(var(--u) * 2.3);
+  font-weight: 700;
+}
+
+/* 記録の表 */
+.exp__record {
+  gap: calc(var(--u) * 0.8);
+}
+.exp__record > .mk-btn,
+.exp__record > .mk-row {
+  flex: none;
+}
+.exp__record .mk-btn--ok {
+  min-height: calc(var(--u) * 6);
+}
+.exp-note {
+  margin: 0;
+  font-size: calc(var(--u) * 1.5);
+  line-height: 1.3;
+  color: var(--ink);
+  background: var(--paper-2);
+  border: calc(var(--u) * 0.25) dashed var(--ink-soft);
+  border-radius: calc(var(--u) * 0.8);
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.6);
+}
+.exp-tablewrap {
+  min-height: 0;
+}
+.exp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: calc(var(--u) * 1.8);
+  color: var(--ink);
+  background: var(--white);
+}
+.exp-table th,
+.exp-table td {
+  border: calc(var(--u) * 0.2) solid var(--ink);
+  padding: calc(var(--u) * 0.15) calc(var(--u) * 0.3);
+  text-align: center;
+  line-height: 1.1;
+}
+.exp-table th {
+  background: var(--paper-2);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.6);
+}
+.exp-table tr.is-last td {
+  font-weight: 700;
+}
+.exp-table tr.is-last .exp-table__result {
+  outline: calc(var(--u) * 0.35) solid var(--sun);
+  outline-offset: calc(var(--u) * -0.4);
+}
+.exp-table__empty {
+  color: var(--ink-soft);
+}
+.exp-need {
+  margin: 0;
+  text-align: center;
+  font-size: calc(var(--u) * 2.1);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 表の結果の札（table） */
+.exp-card {
+  min-width: calc(var(--u) * 20);
+  min-height: calc(var(--u) * 16);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  background: var(--white);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+}
+.exp-card__text {
+  font-size: calc(var(--u) * 3);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* 道具の絵 */
+.exp-bar,
+.exp-wire {
+  stroke: var(--ink);
+  stroke-width: 4;
+  fill: none;
+  stroke-linejoin: round;
+}
+.exp-guide {
+  stroke: var(--ink-soft);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5;
+  fill: none;
+}
+.exp-string {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.exp-bob,
+.exp-weight {
+  fill: var(--wood);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-pivot {
+  fill: var(--ink);
+}
+.exp-svgtext {
+  font-size: 17px;
+  font-weight: 700;
+  fill: var(--ink);
+  text-anchor: middle;
+}
+.exp-svgtext--small {
+  font-size: 12px;
+}
+.exp-svgtext--tiny {
+  font-size: 10px;
+}
+.exp-swing {
+  transform-origin: 0 0;
+  animation-name: exp-swing;
+  animation-timing-function: ease-in-out;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
+}
+@keyframes exp-swing {
+  from {
+    transform: rotate(var(--amp));
+  }
+  to {
+    transform: rotate(calc(var(--amp) * -1));
+  }
+}
+.exp-stand {
+  fill: var(--wood-dark);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-beam {
+  fill: var(--wood);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-tick {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.exp-support rect {
+  fill: var(--paper-2);
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+}
+.exp-cell {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-cell__tip {
+  fill: var(--ink);
+}
+.exp-cell__mark {
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-bulb {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-bulb.is-on {
+  fill: var(--sun);
+}
+.exp-filament {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.exp-socket {
+  fill: var(--paper-2);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-ray {
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.exp-motor {
+  fill: var(--sky);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+}
+.exp-blade {
+  fill: var(--white);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.exp-spin {
+  animation-name: exp-spin;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.exp-spin.is-rev {
+  animation-direction: reverse;
+}
+@keyframes exp-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

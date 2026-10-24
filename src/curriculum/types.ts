@@ -21,6 +21,8 @@ import type { MeasureItem } from '../engines/measure/measure';
 import type { NumberlineItem } from '../engines/numberline/numberline';
 import type { GraphItem } from '../engines/graph/graph';
 import type { GeometryItem } from '../engines/geometry/geometry';
+import type { MapItem } from '../engines/map/map';
+import type { ExperimentItem } from '../engines/experiment/experiment';
 
 /** 全エンジンの問題の型（教材パックはここから import してよい） */
 export type {
@@ -39,6 +41,8 @@ export type {
   NumberlineItem,
   GraphItem,
   GeometryItem,
+  MapItem,
+  ExperimentItem,
 };
 
 /** 文の記法（src/text/rich.ts）。漢字は必ず《よみ》付き */
@@ -162,7 +166,9 @@ export type Item =
   | MeasureItem
   | NumberlineItem
   | GraphItem
-  | GeometryItem;
+  | GeometryItem
+  | MapItem
+  | ExperimentItem;
 export type EngineId = Item['engine'];
 
 // ---- 単元 ----

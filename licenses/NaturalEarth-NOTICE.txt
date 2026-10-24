@@ -1,0 +1,30 @@
+Natural Earth 由来の地図データの表示（Notice for map data derived from Natural Earth）
+
+対象ファイル（まなびのにわ）:
+  src/engines/map/data/japan.json（日本の47都道府県の簡略化した形）
+  （ビルドで配布物に含まれる場合は、その複製）
+
+元データ: Natural Earth（https://www.naturalearthdata.com/）
+  1:10m Cultural Vectors — Admin 1 – States, Provinces
+  ファイル: ne_10m_admin_1_states_provinces.zip（VERSION.txt の版 5.1.1）
+  取得元: https://naciscdn.org/naturalearth/10m/cultural/ne_10m_admin_1_states_provinces.zip
+          （naturalearthdata.com の公式ダウンロードの配信先）
+  取得日: 2026-10-24
+  取得物の SHA-256: EFC59726337323058F9446210ADC96673179CD344E053666EE3D28CB58BA2B05
+
+ライセンス: パブリックドメイン（Natural Earth の利用条件 https://www.naturalearthdata.com/about/terms-of-use/
+  「All versions of Natural Earth raster + vector map data found on this website are in the public domain.」）。
+  帰属表示は必須ではないが、出典として「Made with Natural Earth.」を記す。
+
+改変の内容:
+  - 日本（adm0_a3 = JPN）の47件を取り出し、都道府県コード（iso_3166_2 の JP-01〜JP-47）で並べた。
+  - 北方領土（択捉島・国後島・色丹島・歯舞群島）の島は、元データでは RU-SAK（サハリン州）の形に含まれるため、
+    その範囲（経度145.3〜149.0度・緯度43.0〜45.7度）の環を北海道に加えた
+    （小学校社会の学習指導要領の「我が国の領土」の扱いに合わせた本アプリの判断）。
+  - 正距円筒の投影（経度に cos 37.5度を掛ける。1度 = 縦60・横約47.6 の単位）にし、整数へ丸めた。
+  - 沖縄県と、鹿児島県の北緯29度より南の島（奄美群島など）を、左上の囲みへ同じ縮尺で移した。
+  - 東京都の北緯32.5度より南の島（小笠原諸島・沖ノ鳥島・南鳥島など）を除いた。
+    面積が約27km²未満の島を除いた（各都道府県の最大の島は残す）。
+  - 頂点を間引いた（隣の都道府県と共有する境界の分かれ目を固定し、その間を Douglas–Peucker 法・許容 0.8 単位）。
+  - 名前（漢字・よみ）と地方の区分は本アプリで付けた（元データの名前は使っていない）。
+  - 変換スクリプト: scripts/map/build_japan_map.py, scripts/map/naturalearth_io.py

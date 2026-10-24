@@ -80,6 +80,49 @@ export function onReview(s: ReviewState, outcomes: Outcome[], now: number): Revi
   };
 }
 
+/**
+ * 長く放置された復習（超過が今の間隔の2倍以上）は、間隔を1段戻す（段階は下げない）。
+ * 復習を始めるときに呼ぶ（review-1 #14）。
+ */
+export function relaxOverdue(s: ReviewState, now: number): ReviewState {
+  if (s.reviewDue === null || s.reviewStep === 0) return s;
+  const interval = REVIEW_INTERVAL_DAYS[Math.min(s.reviewStep, REVIEW_INTERVAL_DAYS.length - 1)]!;
+  const overdueDays = (now - s.reviewDue) / DAY;
+  if (overdueDays < interval * 2) return s;
+  return { ...s, reviewStep: s.reviewStep - 1 };
+}
+
+export interface ReviewCandidate {
+  unitId: string;
+  subject: string;
+  state: ReviewState;
+  /** この単元を前提にする単元の数 */
+  dependents: number;
+}
+
+/**
+ * 「きょうの おすすめ」に出す復習を選ぶ（review-1 #14）。
+ * 優先度 = 超過日数 ×（後続単元の数 + 1）。同じ教科は1日1件まで。残りは単元の地図の時計の印で見せる。
+ */
+export function pickReviews(cands: ReviewCandidate[], now: number, limit: number): string[] {
+  const due = cands
+    .filter((c) => isReviewDue(c.state, now))
+    .map((c) => ({
+      c,
+      score: ((now - c.state.reviewDue!) / DAY + 1) * (c.dependents + 1),
+    }))
+    .sort((a, b) => b.score - a.score || a.c.unitId.localeCompare(b.c.unitId));
+  const out: string[] = [];
+  const subjects = new Set<string>();
+  for (const { c } of due) {
+    if (out.length >= limit) break;
+    if (subjects.has(c.subject)) continue;
+    subjects.add(c.subject);
+    out.push(c.unitId);
+  }
+  return out;
+}
+
 export function isReviewDue(s: ReviewState, now: number): boolean {
   return s.reviewDue !== null && s.reviewDue <= now;
 }

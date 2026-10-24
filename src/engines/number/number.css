@@ -43,11 +43,12 @@
 }
 .eng-number__pad {
   display: grid;
-  grid-template-columns: repeat(3, calc(var(--u) * 6.4));
-  gap: calc(var(--u) * 1);
+  grid-template-columns: repeat(4, calc(var(--u) * 6));
+  gap: calc(var(--u) * 0.8);
 }
 .numkey {
-  height: calc(var(--u) * 6.4);
+  height: calc(var(--u) * 5.6);
+  white-space: nowrap;
   font: inherit;
   font-size: calc(var(--u) * 3.2);
   font-weight: 700;
@@ -64,8 +65,9 @@
   font-size: calc(var(--u) * 2.2);
 }
 .numkey--ok {
-  grid-column: 1 / -1;
-  font-size: calc(var(--u) * 2.6);
+  grid-column: span 2;
+  font-size: calc(var(--u) * 2);
+  padding: 0;
   background: var(--sun);
 }
 .num-frac-show {

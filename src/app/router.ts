@@ -12,7 +12,13 @@ export type Route =
   | { name: 'home' }
   | { name: 'mode'; modeId: ModeId; variantId?: string }
   | { name: 'notebook' }
-  | { name: 'parent'; tab: string };
+  | { name: 'parent'; tab: string }
+  /** 教科の単元の地図（grade: 表示する学年。省略時はプロフィールの学年） */
+  | { name: 'subject'; subject: string; grade?: string }
+  /** 単元の学習（UnitRunner） */
+  | { name: 'unit'; unitId: string };
+
+const UNIT_ID = /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/;
 
 export function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -20,6 +26,11 @@ export function parseHash(hash: string): Route {
   if (a === 'home') return { name: 'home' };
   if (a === 'notebook') return { name: 'notebook' };
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
+  if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
+  if (a === 'subject' && b && /^[a-z]+$/.test(b))
+    return c && /^(p23|p4|p5|g[1-6])$/.test(c)
+      ? { name: 'subject', subject: b, grade: c }
+      : { name: 'subject', subject: b };
   if (a === 'play' && b && (MODE_IDS as readonly string[]).includes(b)) {
     return c
       ? { name: 'mode', modeId: b as ModeId, variantId: c }
@@ -40,6 +51,10 @@ export function routeToHash(r: Route): string {
       return `#/parent/${r.tab}`;
     case 'mode':
       return r.variantId ? `#/play/${r.modeId}/${r.variantId}` : `#/play/${r.modeId}`;
+    case 'subject':
+      return r.grade ? `#/subject/${r.subject}/${r.grade}` : `#/subject/${r.subject}`;
+    case 'unit':
+      return `#/unit/${r.unitId}`;
   }
 }
 

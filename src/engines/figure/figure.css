@@ -62,6 +62,9 @@
   stroke: var(--ink);
   stroke-width: 1;
 }
+.fig-tone--b .blk--o {
+  fill: var(--sky);
+}
 .fig-tone--focus .blk {
   stroke-width: 2.4;
 }
@@ -97,12 +100,11 @@
 .fig-tape__part.fig-tone--a {
   background: var(--sky);
 }
+/* tone b は色に加えて内側の破線の枠で区別する（色だけに頼らない。グラデーションは使わない） */
 .fig-tape__part.fig-tone--b {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--white) 0 calc(var(--u) * 0.6),
-    var(--sun) calc(var(--u) * 0.6) calc(var(--u) * 1.2)
-  );
+  background: var(--sun);
+  outline: calc(var(--u) * 0.3) dashed var(--ink);
+  outline-offset: calc(var(--u) * -0.9);
 }
 .fig-tape__part.fig-tone--muted {
   border-style: dashed;

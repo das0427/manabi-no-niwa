@@ -175,14 +175,22 @@ function Blocks({
     for (let k = 0; k < ones; k++) {
       const col = Math.floor(k / 5);
       const row = k % 5;
+      const cx = x + col * c * 1.3 + c * 0.5;
+      const cy = row * c * 1.3 + c * 0.5 + (tens || hundreds ? c * 3.5 : 0);
+      // tone b は四角（色だけで区別しない）
       items.push(
-        <circle
-          key={`o${k}`}
-          cx={x + col * c * 1.3 + c * 0.5}
-          cy={row * c * 1.3 + c * 0.5 + (tens || hundreds ? c * 3.5 : 0)}
-          r={c * 0.45}
-          className="blk blk--o"
-        />,
+        tone === 'b' ? (
+          <rect
+            key={`o${k}`}
+            x={cx - c * 0.42}
+            y={cy - c * 0.42}
+            width={c * 0.84}
+            height={c * 0.84}
+            className="blk blk--o"
+          />
+        ) : (
+          <circle key={`o${k}`} cx={cx} cy={cy} r={c * 0.45} className="blk blk--o" />
+        ),
       );
     }
     x += Math.ceil(ones / 5) * c * 1.3;

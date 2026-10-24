@@ -1,0 +1,15 @@
+[
+  {
+    "id": "g1.math.add-basic",
+    "pack": "g1-math",
+    "title": "たしざん（10まで）",
+    "stage": "g1",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-add",
+    "prereq": ["g1.math.compose-10"],
+    "priority": "P1",
+    "status": "partial",
+    "engine": "number"
+  }
+]

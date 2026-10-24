@@ -245,7 +245,9 @@ export function generateAddBasic(level: number, rng: Rng, index: number): Item {
         alt ? `${sc.text(a, b)}` : 'あわせて いくつ？',
         fig,
         alt,
-        'ふたつの ブロックを ひとつに あわせよう。',
+        alt
+          ? 'ふたつの なかまを いっしょに かぞえよう。'
+          : 'ふたつの ブロックを ひとつに あわせよう。',
       );
     }
     case 'zouka': {
@@ -365,7 +367,10 @@ export const addBasic: UnitSpec = {
     { label: 'しき・ぶんしょうだい', chance: 0.05 },
   ],
   intro: [
-    { text: 'あかい ブロックが 3こ、あおい ブロックが 2こ あります。', figure: blocksFig(3, 2) },
+    {
+      text: 'まるい ブロックが 3こ、しかくい ブロックが 2こ あります。',
+      figure: blocksFig(3, 2),
+    },
     {
       text: 'ひとつに あわせると、ぜんぶで 5こ。',
       figure: { kind: 'blocks', ones: 5, frame: true },

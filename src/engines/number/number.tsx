@@ -44,6 +44,11 @@ export function judgeNumberItem(item: NumberItem, res: NumberResponse): Judgemen
 export function checkNumberItem(item: NumberItem): string[] {
   const errs: string[] = [];
   if (item.fields.length === 0) errs.push('入力欄が無い');
+  const fnCount =
+    (item.keys?.includes('decimal') ? 1 : 0) +
+    (item.keys?.includes('fraction') ? 2 : 0) +
+    (item.keys?.includes('minus') ? 1 : 0);
+  if (fnCount > 3) errs.push('記号のキーは3つまで（小数点・分数・マイナスを同時に使わない）');
   for (const f of item.fields) {
     const a = f.answer;
     if (a.kind === 'fraction' && a.den === 0) errs.push('分母が0');
@@ -126,6 +131,27 @@ function NumberView({
     });
   };
   const ready = vals.every((v) => v.trim() !== '');
+  const key = (ch: string, text: string, label: string, testId: string, cls = '') => (
+    <button
+      key={testId}
+      type="button"
+      className={`numkey ${cls}`}
+      onClick={() => put(ch)}
+      disabled={disabled || revealed}
+      aria-label={label}
+      data-testid={testId}
+    >
+      {text}
+    </button>
+  );
+  const digit = (d: string) => key(d, d, d, `key-${d}`);
+  // 問題で使う記号のキー（最大3つ。右の列に入る）
+  const fns = [
+    keys.includes('decimal') ? key('.', '.', 'しょうすうてん', 'key-dot') : null,
+    keys.includes('fraction') ? key('/', '／', 'ぶんすう', 'key-frac') : null,
+    keys.includes('fraction') ? key(' ', 'と', 'たいぶんすうの と', 'key-mixed') : null,
+    keys.includes('minus') ? key('-', '−', 'マイナス', 'key-minus') : null,
+  ].filter((x) => x !== null);
   return (
     <div className="eng-number">
       <div className="eng-number__fields">
@@ -160,76 +186,16 @@ function NumberView({
           </label>
         ))}
       </div>
+      {/* 4列×4段（作業領域の右側に収める。右下の「つぎへ」と重ならない: DESINGN.md 18章） */}
       <div className="eng-number__pad" role="group" aria-label="すうじの キー">
-        {['7', '8', '9', '4', '5', '6', '1', '2', '3', '0'].map((d) => (
-          <button
-            key={d}
-            type="button"
-            className="numkey"
-            onClick={() => put(d)}
-            disabled={disabled || revealed}
-            data-testid={`key-${d}`}
-          >
-            {d}
-          </button>
-        ))}
-        {keys.includes('decimal') ? (
-          <button
-            type="button"
-            className="numkey"
-            onClick={() => put('.')}
-            disabled={disabled || revealed}
-            aria-label="しょうすうてん"
-            data-testid="key-dot"
-          >
-            .
-          </button>
-        ) : null}
-        {keys.includes('fraction') ? (
-          <>
-            <button
-              type="button"
-              className="numkey"
-              onClick={() => put('/')}
-              disabled={disabled || revealed}
-              aria-label="ぶんすう"
-              data-testid="key-frac"
-            >
-              ／
-            </button>
-            <button
-              type="button"
-              className="numkey"
-              onClick={() => put(' ')}
-              disabled={disabled || revealed}
-              aria-label="たいぶんすうの と"
-              data-testid="key-mixed"
-            >
-              と
-            </button>
-          </>
-        ) : null}
-        {keys.includes('minus') ? (
-          <button
-            type="button"
-            className="numkey"
-            onClick={() => put('-')}
-            disabled={disabled || revealed}
-            aria-label="マイナス"
-          >
-            −
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="numkey numkey--fn"
-          onClick={() => put('back')}
-          disabled={disabled || revealed}
-          aria-label="ひとつ けす"
-          data-testid="key-back"
-        >
-          けす
-        </button>
+        {['7', '8', '9'].map(digit)}
+        {key('back', 'けす', 'ひとつ けす', 'key-back', 'numkey--fn')}
+        {['4', '5', '6'].map(digit)}
+        {fns[0] ?? <span />}
+        {['1', '2', '3'].map(digit)}
+        {fns[1] ?? <span />}
+        {digit('0')}
+        {fns[2] ?? <span />}
         <button
           type="button"
           className="numkey numkey--ok"

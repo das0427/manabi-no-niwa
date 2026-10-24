@@ -1,0 +1,147 @@
+/* 単元の画面の区画（ux-by-age 2.4、DESINGN.md 5.1・18章）。位置は全単元で同じ */
+.unit__prompt {
+  position: absolute;
+  top: calc(var(--u) * 8);
+  left: calc(var(--u) * 4);
+  right: calc(var(--u) * 4);
+  min-height: calc(var(--u) * 7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: calc(var(--u) * 3);
+  font-weight: 700;
+  color: var(--ink);
+  white-space: pre-line;
+}
+.unit__work {
+  position: absolute;
+  top: calc(var(--u) * 15);
+  /* 下の帯（14u）: ヒント・つぎへ・誤答の説明の吹き出し。作業領域と重ならない */
+  bottom: calc(var(--u) * 14);
+  left: calc(var(--u) * 4);
+  right: calc(var(--u) * 4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+}
+/* 数の入力: 左に図と回答欄、右に数字キー（DESINGN.md 18章、review-1 #21） */
+.unit__work--number {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  align-content: center;
+  align-items: center;
+  column-gap: calc(var(--u) * 3);
+  row-gap: calc(var(--u) * 2);
+}
+.unit__work--number .unit__engine,
+.unit__work--number .eng-number {
+  display: contents;
+}
+.unit__work--number .unit__figure {
+  grid-column: 1;
+  grid-row: 1;
+}
+.unit__work--number .eng-number__fields {
+  grid-column: 1;
+  grid-row: 2;
+}
+.unit__work--number .eng-number__pad {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+}
+.unit__figure {
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.unit__engine {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.unit__corner-left {
+  position: absolute;
+  left: calc(var(--u) * 2);
+  bottom: calc(var(--u) * 2);
+}
+.unit__corner-right {
+  position: absolute;
+  right: calc(var(--u) * 2);
+  bottom: calc(var(--u) * 2);
+  font-size: calc(var(--u) * 2.6);
+}
+.unit__bubble {
+  position: absolute;
+  left: calc(var(--u) * 12);
+  right: calc(var(--u) * 24);
+  bottom: calc(var(--u) * 1.6);
+  max-height: calc(var(--u) * 11.6);
+  overflow: auto;
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
+  background: var(--white);
+  border: calc(var(--u) * 0.3) solid var(--ink);
+  border-radius: calc(var(--u) * 1.4);
+  font-size: calc(var(--u) * 2);
+  line-height: 1.4;
+  color: var(--ink);
+}
+.unit__msg {
+  margin: 0;
+  font-weight: 700;
+}
+.unit__hint {
+  margin: calc(var(--u) * 0.4) 0 0;
+  display: flex;
+  gap: calc(var(--u) * 0.8);
+  align-items: baseline;
+}
+/* ヒントの段（破線の丸。DESINGN.md: 破線＝ヒント） */
+.unit__hint-mark {
+  flex: none;
+  width: calc(var(--u) * 3);
+  height: calc(var(--u) * 3);
+  border: calc(var(--u) * 0.3) dashed var(--ink);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.unit__explain {
+  position: absolute;
+  left: calc(var(--u) * 12);
+  right: calc(var(--u) * 24);
+  bottom: calc(var(--u) * 1.6);
+  /* 下の帯に収める（作業領域の回答・正答を隠さない）。文と図を横に並べる */
+  max-height: calc(var(--u) * 11.6);
+  overflow: auto;
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
+  background: var(--paper);
+  border: calc(var(--u) * 0.35) solid var(--ink);
+  border-radius: calc(var(--u) * 1.4);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 2.1);
+  line-height: 1.4;
+}
+.unit__explain .fig-svgbox {
+  max-height: calc(var(--u) * 9);
+  width: auto;
+}
+.unit__explain-head {
+  margin: 0;
+  flex: none;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.4);
+}
+.unit__explain-text {
+  margin: 0;
+}

@@ -8,6 +8,9 @@ import { StartScreen } from './app/StartScreen';
 import './ui/ui.css';
 
 const ParentApp = lazy(() => import('./parent/index'));
+const UnitRunner = lazy(() =>
+  import('./units/UnitRunner').then((m) => ({ default: m.UnitRunner })),
+);
 
 function Routes() {
   const route = useRoute();
@@ -46,6 +49,12 @@ function Routes() {
         modeId={route.modeId}
         variantId={route.variantId}
       />
+    );
+  else if (route.name === 'unit')
+    screen = (
+      <Suspense fallback={null}>
+        <UnitRunner key={route.unitId} unitId={route.unitId} />
+      </Suspense>
     );
 
   return <div className="stage">{screen}</div>;

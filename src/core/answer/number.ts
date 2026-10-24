@@ -4,7 +4,12 @@
  */
 export type NumberAnswer =
   | { kind: 'int'; value: number }
-  | { kind: 'decimal'; value: number; places?: number }
+  | {
+      kind: 'decimal';
+      value: number;
+      /** 小数点より下の桁数を指定する（例 1 なら 3 は「3.0」と書く）。省略時は桁数を問わない */
+      places?: number;
+    }
   | {
       kind: 'fraction';
       num: number;
@@ -156,6 +161,9 @@ export function judgeNumber(answer: NumberAnswer, input: string, unit?: string):
       if (!eq(p.value, want)) return { result: 'wrong' };
       // 小数で答える問題に分数で答えた: 値は合っているので形式だけ直してもらう
       if (p.form === 'fraction' || p.form === 'mixed') return { result: 'retry', reason: 'form' };
+      // 桁数の指定（例「3.0」と 1/10 の位まで書く単元）: 値は合っているので形式だけ直してもらう
+      if (answer.places !== undefined && (p.places ?? 0) !== answer.places)
+        return { result: 'retry', reason: 'form' };
       return { result: 'correct' };
     }
 

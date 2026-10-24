@@ -45,6 +45,13 @@ describe('judgeNumber', () => {
     expect(judgeNumber(a, '3/10')).toEqual({ result: 'retry', reason: 'form' });
     expect(judgeNumber(a, '0.4').result).toBe('wrong');
   });
+  it('小数の桁数の指定: 3.0 と書く単元では 3 は「もう一度」（誤答にしない）', () => {
+    const a = { kind: 'decimal', value: 3, places: 1 } as const;
+    expect(judgeNumber(a, '3.0').result).toBe('correct');
+    expect(judgeNumber(a, '3')).toEqual({ result: 'retry', reason: 'form' });
+    expect(judgeNumber(a, '3.00')).toEqual({ result: 'retry', reason: 'form' });
+    expect(judgeNumber(a, '3.1').result).toBe('wrong');
+  });
   it('分数: 等価なら正解。約分が目標なら「もう少し」', () => {
     const a = { kind: 'fraction', num: 1, den: 2 } as const;
     expect(judgeNumber(a, '1/2').result).toBe('correct');

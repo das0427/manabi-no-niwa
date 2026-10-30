@@ -182,3 +182,10 @@ export function flowReducer(s: FlowState, a: FlowAction): FlowState {
     }
   }
 }
+
+/**
+ * 不正解の効果音を鳴らすか。2歳段階（softJudgement）と、穏やかな判定の単元（gentleJudgement。幼児の英語）では鳴らさない。
+ * ○／？の印・誤概念の説明・記録は変えない。
+ */
+export const playsWrongSfx = (softJudgement: boolean, gentleJudgement?: boolean): boolean =>
+  !softJudgement && gentleJudgement !== true;

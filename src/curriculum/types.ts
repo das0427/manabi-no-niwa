@@ -119,6 +119,11 @@ export interface ChoiceOption {
   correct?: boolean;
   /** 誤りの選択肢の誤概念 id */
   misconception?: string;
+  /**
+   * listen の nameBack で、触ったときに返す名前の音声（英語は key 必須）。choice エンジンは使わない。
+   * 形は listen の ListenSound と同じ（types.ts から listen を値で import しないため、形をそのまま書く）
+   */
+  sound?: { text: RichText; key?: string };
 }
 
 export interface ChoiceItem extends ItemBase {
@@ -260,6 +265,10 @@ export interface UnitSpec {
   revised: string;
   /** 既定で子供画面に出さない（保護者が開く） */
   hiddenByDefault?: boolean;
+  /** 不正解の効果音を鳴らさない（正誤の印・説明・記録は今までどおり）。幼児の英語で使う */
+  gentleJudgement?: boolean;
+  /** 保護者画面に出す遊び方の一言（漢字かな交じり可。子供画面には出さない） */
+  parentNote?: string;
 }
 
 export interface PackContent {
@@ -284,4 +293,6 @@ export interface UnitMeta {
   legacy?: LegacyRef;
   /** 既定で子供画面に出さない（保護者が開く。5歳の式・カタカナの書き等: 統括の判断7） */
   hiddenByDefault?: boolean;
+  /** 保護者画面に出す遊び方の一言（UnitSpec から写す） */
+  parentNote?: string;
 }

@@ -204,6 +204,13 @@ export function normalizeSettings(
     ),
     levelLocks: take(raw.levelLocks, locks, d.levelLocks),
   };
+  // 省略可（省略時は true 扱い）。無いときは項目を作らない
+  const spe = take<boolean | undefined>(
+    raw.showPreschoolEnglish,
+    (v) => (bool(v) ? v : undefined),
+    undefined,
+  );
+  if (spe !== undefined) s.showPreschoolEnglish = spe;
   return bad && strictMode ? null : s;
 }
 

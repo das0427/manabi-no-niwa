@@ -6,6 +6,7 @@
  */
 import { gradeOf, type Grade } from '../audience/audience';
 import { profileAudience } from '../core/types';
+import { PRESCHOOL_EN_CARDS } from '../curriculum/preschoolEnglish';
 import { PRESCHOOL_HOMES, preschoolStageOf, type HomeCard } from '../curriculum/preschoolHome';
 import { subjectName, subjectsForGrade } from '../curriculum/subjects';
 import { Illust } from '../illust/Illust';
@@ -73,7 +74,10 @@ export function Explore({ stage: stageParam }: { stage?: string }) {
   let body;
   if (stage === 'p23' || stage === 'p4' || stage === 'p5') {
     const def = PRESCHOOL_HOMES[stage];
-    const cards = (def?.cards ?? []).filter((c) => cardUnits(c, settings.unitsOpened).length > 0);
+    // ふつうの札の後に「えいご」の札。ここでは2歳段階・保護者の設定にかかわらず出す（保護者といっしょにのぞく入口）
+    const cards = [...(def?.cards ?? []), PRESCHOOL_EN_CARDS[stage]].filter(
+      (c) => cardUnits(c, settings.unitsOpened).length > 0,
+    );
     body = (
       <div className="explore-cards" role="list" aria-label={`${STAGE_LABEL[stage]}の あそび`}>
         {cards.map((c) => (

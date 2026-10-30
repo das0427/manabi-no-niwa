@@ -39,7 +39,7 @@ export function packLabel(packId: string): string {
   if (grade) return `小${grade[1]} ${SUBJECT_LABEL[grade[2]!] ?? grade[2]}`;
   const kanji = /^kanji-g(\d+)$/.exec(packId);
   if (kanji) return `漢字（${[...kanji[1]!].map((g) => `小${g}`).join('・')}）`;
-  const toddler = { p23: '2〜3歳', p4: '4歳', p5: '5歳' }[packId];
+  const toddler = { p23: '2〜3歳', p4: '4歳', p5: '5歳', 'en-pre': '幼児の英語' }[packId];
   if (toddler) return toddler;
   return packId;
 }

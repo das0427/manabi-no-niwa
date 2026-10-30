@@ -1,5 +1,7 @@
 import { applyUpdate, isPageControlled, useOfflineState } from '../core/offline/index';
+import { UNIT_INDEX } from '../curriculum/unitIndex';
 import { MODES } from '../modes/registry';
+import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
 import { APP_VERSION } from './util';
 
@@ -9,6 +11,8 @@ const CREDITS: [string, string][] = [
   ['書き順データ', 'KanjiVG（CC BY-SA 3.0）'],
   ['イラスト', 'オリジナル（このアプリのために描いたもの）'],
 ];
+
+const STAGE_LABEL: Record<string, string> = { p23: '2〜3歳', p4: '4歳', p5: '5歳' };
 
 export function AboutTab() {
   const off = useOfflineState();
@@ -83,6 +87,42 @@ export function AboutTab() {
           「なぞって
           あそぼう」の練習は、鉛筆の持ち方や筆圧の練習とは別です。持ち方や書き方は、大人が実際の鉛筆で見てあげてください。
         </Note>
+      </Section>
+
+      <Section title="幼児の英語について">
+        <p data-testid="about-preschool-english">
+          英語の音に親しみ、日本語とのちがいに気づく遊びです。英語の力を身につけることを目的にしていません。短い時間を、できるだけおうちの方と一緒に楽しんでください。
+        </p>
+        <h3>使い方のこつ</h3>
+        <ul>
+          <li>
+            お子さんが絵を指さしたら、英語で言ってみてください（正しく言えたかは気にしなくて大丈夫です）。
+          </li>
+          <li>英語のあいさつは、毎日の決まった場面で言い合うと続けやすくなります。</li>
+          <li>体を動かす遊びは、大人がまねして見せると、子どもも動きやすくなります。</li>
+        </ul>
+        <p>
+          日本語の絵本の読み聞かせやおしゃべりの時間を減らさないでください。画面の文字は日本語（ひらがな）だけで、英語は音声だけで出します。
+        </p>
+        <p className="p-small">
+          英語の音声は合成音声（Kokoro）で作っています。発音の正しさの判定や録音はしません。マイクは使いません。
+        </p>
+        <p className="p-small">
+          2〜3歳の2歳の段階では、ホームに英語の札を出しません。「ほかの
+          がくねん」から、おうちの方と一緒に遊べます。
+        </p>
+        <table className="p-table p-table--compact" data-testid="preschool-english-units">
+          <tbody>
+            {UNIT_INDEX.filter((u) => u.pack === 'en-pre').map((u) => (
+              <tr key={u.id}>
+                <th>
+                  {plainText(u.title)}（{STAGE_LABEL[u.stage] ?? u.stage}）
+                </th>
+                <td>{u.parentNote}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Section>
 
       <Section title="素材のクレジット">

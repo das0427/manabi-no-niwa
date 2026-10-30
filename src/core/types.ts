@@ -87,6 +87,11 @@ export interface ChildSettings {
   support: SupportSettings;
   /** 保護者が開いた単元（既定で隠す単元 hiddenByDefault を子供画面に出す） */
   unitsOpened: string[];
+  /**
+   * 幼児ホームに「えいご」の札を出す。省略時は true（データ移行なし。defaultSettings には書かない）。
+   * 2歳段階のホームには、この設定にかかわらず出さない
+   */
+  showPreschoolEnglish?: boolean;
 }
 
 export interface Profile {

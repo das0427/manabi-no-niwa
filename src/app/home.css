@@ -130,3 +130,34 @@
   display: flex;
   align-items: center;
 }
+/* 幼児ホームの「ほかの がくねん」: 上の帯の鍵の左。補助操作の最小（5.5u）。鍵との間は 3u 以上 */
+.home-explore {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  height: calc(var(--u) * 5.5);
+  margin-right: calc(var(--u) * 3);
+  padding: 0 calc(var(--u) * 1.4);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  box-shadow: 0 var(--step) 0 var(--paper-2);
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: var(--font-child);
+  font-weight: 700;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.home-explore:active {
+  transform: translateY(calc(var(--u) * 0.4));
+}
+.home-explore__illust {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+  flex: none;
+}
+.home-explore__name {
+  font-size: calc(var(--u) * 2.2);
+  line-height: 1;
+}

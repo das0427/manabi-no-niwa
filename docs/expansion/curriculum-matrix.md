@@ -55,7 +55,7 @@
 
 **単元ID** `{段階}.{教科}.{名前}`（英小文字とハイフン）。
 - 段階: `p23` = 2〜3歳（入口は1つ。内部段階 **L2**=2歳段階、**L3**=3歳段階）、`p4` = 4歳、`p5` = 5歳、`g1`〜`g6` = 小1〜小6。
-- 教科（幼児）: `ja` ことば・もじ、`math` かず・かたち・くらべる、`think` かんがえる（なかま・きまり・きおく）、`env` みのまわり・しぜん・くらし、`hand` て・うんぴつ、`prog` てじゅん。
+- 教科（幼児）: `ja` ことば・もじ、`math` かず・かたち・くらべる、`think` かんがえる（なかま・きまり・きおく）、`env` みのまわり・しぜん・くらし、`hand` て・うんぴつ、`prog` てじゅん、`en` えいご（音声で親しむ。画面の文字は日本語だけで、英語は音声）。
 - 教科（小学校）: `ja` 国語、`math` 算数、`life` 生活、`sci` 理科、`soc` 社会、`en` 外国語活動・外国語、`prog` プログラミング的活動。
 - 対象（年齢・学年）は ID の段階で示す。先取り・さかのぼりは 5.3。
 
@@ -195,13 +195,14 @@
 
 ### 2.3 英語（評価できる範囲）
 
-| 領域 | 3・4年（外国語活動） | 5・6年（外国語） | 本アプリの扱い |
-|---|---|---|---|
-| 聞く | 語句・基本表現の意味、文字の名称 | 語句・表現、具体的な情報、短い話の概要 | **自動**（listen: 聞いて絵・語・文を選ぶ） |
-| 読む | 目標に含まれない（文字の名称と字形を結び付ける程度） | 活字体の文字の識別、慣れ親しんだ語句の意味 | **自動**（choice・match: 文字や語と絵） |
-| 書く | 目標に含まれない | 大文字・小文字、語句・表現の書き写し、例文を参考に書く | 文字のなぞり（trace。字形は採点しない）と語順（build）を自動。自由に書いた文は採点しない |
-| 話す（やり取り・発表） | あり | あり | **自動評価しない**。お手本を聞く → まねて言う →（任意）自分の録音を聞く。録音は既定で保存しない |
+| 領域 | 3・4年（外国語活動） | 5・6年（外国語） | 本アプリの扱い | 幼児（えいご あそび） |
+|---|---|---|---|---|
+| 聞く | 語句・基本表現の意味、文字の名称 | 語句・表現、具体的な情報、短い話の概要 | **自動**（listen: 聞いて絵・語・文を選ぶ） | 語・短い文の音声を聞いて絵を選ぶ（listen）。自動 |
+| 読む | 目標に含まれない（文字の名称と字形を結び付ける程度） | 活字体の文字の識別、慣れ親しんだ語句の意味 | **自動**（choice・match: 文字や語と絵） | 目標に含めない（5歳の ABC は保護者が開いたとき、文字の名前と大文字だけ） |
+| 書く | 目標に含まれない | 大文字・小文字、語句・表現の書き写し、例文を参考に書く | 文字のなぞり（trace。字形は採点しない）と語順（build）を自動。自由に書いた文は採点しない | しない |
+| 話す（やり取り・発表） | あり | あり | **自動評価しない**。お手本を聞く → まねて言う →（任意）自分の録音を聞く。録音は既定で保存しない | 評価しない。まねして言うよう声をかける（録音しない） |
 
+- 幼児の英語のねらいは、英語の音に親しむ・日本語との音の違いに気づく・ちがう ことばに興味を持つこと。英語の力の習得をうたわない（research/preschool-english.md、p2-design/preschool-english.md）。
 - 中学年で発音と綴りの法則を教え込まない。単語の綴りの書き取りは求めない（EOS 6.1）。
 - 語彙は5・6年で600〜700語（3・4年を含む）。語リストは本アプリが選び、他社教材・教科書の語順や単元構成を写さない。学年割当は※。
 - 特定の地域の発音に偏らない。録音・合成音声の権利を確認する。
@@ -264,6 +265,8 @@
 | p23.math.puzzle2 | 2ピースの絵あわせ（L3） | p23.math.shape-match | L3 置き場所の線あり | legacy(K2 縮小) | 遊 絵8 | ●●− | − | EC2.1（簡単なパズル） | P2 | 未 | 半分に切れたりんごの絵を合わせる |
 | p23.think.road | みち（L3）: 1マス欠けた道をうめる | − | L3 候補2 | legacy(R1) | 遊 8面 | ●●− | − | 独 | P2 | 未 | うさぎの家とにんじんの間の1マス |
 | p23.ja.picture-book | えほん: 短いお話を聞く | − | L2 聞くだけ → L3「だれが いた？」1問 | listen, reading | 遊 本8 | ●○− | − | 保指(1-3)言葉（絵本） | P2 | 未 | 3場面のお話の後「でてきたのは どっち？」 |
+| p23.en.words | えいごで タッチ: 英語の語を聞いて絵を選ぶ（音に親しむ） | − | L2 どうぶつ・たべもの 2択（1語を2回）→ L3 のりもの・もの を足して 3択 | listen | 遊 語24（L2 12） | ●●○ | − | 幼要 言葉（響き）・環境（異なる文化）、保指、研（調査 1.1） | P1 | 未 | 「Dog.（2回）」→ いぬ／ねこ の絵。触ると「Cat.」と名前が返る |
+| p23.en.move | うごいて みよう（L3）: 合図を聞いて動きの絵 → 親子で体を動かす | p23.en.words | L3 2択 → 3択 | listen | 遊 動き8 | ●●○ | − | 調査 1.3（TPR は示唆） | P2 | 未 | 「Jump!」→ とぶ うさぎ／すわる うさぎ |
 
 ### 3.2 4歳（p4）
 
@@ -287,6 +290,12 @@
 | p4.env.seasons | きせつと しぜん（一般的な例） | − | 2択 → 4つの季節に分ける | choice, sort | 遊 手24 | ●●○ | − | 幼要 環境（自然・季節）、EOS3.2（地域差） | P2 | 未 | 「ゆきだるまを つくるのは どの きせつ？」 |
 | p4.env.daily-order | くらしの じゅんばん（3つ） | p23.env.daily-life | 3枚の順 → 4枚の順 | order | 遊 手16 | ●●○ | − | EC2.3、EOS7.2（順序） | P2 | 未 | 「あさ おきてから」3枚を並べる |
 | p4.hand.kana-trace-early | もじなぞり T5（1画の字） | p4.hand.lines | T5（し く つ へ の て） | trace | 運 6字 | ●●− | − | 教C1 | P2 | 未 | 保護者が開いたときだけ表示 |
+| p4.en.words | えいごで タッチ: 語・短い文を聞いて絵を選ぶ | p23.en.words（推奨のみ） | 1語 3択 → Where is the 〜? 3択 → なかまを混ぜて 4択 | listen | 遊 語42 | ●●○ | − | 幼要 言葉・環境、調査 1.1・1.2 | P1 | 未 | 「Where is the rabbit?」→ うさぎ／くま／ぞう |
+| p4.en.colors-numbers | いろと かず（1〜5）を聞いて選ぶ | − | いろ 3択 → かず 3択 → まぜて 4択 | listen | 遊 色8・数5 | ●●○ | − | 幼要 環境（数量・色）、外活34 へ接続 | P1 | 未 | 「Three.（2回）」→ りんご3こ／2こ／4こ |
+| p4.en.move | うごいて みよう: 合図を聞いて動きの絵 → 親子で体を動かす | − | からだ全体 3択 → からだを さわる 3択 → まぜて 4択 | listen | 遊 動き13 | ●●○ | − | 調査 1.3（TPR は示唆）、幼要 健康・表現 | P1 | 未 | 「Touch your nose.」→ はなを さわる うさぎ |
+| p4.en.hello | あいさつ・きもちを聞いて場面を選ぶ | − | あいさつ 3択 → きもち 3択 → まぜて 4択 | listen | 遊 9（全件）＋別例 | ●●○ | − | 幼要 人間関係・言葉、外活34 へ接続 | P1 | 未 | 「Good night!」→ つき／たいよう／プレゼント |
+| p4.en.picture-book | えいごの えほん: オリジナルの4ページのお話をくり返し聞く | p4.en.words（推奨のみ） | 聞こえたページ 2択 → 3択 → さいしょの ページ 3択（絵の帯なし） | listen | 読 本6・問24 | ●●○ | − | 研 Horst 2011（同じ本のくり返し）、幼要 言葉（絵本） | P1 | 未 | 「Hello, dog! … Hello, cat!」→ さいごに聞こえたのは ねこ |
+| p4.en.where | かくれんぼ: in / on / under | p4.en.words | 2択 → 3択 | listen | 遊 場12 | ●●○ | − | 外56 へ接続（場所） | P2 | 未 | 「The cat is under the box.」 |
 
 ### 3.3 5歳（p5）
 
@@ -313,6 +322,11 @@
 | p5.env.predict | どうなるかな: 予想して結果を見る | − | 2択で予想 → 結果の絵 → おうちで試せる安全な例 | experiment | 探 場8 | ●●○ | − | 幼要解説（予想する・試す） | P2 | 未 | 「こいしを みずに いれると？」うく／しずむ |
 | p5.ja.letter-play | おてがみごっこ: 絵と文字で伝える | p5.hand.kana-trace | explain（採点しない） | explain | 記 問6 | ●−− | − | 幼要解説（文字を使う喜び） | P2 | 未 | 「だれに なにを つたえる？」 |
 | p5.math.money | おかね（硬貨で買い物） | − | − | − | − | − | − | 教C1 のみ | 外 | 未 | 公的資料（幼要・小要の調査範囲）に記述を確認できない（要確認） |
+| p5.en.phrases | かずと いろと もの: 2〜3語の句を聞いて絵を選ぶ | p4.en.colors-numbers（推奨のみ） | 1語 4択 → かず＋もの 4択 → かず＋いろ＋ボール 4択 | listen | 遊 生130 | ●●○ | − | 外活34 聞く へ接続、調査 3 | P1 | 未 | 「Three apples.」→ りんご3こ／2こ／ボール3こ／ボール2こ |
+| p5.en.shop | おみせやさん: 注文を聞いて品物を渡す、決まった返しを親子で言う | p4.en.words（推奨のみ） | 品物 4択 → かず＋品物 4択 → まぜて（Can I have 〜?） | listen | 遊 生90 | ●●○ | − | 幼要 人間関係（ごっこ）、調査 1.2（JME） | P1 | 未 | 「Two bananas, please.」→ バナナ2本 …「Here you are.」「Thank you!」 |
+| p5.en.picture-book | えいごの えほん（6ページ） | p4.en.picture-book | 聞こえたページ 4択 → さいしょ・さいご 4択 | listen | 読 本4・問24 | ●●○ | − | 研 Horst 2011 | P2 | 未 | − |
+| p5.en.first-sound | おなじ おと: 同じ音で始まる絵（聞くだけ中心） | p4.en.words | 3択 | listen | 遊 語20 | ●●○ | − | 調査 1.4（5歳で頭韻の判別） | P2 | 未 | 「ball … bus」→ バス／ねこ／りんご |
+| p5.en.abc | ABC: 文字の名前を聞いて大文字を選ぶ（既定で非表示、保護者が開く） | − | 3択 → 4択（形・音の似た字） | listen | 知 項26 | ●●○ | − | 外活34（文字の名前を聞いて分かる）の前段階、文科省 Q&A | P2 | 未 | 「B（2回）」→ B／D／P |
 
 ### 3.4 小学1年（g1）
 
@@ -859,7 +873,7 @@
 | 書く・聞く | − | − | letter-play | listen, write-order | write-structure | write-reasons | write-report, info-compare | write-fact-opinion | write-opinion, info-relations |
 | 科学的探究 | daily-life | seasons | predict | life.seasons, plant-diary | life.animals | 比較: living-things, magnets, circuits, sun-ground | 関係付け: air-water, current, weather, moon-stars | 条件制御: pendulum, dissolve, germination, weather-change | 多面的: lever, combustion, moon-sun, electricity-use |
 | 地図・社会 | − | − | − | position, life.school-safety | life.town | map-symbols, shop-work, city-changes | prefectures, water-waste, disaster | land, food, industry | politics, history-1〜3, world |
-| 英語 | − | − | − | − | − | greetings, numbers-colors, alphabet-upper | alphabet-lower, time-days | letters-write, listen-self, read-words, word-order | past, places, sentence-write |
+| 英語 | words（, move） | words, colors-numbers, move, hello, picture-book（, where） | phrases, shop（, picture-book, first-sound, abc） | − | − | greetings, numbers-colors, alphabet-upper | alphabet-lower, time-days | letters-write, listen-self, read-words, word-order | past, places, sentence-write |
 | 手順と論理 | daily-life（2つの順） | pattern, road, memory | pattern, prog.steps | prog.sequence, condition | prog.repeat, debug | condition-combo, decompose | prefecture-finder, draw-shapes | polygon, debug-plan | sensor, efficient |
 
 ### 5.2 主な前提の鎖（さかのぼりの経路）
@@ -941,6 +955,7 @@
 | sci-g56 | g5: pendulum, dissolve, germination, weather-change／g6: lever, combustion, moon-sun, electricity-use／P2: g5 electromagnet, birth, flowing-water, g6 solutions, body, plant-water, ecosystem, strata | 8 | experiment（シミュレーション）, graph | B6, B7 |
 | soc-g34 | g3: map-symbols, shop-work, city-changes／g4: prefectures, water-waste, disaster／P2: g3 safety, g4 tradition | 6 | map, order, graph, reading | B5, B6, B1 |
 | soc-g56 | g5: land, food, industry／g6: politics, history-1, history-2, history-3, world／P2: g5 information, environment | 8 | map, graph, reading, order | B5, B6 |
+| en-pre | p23: words／p4: words, colors-numbers, move, hello, picture-book／p5: phrases, shop／P2: p23 move, p4 where, p5 picture-book, first-sound, abc | 8 | listen | B3（英語音声）、コア同梱 |
 | en-g34 | g3: greetings, numbers-colors, alphabet-upper／g4: alphabet-lower, time-days／P2: g3 likes, g4 want, directions | 5 | listen, match | B3（英語音声） |
 | en-g56 | g5: letters-write, listen-self, read-words, word-order／g6: past, places, sentence-write／P2: g5 where, g6 future | 7 | listen, match, build, trace | B3 |
 | prog-g16 | g1: sequence, condition／g2: repeat, debug／g3: condition-combo, decompose／g4: prefecture-finder, draw-shapes／g5: polygon, debug-plan／g6: sensor, efficient | 12 | program | g4.soc・g5.math・g6.sci と連携 |
@@ -953,16 +968,16 @@
 
 ## 8. 単元数（学年 × 教科、P1／P2／対象外）
 
-2026-10-24 時点、全328単元（状態はすべて未実装）。「国語」には漢字の読み・書きの2単元を含む。
+2026-10-24 時点、全328単元（状態はすべて未実装）。幼児の英語（en）を足して、2026-10-30 時点で全341単元。「国語」には漢字の読み・書きの2単元を含む。
 
 **幼児**
 
-| 段階 | ことば・もじ ja | かず・かたち math | かんがえる think | みのまわり env | て・うんぴつ hand | てじゅん prog | 計 P1／P2／外 |
-|---|---|---|---|---|---|---|---|
-| 2〜3歳 p23 | 2／2／0 | 3／1／0 | 1／2／0 | 1／0／0 | 1／0／0 | − | **8／5／0**（13） |
-| 4歳 p4 | 3／1／0 | 4／0／0 | 4／0／0 | 0／2／0 | 1／1／0 | − | **12／4／0**（16） |
-| 5歳 p5 | 4／2／0 | 6／0／1 | 1／1／0 | 0／1／0 | 1／1／0 | 1／0／0 | **13／5／1**（19） |
-| 幼児計 | 9／5／0 | 13／1／1 | 6／3／0 | 1／3／0 | 3／2／0 | 1／0／0 | **33／14／1**（48） |
+| 段階 | ことば・もじ ja | かず・かたち math | かんがえる think | みのまわり env | て・うんぴつ hand | てじゅん prog | えいご en | 計 P1／P2／外 |
+|---|---|---|---|---|---|---|---|---|
+| 2〜3歳 p23 | 2／2／0 | 3／1／0 | 1／2／0 | 1／0／0 | 1／0／0 | − | 1／1／0 | **9／6／0**（15） |
+| 4歳 p4 | 3／1／0 | 4／0／0 | 4／0／0 | 0／2／0 | 1／1／0 | − | 5／1／0 | **17／5／0**（22） |
+| 5歳 p5 | 4／2／0 | 6／0／1 | 1／1／0 | 0／1／0 | 1／1／0 | 1／0／0 | 2／3／0 | **15／8／1**（24） |
+| 幼児計 | 9／5／0 | 13／1／1 | 6／3／0 | 1／3／0 | 3／2／0 | 1／0／0 | 8／5／0 | **41／19／1**（61） |
 
 **小学校**
 
@@ -976,7 +991,7 @@
 | 小6 | 8／1／1 | 13／1／0 | − | 4／5／0 | 5／0／0 | 3／1／1 | 2／0／1 | **35／8／3**（46） |
 | 小学校計 | 62／10／9 | 96／6／0 | 6／3／2 | 16／15／1 | 14／4／2 | 12／5／4 | 12／0／1 | **218／43／19**（280） |
 
-**全体: P1 251／P2 57／対象外 20（328単元）**。対象外の内訳: 話す・音読・話し合いの評価（国語6、英語4）、書写の姿勢・毛筆・タイピング（3）、実物が本体（生活2、理科1）、地域依存（社会2）、お金（5歳、根拠未確認）、生成AI（次期の内容）。
+**全体: P1 259／P2 62／対象外 20（341単元）**（幼児の英語を足した。幼児計は 41／19／1（61））。対象外の内訳: 話す・音読・話し合いの評価（国語6、英語4）、書写の姿勢・毛筆・タイピング（3）、実物が本体（生活2、理科1）、地域依存（社会2）、お金（5歳、根拠未確認）、生成AI（次期の内容）。
 
 ---
 
@@ -997,6 +1012,7 @@
 | 11 | 英語の音声 | 人の録音か品質確認済みの合成音声（1.7、2.3） | 録音の調達と権利、合成音声の品質の基準 |
 | 12 | 歴史の区切り | g6.soc.history-1〜3 の3単元 | 指導要領 社6(2) の内容の取扱いの事項との対応を確認していない |
 | 13 | 都道府県・世界の地図データ | B5 で出典を明示した地図を用意 | 地図の出典・ライセンスの選定 |
+| 14 | 幼児の英語（en-pre） | ホームの入口は右の列の一番下、2歳段階は出さない（p2-design/preschool-english.md） | 目標は親しむ・気づく・興味で、英語力の習得をうたわない。2歳段階の画面学習の根拠が最も弱い |
 
 ---
 

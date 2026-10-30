@@ -43,6 +43,7 @@ export function metaOf(packId: string, u: UnitSpec): UnitMeta {
   return {
     ...(src.kind === 'legacy' ? { legacy: src.legacy } : {}),
     ...(u.hiddenByDefault ? { hiddenByDefault: true } : {}),
+    ...(u.parentNote ? { parentNote: u.parentNote } : {}),
     id: u.id,
     pack: packId,
     title: u.title,

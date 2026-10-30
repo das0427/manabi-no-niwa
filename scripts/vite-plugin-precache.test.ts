@@ -4,9 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  CORE_PACK_IDS,
   CSP,
   computeVersion,
   finalizeDist,
+  isCorePack,
   isExcluded,
   listDistFiles,
   precachePlugin,
@@ -30,6 +32,17 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
+});
+
+describe('コアに同梱するパック', () => {
+  it('幼児のパック（p23・p4・p5）と幼児の英語（en-pre）はコア。小学生のパックは違う', () => {
+    for (const id of ['p23', 'p4', 'p5', 'en-pre']) {
+      expect(CORE_PACK_IDS).toContain(id);
+      expect(isCorePack(id)).toBe(true);
+    }
+    expect(isCorePack('en-g34')).toBe(false);
+    expect(isCorePack('g3-math')).toBe(false);
+  });
 });
 
 describe('listDistFiles', () => {

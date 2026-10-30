@@ -168,7 +168,7 @@ type Verdict =
 ## 6. 教材パック（packs/）と取得（X-OF-01〜04）
 
 ### 6.1 パックの範囲（R#20）
-- **幼児（toddler/p4/p5）の教材はコアに同梱**する（パックにしない）。初回のオフライン準備で必ずそろう。
+- **幼児（toddler/p4/p5）の教材はコアに同梱**する（パックにしない）。初回のオフライン準備で必ずそろう。コアに同梱するパックは `scripts/vite-plugin-precache.ts` の `CORE_PACK_IDS`（p23・p4・p5・**en-pre**（幼児向けの英語。p2-design/preschool-english.md）と見本のコア用）。英語の mp3（`public/audio/en/`）は `audio/<packId>/` ではないのでコアに入る。
 - 小学生の教材だけをパックにする。パック = 学年×教科（例 `g3-sansu`, `g3-kokugo`）。packId に '@' を使わない（R#26）。
 - `packs/<packId>/index.ts` が `PackContent = { units: Record<unitId, UnitContent> }` を default export。UnitContent は手作り問題の配列か、生成器（`generate(level, seed, count) → Item[]`）。
 

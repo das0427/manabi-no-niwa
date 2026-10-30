@@ -7,6 +7,10 @@
  *   押せなくなったままにしない。
  * - 「もういちど きく」の札はいつでも押せる（止めてから最初から鳴らす）。
  * - 判定・検査は choice と同じ（正解1つ、または「すべて選ぶ」の集合一致）。
+ * - 幼児の英語向けの拡張（省略可。ないときは今までどおり）:
+ *     nameBack … 選択肢を触ると、その選択肢の sound（名前）を鳴らしてから答える
+ *     replay … 不正解の後・ヒントを出した後に、問題の音声をもう一度鳴らす
+ *     revealAudio … 正答を見せるとき（解説）に1回だけ鳴らす音声
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { audio } from '../../core/audio/index';
@@ -48,7 +52,18 @@ export interface ListenItem extends ItemBase {
   layout?: 'row' | 'grid' | 'column';
   /** 正答を見せるときも音声の文を出さない */
   hideTranscript?: boolean;
+  /** 選択肢を触ると、その選択肢の sound を鳴らしてから答える（幼児の英語）。multi とは併用できない */
+  nameBack?: boolean;
+  /** 不正解の後・ヒントを出した後に、問題の音声をもう一度鳴らす */
+  replay?: { afterWrong?: boolean; onHint?: boolean };
+  /** 正答を見せるとき（解説）に1回だけ鳴らす音声。日本語の文（key なし）と英語（key あり）を混ぜてよい */
+  revealAudio?: ListenSound[];
 }
+
+/** 名前を返す音声が終わらないときの打ち切り（音が出ない環境。ミリ秒） */
+export const NAME_BACK_SILENT_MS = 1500;
+/** 音が出る環境での、名前を返す音声の安全な打ち切り（ミリ秒） */
+export const NAME_BACK_MAX_MS = 5000;
 
 /** 答え: 選んだ選択肢の番号（multi は複数） */
 export type ListenResponse = ChoiceResponse;
@@ -96,6 +111,21 @@ export function checkListen(item: ListenItem): string[] {
   }
   if (item.gapMs !== undefined && (item.gapMs < 0 || item.gapMs > 5000))
     errs.push('gapMs は 0〜5000');
+  const checkSound = (s: ListenSound, where: string) => {
+    if (!s.text.trim()) errs.push(`${where}の文が空`);
+    if (s.key !== undefined && !KEY_RE.test(s.key))
+      errs.push(`${where}の音声キー ${s.key} に使えない文字がある（a-z 0-9 . _ - /）`);
+    if (s.key === undefined && /[A-Za-z]/.test(plainText(s.text)))
+      errs.push(`英字を含む${where}「${plainText(s.text)}」は key（録音の mp3）を指定する`);
+  };
+  for (const s of item.revealAudio ?? []) checkSound(s, '答えの後の音声');
+  if (item.nameBack) {
+    if (item.multi) errs.push('nameBack は multi と併用できない');
+    item.options.forEach((o, i) => {
+      if (!o.sound) errs.push(`nameBack の選択肢 ${i + 1} に sound が無い`);
+      else checkSound(o.sound, `選択肢 ${i + 1} の sound`);
+    });
+  }
   return errs;
 }
 
@@ -126,10 +156,12 @@ function whenQuiet(cb: () => void): () => void {
   };
 }
 
-function ListenView({ item, ctx, revealed, wrongMark, disabled, submit }: Props) {
+function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsShown }: Props) {
   /** 最初の再生が終わった（選択肢を押せる） */
   const [heard, setHeard] = useState(false);
   const [playing, setPlaying] = useState(false);
+  /** nameBack: 名前を鳴らしている選択肢（その間は他を押せない） */
+  const [pressed, setPressed] = useState<number | null>(null);
   const alive = useRef(true);
   const seq = useMemo(() => listenSeq(item, ctx.packId), [item, ctx.packId]);
 
@@ -152,6 +184,62 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit }: Props)
       cancel();
     };
   }, [play]);
+
+  // 聞き直し: 不正解の後（実行枠の日本語の声かけが終わってから）・ヒントを出した後（ヒントの読み上げが終わってから）。
+  // 不正解は同時にヒントの段も進めるので、同じ変化で2回鳴らさない
+  const prev = useRef({ wrong: wrongMark, hints: hintsShown ?? 0 });
+  useEffect(() => {
+    const p = prev.current;
+    prev.current = { wrong: wrongMark, hints: hintsShown ?? 0 };
+    if (revealed || !item.replay) return;
+    const wrongNew = wrongMark != null && wrongMark !== p.wrong;
+    const hintNew = (hintsShown ?? 0) > p.hints;
+    if ((wrongNew && item.replay.afterWrong) || (hintNew && !wrongNew && item.replay.onHint))
+      return whenQuiet(play);
+    return undefined;
+  }, [wrongMark, hintsShown, revealed, item.replay, play]);
+
+  // 答えの後の音声: 正答を見せるとき1回だけ（再レンダーで鳴らし直さない）。次へ進むときは止める
+  const revealStarted = useRef(false);
+  useEffect(() => {
+    if (!revealed || !item.revealAudio?.length || revealStarted.current) return;
+    const rseq = listenSeq({ audio: item.revealAudio, gapMs: item.gapMs }, ctx.packId);
+    const cancel = whenQuiet(() => {
+      revealStarted.current = true;
+      void audio.play(rseq);
+    });
+    return () => {
+      cancel();
+      if (revealStarted.current) audio.stop();
+    };
+  }, [revealed, item.revealAudio, item.gapMs, ctx.packId]);
+
+  // 名前を返す: 触った選択肢の名前を鳴らし、鳴り終わってから答える
+  const onPress = useCallback(
+    (i: number, send: (r: ChoiceResponse) => void) => {
+      const sound = item.options[i]?.sound;
+      if (!sound) {
+        send([i]);
+        return;
+      }
+      setPressed(i);
+      const st = audio.getState();
+      const limit = !st.unlocked || st.health === 'silent' ? NAME_BACK_SILENT_MS : NAME_BACK_MAX_MS;
+      let done = false;
+      let timer = 0;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        window.clearTimeout(timer);
+        if (!alive.current) return;
+        setPressed(null);
+        send([i]);
+      };
+      timer = window.setTimeout(finish, limit);
+      void audio.play(soundSeq(ctx.packId, sound)).then(finish, finish);
+    },
+    [item.options, ctx.packId],
+  );
 
   const sounds = soundsOf(item);
   return (
@@ -185,8 +273,9 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit }: Props)
         ctx={ctx}
         revealed={revealed}
         wrongMark={wrongMark}
-        locked={disabled || !heard}
+        locked={disabled || !heard || pressed !== null}
         submit={submit}
+        {...(item.nameBack ? { onPress, pressed } : {})}
       />
     </div>
   );

@@ -5,6 +5,7 @@ import {
   draftOf,
   flowReducer,
   initialFlow,
+  playsWrongSfx,
   restoreFlow,
   type FlowDraft,
 } from './unitFlow';
@@ -94,5 +95,15 @@ describe('単元の流れ', () => {
     s = flowReducer(s, { type: 'judged', j: { result: 'correct' } });
     expect(flowReducer(s, { type: 'judged', j: { result: 'wrong' } })).toBe(s);
     expect(flowReducer(s, { type: 'hint' })).toBe(s);
+  });
+});
+
+describe('不正解の効果音', () => {
+  it('ふつうは鳴らす。2歳段階（soft）と gentleJudgement の単元は鳴らさない', () => {
+    expect(playsWrongSfx(false)).toBe(true);
+    expect(playsWrongSfx(false, false)).toBe(true);
+    expect(playsWrongSfx(true)).toBe(false);
+    expect(playsWrongSfx(false, true)).toBe(false);
+    expect(playsWrongSfx(true, true)).toBe(false);
   });
 });

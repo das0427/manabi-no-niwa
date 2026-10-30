@@ -1,7 +1,9 @@
 /** 保護者画面の共通部品（表示用の整形・ダウンロード・読み込み） */
 import { useCallback, useEffect, useState } from 'react';
 import type { ModeId, Outcome } from '../core/types';
+import { unitMeta } from '../curriculum/unitIndex';
 import { MODES } from '../modes/registry';
+import { plainText } from '../text/rich';
 
 /**
  * アプリの版。package.json の version をビルド時に埋め込む（vite.config.ts の define）。
@@ -19,7 +21,11 @@ export const OUTCOME_LABEL: Record<Outcome, string> = {
 };
 
 export function modeTitle(id: ModeId | 'unit', unitId?: string): string {
-  if (id === 'unit') return unitId ?? 'たんげん';
+  if (id === 'unit') {
+    // 単元は索引の題名（ふりがなの記号を除く）。索引に無い単元（取得前のパック等）は ID のまま
+    const m = unitId ? unitMeta(unitId) : undefined;
+    return m ? plainText(m.title) : (unitId ?? 'たんげん');
+  }
   return MODES.find((m) => m.id === id)?.title.replace(/\s+/g, '') ?? id;
 }
 
@@ -28,6 +34,12 @@ const pad = (n: number): string => String(n).padStart(2, '0');
 export function formatDateTime(ts: number): string {
   const d = new Date(ts);
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** 年月日（年をまたぐ記録があるため年も出す） */
+export function formatDate(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 export function formatIso(iso: string): string {

@@ -2,7 +2,12 @@
 import type { PackContent } from '../../curriculum/types';
 import { compareUnit } from './compare';
 import { dailyLife } from './daily-life';
+import { firstSound } from './first-sound';
 import { linesUnit } from './lines';
+import { peekaboo } from './peekaboo';
+import { pictureBook } from './picture-book';
+import { puzzle2 } from './puzzle2';
+import { roadUnit } from './road';
 import { shapeMatch } from './shape-match';
 import { shopUnit } from './shop';
 import { sortUnit } from './sort';
@@ -11,6 +16,20 @@ import { wordListen } from './word-listen';
 
 const pack: PackContent = {
   packId: 'p23',
-  units: [shapeMatch, sortUnit, compareUnit, shopUnit, wordListen, soundPlay, dailyLife, linesUnit],
+  units: [
+    shapeMatch,
+    sortUnit,
+    compareUnit,
+    shopUnit,
+    wordListen,
+    soundPlay,
+    dailyLife,
+    linesUnit,
+    firstSound,
+    peekaboo,
+    puzzle2,
+    roadUnit,
+    pictureBook,
+  ],
 };
 export default pack;

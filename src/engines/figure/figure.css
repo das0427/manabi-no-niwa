@@ -3,6 +3,13 @@
   font-weight: 700;
   color: var(--ink);
   text-align: center;
+  max-width: 100%;
+  /* 語の途中で折らない: 空白（全角・半角）のところで折り返す（DESINGN.md 17章） */
+  word-break: keep-all;
+  /* 空白の無い長い文でも、はみ出す前に どこでも折る */
+  overflow-wrap: anywhere;
+  /* 行が短くなりすぎないよう行末をそろえる（対応しない環境では無視される） */
+  text-wrap: pretty;
 }
 .fig-text--m {
   font-size: calc(var(--u) * 3.6);

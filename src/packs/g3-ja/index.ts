@@ -8,6 +8,8 @@ import { proverbs } from './proverbs';
 import { readParagraphs } from './read-paragraphs';
 import { readCharacter } from './read-character';
 import { writeReasons } from './write-reasons';
+import { haiku } from './haiku';
+import { listenMemo } from './listen-memo';
 
 const pack: PackContent = {
   packId: 'g3-ja',
@@ -21,6 +23,8 @@ const pack: PackContent = {
     readParagraphs,
     readCharacter,
     writeReasons,
+    haiku,
+    listenMemo,
   ],
 };
 

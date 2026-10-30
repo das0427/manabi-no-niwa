@@ -7,12 +7,16 @@ import { kanaReadAll } from './kana-read-all';
 import { kanaTrace } from './kana-trace';
 import { katakanaRead } from './katakana-read';
 import { katakanaTrace } from './katakana-trace';
+import { letterPlay } from './letter-play';
 import { measureCompare } from './measure-compare';
 import { numbers10 } from './numbers-10';
 import { patternUnit } from './pattern';
+import { envPredict } from './predict';
 import { shapesUnit } from './shapes';
+import { smallKana } from './small-kana';
 import { stepsUnit } from './steps';
 import { storyListen } from './story-listen';
+import { thinkWhy } from './why';
 import { wordBuild } from './word-build';
 
 const pack: PackContent = {
@@ -32,6 +36,10 @@ const pack: PackContent = {
     storyListen,
     kanaTrace,
     katakanaTrace,
+    smallKana,
+    thinkWhy,
+    envPredict,
+    letterPlay,
   ],
 };
 export default pack;

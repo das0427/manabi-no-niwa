@@ -7,6 +7,8 @@ import { readGist } from './read-gist';
 import { readRelations } from './read-relations';
 import { textFigure } from './text-figure';
 import { writeFactOpinion } from './write-fact-opinion';
+import { spokenWritten } from './spoken-written';
+import { classics } from './classics';
 
 const pack: PackContent = {
   packId: 'g5-ja',
@@ -19,6 +21,8 @@ const pack: PackContent = {
     readRelations,
     textFigure,
     writeFactOpinion,
+    spokenWritten,
+    classics,
   ],
 };
 

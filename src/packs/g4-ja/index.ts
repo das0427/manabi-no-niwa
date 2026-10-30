@@ -1,5 +1,6 @@
 import type { PackContent } from '../../curriculum/types';
 import { okurigana } from './okurigana';
+import { tanka } from './tanka';
 import { idioms } from './idioms';
 import { plainPoliteStyle } from './plain-polite-style';
 import { infoCompare } from './info-compare';
@@ -9,7 +10,16 @@ import { writeReport } from './write-report';
 
 const pack: PackContent = {
   packId: 'g4-ja',
-  units: [okurigana, idioms, plainPoliteStyle, infoCompare, readSummary, readFeelings, writeReport],
+  units: [
+    okurigana,
+    idioms,
+    plainPoliteStyle,
+    infoCompare,
+    readSummary,
+    readFeelings,
+    writeReport,
+    tanka,
+  ],
 };
 
 export default pack;

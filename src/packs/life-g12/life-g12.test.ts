@@ -191,4 +191,83 @@ describe('life-g12 の教材検査（curriculum-matrix 1.8）', () => {
       }
     }
   });
+
+  it('P2 の3単元（public・home・tell）の量・優先・内容', () => {
+    const unitOf = (id: string) => pack.units.find((u) => u.id === id)!;
+    const itemsOf = (id: string): Item[] => {
+      const u = unitOf(id);
+      if (u.source.kind !== 'items') throw new Error(id);
+      return u.source.items;
+    };
+    const expected: Record<string, [number, number, number]> = {
+      'g1.life.public': [30, 1.25, 3],
+      'g1.life.home': [18, 3, 2],
+      'g2.life.tell': [30, 1.25, 3],
+    };
+    for (const [id, [distinct, q, c]] of Object.entries(expected)) {
+      const u = unitOf(id);
+      expect(u.priority, id).toBe('P2');
+      expect(u.status, id).toBe('ready');
+      const r = checkUnit(u);
+      expect(isReady(r), id).toBe(true);
+      expect(r.distinct, id).toBe(distinct);
+      expect(r.q, id).toBeCloseTo(q, 2);
+      expect(r.c, id).toEqual([c, c]);
+      // 誤りの選択肢はすべて誤概念つき（汎用誤答 0%）
+      for (const it of itemsOf(id))
+        if (it.engine === 'choice')
+          for (const o of it.options)
+            if (!o.correct) expect(o.misconception, `${id} ${it.id}`).toBeTruthy();
+    }
+    const optionTexts = (it: Item) => {
+      if (it.engine !== 'choice') return [];
+      return it.options.map((o) => {
+        const l = it.prompt.split('\n').find((x) => x.startsWith(`${o.label}：`));
+        return {
+          text: l ? l.slice((o.label ?? '').length + 1) : (o.label ?? ''),
+          correct: !!o.correct,
+        };
+      });
+    };
+    const pick = (uid: string, iid: string) => itemsOf(uid).find((x) => x.id === iid)!;
+    // こわれた遊具は、子供が直す・乗るを正解にしない
+    expect(
+      optionTexts(pick('g1.life.public', 'use-broken')).find((o) => o.correct)?.text,
+    ).toContain('おとな');
+    expect(optionTexts(pick('g1.life.public', 'sup-fix')).find((o) => o.correct)?.text).not.toBe(
+      'こどもが じぶんで なおす',
+    );
+    // home: 家族の形を決めつけない・火やはものを勧めない
+    const home = unitOf('g1.life.home');
+    const homeTexts = [
+      home.title,
+      ...home.intro.map((x) => x.text),
+      ...home.objectives.map((o) => o.title),
+      ...home.misconceptions.map((m) => m.explain),
+      ...itemsOf('g1.life.home').flatMap((it) => textsOf(it)),
+    ];
+    for (const t of homeTexts) {
+      expect(t).not.toMatch(/おかあさん|おとうさん|ママ|パパ/);
+      expect(t).not.toMatch(/ほうちょう|ひを つかう/);
+    }
+    // home: explain の理由は 3つ以下（4つ目以降は切られる）
+    for (const it of itemsOf('g1.life.home'))
+      if (it.engine === 'explain' && it.reasons)
+        expect(it.reasons.length, it.id).toBeLessThanOrEqual(3);
+    // tell: 手紙の問題は 図に「おばあちゃんへ」・3つのボタン・正解は「かいた ひと」
+    const letter = pick('g2.life.tell', 'man-alt-letter');
+    expect(JSON.stringify(letter.figure)).toContain('おばあちゃんへ');
+    if (letter.engine !== 'choice') throw new Error('man-alt-letter');
+    expect(letter.options.length).toBe(3);
+    expect(letter.options.find((o) => o.correct)?.label).toBe('かいた ひと');
+    // レビューで直した文: 「子と」を かなで「こと」と書かない・問題の順に よる「こんどは」を使わない
+    const publicTexts = itemsOf('g1.life.public').flatMap((it) => textsOf(it));
+    for (const t of publicTexts) expect(t).not.toMatch(/くる こと ぶつか|きまりの ひ|こんどは/);
+    // tell（小2）は 手紙・電話 を 漢字《よみ》で そろえる
+    const tellTexts = itemsOf('g2.life.tell').flatMap((it) => [
+      ...textsOf(it),
+      ...(it.engine === 'choice' ? it.options.map((o) => o.label ?? '') : []),
+    ]);
+    for (const t of tellTexts) expect(t.replace(/《[^》]*》/g, '')).not.toMatch(/てがみ|でんわ/);
+  });
 });

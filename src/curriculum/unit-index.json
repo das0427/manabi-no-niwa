@@ -1,5 +1,18 @@
 [
   {
+    "id": "g1.ja.folktales",
+    "pack": "g1-ja",
+    "title": "むかしばなしを きこう",
+    "stage": "g1",
+    "subject": "ja",
+    "domain": "yomu",
+    "icon": "book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g1.ja.hiragana-read",
     "pack": "g1-ja",
     "title": "ひらがなを よもう",
@@ -191,6 +204,21 @@
     "engine": "sort"
   },
   {
+    "id": "g1.ja.word-play",
+    "pack": "g1-ja",
+    "title": "ことばあそび",
+    "stage": "g1",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "music-note",
+    "prereq": [
+      "p4.ja.word-play"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g1.ja.write-order",
     "pack": "g1-ja",
     "title": "じゅんじょよく かこう",
@@ -206,6 +234,19 @@
     "engine": "order"
   },
   {
+    "id": "g1.life.home",
+    "pack": "life-g12",
+    "title": "おうちで できる こと",
+    "stage": "g1",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "explain"
+  },
+  {
     "id": "g1.life.plant-diary",
     "pack": "life-g12",
     "title": "そだてて いる しょくぶつ",
@@ -217,6 +258,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "explain"
+  },
+  {
+    "id": "g1.life.public",
+    "pack": "life-g12",
+    "title": "みんなで つかう もの・ばしょ",
+    "stage": "g1",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g1.life.school-safety",
@@ -513,6 +567,21 @@
     "engine": "order"
   },
   {
+    "id": "g2.ja.culture",
+    "pack": "g2-ja",
+    "title": "むかしばなしと ことばあそび",
+    "stage": "g2",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "p23-book",
+    "prereq": [
+      "g1.ja.word-play"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g2.ja.kanji-read-g2",
     "pack": "kanji-g12",
     "title": "かんじを よむ（2ねん）",
@@ -556,6 +625,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g2.ja.listen-notes",
+    "pack": "g2-ja",
+    "title": "きいて だいじな ことを えらぼう",
+    "stage": "g2",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [
+      "g1.ja.listen"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g2.ja.orthography",
@@ -687,6 +771,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "explain"
+  },
+  {
+    "id": "g2.life.tell",
+    "pack": "life-g12",
+    "title": "つたえ合《あ》おう",
+    "stage": "g2",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g2.life.town",
@@ -998,6 +1095,21 @@
     "engine": "listen"
   },
   {
+    "id": "g3.en.likes",
+    "pack": "en-g34",
+    "title": "すきな もの",
+    "stage": "g3",
+    "subject": "en",
+    "domain": "en",
+    "icon": "strawberry",
+    "prereq": [
+      "g3.en.greetings"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g3.en.numbers-colors",
     "pack": "en-g34",
     "title": "かず・いろ・かたち",
@@ -1022,6 +1134,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "order"
+  },
+  {
+    "id": "g3.ja.haiku",
+    "pack": "g3-ja",
+    "title": "俳句《はいく》を楽《たの》しもう",
+    "stage": "g3",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "leaf",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g3.ja.kanji-parts",
@@ -1067,6 +1192,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
+  },
+  {
+    "id": "g3.ja.listen-memo",
+    "pack": "g3-ja",
+    "title": "聞《き》いてメモしよう",
+    "stage": "g3",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [
+      "g2.ja.listen-notes"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g3.ja.modifiers",
@@ -1166,6 +1306,21 @@
       "g2.ja.write-structure"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g3.math.abacus",
+    "pack": "g3-math",
+    "title": "そろばん",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "subj-sansu",
+    "prereq": [
+      "g3.math.large-numbers"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -1455,6 +1610,19 @@
     "engine": "experiment"
   },
   {
+    "id": "g3.sci.light-sound",
+    "pack": "sci-g34",
+    "title": "光《ひかり》と 音《おと》",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g3.sci.living-things",
     "pack": "sci-g34",
     "title": "みのまわりの 生《い》き物《もの》",
@@ -1496,6 +1664,32 @@
     "engine": "choice"
   },
   {
+    "id": "g3.sci.weight",
+    "pack": "sci-g34",
+    "title": "ものと 重《おも》さ",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g3.sci.wind-rubber",
+    "pack": "sci-g34",
+    "title": "風《かぜ》と ゴムの 力《ちから》",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
     "id": "g3.soc.city-changes",
     "pack": "soc-g34",
     "title": "市《し》のうつりかわり",
@@ -1522,6 +1716,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "map"
+  },
+  {
+    "id": "g3.soc.safety",
+    "pack": "soc-g34",
+    "title": "まちの安全《あんぜん》を守《まも》るはたらき",
+    "stage": "g3",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g3.soc.shop-work",
@@ -1552,6 +1759,21 @@
     "engine": "listen"
   },
   {
+    "id": "g4.en.directions",
+    "pack": "en-g34",
+    "title": "道《みち》あんない",
+    "stage": "g4",
+    "subject": "en",
+    "domain": "en",
+    "icon": "mode-road",
+    "prereq": [
+      "g4.en.time-days"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g4.en.time-days",
     "pack": "en-g34",
     "title": "曜日《ようび》と じこく",
@@ -1563,6 +1785,21 @@
       "g3.en.numbers-colors"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "g4.en.want",
+    "pack": "en-g34",
+    "title": "ほしい もの（かいもの）",
+    "stage": "g4",
+    "subject": "en",
+    "domain": "en",
+    "icon": "mode-shopping",
+    "prereq": [
+      "g3.en.likes"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "listen"
   },
@@ -1687,6 +1924,21 @@
     "engine": "reading"
   },
   {
+    "id": "g4.ja.tanka",
+    "pack": "g4-ja",
+    "title": "短歌《たんか》の音読《おんどく》",
+    "stage": "g4",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "notebook",
+    "prereq": [
+      "g3.ja.haiku"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g4.ja.write-report",
     "pack": "g4-ja",
     "title": "調《しら》べたことのほうこく",
@@ -1700,6 +1952,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
+  },
+  {
+    "id": "g4.math.abacus",
+    "pack": "g4-math",
+    "title": "そろばん",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "subj-sansu",
+    "prereq": [
+      "g3.math.abacus"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g4.math.angle",
@@ -2016,6 +2283,19 @@
     "engine": "experiment"
   },
   {
+    "id": "g4.sci.body",
+    "pack": "sci-g34",
+    "title": "人《ひと》の 体《からだ》の つくりと 運動《うんどう》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g4.sci.current",
     "pack": "sci-g34",
     "title": "電流《でんりゅう》の はたらき",
@@ -2042,6 +2322,49 @@
       "g3.sci.sun-ground"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.rainwater",
+    "pack": "sci-g34",
+    "title": "雨水《あまみず》の ゆくえと 地面《じめん》の ようす",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.seasons-life",
+    "pack": "sci-g34",
+    "title": "季節《きせつ》と 生《い》き物《もの》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g3.sci.living-things"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g4.sci.temperature",
+    "pack": "sci-g34",
+    "title": "金《きん》ぞく・水《みず》・空気《くうき》と 温度《おんど》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.air-water"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "experiment"
   },
@@ -2089,6 +2412,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "map"
+  },
+  {
+    "id": "g4.soc.tradition",
+    "pack": "soc-g34",
+    "title": "地《ち》いきの伝統《でんとう》と先人《せんじん》の働《はたら》き",
+    "stage": "g4",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
   },
   {
     "id": "g4.soc.water-waste",
@@ -2149,6 +2485,21 @@
     "engine": "listen"
   },
   {
+    "id": "g5.en.where",
+    "pack": "en-g56",
+    "title": "どこに あるかを 聞《き》こう",
+    "stage": "g5",
+    "subject": "en",
+    "domain": "en",
+    "icon": "subj-eigo",
+    "prereq": [
+      "g5.en.listen-self"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g5.en.word-order",
     "pack": "en-g56",
     "title": "ことばの じゅんばん",
@@ -2162,6 +2513,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "build"
+  },
+  {
+    "id": "g5.ja.classics",
+    "pack": "g5-ja",
+    "title": "古文《こぶん》・漢文《かんぶん》の音読《おんどく》を聞《き》く",
+    "stage": "g5",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g5.ja.figurative",
@@ -2263,6 +2627,19 @@
       "g3.ja.modifiers"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g5.ja.spoken-written",
+    "pack": "g5-ja",
+    "title": "話《はな》し言葉《ことば》と書《か》き言葉《ことば》",
+    "stage": "g5",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "pencil",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -2416,6 +2793,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "number"
+  },
+  {
+    "id": "g5.math.expressions",
+    "pack": "g5-math",
+    "title": "□と ○の 式《しき》（数《かず》量《りょう》の 関係《かんけい》）",
+    "stage": "g5",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g4.math.change-relations"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "fill"
   },
   {
     "id": "g5.math.fraction-add-diff",
@@ -2631,6 +3023,19 @@
     "engine": "choice"
   },
   {
+    "id": "g5.sci.birth",
+    "pack": "sci-g56",
+    "title": "動物《どうぶつ》の たん生《じょう》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "order"
+  },
+  {
     "id": "g5.sci.dissolve",
     "pack": "sci-g56",
     "title": "物《もの》の とけ方《かた》",
@@ -2644,6 +3049,34 @@
     "priority": "P1",
     "status": "ready",
     "engine": "experiment"
+  },
+  {
+    "id": "g5.sci.electromagnet",
+    "pack": "sci-g56",
+    "title": "電流《でんりゅう》が つくる じ力《りょく》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.current"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g5.sci.flowing-water",
+    "pack": "sci-g56",
+    "title": "流《なが》れる 水《みず》の はたらきと 土地《とち》の 変化《へんか》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g5.sci.germination",
@@ -2691,6 +3124,21 @@
     "engine": "choice"
   },
   {
+    "id": "g5.soc.environment",
+    "pack": "soc-g56",
+    "title": "国土《こくど》の自然《しぜん》とくらし（災害《さいがい》・森林《しんりん》・公害《こうがい》）",
+    "stage": "g5",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [
+      "g5.soc.land"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
+  },
+  {
     "id": "g5.soc.food",
     "pack": "soc-g56",
     "title": "わたしたちの生活《せいかつ》と食料生産《しょくりょうせいさん》",
@@ -2723,6 +3171,19 @@
     "engine": "choice"
   },
   {
+    "id": "g5.soc.information",
+    "pack": "soc-g56",
+    "title": "産業《さんぎょう》と情報《じょうほう》（送《おく》り手《て》と受《う》け手《て》）",
+    "stage": "g5",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
+  },
+  {
     "id": "g5.soc.land",
     "pack": "soc-g56",
     "title": "日本《にっぽん》の国土《こくど》",
@@ -2736,6 +3197,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g6.en.future",
+    "pack": "en-g56",
+    "title": "したい こと・なりたい ものを 聞《き》こう",
+    "stage": "g6",
+    "subject": "en",
+    "domain": "en",
+    "icon": "subj-eigo",
+    "prereq": [
+      "g6.en.past"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g6.en.past",
@@ -2856,6 +3332,19 @@
     "engine": "trace"
   },
   {
+    "id": "g6.ja.language-change",
+    "pack": "g6-ja",
+    "title": "方言《ほうげん》と共通語《きょうつうご》、言葉《ことば》の変化《へんか》と由来《ゆらい》",
+    "stage": "g6",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "match"
+  },
+  {
     "id": "g6.ja.read-argument",
     "pack": "g6-ja",
     "title": "筆者《ひっしゃ》の主張《しゅちょう》と根拠《こんきょ》",
@@ -2899,6 +3388,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "order"
+  },
+  {
+    "id": "g6.math.approx-area",
+    "pack": "g6-math",
+    "title": "およその 形《かたち》と 面積《めんせき》",
+    "stage": "g6",
+    "subject": "math",
+    "domain": "B-shape",
+    "icon": "leaf",
+    "prereq": [
+      "g6.math.circle-area"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "geometry"
   },
   {
     "id": "g6.math.circle-area",
@@ -3128,6 +3632,21 @@
     "engine": "choice"
   },
   {
+    "id": "g6.sci.body",
+    "pack": "sci-g56",
+    "title": "人《ひと》の 体《からだ》の つくりと 働《はたら》き",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.body"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g6.sci.combustion",
     "pack": "sci-g56",
     "title": "物《もの》の 燃《も》え方《かた》",
@@ -3137,6 +3656,19 @@
     "icon": "subj-rika",
     "prereq": [],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.ecosystem",
+    "pack": "sci-g56",
+    "title": "生物《せいぶつ》と かん境《きょう》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -3182,6 +3714,49 @@
       "g4.sci.moon-stars"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.plant-water",
+    "pack": "sci-g56",
+    "title": "植物《しょくぶつ》の 養分《ようぶん》と 水《みず》の 通《とお》り道《みち》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g5.sci.germination"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g6.sci.solutions",
+    "pack": "sci-g56",
+    "title": "水《すい》よう液《えき》の 性質《せいしつ》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.strata",
+    "pack": "sci-g56",
+    "title": "土地《とち》の つくりと 変化《へんか》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g5.sci.flowing-water"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -3295,6 +3870,34 @@
     "engine": "legacy"
   },
   {
+    "id": "p23.ja.first-sound",
+    "pack": "p23",
+    "title": "はじめの おと",
+    "stage": "p23",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "strawberry",
+    "prereq": [
+      "p23.ja.word-listen"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "p23.ja.picture-book",
+    "pack": "p23",
+    "title": "えほん",
+    "stage": "p23",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p23-book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "p23.ja.sound-play",
     "pack": "p23",
     "title": "おとあそび",
@@ -3334,6 +3937,21 @@
     "engine": "choice"
   },
   {
+    "id": "p23.math.puzzle2",
+    "pack": "p23",
+    "title": "えあわせ",
+    "stage": "p23",
+    "subject": "math",
+    "domain": "play",
+    "icon": "p23-puz-apple-lslot",
+    "prereq": [
+      "p23.math.shape-match"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "p23.math.shape-match",
     "pack": "p23",
     "title": "かたちあわせ",
@@ -3360,6 +3978,32 @@
     "engine": "choice"
   },
   {
+    "id": "p23.think.peekaboo",
+    "pack": "p23",
+    "title": "どこかな",
+    "stage": "p23",
+    "subject": "think",
+    "domain": "play",
+    "icon": "p23-peek-rabbit-cup",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "p23.think.road",
+    "pack": "p23",
+    "title": "みち",
+    "stage": "p23",
+    "subject": "think",
+    "domain": "play",
+    "icon": "mode-road",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "p23.think.sort",
     "pack": "p23",
     "title": "わけてみよう",
@@ -3371,6 +4015,34 @@
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
+  },
+  {
+    "id": "p4.env.daily-order",
+    "pack": "p4",
+    "title": "くらしの じゅんばん",
+    "stage": "p4",
+    "subject": "env",
+    "domain": "play",
+    "icon": "p23-clock",
+    "prereq": [
+      "p23.env.daily-life"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "order"
+  },
+  {
+    "id": "p4.env.seasons",
+    "pack": "p4",
+    "title": "きせつと しぜん",
+    "stage": "p4",
+    "subject": "env",
+    "domain": "play",
+    "icon": "life-cherry",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "hiddenByDefault": true,
@@ -3476,6 +4148,21 @@
       "p4.ja.first-sound"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "p4.ja.story-listen",
+    "pack": "p4",
+    "title": "おはなしを きいて",
+    "stage": "p4",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p23-book",
+    "prereq": [
+      "p23.ja.word-listen"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "listen"
   },
@@ -3649,6 +4336,19 @@
     "engine": "legacy"
   },
   {
+    "id": "p5.env.predict",
+    "pack": "p5",
+    "title": "どう なるかな",
+    "stage": "p5",
+    "subject": "env",
+    "domain": "play",
+    "icon": "p5-ice",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "p5.hand.kana-trace",
     "pack": "p5",
     "title": "ひらがなを なぞる",
@@ -3708,6 +4408,36 @@
     "priority": "P1",
     "status": "ready",
     "engine": "match"
+  },
+  {
+    "id": "p5.ja.letter-play",
+    "pack": "p5",
+    "title": "おてがみ ごっこ",
+    "stage": "p5",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p5-letter",
+    "prereq": [
+      "p5.hand.kana-trace"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "explain"
+  },
+  {
+    "id": "p5.ja.small-kana",
+    "pack": "p5",
+    "title": "ちいさい じ・のばす おと",
+    "stage": "p5",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p5-stamp",
+    "prereq": [
+      "p5.ja.kana-read-all"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "p5.ja.story-listen",
@@ -3853,6 +4583,19 @@
       "p4.think.pattern"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "p5.think.why",
+    "pack": "p5",
+    "title": "どうしてかな",
+    "stage": "p5",
+    "subject": "think",
+    "domain": "play",
+    "icon": "p5-rain",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   }

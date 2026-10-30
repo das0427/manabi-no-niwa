@@ -1,4 +1,5 @@
 import type { PackContent } from '../../curriculum/types';
+import { abacus } from './abacus';
 import { addSubColumn } from './add-sub-column';
 import { barGraph } from './bar-graph';
 import { boxExpression } from './box-expression';
@@ -35,6 +36,7 @@ const pack: PackContent = {
     weight,
     time,
     barGraph,
+    abacus,
   ],
 };
 

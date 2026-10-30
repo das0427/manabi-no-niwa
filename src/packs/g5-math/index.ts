@@ -18,6 +18,7 @@ import { speed } from './speed';
 import { percent } from './percent';
 import { pieBand } from './pie-band';
 import { average } from './average';
+import { expressions } from './expressions';
 
 const pack: PackContent = {
   packId: 'g5-math',
@@ -41,6 +42,7 @@ const pack: PackContent = {
     percent,
     pieBand,
     average,
+    expressions,
   ],
 };
 

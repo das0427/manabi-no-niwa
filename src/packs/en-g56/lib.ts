@@ -38,6 +38,7 @@ export interface ListenSpec {
   objective: string;
   level: number;
   prompt: RichText;
+  figure?: Figure;
   audio: EnSound | EnSound[];
   gapMs?: number;
   options: ChoiceOption[];
@@ -57,6 +58,7 @@ export function listen(s: ListenSpec): ListenItem {
     objective: s.objective,
     level: s.level,
     prompt: s.prompt,
+    ...(s.figure ? { figure: s.figure } : {}),
     audio: s.audio,
     ...(s.gapMs !== undefined ? { gapMs: s.gapMs } : {}),
     options: s.options,

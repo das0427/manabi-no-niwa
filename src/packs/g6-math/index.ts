@@ -12,6 +12,7 @@ import { proportion } from './proportion';
 import { ratio } from './ratio';
 import { scale } from './scale';
 import { symmetry } from './symmetry';
+import { approxArea } from './approx-area';
 
 const pack: PackContent = {
   packId: 'g6-math',
@@ -29,6 +30,7 @@ const pack: PackContent = {
     representative,
     frequency,
     combinations,
+    approxArea,
   ],
 };
 

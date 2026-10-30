@@ -163,6 +163,31 @@
   font-size: 13px;
 }
 
+/* 開いて見る一覧（まえの きろく の1問ごとの記録など）。押す所はボタンと同じ 44px 以上 */
+.p-details {
+  margin: 12px 0;
+}
+
+.p-details > summary {
+  /* list-item のまま（開閉の三角を残す）。行の高さ 42px＋線 2px = 44px */
+  display: list-item;
+  line-height: 42px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--white));
+  border-radius: 6px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.p-details > summary:focus-visible {
+  outline: 2px solid var(--sky-dark);
+  outline-offset: 1px;
+}
+
+.p-details[open] > summary {
+  margin-bottom: 8px;
+}
+
 .p-error {
   color: var(--berry);
 }

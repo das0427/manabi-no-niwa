@@ -22,6 +22,7 @@ export {
   saveProgress,
   addAttempt,
   listAttempts,
+  MAX_ATTEMPTS_PER_PROFILE,
   addRound,
   updateRound,
   listRounds,

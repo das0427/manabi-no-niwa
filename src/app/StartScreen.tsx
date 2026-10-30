@@ -1,19 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { audio } from '../core/audio/index';
-import { useOfflineState } from '../core/offline/index';
+import { setupView, usePackSetup, type SetupState } from '../core/offline/setup';
 import { getStorageProblem, type StorageProblem } from '../core/storage/index';
+import { setupPackIds } from '../curriculum/defaultPacks';
 import { Illust } from '../illust/Illust';
 import { Tap } from '../ui/Tap';
 import { useApp } from './AppState';
+import { PackSetupStatus, setupParentNote } from './PackSetupStatus';
 import { navigate } from './router';
 
 /**
  * 起動画面。「はじめる」のタップで音声を有効にする（ブラウザの自動再生制約: VO-05）。
  * 2人以上のプロフィールがあれば、だれが遊ぶかを選ぶ。
+ * 初回準備の2段階（R#20）: 本体の準備のあと、登録しているプロフィールの区分の既定パックを自動で取得し、
+ * その様子を見せる（PackSetupStatus）。待たせない: 取得中・失敗中でも「はじめる」は押せる。
  */
 export function StartScreen() {
   const app = useApp();
   const [choosing, setChoosing] = useState(false);
+  const packIds = useMemo(() => setupPackIds(app.profiles), [app.profiles]);
+  const setup = usePackSetup(packIds);
 
   const begin = async () => {
     await audio.unlock();
@@ -71,7 +77,8 @@ export function StartScreen() {
         testId="start-button"
         style={{ minWidth: 'calc(var(--u) * 30)' }}
       />
-      <ParentNotes />
+      <PackSetupStatus view={setupView(setup)} onRetry={setup.retry} />
+      <ParentNotes setup={setup} />
     </div>
   );
 }
@@ -85,18 +92,10 @@ const PROBLEM_TEXT: Record<Exclude<StorageProblem, null>, string> = {
 };
 
 /** 起動画面の隅の、保護者向けの小さな表示（オフラインの準備状況 OF-02 と、保存の問題 DA-07） */
-function ParentNotes() {
+function ParentNotes({ setup }: { setup: SetupState }) {
   const app = useApp();
-  const off = useOfflineState();
   const problem = app.storageUnavailable ? (getStorageProblem() ?? 'error') : null;
-  let offline: string | null = null;
-  if (off.status === 'installing' && off.progress) {
-    offline = `オフラインの準備中 ${Math.round((off.progress.done / Math.max(1, off.progress.total)) * 100)}%`;
-  } else if (off.status === 'ready') {
-    offline = 'オフラインで つかえます';
-  } else if (off.status === 'error') {
-    offline = 'オフラインの準備に失敗しました（保護者画面を見てください）';
-  }
+  const offline = setupParentNote(setup);
   return (
     <div className="start-notes" data-testid="start-notes">
       {problem ? (

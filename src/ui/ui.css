@@ -275,6 +275,46 @@
   margin: 0.2em 0;
 }
 
+/* ---- 起動画面の「きょうざいの じゅんび」（DESINGN.md 24章） ---- */
+.start-setup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  color: var(--ink);
+}
+.start-setup--row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--gap-min);
+}
+.start-setup__text {
+  margin: 0;
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+.start-setup__sub {
+  margin: 0;
+  font-size: var(--text-small);
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.start-setup__bar {
+  width: calc(var(--u) * 24);
+  height: calc(var(--u) * 1.6);
+  border: var(--outline) solid var(--ink);
+  border-radius: calc(var(--u) * 0.8);
+  background: var(--surface);
+  overflow: hidden;
+}
+.start-setup__fill {
+  height: 100%;
+  background: var(--leaf);
+  /* 動きを減らす設定では tokens.css の .reduce-motion / prefers-reduced-motion で止まる */
+  transition: width var(--dur-move) ease-out;
+}
+
 /* ---- 汎用レイアウト ---- */
 .screen {
   position: absolute;

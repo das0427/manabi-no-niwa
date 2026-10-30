@@ -573,7 +573,7 @@ const changeItems: Item[] = [
     right: 'よう岩《がん》や 火山灰《かざんばい》で 新《あたら》しい 土地《とち》が できる',
     wrongs: [
       ['土地《とち》は まったく かわらない', 'st-land-fixed'],
-      ['地層《ちそう》に 丸《まる》い れきが 積《つ》もる', 'st-quake-volcano'],
+      ['地層《ちそう》に 丸《まる》い れきが 積《つ》もる', 'st-round-why'],
     ],
   }),
   choice({

@@ -183,6 +183,22 @@ describe('sci-g56 小6 P2 単元（設計書 sci-g6.md）', () => {
       }
   });
 
+  it('どの段の ヒントにも 正解の 文（6字以上）が 入っていない', () => {
+    for (const id of IDS)
+      for (const it of itemsOf(id)) {
+        const options =
+          it.engine === 'choice'
+            ? it.options
+            : it.engine === 'experiment' && it.task.kind === 'consider'
+              ? it.task.options
+              : [];
+        for (const h of it.hints)
+          for (const o of options)
+            if (o.correct && plain(o.label).length >= 6)
+              expect(plain(h), `${id} ${it.id}`).not.toContain(plain(o.label));
+      }
+  });
+
   it('エンジン: body・ecosystem の match、ecosystem の order', () => {
     for (const [u, ids] of [
       ['g6.sci.body', ['dg-alt-match', 'bl-alt-match']],
@@ -259,6 +275,7 @@ describe('sci-g56 小6 P2 単元（設計書 sci-g6.md）', () => {
     expect(misOf('g6.sci.ecosystem', 'ai-dark', 'しない')).toBe('ec-plant-no-breath');
     expect(misOf('g6.sci.strata', 'ly-old', '上《うえ》')).toBe('st-old-top');
     expect(misOf('g6.sci.strata', 'ch-quake', '火山灰《かざんばい》')).toBe('st-quake-volcano');
+    expect(misOf('g6.sci.strata', 'ch-volcano', '丸《まる》い れき')).toBe('st-round-why');
   });
 
   it('安全・表現: 薬品・火の 手順を 書かない／赤と緑を 並べない／図は 文字を 描かない', () => {

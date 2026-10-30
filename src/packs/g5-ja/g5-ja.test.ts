@@ -39,6 +39,9 @@ const ALLOWED_OVER: Record<string, string> = {
   'g5.ja.read-relations': '',
   'g5.ja.text-figure': '',
   'g5.ja.write-fact-opinion': '',
+  'g5.ja.spoken-written': '',
+  // 枕草子《まくらのそうし》・論語《ろんご》（作品名。よみ付き。g6 の classics-read と同じ扱い）
+  'g5.ja.classics': '枕論',
 };
 
 function extraChecks(unit: UnitSpec): string[] {

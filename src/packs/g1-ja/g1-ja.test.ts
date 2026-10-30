@@ -231,6 +231,27 @@ describe('P2: word-play・folktales', () => {
     }
   });
 
+  it('word-play: 数字の別例で「となりの かず」の誤りは、となりの 数の うたの ことば', () => {
+    const items = all('g1.ja.word-play');
+    const song = items
+      .filter((i) => i.engine === 'choice' && i.objective === 'kazoe' && !i.alt)
+      .map((i) => correctLabel(i));
+    const digits = items.filter((i) => i.id.startsWith('kazoe-alt:digit-'));
+    expect(digits.length).toBe(3);
+    for (const it of digits) {
+      if (it.engine !== 'choice') continue;
+      const n = Number(it.id.slice('kazoe-alt:digit-'.length));
+      const order = it.options.find((o) => o.misconception === 'wp-kz-order')!;
+      const idx = song.indexOf(order.label as string);
+      expect(Math.abs(idx + 1 - n), `${it.id} ${order.label}`).toBe(1);
+    }
+  });
+
+  it('folktales: わらしべ: わらを あげて みかんを もらう（とりかえの じゅんの 根拠が 本文に ある）', () => {
+    const r = all('g1.ja.folktales').find((i) => i.id === 'g1-folk-warashibe:trade-order')!;
+    if (r.engine === 'reading') expect(r.passage.paragraphs[2]![1]).toContain('わらを あげると');
+  });
+
   it('word-play: 文字の画面には 漢字のよみ《》が 無い・誤りの選択肢は ぜんぶ誤概念IDつき', () => {
     const unit = unitOf('g1.ja.word-play');
     for (const it of all('g1.ja.word-play')) {

@@ -5,6 +5,7 @@
  * 幼児（toddler/p4/p5）の教材はコアに同梱なので、既定パックは無い（空）。
  */
 import { isPreschool, type AudienceId } from '../audience/audience';
+import { profileAudience } from '../core/types';
 import type { UnitMeta } from './types';
 import { UNIT_INDEX } from './unitIndex';
 
@@ -31,7 +32,7 @@ export function setupPackIds(
 ): string[] {
   const ids = new Set<string>();
   for (const p of profiles) {
-    for (const id of defaultPackIds(p.audience ?? 'p4', index)) ids.add(id);
+    for (const id of defaultPackIds(profileAudience(p), index)) ids.add(id);
   }
   return [...ids].sort();
 }

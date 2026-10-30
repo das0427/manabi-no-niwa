@@ -63,6 +63,8 @@ const BASE = {
  * コアの状態とパックの状態から、準備の段階をまとめる（純関数。取得中の進み具合は packs.ts から読む）。
  * planned はこの回に取得すると決めたパック。渡すと、取得し終えたパックの分も進み具合に数える
  * （1つ終わるたびに割合が戻らないように）。
+ * netDown はネットワークにつながっていない（navigator.onLine === false）。packs.json を読めない理由を
+ * 'offline' として扱い、つながったら自動で続ける対象にする。
  */
 export function summarizeSetup(
   off: Pick<OfflineState, 'status' | 'progress'>,
@@ -70,6 +72,7 @@ export function summarizeSetup(
   statuses: readonly PackStatus[] | null,
   failures: SetupState['failures'] = [],
   planned: readonly string[] = [],
+  netDown = false,
 ): SetupState {
   if (off.status === 'unsupported') {
     return { ...BASE, stage: 'ready', unsupported: true };
@@ -104,7 +107,10 @@ export function summarizeSetup(
   // 状態を読み終える前（statuses が null）は失敗扱いにしない
   const unavailable = (statuses === null ? [] : missing)
     .filter((id) => !byId.get(id) || byId.get(id)?.state === 'unavailable')
-    .map((packId) => ({ packId, reason: 'unavailable' as const }));
+    .map((packId): SetupState['failures'][number] => ({
+      packId,
+      reason: netDown ? 'offline' : 'unavailable',
+    }));
   const kept = failures.filter((f) => missingSet.has(f.packId));
   return {
     ...BASE,
@@ -139,6 +145,20 @@ export function setupView(s: SetupState): SetupView {
   return { kind: 'preparing', percent, renewing: s.outdated.length > 0 };
 }
 
+function subscribeNet(cb: () => void): () => void {
+  if (typeof window === 'undefined') return () => undefined;
+  window.addEventListener('online', cb);
+  window.addEventListener('offline', cb);
+  return () => {
+    window.removeEventListener('online', cb);
+    window.removeEventListener('offline', cb);
+  };
+}
+
+function getNetDown(): boolean {
+  return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
 /**
  * 初回準備の2段階を進めて状態を返す。コアがそろったら、packIds のうち未取得・版違いのものを自動で取得する。
  * retry() で失敗したものを取り直す。オフラインで失敗したときは、ネットワークがつながったら自動で取り直す。
@@ -147,6 +167,7 @@ export function setupView(s: SetupState): SetupView {
 export function usePackSetup(packIds: readonly string[]): SetupState & { retry: () => void } {
   const off = useOfflineState();
   const seq = useSyncExternalStore(subscribePacks, getPacksSeq, getPacksSeq);
+  const netDown = useSyncExternalStore(subscribeNet, getNetDown, () => false);
   const key = packIds.join(',');
   const [read, setRead] = useState<{ key: string; statuses: PackStatus[] } | null>(null);
   const [failures, setFailures] = useState<SetupState['failures']>([]);
@@ -166,7 +187,8 @@ export function usePackSetup(packIds: readonly string[]): SetupState & { retry: 
       alive = false;
       clearTimeout(timer);
     };
-  }, [coreReady, key, seq]);
+    // attempt: 取り直しのときは状態も読み直す（packs.json を読めなかった 'unavailable' のままにしない）
+  }, [coreReady, key, seq, attempt]);
 
   useEffect(() => {
     if (!coreReady || key === '') return;
@@ -194,8 +216,11 @@ export function usePackSetup(packIds: readonly string[]): SetupState & { retry: 
     setAttempt((n) => n + 1);
   };
 
-  // オフラインで止まったら、つながったときに自動で取り直す
-  const waitingOnline = failures.some((f) => f.reason === 'offline');
+  const statuses = coreReady && read?.key === key ? read.statuses : null;
+  const state = summarizeSetup(off, packIds, statuses, failures, planned, netDown);
+
+  // オフラインで止まったら（packs.json を読めなかったときを含む）、つながったときに自動で取り直す
+  const waitingOnline = state.failures.some((f) => f.reason === 'offline');
   useEffect(() => {
     if (!waitingOnline || typeof window === 'undefined') return;
     const onOnline = (): void => {
@@ -206,7 +231,5 @@ export function usePackSetup(packIds: readonly string[]): SetupState & { retry: 
     return () => window.removeEventListener('online', onOnline);
   }, [waitingOnline]);
 
-  const statuses = coreReady && read?.key === key ? read.statuses : null;
-  const state = summarizeSetup(off, packIds, statuses, failures, planned);
   return { ...state, retry };
 }

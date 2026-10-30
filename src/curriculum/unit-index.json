@@ -1095,6 +1095,21 @@
     "engine": "listen"
   },
   {
+    "id": "g3.en.likes",
+    "pack": "en-g34",
+    "title": "すきな もの",
+    "stage": "g3",
+    "subject": "en",
+    "domain": "en",
+    "icon": "strawberry",
+    "prereq": [
+      "g3.en.greetings"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g3.en.numbers-colors",
     "pack": "en-g34",
     "title": "かず・いろ・かたち",
@@ -1744,6 +1759,21 @@
     "engine": "listen"
   },
   {
+    "id": "g4.en.directions",
+    "pack": "en-g34",
+    "title": "道《みち》あんない",
+    "stage": "g4",
+    "subject": "en",
+    "domain": "en",
+    "icon": "mode-road",
+    "prereq": [
+      "g4.en.time-days"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g4.en.time-days",
     "pack": "en-g34",
     "title": "曜日《ようび》と じこく",
@@ -1755,6 +1785,21 @@
       "g3.en.numbers-colors"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "g4.en.want",
+    "pack": "en-g34",
+    "title": "ほしい もの（かいもの）",
+    "stage": "g4",
+    "subject": "en",
+    "domain": "en",
+    "icon": "mode-shopping",
+    "prereq": [
+      "g3.en.likes"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "listen"
   },

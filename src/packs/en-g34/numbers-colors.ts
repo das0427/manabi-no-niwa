@@ -34,7 +34,7 @@ const WORDS = [
 ];
 
 /** 1〜10 の、はじめの音が にている数（聞きまちがえやすい） */
-const SAME_START: Record<number, number[]> = {
+export const SAME_START: Record<number, number[]> = {
   1: [9, 7],
   2: [3, 10],
   3: [2, 10],

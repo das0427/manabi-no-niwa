@@ -3295,6 +3295,34 @@
     "engine": "legacy"
   },
   {
+    "id": "p23.ja.first-sound",
+    "pack": "p23",
+    "title": "はじめの おと",
+    "stage": "p23",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "strawberry",
+    "prereq": [
+      "p23.ja.word-listen"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "p23.ja.picture-book",
+    "pack": "p23",
+    "title": "えほん",
+    "stage": "p23",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p23-book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "p23.ja.sound-play",
     "pack": "p23",
     "title": "おとあそび",
@@ -3334,6 +3362,21 @@
     "engine": "choice"
   },
   {
+    "id": "p23.math.puzzle2",
+    "pack": "p23",
+    "title": "えあわせ",
+    "stage": "p23",
+    "subject": "math",
+    "domain": "play",
+    "icon": "p23-puz-apple-lslot",
+    "prereq": [
+      "p23.math.shape-match"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "p23.math.shape-match",
     "pack": "p23",
     "title": "かたちあわせ",
@@ -3356,6 +3399,32 @@
     "icon": "mode-shopping",
     "prereq": [],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "p23.think.peekaboo",
+    "pack": "p23",
+    "title": "どこかな",
+    "stage": "p23",
+    "subject": "think",
+    "domain": "play",
+    "icon": "p23-peek-rabbit-cup",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "p23.think.road",
+    "pack": "p23",
+    "title": "みち",
+    "stage": "p23",
+    "subject": "think",
+    "domain": "play",
+    "icon": "mode-road",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },

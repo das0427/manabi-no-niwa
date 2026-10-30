@@ -3022,6 +3022,19 @@
     "engine": "trace"
   },
   {
+    "id": "g6.ja.language-change",
+    "pack": "g6-ja",
+    "title": "方言《ほうげん》と共通語《きょうつうご》、言葉《ことば》の変化《へんか》と由来《ゆらい》",
+    "stage": "g6",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "match"
+  },
+  {
     "id": "g6.ja.read-argument",
     "pack": "g6-ja",
     "title": "筆者《ひっしゃ》の主張《しゅちょう》と根拠《こんきょ》",

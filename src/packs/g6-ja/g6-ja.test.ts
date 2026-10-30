@@ -38,6 +38,8 @@ const ALLOWED_OVER: Record<string, string> = {
   'g6.ja.classics-read': '翁枕鐘響暁眠及丈随々',
   // 根拠《こんきょ》（単元の用語。指導要領の語。よみ付き）
   'g6.ja.write-opinion': '拠',
+  // 6年より上の字は使わない設計（足りなければ字をかなに直す）
+  'g6.ja.language-change': '',
 };
 
 function extraChecks(unit: UnitSpec): string[] {

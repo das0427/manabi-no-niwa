@@ -1687,6 +1687,21 @@
     "engine": "reading"
   },
   {
+    "id": "g4.ja.tanka",
+    "pack": "g4-ja",
+    "title": "短歌《たんか》の音読《おんどく》",
+    "stage": "g4",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "notebook",
+    "prereq": [
+      "g3.ja.haiku"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g4.ja.write-report",
     "pack": "g4-ja",
     "title": "調《しら》べたことのほうこく",

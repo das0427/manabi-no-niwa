@@ -2614,6 +2614,21 @@
     "engine": "number"
   },
   {
+    "id": "g5.math.expressions",
+    "pack": "g5-math",
+    "title": "□と ○の 式《しき》（数《かず》量《りょう》の 関係《かんけい》）",
+    "stage": "g5",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g4.math.change-relations"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "fill"
+  },
+  {
     "id": "g5.math.fraction-add-diff",
     "pack": "g5-math",
     "title": "分母《ぶんぼ》の ちがう 分数《ぶんすう》の たし算《ざん》・ひき算《ざん》",
@@ -3108,6 +3123,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "order"
+  },
+  {
+    "id": "g6.math.approx-area",
+    "pack": "g6-math",
+    "title": "およその 形《かたち》と 面積《めんせき》",
+    "stage": "g6",
+    "subject": "math",
+    "domain": "B-shape",
+    "icon": "leaf",
+    "prereq": [
+      "g6.math.circle-area"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "geometry"
   },
   {
     "id": "g6.math.circle-area",

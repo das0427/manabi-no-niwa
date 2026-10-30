@@ -109,6 +109,33 @@ describe('小5 P2 の3単元（sci-g56）', () => {
     expect(resultOf(it.setup, it.initial ?? {})?.key).not.toBe(target);
   });
 
+  it('reach の実験: 正解でない条件の組には すべて誤概念が付く', () => {
+    for (const id of IDS) {
+      for (const it of itemsOf(unitOf(id))) {
+        if (it.engine !== 'experiment' || it.task.kind !== 'reach') continue;
+        const { setup, task } = it;
+        if (setup.kind !== 'table') throw new Error(`${it.id} は table のはず`);
+        let combos: Record<string, string>[] = [{}];
+        for (const f of setup.factors)
+          combos = combos.flatMap((c) => f.values.map((v) => ({ ...c, [f.id]: String(v.id) })));
+        for (const c of combos) {
+          if (resultOf(setup, c)?.key === task.target) continue;
+          const hit = (it.wrongConditions ?? []).find((w) =>
+            Object.entries(w.when).every(([k, v]) => c[k] === String(v)),
+          );
+          expect(hit, `${it.id} ${JSON.stringify(c)}`).toBeDefined();
+        }
+      }
+    }
+  });
+
+  it('電磁石: 銅は ふりがな付きの漢字で書く（「どうの」と読みちがえない）', () => {
+    const u = unitOf('g5.sci.electromagnet');
+    const texts = itemsOf(u).flatMap((it) => textsOf(it));
+    expect(texts.some((t) => t.includes('銅《どう》'))).toBe(true);
+    for (const t of texts) expect(t).not.toMatch(/(^|[ 、。・'])どう(の|も|で) /);
+  });
+
   it('動物の誕生に 人の受精に至る過程の語が無い', () => {
     const u = unitOf('g5.sci.birth');
     const all = [

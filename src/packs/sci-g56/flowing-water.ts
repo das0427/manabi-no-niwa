@@ -643,6 +643,7 @@ const flood: Item[] = [
     wrongConditions: [
       { when: { place: 'inside' }, misconception: 'fw-bend-reverse' },
       { when: { water: 'small' }, misconception: 'fw-amount-none' },
+      { when: { place: 'straight' }, misconception: 'fw-speed-same' },
     ],
     hints: [
       'けずる はたらきが 大《おお》きいのは、流《なが》れが 速《はや》い ときだね。',

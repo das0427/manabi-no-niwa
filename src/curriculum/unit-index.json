@@ -234,6 +234,19 @@
     "engine": "order"
   },
   {
+    "id": "g1.life.home",
+    "pack": "life-g12",
+    "title": "おうちで できる こと",
+    "stage": "g1",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "explain"
+  },
+  {
     "id": "g1.life.plant-diary",
     "pack": "life-g12",
     "title": "そだてて いる しょくぶつ",
@@ -245,6 +258,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "explain"
+  },
+  {
+    "id": "g1.life.public",
+    "pack": "life-g12",
+    "title": "みんなで つかう もの・ばしょ",
+    "stage": "g1",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g1.life.school-safety",
@@ -745,6 +771,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "explain"
+  },
+  {
+    "id": "g2.life.tell",
+    "pack": "life-g12",
+    "title": "つたえ合《あ》おう",
+    "stage": "g2",
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g2.life.town",

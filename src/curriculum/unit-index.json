@@ -2691,6 +2691,21 @@
     "engine": "choice"
   },
   {
+    "id": "g5.soc.environment",
+    "pack": "soc-g56",
+    "title": "国土《こくど》の自然《しぜん》とくらし（災害《さいがい》・森林《しんりん》・公害《こうがい》）",
+    "stage": "g5",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [
+      "g5.soc.land"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
+  },
+  {
     "id": "g5.soc.food",
     "pack": "soc-g56",
     "title": "わたしたちの生活《せいかつ》と食料生産《しょくりょうせいさん》",
@@ -2721,6 +2736,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g5.soc.information",
+    "pack": "soc-g56",
+    "title": "産業《さんぎょう》と情報《じょうほう》（送《おく》り手《て》と受《う》け手《て》）",
+    "stage": "g5",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
   },
   {
     "id": "g5.soc.land",

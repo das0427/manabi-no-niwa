@@ -100,7 +100,11 @@ function Routes() {
   else if (route.name === 'draw')
     screen = (
       <Suspense fallback={null}>
-        <DrawingScreen key={route.artId ?? ''} artId={route.artId} />
+        <DrawingScreen
+          key={`${route.artId ?? ''}/${route.template ?? ''}`}
+          artId={route.artId}
+          template={route.template}
+        />
       </Suspense>
     );
   else if (route.name === 'gallery')

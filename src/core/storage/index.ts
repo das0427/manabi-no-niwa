@@ -54,6 +54,7 @@ export {
   saveArtwork,
   saveArtworkChecked,
   listArtworkBlobKinds,
+  artworkBytes,
   deleteArtwork,
 } from './repo-v2';
 export type { CheckedSaveResult } from './repo-v2';

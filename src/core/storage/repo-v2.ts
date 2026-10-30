@@ -178,6 +178,23 @@ export async function listArtworkBlobKinds(artId: string): Promise<ArtworkBlobKi
   }, []);
 }
 
+/**
+ * プロフィールの作品の画像の大きさ（作品ごとの合計バイト。保護者画面の容量の表示: architecture.md 7.4）。
+ * 画像の中身は読まない（Blob の size だけ）。
+ */
+export async function artworkBytes(profileId: string): Promise<Record<string, number>> {
+  return safeRead(async () => {
+    const recs = await runTx([STORE.artworkBlobs], 'readonly', (tx) =>
+      r<ArtworkBlobRecord[]>(
+        tx.objectStore(STORE.artworkBlobs).index('profileId').getAll(profileId),
+      ),
+    );
+    const out: Record<string, number> = {};
+    for (const b of recs) out[b.artId] = (out[b.artId] ?? 0) + (b.blob?.size ?? 0);
+    return out;
+  }, {});
+}
+
 /** 作品と画像を削除する（保護者操作・子供の「すてる」） */
 export async function deleteArtwork(id: string): Promise<void> {
   await strict(() =>

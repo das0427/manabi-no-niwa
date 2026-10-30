@@ -6,7 +6,16 @@
  */
 import { expect, test, type Page } from '@playwright/test';
 import { defaultSupport } from '../src/audience/audience';
-import { boot, clickUntil, gotoApp, prepare, start } from './helpers/app';
+import {
+  activeProfileId,
+  boot,
+  clickUntil,
+  gotoApp,
+  idbGetAll,
+  idbPutMany,
+  prepare,
+  start,
+} from './helpers/app';
 
 type RGBA = [number, number, number, number];
 type ItemRow = {
@@ -58,6 +67,16 @@ async function tapAt(page: Page, x: number, y: number): Promise<void> {
 
 function sample(page: Page, x: number, y: number): Promise<RGBA> {
   return page.evaluate(([px, py]) => window.__mnwDraw!.engine.sample(px!, py!), [x, y]);
+}
+
+/** 紙の背景（テンプレートなら ID、白い紙なら 'color'） */
+function backgroundOf(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const doc = window.__mnwDraw!.engine.doc as unknown as {
+      background: { kind: string; templateId?: string };
+    };
+    return doc.background.templateId ?? doc.background.kind;
+  });
 }
 
 function items(page: Page): Promise<ItemRow[]> {
@@ -644,6 +663,185 @@ test.describe('おえかき（マウス）', () => {
     expect((await side())!.x).toBeLessThan((await canvas())!.x);
     await page.getByTestId('swap-hand').click();
     await expect.poll(async () => (await side())!.x > (await canvas())!.x).toBe(true);
+    // 子供の設定に入る（保護者画面の設定・バックアップと同じ値）。開き直しても右のまま
+    await expect
+      .poll(async () => (await idbGetAll<{ drawingHand?: string }>(page, 'settings'))[0])
+      .toMatchObject({ drawingHand: 'left' });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await start(page);
+    await gotoDraw(page);
+    expect((await side())!.x).toBeGreaterThan((await canvas())!.x);
+  });
+
+  test('利き手: 2.0 までの端末内の値（localStorage）を設定へ移す', async ({ page }) => {
+    await gotoApp(page);
+    const pid = await prepare(page, { settings: {} });
+    await page.evaluate((id) => localStorage.setItem(`mnw:draw:hand:${id}`, 'left'), pid);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await start(page);
+    await gotoDraw(page);
+    const side = (await page.getByTestId('draw-side').boundingBox())!;
+    const canvas = (await page.getByTestId('draw-canvas').boundingBox())!;
+    expect(side.x).toBeGreaterThan(canvas.x);
+    expect((await idbGetAll<{ drawingHand?: string }>(page, 'settings'))[0]).toMatchObject({
+      drawingHand: 'left',
+    });
+    expect(
+      await page.evaluate((id) => localStorage.getItem(`mnw:draw:hand:${id}`), pid),
+    ).toBeNull();
+  });
+
+  test('かみ: 「あたらしく」でテンプレートの背景を選ぶ（背景は塗りの境界にもなる・保存して開き直せる）', async ({
+    page,
+  }) => {
+    await openDraw(page);
+    await tool(page, 'new');
+    await expect(page.getByTestId('paper-panel')).toBeVisible();
+    await clickUntil(page, page.getByTestId('paper-field'), page.getByTestId('draw-screen'));
+    await expect.poll(() => backgroundOf(page)).toBe('field');
+    // そら（上）は紙の色ではない（絵が読めたら描かれる）
+    await expect.poll(async () => isPaper(await sample(page, 400, 300))).toBe(false);
+    const sky = await sample(page, 400, 300);
+    // そらを塗ると、地面（下）は変わらない
+    const ground0 = await sample(page, 400, 900);
+    await tool(page, 'fill');
+    await page.getByTestId('color-red').click();
+    await tapAt(page, 400, 300);
+    expect(near(await sample(page, 400, 300), RED)).toBe(true);
+    expect(near(await sample(page, 400, 900), ground0)).toBe(true);
+    expect(near(sky, RED)).toBe(false);
+    await waitSaved(page);
+    await clickUntil(page, page.getByTestId('gallery-button'), page.getByTestId('gallery'));
+    await clickUntil(page, page.getByTestId('gallery-open'), page.getByTestId('draw-screen'));
+    await expect.poll(() => page.evaluate(() => !!window.__mnwDraw)).toBe(true);
+    await expect.poll(() => backgroundOf(page)).toBe('field');
+    // やめる で板が閉じ、紙はそのまま
+    await tool(page, 'new');
+    await page.getByTestId('paper-cancel').click();
+    await expect(page.getByTestId('paper-panel')).toBeHidden();
+    // #/draw/new/<かみ> で描いた紙から、同じかみで「あたらしく」→ 新しい紙になる（同じ道すじでも作り直す）
+    await gotoDraw(page, '#/draw/new/sea');
+    await expect.poll(() => backgroundOf(page)).toBe('sea');
+    await tool(page, 'pen');
+    await mouseLine(page, [
+      [300, 300],
+      [600, 400],
+    ]);
+    await expect.poll(() => items(page).then((x) => x.length)).toBeGreaterThan(0);
+    const first = await page.evaluate(() => window.__mnwDraw!.meta.id);
+    await tool(page, 'new');
+    await page.getByTestId('paper-sea').click();
+    await expect(page.getByTestId('paper-panel')).toBeHidden();
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw?.meta.id)).not.toBe(first);
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw!.engine.doc.items.length)).toBe(0);
+    expect(await page.evaluate(() => location.hash)).toBe('#/draw/new/sea');
+    // もどると、さっき描いた紙が開く
+    await page.goBack();
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw?.meta.id)).toBe(first);
+  });
+
+  test('図形: ドラッグで大きさを決めて置く（タップで置く方法も残る）', async ({ page }) => {
+    await openDraw(page);
+    await tool(page, 'shape');
+    await page.getByTestId('shape-rect').click();
+    await page.getByTestId('panel-ok').click();
+    await mouseLine(page, [
+      [200, 200],
+      [700, 500],
+    ]);
+    let list = await items(page);
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({
+      shape: 'rect',
+      x: expect.closeTo(450, -1),
+      y: expect.closeTo(350, -1),
+      w: expect.closeTo(500, -1),
+    });
+    await expect(page.getByTestId('shape-draft')).toHaveCount(0);
+    await tapAt(page, 1200, 700);
+    list = await items(page);
+    expect(list[1]).toMatchObject({ w: 240, x: expect.closeTo(1200, -1) });
+  });
+
+  test('くわしく: 虫めがねで選んだ所を大きく見て、そのまま描ける', async ({ page }) => {
+    await openDraw(page, 'detailed');
+    const before = (await page.getByTestId('draw-canvas').boundingBox())!;
+    await page.getByTestId('zoom').click();
+    await expect(page.getByTestId('zoom')).toHaveAttribute('data-zoom', 'pick');
+    // 次のタップは描かずに、そこを大きく見る
+    await tapAt(page, 400, 250);
+    await expect(page.getByTestId('zoom')).toHaveAttribute('data-zoom', 'on');
+    expect(await items(page)).toHaveLength(0);
+    const zoomed = (await page.getByTestId('draw-canvas').boundingBox())!;
+    expect(zoomed.width).toBeCloseTo(before.width * 2, -1);
+    // 大きく見ている所に描いても、作品の座標は正しい
+    await mouseLine(page, [
+      [350, 250],
+      [450, 250],
+    ]);
+    expect(near(await sample(page, 400, 250), [0xd9, 0x43, 0x3a, 255])).toBe(true);
+    await page.getByTestId('zoom').click();
+    await expect(page.getByTestId('zoom')).toHaveAttribute('data-zoom', 'off');
+    const back = (await page.getByTestId('draw-canvas').boundingBox())!;
+    expect(back.width).toBeCloseTo(before.width, 0);
+  });
+
+  test('保存できないとき: ！から保護者向けの案内を開き、もう いちど で保存し直す', async ({
+    page,
+  }) => {
+    await openDraw(page);
+    // 書き込みを失敗させる（テスト用。作品は消えない）
+    await page.evaluate(() => {
+      const s = (window.__mnwDraw as unknown as { saver: { d: { write: unknown } } }).saver;
+      const real = s.d.write;
+      (window as unknown as { __realWrite: unknown }).__realWrite = real;
+      s.d.write = () => Promise.resolve('error');
+    });
+    await mouseLine(page, [
+      [300, 300],
+      [600, 300],
+    ]);
+    await expect(page.getByTestId('draw-screen')).toHaveAttribute('data-save-state', 'error', {
+      timeout: 10_000,
+    });
+    await page.getByTestId('save-help-open').click();
+    await expect(page.getByTestId('save-help')).toBeVisible();
+    await expect(page.getByTestId('save-help-parent')).toContainText('保護者の方へ');
+    expect(await items(page)).toHaveLength(1);
+    await page.evaluate(() => {
+      const s = (window.__mnwDraw as unknown as { saver: { d: { write: unknown } } }).saver;
+      s.d.write = (window as unknown as { __realWrite: unknown }).__realWrite;
+    });
+    await page.getByTestId('save-help-retry').click();
+    await expect(page.getByTestId('save-help')).toBeHidden();
+    await waitSaved(page);
+  });
+
+  test('さくひん: なぞり・みち の作品を見るだけで並べる', async ({ page }) => {
+    await gotoApp(page);
+    const pid = await activeProfileId(page);
+    await idbPutMany(page, 'works', [
+      {
+        id: 'w-test-1',
+        profileId: pid,
+        modeId: 'trace',
+        kind: 'trace',
+        title: 'し',
+        createdAt: Date.now() - 1000,
+        data: {},
+      },
+    ]);
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await start(page);
+    await page.evaluate(() => (location.hash = '#/gallery'));
+    await expect(page.getByTestId('gallery-old')).toHaveCount(1);
+    await expect(page.getByTestId('gallery-empty')).toHaveCount(0);
+    await page.getByTestId('gallery-old-open').click();
+    await expect(page.getByTestId('gallery-old-view')).toBeVisible();
+    await page.getByTestId('gallery-old-close').click();
+    await expect(page.getByTestId('gallery-old-view')).toBeHidden();
+    // 見るだけ（ひらく・うつす・すてる は無い）
+    await expect(page.getByTestId('gallery-old').getByTestId('gallery-delete')).toHaveCount(0);
   });
 });
 

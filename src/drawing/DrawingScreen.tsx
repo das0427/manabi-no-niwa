@@ -1,23 +1,37 @@
 /**
  * おえかき画面（DESINGN.md 19章、ux-by-age.md 2.6、architecture.md 7章）。
- * 上の帯: おうち・さくひん・いまの道具の大きな表示 ／ 保存状態・がぞう。
- * 道具欄（利き手の設定で左右）: 道具の札 ＋ 道具ごとの設定（色・太さ・はんこの見本 等）。
+ * 上の帯: おうち・さくひん・いまの道具の大きな表示 ／ 保存状態・（くわしく: 虫めがね）・左右・がぞう。
+ * 道具欄（描く手の設定で左右。子供の設定 drawingHand）: 道具の札 ＋ 道具ごとの設定（色・太さ・はんこの見本 等）。
+ * 「あたらしく」は かみ（白い紙・テンプレートの背景）を選んでから新しい紙にする。
  */
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../app/AppState';
-import { navigate } from '../app/router';
+import { audienceUx } from '../audience/audience';
+import { navigate, routeToHash, type Route } from '../app/router';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
+import { profileAudience } from '../core/types';
 import { Illust } from '../illust/Illust';
 import { hasVoice } from '../voice/catalog/index';
 import { AutoSaver, type SaveState } from './autosave';
-import { CanvasView, type Gesture, type ViewRect } from './CanvasView';
+import { CanvasView, type Gesture, type ViewRect, type Zoom } from './CanvasView';
 import { DrawingEngine } from './engine';
 import { itemBounds, shapePathD, type Pt } from './geometry';
 import { DrawIcon, ShapeIcon, type DrawIconId } from './icons';
 import { placeCards } from './layout';
-import { DOC_H, DOC_W, clampCenter, emptyDoc, newId, type ObjItem } from './model';
+import { handOf } from './hand';
 import {
+  DOC_H,
+  DOC_W,
+  clampCenter,
+  emptyDoc,
+  newId,
+  type ArtBackground,
+  type ObjItem,
+  type ShapeItem,
+} from './model';
+import {
+  PaperPanel,
   SHAPE_NAMES,
   ShapePanel,
   StampAdjust,
@@ -36,14 +50,18 @@ import {
   renderPreview,
   type ArtMeta,
 } from './persist';
+import { saveHelp } from './saveHelp';
 import { SelectionOverlay } from './SelectionOverlay';
 import { assetKey, getStamp, svgUrl } from './stamps';
+import { backgroundFor, sameBackground } from './templates';
 import {
   ERASER_SCALE,
   NUDGE,
   STAMP_SIZES,
+  SHAPE_DRAG_U,
   SHAPE_STROKES,
   defaultShapeSize,
+  shapeFromDrag,
   palette,
   scaled,
   widths,
@@ -64,14 +82,9 @@ const TOOL_INFO: Record<Tool, { label: string; state: string; icon: DrawIconId |
 };
 
 type Hand = 'right' | 'left';
-const handKey = (pid: string) => `mnw:draw:hand:${pid}`;
-function readHand(pid: string): Hand {
-  try {
-    return localStorage.getItem(handKey(pid)) === 'left' ? 'left' : 'right';
-  } catch {
-    return 'right';
-  }
-}
+
+/** 虫めがねの倍率（くわしく） */
+const ZOOM_SCALE = 2;
 
 interface Session {
   engine: DrawingEngine;
@@ -99,13 +112,19 @@ declare global {
   }
 }
 
-export function DrawingScreen({ artId }: { artId?: string }) {
+export function DrawingScreen({ artId, template }: { artId?: string; template?: string }) {
   const app = useApp();
   const profile = app.profile;
   const settings = app.settings;
   const [session, setSession] = useState<Session | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('clean');
   const [missing, setMissing] = useState(false);
+  /**
+   * 同じ道すじ（#/draw/new…）のまま新しい紙にする（「あたらしく」）。
+   * 道すじが変わらないと作り直されないため、ここで作り直す（n を増やす）
+   */
+  const [restart, setRestart] = useState<{ n: number; template: string | undefined } | null>(null);
+  const paper = restart ? restart.template : template;
 
   // ---- 作品を開く／新しく作る
   useEffect(() => {
@@ -119,7 +138,7 @@ export function DrawingScreen({ artId }: { artId?: string }) {
       let dirty = false;
       const book = new SaveBook();
       // 'new' = 「あたらしく」（つくりかけを探さない）
-      const wantNew = artId === 'new';
+      const wantNew = artId === 'new' || restart !== null;
       if (!artId) {
         const unfinished = app.storageUnavailable ? null : await findUnfinished(profile.id);
         if (!alive) return;
@@ -138,7 +157,7 @@ export function DrawingScreen({ artId }: { artId?: string }) {
         book.markAllPersisted(engine);
       } else {
         if (artId && !wantNew) setMissing(true);
-        engine = new DrawingEngine(emptyDoc());
+        engine = new DrawingEngine({ ...emptyDoc(), background: backgroundFor(paper) });
         meta = {
           id: crypto.randomUUID(),
           profileId: profile.id,
@@ -185,9 +204,9 @@ export function DrawingScreen({ artId }: { artId?: string }) {
         made.saver.dispose();
       }
     };
-    // 開く作品が変わったときだけ作り直す
+    // 開く作品（新しい紙のかみ）が変わったときだけ作り直す
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artId, profile?.id]);
+  }, [artId, template, profile?.id, restart?.n]);
 
   // ---- ページを閉じる・隠れるとき（JSON とダーティ印だけ）
   useEffect(() => {
@@ -206,6 +225,7 @@ export function DrawingScreen({ artId }: { artId?: string }) {
 
   if (!profile || !settings) return null;
   if (!session) return <div className="screen draw-loading" data-testid="draw-loading" />;
+  const ux = audienceUx(profileAudience(profile), profile.toddlerStage);
   return (
     <DrawingBoard
       key={session.meta.id}
@@ -214,7 +234,15 @@ export function DrawingScreen({ artId }: { artId?: string }) {
       missing={missing}
       mode={settings.support.drawingTools}
       toddler={profile.audience === 'toddler'}
-      profileId={profile.id}
+      noDrag={ux.noHoldOrDrag}
+      onRestart={(t) => setRestart((r) => ({ n: (r?.n ?? 0) + 1, template: t ?? undefined }))}
+      hand={handOf(settings)}
+      onHand={(h) => {
+        // 子供の設定に保存（保護者画面の設定・バックアップと同じ値）
+        const cur = app.settings;
+        if (cur) void app.updateSettings({ ...cur, drawingHand: h });
+      }}
+      storageUnavailable={app.storageUnavailable}
       sfx={settings.sfx}
       reduceMotion={app.reduceMotion}
     />
@@ -227,7 +255,11 @@ function DrawingBoard({
   missing,
   mode,
   toddler,
-  profileId,
+  noDrag,
+  onRestart,
+  hand,
+  onHand,
+  storageUnavailable,
   sfx,
   reduceMotion,
 }: {
@@ -236,7 +268,13 @@ function DrawingBoard({
   missing: boolean;
   mode: ToolMode;
   toddler: boolean;
-  profileId: string;
+  /** 長押し・ドラッグの操作を出さない区分（2〜3歳）。図形はタップで置くだけにする */
+  noDrag: boolean;
+  /** いまと同じ道すじのまま新しい紙にする（templateId: かみ。null は白い紙） */
+  onRestart(templateId: string | null): void;
+  hand: Hand;
+  onHand(h: Hand): void;
+  storageUnavailable: boolean;
   sfx: boolean;
   reduceMotion: boolean;
 }) {
@@ -245,6 +283,7 @@ function DrawingBoard({
   const rootRef = useRef<HTMLDivElement>(null);
   const [, setTick] = useState(0);
   const [view, setView] = useState<ViewRect>({ left: 0, top: 0, width: 1, height: 1 });
+  const [clip, setClip] = useState<ViewRect>({ left: 0, top: 0, width: 1, height: 1 });
   const [uPx, setUPx] = useState(10);
   const [rootSize, setRootSize] = useState({ w: 1000, h: 562 });
   const colors = useMemo(() => palette(mode, toddler), [mode, toddler]);
@@ -266,10 +305,16 @@ function DrawingBoard({
     strokeIdx: 1,
     colorId: colors[0]!.id,
   });
-  const [panel, setPanel] = useState<'stamp' | 'shape' | null>(null);
+  const [panel, setPanel] = useState<'stamp' | 'shape' | 'paper' | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hand, setHand] = useState<Hand>(() => readHand(profileId));
   const [anims, setAnims] = useState<Anim[]>([]);
+  /** ドラッグで大きさを決めている図形の見本（置く前。DOM で重ねる） */
+  const [draft, setDraft] = useState<ShapeItem | null>(null);
+  /** 虫めがね（くわしく）: pick = 次にタップした所を大きく見る */
+  const [zoom, setZoom] = useState<Zoom | null>(null);
+  const [zoomPick, setZoomPick] = useState(false);
+  /** 保存できないときの案内（保護者向け） */
+  const [help, setHelp] = useState(false);
   const cycle = useRef<{ id: string; at: Pt } | null>(null);
 
   const color = colors.find((c) => c.id === colorId) ?? colors[0]!;
@@ -357,30 +402,45 @@ function DrawingBoard({
     touchSave();
   };
 
-  const placeShape = (p: Pt) => {
+  /** 置く図形（box が無ければ p を中心に既定の大きさ） */
+  const makeShape = (
+    p: Pt,
+    box?: { x: number; y: number; w: number; h: number; rotation: number },
+  ): ShapeItem => {
     const c = clampCenter(p.x, p.y);
-    const { w, h } = defaultShapeSize(shape.kind);
+    const size = defaultShapeSize(shape.kind);
     const sc = colors.find((x) => x.id === shape.colorId) ?? colors[0]!;
     const sw = SHAPE_STROKES[shape.strokeIdx]!;
-    engine.addObject({
+    return {
       id: newId('H'),
       kind: 'shape',
       shape: shape.kind,
-      x: c.x,
-      y: c.y,
-      w,
-      h: shape.kind === 'line' ? sw * 2 : h,
-      rotation: 0,
+      x: box?.x ?? c.x,
+      y: box?.y ?? c.y,
+      w: box?.w ?? size.w,
+      h: shape.kind === 'line' ? sw * 2 : (box?.h ?? size.h),
+      rotation: box?.rotation ?? 0,
       stroke: sc.hex,
       strokeWidth: sw,
       fill: shape.filled && shape.kind !== 'line' ? sc.hex : null,
-    });
+    };
+  };
+
+  const addShape = (it: ShapeItem) => {
+    engine.addObject(it);
     audio.sfx('place');
     touchSave();
   };
 
   const onPointerDown = (p: Pt): Gesture | null => {
     if (panel) setPanel(null);
+    if (zoomPick) {
+      // 虫めがね: タップした所を大きく見る（描かない）
+      setZoomPick(false);
+      setZoom({ scale: ZOOM_SCALE, cx: p.x, cy: p.y });
+      audio.sfx('tap');
+      return null;
+    }
     switch (tool) {
       case 'pen':
       case 'eraser': {
@@ -403,9 +463,27 @@ function DrawingBoard({
       case 'stamp':
         placeStamp(p);
         return null;
-      case 'shape':
-        placeShape(p);
-        return null;
+      case 'shape': {
+        // タップ: 既定の大きさで置く（幼児も使える）。ドラッグ: 押した所から離した所までの大きさで置く
+        if (noDrag) {
+          addShape(makeShape(p));
+          return null;
+        }
+        let to: Pt | null = null;
+        const box = (q: Pt) => shapeFromDrag(shape.kind, p, q);
+        return {
+          move: (pts) => {
+            const q = pts[pts.length - 1]!;
+            if (!to && Math.hypot(q.x - p.x, q.y - p.y) < SHAPE_DRAG_U * uLogical) return;
+            to = q;
+            setDraft(makeShape(p, box(q)));
+          },
+          end: () => {
+            setDraft(null);
+            addShape(to ? makeShape(p, box(to)) : makeShape(p));
+          },
+        };
+      }
       case 'select': {
         const hit = engine.pick(p, uLogical, detailed ? cycle.current : null);
         if (!hit) {
@@ -503,11 +581,31 @@ function DrawingBoard({
     to();
   };
 
-  const startNew = () => {
+  // 「あたらしく」: かみを選んでから新しい紙にする
+  const startNew = (templateId: string | null) => {
     audio.sfx('tap');
+    setPanel(null);
+    const bg: ArtBackground = backgroundFor(templateId);
+    // まだ何も描いていない紙で、同じかみを選んだときは そのまま
+    if (engine.isEmpty && !engine.history.canUndo && sameBackground(engine.doc.background, bg)) {
+      return;
+    }
+    const to: Route = templateId
+      ? { name: 'draw', artId: 'new', template: templateId }
+      : { name: 'draw', artId: 'new' };
     void leave(() => {
-      if (engine.isEmpty) return;
-      navigate({ name: 'draw', artId: 'new' }, { force: true });
+      const hash = routeToHash(to);
+      if (location.hash !== hash) {
+        navigate(to, { force: true });
+        return;
+      }
+      // いまの紙が同じ道すじ（#/draw/new… で描き始めた紙）のときは、道すじが変わらず作り直されない。
+      // 今の履歴をこの作品の道すじに置き換え、同じ道すじを積んでから、画面の中で作り直す
+      // （もどると この作品が開く）
+      audio.stop();
+      history.replaceState(null, '', routeToHash({ name: 'draw', artId: session.meta.id }));
+      history.pushState(null, '', hash);
+      onRestart(templateId);
     });
   };
 
@@ -527,13 +625,20 @@ function DrawingBoard({
   };
 
   const swapHand = () => {
-    const next: Hand = hand === 'right' ? 'left' : 'right';
-    setHand(next);
-    try {
-      localStorage.setItem(handKey(profileId), next);
-    } catch {
-      /* 保存できなくても今回は切り替わる */
-    }
+    audio.sfx('tap');
+    onHand(hand === 'right' ? 'left' : 'right');
+  };
+
+  const toggleZoom = () => {
+    audio.sfx('tap');
+    if (zoom) setZoom(null);
+    else setZoomPick((v) => !v);
+  };
+
+  const retrySave = () => {
+    audio.sfx('tap');
+    setHelp(false);
+    void saver.flush();
   };
 
   // ---- 選択中の操作札の置き場所（枠の下 → 上 → 道具欄）
@@ -653,7 +758,11 @@ function DrawingBoard({
           className="tap tap--wood draw-tool"
           aria-label="あたらしく"
           data-testid="tool-new"
-          onClick={startNew}
+          onClick={() => {
+            audio.sfx('tap');
+            setSelectedId(null);
+            setPanel('paper');
+          }}
         >
           <DrawIcon id="new" className="tap__icon" />
         </button>
@@ -828,8 +937,17 @@ function DrawingBoard({
             <Illust id="picture" className="tap__icon" decorative />
           </button>
           <div className="draw-state" data-testid="draw-state" aria-live="polite">
-            {toolIcon(tool)}
-            <span>{info.state}</span>
+            {zoomPick ? (
+              <>
+                <DrawIcon id="zoom" className="tap__icon" />
+                <span>どこを みる？</span>
+              </>
+            ) : (
+              <>
+                {toolIcon(tool)}
+                <span>{info.state}</span>
+              </>
+            )}
           </div>
         </div>
         <div className="draw-top__group">
@@ -843,7 +961,21 @@ function DrawingBoard({
               <DrawIcon id="cloud" className="draw-save__icon" />
             ) : saveState === 'saved' ? (
               <DrawIcon id="check" className="draw-save__icon" />
-            ) : saveState === 'error' || saveState === 'conflict' ? (
+            ) : saveState === 'error' ? (
+              // 保存できない: ！を押すと保護者向けの案内（X-SV-03）
+              <button
+                type="button"
+                className="draw-save__btn"
+                aria-label="ほぞん できない（おうちの ひとへ）"
+                data-testid="save-help-open"
+                onClick={() => {
+                  audio.sfx('tap');
+                  setHelp(true);
+                }}
+              >
+                <DrawIcon id="alert" className="draw-save__icon" />
+              </button>
+            ) : saveState === 'conflict' ? (
               <DrawIcon id="alert" className="draw-save__icon" />
             ) : null}
             <span className="visually-hidden">
@@ -859,6 +991,19 @@ function DrawingBoard({
               }
             </span>
           </span>
+          {detailed ? (
+            <button
+              type="button"
+              className={`tap tap--wood tap--aux ${zoom || zoomPick ? 'is-selected' : ''}`}
+              aria-label={zoom ? 'もとの おおきさ' : 'むしめがね'}
+              aria-pressed={zoom !== null || zoomPick}
+              data-testid="zoom"
+              data-zoom={zoom ? 'on' : zoomPick ? 'pick' : 'off'}
+              onClick={toggleZoom}
+            >
+              <DrawIcon id={zoom ? 'zoomOut' : 'zoom'} className="tap__icon" />
+            </button>
+          ) : null}
           <button
             type="button"
             className="tap tap--wood tap--aux"
@@ -884,21 +1029,39 @@ function DrawingBoard({
         <CanvasView
           engine={engine}
           onPointerDown={onPointerDown}
-          onLayout={setView}
+          onLayout={(r, c) => {
+            setView(r);
+            setClip(c);
+          }}
+          zoom={detailed ? zoom : null}
           rootRef={rootRef}
           label="おえかきの かみ"
         />
       </div>
       {missing ? <span className="visually-hidden" data-testid="draw-missing" /> : null}
-      {selected ? (
-        <SelectionOverlay
-          engine={engine}
-          item={selected}
-          view={view}
-          uPx={uPx}
-          onChanged={touchSave}
-        />
-      ) : null}
+      <div
+        className="draw-clip"
+        style={
+          zoom && detailed
+            ? {
+                clipPath: `inset(${clip.top}px ${rootSize.w - clip.left - clip.width}px ${
+                  rootSize.h - clip.top - clip.height
+                }px ${clip.left}px)`,
+              }
+            : undefined
+        }
+      >
+        {selected ? (
+          <SelectionOverlay
+            engine={engine}
+            item={selected}
+            view={view}
+            uPx={uPx}
+            onChanged={touchSave}
+          />
+        ) : null}
+        {draft ? <ShapeDraft item={draft} view={view} s={s} /> : null}
+      </div>
       {selected && placement && placement.where !== 'dock' ? (
         <div
           className="draw-cards"
@@ -932,6 +1095,26 @@ function DrawingBoard({
           boxPx={uPx * 12}
         />
       ) : null}
+      {panel === 'paper' ? (
+        <PaperPanel
+          onChoose={startNew}
+          onClose={() => {
+            audio.sfx('tap');
+            setPanel(null);
+          }}
+        />
+      ) : null}
+      {help ? (
+        <SaveHelpDialog
+          storageUnavailable={storageUnavailable}
+          onRetry={retrySave}
+          onExport={() => void exportPng()}
+          onClose={() => {
+            audio.sfx('tap');
+            setHelp(false);
+          }}
+        />
+      ) : null}
       {panel === 'shape' ? (
         <ShapePanel
           choice={shape}
@@ -948,6 +1131,107 @@ function DrawingBoard({
           }}
         />
       ) : null}
+    </div>
+  );
+}
+
+/** ドラッグで大きさを決めている図形の見本（置く前。PNG には入らない） */
+function ShapeDraft({ item, view, s }: { item: ShapeItem; view: ViewRect; s: number }) {
+  const pad = item.strokeWidth;
+  const w = (item.w + pad * 2) * s;
+  const h = (item.h + pad * 2) * s;
+  return (
+    <svg
+      className="draw-draft"
+      data-testid="shape-draft"
+      style={
+        {
+          left: view.left + item.x * s - w / 2,
+          top: view.top + item.y * s - h / 2,
+          width: w,
+          height: h,
+          '--rot': `${item.rotation}deg`,
+        } as React.CSSProperties
+      }
+      viewBox={`${-item.w / 2 - pad} ${-item.h / 2 - pad} ${item.w + pad * 2} ${item.h + pad * 2}`}
+      aria-hidden
+    >
+      <path
+        d={shapePathD(item.shape, item.w, item.h)}
+        fill={item.fill ?? 'none'}
+        stroke={item.stroke}
+        strokeWidth={item.strokeWidth}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * 保存できないときの案内（X-SV-03）。子供には！の絵と「おうちの ひとに みせてね」、
+ * 保護者には理由とすること（saveHelp.ts）。作品は消さない。
+ */
+function SaveHelpDialog({
+  storageUnavailable,
+  onRetry,
+  onExport,
+  onClose,
+}: {
+  storageUnavailable: boolean;
+  onRetry(): void;
+  onExport(): void;
+  onClose(): void;
+}) {
+  const h = saveHelp(db.getStorageHealth(), storageUnavailable);
+  return (
+    <div
+      className="draw-confirm"
+      role="dialog"
+      aria-label="ほぞん できない"
+      data-testid="save-help"
+    >
+      <div className="draw-confirm__box draw-help">
+        <DrawIcon id="alert" className="draw-confirm__icon" />
+        <p className="label-text">ほぞん できなかったよ。おうちの ひとに みせてね</p>
+        <div className="draw-help__parent" data-testid="save-help-parent">
+          <p className="draw-help__title">保護者の方へ: {h.title}</p>
+          <ul>
+            {h.steps.map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
+        </div>
+        <div className="row">
+          <button
+            type="button"
+            className="tap tap--white"
+            aria-label="とじる"
+            data-testid="save-help-close"
+            onClick={onClose}
+          >
+            とじる
+          </button>
+          <button
+            type="button"
+            className="tap tap--white"
+            aria-label="がぞうに する"
+            data-testid="save-help-export"
+            onClick={onExport}
+          >
+            <DrawIcon id="export" className="tap__icon" />
+          </button>
+          <button
+            type="button"
+            className="tap tap--wood"
+            aria-label="もう いちど"
+            data-testid="save-help-retry"
+            onClick={onRetry}
+          >
+            もう いちど
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

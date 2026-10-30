@@ -4,6 +4,8 @@
  * - isPrimary 以外のポインタは無視（描いている線はそのまま続ける）。pointercancel でも確定（R#7）
  * - ペンを使ってから 1 秒は指を描画に使わない
  * - 描画は requestAnimationFrame でまとめる。描いている・動かしている間は、変わらない部分を画像にしておく
+ * - 虫めがね（くわしく）: zoom があれば、紙を zoom.scale 倍にして (cx, cy) を真ん中に見せる。
+ *   はみ出した所は置き場（wrap）で切る。ピンチでの拡大はしない（architecture.md 7.2）
  */
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import type { DrawingEngine } from './engine';
@@ -25,10 +27,47 @@ export interface ViewRect {
   height: number;
 }
 
+/** 虫めがねで見る所（論理座標の中心と倍率） */
+export interface Zoom {
+  scale: number;
+  cx: number;
+  cy: number;
+}
+
+/** 表示の倍率の上限に合わせて、バッキングの画素数を抑える（1600×1000 の2倍まで） */
+const MAX_BACKING_W = DOC_W * 2;
+
+/**
+ * 紙の表示位置（置き場の中での左上と大きさ。CSS px）。純粋な関数。
+ * zoom が無ければ置き場に 16:10 で最大に（真ん中）。あれば (cx, cy) を真ん中に寄せ、紙の端より外は見せない。
+ */
+export function canvasPlacement(
+  wrapW: number,
+  wrapH: number,
+  zoom: Zoom | null,
+): { left: number; top: number; width: number; height: number } {
+  const w0 = Math.min(wrapW, (wrapH * DOC_W) / DOC_H);
+  const width = w0 * (zoom?.scale ?? 1);
+  const height = (width * DOC_H) / DOC_W;
+  const axis = (wrap: number, size: number, c: number, docSize: number) => {
+    if (size <= wrap) return (wrap - size) / 2;
+    const want = wrap / 2 - (c / docSize) * size;
+    return Math.min(0, Math.max(wrap - size, want));
+  };
+  return {
+    left: axis(wrapW, width, zoom?.cx ?? DOC_W / 2, DOC_W),
+    top: axis(wrapH, height, zoom?.cy ?? DOC_H / 2, DOC_H),
+    width,
+    height,
+  };
+}
+
 interface Props {
   engine: DrawingEngine;
   onPointerDown(p: Pt, kind: PointerKind): Gesture | null;
-  onLayout(r: ViewRect): void;
+  /** r: 紙の位置と大きさ、clip: 紙が見えている範囲（置き場。虫めがねのときは紙より小さい） */
+  onLayout(r: ViewRect, clip: ViewRect): void;
+  zoom?: Zoom | null;
   /** 位置の基準にする要素（おえかき画面のいちばん外側） */
   rootRef: React.RefObject<HTMLElement | null>;
   label: string;
@@ -37,7 +76,14 @@ interface Props {
 const kindOf = (t: string): PointerKind =>
   t === 'pen' ? 'pen' : t === 'touch' ? 'touch' : 'mouse';
 
-export function CanvasView({ engine, onPointerDown, onLayout, rootRef, label }: Props) {
+export function CanvasView({
+  engine,
+  onPointerDown,
+  onLayout,
+  rootRef,
+  label,
+  zoom = null,
+}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const raf = useRef(0);
@@ -50,9 +96,16 @@ export function CanvasView({ engine, onPointerDown, onLayout, rootRef, label }: 
     above: HTMLCanvasElement;
   } | null>(null);
   const handlers = useRef({ onPointerDown, onLayout });
+  const zoomRef = useRef<Zoom | null>(zoom);
+  const fitRef = useRef<(() => void) | null>(null);
   useLayoutEffect(() => {
     handlers.current = { onPointerDown, onLayout };
   });
+  // 虫めがねの切り替えで、紙の大きさと位置を決め直す
+  useLayoutEffect(() => {
+    zoomRef.current = zoom;
+    fitRef.current?.();
+  }, [zoom]);
 
   useEffect(() => {
     const canvas = canvasRef.current!;
@@ -108,13 +161,20 @@ export function CanvasView({ engine, onPointerDown, onLayout, rootRef, label }: 
     const fit = () => {
       const r = wrap.getBoundingClientRect();
       if (r.width === 0 || r.height === 0) return;
-      const w = Math.min(r.width, (r.height * DOC_W) / DOC_H);
-      const h = (w * DOC_H) / DOC_W;
+      const z = zoomRef.current;
+      const place = canvasPlacement(r.width, r.height, z);
+      const w = place.width;
+      const h = place.height;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+      // 虫めがねのときだけ、置き場の中に絶対位置で置いて外側を切る
+      wrap.style.overflow = z ? 'hidden' : '';
+      canvas.style.position = z ? 'absolute' : '';
+      canvas.style.left = z ? `${place.left}px` : '';
+      canvas.style.top = z ? `${place.top}px` : '';
       const dpr = window.devicePixelRatio || 1;
-      const pw = Math.max(1, Math.round(w * dpr));
-      const ph = Math.max(1, Math.round(h * dpr));
+      const pw = Math.max(1, Math.min(MAX_BACKING_W, Math.round(w * dpr)));
+      const ph = Math.max(1, Math.round((pw * DOC_H) / DOC_W));
       if (canvas.width !== pw || canvas.height !== ph) {
         canvas.width = pw;
         canvas.height = ph;
@@ -122,19 +182,29 @@ export function CanvasView({ engine, onPointerDown, onLayout, rootRef, label }: 
       }
       const root = rootRef.current?.getBoundingClientRect();
       const cr = canvas.getBoundingClientRect();
-      handlers.current.onLayout({
-        left: cr.left - (root?.left ?? 0),
-        top: cr.top - (root?.top ?? 0),
-        width: cr.width,
-        height: cr.height,
-      });
+      handlers.current.onLayout(
+        {
+          left: cr.left - (root?.left ?? 0),
+          top: cr.top - (root?.top ?? 0),
+          width: cr.width,
+          height: cr.height,
+        },
+        {
+          left: r.left - (root?.left ?? 0),
+          top: r.top - (root?.top ?? 0),
+          width: r.width,
+          height: r.height,
+        },
+      );
       schedule();
     };
+    fitRef.current = fit;
     fit();
     const ro = new ResizeObserver(fit);
     ro.observe(wrap);
     window.addEventListener('resize', fit);
     return () => {
+      fitRef.current = null;
       off();
       ro.disconnect();
       window.removeEventListener('resize', fit);

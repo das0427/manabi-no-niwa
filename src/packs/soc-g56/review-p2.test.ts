@@ -127,6 +127,17 @@ describe('soc-g56 P2 レビュー: information・environment', () => {
         expect(o.alt, `${o.id} の別例`).toBeGreaterThanOrEqual(3);
       }
     });
+    it(`${id}: 正解だけが目立って長い選択肢にしない（誤りの最長の1.35倍まで）`, () => {
+      const bad = itemsOf(u).flatMap((it) => {
+        const os = optionsOf(it);
+        const right = os.filter((o) => o.correct);
+        const wrong = os.filter((o) => !o.correct);
+        if (right.length !== 1 || wrong.length === 0) return [];
+        const mw = Math.max(...wrong.map((o) => o.label.length));
+        return right[0]!.label.length > mw * 1.35 ? [`${it.id}: ${right[0]!.label}`] : [];
+      });
+      expect(bad).toEqual([]);
+    });
     it(`${id}: 例示データのグラフの題に「れいのデータ」`, () => {
       const graphs = itemsOf(u).filter((it) => it.engine === 'graph');
       for (const g of graphs)
@@ -204,6 +215,20 @@ describe('soc-g56 P2 レビュー: information・environment', () => {
       expect(rightOf(env, 'env-pol-5')).toBe('富山県');
       expect(rightOf(env, 'env-for-1')).toBe('およそ3分の2');
       expect(rightOf(env, 'env-dis-2')).toBe('津波');
+    });
+    it('グラフのいちばん大きい値の札が、正解の文に入る', () => {
+      for (const [u, gid] of [
+        [env, 'env-dis-alt-graph'],
+        [env, 'env-for-alt-graph-area'],
+        [info, 'inf-ind-alt-graph'],
+      ] as const) {
+        const g = itemOf(u, gid);
+        if (g.engine !== 'graph') throw new Error('graph ではない');
+        const vs = g.data.values as number[];
+        const top = plainText(String(g.data.labels[vs.indexOf(Math.max(...vs))]));
+        if (gid === 'inf-ind-alt-graph') expect(top).toBe('水');
+        else expect(rightOf(u, gid)).toContain(top);
+      }
     });
     it('林業の仕事の順', () => {
       const o = itemOf(env, 'env-for-alt-order');

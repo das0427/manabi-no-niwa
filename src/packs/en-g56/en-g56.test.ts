@@ -7,6 +7,7 @@ import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { UnitSpec } from '../../curriculum/types';
 import { normalizeStrokes } from '../../engines/trace/strokes';
 import { judge as traceJudge, polylineLength } from '../../modes/trace/judge';
+import { enG56Illust } from '../../illust/content/en-g56';
 import { lifeG12Illust } from '../../illust/content/life-g12';
 import { getIllust } from '../../illust/registry';
 import { kanjiGrade } from '../../text/kanji-grades';
@@ -18,7 +19,7 @@ import { englishScript } from './voice';
  * 絵が あるか（registry の content の自動読み込みは テストの変換キャッシュで 新しい ファイルが 入らない ことが
  * あるので、ほかの パックの 絵（life-g12 の しせつ）は モジュールから 直接 たしかめる）
  */
-const known = (id: string) => !!getIllust(id) || id in lifeG12Illust;
+const known = (id: string) => !!getIllust(id) || id in lifeG12Illust || id in enG56Illust;
 
 /** ux-by-age: 小5・小6 の選択肢は 4 まで */
 const MAX_CHOICES = 4;
@@ -220,5 +221,79 @@ describe('en-g56 の教材検査（curriculum-matrix 1.8）', () => {
     expect([...(said.get('play the piano') ?? [])]).toEqual(['b']);
     expect([...(said.get('run fast') ?? [])]).toEqual(['g']);
     expect([...(said.get('trains') ?? [])]).toEqual(['g']);
+  });
+
+  // ---- P2: g5.en.where / g6.en.future ----
+  const illustIdOf = (o: { figure?: { kind: string; id?: string } }) =>
+    o.figure?.kind === 'illust' ? o.figure.id : undefined;
+
+  it('g5.en.where: 正答の絵が 音声の文と 一致・絵は すべて 異なる・ふつうでない 組を 問わない', () => {
+    let n = 0;
+    for (const it of itemsOf('g5.en.where')) {
+      if (it.engine !== 'listen') continue;
+      const ids = it.options.map(illustIdOf).filter((x): x is string => !!x);
+      expect(new Set(ids).size, it.id).toBe(ids.length);
+      const ss = soundsOf(it);
+      const last = ss[ss.length - 1]!;
+      // 不自然な文を問わない
+      expect(ss.join(' '), it.id).not.toMatch(/(ball|cap|book) is in the bed|cat is in the desk/);
+      let want: string | undefined;
+      const m1 = /The (ball|cat|cap|book) is (in|on|under) the (desk|bed)\.$/.exec(last);
+      const m2 = /It's (in|on|under) the (desk|bed)\.$/.exec(last);
+      if (m1) want = `en56-${m1[1]}-${m1[2]}-${m1[3]}`;
+      else if (m2) {
+        const o = /Where is (?:my|the) (ball|cat|cap|book)\?/.exec(ss[0]!)?.[1];
+        want = `en56-${o}-${m2[1]}-${m2[2]}`;
+        // 「ある」ばしょが 不自然な 組に ならない
+        expect(
+          (o !== 'cat' && m2[1] === 'in' && m2[2] === 'bed') ||
+            (o === 'cat' && m2[1] === 'in' && m2[2] === 'desk'),
+          it.id,
+        ).toBe(false);
+      }
+      const ok = it.options.find((o) => o.correct);
+      if (illustIdOf(ok!)) {
+        n++;
+        expect(want, it.id).toBeTruthy();
+        expect(illustIdOf(ok!), it.id).toBe(want);
+        // 選択肢は 正答と ちょうど1点だけ 違う
+        for (const o of it.options) {
+          if (o === ok) continue;
+          const a = illustIdOf(o)!.split('-');
+          const b = illustIdOf(ok!)!.split('-');
+          expect(a.filter((x, i) => x !== b[i]).length, `${it.id} ${illustIdOf(o)}`).toBe(1);
+        }
+      }
+    }
+    expect(n).toBe(12 + 8 + 8 + 4);
+  });
+
+  it('台本の種類: where は where、future は future か dream', () => {
+    for (const [uid, re] of [
+      ['g5.en.where', /^en\/en-g56\.where\./],
+      ['g6.en.future', /^en\/en-g56\.(future|dream)\./],
+    ] as const)
+      for (const it of itemsOf(uid)) {
+        if (it.engine !== 'listen') continue;
+        const sounds = Array.isArray(it.audio) ? it.audio : [it.audio];
+        for (const s of sounds) expect(s.key, it.id).toMatch(re);
+        if (uid === 'g6.en.future' && (it.id.startsWith('dream:') || it.id.startsWith('gist:')))
+          for (const s of sounds) expect(s.key, it.id).toMatch(/^en\/en-g56\.dream\./);
+      }
+  });
+
+  it('g6.en.future: 発表のヒントの「Nつめ」は 1〜3 で、発表は 3文', () => {
+    let n = 0;
+    for (const it of itemsOf('g6.en.future')) {
+      if (it.engine !== 'listen' || !it.id.startsWith('dream:')) continue;
+      n++;
+      const sounds = Array.isArray(it.audio) ? it.audio : [it.audio];
+      expect(sounds.length, it.id).toBe(3);
+      const at = Number(/(\d)つめの/.exec(String(it.hints[1]))?.[1]);
+      expect(at, it.id).toBeGreaterThanOrEqual(1);
+      expect(at, it.id).toBeLessThanOrEqual(3);
+      expect(String(it.hints[2]), it.id).toContain(`${at}つめの`);
+    }
+    expect(n).toBe(8);
   });
 });

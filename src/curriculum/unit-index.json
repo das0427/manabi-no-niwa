@@ -2149,6 +2149,21 @@
     "engine": "listen"
   },
   {
+    "id": "g5.en.where",
+    "pack": "en-g56",
+    "title": "どこに あるかを 聞《き》こう",
+    "stage": "g5",
+    "subject": "en",
+    "domain": "en",
+    "icon": "subj-eigo",
+    "prereq": [
+      "g5.en.listen-self"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g5.en.word-order",
     "pack": "en-g56",
     "title": "ことばの じゅんばん",
@@ -2736,6 +2751,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g6.en.future",
+    "pack": "en-g56",
+    "title": "したい こと・なりたい ものを 聞《き》こう",
+    "stage": "g6",
+    "subject": "en",
+    "domain": "en",
+    "icon": "subj-eigo",
+    "prereq": [
+      "g6.en.past"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g6.en.past",

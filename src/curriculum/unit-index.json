@@ -3442,6 +3442,34 @@
     "engine": "sort"
   },
   {
+    "id": "p4.env.daily-order",
+    "pack": "p4",
+    "title": "くらしの じゅんばん",
+    "stage": "p4",
+    "subject": "env",
+    "domain": "play",
+    "icon": "p23-clock",
+    "prereq": [
+      "p23.env.daily-life"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "order"
+  },
+  {
+    "id": "p4.env.seasons",
+    "pack": "p4",
+    "title": "きせつと しぜん",
+    "stage": "p4",
+    "subject": "env",
+    "domain": "play",
+    "icon": "life-cherry",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "hiddenByDefault": true,
     "id": "p4.hand.kana-trace-early",
     "pack": "p4",
@@ -3545,6 +3573,21 @@
       "p4.ja.first-sound"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
+    "id": "p4.ja.story-listen",
+    "pack": "p4",
+    "title": "おはなしを きいて",
+    "stage": "p4",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p23-book",
+    "prereq": [
+      "p23.ja.word-listen"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "listen"
   },

@@ -70,7 +70,7 @@ export const GREETS: Phrase[] = [
     'Happy birthday!',
     'おめでとう',
     'enpre-birthday',
-    'Happy birthday, rabbit!',
+    'Happy birthday, bear!',
     { explain: '「おたんじょうび おめでとう」の ばめんだよ。' },
   ),
 ];

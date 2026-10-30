@@ -506,6 +506,12 @@ describe('en-pre の教材検査（設計書 11.1）', () => {
     for (const a of ['cat', 'dog', 'rabbit'])
       for (const p of ['in', 'on', 'under'])
         expect(`enpre-where-${a}-${p}` in enPreIllust).toBe(true);
+    // label は「<ばしょ>の <どうぶつ>」の短い形（4択の札が きくの札の右に2列で収まるように。8字まで）
+    for (const it of listens(u))
+      for (const o of it.options) {
+        expect(String(o.label), it.id).toMatch(/^(なか|うえ|した)の (ねこ|いぬ|うさぎ)$/);
+        expect([...String(o.label)].length, it.id).toBeLessThanOrEqual(8);
+      }
     // 別例は p4.en.words の where の音声から始まる
     for (const it of listens(u).filter((i) => i.alt))
       expect(soundsOf(it)[0]!.key, it.id).toMatch(/^en\/en-pre\.where\./);

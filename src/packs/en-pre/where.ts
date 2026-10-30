@@ -24,7 +24,8 @@ export const posAnswerSound = (p: Pos): EnSound =>
 export const whereIllust = (a: Animal, p: Pos): string => `enpre-where-${a}-${p}`;
 
 const animalJa = (a: Animal): string => WORD_BY_ID[a]!.ja;
-const label = (a: Animal, p: Pos): string => `ベッドの ${POS_JA[p]}の ${animalJa(a)}`;
+/** 選択肢の label は短く（4択の札が2列に収まるように。ベッドは絵で分かるので書かない） */
+const label = (a: Animal, p: Pos): string => `${POS_JA[p]}の ${animalJa(a)}`;
 
 const whereOpt = (
   a: Animal,

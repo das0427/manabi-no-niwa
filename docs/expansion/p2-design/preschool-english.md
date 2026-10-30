@@ -332,12 +332,12 @@ export interface ListenItem extends ItemBase {
   | id | 台本（sound） | 別例（altSound） | 日本語（label） | 解説 | 絵 |
   |---|---|---|---|---|---|
   | sorry | I'm sorry. | I'm sorry, bear. | ごめんね | 「ごめんね」の ばめんだよ。 | 新 enpre-sorry |
-  | birthday | Happy birthday! | Happy birthday, rabbit! | おめでとう | 「おたんじょうび おめでとう」の ばめんだよ。 | 新 enpre-birthday |
+  | birthday | Happy birthday! | Happy birthday, bear! | おめでとう | 「おたんじょうび おめでとう」の ばめんだよ。 | 新 enpre-birthday |
   | angry | I'm angry. | I'm angry! | おこった | 「おこった」の きもちだよ。 | eng34-face-angry |
   | thirsty | I'm thirsty. | I'm thirsty! | のどが かわいた | 「のどが かわいた」の ようすだよ。 | eng34-face-thirsty |
   | hot | I'm hot. | I'm hot! | あつい | 「あつい」の ようすだよ。 | eng34-face-hot |
   | cold | I'm cold. | I'm cold! | さむい | 「さむい」の ようすだよ。 | eng34-face-cold |
-  - key: sorry は `enKey('hello', 'im-sorry', …)`・別例 `enKey('hello', 'im-sorry-bear', …)`、birthday は `'happy-birthday'`・`'happy-birthday-rabbit'`。きもちは今の `F()` のまま（`feel.im-<id>`・`feelx.im-<id>`）。
+  - key: sorry は `enKey('hello', 'im-sorry', …)`・別例 `enKey('hello', 'im-sorry-bear', …)`、birthday は `'happy-birthday'`・`'happy-birthday-bear'`。きもちは今の `F()` のまま（`feel.im-<id>`・`feelx.im-<id>`）。
   - 既存の4つ（happy・sad・sleepy・hungry）の解説は「〜の きもちだよ。」のまま。hungry は「おなかが すいた」の ようす だが、今の文のままでよい（直すなら thirsty と同じ「ようす」にそろえる）。
 - 同じ問題に並べない組（`clash`。今の hello・bye に足す）:
   - hello と bye（どちらも手をふる場面。今のまま）
@@ -350,7 +350,7 @@ export interface ListenItem extends ItemBase {
 - 段階: 段階0 greet 3択（7）、段階1 feel 3択（8）、段階2 まぜて 4択（15）。段階0では morning と night を同じ問題に入れる今の作り（sameStart を先に入れる）を続ける。段階1では pair-feel の組を先に入れる（hungry の問題に thirsty、hot に cold）。
 - 量: 異なる同一性キー greet 7＋別例 7、feel 8＋別例 8 → C 2/2。全体 30（Q 2.5）。問題 45（段階0 14・段階1 16・段階2 15）。
 - 新しい絵（P1。6.11）: `enpre-sorry`（うさぎが たおれた コップの そばで ぺこりと あたまを さげる。くまが みている）、`enpre-birthday`（ろうそくを たてた ケーキの まえで とんがりぼうしの くまが わらう。プレゼントの はこは描かない: thanks の絵と分けるため。文字・数字を描かない）。
-- 新しい英語の音声: hello 4（I'm sorry. / I'm sorry, bear. / Happy birthday! / Happy birthday, rabbit!）、feel 4、feelx 4 の 12本。
+- 新しい英語の音声: hello 4（I'm sorry. / I'm sorry, bear. / Happy birthday! / Happy birthday, bear!）、feel 4、feelx 4 の 12本。
 - revealAudio・hints・prompt は今のまま。
 - テスト（11.1 に追加）: 上の clash の組が同じ問題に無い／pair-feel の誤りが組どうしだけ／greet 7・feel 8 の異なる同一性キー。
 
@@ -379,7 +379,7 @@ export interface ListenItem extends ItemBase {
   - in: ふとんを かけて ねている。顔と耳だけが まくらの上に出る。
   - on: ふとんの上に すわっている（全身が見える）。
   - under: ベッドの下の床に ふせている（脚の間に全身が見える。ベッドの上は空）。
-  - label: 「ベッドの なかの ねこ」「ベッドの うえの ねこ」「ベッドの したの ねこ」（いぬ・うさぎ も同じ形）。
+  - label: 「なかの ねこ」「うえの ねこ」「したの ねこ」（いぬ・うさぎ も同じ形）。ベッドは絵で分かるので書かない（「ベッドの なかの うさぎ」の 12字では、きくの札の右に4択の札が2列に収まらない。いちばん長い label は「うえの うさぎ」の6字で、p4.en.hello の「おなかが すいた」より短い）。
 - 英語（台本。新しい key は `pos` の種類）:
   | 場面 | 文（sound） | 答えだけ（別例の後半） |
   |---|---|---|
@@ -921,7 +921,7 @@ export interface ListenItem extends ItemBase {
 2. **このままでよい**: `It's bread.`（数えない名詞に a を付けていない）、`Some bread, please.`、`Can I have some bread, please?`、`Two peaches / tomatoes / strawberries`（複数形の綴り）、`These are my ears.`、`Where are the toes?`、`One apple.`（数をはっきり言う形。6.7）、`Hello, everyone!`、`I'm full!`、`A big ship. Toot, toot!`、`Wave your hand!`（片手で手をふる絵）、`Let's put our hands up!`、`Hands up!`。
 3. **気をつけて使う**: `Where is the nose?` など からだの where 文。うさぎの絵の部分をたずねる言い方としては正しい。子に向けた会話では `Where is your nose?` が普通なので、保護者が画面の外で言い合うときはそちらでよい（parentNote には書かない）。
 4. **版 0.2 で足す文**（どれも短い一般的な言い方。確かめた）:
-   - あいさつ: `I'm sorry.`、`I'm sorry, bear.`、`Happy birthday!`、`Happy birthday, rabbit!`。
+   - あいさつ: `I'm sorry.`、`I'm sorry, bear.`、`Happy birthday!`、`Happy birthday, bear!`。
    - きもち: `I'm angry.`、`I'm thirsty.`、`I'm hot.`、`I'm cold.`（＋感嘆の別例）。
    - からだ: `Touch your tummy.`（幼児に向けた普通の語）、`Touch your knees.`、`Touch your shoulders.`。
    - where: `The cat is in / on / under the bed.`、`In the bed.` など（問いへの答えは前置詞句だけで自然）。

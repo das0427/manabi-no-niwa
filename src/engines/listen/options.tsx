@@ -47,6 +47,13 @@ interface Props {
   /** 押せない（判定中・最初の再生中など） */
   locked: boolean;
   submit(r: ChoiceResponse): void;
+  /**
+   * 押したときの動き（listen の nameBack だけが渡す）。渡すと submit は呼ばずに onPress へ任せる
+   * （名前を鳴らしてから send で答える）。reading は渡さない
+   */
+  onPress?: (i: number, send: (r: ChoiceResponse) => void) => void;
+  /** onPress の間、選択中の見た目にする選択肢の番号 */
+  pressed?: number | null;
   className?: string;
 }
 
@@ -57,6 +64,8 @@ export function ChoiceOptions({
   wrongMark,
   locked,
   submit,
+  onPress,
+  pressed,
   className,
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
@@ -68,6 +77,7 @@ export function ChoiceOptions({
   const stateOf = (i: number): TapState => {
     const o = part.options[i]!;
     if (revealed && o.correct) return 'correct';
+    if (pressed === i) return 'selected';
     if (wrong.has(i)) return 'wrong';
     if (part.multi && picked.includes(i)) return 'selected';
     return null;
@@ -75,7 +85,8 @@ export function ChoiceOptions({
   const press = (i: number) => {
     if (locked || revealed) return;
     if (!part.multi) {
-      submit([i]);
+      if (onPress) onPress(i, submit);
+      else submit([i]);
       return;
     }
     setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));

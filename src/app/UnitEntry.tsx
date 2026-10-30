@@ -4,7 +4,7 @@
  *  - LegacyEntry: v1 のモードを使う単元を、使う遊び方・段階の範囲に絞って開く（curriculum-matrix 4.1）。
  */
 import { audio } from '../core/audio/index';
-import { PRESCHOOL_HOMES } from '../curriculum/preschoolHome';
+import { findPreschoolCard } from '../curriculum/preschoolEnglish';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
 import { Rt } from '../text/Rt';
@@ -17,8 +17,10 @@ import { navigate } from './router';
 
 export function CardChooser({ stage, cardId }: { stage: string; cardId: string }) {
   const app = useApp();
-  const def = PRESCHOOL_HOMES[stage as 'p23' | 'p4' | 'p5'];
-  const card = def?.cards.find((c) => c.id === cardId);
+  const card =
+    stage === 'p23' || stage === 'p4' || stage === 'p5'
+      ? findPreschoolCard(stage, cardId)
+      : undefined;
   if (!card || !app.settings) return null;
   const ctx = { furigana: app.settings.support.furigana, learnerGrade: 0 };
   return (

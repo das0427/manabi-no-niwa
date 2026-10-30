@@ -92,6 +92,11 @@ export interface ChildSettings {
    * 無いときは右手（2.0 までの端末内の値 localStorage は drawing/hand.ts が移す）
    */
   drawingHand?: DrawingHand;
+  /**
+   * 幼児ホームに「えいご」の札を出す。省略時は true（データ移行なし。defaultSettings には書かない）。
+   * 2歳段階のホームには、この設定にかかわらず出さない
+   */
+  showPreschoolEnglish?: boolean;
 }
 
 export type DrawingHand = 'right' | 'left';

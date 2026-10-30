@@ -1797,6 +1797,1538 @@
                     {
                         "key":  "en-g56.word.zoo",
                         "text":  "zoo"
+                    },
+                    {
+                        "key":  "en-pre.book.beep-1",
+                        "text":  "A red car. Beep, beep!"
+                    },
+                    {
+                        "key":  "en-pre.book.beep-2",
+                        "text":  "A yellow bus. Beep, beep!"
+                    },
+                    {
+                        "key":  "en-pre.book.beep-3",
+                        "text":  "A big ship. Toot, toot!"
+                    },
+                    {
+                        "key":  "en-pre.book.beep-4",
+                        "text":  "Bye-bye!"
+                    },
+                    {
+                        "key":  "en-pre.book.clap-1",
+                        "text":  "Clap your hands!"
+                    },
+                    {
+                        "key":  "en-pre.book.clap-2",
+                        "text":  "Stomp your feet!"
+                    },
+                    {
+                        "key":  "en-pre.book.clap-3",
+                        "text":  "Turn around!"
+                    },
+                    {
+                        "key":  "en-pre.book.clap-4",
+                        "text":  "Sit down!"
+                    },
+                    {
+                        "key":  "en-pre.book.hello-1",
+                        "text":  "Hello, dog!"
+                    },
+                    {
+                        "key":  "en-pre.book.hello-2",
+                        "text":  "Hello, cat!"
+                    },
+                    {
+                        "key":  "en-pre.book.hello-3",
+                        "text":  "Hello, bird!"
+                    },
+                    {
+                        "key":  "en-pre.book.hello-4",
+                        "text":  "Hello, everyone!"
+                    },
+                    {
+                        "key":  "en-pre.book.jump-1",
+                        "text":  "Jump, frog!"
+                    },
+                    {
+                        "key":  "en-pre.book.jump-2",
+                        "text":  "Jump, rabbit!"
+                    },
+                    {
+                        "key":  "en-pre.book.jump-3",
+                        "text":  "Jump, monkey!"
+                    },
+                    {
+                        "key":  "en-pre.book.jump-4",
+                        "text":  "Jump, jump, jump!"
+                    },
+                    {
+                        "key":  "en-pre.book.sky-1",
+                        "text":  "A little star."
+                    },
+                    {
+                        "key":  "en-pre.book.sky-2",
+                        "text":  "A big moon."
+                    },
+                    {
+                        "key":  "en-pre.book.sky-3",
+                        "text":  "A warm sun."
+                    },
+                    {
+                        "key":  "en-pre.book.sky-4",
+                        "text":  "Good night!"
+                    },
+                    {
+                        "key":  "en-pre.book.yummy-1",
+                        "text":  "An apple. Yummy!"
+                    },
+                    {
+                        "key":  "en-pre.book.yummy-2",
+                        "text":  "A banana. Yummy!"
+                    },
+                    {
+                        "key":  "en-pre.book.yummy-3",
+                        "text":  "A strawberry. Yummy!"
+                    },
+                    {
+                        "key":  "en-pre.book.yummy-4",
+                        "text":  "I\u0027m full!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.clap-your-hands",
+                        "text":  "Clap your hands!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.hands-up",
+                        "text":  "Hands up!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.jump",
+                        "text":  "Jump!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.sit-down",
+                        "text":  "Sit down!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.stand-up",
+                        "text":  "Stand up!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.stomp-your-feet",
+                        "text":  "Stomp your feet!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.turn-around",
+                        "text":  "Turn around!"
+                    },
+                    {
+                        "key":  "en-pre.cmd.wave-your-hand",
+                        "text":  "Wave your hand!"
+                    },
+                    {
+                        "key":  "en-pre.color.blue",
+                        "text":  "Blue."
+                    },
+                    {
+                        "key":  "en-pre.color.green",
+                        "text":  "Green."
+                    },
+                    {
+                        "key":  "en-pre.color.orange",
+                        "text":  "Orange."
+                    },
+                    {
+                        "key":  "en-pre.color.pink",
+                        "text":  "Pink."
+                    },
+                    {
+                        "key":  "en-pre.color.purple",
+                        "text":  "Purple."
+                    },
+                    {
+                        "key":  "en-pre.color.red",
+                        "text":  "Red."
+                    },
+                    {
+                        "key":  "en-pre.color.white",
+                        "text":  "White."
+                    },
+                    {
+                        "key":  "en-pre.color.yellow",
+                        "text":  "Yellow."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-happy",
+                        "text":  "I\u0027m happy."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-hungry",
+                        "text":  "I\u0027m hungry."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-sad",
+                        "text":  "I\u0027m sad."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-sleepy",
+                        "text":  "I\u0027m sleepy."
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-happy",
+                        "text":  "I\u0027m happy!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-hungry",
+                        "text":  "I\u0027m hungry!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-sad",
+                        "text":  "I\u0027m sad!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-sleepy",
+                        "text":  "I\u0027m sleepy!"
+                    },
+                    {
+                        "key":  "en-pre.hello.bye-bye",
+                        "text":  "Bye-bye!"
+                    },
+                    {
+                        "key":  "en-pre.hello.bye-bye-monkey",
+                        "text":  "Bye-bye, monkey!"
+                    },
+                    {
+                        "key":  "en-pre.hello.good-morning",
+                        "text":  "Good morning!"
+                    },
+                    {
+                        "key":  "en-pre.hello.good-morning-bear",
+                        "text":  "Good morning, bear!"
+                    },
+                    {
+                        "key":  "en-pre.hello.good-night",
+                        "text":  "Good night!"
+                    },
+                    {
+                        "key":  "en-pre.hello.good-night-dog",
+                        "text":  "Good night, dog!"
+                    },
+                    {
+                        "key":  "en-pre.hello.hello",
+                        "text":  "Hello!"
+                    },
+                    {
+                        "key":  "en-pre.hello.hello-rabbit",
+                        "text":  "Hello, rabbit!"
+                    },
+                    {
+                        "key":  "en-pre.hello.thank-you",
+                        "text":  "Thank you!"
+                    },
+                    {
+                        "key":  "en-pre.hello.thank-you-cat",
+                        "text":  "Thank you, cat!"
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-ball",
+                        "text":  "It\u0027s a ball."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-bird",
+                        "text":  "It\u0027s a bird."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-book",
+                        "text":  "It\u0027s a book."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-cake",
+                        "text":  "It\u0027s a cake."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-car",
+                        "text":  "It\u0027s a car."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-dog",
+                        "text":  "It\u0027s a dog."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-duck",
+                        "text":  "It\u0027s a duck."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-frog",
+                        "text":  "It\u0027s a frog."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-hat",
+                        "text":  "It\u0027s a hat."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-lemon",
+                        "text":  "It\u0027s a lemon."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-pig",
+                        "text":  "It\u0027s a pig."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-rabbit",
+                        "text":  "It\u0027s a rabbit."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-ship",
+                        "text":  "It\u0027s a ship."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-star",
+                        "text":  "It\u0027s a star."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-strawberry",
+                        "text":  "It\u0027s a strawberry."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-tomato",
+                        "text":  "It\u0027s a tomato."
+                    },
+                    {
+                        "key":  "en-pre.it.its-a-train",
+                        "text":  "It\u0027s a train."
+                    },
+                    {
+                        "key":  "en-pre.it.its-an-apple",
+                        "text":  "It\u0027s an apple."
+                    },
+                    {
+                        "key":  "en-pre.it.its-an-egg",
+                        "text":  "It\u0027s an egg."
+                    },
+                    {
+                        "key":  "en-pre.it.its-an-elephant",
+                        "text":  "It\u0027s an elephant."
+                    },
+                    {
+                        "key":  "en-pre.it.its-an-umbrella",
+                        "text":  "It\u0027s an umbrella."
+                    },
+                    {
+                        "key":  "en-pre.it.these-are-my-ears",
+                        "text":  "These are my ears."
+                    },
+                    {
+                        "key":  "en-pre.it.these-are-my-toes",
+                        "text":  "These are my toes."
+                    },
+                    {
+                        "key":  "en-pre.it.this-is-my-nose",
+                        "text":  "This is my nose."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-blue",
+                        "text":  "It\u0027s blue."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-green",
+                        "text":  "It\u0027s green."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-orange",
+                        "text":  "It\u0027s orange."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-pink",
+                        "text":  "It\u0027s pink."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-purple",
+                        "text":  "It\u0027s purple."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-red",
+                        "text":  "It\u0027s red."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-white",
+                        "text":  "It\u0027s white."
+                    },
+                    {
+                        "key":  "en-pre.itis.its-yellow",
+                        "text":  "It\u0027s yellow."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-clap",
+                        "text":  "Let\u0027s clap!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-jump",
+                        "text":  "Let\u0027s jump!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-put-our-hands-up",
+                        "text":  "Let\u0027s put our hands up!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-sit-down",
+                        "text":  "Let\u0027s sit down!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-stand-up",
+                        "text":  "Let\u0027s stand up!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-stomp",
+                        "text":  "Let\u0027s stomp!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-ears",
+                        "text":  "Let\u0027s touch our ears."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-head",
+                        "text":  "Let\u0027s touch our head."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-mouth",
+                        "text":  "Let\u0027s touch our mouth."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-nose",
+                        "text":  "Let\u0027s touch our nose."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-toes",
+                        "text":  "Let\u0027s touch our toes."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-turn-around",
+                        "text":  "Let\u0027s turn around!"
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-wave",
+                        "text":  "Let\u0027s wave!"
+                    },
+                    {
+                        "key":  "en-pre.np.eight-apples",
+                        "text":  "Eight apples."
+                    },
+                    {
+                        "key":  "en-pre.np.eight-balls",
+                        "text":  "Eight balls."
+                    },
+                    {
+                        "key":  "en-pre.np.eight-cars",
+                        "text":  "Eight cars."
+                    },
+                    {
+                        "key":  "en-pre.np.eight-dogs",
+                        "text":  "Eight dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.eight-flowers",
+                        "text":  "Eight flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.eight-stars",
+                        "text":  "Eight stars."
+                    },
+                    {
+                        "key":  "en-pre.np.five-apples",
+                        "text":  "Five apples."
+                    },
+                    {
+                        "key":  "en-pre.np.five-balls",
+                        "text":  "Five balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-blue-balls",
+                        "text":  "Five blue balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-cars",
+                        "text":  "Five cars."
+                    },
+                    {
+                        "key":  "en-pre.np.five-dogs",
+                        "text":  "Five dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.five-flowers",
+                        "text":  "Five flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.five-green-balls",
+                        "text":  "Five green balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-orange-balls",
+                        "text":  "Five orange balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-pink-balls",
+                        "text":  "Five pink balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-purple-balls",
+                        "text":  "Five purple balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-red-balls",
+                        "text":  "Five red balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-stars",
+                        "text":  "Five stars."
+                    },
+                    {
+                        "key":  "en-pre.np.five-white-balls",
+                        "text":  "Five white balls."
+                    },
+                    {
+                        "key":  "en-pre.np.five-yellow-balls",
+                        "text":  "Five yellow balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-apples",
+                        "text":  "Four apples."
+                    },
+                    {
+                        "key":  "en-pre.np.four-balls",
+                        "text":  "Four balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-blue-balls",
+                        "text":  "Four blue balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-cars",
+                        "text":  "Four cars."
+                    },
+                    {
+                        "key":  "en-pre.np.four-dogs",
+                        "text":  "Four dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.four-flowers",
+                        "text":  "Four flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.four-green-balls",
+                        "text":  "Four green balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-orange-balls",
+                        "text":  "Four orange balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-pink-balls",
+                        "text":  "Four pink balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-purple-balls",
+                        "text":  "Four purple balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-red-balls",
+                        "text":  "Four red balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-stars",
+                        "text":  "Four stars."
+                    },
+                    {
+                        "key":  "en-pre.np.four-white-balls",
+                        "text":  "Four white balls."
+                    },
+                    {
+                        "key":  "en-pre.np.four-yellow-balls",
+                        "text":  "Four yellow balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-five-pink-balls",
+                        "text":  "I see five pink balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-four-balls",
+                        "text":  "I see four balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-four-green-balls",
+                        "text":  "I see four green balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-one-apple",
+                        "text":  "I see one apple."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-one-orange-ball",
+                        "text":  "I see one orange ball."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-one-red-ball",
+                        "text":  "I see one red ball."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-seven-flowers",
+                        "text":  "I see seven flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-six-dogs",
+                        "text":  "I see six dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-ten-stars",
+                        "text":  "I see ten stars."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-three-cars",
+                        "text":  "I see three cars."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-three-white-balls",
+                        "text":  "I see three white balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-three-yellow-balls",
+                        "text":  "I see three yellow balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-two-blue-balls",
+                        "text":  "I see two blue balls."
+                    },
+                    {
+                        "key":  "en-pre.np.i-see-two-purple-balls",
+                        "text":  "I see two purple balls."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-apples",
+                        "text":  "Nine apples."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-balls",
+                        "text":  "Nine balls."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-cars",
+                        "text":  "Nine cars."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-dogs",
+                        "text":  "Nine dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-flowers",
+                        "text":  "Nine flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.nine-stars",
+                        "text":  "Nine stars."
+                    },
+                    {
+                        "key":  "en-pre.np.one-apple",
+                        "text":  "One apple."
+                    },
+                    {
+                        "key":  "en-pre.np.one-ball",
+                        "text":  "One ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-blue-ball",
+                        "text":  "One blue ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-car",
+                        "text":  "One car."
+                    },
+                    {
+                        "key":  "en-pre.np.one-dog",
+                        "text":  "One dog."
+                    },
+                    {
+                        "key":  "en-pre.np.one-flower",
+                        "text":  "One flower."
+                    },
+                    {
+                        "key":  "en-pre.np.one-green-ball",
+                        "text":  "One green ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-orange-ball",
+                        "text":  "One orange ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-pink-ball",
+                        "text":  "One pink ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-purple-ball",
+                        "text":  "One purple ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-red-ball",
+                        "text":  "One red ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-star",
+                        "text":  "One star."
+                    },
+                    {
+                        "key":  "en-pre.np.one-white-ball",
+                        "text":  "One white ball."
+                    },
+                    {
+                        "key":  "en-pre.np.one-yellow-ball",
+                        "text":  "One yellow ball."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-apples",
+                        "text":  "Seven apples."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-balls",
+                        "text":  "Seven balls."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-cars",
+                        "text":  "Seven cars."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-dogs",
+                        "text":  "Seven dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-flowers",
+                        "text":  "Seven flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.seven-stars",
+                        "text":  "Seven stars."
+                    },
+                    {
+                        "key":  "en-pre.np.six-apples",
+                        "text":  "Six apples."
+                    },
+                    {
+                        "key":  "en-pre.np.six-balls",
+                        "text":  "Six balls."
+                    },
+                    {
+                        "key":  "en-pre.np.six-cars",
+                        "text":  "Six cars."
+                    },
+                    {
+                        "key":  "en-pre.np.six-dogs",
+                        "text":  "Six dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.six-flowers",
+                        "text":  "Six flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.six-stars",
+                        "text":  "Six stars."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-apples",
+                        "text":  "Ten apples."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-balls",
+                        "text":  "Ten balls."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-cars",
+                        "text":  "Ten cars."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-dogs",
+                        "text":  "Ten dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-flowers",
+                        "text":  "Ten flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.ten-stars",
+                        "text":  "Ten stars."
+                    },
+                    {
+                        "key":  "en-pre.np.three-apples",
+                        "text":  "Three apples."
+                    },
+                    {
+                        "key":  "en-pre.np.three-balls",
+                        "text":  "Three balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-blue-balls",
+                        "text":  "Three blue balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-cars",
+                        "text":  "Three cars."
+                    },
+                    {
+                        "key":  "en-pre.np.three-dogs",
+                        "text":  "Three dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.three-flowers",
+                        "text":  "Three flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.three-green-balls",
+                        "text":  "Three green balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-orange-balls",
+                        "text":  "Three orange balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-pink-balls",
+                        "text":  "Three pink balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-purple-balls",
+                        "text":  "Three purple balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-red-balls",
+                        "text":  "Three red balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-stars",
+                        "text":  "Three stars."
+                    },
+                    {
+                        "key":  "en-pre.np.three-white-balls",
+                        "text":  "Three white balls."
+                    },
+                    {
+                        "key":  "en-pre.np.three-yellow-balls",
+                        "text":  "Three yellow balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-apples",
+                        "text":  "Two apples."
+                    },
+                    {
+                        "key":  "en-pre.np.two-balls",
+                        "text":  "Two balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-blue-balls",
+                        "text":  "Two blue balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-cars",
+                        "text":  "Two cars."
+                    },
+                    {
+                        "key":  "en-pre.np.two-dogs",
+                        "text":  "Two dogs."
+                    },
+                    {
+                        "key":  "en-pre.np.two-flowers",
+                        "text":  "Two flowers."
+                    },
+                    {
+                        "key":  "en-pre.np.two-green-balls",
+                        "text":  "Two green balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-orange-balls",
+                        "text":  "Two orange balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-pink-balls",
+                        "text":  "Two pink balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-purple-balls",
+                        "text":  "Two purple balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-red-balls",
+                        "text":  "Two red balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-stars",
+                        "text":  "Two stars."
+                    },
+                    {
+                        "key":  "en-pre.np.two-white-balls",
+                        "text":  "Two white balls."
+                    },
+                    {
+                        "key":  "en-pre.np.two-yellow-balls",
+                        "text":  "Two yellow balls."
+                    },
+                    {
+                        "key":  "en-pre.num.five",
+                        "text":  "Five."
+                    },
+                    {
+                        "key":  "en-pre.num.four",
+                        "text":  "Four."
+                    },
+                    {
+                        "key":  "en-pre.num.one",
+                        "text":  "One."
+                    },
+                    {
+                        "key":  "en-pre.num.three",
+                        "text":  "Three."
+                    },
+                    {
+                        "key":  "en-pre.num.two",
+                        "text":  "Two."
+                    },
+                    {
+                        "key":  "en-pre.reply.here-you-are",
+                        "text":  "Here you are."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-banana-please",
+                        "text":  "A banana, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-cake-please",
+                        "text":  "A cake, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-carrot-please",
+                        "text":  "A carrot, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-lemon-please",
+                        "text":  "A lemon, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-peach-please",
+                        "text":  "A peach, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-strawberry-please",
+                        "text":  "A strawberry, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.a-tomato-please",
+                        "text":  "A tomato, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.an-apple-please",
+                        "text":  "An apple, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.an-egg-please",
+                        "text":  "An egg, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-banana-please",
+                        "text":  "Can I have a banana, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-cake-please",
+                        "text":  "Can I have a cake, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-carrot-please",
+                        "text":  "Can I have a carrot, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-lemon-please",
+                        "text":  "Can I have a lemon, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-peach-please",
+                        "text":  "Can I have a peach, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-strawberry-please",
+                        "text":  "Can I have a strawberry, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-a-tomato-please",
+                        "text":  "Can I have a tomato, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-an-apple-please",
+                        "text":  "Can I have an apple, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-an-egg-please",
+                        "text":  "Can I have an egg, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-five-carrots-please",
+                        "text":  "Can I have five carrots, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-four-eggs-please",
+                        "text":  "Can I have four eggs, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-one-apple-please",
+                        "text":  "Can I have one apple, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-one-tomato-please",
+                        "text":  "Can I have one tomato, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-some-bread-please",
+                        "text":  "Can I have some bread, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-three-strawberries-please",
+                        "text":  "Can I have three strawberries, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.can-i-have-two-bananas-please",
+                        "text":  "Can I have two bananas, please?"
+                    },
+                    {
+                        "key":  "en-pre.shop.five-apples-please",
+                        "text":  "Five apples, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-bananas-please",
+                        "text":  "Five bananas, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-cakes-please",
+                        "text":  "Five cakes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-carrots-please",
+                        "text":  "Five carrots, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-eggs-please",
+                        "text":  "Five eggs, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-lemons-please",
+                        "text":  "Five lemons, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-peaches-please",
+                        "text":  "Five peaches, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-strawberries-please",
+                        "text":  "Five strawberries, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.five-tomatoes-please",
+                        "text":  "Five tomatoes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-apples-please",
+                        "text":  "Four apples, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-bananas-please",
+                        "text":  "Four bananas, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-cakes-please",
+                        "text":  "Four cakes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-carrots-please",
+                        "text":  "Four carrots, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-eggs-please",
+                        "text":  "Four eggs, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-lemons-please",
+                        "text":  "Four lemons, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-peaches-please",
+                        "text":  "Four peaches, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-strawberries-please",
+                        "text":  "Four strawberries, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.four-tomatoes-please",
+                        "text":  "Four tomatoes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-apple-please",
+                        "text":  "One apple, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-banana-please",
+                        "text":  "One banana, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-cake-please",
+                        "text":  "One cake, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-carrot-please",
+                        "text":  "One carrot, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-egg-please",
+                        "text":  "One egg, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-lemon-please",
+                        "text":  "One lemon, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-peach-please",
+                        "text":  "One peach, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-strawberry-please",
+                        "text":  "One strawberry, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.one-tomato-please",
+                        "text":  "One tomato, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.some-bread-please",
+                        "text":  "Some bread, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-apples-please",
+                        "text":  "Three apples, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-bananas-please",
+                        "text":  "Three bananas, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-cakes-please",
+                        "text":  "Three cakes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-carrots-please",
+                        "text":  "Three carrots, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-eggs-please",
+                        "text":  "Three eggs, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-lemons-please",
+                        "text":  "Three lemons, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-peaches-please",
+                        "text":  "Three peaches, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-strawberries-please",
+                        "text":  "Three strawberries, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.three-tomatoes-please",
+                        "text":  "Three tomatoes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-apples-please",
+                        "text":  "Two apples, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-bananas-please",
+                        "text":  "Two bananas, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-cakes-please",
+                        "text":  "Two cakes, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-carrots-please",
+                        "text":  "Two carrots, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-eggs-please",
+                        "text":  "Two eggs, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-lemons-please",
+                        "text":  "Two lemons, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-peaches-please",
+                        "text":  "Two peaches, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-strawberries-please",
+                        "text":  "Two strawberries, please."
+                    },
+                    {
+                        "key":  "en-pre.shop.two-tomatoes-please",
+                        "text":  "Two tomatoes, please."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-ears",
+                        "text":  "Touch your ears."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-head",
+                        "text":  "Touch your head."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-mouth",
+                        "text":  "Touch your mouth."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-nose",
+                        "text":  "Touch your nose."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-toes",
+                        "text":  "Touch your toes."
+                    },
+                    {
+                        "key":  "en-pre.where.where-are-the-ears",
+                        "text":  "Where are the ears?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-are-the-hands",
+                        "text":  "Where are the hands?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-are-the-toes",
+                        "text":  "Where are the toes?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-airplane",
+                        "text":  "Where is the airplane?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-apple",
+                        "text":  "Where is the apple?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-ball",
+                        "text":  "Where is the ball?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-banana",
+                        "text":  "Where is the banana?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-bear",
+                        "text":  "Where is the bear?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-bike",
+                        "text":  "Where is the bike?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-bird",
+                        "text":  "Where is the bird?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-book",
+                        "text":  "Where is the book?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-bread",
+                        "text":  "Where is the bread?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-bus",
+                        "text":  "Where is the bus?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-cake",
+                        "text":  "Where is the cake?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-car",
+                        "text":  "Where is the car?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-carrot",
+                        "text":  "Where is the carrot?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-cat",
+                        "text":  "Where is the cat?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-cow",
+                        "text":  "Where is the cow?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-cup",
+                        "text":  "Where is the cup?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-dog",
+                        "text":  "Where is the dog?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-duck",
+                        "text":  "Where is the duck?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-egg",
+                        "text":  "Where is the egg?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-elephant",
+                        "text":  "Where is the elephant?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-flower",
+                        "text":  "Where is the flower?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-frog",
+                        "text":  "Where is the frog?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-hat",
+                        "text":  "Where is the hat?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-head",
+                        "text":  "Where is the head?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-lemon",
+                        "text":  "Where is the lemon?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-monkey",
+                        "text":  "Where is the monkey?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-mouth",
+                        "text":  "Where is the mouth?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-nose",
+                        "text":  "Where is the nose?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-peach",
+                        "text":  "Where is the peach?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-pig",
+                        "text":  "Where is the pig?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-rabbit",
+                        "text":  "Where is the rabbit?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-ship",
+                        "text":  "Where is the ship?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-shoe",
+                        "text":  "Where is the shoe?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-star",
+                        "text":  "Where is the star?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-strawberry",
+                        "text":  "Where is the strawberry?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-tomato",
+                        "text":  "Where is the tomato?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-train",
+                        "text":  "Where is the train?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-turtle",
+                        "text":  "Where is the turtle?"
+                    },
+                    {
+                        "key":  "en-pre.where.where-is-the-umbrella",
+                        "text":  "Where is the umbrella?"
+                    },
+                    {
+                        "key":  "en-pre.word.airplane",
+                        "text":  "Airplane."
+                    },
+                    {
+                        "key":  "en-pre.word.apple",
+                        "text":  "Apple."
+                    },
+                    {
+                        "key":  "en-pre.word.ball",
+                        "text":  "Ball."
+                    },
+                    {
+                        "key":  "en-pre.word.banana",
+                        "text":  "Banana."
+                    },
+                    {
+                        "key":  "en-pre.word.bear",
+                        "text":  "Bear."
+                    },
+                    {
+                        "key":  "en-pre.word.bike",
+                        "text":  "Bike."
+                    },
+                    {
+                        "key":  "en-pre.word.bird",
+                        "text":  "Bird."
+                    },
+                    {
+                        "key":  "en-pre.word.book",
+                        "text":  "Book."
+                    },
+                    {
+                        "key":  "en-pre.word.bread",
+                        "text":  "Bread."
+                    },
+                    {
+                        "key":  "en-pre.word.bus",
+                        "text":  "Bus."
+                    },
+                    {
+                        "key":  "en-pre.word.cake",
+                        "text":  "Cake."
+                    },
+                    {
+                        "key":  "en-pre.word.car",
+                        "text":  "Car."
+                    },
+                    {
+                        "key":  "en-pre.word.carrot",
+                        "text":  "Carrot."
+                    },
+                    {
+                        "key":  "en-pre.word.cat",
+                        "text":  "Cat."
+                    },
+                    {
+                        "key":  "en-pre.word.cow",
+                        "text":  "Cow."
+                    },
+                    {
+                        "key":  "en-pre.word.cup",
+                        "text":  "Cup."
+                    },
+                    {
+                        "key":  "en-pre.word.dog",
+                        "text":  "Dog."
+                    },
+                    {
+                        "key":  "en-pre.word.duck",
+                        "text":  "Duck."
+                    },
+                    {
+                        "key":  "en-pre.word.ears",
+                        "text":  "Ears."
+                    },
+                    {
+                        "key":  "en-pre.word.egg",
+                        "text":  "Egg."
+                    },
+                    {
+                        "key":  "en-pre.word.elephant",
+                        "text":  "Elephant."
+                    },
+                    {
+                        "key":  "en-pre.word.flower",
+                        "text":  "Flower."
+                    },
+                    {
+                        "key":  "en-pre.word.frog",
+                        "text":  "Frog."
+                    },
+                    {
+                        "key":  "en-pre.word.hands",
+                        "text":  "Hands."
+                    },
+                    {
+                        "key":  "en-pre.word.hat",
+                        "text":  "Hat."
+                    },
+                    {
+                        "key":  "en-pre.word.head",
+                        "text":  "Head."
+                    },
+                    {
+                        "key":  "en-pre.word.lemon",
+                        "text":  "Lemon."
+                    },
+                    {
+                        "key":  "en-pre.word.monkey",
+                        "text":  "Monkey."
+                    },
+                    {
+                        "key":  "en-pre.word.mouth",
+                        "text":  "Mouth."
+                    },
+                    {
+                        "key":  "en-pre.word.nose",
+                        "text":  "Nose."
+                    },
+                    {
+                        "key":  "en-pre.word.peach",
+                        "text":  "Peach."
+                    },
+                    {
+                        "key":  "en-pre.word.pig",
+                        "text":  "Pig."
+                    },
+                    {
+                        "key":  "en-pre.word.rabbit",
+                        "text":  "Rabbit."
+                    },
+                    {
+                        "key":  "en-pre.word.ship",
+                        "text":  "Ship."
+                    },
+                    {
+                        "key":  "en-pre.word.shoe",
+                        "text":  "Shoe."
+                    },
+                    {
+                        "key":  "en-pre.word.star",
+                        "text":  "Star."
+                    },
+                    {
+                        "key":  "en-pre.word.strawberry",
+                        "text":  "Strawberry."
+                    },
+                    {
+                        "key":  "en-pre.word.toes",
+                        "text":  "Toes."
+                    },
+                    {
+                        "key":  "en-pre.word.tomato",
+                        "text":  "Tomato."
+                    },
+                    {
+                        "key":  "en-pre.word.train",
+                        "text":  "Train."
+                    },
+                    {
+                        "key":  "en-pre.word.turtle",
+                        "text":  "Turtle."
+                    },
+                    {
+                        "key":  "en-pre.word.umbrella",
+                        "text":  "Umbrella."
                     }
                 ]
 }

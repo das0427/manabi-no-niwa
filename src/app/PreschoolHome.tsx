@@ -1,11 +1,13 @@
 /**
- * 幼児ホーム（2〜3歳・4歳・5歳。ux-by-age 2.1）: 左に札の 3×3（位置は固定）、右に おえかき・がんばりノート。
- * 2歳段階は札4枚（2×2）・おすすめなし（review-1 #23）。保護者向けの案内は起動画面で出す。
+ * 幼児ホーム（2〜3歳・4歳・5歳。ux-by-age 2.1）: 左に札の 3×3（位置は固定）、右に おえかき・がんばりノート・えいご。
+ * 2歳段階は札4枚（2×2）・おすすめなし・えいごの札なし（review-1 #23）。保護者向けの案内は起動画面で出す。
+ * 「ほかの がくねん」は上の帯（鍵の左）。右の列の一番下を「えいご」の札にするため（設計: preschool-english.md 8章）。
  */
 import { useEffect, useState, type CSSProperties } from 'react';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
 import { MODE_IDS } from '../core/types';
+import { PRESCHOOL_EN_CARDS, showsEnglishCard } from '../curriculum/preschoolEnglish';
 import {
   recommendCards,
   type CardRec,
@@ -96,6 +98,12 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
     // cards は def と stage2 で決まる
   }, [profile.id, settings, app.favorites, def, stage2]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 「えいご」の札（右の列の一番下）。2歳段階は出さない。保護者の設定で隠せる。出せる単元が1つ以上あるときだけ
+  const eigo = PRESCHOOL_EN_CARDS[def.stage];
+  const eigoShown =
+    showsEnglishCard({ stage2, showPreschoolEnglish: settings?.showPreschoolEnglish }) &&
+    cardUnits(eigo, settings?.unitsOpened).length > 0;
+
   const open = (c: HomeCard) => {
     const units = cardUnits(c, app.settings?.unitsOpened);
     if (c.titleVoice) void audio.play(c.titleVoice);
@@ -111,6 +119,17 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
           <span className="label-text">{profile.name}</span>
         </div>
         <div className="home-top__right">
+          {/* ほかの がくねん・きょうか（幼児からも小学生の教科をのぞける）。補助操作の大きさ（5.5u） */}
+          <button
+            type="button"
+            className="home-explore"
+            aria-label="ほかの がくねん・きょうか"
+            onClick={() => navigate({ name: 'explore' })}
+            data-testid="home-explore"
+          >
+            <Illust id="explore" className="home-explore__illust" decorative />
+            <span className="home-explore__name">ほかの がくねん</span>
+          </button>
           <ParentGateButton />
         </div>
       </div>
@@ -183,21 +202,18 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
             </button>
           )}
         </div>
-        {/* ほかの がくねん・きょうか（幼児からも小学生の教科をのぞける） */}
-        <button
-          type="button"
-          className="home-rec home-rec--note"
-          aria-label="ほかの がくねん・きょうか"
-          onClick={() => navigate({ name: 'explore' })}
-          data-testid="home-explore"
-        >
-          <Illust id="explore" className="home-rec__illust" decorative />
-          <span className="home-rec__name">
-            ほかの
-            <br />
-            がくねん
-          </span>
-        </button>
+        {eigoShown ? (
+          <button
+            type="button"
+            className="home-rec home-rec--note"
+            aria-label="えいご"
+            onClick={() => open(eigo)}
+            data-testid="home-eigo"
+          >
+            <Illust id={eigo.icon} className="home-rec__illust" decorative />
+            <span className="home-rec__name">{eigo.title}</span>
+          </button>
+        ) : null}
       </aside>
     </div>
   );

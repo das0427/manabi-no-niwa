@@ -519,6 +519,18 @@ export function SettingsTab() {
             })}
           </div>
         ) : null}
+        <label className="p-inline" style={{ display: 'block' }}>
+          <input
+            type="checkbox"
+            checked={s.showPreschoolEnglish !== false}
+            onChange={(e) => update({ showPreschoolEnglish: e.target.checked })}
+            data-testid="setting-preschool-english"
+          />
+          幼児ホームに「えいご」の札を出す
+        </label>
+        <Note>
+          2〜3歳の2歳の段階では、この設定にかかわらず出しません。「ほかの がくねん」からは入れます。
+        </Note>
       </Section>
 
       <Section title="なぞりの判定幅">

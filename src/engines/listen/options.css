@@ -37,3 +37,8 @@
   min-width: calc(var(--u) * 20);
   font-size: calc(var(--u) * 2.8);
 }
+/* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語） */
+.eng-listen .eng-opts__opt .fig-row svg {
+  width: calc(var(--u) * 6) !important;
+  height: calc(var(--u) * 6) !important;
+}

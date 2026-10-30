@@ -48,6 +48,7 @@ import {
   draftOf,
   flowReducer,
   initialFlow,
+  playsWrongSfx,
   restoreFlow,
   type FlowDraft,
   type FlowState,
@@ -492,8 +493,10 @@ export function UnitRound({
       if (now - lastSubmit.current < 400) return;
       lastSubmit.current = now;
       const j: Judgement = engineOf(item).judge(item, response);
+      // 不正解の効果音: 2歳段階と、単元が穏やかな判定（gentleJudgement。幼児の英語）のときは鳴らさない
       if (j.result === 'correct') audio.sfx(ux.softJudgement ? 'place' : 'correct');
-      else if (j.result === 'wrong' && !ux.softJudgement) audio.sfx('wrong');
+      else if (j.result === 'wrong' && playsWrongSfx(ux.softJudgement, unit.gentleJudgement))
+        audio.sfx('wrong');
       // 2歳段階は正誤を強く出さない（統括の判断1、コードレビュー #6）: 説明の代わりに「もういちど」
       const mt =
         j.result === 'wrong'
@@ -510,7 +513,7 @@ export function UnitRound({
       if (j.result === 'wrong') say([mt ?? 'ちがったよ。もういちど かんがえて みよう。']);
       if (j.result === 'retry') say([j.message]);
     },
-    [item, misText, say, ux.softJudgement, s.phase],
+    [item, misText, say, ux.softJudgement, unit.gentleJudgement, s.phase],
   );
 
   // 問題文が2行以上になったら、作業領域をその下から始める（なぞり盤などと重ならないように）
@@ -583,7 +586,9 @@ export function UnitRound({
       {s.phase !== 'intro' && item && Engine ? (
         <div className={`unit__work unit__work--${item.engine}`}>
           {item.figure ? (
-            <div className="unit__figure">
+            <div
+              className={`unit__figure${item.figure.kind === 'row' ? ' unit__figure--row' : ''}`}
+            >
               <Figure fig={item.figure} ctx={ctx} />
             </div>
           ) : null}

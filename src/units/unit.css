@@ -61,6 +61,18 @@
   display: flex;
   justify-content: center;
 }
+/*
+ * 絵の帯つきの聞く問題（えいごの えほん: 4ページの絵の帯＋きくの札＋選択肢）は、帯と選択肢の絵を小さくして、
+ * 作業領域（問題文の下から下の帯の上まで）に収める
+ */
+.unit__work--listen .unit__figure--row svg {
+  width: calc(var(--u) * 8) !important;
+  height: calc(var(--u) * 8) !important;
+}
+.unit__work--listen .unit__figure--row + .unit__engine .eng-opts__opt svg {
+  width: calc(var(--u) * 9) !important;
+  height: calc(var(--u) * 9) !important;
+}
 .unit__engine {
   width: 100%;
   display: flex;

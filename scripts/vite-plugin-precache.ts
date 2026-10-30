@@ -35,7 +35,7 @@ export const PACKS_FILE = 'packs.json';
 /** Vite の build manifest（dist からの相対。build.manifest: true） */
 export const MANIFEST_FILE = '.vite/manifest.json';
 /** コアに同梱するパック（幼児: R#20）と、コア扱いの見本パック */
-export const CORE_PACK_IDS: readonly string[] = ['p23', 'p4', 'p5', '_sample-core'];
+export const CORE_PACK_IDS: readonly string[] = ['p23', 'p4', 'p5', 'en-pre', '_sample-core'];
 /** 共有データのディレクトリ名（src/packs/_data） */
 export const SHARED_DATA_DIR = '_data';
 /** 見本パック（VITE_MNW_SAMPLE_PACKS=1 のときだけビルドに入る）の接頭辞 */

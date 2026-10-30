@@ -30,6 +30,13 @@ JOBS = [
     ("klee-one-400.woff2", "KleeOne-Regular.ttf", "kleeone", "klee"),
     ("klee-one-600.woff2", "KleeOne-SemiBold.ttf", "kleeone", "klee"),
 ]
+# 小学生用フォント（review-1 #22）: 漢字だけのサブセット。(出力名, 入力TTF)
+# アプリは小学生のプロフィールで FontFace（unicode-range: 漢字）として読み込む。
+# 入れる字: 配当漢字 1026 字 + src・教材パック・音声台本の漢字（npm run chars が used-chars-elementary.txt に出す）
+ELEMENTARY_JOBS = [
+    ("zen-maru-gothic-kanji-400.woff2", "ZenMaruGothic-Regular.ttf"),
+    ("zen-maru-gothic-kanji-700.woff2", "ZenMaruGothic-Bold.ttf"),
+]
 OFL = [("zenmarugothic", "OFL-ZenMaruGothic.txt"), ("kleeone", "OFL-KleeOne.txt")]
 
 # 残す OpenType フィーチャ(かな用の proportional metrics=palt, 縦書き, 互換用)
@@ -90,6 +97,7 @@ def main() -> int:
     ap.add_argument("--chars", nargs="+", default=[str(HERE / "base-chars.txt")])
     ap.add_argument("--extra", nargs="*", default=[])
     ap.add_argument("--klee-extra", nargs="*", default=[])
+    ap.add_argument("--elementary", nargs="*", default=[])  # 小学生用（漢字だけ）の字のリスト
     ap.add_argument("--src", type=Path, default=ROOT / ".cache" / "fonts")
     ap.add_argument("--out", type=Path, default=ROOT / "public" / "fonts")
     a = ap.parse_args()
@@ -111,6 +119,17 @@ def main() -> int:
         f = TTFont(str(a.out / out_name))
         n = len(f.getBestCmap())
         print(f"[fonts] {out_name:<28} {size / 1024:8.1f} KiB  cmap {n} 件")
+    if a.elementary:
+        kanji = {c for c in read_chars(a.elementary) if is_ideograph(c)}
+        print(f"[fonts] 小学生用（漢字のみ）: {len(kanji)} 字")
+        for out_name, ttf in ELEMENTARY_JOBS:
+            src = a.src / ttf
+            if not src.exists():
+                fetch(ttf, "zenmarugothic", src)
+            size = subset_font(src, a.out / out_name, kanji)
+            total += size
+            n = len(TTFont(str(a.out / out_name)).getBestCmap())
+            print(f"[fonts] {out_name:<34} {size / 1024:8.1f} KiB  cmap {n} 件")
     print(f"[fonts] 合計 {total / 1024:.1f} KiB")
     return 0
 

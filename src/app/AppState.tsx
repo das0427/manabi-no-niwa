@@ -12,6 +12,7 @@ import {
 } from 'react';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
+import { clearLegacyHand, localKeyStore, migrateLegacyHand } from '../drawing/hand';
 import { defaultSettings, type ChildSettings, type ModeId, type Profile } from '../core/types';
 
 export interface AppStateValue {
@@ -96,7 +97,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     setProfiles(list);
     setProfile(active);
     if (active) {
-      const s = await db.getSettings(active.id);
+      let s = await db.getSettings(active.id);
+      // おえかきの描く手: 2.0 までの端末内の値を設定へ移す（保護者画面・バックアップの対象にする）
+      const store = localKeyStore();
+      const moved = migrateLegacyHand(s, store);
+      if (moved.next) {
+        s = moved.next;
+        await db.saveSettings(s);
+      }
+      if (moved.clear && db.getStorageHealth() === 'ok') clearLegacyHand(active.id, store);
       setSettings(s);
       audio.setVolume(s.volume);
       audio.setSfxEnabled(s.sfx);

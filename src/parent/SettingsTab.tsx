@@ -363,6 +363,30 @@ export function SettingsTab() {
             {f.note ? <span className="p-muted">{f.note}</span> : null}
           </fieldset>
         ))}
+        <fieldset className="p-field">
+          <legend>おえかきで描く手</legend>
+          {(
+            [
+              ['right', '右手（道具欄を左に置く）'],
+              ['left', '左手（道具欄を右に置く）'],
+            ] as const
+          ).map(([v, text]) => (
+            <label key={v} className="p-inline">
+              <input
+                type="radio"
+                name="drawingHand"
+                checked={(s.drawingHand ?? 'right') === v}
+                onChange={() => update({ drawingHand: v })}
+                data-testid={`setting-drawingHand-${v}`}
+              />
+              {text}
+            </label>
+          ))}
+          <span className="p-muted">
+            描く手で道具欄が隠れないよう、反対側に置きます。おえかきの画面の「どうぐを
+            はんたいがわに」でも変えられます。書き出し（データ）に含まれます。
+          </span>
+        </fieldset>
       </Section>
 
       <Section title="はじめは かくれている単元">

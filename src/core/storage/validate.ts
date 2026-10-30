@@ -7,6 +7,7 @@ import {
   type ArtworkBlobKind,
   type ArtworkRecord,
   type AudienceId,
+  type DrawingHand,
   type Grade,
   type SupportSettings,
   type UnitProgress,
@@ -204,6 +205,13 @@ export function normalizeSettings(
     ),
     levelLocks: take(raw.levelLocks, locks, d.levelLocks),
   };
+  // おえかきの描く手（2.1.0〜。任意。無いときは右手として扱う）
+  const hand = take<DrawingHand | undefined>(
+    raw.drawingHand,
+    (v) => (v === 'right' || v === 'left' ? v : undefined),
+    undefined,
+  );
+  if (hand) s.drawingHand = hand;
   return bad && strictMode ? null : s;
 }
 

@@ -87,7 +87,14 @@ export interface ChildSettings {
   support: SupportSettings;
   /** 保護者が開いた単元（既定で隠す単元 hiddenByDefault を子供画面に出す） */
   unitsOpened: string[];
+  /**
+   * おえかきで描く手（2.1.0〜）。'right' は道具欄を左に、'left' は右に置く。
+   * 無いときは右手（2.0 までの端末内の値 localStorage は drawing/hand.ts が移す）
+   */
+  drawingHand?: DrawingHand;
 }
+
+export type DrawingHand = 'right' | 'left';
 
 export interface Profile {
   id: string;

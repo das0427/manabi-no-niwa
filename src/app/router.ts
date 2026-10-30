@@ -23,14 +23,18 @@ export type Route =
   | { name: 'card'; stage: string; cardId: string }
   /** 開発用: エンジンの見本（開発時だけ） */
   | { name: 'dev-engines' }
-  /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
-  | { name: 'draw'; artId?: string }
+  /**
+   * おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く）。
+   * template: 'new' のときのかみ（テンプレートの背景。drawing/templates.ts の ID）
+   */
+  | { name: 'draw'; artId?: string; template?: string }
   /** おえかきの作品一覧（さくひん） */
   | { name: 'gallery' }
   /** ほかの がくねん・きょうか（stage: 開いている区分。省略時は子供の区分） */
   | { name: 'explore'; stage?: string };
 
 const ART_ID = /^[A-Za-z0-9-]{1,100}$/;
+const TEMPLATE_ID = /^[a-z0-9-]{1,40}$/;
 
 const UNIT_ID = /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/;
 
@@ -44,7 +48,10 @@ export function parseHash(hash: string): Route {
     return b && /^(p23|p4|p5|g[1-6])$/.test(b)
       ? { name: 'explore', stage: b }
       : { name: 'explore' };
-  if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
+  if (a === 'draw') {
+    if (b === 'new' && c && TEMPLATE_ID.test(c)) return { name: 'draw', artId: b, template: c };
+    return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
+  }
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
   if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
@@ -90,6 +97,7 @@ export function routeToHash(r: Route): string {
     case 'dev-engines':
       return '#/dev/engines';
     case 'draw':
+      if (r.artId === 'new' && r.template) return `#/draw/new/${r.template}`;
       return r.artId ? `#/draw/${r.artId}` : '#/draw';
     case 'gallery':
       return '#/gallery';

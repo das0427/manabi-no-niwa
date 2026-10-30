@@ -1,11 +1,12 @@
 /**
- * はんこ・図形の「えらぶ板」（DESINGN.md 19章、X-ST-02/04、X-SH-02）。
+ * はんこ・図形・かみの「えらぶ板」（DESINGN.md 19章、X-ST-02/04、X-SH-02）。
  * 絵柄を選んだだけではキャンバスに置かない（X-DR-06）。「これに する」で板を閉じ、キャンバスをタップで置く。
  */
 import { Illust } from '../illust/Illust';
 import { DrawIcon, ShapeIcon } from './icons';
 import { SHAPE_KINDS, type ShapeKind } from './model';
 import { STAMPS, STAMP_CATEGORIES, getStamp, svgUrl } from './stamps';
+import { PAPER_TEMPLATES } from './templates';
 import { SHAPE_STROKES, STAMP_SIZES, type DrawColor } from './tools';
 
 export interface StampChoice {
@@ -298,6 +299,61 @@ export function ShapePanel({
             これに する
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * かみ（新しい紙の背景）の えらぶ板。「あたらしく」で開く。
+ * しろい かみ が先頭（いつもの紙）。押すとすぐにその紙で新しく描き始める。
+ */
+export function PaperPanel({
+  onChoose,
+  onClose,
+}: {
+  onChoose(templateId: string | null): void;
+  onClose(): void;
+}) {
+  const cards: { id: string | null; name: string; url: string | null }[] = [
+    { id: null, name: 'しろい かみ', url: null },
+    ...PAPER_TEMPLATES.map((t) => ({ id: t.id, name: t.name, url: svgUrl(t.svg) })),
+  ];
+  return (
+    <div
+      className="draw-panel"
+      role="dialog"
+      aria-label="あたらしい かみを えらぶ"
+      data-testid="paper-panel"
+    >
+      <div className="draw-paper-grid" role="list">
+        {cards.map((c) => (
+          <button
+            key={c.id ?? 'plain'}
+            type="button"
+            role="listitem"
+            className="draw-paper"
+            aria-label={c.name}
+            data-testid={`paper-${c.id ?? 'plain'}`}
+            onClick={() => onChoose(c.id)}
+          >
+            <span className="draw-paper__thumb">
+              {c.url ? <img src={c.url} alt="" draggable={false} /> : null}
+            </span>
+            <span className="draw-paper__name">{c.name}</span>
+          </button>
+        ))}
+      </div>
+      <div className="draw-row draw-row--end">
+        <button
+          type="button"
+          className="tap tap--white"
+          aria-label="やめる"
+          data-testid="paper-cancel"
+          onClick={onClose}
+        >
+          やめる
+        </button>
       </div>
     </div>
   );

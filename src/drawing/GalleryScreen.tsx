@@ -2,15 +2,19 @@
  * おえかきの作品一覧（さくひん。DESINGN.md 19章）。
  * 縮小画像の格子・日付・つくりかけの印。ひらく（再編集）・うつして かく（複製）・すてる（確認つき）。
  * 確認は幼児では2段階（「すてる？」→「ほんとうに？」。X-DR-08）。
+ * 下に、なぞり・みち の作品（1.0 から続く works ストア）を見るだけで並べる（X-SV-05）。
+ * すてるのは保護者画面の「さくひん」だけ（子供の画面では消さない）。
  */
-import { useEffect, useState } from 'react';
+import { Component, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from '../app/AppState';
 import { navigate } from '../app/router';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
-import type { ArtworkRecord } from '../core/types';
+import type { ArtworkRecord, WorkRecord } from '../core/types';
 import { Illust } from '../illust/Illust';
+import { WorkThumb } from '../modes/workThumb';
 import { DrawIcon } from './icons';
+import { viewableWorks } from './oldWorks';
 import { duplicateArtwork } from './persist';
 import './drawing.css';
 
@@ -20,10 +24,23 @@ interface Card {
   dirty: boolean;
 }
 
+/** 古い作品のデータが読めなくても一覧は出す */
+class SafeThumb extends Component<{ children: ReactNode }, { failed: boolean }> {
+  override state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 export function GalleryScreen() {
   const app = useApp();
   const profile = app.profile;
   const [cards, setCards] = useState<Card[] | null>(null);
+  const [olds, setOlds] = useState<WorkRecord[]>([]);
+  const [viewing, setViewing] = useState<WorkRecord | null>(null);
   const [confirm, setConfirm] = useState<{ id: string; step: 1 | 2 } | null>(null);
   const [reload, setReload] = useState(0);
   // 複製の最中（連打で2つ作らない）
@@ -37,6 +54,7 @@ export function GalleryScreen() {
     void (async () => {
       const t0 = performance.now();
       const list = await db.listArtworks(profile.id);
+      const works = viewableWorks(await db.listWorks(profile.id));
       const out: Card[] = [];
       for (const rec of list) {
         const b = await db.getArtworkBlob(rec.id, 'thumb');
@@ -46,6 +64,7 @@ export function GalleryScreen() {
       }
       if (!alive) return;
       setCards(out);
+      setOlds(works);
       document.documentElement.dataset.galleryMs = String(Math.round(performance.now() - t0));
     })();
     return () => {
@@ -167,12 +186,73 @@ export function GalleryScreen() {
             </div>
           </div>
         ))}
-        {cards && cards.length === 0 ? (
+        {cards && cards.length === 0 && olds.length === 0 ? (
           <p className="label-text gallery-empty" data-testid="gallery-empty">
             まだ さくひんが ないよ
           </p>
         ) : null}
+        {olds.length > 0 ? (
+          <h2 className="gallery-heading" data-testid="gallery-old-heading">
+            <Illust id="mode-trace" className="tap__icon" decorative />
+            なぞりと みちの さくひん
+          </h2>
+        ) : null}
+        {olds.map((w) => (
+          <div
+            key={w.id}
+            className="gallery-card"
+            role="listitem"
+            data-testid="gallery-old"
+            data-id={w.id}
+          >
+            <button
+              type="button"
+              className="gallery-thumb"
+              aria-label={`みる ${fmt(w.createdAt)}`}
+              data-testid="gallery-old-open"
+              onClick={() => {
+                audio.sfx('tap');
+                setViewing(w);
+              }}
+            >
+              <SafeThumb>
+                <WorkThumb work={w} />
+              </SafeThumb>
+            </button>
+            <div className="gallery-card__row">
+              <span className="gallery-date">{fmt(w.createdAt)}</span>
+            </div>
+          </div>
+        ))}
       </div>
+      {viewing ? (
+        <div
+          className="draw-confirm"
+          role="dialog"
+          aria-label="さくひんを みる"
+          data-testid="gallery-old-view"
+        >
+          <div className="draw-confirm__box">
+            <div className="gallery-old-big">
+              <SafeThumb>
+                <WorkThumb work={viewing} />
+              </SafeThumb>
+            </div>
+            <button
+              type="button"
+              className="tap tap--white tap--big"
+              aria-label="とじる"
+              data-testid="gallery-old-close"
+              onClick={() => {
+                audio.sfx('tap');
+                setViewing(null);
+              }}
+            >
+              とじる
+            </button>
+          </div>
+        </div>
+      ) : null}
       {confirm ? (
         <div className="draw-confirm" role="dialog" aria-label="すてる？" data-testid="confirm">
           <div className="draw-confirm__box">

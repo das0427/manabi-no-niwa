@@ -173,6 +173,29 @@ describe('g6.ja.language-change', () => {
     for (const h of iroha.hints) expect(plain(h)).not.toContain('きょう');
   });
 
+  it('match のまぎらわしい札は、解説で名前を出して区別している', () => {
+    for (const id of ['or-match:moto', 'ch-match:kogo-a', 'dl-match:c']) {
+      const it = byId(id);
+      if (it.engine !== 'match') throw new Error('match のはず');
+      const extra = it.right[it.right.length - 1]?.label ?? '';
+      expect(plain(it.explain)).toContain(plain(extra).replace(/[「」]/g, ''));
+    }
+  });
+
+  it('古語の match のまぎらわしい札は、千年前にも通じた意味ではない（おどろく＝びっくりする を使わない）', () => {
+    const it = byId('ch-match:kogo-a');
+    if (it.engine !== 'match') throw new Error('match のはず');
+    expect(it.right.map((c) => plain(c.label ?? ''))).not.toContain('びっくりする');
+  });
+
+  it('字源のヒントは「音読みのはじめの音」に頼らせない（止→と・女→め・千→チ・流→ル は合わない）', () => {
+    for (const it of items()) {
+      if (it.objective !== 'kana') continue;
+      for (const h of it.hints)
+        expect(plain(h)).not.toMatch(/音読みのはじめの音と合うか|りゅう」のはじめ/);
+    }
+  });
+
   it('reading は別例（alt）で、選択肢は3つ', () => {
     const rs = items().filter((i) => i.engine === 'reading');
     expect(rs.length).toBe(12);

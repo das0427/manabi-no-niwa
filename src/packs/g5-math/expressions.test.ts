@@ -7,6 +7,17 @@ import { MISSING } from './ruby';
 
 const fills = () =>
   sampleItems(expressions, 200).filter((it): it is FillItem => it.engine === 'fill');
+/** 場面ごとの □ ＝ t の ときの ○（設計書 1.4。id の 数の 並び: cookie・tank a:b、box a:b、ほかは 1つ） */
+const F: Record<string, (n: number[], t: number) => number> = {
+  cookie: ([a, b], t) => a! * t + b!,
+  tank: ([a, b], t) => a! * t + b!,
+  tri: ([a], t) => (a! * t) / 2,
+  box: ([a, b], t) => a! * b! * t,
+  garden: ([a], t) => a! * t,
+  cards: ([c], t) => c! - t,
+  ribbon: ([c], t) => c! - t,
+  sticker: ([d], t) => t + d!,
+};
 const plain = (s: string) => s.replace(/《[^》]*》/g, '');
 
 describe('g5.math.expressions', () => {
@@ -55,13 +66,20 @@ describe('g5.math.expressions', () => {
       const m = /^(value|reverse)(?:-alt)?:/.exec(it.id);
       if (!m) continue;
       const ans = Number(plain(it.blanks[0]!.answers[0]!));
-      // 式は prompt か 図に ある。□ ＝ t を式に 入れて ○ に戻る
-      const src =
-        it.id.startsWith('value-alt') || it.id.startsWith('reverse-alt') ? it.prompt : it.prompt;
-      void src;
-      const t = Number(it.id.split(':').pop());
-      if (m[1] === 'reverse') expect(ans, it.id).toBe(t);
-      expect(Number.isInteger(ans) && ans > 0, it.id).toBe(true);
+      // id = 形:場面:数…:t。場面の 式で ○ を 計算し直す
+      const parts = it.id.split(':');
+      const scene = parts[1]!;
+      const nums = parts.slice(2, -1).map(Number);
+      const t = Number(parts[parts.length - 1]);
+      const y = F[scene]!(nums, t);
+      expect(Number.isInteger(y) && y > 0, it.id).toBe(true);
+      if (m[1] === 'reverse') {
+        // ○ の 値が 問題に 出て いて、答えは t
+        expect(ans, it.id).toBe(t);
+        expect(plain(it.prompt), it.id).toContain(String(y));
+      } else {
+        expect(ans, it.id).toBe(y);
+      }
       n++;
     }
     expect(n).toBeGreaterThan(20);
@@ -74,6 +92,16 @@ describe('g5.math.expressions', () => {
       if (!m) continue;
       expect(plain(it.blanks[0]!.answers[0]!), it.id).toBe(yes.includes(m[1]!) ? 'する' : 'しない');
     }
+  });
+
+  it('表の 別例（change-alt:step）の 解説は 見せて いない 式を 使わない', () => {
+    let n = 0;
+    for (const it of fills()) {
+      if (!it.id.startsWith('change-alt:step')) continue;
+      expect(plain(it.explain ?? ''), it.id).not.toContain('式');
+      n++;
+    }
+    expect(n).toBeGreaterThan(0);
   });
 
   it('検査の誤りなし・よみの漏れなし', () => {

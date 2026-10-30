@@ -3,7 +3,36 @@ import { checkUnit, isReady, sampleItems } from '../../curriculum/qa';
 import type { ChoiceItem, NumberItem } from '../../curriculum/types';
 import type { GeometryItem } from '../../engines/geometry/geometry';
 import { engineOf } from '../../engines/registry';
-import { approxArea, countCells, GRID_TABLE, ITEMS, polyArea } from './approx-area';
+import { approxArea, countCells, GRID_TABLE, ITEMS, OBJS, polyArea } from './approx-area';
+
+/** path（M・L・C・Z だけ）を 折れ線に して 面積を 求める */
+function pathArea(d: string): number {
+  const t = d.trim().split(/\s+/);
+  const pts: [number, number][] = [];
+  let cur: [number, number] = [0, 0];
+  for (let i = 0; i < t.length;) {
+    const c = t[i++];
+    const num = () => Number(t[i++]);
+    if (c === 'M' || c === 'L') {
+      cur = [num(), num()];
+      pts.push(cur);
+    } else if (c === 'C') {
+      const p1 = [num(), num()];
+      const p2 = [num(), num()];
+      const p3: [number, number] = [num(), num()];
+      const p0 = cur;
+      for (let k = 1; k <= 40; k++) {
+        const s = k / 40;
+        const u = 1 - s;
+        const f = (j: 0 | 1) =>
+          u * u * u * p0[j] + 3 * u * u * s * p1[j]! + 3 * u * s * s * p2[j]! + s * s * s * p3[j];
+        pts.push([f(0), f(1)]);
+      }
+      cur = p3;
+    }
+  }
+  return polyArea(pts);
+}
 
 const items = () => sampleItems(approxArea, 100);
 
@@ -95,6 +124,24 @@ describe('g6.math.approx-area', () => {
     const labels = cs.map((c) => String(c.options.find((o) => o.correct)!.label));
     expect(labels.some((l) => l.startsWith('Aの'))).toBe(true);
     expect(labels.some((l) => l.startsWith('Bの'))).toBe(true);
+  });
+
+  it('物の 輪郭の 面積が あてはめる 形の 面積に 近い（12% 以内）', () => {
+    // あてはめる 形の 面積（viewBox の 座標で 計算。設計書 2.6 の 表）
+    const fit: Record<string, number> = {
+      A: ((100 + 200) * 150) / 2,
+      B: (90 * 150) / 2,
+      C: 80 * 80 * Math.PI,
+      D: 210 * 120,
+      E: 200 * 120,
+      F: (200 * 150) / 2,
+      G: 120 * 80 + 40 * 40 * Math.PI,
+      H: 80 * 80 * Math.PI,
+    };
+    for (const [id, o] of Object.entries(OBJS)) {
+      const r = pathArea(o.outline) / fit[id]!;
+      expect(Math.abs(r - 1), `${id} ${r.toFixed(3)}`).toBeLessThan(0.12);
+    }
   });
 
   it('検査の誤りなし・ready', () => {

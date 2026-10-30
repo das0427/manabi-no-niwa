@@ -424,7 +424,7 @@ function makeBlanks(kind: Kind, p: P): { text: string; options: string[]; blanks
 function makeHint3(kind: Kind, p: P): string {
   switch (kind) {
     case 'lin':
-      return `○ ＝ ${p.a} × □ ＋ … あとから たすのは 何かな。`;
+      return `○ ＝ ${p.a} × □ ＋ … あとから たすのは 何《なに》かな。`;
     case 'tri':
       return `${p.a} と □ を かけて、それを …`;
     case 'vol':
@@ -453,7 +453,7 @@ function make(level: number, rng: Rng, alt: boolean): FillItem {
     const b = makeBlanks(sc.kind, p);
     const hint3: Record<Kind, string> = {
       lin: `□が 1 ふえると ○は ${p.a} ふえるね。□が 1の とき、${p.a} × 1 ＝ ${p.a}。${ys[0]}との ちがいは …`,
-      tri: `${p.a} × ${xs[0]} ＝ ${p.a * xs[0]!}。○は その 何分の いくつかな。`,
+      tri: `${p.a} × ${xs[0]} ＝ ${p.a * xs[0]!}。○は その 何分《なんぶん》の いくつかな。`,
       vol: 'たて × 横 を 先に 計算してみよう。',
       mul: '○ ÷ □ は いつも 同じ 数だね。',
       sum: '□と ○を たすと、いつも 同じ 数に なるね。',
@@ -601,7 +601,7 @@ function value(level: number, rng: Rng, alt: boolean): FillItem {
       options,
       blanks,
       hints: [
-        `□と ○の 関係を 式に して みよう。${sc.word}`,
+        `□と ○の 関係を 式に して みよう。言葉の 式は「${sc.word}」。`,
         `式は ${formula(sc.kind, p)}。□に ${t}を 入れよう。`,
         valueHint3(sc.kind, p, t),
       ],
@@ -744,7 +744,6 @@ function changeItem(
         xs.map((x) => f(kind, p, x)),
       )
     : expr(formula(kind, p));
-  const fromWhere = alt ? '表で、' : '';
   const sp = stepSpec(kind, p);
   if (form === 'step') {
     const x1 = kind === 'tri' ? 2 : 1;
@@ -753,7 +752,10 @@ function changeItem(
       ? `${idHead}:step:${kind}:${pkey(kind, p)}`
       : `${idHead}:step:${sceneId}:${stepKey(kind, p)}`;
     const dir = sp.up ? 'ふえ' : 'へり';
-    const exp = `${fromWhere}□が ${sp.step} ふえると、○は ${sp.delta} ${dir}ます。${alt && kind === 'lin' ? `□が 1 ふえる ごとに ○は ${p.a}ずつ ふえて います。` : sp.why}`;
+    // 別例（表）は 式を 見せないので、表の 読み方だけで 説明する
+    const exp = alt
+      ? `表で、□が ${sp.step} ふえる ごとに、○は ${sp.delta}ずつ ${sp.up ? 'ふえて' : 'へって'} います。`
+      : `□が ${sp.step} ふえると、○は ${sp.delta} ${dir}ます。${sp.why}`;
     let options: string[];
     let blanks: FillBlank[];
     if (kind === 'sum' || kind === 'sub') {
@@ -884,7 +886,7 @@ function meaning(level: number, rng: Rng, alt: boolean): FillItem {
     hints: [
       '式の 中で、その 数や 記号が どこに あるかを 見よう。',
       `言葉の 式は「${sc.word}」。`,
-      '言葉の 式と ○ ＝ … の 式を 上下に ならべて、同じ 場所に ある ものを さがそう。',
+      '言葉の 式と 数の 式を 上下に ならべて、同じ 場所に ある ものを さがそう。',
     ],
     explain: `${formula(sc.kind, p)} は「${sc.word}」を 表して いるので、${tt}は「${right}」です。`,
   });
@@ -1095,7 +1097,7 @@ function reverse(level: number, rng: Rng, alt: boolean): FillItem {
         `式は ${formula(sc.kind, p)}。○に ${y}を 入れよう。`,
         st.h3,
       ],
-      explain: `${exp}答えは ${t}${sc.id === 'tank' ? '分《ふん》' : unitOfX(sc.id)}です。`,
+      explain: `${exp}答えは ${sc.id === 'tank' ? `${bun(t)}後《ご》` : `${t}${unitOfX(sc.id)}`}です。`,
     });
   }
   return fillItem({

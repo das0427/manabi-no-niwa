@@ -49,7 +49,7 @@ interface Obj {
   dims: (ds: string[]) => string;
 }
 
-const OBJS: Record<ObjId, Obj> = {
+export const OBJS: Record<ObjId, Obj> = {
   A: {
     name: '池',
     fitName: '台形',
@@ -68,10 +68,10 @@ const OBJS: Record<ObjId, Obj> = {
     name: '葉',
     fitName: 'ひし形',
     outline:
-      'M 160 32 C 194 58 212 92 208 112 C 202 140 182 166 160 188 C 138 166 118 140 112 112 C 108 92 126 58 160 32 Z',
+      'M 160 32 C 170 50 196 86 198 110 C 196 134 172 168 160 188 C 148 168 124 134 122 110 C 124 86 150 50 160 32 Z',
     stem: `<path d="M 160 188 L 160 208" fill="none" ${STROKE}/>`,
     fit: polygon('160,35 205,110 160,185 115,110'),
-    bbox: [110, 32, 210, 190],
+    bbox: [122, 32, 198, 188],
     wrong: polygon('160,35 210,188 110,188'),
     dims: (d) =>
       line(115, 110, 205, 110) +
@@ -325,8 +325,27 @@ const SHAPE_EXPLAIN: Record<ObjId, string> = {
 };
 const SHAPE_ORDER: ObjId[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
+/** shape の 選択肢の 図の 名前（どの 選択肢も 重ねた 形を そのまま 言う） */
+const WRONG_NAME: Record<ObjId, string> = {
+  A: '円',
+  B: '三角形',
+  C: '三角形',
+  D: '三角形',
+  E: '円',
+  F: '円',
+  G: '三角形',
+  H: '三角形',
+};
 const shapeItems: GeometryItem[] = SHAPE_ORDER.map((id, n) => {
-  const mk = (overlay: Overlay) => objFig(id, { overlay, dims: null });
+  const name = NAME_OF(id);
+  const lab: Record<Overlay, string> = {
+    fit: `${name}の 形に ${OBJS[id].fitName}を 重ねた 図`,
+    big: `${name}の 形に 大きな 長方形を 重ねた 図`,
+    small: `${name}の 形に 小さな 長方形を 重ねた 図`,
+    wrong: `${name}の 形に ${WRONG_NAME[id]}を 重ねた 図`,
+    none: `${name}の 形`,
+  };
+  const mk = (overlay: Overlay) => objFig(id, { overlay, dims: null, label: lab[overlay] });
   const options = [
     { figure: mk('big'), misconception: 'fit-big' },
     { figure: mk('small'), misconception: 'fit-small' },
@@ -623,7 +642,7 @@ const formulaAltItems: ChoiceItem[] = FORMULA_ALT.map((r) => ({
 }));
 
 // ---- (5) estimate ----
-const NOTE = ' およその 面積なので、少し ちがっても よいよ。';
+const NOTE = 'およその 面積なので、少し ちがっても よいよ。';
 interface EstRow {
   id: ObjId;
   unit: string;
@@ -675,7 +694,7 @@ const ESTIMATES: EstRow[] = [
     dims: ['10m'],
     shape: '円',
     expl: '10 × 10 × 3.14 ＝ 314。広場の 面積は 約 314m²です。',
-    hint3: '10 × 10 ＝ 100。これに 何を かけるかな。',
+    hint3: '10 × 10 ＝ 100。これに 何《なに》を かけるかな。',
     wrongs: [
       [62.8, 'circle-r2'],
       [1256, 'radius-diam'],
@@ -890,7 +909,7 @@ const estimateAltItems: NumberItem[] = GRIDS.map((g) => {
         `全部 入って いる ますは ${F}こ、形に かかって いる ますは ${P}こ だよ。`,
         `${F} ＋ ${P} × 0.5 を 計算しよう。`,
       ],
-      explain: `全部 入って いる ます ${F}こで ${F}cm²、かかって いる ます ${P}こで ${P / 2}cm²。合わせて 約 ${value}cm²です。数え方で 少し ちがっても よいよ。`,
+      explain: `全部 入って いる ます ${F}こで ${F}cm²、かかって いる ます ${P}こで ${P / 2}cm²。合わせて 約 ${value}cm²です。数《かぞ》え方《かた》で 少し ちがっても よいよ。`,
     }),
     figure: gridFig(g.poly, `${g.name}の 形を 方眼に かいた 図`),
     unit: 'cm²',
@@ -937,17 +956,17 @@ const compareItems: ChoiceItem[] = [
       level: 2,
       alt: false,
       prompt:
-        '広場は 半径 10mの 円、公園は たて 12m、横 20mの 長方形と みます。広いのは どちらですか。',
-      hints: ['2つの 面積を それぞれ 求めよう。', '広場: 10 × 10 × 3.14', '公園: 12 × 20'],
+        '広場は 半径 10mの 円、公園は たて 15m、横 25mの 長方形と みます。広いのは どちらですか。',
+      hints: ['2つの 面積を それぞれ 求めよう。', '広場: 10 × 10 × 3.14', '公園: 15 × 25'],
       explain:
-        '広場は 10 × 10 × 3.14 ＝ 314、公園は 12 × 20 ＝ 240。314m²より 240m²の ほうが 小さいので、広場の ほうが 広いです。',
+        '広場は 10 × 10 × 3.14 ＝ 314、公園は 15 × 25 ＝ 375。314m²より 375m²の ほうが 大きいので、公園の ほうが 広いです。',
     }),
     figure: rowFig(
       objFig('C', { overlay: 'fit', dims: ['10m'] }),
-      objFig('D', { overlay: 'fit', dims: ['20m', '12m'] }),
+      objFig('D', { overlay: 'fit', dims: ['25m', '15m'] }),
     ),
-    options: opts('広場', [
-      ['公園', 'circle-r2'],
+    options: opts('公園', [
+      ['広場', 'radius-diam'],
       ['同じ くらい', 'same-approx'],
     ]),
   },
@@ -981,21 +1000,21 @@ const compareItems: ChoiceItem[] = [
       level: 2,
       alt: false,
       prompt:
-        'ひし形に 近い 葉は 対角線が 6cmと 10cm、三角形に 近い 葉は 底辺 6cm、高さ 8cmです。広いのは どちらですか。',
+        'ひし形に 近い 葉は 対角線が 6cmと 10cm、三角形に 近い 葉は 底辺 12cm、高さ 9cmです。広いのは どちらですか。',
       hints: [
         '2つの 面積を それぞれ 求めよう。',
         'ひし形に 近い 葉: 6 × 10 ÷ 2',
-        '三角形に 近い 葉: 6 × 8 ÷ 2',
+        '三角形に 近い 葉: 12 × 9 ÷ 2',
       ],
       explain:
-        'ひし形に 近い 葉は 6 × 10 ÷ 2 ＝ 30、三角形に 近い 葉は 6 × 8 ÷ 2 ＝ 24。30cm²の ほうが 大きいので、ひし形に 近い 葉の ほうが 広いです。',
+        'ひし形に 近い 葉は 6 × 10 ÷ 2 ＝ 30、三角形に 近い 葉は 12 × 9 ÷ 2 ＝ 54。54cm²の ほうが 大きいので、三角形に 近い 葉の ほうが 広いです。',
     }),
     figure: rowFig(
       objFig('B', { overlay: 'fit', dims: ['6cm', '10cm'] }),
-      objFig('F', { overlay: 'fit', dims: ['6cm', '8cm'] }),
+      objFig('F', { overlay: 'fit', dims: ['12cm', '9cm'] }),
     ),
-    options: opts('ひし形に 近い 葉', [
-      ['三角形に 近い 葉', 'half-forgot'],
+    options: opts('三角形に 近い 葉', [
+      ['ひし形に 近い 葉', 'half-forgot'],
       ['同じ くらい', 'same-approx'],
     ]),
   },

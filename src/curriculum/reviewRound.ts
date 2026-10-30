@@ -79,7 +79,8 @@ export interface ReviewRoundOptions {
   history: ReviewHistory;
 }
 
-export function buildReviewRound(unit: UnitSpec, opt: ReviewRoundOptions): Item[] {
+/** 復習の回の候補（seed と段階だけで決まる。記録には依らない） */
+function reviewCandidates(unit: UnitSpec, level: number, seed: number): Item[] {
   const src = unit.source;
   if (src.kind === 'legacy') return [];
   const cands: Item[] = [];
@@ -91,13 +92,38 @@ export function buildReviewRound(unit: UnitSpec, opt: ReviewRoundOptions): Item[
   };
   if (src.kind === 'generator') {
     for (let k = 0; k < CANDIDATES; k++) {
-      const rng = createRng(hashSeed(opt.seed, 'review', k));
-      add(src.generate({ level: opt.level, rng, index: k }));
+      const rng = createRng(hashSeed(seed, 'review', k));
+      add(src.generate({ level, rng, index: k }));
     }
   } else {
-    const rng = createRng(hashSeed(opt.seed, 'review-items'));
-    for (const it of rng.shuffle(poolFor(src.items, opt.level))) add(it);
+    const rng = createRng(hashSeed(seed, 'review-items'));
+    for (const it of rng.shuffle(poolFor(src.items, level))) add(it);
   }
+  return cands;
+}
+
+/**
+ * 中断した復習の回を、選んだ問題の同一性キー（picks）から作り直す。
+ * 候補は seed と段階だけで決まるので、記録が変わっても（古い記録の削除・復元）同じ問題になる。
+ * 見つからない問題があれば null（教材が変わったなど）。
+ */
+export function restoreReviewRound(
+  unit: UnitSpec,
+  opt: { level: number; seed: number; picks: readonly string[] },
+): Item[] | null {
+  if (opt.picks.length === 0) return null;
+  const byId = new Map(reviewCandidates(unit, opt.level, opt.seed).map((it) => [it.identity, it]));
+  const out: Item[] = [];
+  for (const id of opt.picks) {
+    const it = byId.get(id);
+    if (!it) return null;
+    out.push(it);
+  }
+  return out;
+}
+
+export function buildReviewRound(unit: UnitSpec, opt: ReviewRoundOptions): Item[] {
+  const cands = reviewCandidates(unit, opt.level, opt.seed);
 
   const h = opt.history;
   const seenItem = (it: Item) => h.itemIds.has(it.id) || h.identities.has(it.identity);

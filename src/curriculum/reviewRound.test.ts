@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildReviewRound, emptyHistory, representationOf, reviewHistoryOf } from './reviewRound';
+import {
+  buildReviewRound,
+  emptyHistory,
+  representationOf,
+  restoreReviewRound,
+  reviewHistoryOf,
+} from './reviewRound';
 import type { ChoiceItem, Item, UnitSpec } from './types';
 import { addBasic } from '../packs/g1-math/add-basic';
 
@@ -156,5 +162,46 @@ describe('復習の回の問題', () => {
       expect(out.every((it) => it.level === top)).toBe(true);
       expect(new Set(out.map(representationOf)).size).toBeGreaterThanOrEqual(2);
     }
+  });
+});
+
+describe('中断した復習の回の作り直し', () => {
+  it('選んだ問題の同一性キーから、記録が変わっても同じ回を作り直す（生成器）', () => {
+    const unit = addBasic;
+    const top = unit.levels.length - 1;
+    for (let seed = 0; seed < 10; seed++) {
+      const history = reviewHistoryOf(
+        [{ unitId: unit.id, itemKey: 'x', at: 1, detail: { rep: 'choice|alt|bunshou-alt' } }],
+        unit.id,
+        10,
+      );
+      const first = buildReviewRound(unit, { level: top, seed, count: 3, history });
+      // 再開までに記録が消えても（記録の上限・復元）、選んだ問題のまま
+      const again = restoreReviewRound(unit, {
+        level: top,
+        seed,
+        picks: first.map((it) => it.identity),
+      });
+      expect(again?.map((it) => it.id)).toEqual(first.map((it) => it.id));
+    }
+  });
+
+  it('手作りの単元でも、選んだ順のまま作り直す', () => {
+    const first = buildReviewRound(unitOf(ITEMS), {
+      level: 0,
+      seed: 7,
+      count: 3,
+      history: emptyHistory,
+    });
+    const picks = first.map((it) => it.identity);
+    const again = restoreReviewRound(unitOf(ITEMS), { level: 0, seed: 7, picks });
+    expect(again?.map((it) => it.identity)).toEqual(picks);
+  });
+
+  it('候補に無い問題があれば null（教材が変わったなど）', () => {
+    expect(
+      restoreReviewRound(unitOf(ITEMS), { level: 0, seed: 7, picks: ['story:1', 'nai:9'] }),
+    ).toBeNull();
+    expect(restoreReviewRound(unitOf(ITEMS), { level: 0, seed: 7, picks: [] })).toBeNull();
   });
 });

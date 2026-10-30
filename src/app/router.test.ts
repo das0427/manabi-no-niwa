@@ -21,4 +21,19 @@ describe('ハッシュの道すじ', () => {
     expect(parseHash('#/draw/abc/sea')).toEqual({ name: 'draw', artId: 'abc' });
     expect(parseHash('#/draw/new/Sea!')).toEqual({ name: 'draw', artId: 'new' });
   });
+  it('開発用: 単元の見本の1問（番号と query）', () => {
+    const r = {
+      name: 'dev-unit',
+      unitId: 'g1.math.add-basic',
+      n: 3,
+      query: 'seeds=2&state=h2',
+    } as const;
+    expect(parseHash('#/dev/unit/g1.math.add-basic/3?seeds=2&state=h2')).toEqual(r);
+    expect(parseHash(routeToHash(r))).toEqual(r);
+    expect(parseHash('#/dev/unit/g1.math.add-basic')).toEqual({
+      name: 'dev-unit',
+      unitId: 'g1.math.add-basic',
+      query: '',
+    });
+  });
 });

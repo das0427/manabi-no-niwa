@@ -1455,6 +1455,19 @@
     "engine": "experiment"
   },
   {
+    "id": "g3.sci.light-sound",
+    "pack": "sci-g34",
+    "title": "光《ひかり》と 音《おと》",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g3.sci.living-things",
     "pack": "sci-g34",
     "title": "みのまわりの 生《い》き物《もの》",
@@ -1494,6 +1507,32 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g3.sci.weight",
+    "pack": "sci-g34",
+    "title": "ものと 重《おも》さ",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g3.sci.wind-rubber",
+    "pack": "sci-g34",
+    "title": "風《かぜ》と ゴムの 力《ちから》",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
   },
   {
     "id": "g3.soc.city-changes",

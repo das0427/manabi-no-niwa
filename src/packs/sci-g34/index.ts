@@ -7,9 +7,24 @@ import { airWater } from './air-water';
 import { current } from './current';
 import { weather } from './weather';
 import { moonStars } from './moon-stars';
+import { weight } from './weight';
+import { windRubber } from './wind-rubber';
+import { lightSound } from './light-sound';
 
 const pack: PackContent = {
   packId: 'sci-g34',
-  units: [livingThings, sunGround, magnets, circuits, airWater, current, weather, moonStars],
+  units: [
+    livingThings,
+    sunGround,
+    magnets,
+    circuits,
+    airWater,
+    current,
+    weather,
+    moonStars,
+    weight,
+    windRubber,
+    lightSound,
+  ],
 };
 export default pack;

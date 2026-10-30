@@ -28,6 +28,10 @@ const il = (o: Obj, p: Prep, c: Cont) => `en56-${o}-${p}-${c}`;
 const posJa = (p: Prep, c: Cont) => `${CONT_JA[c]}の ${PREP_JA[p]}`;
 const thingJa = (o: Obj, p: Prep, c: Cont) => `${posJa(p, c)}の ${OBJ_JA[o]}`;
 const sent = (o: Obj, p: Prep, c: Cont) => `The ${o} is ${p} the ${c}.`;
+/** 生き物（ねこ）は「います」、ものは「あります」 */
+const aru = (o: Obj) => (o === 'cat' ? 'います' : 'あります');
+/** 「ない」の ばしょ: 生き物は「いなくて」 */
+const nakute = (o: Obj) => (o === 'cat' ? 'いなくて' : 'なくて');
 const illFig = (o: Obj, p: Prep, c: Cont): Figure => ({ kind: 'illust', id: il(o, p, c) });
 
 /** ようすの とりちがえの 誤概念ID（正答と 選んだ ようすの 組。順不同） */
@@ -82,7 +86,7 @@ function posItems(): Item[] {
         'その ことばは「中《なか》」「上《うえ》」「下《した》」の どれかだよ。',
         'その ことばが みじかいか、すこし ながいかを 聞《き》きくらべよう。',
       ],
-      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に あります。`,
+      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に ${aru(o)}。`,
       explainFigure: sceneFig(o, p, c, [s]),
       identity: `pos:${slugOf(s)}`,
     });
@@ -197,7 +201,7 @@ function thingItems(): Item[] {
         'えらぶ 絵《え》は、ものか、つくえ・ベッドかが ちがうよ。',
         'ものの なまえと さいごの ことばを 聞《き》いて、2つに あう 絵《え》を えらぼう。',
       ],
-      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に あります。もの・ばしょ・ようすの 3つが あう 絵《え》です。`,
+      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に ${aru(o)}。もの・ばしょ・ようすの 3つが あう 絵《え》です。`,
       explainFigure: sceneFig(o, p, c, [s]),
       identity: `thing:${slugOf(s)}`,
     });
@@ -384,7 +388,7 @@ function askItems(): Item[] {
         'こたえの 文《ぶん》の はじめの ことばは、たずねた ものの ことだよ。',
         'こたえの まんなかと さいごの ことばで、ばしょが わかるよ。',
       ],
-      explain: `たずねた ${OBJ_JA[o]}は、${posJa(p, c)}に あります。`,
+      explain: `たずねた ${OBJ_JA[o]}は、${posJa(p, c)}に ${aru(o)}。`,
       explainFigure: sceneFig(o, p, c, [q, a]),
       identity: `ask:${slugOf(q)}:${slugOf(a)}`,
     }),
@@ -484,7 +488,7 @@ function notItems(): Item[] {
         '1つめの こたえは「そこには ない」と いう いみだよ。',
         '2つめの こたえの ばしょを 聞《き》こう。',
       ],
-      explain: `${posJa(n.np, n.nc)}には なくて、${posJa(n.p, n.c)}に あります。`,
+      explain: `${posJa(n.np, n.nc)}には ${nakute(n.o)}、${posJa(n.p, n.c)}に ${aru(n.o)}。`,
       explainFigure: sceneFig(n.o, n.p, n.c, [n.q, n.a]),
       identity: `not:${slugOf(n.q)}:${slugOf(n.a)}`,
       alt: true,
@@ -515,7 +519,7 @@ export const where: UnitSpec = {
     {
       id: 'in-on',
       explain:
-        '「中《なか》」と「上《うえ》」を とりちがえたのかな。どちらも みじかい ことばだよ。はじめの 音《おと》が、「中《なか》」は イに にた 音《おと》、「上《うえ》」は オに にた 音《おと》だよ。',
+        '「中《なか》」と「上《うえ》」を とりちがえたのかな。どちらも みじかい ことばだよ。はじめの 音《おと》が、「中《なか》」は イに にた 音《おと》、「上《うえ》」は アや オに にた 音《おと》だよ。',
     },
     {
       id: 'in-under',

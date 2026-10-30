@@ -72,20 +72,21 @@ function drawObj(o: Obj, cx: number, by: number, s: number): ReactElement {
     );
   }
   if (o === 'cap') {
-    const w = s * 0.4;
+    // かけぶとん（P.blue）の 上でも 見えるように むらさき
+    const w = s * 0.5;
     return (
       <g>
         <path
           d={`M${f(cx - w)} ${f(by)} A${f(w)} ${f(s * 0.55)} 0 0 1 ${f(cx + w)} ${f(by)} Z`}
-          fill={P.blue}
+          fill={P.purple}
           {...line}
         />
         <path
           d={`M${f(cx + w * 0.1)} ${f(by - s * 0.14)} L${f(cx + w * 1.45)} ${f(by - s * 0.14)} Q${f(cx + w * 1.5)} ${f(by)} ${f(cx + w * 1.3)} ${f(by)} L${f(cx + w * 0.1)} ${f(by)} Z`}
-          fill={P.blue}
+          fill={P.purple}
           {...line}
         />
-        <circle cx={cx} cy={by - s * 0.52} r={1.6} fill={INK} />
+        <circle cx={cx} cy={by - s * 0.55} r={1.8} fill={INK} />
       </g>
     );
   }
@@ -144,7 +145,7 @@ function scene(o: Obj, p: Prep, c: Cont): ReactElement {
       return (
         <g>
           {deskBase()}
-          {drawObj(o, 50, 58, 15)}
+          {drawObj(o, 50, o === 'cap' ? 56 : 58, 15)}
           {deskFront}
         </g>
       );
@@ -167,7 +168,8 @@ function scene(o: Obj, p: Prep, c: Cont): ReactElement {
     return (
       <g>
         {bedBase()}
-        {drawObj(o, 60, 64, 26)}
+        {/* ぼうしは 低いので 少し 上げて、ふとんから 出る ように する */}
+        {drawObj(o, 60, o === 'cap' ? 55 : 64, 26)}
         {bedFront}
       </g>
     );

@@ -296,4 +296,35 @@ describe('en-g56 の教材検査（curriculum-matrix 1.8）', () => {
     }
     expect(n).toBe(8);
   });
+
+  it('g6.en.future: 解説が 正答と そろう（ばんめ・Nつめ・正答の ことば）', () => {
+    for (const it of itemsOf('g6.en.future')) {
+      if (it.engine !== 'listen') continue;
+      const k = it.options.findIndex((o) => o.correct);
+      expect(k, it.id).toBeGreaterThanOrEqual(0);
+      const ok = String(it.options[k]!.label);
+      const ex = String(it.explain);
+      if (it.id.startsWith('desc:')) {
+        expect(ex.startsWith(`${k + 1}ばんめ`), it.id).toBe(true);
+        // 3文は さいごの しごとだけが 違う
+        for (const s of soundsOf(it)) expect(s, it.id).toMatch(/^I want to be an? [a-z ]+\.$/);
+      } else if (it.id.startsWith('dream:')) {
+        const at = Number(/(\d)つめの/.exec(String(it.hints[1]))?.[1]);
+        expect(ex.startsWith(`${at}つめ`), it.id).toBe(true);
+        expect(ex, it.id).toContain(`「${ok}」`);
+      } else {
+        expect(ex, it.id).toContain(ok);
+      }
+    }
+  });
+
+  it('g5.en.where: 解説の「います／あります」（ねこは います）', () => {
+    for (const it of itemsOf('g5.en.where')) {
+      if (it.engine !== 'listen') continue;
+      const ex = String(it.explain);
+      const cat = soundsOf(it).some((s) => /\bcat\b/.test(s));
+      if (/(あります|います)。/.test(ex) && !it.id.startsWith('pic:'))
+        expect(ex.includes('います'), it.id).toBe(cat);
+    }
+  });
 });

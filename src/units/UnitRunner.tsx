@@ -20,6 +20,12 @@ import {
   REVIEW_SIZE,
 } from '../curriculum/review';
 import { buildRound } from '../curriculum/round';
+import {
+  buildReviewRound,
+  representationOf,
+  reviewHistoryOf,
+  type HistoryAttempt,
+} from '../curriculum/reviewRound';
 import type { Item, UnitSpec } from '../curriculum/types';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Figure } from '../engines/figure/Figure';
@@ -56,9 +62,17 @@ interface UnitDraft {
   flow: FlowDraft;
   /** 中断前の回の記録の id（引き継ぐ） */
   roundId?: number;
+  /**
+   * 復習の回で、この時刻より前の記録を「前に見たもの」として問題を選んだ（再開で同じ回を作り直すため）。
+   * 2.0 までの中断データには無い。無い復習の回は前の選び方（buildRound）で作り直す
+   */
+  historyBefore?: number;
 }
 
 const DRAFT_TTL = 24 * 60 * 60 * 1000;
+/** 復習の問題を選ぶときに読む記録の期間（復習の間隔は最長 21日。その数倍をみる） */
+const HISTORY_DAYS = 180;
+const NO_HISTORY: HistoryAttempt[] = [];
 /**
  * この回の段階。2歳段階は常に段階0（2歳向け）。段階の自動判定をしないうえ、3歳段階で進んだ段階の問題\n * （3択など）を2歳段階で出さない（コードレビュー #3）。
  */
@@ -80,6 +94,8 @@ type Loaded =
       progress: UnitProgress;
       review: boolean;
       draft: UnitDraft | null;
+      /** 復習の回のとき、この単元の最近の記録（別の表現を選ぶのに使う） */
+      history: HistoryAttempt[];
     };
 
 export function UnitRunner({ unitId }: { unitId: string }) {
@@ -118,7 +134,21 @@ export function UnitRunner({ unitId }: { unitId: string }) {
             ? st
             : null;
         if (d && !draft) void db.deleteDraft(profile.id, 'unit', unitId);
-        if (alive) setLoaded({ kind: 'ready', unit, packId: meta.pack, progress, review, draft });
+        const history = review
+          ? (
+              await db.listAttempts(profile.id, { since: now - HISTORY_DAYS * 24 * 60 * 60 * 1000 })
+            ).filter((a) => a.unitId === unitId)
+          : [];
+        if (alive)
+          setLoaded({
+            kind: 'ready',
+            unit,
+            packId: meta.pack,
+            progress,
+            review,
+            draft,
+            history,
+          });
       } catch (e) {
         if (!alive) return;
         setLoaded({
@@ -194,6 +224,7 @@ export function UnitRunner({ unitId }: { unitId: string }) {
       packId={loaded.packId}
       progress={loaded.progress}
       review={loaded.review}
+      history={loaded.history}
       resume={resume ?? null}
       settings={settings}
       profile={profile}
@@ -211,6 +242,8 @@ interface RoundProps {
   packId: string;
   progress: UnitProgress;
   review: boolean;
+  /** 復習の回のとき、この単元の最近の記録（省略時は記録なし） */
+  history?: HistoryAttempt[];
   resume: UnitDraft | null;
   settings: NonNullable<ReturnType<typeof useApp>['settings']>;
   profile: NonNullable<ReturnType<typeof useApp>['profile']>;
@@ -223,6 +256,7 @@ export function UnitRound({
   packId,
   progress,
   review,
+  history = NO_HISTORY,
   resume,
   settings,
   profile,
@@ -255,10 +289,19 @@ export function UnitRound({
   const level = roundLevel(unit, progress, profile);
   const [seed] = useState(() => resume?.seed ?? freshSeed());
   const count = resume?.count ?? (review ? REVIEW_SIZE : (unit.roundSize ?? ux.roundSize));
-  const items = useMemo(
-    () => buildRound(unit, { level: review ? unit.levels.length - 1 : level, seed, count }),
-    [unit, level, seed, review, count],
-  );
+  // 復習は別の表現の問題を優先する（curriculum/reviewRound.ts）。2.0 までの中断データの復習は前の選び方で作り直す
+  const [historyBefore] = useState(() => (resume ? resume.historyBefore : Date.now()));
+  const items = useMemo(() => {
+    if (!review) return buildRound(unit, { level, seed, count });
+    const top = unit.levels.length - 1;
+    if (historyBefore === undefined) return buildRound(unit, { level: top, seed, count });
+    return buildReviewRound(unit, {
+      level: top,
+      seed,
+      count,
+      history: reviewHistoryOf(history, unit.id, historyBefore),
+    });
+  }, [unit, level, seed, review, count, history, historyBefore]);
   const firstTime = !progress.attempted && unit.intro.length > 0;
   const [s, dispatch] = useReducer(flowReducer, undefined, () =>
     resume ? restoreFlow(items, resume.flow) : initialFlow(items, firstTime),
@@ -342,6 +385,7 @@ export function UnitRound({
         detail: {
           objective: r.item.objective,
           identity: r.item.identity.slice(0, 200),
+          rep: representationOf(r.item),
           ...(r.misconception ? { misconception: r.misconception } : {}),
         },
       });
@@ -350,7 +394,15 @@ export function UnitRound({
     // 回の終わりの処理で消す
     if (s.results.length > 0 && s.phase !== 'done') {
       void ensureRound().then((rid) => {
-        const state: UnitDraft = { seed, level, review, count, flow: draftOf(s), roundId: rid };
+        const state: UnitDraft = {
+          seed,
+          level,
+          review,
+          count,
+          flow: draftOf(s),
+          roundId: rid,
+          ...(review && historyBefore !== undefined ? { historyBefore } : {}),
+        };
         return db.saveDraft({
           profileId: profile.id,
           modeId: 'unit',
@@ -360,7 +412,7 @@ export function UnitRound({
         });
       });
     }
-  }, [s, profile.id, unit.id, review, ensureRound, roundRecord, seed, level, count]);
+  }, [s, profile.id, unit.id, review, ensureRound, roundRecord, seed, level, count, historyBefore]);
 
   // 回の終わり: 進度と復習（AD-04: 段階の変更は回の終わりだけ）
   const finished = useRef(false);

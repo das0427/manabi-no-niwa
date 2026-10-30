@@ -223,6 +223,29 @@ describe('g4.ja.tanka', () => {
     }
   });
 
+  it('build: タイルに重なりがなく、正解・誤答はどれもタイルを1回ずつ使って作れる', () => {
+    const buildable = (value: string, tiles: readonly string[]): boolean => {
+      const rest = [...tiles];
+      for (const p of value.split(' ')) {
+        const i = rest.indexOf(p);
+        if (i < 0) return false;
+        rest.splice(i, 1);
+      }
+      return true;
+    };
+    for (const it of items) {
+      if (it.engine !== 'build' || it.answer.kind !== 'text') continue;
+      expect(new Set(it.tiles).size, it.id).toBe(it.tiles.length);
+      expect(buildable(it.answer.values[0]!, it.tiles), it.id).toBe(true);
+      for (const w of it.wrongAnswers ?? [])
+        expect(buildable(w.value, it.tiles), `${it.id}: ${w.value}`).toBe(true);
+      // 区切りの問題は、まちがった区切りでも上の句（下の句）の字をぜんぶ使う
+      if (it.id.startsWith('kiru:'))
+        for (const w of it.wrongAnswers ?? [])
+          expect(visible(w.value), `${it.id}: ${w.value}`).toBe(visible(it.answer.values[0]!));
+    }
+  });
+
   it('listen: 選択肢4つ・正解1つ・誤りすべてに誤概念・audio に英字なし', () => {
     for (const it of items) {
       if (it.engine !== 'listen') continue;
@@ -244,13 +267,15 @@ describe('g4.ja.tanka', () => {
         expect(sounds.length, it.id).toBe(1);
         expect(sounds[0]!.text, it.id).toBe(t.ku.join(''));
       } else {
-        const t = TANKA.find((x) => it.identity.split(':').includes(x.id) || it.id.endsWith(x.id));
         expect(sounds.length, it.id).toBe(5);
-        if (t && !it.identity.includes(':fact:'))
-          expect(
-            sounds.map((s) => s.text),
-            it.id,
-          ).toEqual(t.ku);
+        const texts = sounds.map((s) => s.text);
+        const t = TANKA.find((x) => x.ku.join('|') === texts.join('|'));
+        expect(t, it.id).toBeTruthy();
+        // 歌の名前が id に入っている問題は、その歌の音声であること
+        const named = it.id.split(':')[1]?.split('-')[0];
+        if (named && TANKA.some((x) => x.id === named)) expect(t?.id, it.id).toBe(named);
+        // 字を見せる問題は、図の文が同じ歌
+        if (it.figure?.kind === 'text') expect(it.figure.text, it.id).toBe(t?.ku.join('　'));
       }
     }
   });

@@ -397,8 +397,10 @@ interface KiruRow {
   part: 'kami' | 'shimo';
   /** 正しいタイル（順） */
   tiles: string[];
-  /** まちがった区切りのタイル（順） */
+  /** まちがった区切りのタイル（正しいタイルに足すもの） */
   wrong: string[];
+  /** まちがった区切りの並び（wrongAnswers の value）。省略時は wrong をそのまま並べる */
+  wrongSeq?: string[];
   mis: 'tk-split' | 'tk-kanji' | 'tk-skip';
 }
 
@@ -422,6 +424,7 @@ const KIRU: KiruRow[] = [
     part: 'kami',
     tiles: ['しゅわしゅわと', 'ソーダのあわが', 'はじけたら'],
     wrong: ['しゅわしゅわ', 'とソーダのあわが'],
+    wrongSeq: ['しゅわしゅわ', 'とソーダのあわが', 'はじけたら'],
     mis: 'tk-split',
   },
   {
@@ -449,7 +452,8 @@ const KIRU: KiruRow[] = [
     song: 'yuki',
     part: 'shimo',
     tiles: ['まだだれひとり', '歩《ある》いていない'],
-    wrong: ['まだだれ', 'ひとり', '歩《ある》いていない'],
+    wrong: ['まだだれ', 'ひとり'],
+    wrongSeq: ['まだだれ', 'ひとり', '歩《ある》いていない'],
     mis: 'tk-split',
   },
   {
@@ -495,7 +499,7 @@ function kiruItem(r: KiruRow): BuildItem {
     answer: { kind: 'text', values: [r.tiles.join(' ')] },
     joiner: ' ',
     hideLength: true,
-    wrongAnswers: [{ value: r.wrong.join(' '), misconception: r.mis }],
+    wrongAnswers: [{ value: (r.wrongSeq ?? r.wrong).join(' '), misconception: r.mis }],
     hints: [
       kami
         ? '上《かみ》の句《く》は、五《ご》・七《しち》・五《ご》の三《みっ》つの句《く》に分《わ》かれるよ。'
@@ -742,7 +746,7 @@ const KATACHI: KatachiRow[] = [
     ],
     hints: () => [
       '下《しも》の句《く》は、四《よっ》つめと五《いつ》つめの句《く》だよ。',
-      '下《しも》の句《く》の句《く》は、どちらも七音《しちおん》だよ。',
+      '下《しも》の句《く》の二《ふた》つの句《く》は、どちらも七音《しちおん》だよ。',
       '7＋7を計算《けいさん》しよう。',
     ],
     explain: () =>
@@ -783,7 +787,7 @@ const KATACHI: KatachiRow[] = [
     hints: () => [
       'もういちど聞《き》いて、句《く》が一《ひと》つ終《お》わるごとに指《ゆび》をおろそう。',
       '短歌《たんか》は、上《かみ》の句《く》と下《しも》の句《く》に分《わ》かれるよ。',
-      '上《かみ》の句《く》は三《みっ》つの句《く》。そこに下《しも》の句《く》の句《く》の数《かず》をたそう。',
+      '上《かみ》の句《く》は三《みっ》つの句《く》。そこに、下《しも》の句《く》にある句《く》の数《かず》をたそう。',
     ],
     explain: () =>
       '上《かみ》の句《く》が三《みっ》つ、下《しも》の句《く》が二《ふた》つで、短歌《たんか》は五《いつ》つの句《く》でできています。はいくは三《みっ》つです。',
@@ -1331,7 +1335,8 @@ export const tanka: UnitSpec = {
     },
   ],
   source: { kind: 'items', items: ITEMS },
-  review: 'none',
+  // matrix の行は「−」だが、1.6「小1以上の P1・P2 単元すべて」に従う（知識＝項目単位。idioms と同じ）
+  review: 'item',
   basis:
     '小学校学習指導要領（平成29年告示）国語 第3学年及び第4学年〔知識及び技能〕(3)ア（易しい文語調の短歌や俳句を音読したり暗唱したりするなどして、言葉の響きやリズムに親しむこと）。歌はすべて本アプリのオリジナル',
   gradeIsAppProposal: true,

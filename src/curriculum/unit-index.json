@@ -2937,6 +2937,19 @@
     "engine": "choice"
   },
   {
+    "id": "g5.sci.birth",
+    "pack": "sci-g56",
+    "title": "動物《どうぶつ》の たん生《じょう》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "order"
+  },
+  {
     "id": "g5.sci.dissolve",
     "pack": "sci-g56",
     "title": "物《もの》の とけ方《かた》",
@@ -2950,6 +2963,34 @@
     "priority": "P1",
     "status": "ready",
     "engine": "experiment"
+  },
+  {
+    "id": "g5.sci.electromagnet",
+    "pack": "sci-g56",
+    "title": "電流《でんりゅう》が つくる じ力《りょく》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.current"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g5.sci.flowing-water",
+    "pack": "sci-g56",
+    "title": "流《なが》れる 水《みず》の はたらきと 土地《とち》の 変化《へんか》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g5.sci.germination",

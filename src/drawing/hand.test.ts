@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeSettings } from '../core/storage/validate';
 import { defaultSettings } from '../core/types';
-import { clearLegacyHand, handOf, legacyHandKey, migrateLegacyHand } from './hand';
+import { clearLegacyHand, handOf, hasLegacyHand, legacyHandKey, migrateLegacyHand } from './hand';
 
 /** 架空のプロフィール ID の端末内保存 */
 function memStore(init: Record<string, string> = {}) {
@@ -57,6 +57,14 @@ describe('おえかきの描く手（設定・バックアップへ移す）', (
     };
     expect(migrateLegacyHand(defaultSettings(pid), broken)).toEqual({ next: null, clear: false });
     expect(() => clearLegacyHand(pid, broken)).not.toThrow();
+    expect(hasLegacyHand(pid, broken)).toBe(false);
+  });
+
+  it('古い値があるプロフィールだけを移す対象にする（選んでいないプロフィールも）', () => {
+    const st = memStore({ [legacyHandKey('p-test-2')]: 'right' });
+    expect(hasLegacyHand('p-test-2', st)).toBe(true);
+    expect(hasLegacyHand(pid, st)).toBe(false);
+    expect(hasLegacyHand(pid, null)).toBe(false);
   });
 
   it('設定の検証: 書き出した値が読み込みで戻る。不正な値は厳密な読み込みで拒否', () => {

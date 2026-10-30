@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
-import { clearLegacyHand, localKeyStore, migrateLegacyHand } from '../drawing/hand';
+import { clearLegacyHand, hasLegacyHand, localKeyStore, migrateLegacyHand } from '../drawing/hand';
 import { defaultSettings, type ChildSettings, type ModeId, type Profile } from '../core/types';
 
 export interface AppStateValue {
@@ -94,18 +94,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }
     const app = await db.getAppRecord();
     const active = list.find((p) => p.id === app.activeProfileId) ?? list[0] ?? null;
+    // おえかきの描く手: 2.0 までの端末内の値を設定へ移す（保護者画面・バックアップの対象にする）。
+    // 選んでいないプロフィールも移す（保護者画面の表示と書き出しに入れるため）
+    const store = localKeyStore();
+    const handMoved = new Map<string, ChildSettings>();
+    if (store) {
+      for (const p of list) {
+        if (!hasLegacyHand(p.id, store)) continue;
+        const moved = migrateLegacyHand(await db.getSettings(p.id), store);
+        if (moved.next) {
+          handMoved.set(p.id, moved.next);
+          await db.saveSettings(moved.next);
+        }
+        if (moved.clear && db.getStorageHealth() === 'ok') clearLegacyHand(p.id, store);
+      }
+    }
     setProfiles(list);
     setProfile(active);
     if (active) {
-      let s = await db.getSettings(active.id);
-      // おえかきの描く手: 2.0 までの端末内の値を設定へ移す（保護者画面・バックアップの対象にする）
-      const store = localKeyStore();
-      const moved = migrateLegacyHand(s, store);
-      if (moved.next) {
-        s = moved.next;
-        await db.saveSettings(s);
-      }
-      if (moved.clear && db.getStorageHealth() === 'ok') clearLegacyHand(active.id, store);
+      // 保存に失敗しても、今回は移した値で使う（端末内の古い値は消していないので次回また移す）
+      const s = handMoved.get(active.id) ?? (await db.getSettings(active.id));
       setSettings(s);
       audio.setVolume(s.volume);
       audio.setSfxEnabled(s.sfx);

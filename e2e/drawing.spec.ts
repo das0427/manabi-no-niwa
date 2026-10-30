@@ -719,6 +719,25 @@ test.describe('おえかき（マウス）', () => {
     await tool(page, 'new');
     await page.getByTestId('paper-cancel').click();
     await expect(page.getByTestId('paper-panel')).toBeHidden();
+    // #/draw/new/<かみ> で描いた紙から、同じかみで「あたらしく」→ 新しい紙になる（同じ道すじでも作り直す）
+    await gotoDraw(page, '#/draw/new/sea');
+    await expect.poll(() => backgroundOf(page)).toBe('sea');
+    await tool(page, 'pen');
+    await mouseLine(page, [
+      [300, 300],
+      [600, 400],
+    ]);
+    await expect.poll(() => items(page).then((x) => x.length)).toBeGreaterThan(0);
+    const first = await page.evaluate(() => window.__mnwDraw!.meta.id);
+    await tool(page, 'new');
+    await page.getByTestId('paper-sea').click();
+    await expect(page.getByTestId('paper-panel')).toBeHidden();
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw?.meta.id)).not.toBe(first);
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw!.engine.doc.items.length)).toBe(0);
+    expect(await page.evaluate(() => location.hash)).toBe('#/draw/new/sea');
+    // もどると、さっき描いた紙が開く
+    await page.goBack();
+    await expect.poll(() => page.evaluate(() => window.__mnwDraw?.meta.id)).toBe(first);
   });
 
   test('図形: ドラッグで大きさを決めて置く（タップで置く方法も残る）', async ({ page }) => {

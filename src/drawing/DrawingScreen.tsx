@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../app/AppState';
 import { audienceUx } from '../audience/audience';
-import { navigate } from '../app/router';
+import { navigate, routeToHash, type Route } from '../app/router';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
 import { profileAudience } from '../core/types';
@@ -119,6 +119,12 @@ export function DrawingScreen({ artId, template }: { artId?: string; template?: 
   const [session, setSession] = useState<Session | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('clean');
   const [missing, setMissing] = useState(false);
+  /**
+   * 同じ道すじ（#/draw/new…）のまま新しい紙にする（「あたらしく」）。
+   * 道すじが変わらないと作り直されないため、ここで作り直す（n を増やす）
+   */
+  const [restart, setRestart] = useState<{ n: number; template: string | undefined } | null>(null);
+  const paper = restart ? restart.template : template;
 
   // ---- 作品を開く／新しく作る
   useEffect(() => {
@@ -132,7 +138,7 @@ export function DrawingScreen({ artId, template }: { artId?: string; template?: 
       let dirty = false;
       const book = new SaveBook();
       // 'new' = 「あたらしく」（つくりかけを探さない）
-      const wantNew = artId === 'new';
+      const wantNew = artId === 'new' || restart !== null;
       if (!artId) {
         const unfinished = app.storageUnavailable ? null : await findUnfinished(profile.id);
         if (!alive) return;
@@ -151,7 +157,7 @@ export function DrawingScreen({ artId, template }: { artId?: string; template?: 
         book.markAllPersisted(engine);
       } else {
         if (artId && !wantNew) setMissing(true);
-        engine = new DrawingEngine({ ...emptyDoc(), background: backgroundFor(template) });
+        engine = new DrawingEngine({ ...emptyDoc(), background: backgroundFor(paper) });
         meta = {
           id: crypto.randomUUID(),
           profileId: profile.id,
@@ -200,7 +206,7 @@ export function DrawingScreen({ artId, template }: { artId?: string; template?: 
     };
     // 開く作品（新しい紙のかみ）が変わったときだけ作り直す
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [artId, template, profile?.id]);
+  }, [artId, template, profile?.id, restart?.n]);
 
   // ---- ページを閉じる・隠れるとき（JSON とダーティ印だけ）
   useEffect(() => {
@@ -229,6 +235,7 @@ export function DrawingScreen({ artId, template }: { artId?: string; template?: 
       mode={settings.support.drawingTools}
       toddler={profile.audience === 'toddler'}
       noDrag={ux.noHoldOrDrag}
+      onRestart={(t) => setRestart((r) => ({ n: (r?.n ?? 0) + 1, template: t ?? undefined }))}
       hand={handOf(settings)}
       onHand={(h) => {
         // 子供の設定に保存（保護者画面の設定・バックアップと同じ値）
@@ -249,6 +256,7 @@ function DrawingBoard({
   mode,
   toddler,
   noDrag,
+  onRestart,
   hand,
   onHand,
   storageUnavailable,
@@ -262,6 +270,8 @@ function DrawingBoard({
   toddler: boolean;
   /** 長押し・ドラッグの操作を出さない区分（2〜3歳）。図形はタップで置くだけにする */
   noDrag: boolean;
+  /** いまと同じ道すじのまま新しい紙にする（templateId: かみ。null は白い紙） */
+  onRestart(templateId: string | null): void;
   hand: Hand;
   onHand(h: Hand): void;
   storageUnavailable: boolean;
@@ -580,14 +590,23 @@ function DrawingBoard({
     if (engine.isEmpty && !engine.history.canUndo && sameBackground(engine.doc.background, bg)) {
       return;
     }
-    void leave(() =>
-      navigate(
-        templateId
-          ? { name: 'draw', artId: 'new', template: templateId }
-          : { name: 'draw', artId: 'new' },
-        { force: true },
-      ),
-    );
+    const to: Route = templateId
+      ? { name: 'draw', artId: 'new', template: templateId }
+      : { name: 'draw', artId: 'new' };
+    void leave(() => {
+      const hash = routeToHash(to);
+      if (location.hash !== hash) {
+        navigate(to, { force: true });
+        return;
+      }
+      // いまの紙が同じ道すじ（#/draw/new… で描き始めた紙）のときは、道すじが変わらず作り直されない。
+      // 今の履歴をこの作品の道すじに置き換え、同じ道すじを積んでから、画面の中で作り直す
+      // （もどると この作品が開く）
+      audio.stop();
+      history.replaceState(null, '', routeToHash({ name: 'draw', artId: session.meta.id }));
+      history.pushState(null, '', hash);
+      onRestart(templateId);
+    });
   };
 
   const exportPng = async () => {

@@ -35,6 +35,15 @@ export function migrateLegacyHand(
   return { next: { ...settings, drawingHand: 'left' }, clear: true };
 }
 
+/** 端末内に古い値があるか（読めなければ false） */
+export function hasLegacyHand(profileId: string, store: KeyStore | null): boolean {
+  try {
+    return store?.getItem(legacyHandKey(profileId)) != null;
+  } catch {
+    return false;
+  }
+}
+
 /** 移したあと、端末内の古い値を消す */
 export function clearLegacyHand(profileId: string, store: KeyStore | null): void {
   try {

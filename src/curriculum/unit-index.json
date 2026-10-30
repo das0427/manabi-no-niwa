@@ -2225,6 +2225,19 @@
     "engine": "experiment"
   },
   {
+    "id": "g4.sci.body",
+    "pack": "sci-g34",
+    "title": "人《ひと》の 体《からだ》の つくりと 運動《うんどう》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g4.sci.current",
     "pack": "sci-g34",
     "title": "電流《でんりゅう》の はたらき",
@@ -2251,6 +2264,49 @@
       "g3.sci.sun-ground"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.rainwater",
+    "pack": "sci-g34",
+    "title": "雨水《あまみず》の ゆくえと 地面《じめん》の ようす",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.seasons-life",
+    "pack": "sci-g34",
+    "title": "季節《きせつ》と 生《い》き物《もの》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g3.sci.living-things"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g4.sci.temperature",
+    "pack": "sci-g34",
+    "title": "金《きん》ぞく・水《みず》・空気《くうき》と 温度《おんど》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.air-water"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "experiment"
   },

@@ -10,6 +10,10 @@ import { moonStars } from './moon-stars';
 import { weight } from './weight';
 import { windRubber } from './wind-rubber';
 import { lightSound } from './light-sound';
+import { temperature } from './temperature';
+import { body } from './body';
+import { seasonsLife } from './seasons-life';
+import { rainwater } from './rainwater';
 
 const pack: PackContent = {
   packId: 'sci-g34',
@@ -25,6 +29,10 @@ const pack: PackContent = {
     weight,
     windRubber,
     lightSound,
+    temperature,
+    body,
+    seasonsLife,
+    rainwater,
   ],
 };
 export default pack;

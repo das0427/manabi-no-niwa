@@ -513,6 +513,21 @@
     "engine": "order"
   },
   {
+    "id": "g2.ja.culture",
+    "pack": "g2-ja",
+    "title": "むかしばなしと ことばあそび",
+    "stage": "g2",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "p23-book",
+    "prereq": [
+      "g1.ja.word-play"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g2.ja.kanji-read-g2",
     "pack": "kanji-g12",
     "title": "かんじを よむ（2ねん）",
@@ -556,6 +571,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g2.ja.listen-notes",
+    "pack": "g2-ja",
+    "title": "きいて だいじな ことを えらぼう",
+    "stage": "g2",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [
+      "g1.ja.listen"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g2.ja.orthography",

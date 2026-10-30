@@ -17,15 +17,6 @@ function illustIds(x: unknown, out: string[] = []): string[] {
   return out;
 }
 
-/** 統括が札に入れるまでの間、札に無くてよい P2 単元（docs/expansion/p2-design/p23.md 0.4） */
-const PENDING_HOME = [
-  'p23.ja.first-sound',
-  'p23.think.peekaboo',
-  'p23.math.puzzle2',
-  'p23.think.road',
-  'p23.ja.picture-book',
-];
-
 const itemsOf = (u: (typeof pack.units)[number]): Item[] =>
   u.source.kind === 'items' ? u.source.items : [];
 
@@ -90,7 +81,7 @@ describe('p23 の教材検査（curriculum-matrix 1.8）', () => {
       expect(ILLUST[c.icon], c.icon).toBeDefined();
       for (const u of c.units) expect(ids.has(u), u).toBe(true);
     }
-    for (const u of pack.units.filter((x) => !PENDING_HOME.includes(x.id)))
+    for (const u of pack.units)
       expect(
         def.cards.some((c) => c.units.includes(u.id)),
         u.id,

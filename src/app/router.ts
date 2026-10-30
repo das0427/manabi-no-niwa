@@ -23,6 +23,11 @@ export type Route =
   | { name: 'card'; stage: string; cardId: string }
   /** 開発用: エンジンの見本（開発時だけ） */
   | { name: 'dev-engines' }
+  /**
+   * 開発用: 単元の見本の問題を1問だけ本物の画面で出す（開発時だけ。文字の配置の検査 e2e/text-layout.spec.ts が使う）。
+   * n: sampleItems の何番目か（省略時は一覧）。query: '?' の後ろ（state・seeds など）
+   */
+  | { name: 'dev-unit'; unitId: string; n?: number; query: string }
   /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
   | { name: 'draw'; artId?: string }
   /** おえかきの作品一覧（さくひん） */
@@ -48,6 +53,21 @@ export function parseHash(hash: string): Route {
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
   if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
+  if (a === 'dev' && b === 'unit' && import.meta.env.DEV) {
+    // #/dev/unit/<unitId>/<n>?state=h2&seeds=2（'?' 以降は開発用の画面が読む）
+    const q = hash.indexOf('?');
+    const [, , id, num] = (q >= 0 ? hash.slice(0, q) : hash)
+      .replace(/^#\/?/, '')
+      .split('/')
+      .filter(Boolean);
+    if (id && UNIT_ID.test(id))
+      return {
+        name: 'dev-unit',
+        unitId: id,
+        ...(num && /^\d+$/.test(num) ? { n: Number(num) } : {}),
+        query: q >= 0 ? hash.slice(q + 1) : '',
+      };
+  }
   if (a === 'legacy' && b && UNIT_ID.test(b))
     // v1 の遊び方の id は formula_add のように _ を含む
     return c && /^[a-z0-9_-]+$/.test(c)
@@ -89,6 +109,8 @@ export function routeToHash(r: Route): string {
       return `#/card/${r.stage}/${r.cardId}`;
     case 'dev-engines':
       return '#/dev/engines';
+    case 'dev-unit':
+      return `#/dev/unit/${r.unitId}${r.n !== undefined ? `/${r.n}` : ''}${r.query ? `?${r.query}` : ''}`;
     case 'draw':
       return r.artId ? `#/draw/${r.artId}` : '#/draw';
     case 'gallery':

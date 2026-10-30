@@ -21,6 +21,10 @@ const GalleryScreen = lazy(() =>
 const EngineGallery = lazy(() =>
   import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })),
 );
+// 開発用: 単元の見本の1問（import.meta.env.DEV が false の本番ビルドでは import ごと消える）
+const UnitSampleView = import.meta.env.DEV
+  ? lazy(() => import('./dev/UnitSampleView').then((m) => ({ default: m.UnitSampleView })))
+  : null;
 const UnitRunner = lazy(() =>
   import('./units/UnitRunner').then((m) => ({ default: m.UnitRunner })),
 );
@@ -75,6 +79,17 @@ function Routes() {
     screen = (
       <Suspense fallback={null}>
         <EngineGallery />
+      </Suspense>
+    );
+  else if (route.name === 'dev-unit' && UnitSampleView)
+    screen = (
+      <Suspense fallback={null}>
+        <UnitSampleView
+          key={`${route.unitId}/${route.n ?? ''}?${route.query}`}
+          unitId={route.unitId}
+          n={route.n}
+          query={route.query}
+        />
       </Suspense>
     );
   else if (route.name === 'card')

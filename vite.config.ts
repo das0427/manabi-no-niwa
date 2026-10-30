@@ -66,7 +66,13 @@ export default defineConfig({
     'import.meta.env.VITE_MNW_SAMPLE_PACKS': JSON.stringify(samplePacks ? '1' : ''),
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
-  server: { host: '127.0.0.1', port: 5173 },
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    // 文字の配置の検査（playwright.text-layout.config.ts）の開発サーバーは、ファイルの変更を見ない。
+    // 別の作業ツリー（.claude/worktrees）等の変更で検査中のページが読み直されないように
+    ...(process.env.MNW_DEV_NO_HMR === '1' ? { hmr: false, watch: null } : {}),
+  },
   preview: { host: '127.0.0.1', port: 4173 },
   test: {
     environment: 'jsdom',

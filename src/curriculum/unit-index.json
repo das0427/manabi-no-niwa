@@ -1024,6 +1024,19 @@
     "engine": "order"
   },
   {
+    "id": "g3.ja.haiku",
+    "pack": "g3-ja",
+    "title": "俳句《はいく》を楽《たの》しもう",
+    "stage": "g3",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "leaf",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g3.ja.kanji-parts",
     "pack": "g3-ja",
     "title": "漢字《かんじ》の組《く》み立《た》て",
@@ -1067,6 +1080,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "trace"
+  },
+  {
+    "id": "g3.ja.listen-memo",
+    "pack": "g3-ja",
+    "title": "聞《き》いてメモしよう",
+    "stage": "g3",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [
+      "g2.ja.listen-notes"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "g3.ja.modifiers",

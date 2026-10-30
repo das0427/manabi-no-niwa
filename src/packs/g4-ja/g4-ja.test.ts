@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
-import { parseRich, type Token } from '../../text/rich';
+import { parseRich, plainText, type Token } from '../../text/rich';
 import pack from './index';
+import { TANKA } from './tanka';
 
 const GRADE = 4;
 /** g3/g4 の選択肢の上限（ux-by-age: 4。多いと先頭から切られ、正解が消えることがある） */
@@ -26,7 +27,10 @@ function overGrade(src: string): string[] {
  * 学年より上でも使ってよい字（教科の用語で必要なもの。curriculum-matrix 2.1）。
  * 足すときは理由をコメントに書く。
  */
-const ALLOWED_OVER: ReadonlySet<string> = new Set([]);
+const ALLOWED_OVER: ReadonlySet<string> = new Set([
+  // 句（5年）: 短歌の用語「上の句・下の句」に必要（g4.ja.tanka。curriculum-matrix 2.1 教科の用語）
+  '句',
+]);
 
 function extraChecks(unit: UnitSpec): string[] {
   const errs: string[] = [];
@@ -145,4 +149,146 @@ describe('g4-ja の教材検査（curriculum-matrix 1.8）', () => {
       );
     });
   }
+});
+
+describe('g4.ja.tanka', () => {
+  const unit = pack.units.find((u) => u.id === 'g4.ja.tanka');
+  if (!unit || unit.source.kind !== 'items') throw new Error('tanka がない');
+  const items = unit.source.items;
+
+  /** RichText をかなにする（カタカナはひらがなに。「ー」は残す） */
+  function kana(src: string): string {
+    const walk = (ts: Token[]): string =>
+      ts
+        .map((t) =>
+          t.t === 'ruby'
+            ? t.reading
+            : t.t === 'text'
+              ? t.s
+              : t.t === 'strong'
+                ? walk(t.children)
+                : '',
+        )
+        .join('');
+    return walk(parseRich(src))
+      .replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60))
+      .replace(/[^ぁ-ゖー]/g, '');
+  }
+  /** 音の数: 小さい「ゃゅょぁぃぅぇぉゎ」は数えず、ほかの字（「っ」「ん」「ー」を含む）を1つと数える */
+  const mora = (src: string): number =>
+    [...kana(src)].filter((c) => !'ゃゅょぁぃぅぇぉゎ'.includes(c)).length;
+  const visible = (src: string): string => src.replace(/《[^》]*》/g, '').replace(/\s+/g, '');
+
+  it('音を数える関数（例）', () => {
+    expect(mora('しゅわしゅわと')).toBe(5);
+    expect(mora('おばあちゃん')).toBe(5);
+    expect(mora('ソーダのあわが')).toBe(7);
+    expect(mora('ゆっくりとゆく')).toBe(7);
+    expect(mora('校庭《こうてい》のすみ')).toBe(7);
+  });
+
+  it('全10首の句の音の数が 5・7・5・7・7', () => {
+    expect(TANKA.length).toBe(10);
+    for (const t of TANKA) expect(t.ku.map(mora), t.id).toEqual([5, 7, 5, 7, 7]);
+  });
+
+  it('oto: 正解の音の数が audio の音の数と同じ・誤りの値が重ならない', () => {
+    const oto = items.filter((it) => it.id.startsWith('oto:'));
+    expect(oto.length).toBe(12);
+    for (const it of oto) {
+      if (it.engine !== 'listen') throw new Error(it.id);
+      const nums = it.options.map((o) => parseInt(o.label ?? '', 10));
+      expect(new Set(nums).size, it.id).toBe(nums.length);
+      const right = it.options.find((o) => o.correct);
+      const a = Array.isArray(it.audio) ? it.audio[0]! : it.audio;
+      expect(parseInt(right?.label ?? '', 10), it.id).toBe(mora(a.text));
+      expect(nums, it.id).toEqual([...nums].sort((x, y) => x - y));
+    }
+  });
+
+  it('build: 正解の区切りの音の数・誤答の区切りとの違い・タイルは8字以内', () => {
+    for (const it of items) {
+      if (it.engine !== 'build') continue;
+      if (it.answer.kind !== 'text') throw new Error(it.id);
+      const parts = it.answer.values[0]!.split(' ');
+      if (it.id.startsWith('kiru:')) {
+        expect(parts.map(mora), it.id).toEqual(parts.length === 3 ? [5, 7, 5] : [7, 7]);
+      } else expect(parts.map(mora), it.id).toEqual([7, 7]);
+      for (const w of it.wrongAnswers ?? []) {
+        expect(w.value, it.id).not.toBe(it.answer.values[0]);
+        if (w.misconception !== 'tk-order')
+          expect(w.value.split(' ').map(mora), `${it.id}: ${w.value}`).not.toEqual(parts.map(mora));
+      }
+      for (const t of it.tiles) expect(visible(t).length, `${it.id}: ${t}`).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it('build: タイルに重なりがなく、正解・誤答はどれもタイルを1回ずつ使って作れる', () => {
+    const buildable = (value: string, tiles: readonly string[]): boolean => {
+      const rest = [...tiles];
+      for (const p of value.split(' ')) {
+        const i = rest.indexOf(p);
+        if (i < 0) return false;
+        rest.splice(i, 1);
+      }
+      return true;
+    };
+    for (const it of items) {
+      if (it.engine !== 'build' || it.answer.kind !== 'text') continue;
+      expect(new Set(it.tiles).size, it.id).toBe(it.tiles.length);
+      expect(buildable(it.answer.values[0]!, it.tiles), it.id).toBe(true);
+      for (const w of it.wrongAnswers ?? [])
+        expect(buildable(w.value, it.tiles), `${it.id}: ${w.value}`).toBe(true);
+      // 区切りの問題は、まちがった区切りでも上の句（下の句）の字をぜんぶ使う
+      if (it.id.startsWith('kiru:'))
+        for (const w of it.wrongAnswers ?? [])
+          expect(visible(w.value), `${it.id}: ${w.value}`).toBe(visible(it.answer.values[0]!));
+    }
+  });
+
+  it('listen: 選択肢4つ・正解1つ・誤りすべてに誤概念・audio に英字なし', () => {
+    for (const it of items) {
+      if (it.engine !== 'listen') continue;
+      expect(it.options.length, it.id).toBe(4);
+      expect(it.options.filter((o) => o.correct).length, it.id).toBe(1);
+      for (const o of it.options) if (!o.correct) expect(o.misconception, it.id).toBeTruthy();
+      const sounds = Array.isArray(it.audio) ? it.audio : [it.audio];
+      for (const s of sounds) expect(/[A-Za-z]/.test(s.text), it.id).toBe(false);
+    }
+  });
+
+  it('audio は歌の句と同じ（O2 別例は続けて1つ・O3/O4 は5つの音）', () => {
+    for (const it of items) {
+      if (it.engine !== 'listen') continue;
+      const sounds = Array.isArray(it.audio) ? it.audio : [it.audio];
+      if (it.id.startsWith('oto:')) continue;
+      if (it.id.startsWith('kiru-kiku:')) {
+        const t = TANKA.find((x) => x.id === it.id.slice('kiru-kiku:'.length))!;
+        expect(sounds.length, it.id).toBe(1);
+        expect(sounds[0]!.text, it.id).toBe(t.ku.join(''));
+      } else {
+        expect(sounds.length, it.id).toBe(5);
+        const texts = sounds.map((s) => s.text);
+        const t = TANKA.find((x) => x.ku.join('|') === texts.join('|'));
+        expect(t, it.id).toBeTruthy();
+        // 歌の名前が id に入っている問題は、その歌の音声であること
+        const named = it.id.split(':')[1]?.split('-')[0];
+        if (named && TANKA.some((x) => x.id === named)) expect(t?.id, it.id).toBe(named);
+        // 字を見せる問題は、図の文が同じ歌
+        if (it.figure?.kind === 'text') expect(it.figure.text, it.id).toBe(t?.ku.join('　'));
+      }
+    }
+  });
+
+  it('kisetsu: 正解の季節が歌の season と一致する（朝顔は使わない）', () => {
+    const ks = items.filter((it) => it.id.startsWith('kisetsu:'));
+    expect(ks.length).toBe(5);
+    for (const it of ks) {
+      if (it.engine !== 'listen') throw new Error(it.id);
+      const t = TANKA.find((x) => x.id === it.id.slice('kisetsu:'.length))!;
+      expect(t.id).not.toBe('asagao');
+      const right = it.options.find((o) => o.correct)!;
+      expect(plainText(right.label ?? '')).toBe(t.season);
+    }
+  });
 });

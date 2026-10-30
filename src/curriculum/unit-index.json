@@ -3761,6 +3761,19 @@
     "engine": "legacy"
   },
   {
+    "id": "p5.env.predict",
+    "pack": "p5",
+    "title": "どう なるかな",
+    "stage": "p5",
+    "subject": "env",
+    "domain": "play",
+    "icon": "p5-ice",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "p5.hand.kana-trace",
     "pack": "p5",
     "title": "ひらがなを なぞる",
@@ -3820,6 +3833,36 @@
     "priority": "P1",
     "status": "ready",
     "engine": "match"
+  },
+  {
+    "id": "p5.ja.letter-play",
+    "pack": "p5",
+    "title": "おてがみ ごっこ",
+    "stage": "p5",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p5-letter",
+    "prereq": [
+      "p5.hand.kana-trace"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "explain"
+  },
+  {
+    "id": "p5.ja.small-kana",
+    "pack": "p5",
+    "title": "ちいさい じ・のばす おと",
+    "stage": "p5",
+    "subject": "ja",
+    "domain": "play",
+    "icon": "p5-stamp",
+    "prereq": [
+      "p5.ja.kana-read-all"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
   },
   {
     "id": "p5.ja.story-listen",
@@ -3965,6 +4008,19 @@
       "p4.think.pattern"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "p5.think.why",
+    "pack": "p5",
+    "title": "どうしてかな",
+    "stage": "p5",
+    "subject": "think",
+    "domain": "play",
+    "icon": "p5-rain",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   }

@@ -8,6 +8,8 @@ import { StartScreen } from './app/StartScreen';
 import { SubjectMap } from './app/SubjectMap';
 import { CardChooser, LegacyEntry } from './app/UnitEntry';
 import { Explore } from './app/Explore';
+import { profileAudience } from './core/types';
+import { loadElementaryFont, needsElementaryFont } from './ui/elementaryFont';
 import './ui/ui.css';
 
 const ParentApp = lazy(() => import('./parent/index'));
@@ -35,6 +37,12 @@ function Routes() {
   useEffect(() => {
     if (needsStart || parentLocked) navigate({ name: 'start' }, { replace: true, force: true });
   }, [needsStart, parentLocked]);
+
+  // 小学生のプロフィールでは、漢字だけの小学生用フォントを読み込む（review-1 #22）
+  const audience = app.profile ? profileAudience(app.profile) : null;
+  useEffect(() => {
+    if (audience && needsElementaryFont(audience)) loadElementaryFont();
+  }, [audience]);
 
   // 保護者画面を（どの方法でも）離れたら、ゲートを閉じる。ブラウザの「進む」で戻れないように
   const { parentUnlocked, setParentUnlocked } = app;

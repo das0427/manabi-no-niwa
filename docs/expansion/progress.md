@@ -40,8 +40,8 @@
 - 保護者画面: 支援設定（ふりがな・読み上げ・表現・道具）、単元を開く／閉じる（hiddenByDefault の解除）、2歳段階の記録の見せ方（review-1 #8）、旧記録の表示
 - がんばりノートに単元の回を出す、UnitRunner の中断・再開（review-1 #31）、復習中の「別の表現」の出題
 - 音声の生成（教材の台本の書き出し → Open JTalk / Kokoro）
-- 初回準備の2段階（usePackSetup を起動画面へ）、小学生用フォント（review-1 #22）
-- check:design: トークン表との一致・大きな文字の閾値（review-1 #18）
+- 初回準備の2段階（usePackSetup を起動画面へ）、小学生用フォント（review-1 #22。2.1.0 で対応済み: handover.md C 欄）
+- check:design: トークン表との一致・大きな文字の閾値（review-1 #18。2.1.0 で対応済み: handover.md C 欄）
 
 ## 重要な判断（理由は各文書）
 - 2〜3歳は親子利用を前提に入口を1つにし、内部で2歳段階・3歳段階を分ける（research/early-childhood.md）。

@@ -28,8 +28,8 @@
     "build:unit-index": "tsx --tsconfig tsconfig.app.json scripts/build-unit-index.ts",
     "build-stamps": "tsx --tsconfig tsconfig.app.json scripts/build-stamps.ts",
     "chars": "tsx scripts/collect-chars.ts",
-    "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
-    "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
+    "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
+    "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
     "package": "tsx scripts/package-release.ts"
   },
   "dependencies": {

@@ -7,6 +7,7 @@ import { checkDist, checkSources } from './check-packs.ts';
 import {
   finalizeDist,
   isExcluded,
+  packChunkFileName,
   packChunkName,
   packHash,
   type PackIndex,
@@ -21,21 +22,25 @@ async function put(rel: string, content: string): Promise<void> {
   await writeFile(file, content, 'utf8');
 }
 
-/** コア（index・shared）、小学生のパック 2つ（共有データ kanji-g1 を両方が使う）、コア同梱の p4 */
+/**
+ * コア（index・shared・pack-runtime）、小学生のパック 2つ（共有データ kanji-g1 を両方が使う。
+ * g3-sansu は pack-runtime を使う）、コア同梱の p4
+ */
 function baseManifest(): ViteManifest {
   return {
     'index.html': {
       file: 'assets/index-1.js',
       src: 'index.html',
       isEntry: true,
-      imports: ['_shared-1.js'],
+      imports: ['_shared-1.js', '_pack-runtime.js'],
       dynamicImports: ['_g3-sansu-1.js', '_g3-kokugo-1.js', '_p4-1.js'],
       css: ['assets/index-1.css'],
     },
     '_shared-1.js': { file: 'assets/shared-1.js' },
+    '_pack-runtime.js': { file: 'assets/pack-runtime.js' },
     '_g3-sansu-1.js': {
       file: 'assets/packs/g3-sansu/g3-sansu-1.js',
-      imports: ['_shared-1.js', '_kanji-g1-1.js'],
+      imports: ['_pack-runtime.js', '_kanji-g1-1.js'],
     },
     '_g3-kokugo-1.js': {
       file: 'assets/packs/g3-kokugo/g3-kokugo-1.js',
@@ -81,7 +86,10 @@ describe('packChunkName（codeSplitting の名前）', () => {
     expect(packChunkName('C:\\w\\src\\packs\\g3-sansu\\units\\a.ts')).toBe(
       'packs/g3-sansu/g3-sansu',
     );
-    expect(packChunkName('/w/src/packs/g3-sansu/index.ts')).toBe('packs/g3-sansu/g3-sansu');
+    // 入口はグループに入れない（独立したチャンク assets/packs/<id>/index.js にする）
+    expect(packChunkName('/w/src/packs/g3-sansu/index.ts')).toBeNull();
+    expect(packChunkName('C:\\w\\src\\packs\\g3-sansu\\index.ts')).toBeNull();
+    expect(packChunkName('/w/src/packs/g3-sansu/units/index.ts')).toBe('packs/g3-sansu/g3-sansu');
     expect(packChunkName('/w/src/packs/_data/strokes/kanji-g1.json')).toBe(
       'packs/_data/strokes/kanji-g1',
     );
@@ -91,6 +99,32 @@ describe('packChunkName（codeSplitting の名前）', () => {
     expect(packChunkName('/w/src/packs/loader.ts')).toBeNull();
     expect(packChunkName('/w/src/engines/choice.ts')).toBeNull();
     expect(packChunkName('\0vite/preload-helper')).toBeNull();
+  });
+});
+
+describe('packChunkFileName（chunkFileNames）', () => {
+  it('パックの入口は assets/packs/<id>/index.js、パックと pack-runtime は hash なし、本体は hash 付き', () => {
+    expect(
+      packChunkFileName({ name: 'g3-sansu', facadeModuleId: '/w/src/packs/g3-sansu/index.ts' }),
+    ).toBe('assets/packs/g3-sansu/index.js');
+    expect(
+      packChunkFileName({
+        name: 'index',
+        facadeModuleId: 'C:\\w\\src\\packs\\_sample-core\\index.ts',
+      }),
+    ).toBe('assets/packs/_sample-core/index.js');
+    expect(packChunkFileName({ name: 'packs/g3-sansu/g3-sansu', facadeModuleId: null })).toBe(
+      'assets/[name].js',
+    );
+    expect(packChunkFileName({ name: 'pack-runtime', facadeModuleId: null })).toBe(
+      'assets/[name].js',
+    );
+    expect(
+      packChunkFileName({ name: 'index', facadeModuleId: '/w/src/packs/_data/strokes/index.ts' }),
+    ).toBe('assets/[name]-[hash].js');
+    expect(packChunkFileName({ name: 'Illust', facadeModuleId: '/w/src/illust/Illust.tsx' })).toBe(
+      'assets/[name]-[hash].js',
+    );
   });
 });
 
@@ -120,6 +154,7 @@ describe('finalizeDist（パックの分離）', () => {
     expect(files).toEqual([
       'assets/index-1.css',
       'assets/index-1.js',
+      'assets/pack-runtime.js',
       'assets/packs/p4/p4-1.js',
       'assets/shared-1.js',
       'audio/app.mp3',
@@ -194,6 +229,18 @@ describe('checkDist（npm run check:packs）', () => {
     await finalizeDist(dir);
     const r = await checkDist(dir);
     expect(r.problems.join('\n')).toContain('コアにも自分にも属さないチャンク assets/helper-1.js');
+  });
+
+  it('小学生のパックが本体の hash 付きチャンクを読み込むと違反（コア同梱のパックは可）', async () => {
+    const m = baseManifest();
+    m['_g3-kokugo-1.js']!.imports!.push('_shared-1.js');
+    await writeDist(m);
+    await finalizeDist(dir);
+    const problems = (await checkDist(dir)).problems;
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain(
+      'パック g3-kokugo の assets/packs/g3-kokugo/g3-kokugo-1.js が本体の hash 付きチャンク assets/shared-1.js',
+    );
   });
 
   it('コアが小学生のパックを静的に import すると違反', async () => {

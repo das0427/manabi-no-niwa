@@ -11,6 +11,8 @@
  *  5. packId の形式（英小文字・数字・ハイフン、'@' なし）。見本パックは本番の packs.json に出ない
  *     （VITE_MNW_SAMPLE_PACKS=1 のビルド、または --allow-samples のときだけ許す）
  *  6. ソース: src/packs/<packId>/ が他のパックを import しない（共有データ src/packs/_data/ は可）
+ *  7. 小学生のパックのファイルが直接読み込む本体のチャンクは、固定名の assets/pack-runtime.js と
+ *     コアの共有データだけ（hash 付きの本体のチャンクを読み込むと、本体の更新だけでパックの版が変わる）
  *
  * 使い方: tsx scripts/check-packs.ts [distDir] [--allow-samples]
  */
@@ -32,6 +34,9 @@ import {
   readManifest,
   type PackIndex,
 } from './vite-plugin-precache.ts';
+
+/** パックが値として読み込んでよい本体のチャンク（vite.config.ts の PACK_RUNTIME。hash なし） */
+const PACK_RUNTIME_FILE = 'assets/pack-runtime.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -106,6 +111,24 @@ export async function checkDist(
           ? `パック ${id} が別のパック ${other} のチャンク ${f} を読み込む（パック同士で import しない）`
           : `パック ${id} が、コアにも自分にも属さないチャンク ${f} を読み込む（共有するコードは src/engines・src/core に置き、コアから使う）`,
       );
+    }
+  }
+
+  // 7. 小学生のパックのファイル（packs.json の hash の元）が直接読み込む本体のチャンクは、固定名の
+  //    pack-runtime とコアの共有データ（assets/packs/_data/…。hash なし）だけ。hash 付きの本体の
+  //    チャンクを読み込むと、import の文字列に hash が入り、本体の更新だけでパックの版が変わる
+  const chunkOfFile = new Map(Object.values(manifest).map((c) => [c.file, c]));
+  for (const id of separateIds) {
+    for (const f of index[id]?.files ?? []) {
+      const c = chunkOfFile.get(f);
+      for (const k of [...(c?.imports ?? []), ...(c?.dynamicImports ?? [])]) {
+        const target = manifest[k]?.file;
+        if (!target || !coreFiles.has(target) || !target.endsWith('.js')) continue;
+        if (target === PACK_RUNTIME_FILE || isSharedDataFile(target)) continue;
+        problems.push(
+          `パック ${id} の ${f} が本体の hash 付きチャンク ${target} を読み込む（本体の更新でパックの版が変わる。値は pack-runtime から使う）`,
+        );
+      }
     }
   }
 

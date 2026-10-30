@@ -51,14 +51,31 @@ function toPosix(p: string): string {
   return p.replaceAll('\\', '/');
 }
 
+/** モジュール ID がパックの入口（src/packs/<packId>/index.ts）なら packId を返す（共有データは除く） */
+export function packEntryId(moduleId: string | null | undefined): string | null {
+  if (!moduleId || moduleId.startsWith('\0')) return null;
+  const id = toPosix(moduleId.split('?')[0] ?? moduleId);
+  const m = /\/src\/packs\/([^/]+)\/index\.ts$/.exec(id);
+  if (!m || m[1] === SHARED_DATA_DIR) return null;
+  return m[1]!;
+}
+
 /**
  * codeSplitting（旧 manualChunks）の名前の関数。モジュール ID から、パックのチャンク名を返す（対象外は null）。
- *  - src/packs/<packId>/**            → packs/<packId>/<packId>   （出力: assets/packs/<packId>/<packId>-<hash>.js）
+ *  - src/packs/<packId>/index.ts      → null（入口は自分だけの動的 import のチャンクにする。下記）
+ *  - src/packs/<packId>/** の残り     → packs/<packId>/<packId>   （出力: assets/packs/<packId>/<packId>.js）
  *  - src/packs/_data/<path>.<ext>     → packs/_data/<path>         （1 ファイル 1 チャンク）
  *  - src/packs/loader.ts など直下のファイル → null（コア）
+ *
+ * 入口をグループに入れない理由: グループのチャンクに入った動的 import 先は、rolldown が名前空間
+ * オブジェクトを作って返す。その補助関数（__export）が本体の hash 付きチャンクに置かれ、パックが
+ * それを import するため、本体を更新するとパックの内容（packs.json の hash）も変わっていた。
+ * 入口だけを独立したチャンク（packChunkFileName: assets/packs/<packId>/index.js）にすると、
+ * そのチャンクは `export { x as default }` をそのまま持ち、名前空間も補助関数も要らない。
  */
 export function packChunkName(moduleId: string): string | null {
   if (moduleId.startsWith('\0')) return null;
+  if (packEntryId(moduleId)) return null;
   const id = toPosix(moduleId.split('?')[0] ?? moduleId);
   const m = /\/src\/packs\/([^/]+)\/(.+)$/.exec(id);
   if (!m) return null;
@@ -66,6 +83,17 @@ export function packChunkName(moduleId: string): string | null {
   const rest = m[2]!;
   if (dir === SHARED_DATA_DIR) return `packs/${SHARED_DATA_DIR}/${rest.replace(/\.[^./]+$/, '')}`;
   return `packs/${dir}/${dir}`;
+}
+
+/**
+ * chunkFileNames の関数。パックの入口・パックのグループ・pack-runtime は hash を付けない固定名
+ * （版は packs.json の内容 hash で管理する）。それ以外は本体として hash 付き。
+ */
+export function packChunkFileName(chunk: { name: string; facadeModuleId: string | null }): string {
+  const entry = packEntryId(chunk.facadeModuleId);
+  if (entry) return `assets/packs/${entry}/index.js`;
+  if (chunk.name === 'pack-runtime' || chunk.name.startsWith('packs/')) return 'assets/[name].js';
+  return 'assets/[name]-[hash].js';
 }
 
 export interface ManifestChunk {
@@ -92,8 +120,8 @@ export type PackIndex = Record<string, PackIndexEntry>;
 
 /**
  * 出力ファイルがパック自身のチャンクなら packId を返す（assets/packs/<packId>/…。共有データは除く）。
- * パックの入口のモジュールは codeSplitting のグループに入るため、manifest のキーはソースのパスではなく
- * チャンク名（例 `_g1-math-<hash>.js`）になる。そのため出力ファイルの場所で判定する。
+ * パックの入口（assets/packs/<packId>/index.js）の manifest のキーはソースのパスだが、グループの
+ * チャンクのキーはチャンク名（例 `_g1-math.js`）になる。そのため出力ファイルの場所で判定する。
  */
 export function packIdOfFile(file: string): string | null {
   const m = /^assets\/packs\/([^/]+)\//.exec(toPosix(file));

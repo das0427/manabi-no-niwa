@@ -173,7 +173,7 @@ type Verdict =
 - `packs/<packId>/index.ts` が `PackContent = { units: Record<unitId, UnitContent> }` を default export。UnitContent は手作り問題の配列か、生成器（`generate(level, seed, count) → Item[]`）。
 
 ### 6.2 ビルド（R#5）
-- 遅延読み込み: `import(\`../packs/${id}/index.ts\`)`。Vite の `manualChunks` でパック配下のモジュールを `packs/<id>/` のチャンクに閉じ込める。
+- 遅延読み込み: `import(\`../packs/${id}/index.ts\`)`。Vite の `manualChunks`（rolldown の codeSplitting）でパック配下のモジュールを `packs/<id>/` のチャンクに閉じ込める。入口の index.ts だけはグループに入れず `assets/packs/<id>/index.js` にする（グループに入れると rolldown が名前空間の補助関数を本体の hash 付きチャンクから import し、本体の更新でパックの版が変わるため。2.1.0）。パックのファイル名に hash は付けない（版は packs.json の hash）。
 - パック間で共有するコードは `engines/`・`core/` に置いてコアに含める規約（1章）。
 - `npm run check:packs`: 「各パックの入口から辿れるチャンクが、コアかそのパック自身だけ」であることを build manifest から機械検査する。
 - precache プラグイン（scripts/vite-plugin-precache.ts）: `assets/packs/**` と `audio/<packId>/**` をコアの `__MNW_FILES__` から除外し、`dist/packs.json` を出力する: `{ [packId]: { files: string[], bytes: number, hash: string } }`。**コアの版ID（`__MNW_VERSION__`）にパックの内容を含めない**（パックだけの更新でコアを入れ直さない）。`packs.json` 自体はコアに含める。

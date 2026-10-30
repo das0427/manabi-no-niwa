@@ -1,5 +1,18 @@
 [
   {
+    "id": "g1.ja.folktales",
+    "pack": "g1-ja",
+    "title": "むかしばなしを きこう",
+    "stage": "g1",
+    "subject": "ja",
+    "domain": "yomu",
+    "icon": "book",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "listen"
+  },
+  {
     "id": "g1.ja.hiragana-read",
     "pack": "g1-ja",
     "title": "ひらがなを よもう",
@@ -189,6 +202,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
+  },
+  {
+    "id": "g1.ja.word-play",
+    "pack": "g1-ja",
+    "title": "ことばあそび",
+    "stage": "g1",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "music-note",
+    "prereq": [
+      "p4.ja.word-play"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g1.ja.write-order",

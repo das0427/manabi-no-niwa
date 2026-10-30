@@ -2304,6 +2304,19 @@
     "engine": "build"
   },
   {
+    "id": "g5.ja.classics",
+    "pack": "g5-ja",
+    "title": "古文《こぶん》・漢文《かんぶん》の音読《おんどく》を聞《き》く",
+    "stage": "g5",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "listen",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g5.ja.figurative",
     "pack": "g5-ja",
     "title": "表現《ひょうげん》の工夫《くふう》（比喩《ひゆ》・反復《はんぷく》など）",
@@ -2403,6 +2416,19 @@
       "g3.ja.modifiers"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g5.ja.spoken-written",
+    "pack": "g5-ja",
+    "title": "話《はな》し言葉《ことば》と書《か》き言葉《ことば》",
+    "stage": "g5",
+    "subject": "ja",
+    "domain": "kotoba",
+    "icon": "pencil",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },

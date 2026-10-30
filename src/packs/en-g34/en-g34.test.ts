@@ -10,6 +10,21 @@ import { getIllust } from '../../illust/registry';
 import { kanjiGrade } from '../../text/kanji-grades';
 import { parseRich, type Token } from '../../text/rich';
 import { isMirror } from './alphabet-lower';
+import {
+  GOAL_ROWS,
+  GOAL_TURN_CODES,
+  goalPos,
+  routeSvg,
+  townLetters,
+  walk,
+  type GoalDir,
+  type PlaceCode,
+  type Step,
+} from './directions';
+import { LIKE_WORDS } from './likes';
+import { NAMES } from './names';
+import { SAME_START } from './numbers-colors';
+import { NUMBER_WORDS } from './want';
 import { soundMates } from './alphabet-upper';
 import pack from './index';
 import { englishScript } from './voice';
@@ -219,5 +234,223 @@ describe('en-g34 の教材検査（curriculum-matrix 1.8）', () => {
       for (const it of sampleItems(unit, 1))
         if (it.engine === 'listen' || it.engine === 'choice')
           for (const o of it.options) if (!o.correct) expect(o.misconception, it.id).toBeTruthy();
+  });
+});
+
+// ---- P2 単元（likes・want・directions。設計書 docs/expansion/p2-design/en-g34.md 1.7・2.7・3.10）----
+interface AnyOpt {
+  label?: string;
+  correct?: boolean;
+  misconception?: string;
+  figure?: {
+    kind: string;
+    id?: string;
+    count?: number;
+    markup?: string;
+    items?: AnyOpt['figure'][];
+  };
+}
+interface AnyItem {
+  id: string;
+  audio?: { text: string } | { text: string }[];
+  options?: AnyOpt[];
+}
+const itemsOf = (unitId: string): AnyItem[] =>
+  sampleItems(
+    pack.units.find((u) => u.id === unitId)!,
+    1,
+  ) as unknown as AnyItem[];
+const unitOf = (unitId: string) => pack.units.find((u) => u.id === unitId)!;
+const textsOfAudio = (it: AnyItem): string[] =>
+  (Array.isArray(it.audio) ? it.audio : it.audio ? [it.audio] : []).map((a) => a.text);
+const correctOf = (it: AnyItem) => it.options!.find((o) => o.correct)!;
+
+describe('g3.en.likes', () => {
+  const items = itemsOf('g3.en.likes');
+  it('isReady', () => {
+    expect(isReady(checkUnit(unitOf('g3.en.likes')))).toBe(true);
+  });
+  it("「すきではない」「×」は 音声に don't が あるときだけ", () => {
+    const bad: string[] = [];
+    for (const it of items) {
+      if (!/^(not|ask|not-mark):/.test(it.id)) continue;
+      const neg = textsOfAudio(it).some((t) => t.includes("don't"));
+      const l = correctOf(it).label!;
+      const isNeg = l.endsWith('すきではない') || l.endsWith('×');
+      if (neg !== isNeg) bad.push(`${it.id}: ${l}`);
+    }
+    expect(bad).toEqual([]);
+  });
+  it('dont-mix・yes-no・ask-tell の誤りは 正答と 同じ 物の 名前で 始まる', () => {
+    const head = (l: string) => l.split(/ (?=[○×])|が /)[0];
+    const bad: string[] = [];
+    for (const it of items.filter((x) => !x.id.startsWith('not-two:')))
+      for (const o of it.options!)
+        if (['dont-mix', 'yes-no', 'ask-tell'].includes(o.misconception ?? ''))
+          if (head(o.label!) !== head(correctOf(it).label!)) bad.push(`${it.id}: ${o.label}`);
+    expect(bad).toEqual([]);
+  });
+  it('like: の 正答の 絵は 英文の 語と 一致', () => {
+    for (const it of items.filter((x) => x.id.startsWith('like:'))) {
+      const word = /I like (\w+)\./.exec(textsOfAudio(it)[0]!)![1]!;
+      const o = correctOf(it);
+      expect(o.figure!.id, it.id).toBe(LIKE_WORDS[word]);
+      expect(o.label, it.id).toBe(NAMES[LIKE_WORDS[word]!]);
+    }
+  });
+});
+
+describe('g4.en.want', () => {
+  const items = itemsOf('g4.en.want');
+  it('isReady', () => {
+    expect(isReady(checkUnit(unitOf('g4.en.want')))).toBe(true);
+  });
+  const numsIn = (it: AnyItem): number[] =>
+    textsOfAudio(it)
+      .flatMap((t) => t.toLowerCase().match(/\b[a-z]+\b/g) ?? [])
+      .map((w) => NUMBER_WORDS.indexOf(w))
+      .filter((n) => n > 0);
+  const figCounts = (o: AnyOpt): [string, number][] => {
+    const f = o.figure!;
+    const list = f.kind === 'row' ? f.items! : [f];
+    return list.map((x) => [x!.id!, x!.count!]);
+  };
+  it('count・shop: 英文の 数と 正答の 絵の 数が 一致', () => {
+    for (const it of items.filter((x) => /^(count|shop|shop-two):/.test(x.id))) {
+      const counts = figCounts(correctOf(it)).map((c) => c[1]);
+      expect(counts, it.id).toEqual(numsIn(it));
+    }
+    for (const it of items.filter((x) => x.id.startsWith('count-word:'))) {
+      const n = numsIn(it)[0];
+      expect(correctOf(it).label, it.id).toMatch(new RegExp(` ${n}こ$`));
+    }
+  });
+  it('num-sound・item-mix・swap-count の 作り', () => {
+    for (const it of items) {
+      const c = correctOf(it);
+      for (const o of it.options!) {
+        if (o.correct || !o.figure) continue;
+        const a = figCounts(c);
+        const b = figCounts(o);
+        if (o.misconception === 'num-sound') {
+          expect(b[0]![0], it.id).toBe(a[0]![0]);
+          expect(SAME_START[a[0]![1]]).toContain(b[0]![1]);
+        } else if (o.misconception === 'item-mix') {
+          expect(
+            b.map((x) => x[1]),
+            it.id,
+          ).toEqual(a.map((x) => x[1]));
+          expect(
+            b.map((x) => x[0]),
+            it.id,
+          ).not.toEqual(a.map((x) => x[0]));
+        } else if (o.misconception === 'swap-count') {
+          expect(
+            b.map((x) => x[1]),
+            it.id,
+          ).toEqual(a.map((x) => x[1]).reverse());
+        }
+      }
+    }
+  });
+  it('赤い物と 緑の 物が 同じ 問題の 選択肢に 並ばない', () => {
+    const RED = ['apple', 'strawberry', 'tomato', 'car-red'];
+    const GREEN = ['cucumber', 'green-pepper', 'frog', 'turtle'];
+    const bad: string[] = [];
+    for (const it of itemsOf('g3.en.likes').concat(items)) {
+      const ids = (it.options ?? []).flatMap((o) =>
+        o.figure?.kind === 'row'
+          ? o.figure.items!.map((x) => x!.id!)
+          : o.figure?.id
+            ? [o.figure.id]
+            : [],
+      );
+      if (ids.some((i) => RED.includes(i)) && ids.some((i) => GREEN.includes(i))) bad.push(it.id);
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('g4.en.directions', () => {
+  const items = itemsOf('g4.en.directions');
+  it('isReady', () => {
+    expect(isReady(checkUnit(unitOf('g4.en.directions')))).toBe(true);
+  });
+  const stepOf = (t: string): Step | null =>
+    t === 'Go straight.' ? 'S' : t === 'Turn right.' ? 'R' : t === 'Turn left.' ? 'L' : null;
+  it('walk: 交点の 範囲・route の 選択肢の 道じゅんは たがいに ちがう', () => {
+    for (const it of items.filter((x) => x.id.startsWith('route:'))) {
+      const steps = textsOfAudio(it).map((t) => stepOf(t)!);
+      expect(steps.join(''), it.id).toBe(it.id.slice(6));
+      const marks = it.options!.map((o) => o.figure!.markup as string);
+      expect(new Set(marks).size, it.id).toBe(3);
+      expect(marks[0], it.id).toBe((routeSvg(steps) as { markup: string }).markup);
+      for (const [i, j] of walk(steps)) {
+        expect(i >= 0 && i <= 4 && j >= 0 && j <= 3, it.id).toBe(true);
+      }
+    }
+    for (const row of ['SR', 'SL', 'RL', 'LR', 'RS', 'LS', 'SRL', 'SLR', 'R', 'L'])
+      for (const [i, j] of walk(row.split('') as Step[]))
+        expect(i >= 0 && i <= 4 && j >= 0 && j <= 3, row).toBe(true);
+  });
+  const roadOf = (p: PlaceCode) => p[0];
+  const sideOf = (p: PlaceCode) => (['SE', 'ES', 'WN'].includes(p) ? 'R' : 'L');
+  it('goal・goal-turn: 位置・文字・誤概念', () => {
+    const LET: Record<string, string> = {
+      's-right': 'D',
+      's-left': 'C',
+      'sr-right': 'C',
+      'sr-left': 'A',
+      'sl-right': 'A',
+      'sl-left': 'C',
+    };
+    const LET_TURN: Record<string, string> = {
+      'sr-right': 'B',
+      'sr-left': 'D',
+      'sl-right': 'D',
+      'sl-left': 'B',
+    };
+    for (const turned of [false, true]) {
+      const list = items.filter((x) => x.id.startsWith(turned ? 'goal-turn:' : 'goal:'));
+      expect(list.length).toBe(turned ? 4 : 6);
+      for (const it of list) {
+        const code = it.id.split(':')[1]!;
+        const row = GOAL_ROWS.find((r) => r.code === code)!;
+        const dirs = textsOfAudio(it).map((t) =>
+          t === "It's on your right."
+            ? 'on-right'
+            : t === "It's on your left."
+              ? 'on-left'
+              : stepOf(t)!,
+        );
+        expect(dirs, it.id).toEqual(row.dirs);
+        const pos = goalPos(dirs as GoalDir[]);
+        const codes = [pos, ...row.wrong.map((w) => w[0])];
+        expect(new Set(codes).size, it.id).toBe(4);
+        const letters = townLetters(codes, turned);
+        expect(correctOf(it).label, it.id).toBe(letters[pos]);
+        expect(correctOf(it).label, it.id).toBe((turned ? LET_TURN : LET)[code]);
+        expect(it.options!.map((o) => o.label)).toEqual(['A', 'B', 'C', 'D']);
+        for (const [wp] of row.wrong) {
+          const o = it.options!.find((x) => x.label === letters[wp])!;
+          const want =
+            roadOf(wp) === roadOf(pos)
+              ? 'side-lr'
+              : roadOf(wp) === 'S' || roadOf(pos) === 'S'
+                ? 'turn-missed'
+                : turned
+                  ? 'screen-view'
+                  : 'lr-swap';
+          expect(o.misconception, `${it.id} ${wp}`).toBe(want);
+          if (want === 'side-lr') expect(sideOf(wp)).not.toBe(sideOf(pos));
+        }
+      }
+    }
+    expect(GOAL_TURN_CODES.length).toBe(4);
+  });
+  it('svg: 赤・緑を 使わない', () => {
+    const all = JSON.stringify([unitOf('g4.en.directions').intro, items]);
+    expect(all).not.toContain('var(--berry)');
+    expect(all).not.toContain('var(--leaf)');
   });
 });

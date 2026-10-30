@@ -235,6 +235,30 @@
       "text": "Wednesday"
     },
     {
+      "key": "en-g34.dir.go-straight",
+      "text": "Go straight."
+    },
+    {
+      "key": "en-g34.dir.its-on-your-left",
+      "text": "It's on your left."
+    },
+    {
+      "key": "en-g34.dir.its-on-your-right",
+      "text": "It's on your right."
+    },
+    {
+      "key": "en-g34.dir.stop",
+      "text": "Stop."
+    },
+    {
+      "key": "en-g34.dir.turn-left",
+      "text": "Turn left."
+    },
+    {
+      "key": "en-g34.dir.turn-right",
+      "text": "Turn right."
+    },
+    {
       "key": "en-g34.feel.im-angry",
       "text": "I'm angry."
     },
@@ -273,6 +297,154 @@
     {
       "key": "en-g34.feel.im-tired",
       "text": "I'm tired."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-bears",
+      "text": "I don't like bears."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-carrots",
+      "text": "I don't like carrots."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-cats",
+      "text": "I don't like cats."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-dogs",
+      "text": "I don't like dogs."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-eggs",
+      "text": "I don't like eggs."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-frogs",
+      "text": "I don't like frogs."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-rabbits",
+      "text": "I don't like rabbits."
+    },
+    {
+      "key": "en-g34.like.i-dont-like-tomatoes",
+      "text": "I don't like tomatoes."
+    },
+    {
+      "key": "en-g34.like.i-like-apples",
+      "text": "I like apples."
+    },
+    {
+      "key": "en-g34.like.i-like-bananas",
+      "text": "I like bananas."
+    },
+    {
+      "key": "en-g34.like.i-like-bears",
+      "text": "I like bears."
+    },
+    {
+      "key": "en-g34.like.i-like-cake",
+      "text": "I like cake."
+    },
+    {
+      "key": "en-g34.like.i-like-carrots",
+      "text": "I like carrots."
+    },
+    {
+      "key": "en-g34.like.i-like-cats",
+      "text": "I like cats."
+    },
+    {
+      "key": "en-g34.like.i-like-dogs",
+      "text": "I like dogs."
+    },
+    {
+      "key": "en-g34.like.i-like-eggs",
+      "text": "I like eggs."
+    },
+    {
+      "key": "en-g34.like.i-like-elephants",
+      "text": "I like elephants."
+    },
+    {
+      "key": "en-g34.like.i-like-flowers",
+      "text": "I like flowers."
+    },
+    {
+      "key": "en-g34.like.i-like-frogs",
+      "text": "I like frogs."
+    },
+    {
+      "key": "en-g34.like.i-like-peaches",
+      "text": "I like peaches."
+    },
+    {
+      "key": "en-g34.like.i-like-rabbits",
+      "text": "I like rabbits."
+    },
+    {
+      "key": "en-g34.like.i-like-strawberries",
+      "text": "I like strawberries."
+    },
+    {
+      "key": "en-g34.like.i-like-tomatoes",
+      "text": "I like tomatoes."
+    },
+    {
+      "key": "en-g34.like.i-like-trains",
+      "text": "I like trains."
+    },
+    {
+      "key": "en-g34.like.what-do-you-like",
+      "text": "What do you like?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-apples",
+      "text": "Do you like apples?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-bananas",
+      "text": "Do you like bananas?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-cake",
+      "text": "Do you like cake?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-carrots",
+      "text": "Do you like carrots?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-cats",
+      "text": "Do you like cats?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-dogs",
+      "text": "Do you like dogs?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-elephants",
+      "text": "Do you like elephants?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-flowers",
+      "text": "Do you like flowers?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-frogs",
+      "text": "Do you like frogs?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-peaches",
+      "text": "Do you like peaches?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-rabbits",
+      "text": "Do you like rabbits?"
+    },
+    {
+      "key": "en-g34.likeq.do-you-like-trains",
+      "text": "Do you like trains?"
     },
     {
       "key": "en-g34.num.eight",
@@ -419,6 +591,50 @@
       "text": "You're welcome."
     },
     {
+      "key": "en-g34.place.lets-go-to-the-flower-shop",
+      "text": "Let's go to the flower shop."
+    },
+    {
+      "key": "en-g34.place.lets-go-to-the-hospital",
+      "text": "Let's go to the hospital."
+    },
+    {
+      "key": "en-g34.place.lets-go-to-the-library",
+      "text": "Let's go to the library."
+    },
+    {
+      "key": "en-g34.place.lets-go-to-the-station",
+      "text": "Let's go to the station."
+    },
+    {
+      "key": "en-g34.place.where-is-the-bakery",
+      "text": "Where is the bakery?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-fire-station",
+      "text": "Where is the fire station?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-flower-shop",
+      "text": "Where is the flower shop?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-hospital",
+      "text": "Where is the hospital?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-library",
+      "text": "Where is the library?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-police-box",
+      "text": "Where is the police box?"
+    },
+    {
+      "key": "en-g34.place.where-is-the-station",
+      "text": "Where is the station?"
+    },
+    {
       "key": "en-g34.plan.i-do-my-homework-at-four",
       "text": "I do my homework at four."
     },
@@ -455,6 +671,14 @@
       "text": "I take a bath at eight."
     },
     {
+      "key": "en-g34.reply.no-i-dont",
+      "text": "No, I don't."
+    },
+    {
+      "key": "en-g34.reply.yes-i-do",
+      "text": "Yes, I do."
+    },
+    {
       "key": "en-g34.shape.circle",
       "text": "circle"
     },
@@ -489,6 +713,62 @@
     {
       "key": "en-g34.shape.triangle",
       "text": "triangle"
+    },
+    {
+      "key": "en-g34.shop.apples-please",
+      "text": "Apples, please."
+    },
+    {
+      "key": "en-g34.shop.carrots-please",
+      "text": "Carrots, please."
+    },
+    {
+      "key": "en-g34.shop.five-please",
+      "text": "Five, please."
+    },
+    {
+      "key": "en-g34.shop.four-please",
+      "text": "Four, please."
+    },
+    {
+      "key": "en-g34.shop.how-many",
+      "text": "How many?"
+    },
+    {
+      "key": "en-g34.shop.how-many-cucumbers-do-you-want",
+      "text": "How many cucumbers do you want?"
+    },
+    {
+      "key": "en-g34.shop.how-many-lemons-do-you-want",
+      "text": "How many lemons do you want?"
+    },
+    {
+      "key": "en-g34.shop.how-many-tomatoes-do-you-want",
+      "text": "How many tomatoes do you want?"
+    },
+    {
+      "key": "en-g34.shop.nine-please",
+      "text": "Nine, please."
+    },
+    {
+      "key": "en-g34.shop.peaches-please",
+      "text": "Peaches, please."
+    },
+    {
+      "key": "en-g34.shop.six-please",
+      "text": "Six, please."
+    },
+    {
+      "key": "en-g34.shop.three-please",
+      "text": "Three, please."
+    },
+    {
+      "key": "en-g34.shop.two-please",
+      "text": "Two, please."
+    },
+    {
+      "key": "en-g34.shop.what-do-you-want",
+      "text": "What do you want?"
     },
     {
       "key": "en-g34.time.its-eight-oclock",
@@ -565,6 +845,106 @@
     {
       "key": "en-g34.time.its-two-oclock",
       "text": "It's two o'clock."
+    },
+    {
+      "key": "en-g34.want.i-want-a-banana",
+      "text": "I want a banana."
+    },
+    {
+      "key": "en-g34.want.i-want-a-carrot",
+      "text": "I want a carrot."
+    },
+    {
+      "key": "en-g34.want.i-want-a-cucumber",
+      "text": "I want a cucumber."
+    },
+    {
+      "key": "en-g34.want.i-want-a-lemon",
+      "text": "I want a lemon."
+    },
+    {
+      "key": "en-g34.want.i-want-a-peach",
+      "text": "I want a peach."
+    },
+    {
+      "key": "en-g34.want.i-want-a-tomato",
+      "text": "I want a tomato."
+    },
+    {
+      "key": "en-g34.want.i-want-an-apple",
+      "text": "I want an apple."
+    },
+    {
+      "key": "en-g34.want.i-want-an-egg",
+      "text": "I want an egg."
+    },
+    {
+      "key": "en-g34.want.i-want-eight-eggs",
+      "text": "I want eight eggs."
+    },
+    {
+      "key": "en-g34.want.i-want-five-eggs-and-one-lemon",
+      "text": "I want five eggs and one lemon."
+    },
+    {
+      "key": "en-g34.want.i-want-five-lemons",
+      "text": "I want five lemons."
+    },
+    {
+      "key": "en-g34.want.i-want-four-tomatoes",
+      "text": "I want four tomatoes."
+    },
+    {
+      "key": "en-g34.want.i-want-four-tomatoes-and-two-carrots",
+      "text": "I want four tomatoes and two carrots."
+    },
+    {
+      "key": "en-g34.want.i-want-nine-peaches",
+      "text": "I want nine peaches."
+    },
+    {
+      "key": "en-g34.want.i-want-seven-bananas",
+      "text": "I want seven bananas."
+    },
+    {
+      "key": "en-g34.want.i-want-seven-strawberries",
+      "text": "I want seven strawberries."
+    },
+    {
+      "key": "en-g34.want.i-want-six-carrots",
+      "text": "I want six carrots."
+    },
+    {
+      "key": "en-g34.want.i-want-ten-cucumbers",
+      "text": "I want ten cucumbers."
+    },
+    {
+      "key": "en-g34.want.i-want-ten-eggs",
+      "text": "I want ten eggs."
+    },
+    {
+      "key": "en-g34.want.i-want-three-apples",
+      "text": "I want three apples."
+    },
+    {
+      "key": "en-g34.want.i-want-three-peaches",
+      "text": "I want three peaches."
+    },
+    {
+      "key": "en-g34.want.i-want-three-peaches-and-six-strawberries",
+      "text": "I want three peaches and six strawberries."
+    },
+    {
+      "key": "en-g34.want.i-want-two-apples-and-three-bananas",
+      "text": "I want two apples and three bananas."
+    },
+    {
+      "key": "en-g34.want.i-want-two-bananas",
+      "text": "I want two bananas."
+    },
+    {
+      "key": "en-g34.want.i-want-two-eggplants",
+      "text": "I want two eggplants."
     }
   ]
 }

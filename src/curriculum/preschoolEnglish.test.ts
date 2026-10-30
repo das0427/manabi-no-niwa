@@ -23,7 +23,9 @@ describe('幼児ホームの「えいご」の札', () => {
         expect(m, id).toBeTruthy();
         expect(m!.pack, id).toBe('en-pre');
         expect(m!.status, id).not.toBe('planned');
-        expect(m!.hiddenByDefault, id).toBeFalsy();
+        // 既定で隠れる単元は p5.en.abc だけ（保護者が開いたときだけ子供画面に出る）
+        if (id === 'p5.en.abc') expect(m!.hiddenByDefault, id).toBe(true);
+        else expect(m!.hiddenByDefault, id).toBeFalsy();
       }
     }
     // 選ぶ画面は札を最大6枚まで（24u×22u を3枚×2段）
@@ -31,9 +33,24 @@ describe('幼児ホームの「えいご」の札', () => {
       expect(PRESCHOOL_EN_CARDS[stage].units.length).toBeLessThanOrEqual(6);
   });
 
-  it('p5 の札には p4 の move・hello・picture-book もつなぐ', () => {
-    for (const id of ['p4.en.move', 'p4.en.hello', 'p4.en.picture-book'])
-      expect(PRESCHOOL_EN_CARDS.p5.units).toContain(id);
+  it('札の単元（設計書 8.3・13章 #7）: p23 は words・move、p4 は6つ、p5 は6つ（abc は既定で隠れる）', () => {
+    expect(PRESCHOOL_EN_CARDS.p23.units).toEqual(['p23.en.words', 'p23.en.move']);
+    expect(PRESCHOOL_EN_CARDS.p4.units).toEqual([
+      'p4.en.words',
+      'p4.en.colors-numbers',
+      'p4.en.move',
+      'p4.en.hello',
+      'p4.en.picture-book',
+      'p4.en.where',
+    ]);
+    expect(PRESCHOOL_EN_CARDS.p5.units).toEqual([
+      'p5.en.phrases',
+      'p5.en.shop',
+      'p5.en.picture-book',
+      'p5.en.first-sound',
+      'p4.en.hello',
+      'p5.en.abc',
+    ]);
   });
 
   it('札の id は、ほかの札と重ならない。「きょうの おすすめ」の候補（ふつうの札）に入らない', () => {
@@ -55,7 +72,7 @@ describe('幼児ホームの「えいご」の札', () => {
 
   it('en-pre の単元は教科 en・幼児の段階で、parentNote が索引に写っている', () => {
     const pre = UNIT_INDEX.filter((u) => u.pack === 'en-pre');
-    expect(pre.length).toBe(8);
+    expect(pre.length).toBe(13);
     for (const u of pre) {
       expect(u.subject).toBe('en');
       expect(['p23', 'p4', 'p5']).toContain(u.stage);

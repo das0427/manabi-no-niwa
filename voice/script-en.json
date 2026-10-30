@@ -1799,6 +1799,160 @@
                         "text":  "zoo"
                     },
                     {
+                        "key":  "en-pre.abc.a",
+                        "text":  "A.",
+                        "phonemes":  "ˈeɪ"
+                    },
+                    {
+                        "key":  "en-pre.abc.b",
+                        "text":  "B.",
+                        "phonemes":  "bˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.c",
+                        "text":  "C.",
+                        "phonemes":  "sˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.d",
+                        "text":  "D.",
+                        "phonemes":  "dˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.e",
+                        "text":  "E.",
+                        "phonemes":  "ˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.f",
+                        "text":  "F.",
+                        "phonemes":  "ˈɛf"
+                    },
+                    {
+                        "key":  "en-pre.abc.g",
+                        "text":  "G.",
+                        "phonemes":  "dʒˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.h",
+                        "text":  "H.",
+                        "phonemes":  "ˈeɪtʃ"
+                    },
+                    {
+                        "key":  "en-pre.abc.i",
+                        "text":  "I.",
+                        "phonemes":  "ˈaɪ"
+                    },
+                    {
+                        "key":  "en-pre.abc.j",
+                        "text":  "J.",
+                        "phonemes":  "dʒˈeɪ"
+                    },
+                    {
+                        "key":  "en-pre.abc.k",
+                        "text":  "K.",
+                        "phonemes":  "kˈeɪ"
+                    },
+                    {
+                        "key":  "en-pre.abc.l",
+                        "text":  "L.",
+                        "phonemes":  "ˈɛl"
+                    },
+                    {
+                        "key":  "en-pre.abc.m",
+                        "text":  "M.",
+                        "phonemes":  "ˈɛm"
+                    },
+                    {
+                        "key":  "en-pre.abc.n",
+                        "text":  "N.",
+                        "phonemes":  "ˈɛn"
+                    },
+                    {
+                        "key":  "en-pre.abc.o",
+                        "text":  "O.",
+                        "phonemes":  "ˈoʊ"
+                    },
+                    {
+                        "key":  "en-pre.abc.p",
+                        "text":  "P.",
+                        "phonemes":  "pˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.q",
+                        "text":  "Q.",
+                        "phonemes":  "kjˈuː"
+                    },
+                    {
+                        "key":  "en-pre.abc.r",
+                        "text":  "R.",
+                        "phonemes":  "ˈɑːɹ"
+                    },
+                    {
+                        "key":  "en-pre.abc.s",
+                        "text":  "S.",
+                        "phonemes":  "ˈɛs"
+                    },
+                    {
+                        "key":  "en-pre.abc.t",
+                        "text":  "T.",
+                        "phonemes":  "tˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.u",
+                        "text":  "U.",
+                        "phonemes":  "jˈuː"
+                    },
+                    {
+                        "key":  "en-pre.abc.v",
+                        "text":  "V.",
+                        "phonemes":  "vˈiː"
+                    },
+                    {
+                        "key":  "en-pre.abc.w",
+                        "text":  "W.",
+                        "phonemes":  "dˈʌbəljˌuː"
+                    },
+                    {
+                        "key":  "en-pre.abc.x",
+                        "text":  "X.",
+                        "phonemes":  "ˈɛks"
+                    },
+                    {
+                        "key":  "en-pre.abc.y",
+                        "text":  "Y.",
+                        "phonemes":  "wˈaɪ"
+                    },
+                    {
+                        "key":  "en-pre.abc.z",
+                        "text":  "Z.",
+                        "phonemes":  "zˈiː"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-1",
+                        "text":  "One frog. Ribbit, ribbit!"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-2",
+                        "text":  "Two ducks. Quack, quack!"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-3",
+                        "text":  "Three birds. Tweet, tweet!"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-4",
+                        "text":  "Four cats. Meow, meow!"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-5",
+                        "text":  "Five dogs. Woof, woof!"
+                    },
+                    {
+                        "key":  "en-pre.book.animals-6",
+                        "text":  "Hello, friends!"
+                    },
+                    {
                         "key":  "en-pre.book.beep-1",
                         "text":  "A red car. Beep, beep!"
                     },
@@ -1831,6 +1985,30 @@
                         "text":  "Sit down!"
                     },
                     {
+                        "key":  "en-pre.book.garden-1",
+                        "text":  "Here is a little seed."
+                    },
+                    {
+                        "key":  "en-pre.book.garden-2",
+                        "text":  "Water, please!"
+                    },
+                    {
+                        "key":  "en-pre.book.garden-3",
+                        "text":  "Sunshine, please!"
+                    },
+                    {
+                        "key":  "en-pre.book.garden-4",
+                        "text":  "Look! A sprout!"
+                    },
+                    {
+                        "key":  "en-pre.book.garden-5",
+                        "text":  "Look! A bud!"
+                    },
+                    {
+                        "key":  "en-pre.book.garden-6",
+                        "text":  "Look! A flower!"
+                    },
+                    {
                         "key":  "en-pre.book.hello-1",
                         "text":  "Hello, dog!"
                     },
@@ -1861,6 +2039,54 @@
                     {
                         "key":  "en-pre.book.jump-4",
                         "text":  "Jump, jump, jump!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-1",
+                        "text":  "Good morning, sun!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-2",
+                        "text":  "Brush, brush, brush!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-3",
+                        "text":  "Wash, wash, wash!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-4",
+                        "text":  "Yum, yum, yum!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-5",
+                        "text":  "Shoes on!"
+                    },
+                    {
+                        "key":  "en-pre.book.morning-6",
+                        "text":  "Hat on! Let\u0027s go!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-1",
+                        "text":  "Hello, spring!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-2",
+                        "text":  "Hello, summer!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-3",
+                        "text":  "Hello, fall!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-4",
+                        "text":  "Hello, winter!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-5",
+                        "text":  "A big snowman!"
+                    },
+                    {
+                        "key":  "en-pre.book.seasons-6",
+                        "text":  "Hello again, spring!"
                     },
                     {
                         "key":  "en-pre.book.sky-1",
@@ -1959,8 +2185,20 @@
                         "text":  "Yellow."
                     },
                     {
+                        "key":  "en-pre.feel.im-angry",
+                        "text":  "I\u0027m angry."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-cold",
+                        "text":  "I\u0027m cold."
+                    },
+                    {
                         "key":  "en-pre.feel.im-happy",
                         "text":  "I\u0027m happy."
+                    },
+                    {
+                        "key":  "en-pre.feel.im-hot",
+                        "text":  "I\u0027m hot."
                     },
                     {
                         "key":  "en-pre.feel.im-hungry",
@@ -1975,8 +2213,24 @@
                         "text":  "I\u0027m sleepy."
                     },
                     {
+                        "key":  "en-pre.feel.im-thirsty",
+                        "text":  "I\u0027m thirsty."
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-angry",
+                        "text":  "I\u0027m angry!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-cold",
+                        "text":  "I\u0027m cold!"
+                    },
+                    {
                         "key":  "en-pre.feelx.im-happy",
                         "text":  "I\u0027m happy!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-hot",
+                        "text":  "I\u0027m hot!"
                     },
                     {
                         "key":  "en-pre.feelx.im-hungry",
@@ -1989,6 +2243,140 @@
                     {
                         "key":  "en-pre.feelx.im-sleepy",
                         "text":  "I\u0027m sleepy!"
+                    },
+                    {
+                        "key":  "en-pre.feelx.im-thirsty",
+                        "text":  "I\u0027m thirsty!"
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-a",
+                        "text":  "Find the letter A.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈeɪ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-b",
+                        "text":  "Find the letter B.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ bˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-c",
+                        "text":  "Find the letter C.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ sˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-d",
+                        "text":  "Find the letter D.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ dˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-e",
+                        "text":  "Find the letter E.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-f",
+                        "text":  "Find the letter F.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛf."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-g",
+                        "text":  "Find the letter G.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ dʒˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-h",
+                        "text":  "Find the letter H.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈeɪtʃ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-i",
+                        "text":  "Find the letter I.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈaɪ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-j",
+                        "text":  "Find the letter J.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ dʒˈeɪ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-k",
+                        "text":  "Find the letter K.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ kˈeɪ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-l",
+                        "text":  "Find the letter L.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛl."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-m",
+                        "text":  "Find the letter M.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛm."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-n",
+                        "text":  "Find the letter N.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛn."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-o",
+                        "text":  "Find the letter O.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈoʊ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-p",
+                        "text":  "Find the letter P.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ pˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-q",
+                        "text":  "Find the letter Q.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ kjˈuː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-r",
+                        "text":  "Find the letter R.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɑːɹ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-s",
+                        "text":  "Find the letter S.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛs."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-t",
+                        "text":  "Find the letter T.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ tˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-u",
+                        "text":  "Find the letter U.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ jˈuː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-v",
+                        "text":  "Find the letter V.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ vˈiː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-w",
+                        "text":  "Find the letter W.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ dˈʌbəljˌuː."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-x",
+                        "text":  "Find the letter X.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ ˈɛks."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-y",
+                        "text":  "Find the letter Y.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ wˈaɪ."
+                    },
+                    {
+                        "key":  "en-pre.find.find-the-letter-z",
+                        "text":  "Find the letter Z.",
+                        "phonemes":  "fˈaɪnd ðə lˈɛɾɚ zˈiː."
                     },
                     {
                         "key":  "en-pre.hello.bye-bye",
@@ -2015,12 +2403,28 @@
                         "text":  "Good night, dog!"
                     },
                     {
+                        "key":  "en-pre.hello.happy-birthday",
+                        "text":  "Happy birthday!"
+                    },
+                    {
+                        "key":  "en-pre.hello.happy-birthday-rabbit",
+                        "text":  "Happy birthday, rabbit!"
+                    },
+                    {
                         "key":  "en-pre.hello.hello",
                         "text":  "Hello!"
                     },
                     {
                         "key":  "en-pre.hello.hello-rabbit",
                         "text":  "Hello, rabbit!"
+                    },
+                    {
+                        "key":  "en-pre.hello.im-sorry",
+                        "text":  "I\u0027m sorry."
+                    },
+                    {
+                        "key":  "en-pre.hello.im-sorry-bear",
+                        "text":  "I\u0027m sorry, bear."
                     },
                     {
                         "key":  "en-pre.hello.thank-you",
@@ -2187,20 +2591,32 @@
                         "text":  "Let\u0027s touch our ears."
                     },
                     {
-                        "key":  "en-pre.lets.lets-touch-our-head",
-                        "text":  "Let\u0027s touch our head."
+                        "key":  "en-pre.lets.lets-touch-our-heads",
+                        "text":  "Let\u0027s touch our heads."
                     },
                     {
-                        "key":  "en-pre.lets.lets-touch-our-mouth",
-                        "text":  "Let\u0027s touch our mouth."
+                        "key":  "en-pre.lets.lets-touch-our-knees",
+                        "text":  "Let\u0027s touch our knees."
                     },
                     {
-                        "key":  "en-pre.lets.lets-touch-our-nose",
-                        "text":  "Let\u0027s touch our nose."
+                        "key":  "en-pre.lets.lets-touch-our-mouths",
+                        "text":  "Let\u0027s touch our mouths."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-noses",
+                        "text":  "Let\u0027s touch our noses."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-shoulders",
+                        "text":  "Let\u0027s touch our shoulders."
                     },
                     {
                         "key":  "en-pre.lets.lets-touch-our-toes",
                         "text":  "Let\u0027s touch our toes."
+                    },
+                    {
+                        "key":  "en-pre.lets.lets-touch-our-tummies",
+                        "text":  "Let\u0027s touch our tummies."
                     },
                     {
                         "key":  "en-pre.lets.lets-turn-around",
@@ -2687,6 +3103,54 @@
                         "text":  "Two."
                     },
                     {
+                        "key":  "en-pre.pos.in-the-bed",
+                        "text":  "In the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.on-the-bed",
+                        "text":  "On the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-cat-is-in-the-bed",
+                        "text":  "The cat is in the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-cat-is-on-the-bed",
+                        "text":  "The cat is on the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-cat-is-under-the-bed",
+                        "text":  "The cat is under the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-dog-is-in-the-bed",
+                        "text":  "The dog is in the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-dog-is-on-the-bed",
+                        "text":  "The dog is on the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-dog-is-under-the-bed",
+                        "text":  "The dog is under the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-rabbit-is-in-the-bed",
+                        "text":  "The rabbit is in the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-rabbit-is-on-the-bed",
+                        "text":  "The rabbit is on the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.the-rabbit-is-under-the-bed",
+                        "text":  "The rabbit is under the bed."
+                    },
+                    {
+                        "key":  "en-pre.pos.under-the-bed",
+                        "text":  "Under the bed."
+                    },
+                    {
                         "key":  "en-pre.reply.here-you-are",
                         "text":  "Here you are."
                     },
@@ -2983,6 +3447,10 @@
                         "text":  "Touch your head."
                     },
                     {
+                        "key":  "en-pre.touch.touch-your-knees",
+                        "text":  "Touch your knees."
+                    },
+                    {
                         "key":  "en-pre.touch.touch-your-mouth",
                         "text":  "Touch your mouth."
                     },
@@ -2991,8 +3459,16 @@
                         "text":  "Touch your nose."
                     },
                     {
+                        "key":  "en-pre.touch.touch-your-shoulders",
+                        "text":  "Touch your shoulders."
+                    },
+                    {
                         "key":  "en-pre.touch.touch-your-toes",
                         "text":  "Touch your toes."
+                    },
+                    {
+                        "key":  "en-pre.touch.touch-your-tummy",
+                        "text":  "Touch your tummy."
                     },
                     {
                         "key":  "en-pre.where.where-are-the-ears",

@@ -3834,6 +3834,22 @@
     "engine": "choice"
   },
   {
+    "parentNote": "英語の合図を聞いて、いっしょに体を動かしてみてください。大人がまねして見せると、子どもも動きやすくなります。",
+    "id": "p23.en.move",
+    "pack": "en-pre",
+    "title": "うごいて みよう",
+    "stage": "p23",
+    "subject": "en",
+    "domain": "en",
+    "icon": "enpre-act-jump",
+    "prereq": [
+      "p23.en.words"
+    ],
+    "priority": "P2",
+    "status": "partial",
+    "engine": "listen"
+  },
+  {
     "parentNote": "英語を聞いて絵を選ぶ遊びです。お子さんが絵を指さしたら、いっしょに英語で言ってみてください（正しく言えたかは気にしなくて大丈夫です）。",
     "id": "p23.en.words",
     "pack": "en-pre",
@@ -4083,6 +4099,22 @@
     "icon": "p5-book",
     "prereq": [],
     "priority": "P1",
+    "status": "partial",
+    "engine": "listen"
+  },
+  {
+    "parentNote": "『in（なか）』『on（うえ）』『under（した）』を聞き分ける遊びです。おもちゃを箱やいすの上・下に置いて、英語で言い合ってみてください。",
+    "id": "p4.en.where",
+    "pack": "en-pre",
+    "title": "かくれんぼ",
+    "stage": "p4",
+    "subject": "en",
+    "domain": "en",
+    "icon": "enpre-where-cat-under",
+    "prereq": [
+      "p4.en.words"
+    ],
+    "priority": "P2",
     "status": "partial",
     "engine": "listen"
   },
@@ -4420,6 +4452,37 @@
     "engine": "legacy"
   },
   {
+    "hiddenByDefault": true,
+    "parentNote": "英語の大文字と、その名前（エー、ビー…）を聞いて選ぶ遊びです。小学3年の英語で、文字の名前を聞いて分かることを学びます。その前の親しみとして、興味があるときだけ開いてください。文字の音（フォニックス）や書く練習はしません。",
+    "id": "p5.en.abc",
+    "pack": "en-pre",
+    "title": "えいごの もじ",
+    "stage": "p5",
+    "subject": "en",
+    "domain": "en",
+    "icon": "enpre-blocks",
+    "prereq": [],
+    "priority": "P2",
+    "status": "partial",
+    "engine": "listen"
+  },
+  {
+    "parentNote": "英語の言葉の『はじめの音』をくらべる遊びです。『bear（くま）』と『car（くるま）』のように、日本語では似ていても英語ではちがう音で始まることがあります。文字は使いません。",
+    "id": "p5.en.first-sound",
+    "pack": "en-pre",
+    "title": "おなじ おと",
+    "stage": "p5",
+    "subject": "en",
+    "domain": "en",
+    "icon": "ball",
+    "prereq": [
+      "p4.en.words"
+    ],
+    "priority": "P2",
+    "status": "partial",
+    "engine": "listen"
+  },
+  {
     "parentNote": "『Three apples（りんご3こ）』のように、数と物を組み合わせた言い方を聞く遊びです。",
     "id": "p5.en.phrases",
     "pack": "en-pre",
@@ -4430,6 +4493,22 @@
     "icon": "apple",
     "prereq": [],
     "priority": "P1",
+    "status": "partial",
+    "engine": "listen"
+  },
+  {
+    "parentNote": "6ページの短いお話です。同じお話を何度も聞くうちに、言葉や順番を覚えていきます。動物の鳴き声が日本語とちがうことなど、気づいたことを話してみてください。",
+    "id": "p5.en.picture-book",
+    "pack": "en-pre",
+    "title": "ながい えいごの えほん",
+    "stage": "p5",
+    "subject": "en",
+    "domain": "en",
+    "icon": "p5-book",
+    "prereq": [
+      "p4.en.picture-book"
+    ],
+    "priority": "P2",
     "status": "partial",
     "engine": "listen"
   },

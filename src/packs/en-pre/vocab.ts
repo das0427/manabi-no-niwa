@@ -251,3 +251,144 @@ export function colorPhrase(n: number, c: ColorDef): string {
   return `${w[0]!.toUpperCase()}${w.slice(1)} ${c.id} ${n === 1 ? 'ball' : 'balls'}.`;
 }
 export const colorPhraseSound = (n: number, c: ColorDef): EnSound => en('np', colorPhrase(n, c));
+
+// ---- うごき・からだを さわる（p4.en.move・p23.en.move。設計書 6.4・6.5） ----
+
+/** 合図で動かす1つ（move の選択肢の1枚） */
+export interface Move {
+  id: string;
+  kind: 'whole' | 'touch';
+  ja: string;
+  illust: string;
+  /** 合図（cmd / touch の台本） */
+  cmd: EnSound;
+  /** 別例（Let's 〜!） */
+  lets: EnSound;
+  /** 解説（日本語。英字を書かない） */
+  explain: string;
+  /** 似た動き（similar-move。からだ全体だけ） */
+  near?: string;
+}
+
+/** からだ全体の動き 8（似た動きの組: jump↔stomp、clap↔wave、stand↔sit） */
+export const WHOLE: Move[] = [
+  {
+    id: 'jump',
+    ja: 'ジャンプ',
+    desc: '『ジャンプ』は ぴょんと とぶ',
+    cmd: 'Jump!',
+    lets: "Let's jump!",
+    near: 'stomp',
+  },
+  {
+    id: 'clap',
+    ja: 'はくしゅ',
+    desc: '『はくしゅ』は てを たたく',
+    cmd: 'Clap your hands!',
+    lets: "Let's clap!",
+    near: 'wave',
+  },
+  {
+    id: 'stand',
+    ja: 'たつ',
+    desc: '『たつ』は すくっと たちあがる',
+    cmd: 'Stand up!',
+    lets: "Let's stand up!",
+    near: 'sit',
+  },
+  {
+    id: 'sit',
+    ja: 'すわる',
+    desc: '『すわる』は ぺたんと こしを おろす',
+    cmd: 'Sit down!',
+    lets: "Let's sit down!",
+    near: 'stand',
+  },
+  {
+    id: 'turn',
+    ja: 'まわる',
+    desc: '『まわる』は くるっと まわる',
+    cmd: 'Turn around!',
+    lets: "Let's turn around!",
+  },
+  {
+    id: 'stomp',
+    ja: 'あしぶみ',
+    desc: '『あしぶみ』は あしで どんどん ふむ',
+    cmd: 'Stomp your feet!',
+    lets: "Let's stomp!",
+    near: 'jump',
+  },
+  {
+    id: 'wave',
+    ja: 'てを ふる',
+    desc: '『てを ふる』は てを ふって あいさつ する',
+    cmd: 'Wave your hand!',
+    lets: "Let's wave!",
+    near: 'clap',
+  },
+  {
+    id: 'handsup',
+    ja: 'ばんざい',
+    desc: '『ばんざい』は てを うえに あげる',
+    cmd: 'Hands up!',
+    lets: "Let's put our hands up!",
+  },
+].map((m): Move => ({
+  id: m.id,
+  kind: 'whole',
+  ja: m.ja,
+  illust: `enpre-act-${m.id}`,
+  cmd: en('cmd', m.cmd),
+  lets: en('lets', m.lets),
+  explain: `${m.desc} ことだよ。いっしょに やって みよう！`,
+  ...(m.near ? { near: m.near } : {}),
+}));
+
+/** さわる部分の表（words の BODY は変えない。tummy・knees・shoulders は words に入れない） */
+export interface TouchPart {
+  id: string;
+  ja: string;
+  illust: string;
+  /** 別例（Let's touch our 〜.）の英文。みんなで自分の部分をさわる言い方なので複数形（設計書 7.6-1） */
+  lets: string;
+}
+export const TOUCH_PARTS: TouchPart[] = [
+  { id: 'nose', ja: 'はな（かお）', illust: 'enpre-touch-nose', lets: "Let's touch our noses." },
+  { id: 'head', ja: 'あたま', illust: 'enpre-touch-head', lets: "Let's touch our heads." },
+  { id: 'ears', ja: 'みみ', illust: 'enpre-touch-ears', lets: "Let's touch our ears." },
+  { id: 'mouth', ja: 'くち', illust: 'enpre-touch-mouth', lets: "Let's touch our mouths." },
+  { id: 'toes', ja: 'あしの ゆび', illust: 'enpre-touch-toes', lets: "Let's touch our toes." },
+  { id: 'tummy', ja: 'おなか', illust: 'enpre-touch-tummy', lets: "Let's touch our tummies." },
+  { id: 'knees', ja: 'ひざ', illust: 'enpre-touch-knees', lets: "Let's touch our knees." },
+  {
+    id: 'shoulders',
+    ja: 'かた',
+    illust: 'enpre-touch-shoulders',
+    lets: "Let's touch our shoulders.",
+  },
+];
+
+/** 近い部分（body-near）の組。両向きで引く */
+export const NEAR_TOUCH_PAIRS: readonly (readonly [string, string])[] = [
+  ['nose', 'mouth'],
+  ['head', 'ears'],
+  ['toes', 'knees'],
+  ['head', 'shoulders'],
+];
+export const isNearTouch = (a: string, b: string): boolean =>
+  NEAR_TOUCH_PAIRS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+
+/** p23 の3歳段階で使うさわる部分 6（knees・shoulders は4歳から） */
+export const P23_TOUCH_IDS = ['nose', 'head', 'ears', 'mouth', 'tummy', 'toes'];
+
+/** さわる部分の Move（合図 `Touch your 〜.`） */
+export const TOUCH_MOVES: Move[] = TOUCH_PARTS.map((t): Move => ({
+  id: t.id,
+  kind: 'touch',
+  ja: t.ja,
+  illust: t.illust,
+  cmd: en('touch', `Touch your ${t.id}.`),
+  lets: en('lets', t.lets),
+  explain: `『${t.ja}』を さわる ことだよ。いっしょに やって みよう！`,
+}));

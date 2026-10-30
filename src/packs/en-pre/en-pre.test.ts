@@ -11,8 +11,20 @@ import { getIllust } from '../../illust/registry';
 import { soundsOf } from '../../engines/listen/listen';
 import pack from './index';
 import { PRONOUNCE } from './pronounce';
-import { ALL_WORDS, BODY, COLORS, COUNTABLES } from './vocab';
+import {
+  ALL_WORDS,
+  BODY,
+  COLORS,
+  COUNTABLES,
+  NEAR_TOUCH_PAIRS,
+  TOUCH_PARTS,
+  WORD_BY_ID,
+} from './vocab';
 import { BOOKS } from './picture-book';
+import { BOOKS5 } from './picture-book-p5';
+import { CLASH_PAIRS, FEELS, GREETS, PAIR_FEEL_PAIRS } from './hello';
+import { FAR_WORDS, FIRST_SOUND_TABLE, ODD_TABLE, START_OF } from './first-sound';
+import { LETTERS, WRONG_TABLE, SOUND_GROUPS, SHAPE_PAIRS } from './abc';
 import { englishScript } from './voice';
 
 /** 絵が あるか（registry の content の自動読み込みは変換キャッシュで新しいファイルが入らないことがあるので、直接も見る） */
@@ -47,6 +59,9 @@ const KATAKANA_OK = [
   ...COLORS.flatMap((c) => [c.ja, c.jaBall]),
   ...COUNTABLES.map((c) => c.ja),
   ...BOOKS.flatMap((b) => b.pages.map((p) => p.ja)),
+  ...BOOKS5.flatMap((b) => b.pages.map((p) => p.ja)),
+  // 物の名前（where の「ベッド」）
+  'ベッド',
   'ジャンプ',
   // 絵本の「ページ」（設計書 2.2 の問題文）
   'ページ',
@@ -120,12 +135,18 @@ describe('en-pre の教材検査（設計書 11.1）', () => {
         }
       });
 
-      it('7. 選択肢の数（p23: 段階0は2・段階1は3以下／p4: 3〜4（絵本の段階0は2）／p5: 4）', () => {
+      it('7. 選択肢の数（p23: 段階0は2・段階1は3以下／p4: 3〜4（絵本の段階0は2）／p5: 4（first-sound は 3、abc は段階0が 3））', () => {
         for (const it of listens(unit)) {
           const n = it.options.length;
           if (unit.stage === 'p23') {
             if (it.level === 0) expect(n, it.id).toBe(2);
             else expect(n, it.id).toBeLessThanOrEqual(3);
+          } else if (unit.id === 'p5.en.first-sound') {
+            // 音を比べる負担が大きいので3（5歳の上限4より少ない。設計書 13章 #10）
+            expect(n, it.id).toBe(3);
+          } else if (unit.id === 'p5.en.abc') {
+            // 文字の名前: 段階0は3択、段階1は形・音の似た字を混ぜて4択（設計書 5.13）
+            expect(n, it.id).toBe(it.level === 0 ? 3 : 4);
           } else if (unit.stage === 'p4') {
             if (unit.id === 'p4.en.picture-book' && it.level === 0) expect(n, it.id).toBe(2);
             else {
@@ -239,6 +260,9 @@ describe('en-pre の教材検査（設計書 11.1）', () => {
     for (const c of COLORS) if (c.start) group.set(c.text, c.start);
     group.set('Good morning!', 'g');
     group.set('Good night!', 'g');
+    // greet の I'm sorry. と feel の I'm 〜（段階2で同じ問題に出たとき）
+    group.set("I'm sorry.", 'im');
+    for (const f of FEELS) group.set(f.sound.text, 'im');
     let n = 0;
     for (const u of pack.units)
       for (const it of listens(u)) {
@@ -332,5 +356,295 @@ describe('en-pre の教材検査（設計書 11.1）', () => {
         }
       }
     expect(seen).toBeGreaterThan(0);
+  });
+  // ---- 版 0.2 で足す・改める検査（設計書 11.1-16〜25） ----
+  const unitOf = (id: string) => pack.units.find((x) => x.id === id)!;
+  const optIllust = (o: ChoiceOption): string =>
+    o.figure && o.figure.kind === 'illust' ? o.figure.id : '';
+  const keysOf = (u: UnitSpec) =>
+    new Set(englishScript({ packId: 'x', units: [u] }).entries.map((e) => e.key));
+  const rightOf = (it: ListenItem) => it.options.find((o) => o.correct)!;
+
+  it('18. 到達項目ごとの異なる問題の数', () => {
+    const want: Record<string, Record<string, number>> = {
+      'p4.en.move': { whole: 8, touch: 8 },
+      'p4.en.hello': { greet: 7, feel: 8 },
+      'p23.en.move': { move: 8, touch: 6 },
+      'p4.en.where': { pos: 9, 'who-pos': 9 },
+      'p5.en.picture-book': { heard: 20, order: 8 },
+      'p5.en.first-sound': { 'b-sound': 8, 'k-sound': 6, 'other-sound': 14 },
+      'p5.en.abc': { first: 9, middle: 9, last: 8 },
+    };
+    for (const [id, objs] of Object.entries(want)) {
+      const r = checkUnit(unitOf(id));
+      expect(r.errors, id).toEqual([]);
+      for (const [o, n] of Object.entries(objs)) {
+        const got = r.objectives.find((x) => x.id === o)!;
+        expect(got.distinct, `${id} ${o}`).toBe(n);
+        expect(got.alt, `${id} ${o}`).toBeGreaterThanOrEqual(3);
+      }
+      expect(r.c[0], id).toBe(r.c[1]);
+    }
+  });
+
+  it('p4.en.move: さわる部分は8・近い部分の誤りは NEAR_TOUCH_PAIRS の組だけ（両向き）・別例は複数形', () => {
+    const u = unitOf('p4.en.move');
+    const touch = listens(u).filter((i) => i.objective === 'touch');
+    expect(new Set(touch.map((i) => i.identity)).size).toBe(16); // 合図 8 + 別例 8
+    expect(TOUCH_PARTS.length).toBe(8);
+    const ofIllust = new Map(TOUCH_PARTS.map((t) => [t.illust, t.id]));
+    const near = new Set(NEAR_TOUCH_PAIRS.flatMap(([a, b]) => [`${a}/${b}`, `${b}/${a}`]));
+    let n = 0;
+    for (const it of listens(u)) {
+      const right = ofIllust.get(optIllust(rightOf(it)));
+      for (const o of it.options) {
+        if (o.correct) continue;
+        const x = ofIllust.get(optIllust(o));
+        if (right && x) {
+          // 近い部分の組なら body-near、そうでなければ other-move
+          expect(o.misconception, it.id).toBe(
+            near.has(`${right}/${x}`) ? 'body-near' : 'other-move',
+          );
+          if (o.misconception === 'body-near') n++;
+        } else expect(o.misconception, it.id).not.toBe('body-near');
+      }
+    }
+    expect(n).toBeGreaterThan(0);
+    // 近い部分があるときは、段階1の3択に先に入る
+    for (const it of touch.filter((i) => i.level === 1 && !i.alt)) {
+      const right = ofIllust.get(optIllust(rightOf(it)))!;
+      if (NEAR_TOUCH_PAIRS.some(([a, b]) => a === right || b === right))
+        expect(
+          it.options.some((o) => o.misconception === 'body-near'),
+          it.id,
+        ).toBe(true);
+    }
+    for (const it of touch.filter((i) => i.alt))
+      expect(soundsOf(it)[0]!.text, it.id).toMatch(/^Let's touch our [a-z]+s\.$/);
+  });
+
+  it('p23.en.move: 段階0は2択で似た動きを並べない／さわる誤りに全身の絵が無い／英語の音声は p4.en.move にもある', () => {
+    const u = unitOf('p23.en.move');
+    const wholeIds = new Set(
+      ['jump', 'clap', 'stand', 'sit', 'turn', 'stomp', 'wave', 'handsup'].map(
+        (x) => `enpre-act-${x}`,
+      ),
+    );
+    const similar = new Set([
+      'jump/stomp',
+      'stomp/jump',
+      'clap/wave',
+      'wave/clap',
+      'stand/sit',
+      'sit/stand',
+    ]);
+    for (const it of listens(u)) {
+      if (it.level === 0) {
+        expect(it.options.length, it.id).toBe(2);
+        const a = optIllust(rightOf(it)).replace('enpre-act-', '');
+        const b = optIllust(it.options.find((o) => !o.correct)!).replace('enpre-act-', '');
+        expect(similar.has(`${a}/${b}`), it.id).toBe(false);
+      }
+      if (it.objective === 'touch')
+        for (const o of it.options) expect(wholeIds.has(optIllust(o)), it.id).toBe(false);
+    }
+    expect(
+      new Set(
+        listens(u)
+          .filter((i) => i.objective === 'touch')
+          .map((i) => i.identity),
+      ).size,
+    ).toBe(12);
+    const p4keys = keysOf(unitOf('p4.en.move'));
+    for (const k of keysOf(u)) expect(p4keys.has(k), k).toBe(true);
+  });
+
+  it('p4.en.hello: 同じ問題に並べない組・pair-feel・greet 7 と feel 8', () => {
+    const u = unitOf('p4.en.hello');
+    expect(GREETS.length).toBe(7);
+    expect(FEELS.length).toBe(8);
+    const all = [...GREETS, ...FEELS];
+    const idOf = new Map(all.map((p) => [p.sound.text, p.id]));
+    const pairOk = (a: string, b: string, pairs: readonly (readonly [string, string])[]) =>
+      pairs.some(([x, y]) => (a === x && b === y) || (a === y && b === x));
+    for (const it of listens(u)) {
+      const ids = it.options.map((o) => idOf.get(o.sound!.text)!);
+      for (const a of ids)
+        for (const b of ids) expect(pairOk(a, b, CLASH_PAIRS), `${it.id} ${a}/${b}`).toBe(false);
+      const right = idOf.get(rightOf(it).sound!.text)!;
+      for (const o of it.options) {
+        const x = idOf.get(o.sound!.text)!;
+        // pair-feel は hungry・thirsty と hot・cold の組だけ（正解との組）
+        if (o.misconception === 'pair-feel')
+          expect(pairOk(right, x, PAIR_FEEL_PAIRS), it.id).toBe(true);
+        else if (!o.correct) expect(pairOk(right, x, PAIR_FEEL_PAIRS), it.id).toBe(false);
+      }
+      // 段階1（きもち）では、よく にた ようすが先に入る
+      if (it.level === 1 && !it.alt && ['hungry', 'thirsty', 'hot', 'cold'].includes(right))
+        expect(
+          it.options.some((o) => o.misconception === 'pair-feel'),
+          it.id,
+        ).toBe(true);
+    }
+  });
+
+  it('p4.en.where: 段階0は同じ動物・段階1の誤りは other-animal／both／(in-on か other-place) を1つずつ・9枚の絵がある', () => {
+    const u = unitOf('p4.en.where');
+    const animalOf = (o: ChoiceOption) => /^enpre-where-(\w+)-\w+$/.exec(optIllust(o))![1]!;
+    for (const it of listens(u)) {
+      if (it.level === 0) {
+        expect(new Set(it.options.map(animalOf)).size, it.id).toBe(1);
+        expect(new Set(it.options.map(optIllust)).size, it.id).toBe(3);
+      } else {
+        const m = it.options.filter((o) => !o.correct).map((o) => o.misconception);
+        expect(m.filter((x) => x === 'other-animal').length, it.id).toBe(1);
+        expect(m.filter((x) => x === 'both').length, it.id).toBe(1);
+        expect(m.filter((x) => x === 'in-on' || x === 'other-place').length, it.id).toBe(1);
+        expect(it.options.length).toBe(4);
+      }
+    }
+    for (const a of ['cat', 'dog', 'rabbit'])
+      for (const p of ['in', 'on', 'under'])
+        expect(`enpre-where-${a}-${p}` in enPreIllust).toBe(true);
+    // 別例は p4.en.words の where の音声から始まる
+    for (const it of listens(u).filter((i) => i.alt))
+      expect(soundsOf(it)[0]!.key, it.id).toMatch(/^en\/en-pre\.where\./);
+  });
+
+  it('p5.en.picture-book: 本の id が p4 と重ならない・同じ絵を2回使わない・図が無い・段階1の誤りに6ページ目', () => {
+    const p4ids = new Set(BOOKS.map((b) => b.id));
+    for (const b of BOOKS5) {
+      expect(p4ids.has(b.id), b.id).toBe(false);
+      expect(b.pages.length).toBe(6);
+      const figs = b.pages.map((p) => JSON.stringify(p.figure));
+      expect(new Set(figs).size, b.id).toBe(6);
+      for (const p of b.pages) expect(p.text).toMatch(/^[A-Z].*[.!?]$/);
+    }
+    const u = unitOf('p5.en.picture-book');
+    for (const it of listens(u)) {
+      expect(it.figure, it.id).toBeUndefined();
+      expect(it.options.length).toBe(4);
+      if (it.level === 1) {
+        const last = it.options.find((o) => o.misconception === 'story-end');
+        expect(last?.sound?.key, it.id).toMatch(/-6$/);
+      }
+    }
+  });
+
+  it('p5.en.first-sound: 正解は同じ到達項目の語・遠い語はちがう音・わなは表のとおり・音声の並び', () => {
+    const u = unitOf('p5.en.first-sound');
+    const wordOfIllust = new Map(ALL_WORDS.map((w) => [w.illust, w.id]));
+    const idOf = (o: ChoiceOption) => wordOfIllust.get(optIllust(o))!;
+    const objectiveOf = (t: string) =>
+      listens(u).find((i) => i.identity === `same:${t}`)!.objective;
+    const keys = (xs: { key?: string }[]) => xs.map((x) => x.key);
+    for (const it of listens(u)) {
+      if (it.identity.startsWith('same:')) {
+        const t = it.identity.slice(5);
+        const row = FIRST_SOUND_TABLE[t]!;
+        expect(idOf(rightOf(it)), it.id).toBe(row.right);
+        expect(START_OF[row.right], it.id).toBe(START_OF[t]);
+        expect(objectiveOf(row.right), it.id).toBe(objectiveOf(t));
+        for (const o of it.options) {
+          if (o.misconception === 'other-sound') {
+            expect(FAR_WORDS.includes(idOf(o)), it.id).toBe(true);
+            expect(START_OF[idOf(o)], it.id).not.toBe(START_OF[t]);
+          } else if (!o.correct) {
+            expect(idOf(o), it.id).toBe(row.trap);
+            expect(o.misconception, it.id).toBe(row.mis);
+          }
+        }
+        const far = it.options.filter((o) => o.misconception === 'other-sound').length;
+        expect(far, it.id).toBe(it.level === 0 ? 2 : 1);
+        if (it.level === 0) {
+          const a = soundsOf(it);
+          expect(a[0]!.key, it.id).toBe(`en/en-pre.word.${t}`);
+          expect(keys(a.slice(1)), it.id).toEqual(keys(it.options.map((o) => o.sound!)));
+        }
+      } else {
+        // ひとつ ちがう: 音声は選択肢の並び順
+        expect(keys(soundsOf(it)), it.id).toEqual(keys(it.options.map((o) => o.sound!)));
+        const row = ODD_TABLE.find(
+          (r) => it.identity === `odd:${r.pair[0]}-${r.pair[1]}-${r.odd}`,
+        )!;
+        expect(idOf(rightOf(it)), it.id).toBe(row.odd);
+        expect(START_OF[row.odd], it.id).not.toBe(START_OF[row.pair[0]]);
+        expect(START_OF[row.pair[0]], it.id).toBe(START_OF[row.pair[1]]);
+      }
+    }
+    expect(ODD_TABLE.length).toBe(12);
+    expect(Object.keys(FIRST_SOUND_TABLE).length).toBe(28);
+    expect(WORD_BY_ID.bear!.ja).toBe('くま');
+    const p4keys = keysOf(unitOf('p4.en.words'));
+    for (const k of keysOf(u)) expect(p4keys.has(k), k).toBe(true);
+  });
+
+  it('p5.en.abc: 隠れている・知識・選択肢に label が無く大文字1字・遠い字・段階1の誤りは表のとおり', () => {
+    const u = unitOf('p5.en.abc');
+    expect(u.hiddenByDefault).toBe(true);
+    expect(u.kind).toBe('knowledge');
+    for (const x of pack.units)
+      if (x.id !== u.id) {
+        expect(x.hiddenByDefault, x.id).toBeFalsy();
+        expect(x.kind, x.id).toBe('play');
+      }
+    const letterOf = (o: ChoiceOption) => {
+      expect(o.label).toBeUndefined();
+      expect(o.figure?.kind).toBe('text');
+      const t = (o.figure as { text: string }).text;
+      expect(t).toMatch(/^[A-Z]$/);
+      return t;
+    };
+    const soundGroup = (L: string) => SOUND_GROUPS.findIndex((g) => g.includes(L));
+    const shape = (a: string, b: string) =>
+      SHAPE_PAIRS.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+    for (const it of listens(u)) {
+      const L = letterOf(rightOf(it));
+      expect(it.identity.slice(-1).toUpperCase(), it.id).toBe(L);
+      expect((it.explainFigure as { text: string }).text, it.id).toBe(L);
+      if (it.level === 0) {
+        expect(it.options.length).toBe(3);
+        for (const o of it.options.filter((x) => !x.correct)) {
+          const x = letterOf(o);
+          expect(soundGroup(x), it.id).not.toBe(soundGroup(L));
+          expect(shape(L, x), it.id).toBe(false);
+        }
+      } else {
+        expect(it.options.length).toBe(4);
+        // 選択肢は混ぜてあるので、並びは見ない
+        const sorted = (xs: unknown[][]) => xs.map((x) => x.join(':')).sort();
+        expect(
+          sorted(it.options.filter((o) => !o.correct).map((o) => [letterOf(o), o.misconception])),
+          it.id,
+        ).toEqual(sorted(WRONG_TABLE[L]!));
+      }
+    }
+    expect(LETTERS.length).toBe(26);
+    expect(Object.keys(WRONG_TABLE).length).toBe(26);
+    // 画面に英字の図を出すのは abc だけ
+    for (const x of pack.units)
+      if (x.id !== u.id) {
+        const walk = (v: unknown): void => {
+          if (Array.isArray(v)) v.forEach(walk);
+          else if (v && typeof v === 'object') {
+            const o = v as Record<string, unknown>;
+            if (o.kind === 'text') expect(String(o.text), x.id).not.toMatch(/[A-Za-z]/);
+            Object.values(o).forEach(walk);
+          }
+        };
+        walk(x.intro);
+        walk(sampleItems(x, 1));
+      }
+    // PRONOUNCE: abc 26・find 26（音素）。key が台本にある
+    const script = new Set(englishScript(pack).entries.map((e) => e.key));
+    for (const L of LETTERS) {
+      const l = L.toLowerCase();
+      expect(PRONOUNCE[`en-pre.abc.${l}`]?.phonemes, L).toBeTruthy();
+      expect(PRONOUNCE[`en-pre.find.find-the-letter-${l}`]?.phonemes, L).toMatch(
+        /^fˈaɪnd ðə lˈɛɾɚ .+\.$/,
+      );
+      expect(script.has(`en-pre.abc.${l}`), L).toBe(true);
+      expect(script.has(`en-pre.find.find-the-letter-${l}`), L).toBe(true);
+    }
   });
 });

@@ -204,13 +204,25 @@ describe('soc-g34 P2 単元（safety・tradition）', () => {
     expect(answersOf(byId(safety, 'call-a2'))).toEqual(['119', '110']);
   });
 
-  it('safety: 順序の問題に direct-call の誤りの並びがある', () => {
+  it('safety: 順序の問題に「聞く前に出動をつたえる」誤りの並びがある', () => {
     for (const id of ['call-o1', 'call-o2']) {
       const it = byId(safety, id);
       expect(it.engine).toBe('order');
       if (it.engine === 'order')
-        expect(it.wrongOrders?.map((w) => w.misconception)).toEqual(['direct-call']);
+        expect(it.wrongOrders?.map((w) => w.misconception)).toEqual(['skip-ask']);
     }
+  });
+
+  it('safety: 通信指令室が答えの問題のヒントに「指令」を出さない', () => {
+    for (const id of ['call-c3', 'call-a4'])
+      for (const h of byId(safety, id).hints) expect(plainText(h), id).not.toMatch(/指令/);
+  });
+
+  it('safety・tradition: 誤りの選択肢の誤概念が場面に合う（今年から → 読みちがえ）', () => {
+    const r7 = byId(tradition, 'bun-r7');
+    if (r7.engine !== 'reading') throw new Error('形が違う');
+    const o = r7.options.find((x) => x.label && plainText(x.label) === '今年から');
+    expect(o?.misconception).toBe('misread');
   });
 
   it('tradition: 本文は6種類、文種は2種類以上', () => {

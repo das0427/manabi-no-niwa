@@ -39,7 +39,7 @@ function attempt(over: Partial<AttemptRecord>): Omit<AttemptRecord, 'id'> {
 }
 
 /** v1.0.0 と同じ形のデータベース（スキーマ1）に、1.0 で遊んだ記録を入れる */
-async function makeV1(): Promise<void> {
+async function makeV1(extra: Omit<AttemptRecord, 'id'>[] = []): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 1);
     req.onupgradeneeded = () => {
@@ -72,6 +72,7 @@ async function makeV1(): Promise<void> {
           at: T0 + 2000,
         }),
       );
+      for (const a of extra) at.put(a);
       tx.objectStore('rounds').put({
         profileId: 'p1',
         modeId: 'hiragana',
@@ -88,13 +89,13 @@ async function makeV1(): Promise<void> {
   });
 }
 
-async function showRecords() {
+async function showRecords(timeout = 1000) {
   render(
     <AppStateProvider>
       <ParentApp tab="records" />
     </AppStateProvider>,
   );
-  await waitFor(() => expect(screen.getByTestId('tab-records')).toBeTruthy());
+  await waitFor(() => expect(screen.getByTestId('tab-records')).toBeTruthy(), { timeout });
 }
 
 beforeEach(async () => {
@@ -121,7 +122,10 @@ describe('まえの きろく（1.0 の記録）', () => {
       expect.stringContaining('おかいものごっこ'),
       expect.stringContaining('ひらがな'),
     ]);
-    expect(rows[1]!.textContent).toContain('2');
+    // 列: あそび・取り組んだ数・はじめて・さいごに
+    const cells = (tr: HTMLElement) => [...tr.querySelectorAll('td')].map((td) => td.textContent);
+    expect(cells(rows[0]!)).toEqual(['おかいものごっこ', '1', '2026/4/1', '2026/4/1']);
+    expect(cells(rows[1]!)).toEqual(['ひらがな', '2', '2026/4/1', '2026/4/1']);
     // 1問ごとの記録（正誤・ヒント数つき）
     const table = within(sec).getByTestId('legacy-table');
     expect(table.textContent).toContain('りんご×2');
@@ -134,6 +138,31 @@ describe('まえの きろく（1.0 の記録）', () => {
     expect(await db.listAttempts('p1')).toEqual(before);
     expect(await db.listUnitProgress('p1')).toEqual([]);
   });
+
+  it('新しい記録が 2000 件を超えても、1.0 の記録のまとめは全件から作る', async () => {
+    const later = T0 + 30 * 86_400_000;
+    const units = Array.from({ length: 2100 }, (_, i) =>
+      attempt({
+        modeId: 'unit',
+        unitId: 'p4.think.sort',
+        variantId: '',
+        skillId: null,
+        itemKey: `u${i}`,
+        at: later + i,
+      }),
+    );
+    await makeV1(units);
+    await db.openStorage();
+    // 2000 件を超える記録の読み込みは fake-indexeddb では時間がかかる
+    await showRecords(15_000);
+    const sec = await screen.findByTestId('legacy-records');
+    const rows = within(sec).getAllByTestId('legacy-summary-row');
+    expect(rows).toHaveLength(2);
+    expect(rows[1]!.querySelectorAll('td')[1]!.textContent).toBe('2');
+    // 1問ごとの表（最近の記録）は新しい単元の記録で埋まっていても、まえの きろくの表には旧モードだけ
+    expect(within(sec).getByTestId('legacy-table').textContent).toContain('りんご×2');
+    expect(within(sec).getByTestId('legacy-table').textContent).not.toContain('u2099');
+  }, 30_000);
 
   it('1.0 の記録が無いときは「ありません」', async () => {
     await db.openStorage();
@@ -172,7 +201,8 @@ describe('2歳段階の記録の見せ方（review-1 #8）', () => {
     const table = await screen.findByTestId('play-table');
     const rows = within(table).getAllByTestId('play-table-row');
     expect(rows).toHaveLength(2);
-    expect(rows.some((r) => r.textContent?.includes('3'))).toBe(true);
+    const counts = rows.map((r) => r.querySelectorAll('td')[1]!.textContent);
+    expect(counts.sort()).toEqual(['1', '3']);
     expect(screen.getByTestId('play-recent-table').textContent).toContain('いぬ');
 
     // 正誤・ヒント数・むずかしそう・とまどい・おすすめの表は出さない

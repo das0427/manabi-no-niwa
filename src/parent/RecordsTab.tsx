@@ -115,7 +115,9 @@ function LegacyRecords({
     <Section title="まえの きろく（1.0 からの 9つの あそび）" id="legacy-records">
       <Note>
         1.0 からある9つのあそび（おかいものごっこ・ひらがな・さんすう
-        など）の記録です。1.0で遊んだ記録は消さず、変換もしていません。ここでは見るだけで、変更はできません。新しい単元の進み具合には入れていません。いまのホームにある同じあそびの札で遊んだ記録も、ここに入ります。
+        など）の記録です。1.0で遊んだ記録は消さず、変換もしていません。ここでは見るだけで、変更はできません。新しい単元の進み具合には入れていません。いまのホームにある同じあそびの札で遊んだ記録も、ここに入ります。記録は1人あたり新しいものから
+        {db.MAX_ATTEMPTS_PER_PROFILE}{' '}
+        件まで残るため、それより古い記録は「はじめて」に出ないことがあります。
       </Note>
       {old.length === 0 && keptProgress === 0 ? (
         <p className="p-muted" data-testid="legacy-empty">
@@ -176,7 +178,7 @@ function PlayOnlyRecords({ attempts }: { attempts: AttemptRecord[] }) {
     <>
       <Section title="あそんだ内容" id="play-summary">
         <Note>
-          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。段階は自動では変わりません（「せってい」で決めます）。
+          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。2歳の段階と3歳の段階は「プロフィール」で切り替えます（3歳の段階にすると、正誤などの表に戻ります）。
         </Note>
         {played.length === 0 ? (
           <p className="p-muted" data-testid="play-empty">
@@ -220,18 +222,20 @@ export function RecordsTab() {
   const pid = profile?.id ?? '';
   const load = useCallback(async () => {
     const todayStart = startOfToday();
-    const [attempts, progress, rounds] = await Promise.all([
-      db.listAttempts(pid, { limit: 2000 }),
+    // 記録は1人あたり最大 MAX_ATTEMPTS_PER_PROFILE 件。まとめ（あそんだ内容・まえの きろく）は全件から作り、
+    // 1問ごとの表と「むずかしそう」はこれまでどおり新しい 2000 件から作る
+    const [all, progress, rounds] = await Promise.all([
+      db.listAttempts(pid),
       db.listProgress(pid),
       db.listRounds(pid, { since: todayStart - 30 * DAY }),
     ]);
-    return { attempts, progress, rounds, todayStart };
+    return { all, attempts: all.slice(0, 2000), progress, rounds, todayStart };
   }, [pid]);
   const { data } = useLoad(load);
   if (!profile || !settings) return null;
   if (!data) return <p>読み込み中…</p>;
 
-  const { attempts, progress, rounds, todayStart } = data;
+  const { all, attempts, progress, rounds, todayStart } = data;
   // 2歳段階（進度の判定をしない区分）は「あそんだ内容」だけ
   const playOnly = !audienceUx(profileAudience(profile), profile.toddlerStage ?? 3).recordMastery;
   const byskill = new Map<string, SkillProgress>(progress.map((p) => [p.skillId, p]));
@@ -305,8 +309,8 @@ export function RecordsTab() {
 
       {playOnly ? (
         <>
-          <PlayOnlyRecords attempts={attempts} />
-          <LegacyRecords attempts={attempts} progress={progress} playOnly />
+          <PlayOnlyRecords attempts={all} />
+          <LegacyRecords attempts={all} progress={progress} playOnly />
         </>
       ) : (
         <>
@@ -497,7 +501,7 @@ export function RecordsTab() {
             )}
           </Section>
 
-          <LegacyRecords attempts={attempts} progress={progress} playOnly={false} />
+          <LegacyRecords attempts={all} progress={progress} playOnly={false} />
         </>
       )}
     </div>

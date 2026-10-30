@@ -260,5 +260,14 @@ describe('life-g12 の教材検査（curriculum-matrix 1.8）', () => {
     if (letter.engine !== 'choice') throw new Error('man-alt-letter');
     expect(letter.options.length).toBe(3);
     expect(letter.options.find((o) => o.correct)?.label).toBe('かいた ひと');
+    // レビューで直した文: 「子と」を かなで「こと」と書かない・問題の順に よる「こんどは」を使わない
+    const publicTexts = itemsOf('g1.life.public').flatMap((it) => textsOf(it));
+    for (const t of publicTexts) expect(t).not.toMatch(/くる こと ぶつか|きまりの ひ|こんどは/);
+    // tell（小2）は 手紙・電話 を 漢字《よみ》で そろえる
+    const tellTexts = itemsOf('g2.life.tell').flatMap((it) => [
+      ...textsOf(it),
+      ...(it.engine === 'choice' ? it.options.map((o) => o.label ?? '') : []),
+    ]);
+    for (const t of tellTexts) expect(t.replace(/《[^》]*》/g, '')).not.toMatch(/てがみ|でんわ/);
   });
 });

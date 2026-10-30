@@ -556,12 +556,12 @@ const letter = def('life-letter', 'てがみ', () => (
 const phone = def('life-phone', 'でんわ', () => (
   <g>
     {/* ボタンの だい */}
-    <path d="M12 56 L88 56 L94 90 L6 90 Z" fill={P.cream} {...line} />
+    <path d="M14 50 L86 50 L94 90 L6 90 Z" fill={P.cream} {...line} />
     {Array.from({ length: 9 }, (_, i) => (
       <circle
         key={i}
         cx={34 + (i % 3) * 16}
-        cy={64 + Math.floor(i / 3) * 8.5}
+        cy={61 + Math.floor(i / 3) * 9}
         r="3.2"
         fill={P.gray}
         {...line}
@@ -577,7 +577,7 @@ const phone = def('life-phone', 'でんわ', () => (
     <rect x="6" y="32" width="22" height="14" rx="5" fill={P.blue} {...line} />
     <rect x="72" y="32" width="22" height="14" rx="5" fill={P.blue} {...line} />
     {/* コード */}
-    <path d="M16 46 C10 50 22 52 14 56 C8 60 20 60 14 64" fill="none" {...line} strokeWidth="3" />
+    <path d="M9 45 C3 48 13 51 6 54 C1 57 11 60 11 64" fill="none" {...line} strokeWidth="3" />
   </g>
 ));
 

@@ -7,6 +7,7 @@
  */
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ItemBase, RichText } from '../../curriculum/types';
+import { plainText } from '../../text/rich';
 import type { Judgement } from '../types';
 import {
   cardErrors,
@@ -134,6 +135,9 @@ export function rightOrder(item: MatchItem, lefts: number[], rights: number[]): 
   return order;
 }
 
+/** 左右を縦に並べる（eng-match--rows）文の長さの境（字） */
+const LONG_LABEL = 10;
+
 interface Geo {
   w: number;
   h: number;
@@ -173,6 +177,10 @@ function MatchView({
     return l === undefined ? null : l;
   };
   const complete = lefts.every((l) => links[l] !== null);
+  // どちらかの札に 10字を超える文があるときは、左右を縦に並べる2列の表の形にする（細長い札を作らない）
+  const rows = [...item.left, ...item.right].some(
+    (c) => c.label !== undefined && plainText(c.label).length > LONG_LABEL,
+  );
 
   const join = (l: number, r: number) => {
     // その右に別の左がむすんであれば外す（1つの右に1つの左）
@@ -228,10 +236,12 @@ function MatchView({
         for (const [k, node] of Object.entries(map)) {
           if (!node) continue;
           const b = node.getBoundingClientRect();
-          g[side][Number(k)] = [
-            b.left + b.width / 2 - base.left,
-            side === 'l' ? b.bottom - base.top : b.top - base.top,
-          ];
+          g[side][Number(k)] = rows
+            ? [(side === 'l' ? b.right : b.left) - base.left, b.top + b.height / 2 - base.top]
+            : [
+                b.left + b.width / 2 - base.left,
+                side === 'l' ? b.bottom - base.top : b.top - base.top,
+              ];
         }
       }
       setGeo((old) => (JSON.stringify(old) === JSON.stringify(g) ? old : g));
@@ -251,7 +261,14 @@ function MatchView({
   });
 
   return (
-    <div className={['tk-frame', 'eng-match', toddler ? 'tk--big' : ''].join(' ')}>
+    <div
+      className={[
+        'tk-frame',
+        'eng-match',
+        rows ? 'eng-match--rows' : '',
+        toddler ? 'tk--big' : '',
+      ].join(' ')}
+    >
       <div className="tk-frame__main eng-match__main" ref={wrap}>
         {geo ? (
           <svg

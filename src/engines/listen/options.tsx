@@ -9,6 +9,7 @@ import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import {
+  autoLayout,
   checkChoice,
   judgeChoice,
   visibleOptionIndices,
@@ -22,6 +23,8 @@ export interface OptionsPart {
   options: ChoiceOption[];
   multi?: boolean;
   layout?: 'row' | 'grid' | 'column';
+  /** 問題の図（並びの自動決定に使う） */
+  figure?: unknown;
 }
 
 /** judgeChoice・checkChoice が読むのは options と multi だけ */
@@ -55,6 +58,11 @@ interface Props {
   /** onPress の間、選択中の見た目にする選択肢の番号 */
   pressed?: number | null;
   className?: string;
+  /**
+   * 並びを中身で決める（autoLayout）。reading は false（右の細い列なので、指定の縦一列のまま。
+   * 2列にすると1行6〜7字で語の途中で折れる）
+   */
+  autoArrange?: boolean;
 }
 
 export function ChoiceOptions({
@@ -67,6 +75,7 @@ export function ChoiceOptions({
   onPress,
   pressed,
   className,
+  autoArrange = true,
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
@@ -91,9 +100,19 @@ export function ChoiceOptions({
     }
     setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
   };
+  const layout = !autoArrange
+    ? (part.layout ?? 'row')
+    : autoLayout(
+        shown.map((i) => ({
+          label: typeof part.options[i]!.label === 'string' ? part.options[i]!.label : undefined,
+          figure: part.options[i]!.figure,
+        })),
+        part.layout,
+        part.figure !== undefined,
+      );
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
-      <div className={`eng-opts__list eng-opts__list--${part.layout ?? 'row'}`}>
+      <div className={`eng-opts__list eng-opts__list--${layout}`}>
         {shown
           .map((i) => ({ o: part.options[i]!, i }))
           .map(({ o, i }) => (
@@ -104,7 +123,7 @@ export function ChoiceOptions({
               disabled={locked || revealed}
               onPress={() => press(i)}
               testId={`opt-${i}`}
-              className="eng-opts__opt"
+              className={`eng-opts__opt${o.figure ? '' : ' eng-opts__opt--text'}`}
             >
               {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
               {o.label !== undefined ? (

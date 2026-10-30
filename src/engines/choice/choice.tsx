@@ -32,6 +32,27 @@ export function visibleOptionIndices(
   return options.flatMap((_, i) => (keep.has(i) ? [i] : []));
 }
 
+/**
+ * 選択肢の並び（text-layout-fixes S3）。
+ * 文字だけの選択肢が4つ以上→2列のグリッド／問題に図がある・全部8字以下→横一列／
+ * column は「1つでも16字超かつ3つ以下」のときだけ。それ以外は指定（無ければ row）。
+ * 絵・図の選択肢が混じるときは指定を尊重する（寸法が文字だけの札と違うため）。
+ */
+export function autoLayout(
+  options: readonly { label?: string; figure?: unknown }[],
+  declared: 'row' | 'grid' | 'column' | undefined,
+  hasFigure: boolean,
+): 'row' | 'grid' | 'column' {
+  const textOnly = options.every((o) => o.figure === undefined && o.label !== undefined);
+  if (!textOnly) return declared ?? 'row';
+  if (declared === 'grid') return 'grid';
+  const lens = options.map((o) => [...plainText(o.label ?? '')].length);
+  if (options.length >= 4) return hasFigure && lens.every((n) => n <= 8) ? 'row' : 'grid';
+  if (hasFigure || lens.every((n) => n <= 8)) return 'row';
+  if (lens.some((n) => n > 16)) return 'column';
+  return declared === 'column' ? 'row' : (declared ?? 'row');
+}
+
 const labelsOf = (item: Pick<ChoiceItem, 'options'>) =>
   item.options.map((o) => (typeof o.label === 'string' ? o.label : undefined));
 
@@ -110,9 +131,17 @@ function ChoiceView({
     }
     setPicked((p) => (p.includes(i) ? p.filter((x) => x !== i) : [...p, i]));
   };
+  const layout = autoLayout(
+    shown.map((i) => ({
+      label: typeof item.options[i]!.label === 'string' ? item.options[i]!.label : undefined,
+      figure: item.options[i]!.figure,
+    })),
+    item.layout,
+    item.figure !== undefined,
+  );
   return (
     <div className="eng-choice">
-      <div className={`eng-choice__options eng-choice__options--${item.layout ?? 'row'}`}>
+      <div className={`eng-choice__options eng-choice__options--${layout}`}>
         {shown
           .map((i) => ({ o: item.options[i]!, i }))
           .map(({ o, i }, pos) => (
@@ -123,7 +152,7 @@ function ChoiceView({
               disabled={disabled || revealed}
               onPress={() => press(i)}
               testId={`opt-${i}`}
-              className="eng-choice__opt"
+              className={`eng-choice__opt${o.figure ? '' : ' eng-choice__opt--text'}`}
             >
               {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
               {o.label !== undefined ? (

@@ -20,9 +20,10 @@ const GalleryScreen = lazy(() =>
   import('./drawing/index').then((m) => ({ default: m.GalleryScreen })),
 );
 // 開発用（本番では読み込まれない: 経路が開発時だけ有効）
-const EngineGallery = lazy(() =>
-  import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })),
-);
+// （import.meta.env.DEV が false の本番ビルドでは import ごと消え、dist にも先読みにも入らない）
+const EngineGallery = import.meta.env.DEV
+  ? lazy(() => import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })))
+  : null;
 // 開発用: 単元の見本の1問（import.meta.env.DEV が false の本番ビルドでは import ごと消える）
 const UnitSampleView = import.meta.env.DEV
   ? lazy(() => import('./dev/UnitSampleView').then((m) => ({ default: m.UnitSampleView })))
@@ -83,7 +84,7 @@ function Routes() {
         variantId={route.variantId}
       />
     );
-  else if (route.name === 'dev-engines' && import.meta.env.DEV)
+  else if (route.name === 'dev-engines' && EngineGallery)
     screen = (
       <Suspense fallback={null}>
         <EngineGallery />

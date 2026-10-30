@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { displayOrder, visibleOptionIndices } from './choice';
+import { autoLayout, displayOrder, visibleOptionIndices } from './choice';
 
 describe('選択肢の並び', () => {
   const opts = (labels: string[]) => labels.map((label, i) => ({ label, correct: i === 0 }));
@@ -44,5 +44,33 @@ describe('選択肢を減らすとき正解を残す（コードレビュー #3�
   it('上限以内ならそのまま・元の順', () => {
     expect(visibleOptionIndices([{ correct: true }, {}, {}], 3)).toEqual([0, 1, 2]);
     expect(visibleOptionIndices([{}, { correct: true }, {}, {}], 2)).toEqual([0, 1]);
+  });
+});
+
+describe('autoLayout（選択肢の並び。text-layout-fixes S3）', () => {
+  const t = (n: number, len: number) =>
+    Array.from({ length: n }, (_, i) => ({ label: String(i).repeat(1).padEnd(len, 'あ') }));
+  it('文字だけの4つ以上は2列のグリッド（図があって全部8字以下なら横一列）', () => {
+    expect(autoLayout(t(4, 12), undefined, false)).toBe('grid');
+    expect(autoLayout(t(4, 12), 'column', false)).toBe('grid');
+    expect(autoLayout(t(4, 6), undefined, true)).toBe('row');
+  });
+  it('問題に図がある・全部8字以下は横一列', () => {
+    expect(autoLayout(t(3, 14), 'column', true)).toBe('row');
+    expect(autoLayout(t(3, 6), 'column', false)).toBe('row');
+  });
+  it('column は16字超かつ3つ以下のときだけ', () => {
+    expect(autoLayout(t(3, 20), undefined, false)).toBe('column');
+    expect(autoLayout(t(3, 12), 'column', false)).toBe('row');
+  });
+  it('絵・図の選択肢が混じるときは指定のまま', () => {
+    expect(
+      autoLayout(
+        [{ figure: {} }, { figure: {} }, { figure: {} }, { figure: {} }],
+        undefined,
+        false,
+      ),
+    ).toBe('row');
+    expect(autoLayout([{ figure: {} }, { label: 'あ' }], 'column', false)).toBe('column');
   });
 });

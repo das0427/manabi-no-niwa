@@ -145,3 +145,66 @@ test('文字の大きさ・画面のスクロール', async ({ page }) => {
   expect(k).toContain('small-text');
   expect(k).toContain('page-scroll');
 });
+
+test('ふりがな: 長いふりがなの張り出しは出さない・行間不足で前の行に重なるときは出す', async ({
+  page,
+}) => {
+  // 親字より長い rt は隣の仮名の上に張り出す（Chrome は親字の Range の外接も rt の幅まで広げる）。許される組み方
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*10);left:calc(var(--u)*5);line-height:2.2">
+       <ruby>園<rt>ようち</rt></ruby><ruby>長<rt>ちょう</rt></ruby>せんせい、<ruby>正月<rt>しょうがつ</rt></ruby>に あいました。</p>`,
+  );
+  const ok = await inspectText(page, { stage: 'g2' });
+  expect(ok.issues.filter((i) => /overlap/.test(i.kind))).toEqual([]);
+  // 行間 1.0 でふりがなが前の行まで上がると、前の行の字に重なる
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*10);left:calc(var(--u)*5);width:calc(var(--u)*30);line-height:1.0">
+       あいうえおかきくけこさしすせそ<br><ruby>漢字<rt style="position:relative;top:-0.5em">かんじ</rt></ruby>のよみかた</p>`,
+  );
+  const k = await kinds(page, 'g2');
+  expect(k.some((x) => x === 'overlap-text' || x === 'ruby-overlap')).toBe(true);
+});
+
+test('スクロールさせる枠（data-scroll-region）: 枠ごとに印と高さを見る・ふつうの枠は 1 字ずつ出す', async ({
+  page,
+}) => {
+  const long = 'ながい ぶんしょうが つづいて います。'.repeat(8);
+  const region = (extra: string, h: number, inner = '') =>
+    `<div class="abs box" data-scroll-region style="left:calc(var(--u)*5);width:calc(var(--u)*40);height:calc(var(--u)*${h});overflow:auto;font-size:calc(var(--u)*2.4);line-height:1.5;${extra}">
+       <p>${long}</p></div>${inner}`;
+  // 印があり、高さも 4 行以上: 何も出さない
+  await show(
+    page,
+    region(
+      'top:calc(var(--u)*3)',
+      20,
+      `<span class="abs" data-scroll-cue style="top:calc(var(--u)*24);left:calc(var(--u)*5)">▼</span>`,
+    ),
+  );
+  const ok = await inspectText(page, { stage: 'g3' });
+  expect(ok.issues.filter((i) => i.kind === 'scroll-hidden' || i.kind === 'clipped')).toEqual([]);
+  // 印が無い: 枠につき 1 件（字ごとには出さない）
+  await show(page, region('top:calc(var(--u)*3)', 20));
+  const r1 = await inspectText(page, { stage: 'g3' });
+  expect(r1.issues.filter((i) => i.kind === 'scroll-hidden')).toHaveLength(1);
+  expect(r1.issues.filter((i) => i.kind === 'clipped')).toEqual([]);
+  // 高さが 4 行未満: clipped
+  await show(
+    page,
+    region(
+      'top:calc(var(--u)*3)',
+      8,
+      `<span class="abs" data-scroll-cue style="top:calc(var(--u)*12);left:calc(var(--u)*5)">▼</span>`,
+    ),
+  );
+  expect(await kinds(page, 'g3')).toContain('clipped');
+  // data-scroll-region の無い枠は、今までどおり字ごとに scroll-hidden
+  await show(
+    page,
+    `<div class="abs box" style="top:calc(var(--u)*3);left:calc(var(--u)*5);width:calc(var(--u)*40);height:calc(var(--u)*20);overflow:auto;font-size:calc(var(--u)*2.4)"><p>${long}</p></div>`,
+  );
+  const r2 = await inspectText(page, { stage: 'g3' });
+  expect(r2.issues.filter((i) => i.kind === 'scroll-hidden').length).toBeGreaterThan(1);
+});

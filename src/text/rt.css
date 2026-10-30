@@ -6,7 +6,8 @@
   ruby-position: over;
 }
 .rt rt {
-  font-size: 0.5em;
+  /* 本文の約半分。ただし 1.1u を下回らない（--u0 は fit で縮める前の u） */
+  font-size: max(0.5em, calc(var(--u0, var(--u)) * 1.1));
   line-height: 1;
   color: var(--ink);
 }
@@ -27,7 +28,7 @@
   flex-direction: column;
   align-items: center;
   line-height: 1.05;
-  font-size: 0.82em;
+  font-size: max(0.82em, var(--text-min, 0px));
 }
 .rt-frac__num {
   padding: 0 0.15em;
@@ -45,4 +46,8 @@
   border: 0.1em solid var(--ink);
   border-radius: 0.15em;
   background: var(--white);
+}
+/* 空欄と、その直前の始め括弧・直後の終わり括弧や句読点を離さない */
+.rt-nobr {
+  white-space: nowrap;
 }

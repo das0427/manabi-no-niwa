@@ -7,12 +7,40 @@
   position: relative;
   z-index: 1;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: center;
   gap: calc(var(--u) * 2.4);
 }
 .eng-match__cell {
   display: inline-flex;
+}
+/* 長い文の札があるとき: 左の札（上の段）と右の札（下の段）を左右の2列に縦に並べ、線は横に引く */
+.eng-match--rows .eng-match__main {
+  display: grid;
+  /* 左（ことば）は中身の幅（40% まで）、右（意味の文）に残りを全部。右の文が1行に入りやすくする */
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  align-items: stretch;
+  column-gap: calc(var(--u) * 6);
+}
+.eng-match--rows .eng-match__row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+}
+.eng-match--rows .eng-match__cell {
+  display: flex;
+}
+.eng-match--rows .eng-match__cell > .tk-card {
+  flex: 1;
+  max-width: none;
+  min-height: calc(var(--u) * 6);
+  padding-block: calc(var(--u) * 0.4);
+}
+.eng-match--rows .tk-card__label {
+  /* --text-small は :root で解決されて --fit で縮まないので、作業領域の --u で書く（最小は --text-min） */
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
 }
 .eng-match__lines {
   position: absolute;

@@ -142,7 +142,9 @@ function checkColumn(item: NumberItem): string[] {
   if (c.partials !== undefined && c.op !== 'mul') errs.push('partials は かけ算だけ');
   if (c.op === 'mul' && c.partials !== false && String(c.operands[1]).length >= 2) {
     if (String(c.operands[1]).includes('0'))
-      errs.push('かける数に 0 の位がある筆算は partials: false にする（部分積の書き方が教科書で違う）');
+      errs.push(
+        'かける数に 0 の位がある筆算は partials: false にする（部分積の書き方が教科書で違う）',
+      );
   }
   if (item.fields.length !== l.expected.length)
     errs.push(
@@ -209,7 +211,8 @@ function Shown({ s, group }: { s: string; group?: 3 | 4 }) {
     if (m && m[2]!.length > group) {
       const int = m[2]!;
       const parts: string[] = [];
-      for (let e = int.length; e > 0; e -= group) parts.unshift(int.slice(Math.max(0, e - group), e));
+      for (let e = int.length; e > 0; e -= group)
+        parts.unshift(int.slice(Math.max(0, e - group), e));
       return (
         <span className="num-group">
           {m[1]}
@@ -230,12 +233,15 @@ function Shown({ s, group }: { s: string; group?: 3 | 4 }) {
 function Pad({
   keys,
   locked,
+  revealed,
   ready,
   put,
   onSubmit,
 }: {
   keys: NonNullable<NumberItem['keys']>;
   locked: boolean;
+  /** 答えを見せている（解説）。キーは使えないので隠す（解説の板で作業領域が狭く、6u のキーが収まらない） */
+  revealed: boolean;
   ready: boolean;
   put(ch: string): void;
   onSubmit(): void;
@@ -262,7 +268,11 @@ function Pad({
     keys.includes('minus') ? key('-', '−', 'マイナス', 'key-minus') : null,
   ].filter((x) => x !== null);
   return (
-    <div className="eng-number__pad" role="group" aria-label="すうじの キー">
+    <div
+      className={revealed ? 'eng-number__pad eng-number__pad--done' : 'eng-number__pad'}
+      role="group"
+      aria-label="すうじの キー"
+    >
       {['7', '8', '9'].map(digit)}
       {key('back', 'けす', 'ひとつ けす', 'key-back', 'numkey--fn')}
       {['4', '5', '6'].map(digit)}
@@ -351,6 +361,7 @@ function FieldsView({
       <Pad
         keys={item.keys ?? []}
         locked={disabled || revealed}
+        revealed={revealed}
         ready={ready}
         put={put}
         onSubmit={() => submit(vals)}
@@ -509,7 +520,11 @@ function ColumnView({
                 aria-label={`${label} ${shown[i] || 'から'}`}
                 data-testid={r.kind === 'memo' ? `memo-${i}` : `cell-${r.field}-${i}`}
               >
-                {r.kind === 'memo' ? <span className="num-col__memobox">{shown[i]}</span> : shown[i]}
+                {r.kind === 'memo' ? (
+                  <span className="num-col__memobox">{shown[i]}</span>
+                ) : (
+                  shown[i]
+                )}
               </button>
             );
           });
@@ -533,7 +548,14 @@ function ColumnView({
           );
         })}
       </div>
-      <Pad keys={[]} locked={locked} ready={ready} put={put} onSubmit={() => submit(values)} />
+      <Pad
+        keys={[]}
+        locked={locked}
+        revealed={revealed}
+        ready={ready}
+        put={put}
+        onSubmit={() => submit(values)}
+      />
     </div>
   );
 }

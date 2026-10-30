@@ -1,4 +1,5 @@
 .eng-choice {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +13,8 @@
 }
 .eng-choice__options--grid {
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 90%;
 }
 .eng-choice__options--column {
   flex-direction: column;
@@ -27,11 +29,21 @@
   justify-content: center;
   gap: calc(var(--u) * 0.6);
 }
+/* 文字だけの選択肢は低く（絵・図の選択肢は今のまま）。text-layout-fixes S3 */
+.choice.eng-choice__opt--text {
+  min-height: calc(var(--u) * 7);
+}
 .eng-choice__label {
   font-size: calc(var(--u) * 3.2);
   font-weight: 700;
 }
+/* こたえあわせは選択肢の列の下でなく、下の帯の主操作の位置（つぎへ の左 3u。DESINGN.md 5.1） */
 .eng-check {
-  min-width: calc(var(--u) * 20);
+  position: absolute;
+  /* 作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
+  right: calc(var(--u0, var(--u)) * 17.5);
+  bottom: calc(var(--u0, var(--u)) * -12);
+  min-width: calc(var(--u) * 14);
   font-size: calc(var(--u) * 2.8);
+  z-index: 4;
 }

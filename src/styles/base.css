@@ -49,3 +49,31 @@ button {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* 改行の規則（DESINGN.md 17章）。小さい仮名・長音を行頭に置かず、最後の行が1字になるのを避ける */
+.stage {
+  line-break: strict;
+  text-wrap: pretty;
+}
+/* 分かち書きの段階は空白のところだけで折る。空白の無い長い語は枠の手前で折る */
+.stage [data-wakachi] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* ボタン・札・表の文字は行の長さをそろえる */
+.stage .choice,
+.stage .tk-card__label,
+.stage .eng-opts__label,
+.stage .eng-choice__label,
+.stage th,
+.stage td {
+  text-wrap: balance;
+}
+/* 小3以上は文節で折る（ボタン・札だけ。本文・解説は右端がそろわなくなるので付けない）。
+   単元の画面（.unit）だけ。幼児ホーム・v1 モードの data-stage（D1 等）には付けない */
+.stage
+  .unit[data-stage]:not([data-wakachi])
+  :is(.choice, .tk-card__label, .eng-opts__label, .eng-choice__label) {
+  word-break: auto-phrase;
+  overflow-wrap: anywhere;
+}

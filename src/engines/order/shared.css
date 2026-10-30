@@ -10,6 +10,7 @@
   gap: calc(var(--u) * 0.4);
   min-width: calc(var(--u) * 7);
   min-height: calc(var(--u) * 7);
+  max-width: calc(var(--u) * 40);
   padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
   border: var(--outline) solid var(--ink);
   border-radius: var(--radius);
@@ -39,7 +40,10 @@
   box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
   transform: translateY(calc(var(--u) * -1));
 }
+/* block で包む（inline のままだと text-wrap: balance が効かない） */
 .tk-card__label {
+  display: block;
+  text-wrap: balance;
   font-size: var(--text-label);
   line-height: 1.25;
 }
@@ -70,14 +74,14 @@
   position: absolute;
   top: calc(var(--u) * -1.2);
   left: calc(var(--u) * -1.2);
-  min-width: calc(var(--u) * 2.8);
-  height: calc(var(--u) * 2.8);
+  min-width: calc(var(--u) * 3);
+  height: calc(var(--u) * 3);
   padding: 0 calc(var(--u) * 0.4);
   border: calc(var(--u) * 0.3) solid var(--ink);
   border-radius: calc(var(--u) * 1.4);
   background: var(--sun);
   color: var(--ink);
-  font-size: calc(var(--u) * 1.8);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, 0px));
   line-height: 1;
   display: inline-flex;
   align-items: center;
@@ -96,7 +100,7 @@
   color: var(--ink-soft);
   font-family: var(--font-child);
   font-weight: 700;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -119,7 +123,8 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: center;
+  /* 作業領域より高いとき、上へはみ出さない（箱・先頭の札が上の帯に出ない） */
+  align-items: safe center;
   column-gap: calc(var(--u) * 3);
 }
 .tk-frame__main {
@@ -127,5 +132,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: safe center;
   gap: calc(var(--u) * 2.4);
 }

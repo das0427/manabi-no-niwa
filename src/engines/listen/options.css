@@ -5,6 +5,11 @@
   align-items: center;
   gap: calc(var(--u) * 2);
 }
+/* 2列のグリッドは 90% の幅を取る（札の隣の残り全部を使う） */
+.eng-opts:has(.eng-opts__list--grid) {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .eng-opts__list {
   display: flex;
   gap: calc(var(--u) * 2.4);
@@ -13,7 +18,8 @@
 }
 .eng-opts__list--grid {
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 90%;
 }
 .eng-opts__list--column {
   flex-direction: column;
@@ -29,13 +35,23 @@
   justify-content: center;
   gap: calc(var(--u) * 0.6);
 }
+/* 文字だけの選択肢は低く（絵・図の選択肢は今のまま）。text-layout-fixes S3 */
+.choice.eng-opts__opt--text {
+  min-height: calc(var(--u) * 7);
+}
 .eng-opts__label {
   font-size: calc(var(--u) * 3.2);
   font-weight: 700;
 }
+/* こたえあわせは下の帯の主操作の位置（つぎへ の左 3u） */
 .eng-opts__check {
-  min-width: calc(var(--u) * 20);
+  position: absolute;
+  /* 作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
+  right: calc(var(--u0, var(--u)) * 17.5);
+  bottom: calc(var(--u0, var(--u)) * -12);
+  min-width: calc(var(--u) * 14);
   font-size: calc(var(--u) * 2.8);
+  z-index: 4;
 }
 /* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語） */
 .eng-listen .eng-opts__opt .fig-row svg {

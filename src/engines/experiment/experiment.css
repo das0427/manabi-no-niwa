@@ -5,7 +5,11 @@
 }
 .exp {
   display: grid;
-  grid-template-columns: calc(var(--u) * 26) minmax(0, 1fr) calc(var(--u) * 29);
+  /* 列の幅は fit で縮めない基準の u（--u0）で決める。縮むのは中の文字と札だけ（列まで縮むと右の表が狭くなる）。
+     右の記録の列は注記（1.8u 以上）と表が入る幅 */
+  grid-template-columns:
+    calc(var(--u0, var(--u)) * 16) minmax(0, 1fr)
+    calc(var(--u0, var(--u)) * 34);
   gap: calc(var(--u) * 1.6);
   align-items: center;
   width: 100%;
@@ -17,7 +21,7 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  justify-content: center;
+  justify-content: safe center;
   gap: calc(var(--u) * 1);
   min-height: 0;
   height: 100%;
@@ -35,7 +39,7 @@
 }
 .exp-try {
   align-self: center;
-  min-width: calc(var(--u) * 16);
+  min-width: calc(var(--u) * 15);
 }
 .exp__panel {
   display: flex;
@@ -61,7 +65,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: calc(var(--u) * 0.4) calc(var(--u) * 1.2);
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
 }
@@ -72,7 +76,7 @@
 }
 .exp-factor__label {
   max-width: calc(var(--u) * 12);
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
   line-height: 1.2;
@@ -94,7 +98,7 @@
   white-space: nowrap;
   min-width: calc(var(--u) * 6);
   padding: 0 calc(var(--u) * 0.3);
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   background: var(--white);
 }
 .exp-val.is-on {
@@ -107,8 +111,9 @@
 .exp-factor__value,
 .exp-factor__fixed {
   min-width: calc(var(--u) * 7);
+  white-space: nowrap;
   text-align: center;
-  font-size: calc(var(--u) * 2.6);
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
 }
@@ -128,7 +133,7 @@
   text-align: left;
 }
 .exp-opt__label {
-  font-size: calc(var(--u) * 2.3);
+  font-size: max(calc(var(--u) * 2.3), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
 }
 
@@ -145,7 +150,7 @@
 }
 .exp-note {
   margin: 0;
-  font-size: calc(var(--u) * 1.5);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
   line-height: 1.3;
   color: var(--ink);
   background: var(--paper-2);
@@ -154,12 +159,13 @@
   padding: calc(var(--u) * 0.2) calc(var(--u) * 0.6);
 }
 .exp-tablewrap {
-  min-height: 0;
+  /* 表は縮めない。入りきらないときは列からはみ出して、画面の枠の fit（--fit）が全体を縮める */
+  flex: none;
 }
 .exp-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: calc(var(--u) * 1.8);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
   color: var(--ink);
   background: var(--white);
 }
@@ -173,7 +179,7 @@
 .exp-table th {
   background: var(--paper-2);
   font-weight: 700;
-  font-size: calc(var(--u) * 1.6);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
 }
 .exp-table tr.is-last td {
   font-weight: 700;
@@ -183,19 +189,20 @@
   outline-offset: calc(var(--u) * -0.4);
 }
 .exp-table__empty {
-  color: var(--ink-soft);
+  color: var(--ink);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
 }
 .exp-need {
   margin: 0;
   text-align: center;
-  font-size: calc(var(--u) * 2.1);
+  font-size: max(calc(var(--u) * 2.1), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
 }
 
 /* 表の結果の札（table） */
 .exp-card {
-  min-width: calc(var(--u) * 20);
+  min-width: calc(var(--u) * 15);
   min-height: calc(var(--u) * 16);
   display: flex;
   flex-direction: column;
@@ -207,7 +214,8 @@
   border-radius: var(--radius);
 }
 .exp-card__text {
-  font-size: calc(var(--u) * 3);
+  white-space: nowrap;
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
 }
@@ -240,16 +248,17 @@
   fill: var(--ink);
 }
 .exp-svgtext {
-  font-size: 17px;
+  /* SVG の中の文字は viewBox の単位。--vb（= viewBox の高さ / 19）で u に直す（Apparatus.tsx） */
+  font-size: calc(var(--vb, 15) * 2.2px);
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .exp-svgtext--small {
-  font-size: 12px;
+  font-size: calc(var(--vb, 15) * 2px);
 }
 .exp-svgtext--tiny {
-  font-size: 10px;
+  font-size: calc(var(--vb, 15) * 1.9px);
 }
 .exp-swing {
   transform-origin: 0 0;

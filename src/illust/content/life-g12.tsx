@@ -264,7 +264,7 @@ const sprout = def('life-sprout', 'め（ふたば）', () => (
 ));
 const leafShape = (x: number, y: number, rot: number, s = 1) => (
   <path
-    key={`${x}-${y}`}
+    key={`${x}-${y}-${rot}`}
     transform={`translate(${x} ${y}) rotate(${rot}) scale(${s})`}
     d="M0 0 C-12 -8 -12 -26 0 -34 C12 -26 12 -8 0 0 Z"
     fill={P.green}

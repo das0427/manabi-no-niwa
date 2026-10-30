@@ -1,3 +1,33 @@
+/*
+ * 段階ごとの文字の大きさ（DESINGN.md 17章）。--prompt-size は問題文、--text-min は補助の文字の最小。
+ * data-stage は UnitRunner が .screen.unit に付ける
+ */
+.unit {
+  --prompt-size: calc(var(--u) * 3);
+  --text-min: calc(var(--u) * 1.7);
+}
+.unit[data-stage='p23'],
+.unit[data-stage='p4'],
+.unit[data-stage='p5'] {
+  --prompt-size: calc(var(--u) * 3);
+  --text-min: calc(var(--u) * 2.2);
+}
+.unit[data-stage='g1'],
+.unit[data-stage='g2'] {
+  --prompt-size: calc(var(--u) * 2.8);
+  --text-min: calc(var(--u) * 2);
+}
+.unit[data-stage='g3'],
+.unit[data-stage='g4'] {
+  --prompt-size: calc(var(--u) * 2.4);
+  --text-min: calc(var(--u) * 1.8);
+}
+.unit[data-stage='g5'],
+.unit[data-stage='g6'] {
+  --prompt-size: calc(var(--u) * 2.2);
+  --text-min: calc(var(--u) * 1.7);
+}
+
 /* 単元の画面の区画（ux-by-age 2.4、DESINGN.md 5.1・18章）。位置は全単元で同じ */
 .unit__prompt {
   position: absolute;
@@ -10,7 +40,7 @@
   justify-content: center;
   text-align: center;
   /* 文字の大きさの設定（--ts: 1 / 1.15 / 1.3） */
-  font-size: calc(var(--u) * 3 * var(--ts, 1));
+  font-size: calc(var(--prompt-size) * var(--ts, 1));
   font-weight: 700;
   color: var(--ink);
   white-space: pre-line;
@@ -25,16 +55,36 @@
   right: calc(var(--u) * 4);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  /* 収まらないときに上へはみ出して問題文に重ならないよう safe（はみ出す分は下へ） */
+  align-items: safe center;
+  justify-content: safe center;
   gap: calc(var(--u) * 2);
+  /* 重なりの順をこの中に閉じる（札の z-index 等が、あとに描く吹き出し・解説の板より上に出ない）。
+     0.8 倍でも収まらずに下へはみ出したときは、板・吹き出しの文字が上に見える */
+  z-index: 0;
+}
+/* 子は --fit（0.8〜1。UnitRunner が中身の高さと空きを測って書く）の分だけ縮む。.unit__work 自身の位置は縮めない */
+.unit__work > * {
+  --u: calc(var(--u0) * var(--fit, 1));
+  /* tokens.css の寸法の変数は :root で解決されて縮まないので、文字と線だけここで縮む --u で定義し直す。
+     文字は --text-min を下限にする。押す所の最小（--tap-main・--tap-aux）と間隔の最小（--gap-min）は縮めない */
+  --text-label: max(calc(var(--u) * 2.6), var(--text-min));
+  --text-small: max(calc(var(--u) * 2.2), var(--text-min));
+  --radius: calc(var(--u) * 1.2);
+  --outline: calc(var(--u) * 0.35);
+  --step: calc(var(--u) * 0.6);
+}
+/* 解説の板が開いているときは、作業領域を板の上までにする（--panel-h は UnitRunner が測る） */
+.unit[data-phase='explain'] .unit__work {
+  bottom: calc(var(--panel-h, calc(var(--u) * 11.6)) + var(--u) * 2.4);
 }
 /* 数の入力: 左に図と回答欄、右に数字キー（DESINGN.md 18章、review-1 #21） */
 .unit__work--number {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;
-  align-content: center;
+  /* 収まらないときに上へはみ出して問題文に重ならないよう safe（はみ出す分は下へ） */
+  align-content: safe center;
   align-items: center;
   column-gap: calc(var(--u) * 3);
   row-gap: calc(var(--u) * 2);
@@ -100,9 +150,13 @@
   background: var(--white);
   border: calc(var(--u) * 0.3) solid var(--ink);
   border-radius: calc(var(--u) * 1.4);
-  font-size: calc(var(--u) * 2 * var(--ts, 1));
+  font-size: max(calc(var(--u) * 2 * var(--ts, 1)), var(--text-min));
   line-height: 1.4;
   color: var(--ink);
+}
+/* 「こたえあわせ」（複数を選ぶ問題。つぎへ の左 3u、右端から約 21.5〜38u）があるときは、吹き出しをその左まで */
+.unit:has(.eng-check, .eng-opts__check) .unit__bubble {
+  right: calc(var(--u) * 39);
 }
 .unit__msg {
   margin: 0;
@@ -125,37 +179,83 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  font-size: max(calc(var(--u) * 2 * var(--ts, 1)), var(--text-min));
 }
 .unit__explain {
   position: absolute;
   left: calc(var(--u) * 12);
   right: calc(var(--u) * 24);
   bottom: calc(var(--u) * 1.6);
-  /* 下の帯に収める（作業領域の回答・正答を隠さない）。文と図を横に並べる */
-  max-height: calc(var(--u) * 11.6);
-  overflow: auto;
+  /* 22u まで（作業領域は板の上まで。収まらない長さは板の中で縦にスクロール）。上が切れないよう上そろえ */
+  max-height: calc(var(--u) * 22);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
   background: var(--paper);
   border: calc(var(--u) * 0.35) solid var(--ink);
   border-radius: calc(var(--u) * 1.4);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: calc(var(--u) * 1.6);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0;
+  row-gap: calc(var(--u) * 0.8);
   font-size: calc(var(--u) * 2.1 * var(--ts, 1));
   line-height: 1.4;
 }
-.unit__explain .fig-svgbox {
-  max-height: calc(var(--u) * 9);
-  width: auto;
-}
 .unit__explain-head {
-  margin: 0;
-  flex: none;
+  margin: 0 calc(var(--u) * 1.6) 0 0;
   white-space: nowrap;
   font-weight: 700;
   font-size: calc(var(--u) * 2.4);
 }
 .unit__explain-text {
+  grid-column: 2;
   margin: 0;
+}
+/* 解説の図は2段目（文の下）。横に並べて押しつぶさない */
+.unit__explain-figure {
+  grid-column: 2;
+  width: 100%;
+  max-height: calc(var(--u) * 12);
+  display: flex;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.unit__explain-figure > * {
+  max-width: 100%;
+  max-height: calc(var(--u) * 12);
+}
+.unit__explain-figure svg,
+.unit__explain .fig-svgbox {
+  max-width: 100%;
+  max-height: calc(var(--u) * 12);
+  width: auto;
+}
+/* 板が 22u を超えて縦にスクロールするとき、下端に ▼（UnitRunner が data-scroll-cue を付け外しする） */
+.unit__scroll-cue {
+  grid-column: 1 / -1;
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  display: none;
+  pointer-events: none;
+}
+.unit__explain[data-scroll-cue] .unit__scroll-cue {
+  display: block;
+}
+/* ▼ は右の余白に置く（文の字にかぶせない） */
+.unit__explain[data-scroll-cue] {
+  padding-right: calc(var(--u) * 3.6);
+}
+.unit__scroll-cue::before {
+  content: '▼';
+  position: absolute;
+  right: calc(var(--u) * -3.4);
+  bottom: 0;
+  padding: 0 calc(var(--u) * 0.6);
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: calc(var(--u) * 0.6);
 }

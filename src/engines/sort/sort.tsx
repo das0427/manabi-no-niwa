@@ -153,6 +153,11 @@ function SortView({
   const boxOf = (i: number): number | null =>
     revealed ? (boxesOf(item.cards[i]!)[0] ?? null) : (where[i] ?? null);
   const complete = visible.every((i) => where[i] !== null);
+  const pooled = order.filter((i) => boxOf(i) === null);
+  // 文の札（8字超）が5枚以上なら2列で縦を詰める。絵・短い札は横に折り返すほうが低く収まる
+  const cols =
+    visible.length >= 5 &&
+    visible.some((i) => [...plainText(item.cards[i]!.label ?? '')].length > 8);
 
   const pressCard = (i: number) => {
     if (locked) return;
@@ -216,20 +221,22 @@ function SortView({
             </div>
           ))}
         </div>
-        <div className="eng-sort__pool" role="group" aria-label="わける もの">
-          {order
-            .filter((i) => boxOf(i) === null)
-            .map((i) => (
-              <TapCard
-                key={i}
-                card={item.cards[i]!}
-                ctx={ctx}
-                state={picked === i ? 'selected' : null}
-                disabled={locked}
-                onPress={() => pressCard(i)}
-                testId={`card-${i}`}
-              />
-            ))}
+        <div
+          className={['eng-sort__pool', cols ? 'eng-sort__pool--cols' : ''].join(' ')}
+          role="group"
+          aria-label="わける もの"
+        >
+          {pooled.map((i) => (
+            <TapCard
+              key={i}
+              card={item.cards[i]!}
+              ctx={ctx}
+              state={picked === i ? 'selected' : null}
+              disabled={locked}
+              onPress={() => pressCard(i)}
+              testId={`card-${i}`}
+            />
+          ))}
         </div>
       </div>
       {!auto && !revealed ? (

@@ -7,7 +7,7 @@
  * - 正答を見せるとき（revealed）は答えの根拠（evidence）の文に下線を引く。
  * - 本文の読み上げは任意の札（自動では読まない）。読み上げの設定が off のときは札を出さない。
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { audio } from '../../core/audio/index';
 import type { ChoiceOption, Item, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -17,6 +17,7 @@ import type { VoiceSeq } from '../../voice/catalog/index';
 import { registerRich } from '../../voice/dynamic';
 import type { ChoiceResponse } from '../choice/choice';
 import { Figure } from '../figure/Figure';
+import { observeResize } from '../figure/svgText';
 import type { Figure as FigureData } from '../figure/types';
 import type { EngineProps, Judgement } from '../types';
 import { flatSeq } from '../listen/listen';
@@ -178,52 +179,94 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
     }),
   );
 
+  // 本文の枠（スクロール設計）: 下にまだ文があるときは「▼ つづき」、最後まで読んだら「▲ はじめから」を出す
+  // （ヒント・解説で根拠の文へ自動でスクロールしたあとも、上に文があることが分かるように）
+  const boxRef = useRef<HTMLElement | null>(null);
+  const [cue, setCue] = useState<'down' | 'up' | null>(null);
+  const measure = useCallback(() => {
+    const b = boxRef.current;
+    if (!b) return;
+    if (b.scrollHeight <= b.clientHeight + 2) setCue(null);
+    else if (b.scrollTop + b.clientHeight < b.scrollHeight - 2) setCue('down');
+    else setCue('up');
+  }, []);
+  useEffect(() => {
+    const b = boxRef.current;
+    if (!b) return undefined;
+    measure();
+    return observeResize([b], measure);
+  }, [measure, p]);
+  const scrollCue = () => {
+    const b = boxRef.current;
+    if (!b) return;
+    if (cue === 'up') b.scrollTo?.({ top: 0, behavior: 'smooth' });
+    else b.scrollBy?.({ top: b.clientHeight * 0.85, behavior: 'smooth' });
+  };
+
   const size = ctx.learnerGrade >= 5 ? 's' : ctx.learnerGrade >= 3 ? 'm' : 'l';
   return (
     <div className="eng-reading">
-      <section
-        className={`eng-reading__passage eng-reading__passage--${size}`}
-        aria-label="ほんぶん"
-        data-testid="reading-passage"
-      >
-        {p.title ? (
-          <h3 className="eng-reading__title">
-            <Rt text={p.title} ctx={ctx} />
-          </h3>
-        ) : null}
-        {p.figure ? (
-          <div className="eng-reading__figure">
-            <Figure fig={p.figure} ctx={ctx} />
-          </div>
-        ) : null}
-        {p.paragraphs.map((para, pi) => (
-          <p key={pi} className="eng-reading__para" data-p={pi + 1}>
-            {p.numbered ? (
-              <span className="eng-reading__num" aria-label={`だん ${pi + 1}`}>
-                {CIRCLED[pi] ?? `(${pi + 1})`}
-              </span>
-            ) : null}
-            {para.map((s, si) => {
-              const { focus: isFocus, evidence: isEvidence } = marks(pi, si);
-              return (
-                <span
-                  key={si}
-                  ref={firstKey === `${pi}-${si}` ? focusRef : undefined}
-                  className={[
-                    'eng-reading__s',
-                    isFocus ? 'is-focus' : '',
-                    isEvidence ? 'is-evidence' : '',
-                  ].join(' ')}
-                  data-testid={`s-${pi + 1}-${si + 1}`}
-                  data-mark={isEvidence ? 'evidence' : isFocus ? 'focus' : undefined}
-                >
-                  <Rt text={s} ctx={ctx} />
+      <div className="eng-reading__passage-wrap">
+        <section
+          ref={boxRef}
+          onScroll={measure}
+          className={`eng-reading__passage eng-reading__passage--${size}`}
+          aria-label="ほんぶん"
+          data-testid="reading-passage"
+          data-scroll-region="passage"
+        >
+          {p.title ? (
+            <h3 className="eng-reading__title">
+              <Rt text={p.title} ctx={ctx} />
+            </h3>
+          ) : null}
+          {p.figure ? (
+            <div className="eng-reading__figure">
+              <Figure fig={p.figure} ctx={ctx} />
+            </div>
+          ) : null}
+          {p.paragraphs.map((para, pi) => (
+            <p key={pi} className="eng-reading__para" data-p={pi + 1}>
+              {p.numbered ? (
+                <span className="eng-reading__num" aria-label={`だん ${pi + 1}`}>
+                  {CIRCLED[pi] ?? `(${pi + 1})`}
                 </span>
-              );
-            })}
-          </p>
-        ))}
-      </section>
+              ) : null}
+              {para.map((s, si) => {
+                const { focus: isFocus, evidence: isEvidence } = marks(pi, si);
+                return (
+                  <span
+                    key={si}
+                    ref={firstKey === `${pi}-${si}` ? focusRef : undefined}
+                    className={[
+                      'eng-reading__s',
+                      isFocus ? 'is-focus' : '',
+                      isEvidence ? 'is-evidence' : '',
+                    ].join(' ')}
+                    data-testid={`s-${pi + 1}-${si + 1}`}
+                    data-mark={isEvidence ? 'evidence' : isFocus ? 'focus' : undefined}
+                  >
+                    <Rt text={s} ctx={ctx} />
+                  </span>
+                );
+              })}
+            </p>
+          ))}
+        </section>
+        <div className="eng-reading__cue-slot">
+          {cue ? (
+            <button
+              type="button"
+              className="eng-reading__cue"
+              data-scroll-cue
+              data-testid="reading-cue"
+              onClick={scrollCue}
+            >
+              {cue === 'down' ? '▼ つづき' : '▲ はじめから'}
+            </button>
+          ) : null}
+        </div>
+      </div>
       <div className="eng-reading__side">
         {ctx.readAloud !== 'off' ? (
           <Tap
@@ -250,6 +293,7 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
           locked={disabled}
           submit={submit}
           className="eng-reading__opts"
+          autoArrange={false}
         />
       </div>
     </div>

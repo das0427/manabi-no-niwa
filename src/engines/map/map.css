@@ -107,7 +107,7 @@
   vector-effect: non-scaling-stroke;
 }
 .map-badge__no {
-  font-size: 18px;
+  font-size: max(18px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -239,7 +239,7 @@
   stroke-dasharray: 6 5;
 }
 .map-rose__n {
-  font-size: 22px;
+  font-size: max(22px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -275,7 +275,7 @@
   background: var(--paper-2);
 }
 .map-dir__text {
-  font-size: calc(var(--u) * 2.3);
+  font-size: max(calc(var(--u) * 2.3), var(--text-min, 0px));
   font-weight: 700;
 }
 .map-compass-only {
@@ -352,7 +352,7 @@
   stroke-width: 5;
 }
 .map-town__label {
-  font-size: 20px;
+  font-size: max(20px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;

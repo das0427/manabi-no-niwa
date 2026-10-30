@@ -24,10 +24,12 @@
 .eng-explain__side {
   flex: 0 1 calc(var(--u) * 34);
   min-height: 0;
-  overflow-y: auto;
+  /* スクロールさせない（「できた」等のボタンが下に隠れて押せなくなる）。収まらない分は作業領域の
+     fit（--fit）で全体を縮める（作業領域の scrollHeight に出るように、はみ出しを隠さない） */
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   gap: calc(var(--u) * 1.6);
 }
 .eng-explain--nopad .eng-explain__side {
@@ -49,7 +51,7 @@
   text-align: left;
 }
 .eng-explain__reason-label {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
   line-height: 1.4;
 }

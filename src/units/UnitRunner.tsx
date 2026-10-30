@@ -4,7 +4,15 @@
  * 記録（attempts・rounds）、進度と復習（回の終わりだけ）、完了画面。
  * 区画は全単元で同じ: 上＝問題文、中央＝図と作業領域、左下＝ヒント、右下＝つぎへ（X-UX-05）。
  */
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from 'react';
 import { audienceUx, gradeOf } from '../audience/audience';
 import { audio } from '../core/audio/index';
 import { addOutcome, evaluate } from '../core/progress/rules';
@@ -54,6 +62,9 @@ import {
   type FlowState,
 } from './unitFlow';
 import './unit.css';
+
+// 分かち書きの段階（DESINGN.md 17章。改行の規則・S2 が data-wakachi を使う）
+const WAKACHI_STAGES: ReadonlySet<string> = new Set(['p23', 'p4', 'p5', 'g1', 'g2']);
 
 /** 単元の中断データ（drafts ストア: modeId 'unit'・variantId 単元ID。review-1 #31） */
 interface UnitDraft {
@@ -520,16 +531,109 @@ export function UnitRound({
   const rootRef = useRef<HTMLDivElement>(null);
   const promptRef = useRef<HTMLDivElement>(null);
   const isDone = s.phase === 'done';
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = rootRef.current;
     const p = promptRef.current;
-    if (!root || !p || typeof ResizeObserver === 'undefined') return;
+    if (!root || !p) return;
+    let last = '';
+    const write = () => {
+      const v = `${p.offsetTop + p.offsetHeight}px`;
+      if (v === last) return;
+      last = v;
+      root.style.setProperty('--prompt-bottom', v);
+    };
+    // 描く前に1回書く。あとの変化は次のフレームで書く（観測の通知の中で作業領域の寸法を変えると、
+    // 作業領域を見ている fit の ResizeObserver と合わせて「ResizeObserver loop」になる）
+    write();
+    if (typeof ResizeObserver === 'undefined') return;
+    let raf = 0;
     const ro = new ResizeObserver(() => {
-      root.style.setProperty('--prompt-bottom', `${p.offsetTop + p.offsetHeight}px`);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(write);
     });
     ro.observe(p);
-    return () => ro.disconnect();
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
   }, [isDone]);
+
+  // 作業領域の中身が空きに収まらないとき、--fit（0.8〜1）で中身の寸法 --u を縮める。
+  // 子の寸法は --fit=1 に戻して測り直す（文字の折り返しが変わるので 2 回まで補正）。問題が変わったら 1 から
+  const phaseKey = `${s.index}:${s.phase}:${s.hintsShown}`;
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const work = root?.querySelector<HTMLElement>('.unit__work') ?? null;
+    if (!root || !work) return;
+    const fitNow = () => {
+      work.style.removeProperty('--fit');
+      let fit = 1;
+      for (let i = 0; i < 3; i++) {
+        const avail = work.clientHeight;
+        const need = work.scrollHeight;
+        if (avail <= 0 || need <= avail + 1) break;
+        const next = Math.max(0.8, fit * (avail / need));
+        if (Math.abs(next - fit) < 0.005) break;
+        fit = next;
+        work.style.setProperty('--fit', fit.toFixed(3));
+      }
+      if (fit >= 1) work.style.removeProperty('--fit');
+    };
+    fitNow();
+    if (typeof ResizeObserver === 'undefined') return;
+    // 観測の通知の中で寸法を書くと ResizeObserver の loop エラーになるので、次のフレームで測り直す
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        fitNow();
+      });
+    });
+    ro.observe(work);
+    for (const c of Array.from(work.children)) ro.observe(c);
+    return () => {
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [phaseKey]);
+
+  // 解説の板の高さを --panel-h に書き（作業領域は板の上まで）、スクロールが要るときは ▼ の印を出す
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const panel = root?.querySelector<HTMLElement>('.unit__explain') ?? null;
+    if (!root) return;
+    if (!panel) {
+      root.style.removeProperty('--panel-h');
+      return;
+    }
+    const measure = () => {
+      root.style.setProperty('--panel-h', `${panel.offsetHeight}px`);
+      const more = panel.scrollHeight > panel.clientHeight + 1;
+      const atEnd = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 2;
+      if (more && !atEnd) panel.setAttribute('data-scroll-cue', '');
+      else panel.removeAttribute('data-scroll-cue');
+    };
+    measure();
+    panel.addEventListener('scroll', measure, { passive: true });
+    if (typeof ResizeObserver === 'undefined') {
+      return () => panel.removeEventListener('scroll', measure);
+    }
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        measure();
+      });
+    });
+    ro.observe(panel);
+    return () => {
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      panel.removeEventListener('scroll', measure);
+    };
+  }, [phaseKey, isDone]);
 
   if (s.phase === 'done')
     return (
@@ -551,6 +655,8 @@ export function UnitRound({
       className="screen unit"
       data-testid={`unit-${unit.id}`}
       data-phase={s.phase}
+      data-stage={unit.stage}
+      data-wakachi={WAKACHI_STAGES.has(unit.stage) ? '' : undefined}
       data-index={s.index}
       style={{ ['--ts' as string]: String(ctx.textScale) }}
     >
@@ -634,7 +740,12 @@ export function UnitRound({
           <p className="unit__explain-text">
             <Rt text={item.explain} ctx={ctx} />
           </p>
-          {item.explainFigure ? <Figure fig={item.explainFigure} ctx={ctx} /> : null}
+          {item.explainFigure ? (
+            <div className="unit__explain-figure">
+              <Figure fig={item.explainFigure} ctx={ctx} />
+            </div>
+          ) : null}
+          <span className="unit__scroll-cue" aria-hidden />
         </div>
       ) : null}
 

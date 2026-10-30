@@ -17,7 +17,7 @@
   font-weight: 700;
 }
 .gr-unit {
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   font-weight: 700;
 }
 .gr-xy {
@@ -42,7 +42,7 @@
   stroke-width: 4;
 }
 .gr-ylabel {
-  font-size: 30px;
+  font-size: max(30px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: end;
@@ -85,7 +85,7 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: calc(var(--u) * 0.4) calc(var(--u) * 2.4);
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   font-weight: 700;
 }
 .gr-series li {
@@ -127,19 +127,41 @@
 }
 .gr-xlabels {
   display: flex;
+  align-items: flex-start;
   justify-content: space-around;
   gap: calc(var(--u) * 0.4);
 }
+/* 横軸の札: 語の途中で折らない。入らないときは graph.tsx（useXLabelFit）が --text-min まで縮め、
+   なお入らなければ [data-stagger] で1つおきに下へずらす（2段） */
 .gr-xlabel {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
   text-align: center;
-  font-size: calc(var(--u) * 2);
+  white-space: nowrap;
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   font-weight: 700;
+}
+.gr-xlabel__t {
+  display: inline-block;
+  white-space: nowrap;
+}
+[data-stagger] > .gr-xlabel,
+[data-stagger] > .gr-piccol > .gr-xlabel {
+  margin-inline: var(--gr-slot-pad, 0px);
+}
+[data-stagger] > .gr-xlabel--btn {
+  padding-inline: 0;
+}
+[data-stagger] > .gr-xlabel:nth-child(even),
+[data-stagger] > .gr-piccol:nth-child(even) > .gr-xlabel {
+  margin-top: var(--gr-stagger, 0px);
 }
 .gr-xlabel--btn {
   min-height: calc(var(--u) * 6);
   font: inherit;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
   color: var(--ink);
   background: var(--white);
@@ -258,7 +280,7 @@
   fill: var(--leaf);
 }
 .gr-secno {
-  font-size: 26px;
+  font-size: max(26px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -268,7 +290,7 @@
   stroke-width: 1.5;
 }
 .gr-rlabel {
-  font-size: 20px;
+  font-size: max(20px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -280,7 +302,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: calc(var(--u) * 0.6) calc(var(--u) * 1.6);
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
 }
 .gr-ratio:not(.gr-ratio--band) .gr-legend {
@@ -299,7 +321,7 @@
   height: calc(var(--u) * 3.2);
   border: calc(var(--u) * 0.25) solid var(--ink);
   border-radius: calc(var(--u) * 0.4);
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
 }
 .gr-swatch.gr-sec--a {
   background: var(--sky);
@@ -323,7 +345,7 @@
 /* 表 */
 .gr-table {
   border-collapse: collapse;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   background: var(--white);
   align-self: center;
 }
@@ -373,7 +395,7 @@
   max-width: calc(var(--u) * 16 * 720 / 360);
 }
 .eng-graph__nummain .gr-xlabel {
-  font-size: calc(var(--u) * 1.8);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, 0px));
 }
 .eng-graph__nummain .mnp-fields {
   flex-direction: column;

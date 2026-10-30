@@ -242,8 +242,12 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   );
 
   const sounds = soundsOf(item);
+  const showTranscript = revealed && !item.hideTranscript;
   return (
-    <div className="eng-listen" data-heard={heard ? '1' : '0'}>
+    <div
+      className={`eng-listen${showTranscript ? ' eng-listen--explain' : ''}`}
+      data-heard={heard ? '1' : '0'}
+    >
       <div className="eng-listen__ear">
         <Tap
           label="もういちど きく"
@@ -258,7 +262,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
           onPress={play}
           testId="listen-button"
         />
-        {revealed && !item.hideTranscript ? (
+        {showTranscript ? (
           <p className="eng-listen__transcript" data-testid="listen-transcript">
             {sounds.map((s, i) => (
               <span key={i} className="eng-listen__said">

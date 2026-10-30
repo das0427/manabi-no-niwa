@@ -24,8 +24,28 @@
   width: calc(var(--u) * 6);
   height: calc(var(--u) * 6);
 }
+/* 解説のとき: 札を補助の寸法（5.5u）に縮め、書き起こしを同じ列に置く（列の高さを変えない） */
+.eng-listen--explain .eng-listen__ear {
+  max-width: calc(var(--u) * 36);
+}
+.eng-listen--explain .eng-listen__ear .tap {
+  min-width: 0;
+  min-height: calc(var(--u) * 5.5);
+  flex-direction: row;
+  padding-block: calc(var(--u) * 0.3);
+}
+.eng-listen--explain .eng-listen__ear .tap__icon {
+  width: calc(var(--u) * 3.6);
+  height: calc(var(--u) * 3.6);
+}
+.eng-listen--explain .eng-listen__transcript {
+  /* 高さで切らない（スクロールさせると下の行が見えない）。作業領域に入らないときは --fit で縮む */
+  /* ふりがなが枠の上で切れないように */
+  line-height: 1.8;
+}
 .eng-listen__ear-text {
-  font-size: calc(var(--u) * 2.2);
+  /* 作業領域の縮み（--fit）で補助の文字の最小を割らない */
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
 }
 .eng-listen__transcript {

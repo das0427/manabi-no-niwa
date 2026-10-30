@@ -5,7 +5,7 @@
  *                          （列をタップ → その高さへ。▲▼ で1目盛りずつ直せる。ドラッグ不要）
  * 目盛りの間隔（1目盛りの大きさ）は問題で指定する（2・5・10・20・50 など）。円・帯グラフは読むだけ。
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { judgeNumber, normalizeInput, RETRY_MESSAGE } from '../../core/answer/number';
 import type { ChoiceOption, ItemBase, NumberField, RichText } from '../../curriculum/types';
 import { Illust } from '../../illust/Illust';
@@ -14,6 +14,7 @@ import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
+import { floorStyle, observeResize, textMinPx, useSvgTextFloor } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from '../numberline/NumPad';
 import type { Judgement, RenderCtx } from '../types';
@@ -297,8 +298,9 @@ export function graphAnswerText(item: GraphItem): RichText {
 // ---- 画面 ----
 const W = 720;
 const H = 360;
-const LEFT = 80;
-const TOP = 24;
+/** 左の余白は縦軸の数字の分（3けた・最小の文字でも入る広さ） */
+const LEFT = 104;
+const TOP = 28;
 const BOTTOM = 16;
 const RIGHT = 16;
 
@@ -326,9 +328,18 @@ function XYChart({
   const d = item.data;
   const ax = axisOf(d);
   const n = d.labels.length;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  const yFont = Math.max(30, floor);
+  // 縦軸の数字（最小まで大きくなる）が上下からはみ出さない余白
+  const top = Math.max(TOP, Math.ceil(yFont * 0.9) + 2);
+  const bottom = Math.max(BOTTOM, Math.ceil(yFont * 0.9) + 2);
   const slot = (W - LEFT - RIGHT) / n;
-  const Y = (v: number) => TOP + (1 - (v - ax.min) / (ax.max - ax.min)) * (H - TOP - BOTTOM);
+  const Y = (v: number) => top + (1 - (v - ax.min) / (ax.max - ax.min)) * (H - top - bottom);
   const every = d.labelEvery ?? 1;
+  // 縦軸の数字が最小まで大きくなって隣と重なるときは、目盛りの数字を間引く（2つおき・3つおき…）
+  const rowH = (H - top - bottom) / ax.n;
+  const labelStep = every * Math.max(1, Math.ceil((yFont * 1.1) / (rowH * every)));
   const snap = item.task.kind === 'make' ? (item.task.snap ?? ax.step) : ax.step;
   const grid = [];
   for (let k = 0; k <= ax.n; k++) {
@@ -342,8 +353,8 @@ function XYChart({
           y2={Y(v)}
           className={k % every === 0 ? 'gr-grid gr-grid--l' : 'gr-grid'}
         />
-        {k % every === 0 ? (
-          <text x={LEFT - 10} y={Y(v) + 8} className="gr-ylabel">
+        {k % labelStep === 0 ? (
+          <text x={LEFT - 10} y={Y(v) + yFont * 0.27} className="gr-ylabel">
             {fmt(v)}
           </text>
         ) : null}
@@ -357,7 +368,7 @@ function XYChart({
         const p = svgPoint(e, vb);
         const col = Math.floor((p.x - LEFT) / slot);
         if (col < 0 || col >= n) return;
-        const raw = ax.min + (1 - (p.y - TOP) / (H - TOP - BOTTOM)) * (ax.max - ax.min);
+        const raw = ax.min + (1 - (p.y - top) / (H - top - bottom)) * (ax.max - ax.min);
         const k = Math.round((raw - ax.min) / snap);
         const v = ax.min + Math.max(0, Math.min(Math.round((ax.max - ax.min) / snap), k)) * snap;
         onTap(col, Math.round(v * 1e9) / 1e9);
@@ -369,8 +380,10 @@ function XYChart({
     .filter((p): p is { v: number; i: number } => p.v !== null);
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
       className="mk-svg gr-svg"
+      style={floorStyle(floor)}
       role="img"
       aria-label="グラフ"
       onClick={tap}
@@ -380,15 +393,15 @@ function XYChart({
       {selected !== null ? (
         <rect
           x={LEFT + slot * selected + 4}
-          y={TOP - 14}
+          y={top - 14}
           width={slot - 8}
-          height={H - TOP - BOTTOM + 14}
+          height={H - top - bottom + 14}
           className="gr-sel"
         />
       ) : null}
       {grid}
-      <line x1={LEFT} y1={TOP} x2={LEFT} y2={H - BOTTOM} className="gr-axis" />
-      <line x1={LEFT} y1={H - BOTTOM} x2={W - RIGHT} y2={H - BOTTOM} className="gr-axis" />
+      <line x1={LEFT} y1={top} x2={LEFT} y2={H - bottom} className="gr-axis" />
+      <line x1={LEFT} y1={H - bottom} x2={W - RIGHT} y2={H - bottom} className="gr-axis" />
       {isBar ? (
         placed.map(({ v, i }) => (
           <rect
@@ -459,6 +472,53 @@ function XYChart({
   );
 }
 
+/**
+ * 横軸の札: 1行のまま（語の途中で折らない）。入らなければ --text-min まで縮め、
+ * なお入らなければ 1つおきに下へずらして2段にする（「みか／ん」「1960／年」）。
+ */
+function useXLabelFit(ref: React.RefObject<HTMLElement | null>, key: unknown): void {
+  useLayoutEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    const fit = () => {
+      const items = Array.from(box.querySelectorAll<HTMLElement>('.gr-xlabel'));
+      box.removeAttribute('data-stagger');
+      box.style.removeProperty('--gr-stagger');
+      box.style.removeProperty('--gr-slot-pad');
+      for (const it of items) it.style.fontSize = '';
+      if (items.length === 0) return;
+      const need = () =>
+        Math.max(
+          ...items.map((it) => {
+            const t = it.querySelector<HTMLElement>('.gr-xlabel__t');
+            if (!t) return 0;
+            const cs = getComputedStyle(it);
+            const room = it.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            return room > 0 ? t.getBoundingClientRect().width / room : 0;
+          }),
+        );
+      const r = need();
+      if (r <= 1) return;
+      const base = parseFloat(getComputedStyle(items[0]!).fontSize);
+      const min = textMinPx(box);
+      const shrunk = base / r;
+      if (shrunk >= min) {
+        for (const it of items) it.style.fontSize = `${Math.floor(shrunk * 100) / 100}px`;
+        return;
+      }
+      for (const it of items) it.style.fontSize = `${min}px`;
+      // 2段: 1つおきに下へ。札は2つぶんの幅まで使える（となりの札と同じ段には並ばない）
+      const slotW = items[0]!.clientWidth;
+      box.style.setProperty('--gr-slot-pad', `${-Math.round(slotW * 0.48)}px`);
+      box.style.setProperty('--gr-stagger', `${Math.ceil(items[0]!.offsetHeight) + 2}px`);
+      box.setAttribute('data-stagger', '');
+    };
+    fit();
+    void document.fonts?.ready.then(fit);
+    return observeResize([box], fit);
+  }, [ref, key]);
+}
+
 function XLabels({
   labels,
   ctx,
@@ -470,8 +530,11 @@ function XLabels({
   selected?: number | null;
   onSelect?: (i: number) => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useXLabelFit(ref, labels.map((l) => plainText(l)).join('|'));
   return (
     <div
+      ref={ref}
       className="gr-xlabels"
       style={{ paddingLeft: `${(LEFT / W) * 100}%`, paddingRight: `${(RIGHT / W) * 100}%` }}
     >
@@ -484,11 +547,15 @@ function XLabels({
             onClick={() => onSelect(i)}
             data-testid={`col-${i}`}
           >
-            <Rt text={l} ctx={ctx} />
+            <span className="gr-xlabel__t">
+              <Rt text={l} ctx={ctx} />
+            </span>
           </button>
         ) : (
           <span key={i} className="gr-xlabel">
-            <Rt text={l} ctx={ctx} />
+            <span className="gr-xlabel__t">
+              <Rt text={l} ctx={ctx} />
+            </span>
           </span>
         ),
       )}
@@ -517,6 +584,8 @@ function PictureChart({
   const d = item.data;
   const ax = axisOf(d);
   const slots = ax.n;
+  const picRef = useRef<HTMLDivElement>(null);
+  useXLabelFit(picRef, d.labels.map((l) => plainText(l)).join('|'));
   const icon = (key: string, cls: string) =>
     d.illust ? (
       <Illust key={key} id={d.illust} decorative className={`gr-pic ${cls}`} />
@@ -524,7 +593,11 @@ function PictureChart({
       <span key={key} className={`gr-pic gr-pic--o ${cls}`} aria-hidden />
     );
   return (
-    <div className="gr-picture" style={{ gridTemplateColumns: `repeat(${d.labels.length}, 1fr)` }}>
+    <div
+      ref={picRef}
+      className="gr-picture"
+      style={{ gridTemplateColumns: `repeat(${d.labels.length}, 1fr)` }}
+    >
       {d.labels.map((l, i) => {
         const cnt = Math.round((values[i] ?? 0) / ax.step);
         const want = ghost ? Math.round(ghost[i]! / ax.step) : null;
@@ -563,7 +636,9 @@ function PictureChart({
               })}
             </div>
             <span className="gr-xlabel">
-              <Rt text={l} ctx={ctx} />
+              <span className="gr-xlabel__t">
+                <Rt text={l} ctx={ctx} />
+              </span>
             </span>
           </div>
         );
@@ -585,6 +660,8 @@ const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', 
 /** 円グラフ・帯グラフ（読むだけ。割合の目盛り: 1%、5%、10% ごとに数字） */
 function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   const d = item.data;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, d.kind === 'band' ? 900 : 392);
   let acc = 0;
   const parts = d.values.map((v, i) => {
     const from = acc;
@@ -605,7 +682,9 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   );
   if (d.kind === 'band') {
     const BW = 900;
-    const X = (p: number) => 20 + (p / 100) * (BW - 40);
+    // 目盛りの数字（最小まで大きくなる。「100」の半分）が両端からはみ出さない余白
+    const padX = Math.max(20, Math.ceil(Math.max(20, floor) * 1.1));
+    const X = (p: number) => padX + (p / 100) * (BW - 2 * padX);
     const ticks = [];
     for (let p = 0; p <= 100; p++) {
       const len = p % 10 === 0 ? 22 : p % 5 === 0 ? 14 : 7;
@@ -620,6 +699,8 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
     return (
       <div className="gr-ratio gr-ratio--band">
         <svg
+          ref={svgRef}
+          style={floorStyle(floor)}
           viewBox={`0 0 ${BW} 200`}
           className="mk-svg gr-band"
           role="img"
@@ -668,7 +749,14 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   }
   return (
     <div className="gr-ratio">
-      <svg viewBox="-170 -170 340 340" className="mk-svg gr-pie" role="img" aria-label="えんグラフ">
+      <svg
+        ref={svgRef}
+        style={floorStyle(floor)}
+        viewBox="-196 -196 392 392"
+        className="mk-svg gr-pie"
+        role="img"
+        aria-label="えんグラフ"
+      >
         {parts.map((p) => {
           const a = P(p.from, R);
           const b = P(p.to, R);

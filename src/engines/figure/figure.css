@@ -8,17 +8,23 @@
   word-break: keep-all;
   /* 空白の無い長い文でも、はみ出す前に どこでも折る */
   overflow-wrap: anywhere;
+  hyphens: none;
   /* 行が短くなりすぎないよう行末をそろえる（対応しない環境では無視される） */
   text-wrap: pretty;
 }
 .fig-text--m {
   font-size: calc(var(--u) * 3.6);
 }
+/* 大きな語（英単語など）は語の中で折らない。入らないときは Figure.tsx（useFitWidth）が文字を縮める */
 .fig-text--l {
   font-size: calc(var(--u) * 5.2);
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .fig-text--xl {
   font-size: calc(var(--u) * 7);
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .fig-row {
   display: flex;
@@ -150,7 +156,7 @@
   fill: var(--ink);
 }
 .nl-label {
-  font-size: 30px;
+  font-size: max(30px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -195,13 +201,13 @@
   stroke-width: 3.5;
 }
 .clk-num {
-  font-size: 20px;
+  font-size: max(20px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .clk-mnum {
-  font-size: 11px;
+  font-size: max(11px, var(--svg-floor, 0px));
   fill: var(--ink-soft);
   text-anchor: middle;
 }
@@ -220,6 +226,7 @@
 }
 
 /* 表 */
+/* 余白は em: 表が入らないとき Figure.tsx（useFitWidth）が font-size を縮めると、余白も縮む */
 .fig-table {
   border-collapse: collapse;
   font-size: calc(var(--u) * 2.4);
@@ -228,17 +235,29 @@
 .fig-table th,
 .fig-table td {
   border: calc(var(--u) * 0.2) solid var(--ink);
-  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  padding: 0.25em 0.58em;
   text-align: center;
+}
+/* 見出しは1行のまま（「ひゃくの くらい」が1行1字にならない）。分かち書きの空白でも折らない */
+.fig-table td {
+  /* 語（カタカナの名前など）は途中で折らない。空白・句読点では折れる */
+  word-break: keep-all;
 }
 .fig-table th {
   font-weight: 700;
+  word-break: keep-all;
+  white-space: nowrap;
 }
 
 /* グラフ */
+/* グラフは縦 21u まで（作業領域の高さに入る）。選択肢の中の小さなグラフは 26u 幅まで */
 .fig-chart {
-  width: 100%;
-  max-width: calc(var(--u) * 70);
+  /* 幅は決めて置く（親が中身の幅に縮む flex の中でも、横軸の札の幅に左右されない） */
+  width: calc(var(--u) * 32);
+  max-width: min(100%, calc(var(--u) * 40));
+}
+button .fig-chart {
+  max-width: calc(var(--u) * 20);
 }
 .ch-grid {
   stroke: var(--ink-soft);
@@ -249,7 +268,7 @@
   stroke-width: 4;
 }
 .ch-ylabel {
-  font-size: 22px;
+  font-size: max(22px, var(--svg-floor, 0px));
   fill: var(--ink);
   text-anchor: end;
 }
@@ -271,11 +290,30 @@
 .fig-chart__labels {
   display: flex;
   justify-content: space-around;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
 }
+/* 横軸の札は棒・点と同じ幅の枠に置き、語の途中で折らない（「みか／ん」）。入らないときは
+   Figure.tsx（useStaggerLabels）が --text-min まで縮め、なお入らなければ1つおきに下の段へずらす */
+.fig-chart__labels {
+  align-items: flex-start;
+}
+.fig-chart__labels > span {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+}
+.fig-chart__labels[data-stagger] > span {
+  margin-inline: var(--fig-slot-pad, 0px);
+}
+.fig-chart__labels[data-stagger] > span:nth-child(even) {
+  margin-top: var(--fig-stagger, 0px);
+}
 .fig-chart__unit {
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   text-align: left;
 }
 
@@ -298,4 +336,8 @@
   display: block;
   max-width: 100%;
   height: auto;
+}
+/* width を書いていない図は、親が内容の幅になる（flex の中など）と幅が 0 になる。大きさは 23u（ブラウザの既定 300px 相当） */
+.fig-svg :where(svg:not([width])) {
+  width: calc(var(--u) * 23);
 }

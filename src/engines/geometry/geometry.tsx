@@ -6,7 +6,7 @@
  *          垂直・平行な直線
  *  angle … 角の大きさを分度器で測る（数字キー。許容誤差 既定 ±2度）
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { parseNumberInput, RETRY_MESSAGE } from '../../core/answer/number';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -15,6 +15,7 @@ import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
 import type { Figure as FigureData } from '../figure/types';
+import { floorStyle, useSvgTextFloor } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry } from '../numberline/NumPad';
 import type { Judgement } from '../types';
@@ -449,6 +450,8 @@ function DrawView({
   const W = g.w * S + 2 * M;
   const H = g.h * S + 2 * M;
   const vb = { x: 0, y: 0, w: W, h: H };
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
   const tap = (e: React.MouseEvent<SVGSVGElement>) => {
     if (locked) return;
     const q = svgPoint(e, vb);
@@ -525,6 +528,8 @@ function DrawView({
     <div className="mk eng-geo">
       <div className="mk__main">
         <svg
+          ref={svgRef}
+          style={floorStyle(floor)}
           viewBox={`0 0 ${W} ${H}`}
           className={`mk-svg geo-svg${wrong ? ' is-wrong' : ''}`}
           role="img"
@@ -624,13 +629,37 @@ function DrawView({
 /** 角と分度器（中心は角の頂点、0度の線は1つ目の辺にそろえてある） */
 function AngleSvg({ t, revealed }: { t: Extract<GeoTask, { kind: 'angle' }>; revealed: boolean }) {
   const R = 200;
+  const base0 = t.base ?? 0;
+  const ray0 = (deg: number, len: number) => {
+    const a = (deg * Math.PI) / 180;
+    return { x: Math.cos(a) * len, y: -Math.sin(a) * len };
+  };
+  const svgRef = useRef<SVGSVGElement>(null);
+  // 図の範囲（角の辺と分度器が入る最小の枠）
+  const fit = [{ x: 0, y: 0 }, ray0(base0, R + 18), ray0(base0 + t.degrees, R + 18)];
+  if (t.protractor !== false) for (let d = 0; d <= 180; d += 10) fit.push(ray0(base0 + d, R));
+  const pad = 24;
+  const x0 = Math.min(...fit.map((p) => p.x)) - pad;
+  const y0 = Math.min(...fit.map((p) => p.y)) - pad;
+  const x1 = Math.max(...fit.map((p) => p.x)) + pad;
+  const y1 = Math.max(...fit.map((p) => p.y)) + pad;
+  const floor = useSvgTextFloor(svgRef, x1 - x0);
+  // 目盛りの数字は最小まで大きくする。混み合うときは 30度ごと・90度ごとに間引く（目盛りの線は10度ごとのまま）
+  const fsO = Math.max(16, floor);
+  const fsI = Math.max(13, floor);
+  const rO = R - 20 - fsO * 0.7;
+  const rI = rO - (fsO + fsI) * 0.5 - 12;
+  const degFs = Math.max(30, floor);
+  const degPos = ray0(base0 + t.degrees / 2, 90);
+  const labelEvery =
+    [10, 30].find((st) => (rI * (st * Math.PI)) / 180 >= Math.max(fsO, fsI) * 1.9) ?? 90;
   const base = t.base ?? 0;
   const ray = (deg: number, len: number) => {
     const a = (deg * Math.PI) / 180;
     return { x: Math.cos(a) * len, y: -Math.sin(a) * len };
   };
-  const r1 = ray(base, 250);
-  const r2 = ray(base + t.degrees, 250);
+  const r1 = ray(base, R + 18);
+  const r2 = ray(base + t.degrees, R + 18);
   const arcR = 46;
   const a1 = ray(base, arcR);
   const a2 = ray(base + t.degrees, arcR);
@@ -642,14 +671,21 @@ function AngleSvg({ t, revealed }: { t: Extract<GeoTask, { kind: 'angle' }>; rev
       const p1 = ray(base + d, R - len);
       const p2 = ray(base + d, R);
       ticks.push(<line key={d} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} className="geo-ptick" />);
-      if (d % 10 === 0) {
-        const o = ray(base + d, R - 34);
-        const i = ray(base + d, R - 62);
+      if (d % labelEvery === 0) {
+        const o = ray(base + d, rO);
+        const i = ray(base + d, rI);
+        // 答えの「○°」の文字（解説）にぶつかる目盛りの数字は出さない
+        if (
+          revealed &&
+          (Math.hypot(o.x - degPos.x, o.y - degPos.y) < degFs * 1.6 ||
+            Math.hypot(i.x - degPos.x, i.y - degPos.y) < degFs * 1.6)
+        )
+          continue;
         ticks.push(
-          <text key={`o${d}`} x={o.x} y={o.y + 6} className="geo-plabel">
+          <text key={`o${d}`} x={o.x} y={o.y + fsO * 0.37} className="geo-plabel">
             {180 - d}
           </text>,
-          <text key={`i${d}`} x={i.x} y={i.y + 6} className="geo-plabel geo-plabel--in">
+          <text key={`i${d}`} x={i.x} y={i.y + fsI * 0.37} className="geo-plabel geo-plabel--in">
             {d}
           </text>,
         );
@@ -658,16 +694,10 @@ function AngleSvg({ t, revealed }: { t: Extract<GeoTask, { kind: 'angle' }>; rev
   }
   const pb = ray(base, R);
   const pe = ray(base + 180, R);
-  // 図の範囲（角の辺と分度器が入る最小の枠）
-  const fit = [{ x: 0, y: 0 }, r1, r2];
-  if (t.protractor !== false) for (let d = 0; d <= 180; d += 10) fit.push(ray(base + d, R));
-  const pad = 30;
-  const x0 = Math.min(...fit.map((p) => p.x)) - pad;
-  const y0 = Math.min(...fit.map((p) => p.y)) - pad;
-  const x1 = Math.max(...fit.map((p) => p.x)) + pad;
-  const y1 = Math.max(...fit.map((p) => p.y)) + pad;
   return (
     <svg
+      ref={svgRef}
+      style={floorStyle(floor)}
       viewBox={`${x0} ${y0} ${x1 - x0} ${y1 - y0}`}
       className="mk-svg geo-angle"
       role="img"
@@ -687,11 +717,7 @@ function AngleSvg({ t, revealed }: { t: Extract<GeoTask, { kind: 'angle' }>; rev
       <line x1={0} y1={0} x2={r2.x} y2={r2.y} className="geo-ray" />
       <circle r={6} className="geo-pin" />
       {revealed ? (
-        <text
-          x={ray(base + t.degrees / 2, 90).x}
-          y={ray(base + t.degrees / 2, 90).y + 10}
-          className="geo-deg"
-        >
+        <text x={degPos.x} y={degPos.y + degFs * 0.33} className="geo-deg">
           {`${t.degrees}°`}
         </text>
       ) : null}

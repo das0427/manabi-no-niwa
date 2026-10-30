@@ -2,8 +2,17 @@
  * 実験の道具の絵（SVG）。result が null のときは「まだ やっていない」形（てこは ささえで水平、豆電球は消えている）。
  * 色だけにしない: 明るさは光の線の数と長さ、速さは羽根の回る速さと文、てこは傾き。
  */
+import type { CSSProperties } from 'react';
 import type { ExpResult, ExpSetup, Cond } from './model';
 import { circuitCurrent } from './model';
+
+/**
+ * 装置の SVG の高さは 19u。viewBox の高さ vh から「1u が viewBox で何単位か」(= vh / 19) を
+ * --vb に渡し、SVG の中の文字を u で指定できるようにする（experiment.css の .exp-svgtext）。
+ */
+function vbStyle(vh: number): CSSProperties {
+  return { ['--vb' as string]: vh / 19 } as CSSProperties;
+}
 
 export function Apparatus({
   setup,
@@ -46,7 +55,13 @@ function Pendulum({
   const sy = Math.cos(a) * L;
   const swing = result && result.amount ? result.amount : 0;
   return (
-    <svg viewBox="-120 -20 240 285" className="exp-svg" role="img" aria-label="ふりこ">
+    <svg
+      viewBox="-120 -20 240 330"
+      className="exp-svg"
+      style={vbStyle(330)}
+      role="img"
+      aria-label="ふりこ"
+    >
       <line x1={-90} y1={0} x2={90} y2={0} className="exp-bar" />
       <line x1={0} y1={0} x2={-sx} y2={sy} className="exp-guide" />
       <line x1={0} y1={0} x2={sx} y2={sy} className="exp-guide" />
@@ -68,8 +83,9 @@ function Pendulum({
       </g>
       <circle r={5} className="exp-pivot" />
       {result ? (
-        <text x={0} y={258} className="exp-svgtext">
-          {`1おうふく ${result.key}びょう`}
+        <text x={0} y={272} className="exp-svgtext">
+          <tspan x={0}>1おうふく</tspan>
+          <tspan x={0} dy="1.15em">{`${result.key}びょう`}</tspan>
         </text>
       ) : null}
     </svg>
@@ -103,7 +119,13 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
     );
   };
   return (
-    <svg viewBox="-125 -40 250 190" className="exp-svg" role="img" aria-label="てこ">
+    <svg
+      viewBox="-125 -48 250 205"
+      className="exp-svg"
+      style={vbStyle(205)}
+      role="img"
+      aria-label="てこ"
+    >
       <polygon points="0,6 -14,60 14,60" className="exp-stand" />
       <line x1={-40} y1={60} x2={40} y2={60} className="exp-bar" />
       <g transform={`rotate(${tilt})`}>
@@ -130,7 +152,7 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
         </g>
       ) : null}
       {result ? (
-        <text x={0} y={-24} className="exp-svgtext">
+        <text x={0} y={-34} className="exp-svgtext">
           {result.text}
         </text>
       ) : null}
@@ -171,7 +193,13 @@ function Circuit({
   const rays = cur >= 2 ? 10 : cur >= 1 ? 6 : 0;
   const rayLen = cur >= 2 ? 26 : 14;
   return (
-    <svg viewBox="-120 -80 240 240" className="exp-svg" role="img" aria-label="かいろ">
+    <svg
+      viewBox="-120 -80 240 280"
+      className="exp-svg"
+      style={vbStyle(280)}
+      role="img"
+      aria-label="かいろ"
+    >
       {/* 導線: 上の器具から左右へおりて、下の電池へ */}
       <polyline points="-20,-20 -90,-20 -90,110 -64,110" className="exp-wire" />
       <polyline points="20,-20 90,-20 90,110 66,110" className="exp-wire" />
@@ -236,7 +264,7 @@ function Circuit({
         </g>
       )}
       {result ? (
-        <text x={0} y={155} className="exp-svgtext">
+        <text x={0} y={180} className="exp-svgtext">
           {result.text.replace(/（.*）/, '')}
         </text>
       ) : null}

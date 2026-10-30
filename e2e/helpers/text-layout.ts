@@ -392,11 +392,24 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         if (best && best.width > 0 && best.height > 0) {
           const cy = (best.top + best.bottom) / 2;
           const h = Math.min(best.height, fs);
+          let cl = best.left;
+          let cr = best.right;
+          // Chrome は rt が親字より長いとき、親字の Range の外接を rt の幅まで広げる。字形は ruby の箱の中にあり、
+          // rt が隣の仮名の上に張り出すのは JIS X 4051 で許される組み方なので、親字は ruby の箱に詰める
+          if (!isRt && ruby) {
+            let rr: DOMRect | null = null;
+            for (const q of Array.from(ruby.getClientRects()))
+              if (cy >= q.top - 1 && cy <= q.bottom + 1 && (!rr || q.width > rr.width)) rr = q;
+            if (rr && rr.width > 0) {
+              cl = Math.max(cl, rr.left);
+              cr = Math.min(cr, rr.right);
+            }
+          }
           out.push({
             ch,
             node,
-            l: best.left,
-            r: best.right,
+            l: cl,
+            r: cr,
             t: cy - h / 2,
             b: cy + h / 2,
             rt: isRt,
@@ -545,7 +558,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     const clipBy = (
       el: Element,
       r: { l: number; t: number; r: number; b: number },
-    ): { anc: Element; kind: 'clipped' | 'scroll-hidden'; detail?: string } | null => {
+    ): { anc: Element; kind: 'clipped' | 'scroll-hidden' | 'region'; detail?: string } | null => {
+      let region: Element | null = null;
       for (let a = el.parentElement; a && a !== root && a !== document.body; a = a.parentElement) {
         const s = cs(a);
         const ox = s.overflowX;
@@ -569,10 +583,16 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               kind: 'clipped',
               detail: 'スクロールの枠の上・左にはみ出し（スクロールしても見えない）',
             };
+          // スクロールさせる設計の枠（data-scroll-region）の中は 1 字ずつ出さず、枠ごとに (5b) で見る。
+          // 外側の枠で切れるかは続けて見る
+          if (scroll && a.hasAttribute('data-scroll-region')) {
+            region ??= a;
+            continue;
+          }
           return { anc: a, kind: scroll ? 'scroll-hidden' : 'clipped' };
         }
       }
-      return null;
+      return region ? { anc: region, kind: 'region' } : null;
     };
     /** 文字の箱が出てはいけない、いちばん近い枠（線・背景のある祖先。ボタンを含む） */
     const frameOf = (el: Element): Element | null => {
@@ -588,6 +608,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       // 先に祖先の枠で切れるかを見る（スクロールの枠の中の文字は、舞台の外にあっても枠の問題として出す）
       const c = clipBy(bx.el, bx);
       if (c) {
+        if (c.kind === 'region') continue;
         add(c.kind, bx.text, `${describe(bx.el)} ⊂ ${describe(c.anc)}`, rr, c.detail);
         continue;
       }
@@ -629,8 +650,48 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       const b = { l: r.left, t: r.top, r: r.right, b: r.bottom };
       const label = el.getAttribute('aria-label') ?? textOf(el);
       const c = clipBy(el, b);
-      if (c) add(c.kind, label, `${describe(el)} ⊂ ${describe(c.anc)}`, r, c.detail);
-      else if (outOfStage(b)) add('out-of-stage', label, describe(el), r);
+      if (c) {
+        if (c.kind !== 'region')
+          add(c.kind, label, `${describe(el)} ⊂ ${describe(c.anc)}`, r, c.detail);
+      } else if (outOfStage(b)) add('out-of-stage', label, describe(el), r);
+    }
+
+    // ---- (5b) スクロールさせる設計の枠（data-scroll-region）: 枠ごとに、スクロールできる印と高さを見る
+    for (const reg of Array.from(root.querySelectorAll('[data-scroll-region]'))) {
+      if (!shown(reg)) continue;
+      const he = reg as HTMLElement;
+      const s = cs(reg);
+      const ovY = he.scrollHeight > he.clientHeight + 2 && s.overflowY !== 'visible';
+      const ovX = he.scrollWidth > he.clientWidth + 2 && s.overflowX !== 'visible';
+      if (!ovY && !ovX) continue;
+      const rr = reg.getBoundingClientRect();
+      const rect = { left: rr.left, top: rr.top, right: rr.right, bottom: rr.bottom };
+      const scope = reg.parentElement ?? reg;
+      const hasCue = Array.from(scope.querySelectorAll('[data-scroll-cue]')).some((q) => {
+        if (!shown(q)) return false;
+        const qr = q.getBoundingClientRect();
+        return qr.width >= 1 && qr.height >= 1;
+      });
+      if (!hasCue)
+        add(
+          'scroll-hidden',
+          textOf(reg),
+          `${describe(reg)}（data-scroll-region）`,
+          rect,
+          'スクロールできる印（data-scroll-cue）が無い',
+        );
+      if (ovY) {
+        const fs = parseFloat(s.fontSize) || 16;
+        const lh = parseFloat(s.lineHeight) || fs * 1.5;
+        if (he.clientHeight < 4 * lh - 1)
+          add(
+            'clipped',
+            textOf(reg),
+            `${describe(reg)}（data-scroll-region）`,
+            rect,
+            `枠の見える高さが本文の4行未満（${r1(he.clientHeight / lh)}行）`,
+          );
+      }
     }
 
     // ---- (6) 重なり: 文字どうし（em の高さに詰めた箱で比べる）
@@ -653,6 +714,14 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         if (Bx.el.contains(A.el) && A.svg && Bx.svg) continue;
         const ow = Math.min(A.r, Bx.r) - Math.max(A.l, Bx.l);
         const oh = Math.min(A.b, Bx.b) - Math.max(A.t, Bx.t);
+        // 長いふりがなの張り出し: rt が上（相手の字の行の上側）で、横の重なりが rt の字の 0.5 字以内なら、
+        // 同じ行の隣の字の上に張り出しているだけ。前の行に重なる（rt の中心が相手より下）ときは出す
+        if (A.rt !== Bx.rt) {
+          const rtB = A.rt ? A : Bx;
+          const other = A.rt ? Bx : A;
+          const rtFs = rtB.b - rtB.t;
+          if ((rtB.t + rtB.b) / 2 < (other.t + other.b) / 2 && ow <= 0.5 * rtFs + 1) continue;
+        }
         if (ow > 1.5 && oh > 0.3 * Math.min(A.b - A.t, Bx.b - Bx.t)) {
           add(
             'overlap-text',
@@ -1077,7 +1146,9 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               !b.spaceBefore &&
               !BREAK_OK_AFTER.has(a.ch) &&
               !END_NG.has(a.ch) &&
-              !START_NG.has(b.ch)
+              !START_NG.has(b.ch) &&
+              // 始め括弧の直前は、空白が無くても改行してよい（「…は／「…」」。誤検出だった）
+              !END_NG.has(b.ch)
             ) {
               if (inBtn) add('button-split', text, where, rect, '分かち書きの語の途中');
               else add('wakachi-split', text, where, rect, full);

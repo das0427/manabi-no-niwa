@@ -47,8 +47,9 @@
 .eng-order__main--column .eng-order__ghost {
   min-height: calc(var(--u) * 6);
   width: 100%;
+  max-width: none;
 }
 .eng-order__main--column .tk-card__label {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   text-align: left;
 }

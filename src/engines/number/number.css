@@ -17,8 +17,35 @@
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1);
+  max-width: 100%;
   font-size: calc(var(--u) * 3);
   font-weight: 700;
+}
+/* 札（「じゅうの くらい」等）は回答欄の上に置き、幅を回答欄に合わせる（舞台の外に出さない） */
+.eng-number__field:has(.eng-number__label) {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  row-gap: calc(var(--u) * 0.6);
+}
+.eng-number__field:has(.eng-number__label) .eng-number__label {
+  grid-column: 1;
+  grid-row: 1;
+  /* 札と回答欄は同じ幅の列（回答欄が札の幅まで広がる）。長い札だけ 28u で折る */
+  max-width: calc(var(--u) * 28);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
+  line-height: 1.3;
+  text-align: center;
+}
+.eng-number__field:has(.eng-number__label) .eng-number__box {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: stretch;
+}
+.eng-number__field:has(.eng-number__label) .eng-number__unit {
+  grid-column: 2;
+  grid-row: 2;
 }
 .eng-number__box {
   min-width: calc(var(--u) * 14);
@@ -42,12 +69,26 @@
   border-style: dashed;
 }
 .eng-number__pad {
+  /* キーの高さ: min(7u, (作業領域の高さ − 間隔 3×0.6u − キーの影の分 0.4u) / 4)・下限 6u。
+     作業領域の高さは .unit__work--number を size コンテナにして cqh で得る（解説の板が開いて狭くなっても追従）。
+     キーは主操作なので --fit で縮めず、縮める前の --u0 を使う（6u 以上、DESINGN.md 18章） */
+  --u: var(--u0);
+  --key-h: max(calc(var(--u0) * 6), min(calc(var(--u0) * 7), calc((100cqh - var(--u0) * 2.2) / 4)));
   display: grid;
-  grid-template-columns: repeat(4, calc(var(--u) * 6));
-  gap: calc(var(--u) * 0.8);
+  grid-template-columns: repeat(4, calc(var(--u0) * 6));
+  grid-auto-rows: var(--key-h);
+  gap: calc(var(--u0) * 0.6);
+}
+.eng-number__pad--done {
+  /* 解説では答えを見せていてキーは使えない。解説の板が作業領域を狭くするため、横の場所（列の幅）はそのままにして
+     見えなくし、高さは 0 にする（6u×4 のキーの高さで図と回答欄が板の下へ押し出されないように） */
+  visibility: hidden;
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
 }
 .numkey {
-  height: calc(var(--u) * 5.6);
+  height: var(--key-h);
   white-space: nowrap;
   font: inherit;
   font-size: calc(var(--u) * 3.2);
@@ -62,13 +103,16 @@
   opacity: 0.5;
 }
 .numkey--fn {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
 }
 .numkey--ok {
   grid-column: span 2;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   padding: 0;
   background: var(--sun);
+  /* キーの列の中（2列ぶん）に収める */
+  min-width: 0;
+  overflow: visible;
 }
 /* 欄の後ろの単位（「□ cm」） */
 .eng-number__unit {
@@ -77,6 +121,28 @@
 /* 表示上だけの数字の区切り（digitGroup）。文字は入れず、すき間だけ */
 .num-group__g--sep {
   margin-left: 0.3em;
+}
+
+/* 作業領域の高さ（cqh）をキーの寸法に使う。位置は top/bottom で決まるので大きさは変わらない */
+.unit__work--number {
+  container-type: size;
+}
+/* 左の列（図と回答欄）が広くても、キーの区画を作業領域の外へ押し出さない */
+.unit__work.unit__work--number {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.unit__work--number .unit__figure,
+.unit__work--number .eng-number__fields {
+  min-width: 0;
+}
+/* 図は左の列の幅の中、回答欄（札つきで約 15u）を除いた高さの中に収める */
+.unit__work--number .unit__figure svg {
+  max-width: 100%;
+  max-height: calc(100cqh - var(--u0) * 17);
+}
+/* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らない */
+.unit__work--number .fig-table th {
+  white-space: nowrap;
 }
 
 /* ---- 筆算（column）: ますの幅 6u・答えのます 5.6u（キーと同じ）・式の数字の行 3.6u。寸法は column.ts と合わせる ---- */
@@ -153,7 +219,7 @@
 .num-col__memo {
   padding: 0;
   font: inherit;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   color: var(--ink);
   background: transparent;
   border: none;

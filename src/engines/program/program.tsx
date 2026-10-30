@@ -10,7 +10,7 @@
  * 正答: ゴールに着くこと（列の違いは問わない）。maxCards があれば札の数がそれ以下であること。
  * デバッグ問題は initial（誤った列）が最初から並ぶ。
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Item, ItemBase, RichText } from '../../curriculum/types';
 import { Illust } from '../../illust/Illust';
 import type { EngineProps, Judgement } from '../types';
@@ -278,6 +278,41 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
   const [shown, setShown] = useState<{ steps: Step[]; n: number } | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
+  // 命令の列が枠より長いときだけスクロールさせ、「▼ まだ あるよ」の印を出す（DESINGN.md 17章）
+  const stripRef = useRef<HTMLDivElement>(null);
+  const [stripMore, setStripMore] = useState(false);
+  const [stripEnd, setStripEnd] = useState(false);
+  const measureStrip = useRef<() => void>(() => undefined);
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el) return;
+    const measure = () => {
+      setStripMore(el.scrollHeight > el.clientHeight + 2);
+      setStripEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 2);
+    };
+    measureStrip.current = measure;
+    measure();
+    el.addEventListener('scroll', measure);
+    if (typeof ResizeObserver === 'undefined')
+      return () => el.removeEventListener('scroll', measure);
+    // 印の出入りで枠の高さが変わるので、測り直しは次のフレームに回す（ResizeObserver の循環を避ける）
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    });
+    ro.observe(el);
+    const mo = new MutationObserver(measure);
+    mo.observe(el, { childList: true, subtree: true });
+    return () => {
+      el.removeEventListener('scroll', measure);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, []);
+  // 札を足す・消す・正答を見せるたびに、描いた直後に測り直す（印が1フレーム遅れて出ないように）
+  useLayoutEffect(() => measureStrip.current());
 
   const running = shown !== null && shown.n < shown.steps.length;
   const locked = disabled || revealed || running;
@@ -514,6 +549,8 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
           className={`prog-strip${wrong ? ' is-wrong' : ''}`}
           aria-label="ならべた ふだ"
           data-testid="prog-strip"
+          ref={stripRef}
+          data-scroll-region="strip"
         >
           {renderCmds(program, [])}
           {!revealed ? (
@@ -529,6 +566,11 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
             </button>
           ) : null}
         </div>
+        {stripMore ? (
+          <span className="prog-strip__more" data-scroll-cue="" aria-hidden>
+            {stripEnd ? '▲ うえにも あるよ' : '▼ まだ あるよ'}
+          </span>
+        ) : null}
         {!revealed ? (
           <>
             <div className="prog-palette" role="group" aria-label="ふだ">

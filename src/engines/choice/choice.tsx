@@ -2,7 +2,7 @@
  * choice エンジン: 選択肢から選ぶ（1つ、またはすべて選ぶ）。
  * 1つ選ぶ問題はタップでそのまま答える（v1 と同じ）。すべて選ぶ問題は「こたえあわせ」で答える。
  */
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import type { ChoiceItem } from '../../curriculum/types';
 import { displayOrder as sharedOrder, displayPosition } from '../shared/order';
 import { Rt } from '../../text/Rt';
@@ -38,19 +38,89 @@ export function visibleOptionIndices(
  * column は「1つでも16字超かつ3つ以下」のときだけ。それ以外は指定（無ければ row）。
  * 絵・図の選択肢が混じるときは指定を尊重する（寸法が文字だけの札と違うため）。
  */
+/** 絵・図の選択肢に添える文字が「無い、または 4字以下」（絵が主役） */
+const figureOnly = (label: string | undefined) =>
+  label === undefined || [...plainText(label)].length <= 4;
+
 export function autoLayout(
   options: readonly { label?: string; figure?: unknown }[],
   declared: 'row' | 'grid' | 'column' | undefined,
   hasFigure: boolean,
 ): 'row' | 'grid' | 'column' {
   const textOnly = options.every((o) => o.figure === undefined && o.label !== undefined);
-  if (!textOnly) return declared ?? 'row';
+  if (!textOnly) {
+    // 絵・図だけの選択肢（label が無い、または 4字以下）は、パックが column を指定しても横一列にする
+    // （縦に並べると3つ目が舞台の下や吹き出しの下に出る。g1.math.numbers-10/4）。入らない分は絵を縮める（choice.css）
+    if (
+      declared === 'column' &&
+      options.every((o) => o.figure !== undefined && figureOnly(o.label))
+    )
+      return 'row';
+    return declared ?? 'row';
+  }
   if (declared === 'grid') return 'grid';
   const lens = options.map((o) => [...plainText(o.label ?? '')].length);
   if (options.length >= 4) return hasFigure && lens.every((n) => n <= 8) ? 'row' : 'grid';
   if (hasFigure || lens.every((n) => n <= 8)) return 'row';
   if (lens.some((n) => n > 16)) return 'column';
   return declared === 'column' ? 'row' : (declared ?? 'row');
+}
+
+/** 図 1 つに並ぶ絵の数（横幅の見積り用。絵以外の図は 1） */
+function picCount(fig: unknown): number {
+  const f = fig as { kind?: string; count?: number; items?: unknown[] } | undefined;
+  if (!f || typeof f !== 'object') return 1;
+  if (f.kind === 'illust') {
+    const n = f.count ?? 1;
+    return n > 10 ? 5 : Math.max(1, n);
+  }
+  if (f.kind === 'row' && Array.isArray(f.items))
+    return Math.max(
+      1,
+      f.items.reduce<number>((a, x) => a + picCount(x), 0),
+    );
+  return 1;
+}
+
+/**
+ * 絵・図だけの選択肢を横一列に並べるときの、絵の縮みの手がかり（text-layout-fixes R3）。
+ * 並べる数 --pics-n と、全部の選択肢の絵の合計 --pics-total を CSS に渡す。
+ * CSS は「絵 ≤ min(既定, (作業領域の幅 − 間隔・余白) ÷ 絵の合計)」に縮める（既定のままで入るときは変わらない）。
+ */
+export function picsProps(
+  options: readonly { label?: string; figure?: unknown }[],
+  layout: 'row' | 'grid' | 'column',
+  /** 選択肢の列の横に並ぶものの幅（u。聞く問題で「きく」の札を左に置くとき）。既定 0 */
+  side = 0,
+): { className: string; style?: CSSProperties } {
+  // 絵・図だけ（文字が無い、または 4字以下）の選択肢。長い文字が付くときは縮めず、今までどおり折り返す
+  if (
+    layout !== 'row' ||
+    options.length === 0 ||
+    !options.every((o) => o.figure !== undefined && figureOnly(o.label))
+  )
+    return { className: '' };
+  const total = options.reduce((a, o) => a + picCount(o.figure), 0);
+  return {
+    className: ' is-pics',
+    style: {
+      '--pics-n': options.length,
+      '--pics-total': total,
+      '--pics-side': side,
+    } as CSSProperties,
+  };
+}
+
+/**
+ * 聞く問題で、選択肢に絵・図があるとき「きく」の札を上の段（補助の寸法）に置くか。
+ * 絵・図が3つ以下で1つに1つずつ（時計・図1つ）なら左の列のまま（上の段に置くと縦が足りず、時計が縮んで数字が重なる。
+ * g4.en.time-days/14）。4つ以上・1つの中に絵が複数（数えるねこ・色のボールと物）は上の段（左の列だと横が足りない）
+ */
+export function earOnTop(options: readonly { figure?: unknown }[]): boolean {
+  if (!options.some((o) => o.figure !== undefined)) return false;
+  const all = options.every((o) => o.figure !== undefined);
+  const total = options.reduce((a, o) => a + (o.figure !== undefined ? picCount(o.figure) : 0), 0);
+  return !(all && options.length <= 3 && total === options.length);
 }
 
 const labelsOf = (item: Pick<ChoiceItem, 'options'>) =>
@@ -139,9 +209,19 @@ function ChoiceView({
     item.layout,
     item.figure !== undefined,
   );
+  const pics = picsProps(
+    shown.map((i) => ({
+      label: typeof item.options[i]!.label === 'string' ? item.options[i]!.label : undefined,
+      figure: item.options[i]!.figure,
+    })),
+    layout,
+  );
   return (
     <div className="eng-choice">
-      <div className={`eng-choice__options eng-choice__options--${layout}`}>
+      <div
+        className={`eng-choice__options eng-choice__options--${layout}${pics.className}`}
+        style={pics.style}
+      >
         {shown
           .map((i) => ({ o: item.options[i]!, i }))
           .map(({ o, i }, pos) => (

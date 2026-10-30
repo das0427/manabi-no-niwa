@@ -107,6 +107,67 @@ function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
   return [head, body, tail];
 }
 
+const NOBR_MAX = 10;
+/** 1字の並びの上限（回文の「た・け・や・ぶ・や・け・た」は13字。解説の1行は20字ほど） */
+const NOBR_MAX_DOTS = 15;
+const PUNCT_BRACKET = OPENERS + CLOSERS_PUNCT;
+const EXPR_CH = /^[＋−×÷＝＜＞=<>+()（）□]$/u;
+/** 式に使う字の並び（数字は小数・桁区切りの . , を含めて1つにする） */
+const EXPR = String.raw`(?:\d+(?:[.,]\d+)*|[＋−×÷＝＜＞=<>+()（）□])+`;
+/** 1字ずつ「・」でつないだ並び（き・つ・つ・き）。前後が語の続きでないものだけ */
+const BOUND = String.raw`[\s、。，．！？!?「」『』（）()\[\]【】〈〉《》“”‘’]`;
+const NOBR_RE = new RegExp(
+  String.raw`(?<=^|${BOUND})[^\s・]・(?:[^\s・]・)*[^\s・](?=$|${BOUND})|${EXPR}`,
+  'gu',
+);
+
+/**
+ * 表示だけの nowrap の単位を .rt-nobr で包む（読み上げ・plainText は変えない。DESINGN.md 17章）。
+ *  - 数字の並び＋直後の1字（「1字」「4音」「7こ」「60分」。空白・句読点・括弧・数字・英字は付けない）
+ *  - 空白を含まない式（数字・＋−×÷＝＜＞・括弧・□ の3字以上。「10＋4＝14」）
+ *  - 1字ずつ「・」でつないだ並び（「き・つ・つ・き」）
+ * 前の始め括弧・後ろの終わり括弧と句読点も包む。10字（「・」の並びは15字。括弧は数えない）を超えるものは包まない（行より長い nowrap ではみ出すため）
+ */
+export function wrapNobr(s: string, key = ''): ReactNode[] {
+  const out: ReactNode[] = [];
+  let last = 0;
+  let n = 0;
+  for (const m of s.matchAll(NOBR_RE)) {
+    let end = m.index + m[0].length;
+    if (/\d$/.test(m[0]) && !m[0].includes('・')) {
+      const next = [...s.slice(end)][0];
+      if (
+        next !== undefined &&
+        !/[\s\dA-Za-z]/u.test(next) &&
+        !PUNCT_BRACKET.includes(next) &&
+        !EXPR_CH.test(next)
+      )
+        end += next.length;
+    }
+    const piece = s.slice(m.index, end);
+    const len = [...piece].length;
+    if (
+      len > (m[0].includes('・') ? NOBR_MAX_DOTS : NOBR_MAX) ||
+      len < 2 ||
+      (len < 3 && end === m.index + m[0].length)
+    )
+      continue;
+    // 直前の始め括弧・直後の終わり括弧と句読点も同じ nowrap に入れる（「／た・け・や・ぶ」と行末に始め括弧が残らないように）
+    let from = m.index;
+    while (from > last && OPENERS.includes(s[from - 1] as string)) from--;
+    while (end < s.length && CLOSERS_PUNCT.includes(s[end] as string)) end++;
+    if (from > last) out.push(s.slice(last, from));
+    out.push(
+      <span key={`${key}n${n++}`} className="rt-nobr">
+        {s.slice(from, end)}
+      </span>,
+    );
+    last = end;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out.length ? out : [s];
+}
+
 function renderGlue(tk: Token, k: string): ReactNode {
   if (tk.t === 'blank') return <span key={k} className="rt-blank" aria-label="あいている ところ" />;
   if (tk.t === 'ruby')
@@ -141,11 +202,32 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
       );
     }
     switch (tk.t) {
-      case 'text':
-        return <Fragment key={k}>{textParts(ts, i, ctx)[1]}</Fragment>;
-      case 'ruby':
-        // ふりがなを出さない語（isGlue でない）
+      case 'text': {
+        let body = textParts(ts, i, ctx)[1];
+        // ふりがなを出さない語が続くときは、数字の並びを語の頭の1字と離さない（下の ruby で包む）
+        const next = ts[i + 1];
+        if (next?.t === 'ruby' && !isGlue(next, ctx)) body = body.replace(/\d+$/, '');
+        return <Fragment key={k}>{wrapNobr(body, k)}</Fragment>;
+      }
+      case 'ruby': {
+        // ふりがなを出さない語（isGlue でない）。直前が数字なら、数字の並びと語の頭の1字を1つの nowrap にする
+        const prev = ts[i - 1];
+        const digits =
+          prev?.t === 'text' ? /\d+$/.exec(textParts(ts, i - 1, ctx)[1])?.[0] : undefined;
+        if (digits) {
+          const [first, ...rest] = [...tk.base];
+          return (
+            <Fragment key={k}>
+              <span className="rt-nobr">
+                {digits}
+                {first}
+              </span>
+              {rest.join('')}
+            </Fragment>
+          );
+        }
         return <Fragment key={k}>{tk.base}</Fragment>;
+      }
       case 'frac':
         return (
           <span key={k} className="rt-frac-wrap">

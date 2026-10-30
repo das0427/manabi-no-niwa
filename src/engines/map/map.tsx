@@ -18,7 +18,7 @@ import { plainText, spokenReading } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { answerTiling, checkBuild, judgeBuild, type BuildItem } from '../build/build';
-import { floorStyle, useSvgTextFloor } from '../figure/svgText';
+import { floorStyle, useSvgTextFloor, useWidenToText } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps, type ViewBox } from '../numberline/kit';
 import { TapCard, useMarks } from '../order/shared';
 import type { Judgement } from '../types';
@@ -476,6 +476,7 @@ function RegionSwatch({ id }: { id: RegionId }) {
   const r = REGION_BY_ID[id];
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, 60);
+  useWidenToText(svgRef, floor);
   const fs = Math.max(18, floor);
   return (
     <svg
@@ -617,6 +618,7 @@ function JapanMap({
   const vbx: ViewBox = vb;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, vb.w);
+  useWidenToText(svgRef, floor);
   // 番号・名前・記号の文字は最小まで大きくする（丸もそれに合わせる）
   const badgeFs = Math.max(vb.w * 0.044, floor);
   const nameFs = Math.max(vb.w * 0.036, floor);
@@ -1027,6 +1029,7 @@ function PickView({ item, ctx, revealed, wrongMark, disabled, submit }: View) {
 function CompassRose({ dir }: { dir: Dir8 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, 220);
+  useWidenToText(svgRef, floor);
   const a = (DIRS.indexOf(dir) * 45 * Math.PI) / 180;
   const R = 80;
   const tip = { x: Math.sin(a) * R, y: -Math.cos(a) * R };
@@ -1310,6 +1313,7 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
   const pad = 40;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, W + 2 * pad);
+  useWidenToText(svgRef, floor);
   const markFs = Math.max(34, floor);
   const vb: ViewBox = { x: -pad, y: -pad, w: W + 2 * pad, h: H + 2 * pad };
   const C = (p: [number, number]) => ({ x: (p[0] + 0.5) * CELL, y: (p[1] + 0.5) * CELL });

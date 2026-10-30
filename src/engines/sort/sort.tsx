@@ -154,10 +154,10 @@ function SortView({
     revealed ? (boxesOf(item.cards[i]!)[0] ?? null) : (where[i] ?? null);
   const complete = visible.every((i) => where[i] !== null);
   const pooled = order.filter((i) => boxOf(i) === null);
-  // 文の札（8字超）が5枚以上なら2列で縦を詰める。絵・短い札は横に折り返すほうが低く収まる
-  const cols =
-    visible.length >= 5 &&
-    visible.some((i) => [...plainText(item.cards[i]!.label ?? '')].length > 8);
+  // 文の札（8字超）が5枚以上なら複数列で縦を詰める。絵・短い札は横に折り返すほうが低く収まる。
+  // 札の列は作業領域の幅いっぱい（92u）。6枚以上は3列（1列 29u 前後。札の幅 24u 以上）、5枚は2列
+  const sentences = visible.some((i) => [...plainText(item.cards[i]!.label ?? '')].length > 8);
+  const cols = sentences && visible.length >= 5 ? (visible.length >= 6 ? 3 : 2) : 0;
 
   const pressCard = (i: number) => {
     if (locked) return;
@@ -183,7 +183,7 @@ function SortView({
   };
 
   return (
-    <div className={['tk-frame', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
+    <div className={['tk-frame', 'tk-frame--band', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
       <div className="tk-frame__main">
         <div className="eng-sort__boxes">
           {shownBoxes.map((b) => (
@@ -222,7 +222,10 @@ function SortView({
           ))}
         </div>
         <div
-          className={['eng-sort__pool', cols ? 'eng-sort__pool--cols' : ''].join(' ')}
+          className={[
+            'eng-sort__pool',
+            cols ? `eng-sort__pool--cols eng-sort__pool--cols${cols}` : '',
+          ].join(' ')}
           role="group"
           aria-label="わける もの"
         >
@@ -240,7 +243,7 @@ function SortView({
         </div>
       </div>
       {!auto && !revealed ? (
-        <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} />
+        <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} band />
       ) : null}
     </div>
   );

@@ -112,6 +112,81 @@
   justify-content: center;
 }
 /*
+ * 図が先に縮む（DESINGN.md 5.1）。--fig-max は UnitRunner が図の自然な高さと不足から書く。
+ * 文字の図（.fig-text・.fig-table）には書かない（縮めず、横並びかスクロールに任せる）
+ */
+.unit__work > .unit__figure {
+  max-height: var(--fig-max, none);
+  min-height: 0;
+  /* 高さは --fig-max で決める（flex の縮みで 0 まで潰さない） */
+  flex-shrink: 0;
+}
+/* 絵を並べた図は、図の中の --u ごと縮める（--fig-k は UnitRunner が書く） */
+.unit__work > .unit__figure {
+  --u: calc(var(--u0) * var(--fit, 1) * var(--fig-k, 1));
+}
+.unit__work > .unit__figure svg:not(svg svg),
+.unit__work > .unit__figure img {
+  max-width: 100%;
+}
+/* 縮めるときだけ（data-fig-fit。UnitRunner が --fig-max と一緒に付ける）、中の SVG・画像の高さを上書きする。
+   収まる図は各エンジン・図の寸法の指定のまま（height: auto をいつも付けると、CSS で高さを決めた図の形が変わる） */
+.unit__work[data-fig-fit] > .unit__figure svg:not(svg svg),
+.unit__work[data-fig-fit] > .unit__figure img {
+  max-height: var(--fig-max);
+  height: auto;
+}
+/* 幅の属性がある図・画像は、縮めたとき縦横比を保って幅も縮む（幅の属性が無い SVG は 23u の幅のまま） */
+.unit__work[data-fig-fit] > .unit__figure svg[width]:not(svg svg),
+.unit__work[data-fig-fit] > .unit__figure img {
+  width: auto;
+}
+/* 横並び: 図が高く幅が狭いとき、左に図・右にエンジン（UnitRunner が data-layout を付ける） */
+.unit__work[data-layout='side'] {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: safe center;
+  align-content: safe center;
+  column-gap: calc(var(--u) * 3);
+}
+.unit__work[data-layout='side'] > .unit__figure {
+  grid-column: 1;
+}
+.unit__work[data-layout='side'] > .unit__engine {
+  grid-column: 2;
+}
+/* 下限まで縮めても収まらないとき: 重ねずに作業領域の中でスクロール（上そろえ。右下に ▼）。外へは描かない */
+.unit__work[data-scroll-region='work'] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  align-content: start;
+  padding-right: calc(var(--u) * 3.6);
+  /* 上端の札・選択肢のふりがな・影が枠の上で切れない（上へのはみ出しはスクロールしても見えない: g3.ja.proverbs/61。番号の丸は札の角から 1.2u 出る） */
+  padding-top: calc(var(--u) * 1.4);
+}
+.unit__work[data-layout='side'][data-scroll-region='work'] {
+  align-items: start;
+}
+.unit__work[data-scroll-region='work'][data-scroll-cue]::after {
+  content: '▼';
+  position: sticky;
+  grid-column: 1 / -1;
+  align-self: end;
+  justify-self: end;
+  bottom: 0;
+  /* 末尾の隙間（gap 2u）と ▼ の高さの分だけ引き上げて、中身の高さを増やさない。右の余白（padding）に置く */
+  width: calc(var(--text-min) * 1.2);
+  height: calc(var(--text-min) * 1.2);
+  margin: calc(var(--u) * -2 - var(--text-min) * 1.2) calc(var(--u) * -3.4) 0 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  pointer-events: none;
+}
+/*
  * 絵の帯つきの聞く問題（えいごの えほん: 4ページの絵の帯＋きくの札＋選択肢）は、帯と選択肢の絵を小さくして、
  * 作業領域（問題文の下から下の帯の上まで）に収める
  */
@@ -183,7 +258,8 @@
 }
 .unit__explain {
   position: absolute;
-  left: calc(var(--u) * 12);
+  /* 解説ではヒントのボタンが無いので、左端は 4u（行が減る） */
+  left: calc(var(--u) * 4);
   right: calc(var(--u) * 24);
   bottom: calc(var(--u) * 1.6);
   /* 22u まで（作業領域は板の上まで。収まらない長さは板の中で縦にスクロール）。上が切れないよう上そろえ */
@@ -199,14 +275,14 @@
   align-items: start;
   column-gap: 0;
   row-gap: calc(var(--u) * 0.8);
-  font-size: calc(var(--u) * 2.1 * var(--ts, 1));
+  font-size: max(calc(var(--u) * 2.1 * var(--ts, 1)), var(--text-min));
   line-height: 1.4;
 }
 .unit__explain-head {
   margin: 0 calc(var(--u) * 1.6) 0 0;
   white-space: nowrap;
   font-weight: 700;
-  font-size: calc(var(--u) * 2.4);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min));
 }
 .unit__explain-text {
   grid-column: 2;
@@ -230,6 +306,14 @@
   max-width: 100%;
   max-height: calc(var(--u) * 12);
   width: auto;
+}
+/* 表・文の図は切らない（SVG だけ 12u まで。長いときは板が 22u でスクロール） */
+.unit__explain-figure:has(.fig-table, .fig-text) {
+  max-height: none;
+  overflow: visible;
+}
+.unit__explain-figure:has(.fig-table, .fig-text) > * {
+  max-height: none;
 }
 /* 板が 22u を超えて縦にスクロールするとき、下端に ▼（UnitRunner が data-scroll-cue を付け外しする） */
 .unit__scroll-cue {

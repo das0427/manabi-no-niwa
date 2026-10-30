@@ -2,6 +2,8 @@
 
 /* カード（押せるもの）。主操作の寸法（6u 以上） */
 .tk-card {
+  /* 番号の丸の寸法は 3u。--fit で縮んでも、中の字（--text-min が下限）が丸からはみ出さない大きさを下限にする */
+  --badge: max(calc(var(--u) * 3), calc(var(--text-min, 0px) * 1.6));
   position: relative;
   display: inline-flex;
   flex-direction: column;
@@ -74,11 +76,11 @@
   position: absolute;
   top: calc(var(--u) * -1.2);
   left: calc(var(--u) * -1.2);
-  min-width: calc(var(--u) * 3);
-  height: calc(var(--u) * 3);
+  min-width: var(--badge);
+  height: var(--badge);
   padding: 0 calc(var(--u) * 0.4);
   border: calc(var(--u) * 0.3) solid var(--ink);
-  border-radius: calc(var(--u) * 1.4);
+  border-radius: calc(var(--badge) * 0.47);
   background: var(--sun);
   color: var(--ink);
   font-size: max(calc(var(--u) * 1.8), var(--text-min, 0px));
@@ -86,6 +88,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  z-index: 3;
+}
+
+/* ui.css の `.tk-card > :not(.mark) { position: relative }`（字を ○ の前に出す）に負けない詳しさで、丸は絶対配置のまま */
+.tk-card > .tk-badge.tk-badge {
+  position: absolute;
   z-index: 3;
 }
 
@@ -134,4 +142,24 @@
   align-items: center;
   justify-content: safe center;
   gap: calc(var(--u) * 2.4);
+}
+/* 下の帯に置く こたえあわせ（sort。つぎへ の左 3u。右端から 21.5u・下端から 2u。DESINGN.md 5.1）。
+   .stage は transform を持つので、position: fixed の基準は舞台になる。fixed は作業領域のスクロールの範囲に入らないので、
+   作業領域の高さ（fit の測り・スクロールの要否）を押し上げず、作業領域が枠で切れても隠れない。
+   舞台の --u0 で置く（作業領域の中の --u は --fit で縮む） */
+/* .eng-check（choice.css。unit.css の :has が吹き出しを避けるための印）と同じ詳しさだと読み込み順で負けるので .tk-check も付ける */
+.tk-check.tk-check--band {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  /* 幅は 17.5u 以内（吹き出しの右端が右から 39u。unit.css）。「こたえあわせ」6字 + 余白 */
+  min-width: calc(var(--u) * 14);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  padding-inline: calc(var(--u) * 0.8);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
+  z-index: 4;
+}
+/* 帯に置くときは、札の列が作業領域の幅いっぱい（こたえあわせ の列を取らない） */
+.tk-frame--band {
+  grid-template-columns: minmax(0, 1fr);
 }

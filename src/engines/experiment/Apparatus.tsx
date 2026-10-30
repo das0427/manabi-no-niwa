@@ -2,7 +2,8 @@
  * 実験の道具の絵（SVG）。result が null のときは「まだ やっていない」形（てこは ささえで水平、豆電球は消えている）。
  * 色だけにしない: 明るさは光の線の数と長さ、速さは羽根の回る速さと文、てこは傾き。
  */
-import type { CSSProperties } from 'react';
+import { useRef, type CSSProperties } from 'react';
+import { floorStyle, useSvgTextFloor } from '../figure/svgText';
 import type { ExpResult, ExpSetup, Cond } from './model';
 import { circuitCurrent } from './model';
 
@@ -94,6 +95,25 @@ function Pendulum({
 
 function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
   const step = 17;
+  // SVG の字は --text-min を下限にする（viewBox の幅 250 に対する単位）
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, 250);
+  // 目盛りの数字（既定 1.9u 相当）が引き上げで隣と重なるときは1つおきに間引く
+  const tickFs = Math.max((205 / 19) * 1.9, floor);
+  const skip = tickFs * 0.62 + 3 > step ? 2 : 1;
+  // 間引くときも、おもりを下げた位置の数字は残す（問題文が「2の 位置」と言うので）。残す数字から skip 未満の隣は消す
+  const keptTicks = (must: number): Set<number> => {
+    const out = new Set<number>();
+    if (Number.isInteger(must) && must >= 1 && must <= 6) out.add(must);
+    for (let p = 1; p <= 6; p++) if ([...out].every((q) => Math.abs(q - p) >= skip)) out.add(p);
+    return out;
+  };
+  const keepL = keptTicks(Number(cond.leftPos));
+  const keepR = keptTicks(Number(cond.rightPos));
+  // 重さの字（既定 2u 相当）は、支えの横木（y=60）の下に置いて、おもりと線に重ならないようにする
+  const labelFs = Math.max((205 / 19) * 2, floor);
+  // 結果の文は目盛りの数字の上に置く（引き上げで数字が大きくなっても重ならない）
+  const resultY = Math.min(-34, -9 - tickFs * 0.85 - Math.max((205 / 19) * 2.2, floor) * 0.25 - 2);
   const tilt = result ? (result.amount ?? 0) * 8 : 0;
   const block = (side: -1 | 1, pos: number, w: number) => {
     const x = side * pos * step;
@@ -112,7 +132,11 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
             className="exp-weight"
           />
         ))}
-        <text x={x} y={26 + n * hgt + 14} className="exp-svgtext exp-svgtext--small">
+        <text
+          x={x}
+          y={Math.max(26 + n * hgt + 4 + labelFs * 0.9, 62 + labelFs * 0.9)}
+          className="exp-svgtext exp-svgtext--small"
+        >
           {`${w}g`}
         </text>
       </g>
@@ -120,9 +144,10 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
   };
   return (
     <svg
+      ref={svgRef}
       viewBox="-125 -48 250 205"
       className="exp-svg"
-      style={vbStyle(205)}
+      style={{ ...vbStyle(205), ...floorStyle(floor) }}
       role="img"
       aria-label="てこ"
     >
@@ -133,12 +158,16 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
         {[1, 2, 3, 4, 5, 6].flatMap((p) => [
           <line key={`l${p}`} x1={-p * step} y1={-4} x2={-p * step} y2={4} className="exp-tick" />,
           <line key={`r${p}`} x1={p * step} y1={-4} x2={p * step} y2={4} className="exp-tick" />,
-          <text key={`tl${p}`} x={-p * step} y={-9} className="exp-svgtext exp-svgtext--tiny">
-            {p}
-          </text>,
-          <text key={`tr${p}`} x={p * step} y={-9} className="exp-svgtext exp-svgtext--tiny">
-            {p}
-          </text>,
+          keepL.has(p) ? (
+            <text key={`tl${p}`} x={-p * step} y={-9} className="exp-svgtext exp-svgtext--tiny">
+              {p}
+            </text>
+          ) : null,
+          keepR.has(p) ? (
+            <text key={`tr${p}`} x={p * step} y={-9} className="exp-svgtext exp-svgtext--tiny">
+              {p}
+            </text>
+          ) : null,
         ])}
         {block(-1, Number(cond.leftPos), Number(cond.leftWeight))}
         {block(1, Number(cond.rightPos), Number(cond.rightWeight))}
@@ -152,7 +181,7 @@ function Lever({ cond, result }: { cond: Cond; result: ExpResult | null }) {
         </g>
       ) : null}
       {result ? (
-        <text x={0} y={-34} className="exp-svgtext">
+        <text x={0} y={resultY} className="exp-svgtext">
           {result.text}
         </text>
       ) : null}

@@ -162,6 +162,33 @@ describe('画面', () => {
     fireEvent.click(screen.getByTestId('check'));
     expect(p.submit).toHaveBeenCalledWith([0, 1, 0, 1]);
   });
+  it('こたえあわせは下の帯の位置（band）。文の札は 5枚で2列・6枚以上で3列（札の列は作業領域の幅いっぱい）', () => {
+    const long = (n: number): SortItem => ({
+      ...item(),
+      cards: Array.from({ length: n }, (_, i) => ({
+        label: `とても ながい ぶんの カード ${i + 1}`,
+        box: i % 2,
+      })),
+    });
+    const poolOf = (n: number) => {
+      const { container, unmount } = render(
+        createElement(sortEngine.Component, { ...props(), item: long(n) }),
+      );
+      const pool = container.querySelector('.eng-sort__pool')!;
+      const out = [...pool.classList];
+      expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+      const check = screen.getByTestId('check');
+      // unit.css の :has(.eng-check) が吹き出しの右端を避けるための印
+      expect(check.classList.contains('tk-check--band')).toBe(true);
+      expect(check.classList.contains('eng-check')).toBe(true);
+      unmount();
+      return out;
+    };
+    expect(poolOf(4)).not.toContain('eng-sort__pool--cols');
+    expect(poolOf(5)).toContain('eng-sort__pool--cols');
+    expect(poolOf(5)).not.toContain('eng-sort__pool--cols3');
+    expect(poolOf(6)).toContain('eng-sort__pool--cols3');
+  });
   it('2〜3歳: 少ない枚数で、入れ終わると自動で答える', () => {
     const p = props(ctxFor('toddler2'));
     render(createElement(sortEngine.Component, p));

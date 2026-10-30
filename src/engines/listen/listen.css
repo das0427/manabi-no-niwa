@@ -1,7 +1,7 @@
 /* 聞いて選ぶ: 左に「きく」の札、右に選択肢。選択肢の見た目は choice と同じ */
 .eng-listen {
   display: flex;
-  align-items: center;
+  align-items: safe center;
   justify-content: center;
   gap: calc(var(--u) * 4);
   width: 100%;
@@ -24,24 +24,112 @@
   width: calc(var(--u) * 6);
   height: calc(var(--u) * 6);
 }
-/* 解説のとき: 札を補助の寸法（5.5u）に縮め、書き起こしを同じ列に置く（列の高さを変えない） */
-.eng-listen--explain .eng-listen__ear {
-  max-width: calc(var(--u) * 36);
+/* 絵・図の選択肢があるとき・解説のとき: 札を補助の寸法（5.5u）に縮めて上の段に置く
+   （左の列に置くと選択肢の幅が足りない。text-layout-fixes R3） */
+.eng-listen--pics,
+.eng-listen--explain {
+  flex-direction: column;
+  /* 入らないときは上にはみ出さず下へ（上は問題文） */
+  justify-content: safe center;
+  gap: calc(var(--u) * 1.6);
+  min-height: 0;
 }
+.eng-listen--pics .eng-listen__ear,
+.eng-listen--explain .eng-listen__ear {
+  max-width: none;
+}
+/* 札を上の段に置くと、聞いている間（選択中）の持ち上がり（1u）と輪郭（約 0.9u）が作業領域の上端を越えて切れるので、その分の余白 */
+.eng-listen--pics {
+  padding-top: calc(var(--u) * 1.9);
+}
+.eng-listen--pics .eng-listen__ear .tap,
 .eng-listen--explain .eng-listen__ear .tap {
   min-width: 0;
   min-height: calc(var(--u) * 5.5);
   flex-direction: row;
   padding-block: calc(var(--u) * 0.3);
 }
+.eng-listen--pics .eng-listen__ear .tap__icon,
 .eng-listen--explain .eng-listen__ear .tap__icon {
   width: calc(var(--u) * 3.6);
   height: calc(var(--u) * 3.6);
 }
-.eng-listen--explain .eng-listen__transcript {
-  /* 高さで切らない（スクロールさせると下の行が見えない）。作業領域に入らないときは --fit で縮む */
-  /* ふりがなが枠の上で切れないように */
-  line-height: 1.8;
+/* 書き起こしは細い列でなく、作業領域の幅（60u まで）の段で選択肢の上に置く（「きく」の札はその段の左）。
+   高さは本文4行以上・空きまで、入らない分は枠の中でスクロール（▼ の印。data-scroll-region="transcript"） */
+.eng-listen--explain {
+  --tr-fs: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+}
+.eng-listen__head {
+  /* 作業領域の縮み（--fit）で幅まで縮めない（舞台の寸法 --u0 で 60u） */
+  width: min(100%, calc(var(--u0, var(--u)) * 60));
+  /* 短い書き起こしは縮めない（選択肢の下に潜る・字が切れる）。4行を超えるときだけ縮めてスクロールさせる */
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+}
+/* 本文が4行を超えるとき（data-long）は、段の高さの下限を 4行＋印の高さ にする */
+.eng-listen__head:has(.eng-listen__transcript-wrap[data-long]) {
+  flex: 0 1 auto;
+  min-height: calc(var(--tr-fs) * 1.8 * 4 + var(--u) * 1.6 + var(--u) * 3);
+}
+/* 左の列（explain-side）では「きく」の札（5.5u＋影）と間隔（1.6u）も同じ列に入るので、その分を足す（本文が4行見えるように） */
+.eng-listen--explain-side .eng-listen__head:has(.eng-listen__transcript-wrap[data-long]) {
+  min-height: calc(var(--tr-fs) * 1.8 * 4 + var(--u) * 1.6 + var(--u) * 3 + var(--u) * 8);
+}
+/* 解説で絵・図の選択肢が3つ以下のとき（時計）: 札と書き起こしを左の列（28u）に、選択肢を右に置く */
+.eng-listen--explain.eng-listen--explain-side {
+  flex-direction: row;
+  align-items: safe center;
+  gap: calc(var(--u) * 4);
+}
+.eng-listen--explain-side .eng-listen__head {
+  flex-direction: column;
+  align-items: center;
+  width: calc(var(--u) * 28);
+  gap: calc(var(--u) * 1.6);
+  /* 横の並びの中では高さが行の高さに縛られないので、行（エンジンの高さ）までにして書き起こしを枠の中でスクロールさせる
+     （g2.ja.culture/30 の解説で列が 1134px に伸び、作業領域が 45u 足りずスクロールしていた） */
+  align-self: stretch;
+  max-height: 100%;
+  justify-content: center;
+}
+.eng-listen--explain-side .eng-opts {
+  width: auto;
+}
+.eng-listen--explain-side .eng-listen__transcript-wrap {
+  /* 列（縦）に置くので、高さの基準を 0 にしない */
+  flex: 0 1 auto;
+  width: 100%;
+}
+.eng-listen__transcript-wrap {
+  flex: 1 1 0;
+  min-width: 0;
+  /* 段の高さに合わせる（短い書き起こしは段の高さ＝本文の高さ。長いときは段が縮み、枠の中でスクロール） */
+  align-self: stretch;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.eng-listen__cue {
+  flex: none;
+  height: calc(var(--u) * 3);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 2.2)));
+  font-weight: 700;
+  line-height: 1.3;
+  cursor: pointer;
+}
+/* 長い書き起こし（data-long）のときだけ、エンジンの段を空きの高さまで縮められるようにする（書き起こしが縮んでスクロール）。
+   それ以外は縮めない（縮めると、はみ出す中身が中央揃えで上にもはみ出す） */
+.unit__work--listen .unit__engine:has(.eng-listen__transcript-wrap[data-long]) {
+  min-height: 0;
+  flex: 0 1 auto;
 }
 .eng-listen__ear-text {
   /* 作業領域の縮み（--fit）で補助の文字の最小を割らない */
@@ -54,9 +142,16 @@
   background: var(--white);
   border: calc(var(--u) * 0.3) dashed var(--ink);
   border-radius: calc(var(--u) * 1);
-  font-size: calc(var(--u) * 2.6);
+  font-size: var(--tr-fs, calc(var(--u) * 2.6));
+  /* ふりがなが枠の上で切れないように */
+  line-height: 1.8;
   font-weight: 700;
   text-align: center;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-soft) transparent;
 }
 .eng-listen__said + .eng-listen__said::before {
   content: '・';

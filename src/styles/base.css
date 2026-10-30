@@ -77,3 +77,12 @@ button {
   word-break: auto-phrase;
   overflow-wrap: anywhere;
 }
+/* Chrome では auto-phrase と balance を同じ要素に付けると字の途中で折る（「みんながそろ／うまで」）。
+   小3以上のボタン・札は balance をやめて pretty にする（overflow-wrap は上の anywhere のまま。break-word にすると
+   枠が狭いボタンで文字が枠の外に出る: g3.ja.haiku/33・39）。
+   分かち書き（keep-all）と th・td は balance のまま */
+.stage
+  .unit[data-stage]:not([data-wakachi])
+  :is(.choice, .tk-card__label, .eng-opts__label, .eng-choice__label) {
+  text-wrap: pretty;
+}

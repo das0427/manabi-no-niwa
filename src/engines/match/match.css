@@ -39,8 +39,8 @@
   padding-block: calc(var(--u) * 0.4);
 }
 .eng-match--rows .tk-card__label {
-  /* --text-small は :root で解決されて --fit で縮まないので、作業領域の --u で書く（最小は --text-min） */
-  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
+  /* 縮む --u の --text-small（作業領域の --fit で札と一緒に縮む。下限は --text-min） */
+  font-size: var(--text-small);
 }
 .eng-match__lines {
   position: absolute;

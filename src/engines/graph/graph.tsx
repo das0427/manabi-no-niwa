@@ -14,7 +14,13 @@ import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
-import { floorStyle, observeResize, textMinPx, useSvgTextFloor } from '../figure/svgText';
+import {
+  floorStyle,
+  observeResize,
+  textMinPx,
+  useSvgTextFloor,
+  useWidenToText,
+} from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from '../numberline/NumPad';
 import type { Judgement, RenderCtx } from '../types';
@@ -330,6 +336,7 @@ function XYChart({
   const n = d.labels.length;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   const yFont = Math.max(30, floor);
   // 縦軸の数字（最小まで大きくなる）が上下からはみ出さない余白
   const top = Math.max(TOP, Math.ceil(yFont * 0.9) + 2);
@@ -507,7 +514,10 @@ function useXLabelFit(ref: React.RefObject<HTMLElement | null>, key: unknown): v
         return;
       }
       for (const it of items) it.style.fontSize = `${min}px`;
-      // 2段: 1つおきに下へ。札は2つぶんの幅まで使える（となりの札と同じ段には並ばない）
+      // 2段: 1つおきに下へ。札は2つぶんの幅まで使える（となりの札と同じ段には並ばない）。
+      // 2つぶんでも入らない札（枠のあるボタンで、字が最小のまま長い: 「オートバイ」）は、3段にすると
+      // 作業領域をさらに 1行ぶん（6u）使い、図が舞台に入らなくなる（g3.math.bar-graph/7 で確かめた）。
+      // 札の文を短くする（content）。検査には text-outside-box として残る
       const slotW = items[0]!.clientWidth;
       box.style.setProperty('--gr-slot-pad', `${-Math.round(slotW * 0.48)}px`);
       box.style.setProperty('--gr-stagger', `${Math.ceil(items[0]!.offsetHeight) + 2}px`);
@@ -662,6 +672,7 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   const d = item.data;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, d.kind === 'band' ? 900 : 392);
+  useWidenToText(svgRef, floor);
   let acc = 0;
   const parts = d.values.map((v, i) => {
     const from = acc;

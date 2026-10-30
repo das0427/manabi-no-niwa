@@ -21,7 +21,8 @@ import { speechYomi } from '../../text/yomi';
 import { Tap } from '../../ui/Tap';
 import { VOICE_CATALOG, type VoiceSeq } from '../../voice/catalog/index';
 import { registerRich } from '../../voice/dynamic';
-import type { ChoiceResponse } from '../choice/choice';
+import { earOnTop, type ChoiceResponse } from '../choice/choice';
+import { observeResize } from '../figure/svgText';
 import type { EngineProps, Judgement } from '../types';
 import { checkOptions, ChoiceOptions, correctLabels, judgeOptions } from './options';
 import './listen.css';
@@ -156,6 +157,75 @@ function whenQuiet(cb: () => void): () => void {
   };
 }
 
+/**
+ * 解説の書き起こし。作業領域の幅（60u まで）の段で、選択肢の上に置く。高さは本文の4行以上・空きまで
+ * （listen.css）。入らない分は枠の中でスクロールし、下に ▼ の印を出す（text-layout-fixes R3）
+ */
+function Transcript({
+  sounds,
+  ctx,
+}: {
+  sounds: ListenSound[];
+  ctx: EngineProps<Item, ListenResponse>['ctx'];
+}) {
+  const boxRef = useRef<HTMLParagraphElement | null>(null);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [cue, setCue] = useState<'down' | 'up' | null>(null);
+  const measure = useCallback(() => {
+    const b = boxRef.current;
+    if (!b) return;
+    // 本文が4行を超えるときだけ、枠の高さの下限を4行にする（短い書き起こしに空きを足さない）
+    const st = getComputedStyle(b);
+    const lh = parseFloat(st.lineHeight);
+    const pad = parseFloat(st.paddingTop) + parseFloat(st.paddingBottom);
+    if (lh > 0) wrapRef.current?.toggleAttribute('data-long', b.scrollHeight - pad > lh * 4.5);
+    if (b.scrollHeight <= b.clientHeight + 2) setCue(null);
+    else if (b.scrollTop + b.clientHeight < b.scrollHeight - 2) setCue('down');
+    else setCue('up');
+  }, []);
+  useEffect(() => {
+    const b = boxRef.current;
+    if (!b) return undefined;
+    measure();
+    return observeResize([b], measure);
+  }, [measure, sounds]);
+  const scrollCue = () => {
+    const b = boxRef.current;
+    if (!b) return;
+    if (cue === 'up') b.scrollTo?.({ top: 0, behavior: 'smooth' });
+    else b.scrollBy?.({ top: b.clientHeight * 0.85, behavior: 'smooth' });
+  };
+  return (
+    <div ref={wrapRef} className="eng-listen__transcript-wrap">
+      <p
+        ref={boxRef}
+        onScroll={measure}
+        className="eng-listen__transcript"
+        data-testid="listen-transcript"
+        data-scroll-region="transcript"
+      >
+        {sounds.map((s, i) => (
+          <span key={i} className="eng-listen__said">
+            <Rt text={s.text} ctx={ctx} />
+          </span>
+        ))}
+      </p>
+      {cue ? (
+        <button
+          type="button"
+          className="eng-listen__cue"
+          data-scroll-cue
+          data-testid="listen-cue"
+          aria-label={cue === 'down' ? 'つづきを みる' : 'はじめから みる'}
+          onClick={scrollCue}
+        >
+          {cue === 'down' ? '▼ つづき' : '▲ はじめから'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsShown }: Props) {
   /** 最初の再生が終わった（選択肢を押せる） */
   const [heard, setHeard] = useState(false);
@@ -243,35 +313,47 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
 
   const sounds = soundsOf(item);
   const showTranscript = revealed && !item.hideTranscript;
+  // 選択肢に絵・図があるときは、「きく」の札を上の段（補助の寸法）に置く（左の列に置くと選択肢の幅が足りない）
+  const hasPics = earOnTop(item.options);
+  // 解説のとき、絵・図が3つ以下で1つに1つずつ（時計）なら、札と書き起こしを左の列に置く（上の段にすると縦が足りず絵が縮む）
+  const sideHead = showTranscript && !hasPics && item.options.some((o) => o.figure !== undefined);
+  const ear = (
+    <div className="eng-listen__ear">
+      <Tap
+        label="もういちど きく"
+        icon="listen"
+        variant="sky"
+        size="big"
+        text={
+          <span className="eng-listen__ear-text">{heard ? 'もういちど きく' : 'きいてね'}</span>
+        }
+        state={playing ? 'selected' : null}
+        disabled={disabled && !revealed}
+        onPress={play}
+        testId="listen-button"
+      />
+    </div>
+  );
   return (
     <div
-      className={`eng-listen${showTranscript ? ' eng-listen--explain' : ''}`}
+      className={[
+        'eng-listen',
+        showTranscript ? 'eng-listen--explain' : '',
+        sideHead ? 'eng-listen--explain-side' : '',
+        hasPics ? 'eng-listen--pics' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
       data-heard={heard ? '1' : '0'}
     >
-      <div className="eng-listen__ear">
-        <Tap
-          label="もういちど きく"
-          icon="listen"
-          variant="sky"
-          size="big"
-          text={
-            <span className="eng-listen__ear-text">{heard ? 'もういちど きく' : 'きいてね'}</span>
-          }
-          state={playing ? 'selected' : null}
-          disabled={disabled && !revealed}
-          onPress={play}
-          testId="listen-button"
-        />
-        {showTranscript ? (
-          <p className="eng-listen__transcript" data-testid="listen-transcript">
-            {sounds.map((s, i) => (
-              <span key={i} className="eng-listen__said">
-                <Rt text={s.text} ctx={ctx} />
-              </span>
-            ))}
-          </p>
-        ) : null}
-      </div>
+      {showTranscript ? (
+        <div className="eng-listen__head">
+          {ear}
+          <Transcript sounds={sounds} ctx={ctx} />
+        </div>
+      ) : (
+        ear
+      )}
       <ChoiceOptions
         part={item}
         ctx={ctx}
@@ -279,6 +361,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         wrongMark={wrongMark}
         locked={disabled || !heard || pressed !== null}
         submit={submit}
+        picsSide={hasPics ? 0 : sideHead ? 32 : showTranscript ? 0 : 22}
         {...(item.nameBack ? { onPress, pressed } : {})}
       />
     </div>

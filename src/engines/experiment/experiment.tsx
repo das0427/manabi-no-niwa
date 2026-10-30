@@ -8,7 +8,7 @@
  *  reach    … 結果が target になる条件を作って答える（てこをつり合わせる・モーターを速く回す など）
  *  control  … 条件制御: factor だけを変えた2回の実験を記録して答える（2つ以上を同時に変えると誤り）
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ChoiceOption, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
@@ -16,6 +16,7 @@ import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { checkChoice } from '../choice/choice';
 import { Figure } from '../figure/Figure';
+import { observeResize, textMinPx, useFitWidth } from '../figure/svgText';
 import type { KitEngineDef, KitProps } from '../numberline/kit';
 import { kanjiErrors } from '../order/shared';
 import type { Judgement } from '../types';
@@ -393,12 +394,43 @@ function ResultTable({
   const fs = factorsOf(setup).filter((f) => f.values.length > 1);
   const shown = trials.slice(-3);
   const offset = trials.length - shown.length;
+  // 見出しは折らない（「水の／量」）。表が列に入らないときは表の文字を --text-min まで縮める（figure の表と同じ）。
+  // 最小まで縮めても入らない長い見出しだけは、空白のところで折る（折らないと列から切れて読めない）
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [wrap, setWrap] = useState(false);
+  const key = JSON.stringify([fs.map((f) => f.id), shown, output]);
+  useLayoutEffect(() => {
+    const t = tableRef.current;
+    const box = t?.parentElement;
+    if (!t || !box) return;
+    const check = () => {
+      const cs = getComputedStyle(box);
+      const avail =
+        box.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0');
+      const keepFs = t.style.fontSize;
+      const keepWrap = t.dataset.wrap;
+      delete t.dataset.wrap;
+      t.style.fontSize = `${textMinPx(t)}px`;
+      const over = t.getBoundingClientRect().width > avail + 1;
+      t.style.fontSize = keepFs;
+      if (keepWrap !== undefined) t.dataset.wrap = keepWrap;
+      setWrap(over);
+    };
+    check();
+    return observeResize([box], check);
+  }, [key]);
+  useFitWidth(tableRef, `${key}${wrap}`, 'parent');
   return (
-    <table className="exp-table" data-testid="result-table">
+    <table
+      ref={tableRef}
+      className="exp-table"
+      data-wrap={wrap ? '' : undefined}
+      data-testid="result-table"
+    >
       <thead>
         <tr>
           {fs.map((f) => (
-            <th key={f.id} scope="col">
+            <th key={f.id} scope="col" className={shortHead(f.label) ? 'is-short' : undefined}>
               <Rt text={f.label} ctx={ctx} />
             </th>
           ))}
@@ -440,6 +472,11 @@ function ResultTable({
       </tbody>
     </table>
   );
+}
+
+/** 短い見出し（空白を除いて4字まで: 「水の 量」）。表が入らず折る方に回っても、これは折らない */
+function shortHead(label: RichText): boolean {
+  return plainText(label).replace(/\s/g, '').length <= 4;
 }
 
 function outputLabel(s: ExpSetup): RichText {

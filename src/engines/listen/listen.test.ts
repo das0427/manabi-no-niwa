@@ -197,4 +197,46 @@ describe('listen: 画面', () => {
     );
     expect(screen.getByTestId('listen-transcript').textContent).toContain('いぬ');
   });
+
+  it('書き起こしは作業領域の幅の段で、スクロールの枠（data-scroll-region）として出る（R3）', () => {
+    const { container } = render(
+      createElement(listenEngine.Component, {
+        item: base(),
+        ctx,
+        revealed: true,
+        wrongMark: null,
+        disabled: true,
+        submit: () => undefined,
+      }),
+    );
+    const box = screen.getByTestId('listen-transcript');
+    expect(box.getAttribute('data-scroll-region')).toBe('transcript');
+    // 「きく」の札の下の細い列に入れず、選択肢の上の段（札の隣）に置く
+    const root = container.querySelector('.eng-listen')!;
+    expect(box.closest('.eng-listen__ear')).toBeNull();
+    const head = box.closest('.eng-listen__head');
+    expect(head?.parentElement).toBe(root);
+    expect(head?.querySelector('.eng-listen__ear')).not.toBeNull();
+  });
+
+  it('選択肢に絵があるときは「きく」の札を上の段に置く印（eng-listen--pics）を付ける（R3）', () => {
+    const fig = (n: number) => ({ kind: 'illust' as const, id: 'cat', count: n });
+    const { container } = render(
+      createElement(listenEngine.Component, {
+        item: base({
+          options: [{ figure: fig(1), correct: true }, { figure: fig(2) }, { figure: fig(3) }],
+        }),
+        ctx,
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: () => undefined,
+      }),
+    );
+    expect(container.querySelector('.eng-listen--pics')).not.toBeNull();
+    const list = container.querySelector('.eng-opts__list') as HTMLElement;
+    expect(list.className).toContain('is-pics');
+    expect(list.style.getPropertyValue('--pics-n')).toBe('3');
+    expect(list.style.getPropertyValue('--pics-total')).toBe('6');
+  });
 });

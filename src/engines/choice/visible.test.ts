@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoLayout, displayOrder, visibleOptionIndices } from './choice';
+import { autoLayout, displayOrder, picsProps, visibleOptionIndices } from './choice';
 
 describe('選択肢の並び', () => {
   const opts = (labels: string[]) => labels.map((label, i) => ({ label, correct: i === 0 }));
@@ -72,5 +72,25 @@ describe('autoLayout（選択肢の並び。text-layout-fixes S3）', () => {
       ),
     ).toBe('row');
     expect(autoLayout([{ figure: {} }, { label: 'あ' }], 'column', false)).toBe('column');
+  });
+});
+
+describe('絵・図だけの選択肢（text-layout-fixes R3）', () => {
+  const pic = { figure: { kind: 'illust', id: 'cat' } };
+  it('label が無い、または 4字以下なら、パックの column でも横一列', () => {
+    expect(autoLayout([pic, pic, pic], 'column', true)).toBe('row');
+    expect(autoLayout([{ ...pic, label: '3こ' }, pic, pic], 'column', true)).toBe('row');
+    // 5字以上の文が付く選択肢は指定のまま
+    expect(autoLayout([{ ...pic, label: 'ながいことば' }, pic, pic], 'column', true)).toBe(
+      'column',
+    );
+  });
+  it('picsProps は横一列の絵だけのときに、数と1つの中の絵の最大数を渡す', () => {
+    const f = (n: number) => ({ figure: { kind: 'illust', id: 'cat', count: n } });
+    const p = picsProps([f(1), f(2), f(12)], 'row');
+    expect(p.className).toBe(' is-pics');
+    expect(p.style).toMatchObject({ '--pics-n': 3, '--pics-total': 8 });
+    expect(picsProps([f(1), f(2)], 'column').className).toBe('');
+    expect(picsProps([f(1), { label: 'あ' }], 'row').className).toBe('');
   });
 });

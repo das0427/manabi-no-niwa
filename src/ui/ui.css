@@ -18,7 +18,8 @@
   color: var(--ink);
   font-family: var(--font-child);
   font-weight: 700;
-  font-size: var(--text-label);
+  /* 作業領域の縮み（--fit）でも補助の文字の最小を割らない（幼児の「こたえあわせ」「できた」）。text-layout-fixes R3 */
+  font-size: max(var(--text-label), var(--text-min, 0px));
   line-height: 1.2;
   box-shadow: 0 var(--step) 0 var(--edge-color);
   cursor: pointer;
@@ -113,6 +114,17 @@
   box-shadow:
     0 0 0 calc(var(--u) * 0.35) var(--surface),
     inset 0 0 0 calc(var(--u) * 0.35) var(--surface);
+}
+/* 単元の作業領域では ○ を字の後ろに置く（字にかぶって読めなかった。text-layout-fixes R3）: ○ は z-index 0、札の中身は 1。
+   作業領域（z-index: 0 の重なりの文脈）の中に限る。幼児ホーム・v1 モードの選択肢の字に z-index を付けると、
+   z-index の無い重ね物（板・吹き出し）より上に出るため。番号の丸（.tk-badge）は絶対配置のまま */
+.unit__work .mark--correct {
+  z-index: 0;
+}
+.unit__work .choice > :not(.mark),
+.unit__work .tk-card > :not(.mark, .tk-badge) {
+  position: relative;
+  z-index: 1;
 }
 /* 誤答の？: 小さな吹き出しの形（しっぽ付き）。札の中身と違って薄くならない */
 .mark--wrong {

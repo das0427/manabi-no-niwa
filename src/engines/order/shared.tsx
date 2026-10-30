@@ -254,12 +254,26 @@ export function TapCard({
   );
 }
 
-/** 「こたえあわせ」（主操作）。作業領域の右に置く */
-export function CheckButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }) {
+/**
+ * 「こたえあわせ」（主操作）。既定は作業領域の右に置く。
+ * band: 下の帯の主操作の位置（つぎへ の左。DESINGN.md 5.1）に置く。札の列が作業領域の幅いっぱいを使える。
+ * 位置は choice の `.eng-check` と同じ（unit.css の `:has(.eng-check)` が吹き出しをその左までにする）
+ */
+export function CheckButton({
+  disabled,
+  onPress,
+  band = false,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+  band?: boolean;
+}) {
   return (
     <button
       type="button"
-      className="tap tap--main tk-check"
+      className={
+        band ? 'tap tap--main tk-check tk-check--band eng-check' : 'tap tap--main tk-check'
+      }
       disabled={disabled}
       onClick={onPress}
       data-testid="check"

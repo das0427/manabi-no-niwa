@@ -61,13 +61,20 @@
   opacity: 0.5;
 }
 .mnp-key--fn {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min));
 }
 .mnp-key--ok {
   grid-column: span 2;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min));
   padding: 0;
   background: var(--sun);
+  /* 「こたえあわせ」は 6字。最小の字では 2つぶんの幅（12.8u）に入らないことがあるので、
+     0 の隣が空いている（と・／・− のキーが無い）ときは3つぶんにし、狭いときだけ2行にする */
+  white-space: normal;
+  line-height: 1.15;
+}
+.mnp-key--wide {
+  grid-column: span 3;
 }
 
 /* ---- 図のエンジンの共通の配置: 左に図、右に操作 ---- */
@@ -103,7 +110,7 @@
   min-height: calc(var(--u) * 6);
   padding: calc(var(--u) * 0.4) calc(var(--u) * 1);
   font: inherit;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min));
   font-weight: 700;
   line-height: 1.15;
   color: var(--ink);
@@ -128,7 +135,7 @@
 }
 .mk-btn--ok {
   min-height: calc(var(--u) * 6.4);
-  font-size: calc(var(--u) * 2.4);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min));
   background: var(--sun);
 }
 .mk-row {

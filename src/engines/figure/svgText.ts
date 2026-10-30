@@ -27,11 +27,22 @@ export function textMinPx(from: Element): number {
  */
 export function pxPerUnit(svg: Element, viewBoxWidth: number): number {
   const cs = getComputedStyle(svg);
-  const w = parseFloat(cs.width);
-  const h = parseFloat(cs.height);
+  // 描く領域は内容の箱（枠・余白の内側）。box-sizing: border-box の余白・枠の分だけ、width・height より小さい
+  const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  const w =
+    (svg as SVGSVGElement).clientWidth > 0
+      ? (svg as SVGSVGElement).clientWidth - padX
+      : parseFloat(cs.width);
+  const h =
+    (svg as SVGSVGElement).clientHeight > 0
+      ? (svg as SVGSVGElement).clientHeight - padY
+      : parseFloat(cs.height);
   const vb = (svg as SVGSVGElement).viewBox?.baseVal;
-  if (!(viewBoxWidth > 0) || !(w > 0)) return 0;
-  const byW = w / viewBoxWidth;
+  // viewBox が広げられている（useWidenToText・liftSvgText）ときは、いまの幅で測る
+  const vbw = vb && vb.width > 0 ? vb.width : viewBoxWidth;
+  if (!(vbw > 0) || !(w > 0)) return 0;
+  const byW = w / vbw;
   if (vb && vb.width > 0 && vb.height > 0 && h > 0) return Math.min(byW, h / vb.height);
   return byW;
 }
@@ -68,11 +79,19 @@ export function useSvgTextFloor(
       const ppu = pxPerUnit(el, viewBoxWidth);
       const min = minUnits === undefined ? textMinPx(el) : 0;
       const next = ppu > 0 ? (minUnits ?? min / ppu) : 0;
-      // 0.1 単位に丸めて、わずかな揺れで描き直さない
-      setFloor((prev) => (Math.abs(prev - next) < 0.1 ? prev : Math.round(next * 10) / 10));
+      // 0.1 単位に切り上げて（四捨五入だと最小をわずかに割る: 1.998u）、わずかな揺れで描き直さない
+      setFloor((prev) => (prev >= next && prev - next < 0.1 ? prev : Math.ceil(next * 10) / 10));
     };
     measure();
-    return observeResize([el], measure);
+    // viewBox を広げた（useWidenToText）ら、1 単位あたりの px が変わるので測り直す
+    const mo =
+      typeof MutationObserver === 'undefined' ? null : new MutationObserver(() => measure());
+    mo?.observe(el, { attributes: true, attributeFilter: ['viewBox'] });
+    const stop = observeResize([el], measure);
+    return () => {
+      mo?.disconnect();
+      stop();
+    };
   }, [ref, viewBoxWidth, minUnits]);
   return floor;
 }
@@ -97,23 +116,47 @@ export function liftSvgText(root: Element): void {
     if (d.h0) svg.setAttribute('height', d.h0);
     const texts = Array.from(svg.querySelectorAll('text'));
     for (const t of texts) t.style.fontSize = '';
-    for (let pass = 0; pass < 2; pass++) {
-      const vb = svg.viewBox.baseVal;
-      if (!vb || !(vb.width > 0)) break;
-      const ppu = pxPerUnit(svg, vb.width);
-      if (ppu <= 0) break;
-      const floor = min / ppu;
-      if (min > 0)
-        for (const t of texts) {
-          const fs = parseFloat(getComputedStyle(t).fontSize);
-          // 2倍までの引き上げだけ行う。それ以上小さく描かれた図は、文字を大きくすると他の文字や線に重なるので、
-          // 図の描き方（viewBox の大きさ）を直す（content の側）。検査には small-text として残る
-          if (Number.isFinite(fs) && fs > 0 && fs < floor - 0.05 && floor / fs <= 2)
-            t.style.fontSize = `${floor}px`;
-        }
-      if (!widenToText(svg, texts)) break;
+    // 引き上げると外接が広がり、viewBox を広げると拡大率が下がる。収まるまで数回くり返し、
+    // 最後は広げずに引き上げだけやり直す（広げた直後の拡大率で最小を満たす）
+    let widened = false;
+    for (let pass = 0; pass < 5; pass++) {
+      if (!lift(svg, texts, min)) break;
+      widened = widenToText(svg, texts);
+      if (!widened) break;
     }
+    if (widened) lift(svg, texts, min);
   }
+}
+
+/** 字ごとの拡大率で、最小に足りない字を引き上げる。測れなければ false */
+function lift(svg: SVGSVGElement, texts: SVGTextElement[], min: number): boolean {
+  const vb = svg.viewBox.baseVal;
+  if (!vb || !(vb.width > 0)) return false;
+  const ppu = pxPerUnit(svg, vb.width);
+  if (ppu <= 0) return false;
+  if (!(min > 0)) return true;
+  const svgCtm = svg.getScreenCTM?.();
+  const inv = svgCtm ? svgCtm.inverse() : null;
+  for (const t of texts) {
+    const fs = parseFloat(getComputedStyle(t).fontSize);
+    if (!Number.isFinite(fs) || fs <= 0) continue;
+    // 字ごとの拡大率: <g transform> の中の字は svg 全体の拡大率と違う。
+    // svg の画面上の行列との比（群の拡大）に、svg の表示の枠から求めた px/単位を掛ける
+    // （拡大の動きの途中の CSS transform には左右されない）
+    let k = 1;
+    const tc = (t as SVGGraphicsElement).getScreenCTM?.();
+    if (inv && tc) {
+      const m = inv.multiply(tc);
+      const s2 = Math.min(Math.hypot(m.a, m.b), Math.hypot(m.c, m.d));
+      if (Number.isFinite(s2) && s2 > 0) k = s2;
+    }
+    const floor = min / (ppu * k);
+    // 2倍までの引き上げだけ行う。それ以上小さく描かれた図は、文字を大きくすると他の文字や線に重なるので、
+    // 図の描き方（viewBox の大きさ）を直す（content の側）。検査には small-text として残る
+    const target = Math.ceil(floor * 100) / 100;
+    if (fs < floor - 0.005 && floor / fs <= 2) t.style.fontSize = `${target}px`;
+  }
+  return true;
 }
 
 /** 文字の外接が viewBox をはみ出すとき、viewBox を広げる（描く大きさは変えない）。広げたら true */
@@ -165,8 +208,44 @@ function widenToText(svg: SVGSVGElement, texts: SVGTextElement[]): boolean {
   const h = parseFloat(svg.getAttribute('height') ?? '');
   if (Number.isFinite(w)) svg.setAttribute('width', String(w * kx));
   if (Number.isFinite(h)) svg.setAttribute('height', String(h * ky));
-  svg.setAttribute('viewBox', `${x0} ${y0} ${x1 - x0} ${y1 - y0}`);
+  const next = `${x0} ${y0} ${x1 - x0} ${y1 - y0}`;
+  svg.setAttribute('viewBox', next);
+  d.vbw = next;
   return true;
+}
+
+/**
+ * エンジンが自分で描く SVG 用: 文字（最小まで大きくした分を含む）が viewBox の外に出るとき、
+ * viewBox を文字の外接まで広げる（clipped: text ⊂ svg）。deps（floor など、文字の大きさが変わるもの）が
+ * 変わるたびと大きさの変化のたびにやり直す。広げた viewBox は元に戻してから測る
+ */
+export function useWidenToText(ref: RefObject<SVGSVGElement | null>, ...deps: unknown[]): void {
+  const key = deps.join('|');
+  useLayoutEffect(() => {
+    const svg = ref.current;
+    if (!svg) return;
+    const run = () => {
+      const d = svg.dataset;
+      if (d.vbw && svg.getAttribute('viewBox') !== d.vbw) {
+        // React が viewBox を書き換えた（問題が変わった）: 覚えていた元の値は古い
+        delete d.vb0;
+        delete d.w0;
+        delete d.h0;
+      }
+      if (d.vb0) svg.setAttribute('viewBox', d.vb0);
+      if (d.w0) svg.setAttribute('width', d.w0);
+      if (d.h0) svg.setAttribute('height', d.h0);
+      delete d.vb0;
+      delete d.w0;
+      delete d.h0;
+      delete d.vbw;
+      const texts = Array.from(svg.querySelectorAll('text'));
+      for (let pass = 0; pass < 2; pass++) if (!widenToText(svg, texts)) break;
+    };
+    run();
+    void document.fonts?.ready.then(run);
+    return observeResize([svg], run);
+  }, [ref, key]);
 }
 
 /** liftSvgText を、描画と大きさの変化のたびに実行する */

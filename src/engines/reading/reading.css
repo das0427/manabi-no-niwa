@@ -30,11 +30,11 @@
   scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: var(--ink-soft) transparent;
-  padding: calc(var(--u) * 1.2) calc(var(--u) * 2) 0;
+  padding: calc(var(--u) * 0.6) calc(var(--u) * 2) 0;
 }
 .eng-reading__passage--l {
   font-size: max(calc(var(--u) * 2.6), var(--text-min, 0px));
-  line-height: 1.9;
+  line-height: 1.8;
 }
 .eng-reading__passage--m {
   font-size: max(calc(var(--u) * 2.3), var(--text-min, 0px));
@@ -44,11 +44,13 @@
   font-size: max(calc(var(--u) * 2.1), var(--text-min, 0px));
   line-height: 1.8;
 }
+/* 枠の見える高さを本文の4行＋0.3行以上にするため（g1.ja.folktales/29・g2.ja.read-story/9 の 3.9 行）、
+   上の余白 1.2u → 0.6u・印の段 3.4u → 2.9u（印の字 2.2u×行 1.2＋破線）・大の行の高さ 1.9 → 1.8 に詰めた */
 /* 下にまだ文があるときの印（読み切ると消える）。本文の字にかぶせない（かぶせると字が隠れる）よう、
    枠の下に印だけの段を常に取っておく。DESINGN.md 14章はグラデーション禁止なので、平らな面の札＋上の破線 */
 .eng-reading__cue-slot {
   flex: none;
-  height: calc(var(--u) * 3.4);
+  height: calc(var(--u) * 2.9);
   display: flex;
 }
 .eng-reading__cue {
@@ -61,7 +63,7 @@
   font: inherit;
   font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 2.2)));
   font-weight: 700;
-  line-height: 1.3;
+  line-height: 1.2;
   cursor: pointer;
 }
 .eng-reading__title {
@@ -134,4 +136,22 @@
 .eng-reading__opts .eng-opts__label {
   font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 2.2)));
   line-height: 1.5;
+}
+
+/* 選択肢が右の列に収まらないとき（reading.tsx が data-tight を付ける）: 本文:右 を 1:1 に、選択肢の上下の余白を 1u → 0.6u に */
+.eng-reading[data-tight] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.eng-reading[data-tight] .eng-reading__side {
+  gap: calc(var(--u) * 0.6);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__list--column {
+  gap: calc(var(--u) * 0.6);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__opt {
+  padding-block: calc(var(--u) * 0.6);
+  min-height: calc(var(--u) * 4.4);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__label {
+  line-height: 1.4;
 }

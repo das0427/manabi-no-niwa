@@ -136,10 +136,10 @@ export function NumKeys({
       {['1', '2', '3'].map(digit)}
       {fns[1] ?? <span />}
       {digit('0')}
-      {fns[2] ?? <span />}
+      {fns[2] ?? null}
       <button
         type="button"
-        className="mnp-key mnp-key--ok"
+        className={`mnp-key mnp-key--ok${fns[2] ? '' : ' mnp-key--wide'}`}
         onClick={onSubmit}
         disabled={disabled || !entry.ready}
         data-testid="check"

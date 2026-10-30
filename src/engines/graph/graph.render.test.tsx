@@ -24,7 +24,14 @@ describe('graph の画面（追加分）', () => {
   it('2本の折れ線: 凡例に2つ。2本目は破線と ■（点の数 = 項目の数）', () => {
     const s = sample('line2-diff');
     const { container } = render(
-      <Comp item={s} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={vi.fn()} />,
+      <Comp
+        item={s}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={vi.fn()}
+      />,
     );
     const legend = screen.getByTestId('series-legend');
     expect(legend.querySelectorAll('li').length).toBe(2);
@@ -38,7 +45,16 @@ describe('graph の画面（追加分）', () => {
   it('円グラフ: 割合を入れて答える（単位 % は欄の後ろ）', () => {
     const s = sample('pie-percent');
     const submit = vi.fn();
-    render(<Comp item={s} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={s}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     expect(screen.getByTestId('field-0').nextElementSibling?.textContent).toBe('%');
     fireEvent.click(screen.getByTestId('key-2'));
     fireEvent.click(screen.getByTestId('key-5'));
@@ -52,7 +68,16 @@ describe('graph の画面（追加分）', () => {
   it('帯グラフ: いちばん多い項目を選ぶ', () => {
     const s = sample('band-most');
     const submit = vi.fn();
-    render(<Comp item={s} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={s}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     fireEvent.click(screen.getByTestId('opt-0'));
     expect(submit).toHaveBeenCalledWith({ pick: [0] });
     expect(graphEngine.judge(s, { pick: [0] }).result).toBe('correct');

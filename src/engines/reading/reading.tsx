@@ -7,7 +7,15 @@
  * - 正答を見せるとき（revealed）は答えの根拠（evidence）の文に下線を引く。
  * - 本文の読み上げは任意の札（自動では読まない）。読み上げの設定が off のときは札を出さない。
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { audio } from '../../core/audio/index';
 import type { ChoiceOption, Item, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -163,8 +171,16 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
   const focus = hintsShown > 0 ? (item.hintFocus?.[hintsShown - 1] ?? null) : null;
   const evidence = revealed ? item.evidence : null;
   const focusRef = useRef<HTMLSpanElement | null>(null);
+  const boxRef = useRef<HTMLElement | null>(null);
+  // 本文の枠の中だけをスクロールする（scrollIntoView だと外側の作業領域まで動かして、枠が上へずれる）
   useEffect(() => {
-    focusRef.current?.scrollIntoView?.({ block: 'nearest' });
+    const el = focusRef.current;
+    const b = boxRef.current;
+    if (!el || !b) return;
+    const er = el.getBoundingClientRect();
+    const br = b.getBoundingClientRect();
+    if (er.top < br.top) b.scrollTop += er.top - br.top;
+    else if (er.bottom > br.bottom) b.scrollTop += Math.min(er.bottom - br.bottom, er.top - br.top);
   }, [hintsShown, revealed]);
   const marks = (pi: number, si: number) => ({
     focus: locHas(focus, pi + 1, si + 1),
@@ -181,7 +197,6 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
 
   // 本文の枠（スクロール設計）: 下にまだ文があるときは「▼ つづき」、最後まで読んだら「▲ はじめから」を出す
   // （ヒント・解説で根拠の文へ自動でスクロールしたあとも、上に文があることが分かるように）
-  const boxRef = useRef<HTMLElement | null>(null);
   const [cue, setCue] = useState<'down' | 'up' | null>(null);
   const measure = useCallback(() => {
     const b = boxRef.current;
@@ -203,9 +218,26 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
     else b.scrollBy?.({ top: b.clientHeight * 0.85, behavior: 'smooth' });
   };
 
+  // 右の列の選択肢が収まらないとき（scrollHeight > clientHeight）は、本文:右 を 1:1・選択肢の余白を詰める。
+  // 右の列はスクロールさせない。問題が変わるたびに戻して測り直す（一度詰めたら、その問題の間は詰めたまま）
+  const sideRef = useRef<HTMLDivElement | null>(null);
+  const [tight, setTight] = useState(false);
+  useLayoutEffect(() => {
+    setTight(false);
+  }, [item]);
+  useEffect(() => {
+    const el = sideRef.current;
+    if (!el || tight) return undefined;
+    const check = () => {
+      if (el.scrollHeight > el.clientHeight + 1) setTight(true);
+    };
+    check();
+    return observeResize([el], check);
+  }, [tight, item]);
+
   const size = ctx.learnerGrade >= 5 ? 's' : ctx.learnerGrade >= 3 ? 'm' : 'l';
   return (
-    <div className="eng-reading">
+    <div className="eng-reading" data-tight={tight ? '' : undefined}>
       <div className="eng-reading__passage-wrap">
         <section
           ref={boxRef}
@@ -267,7 +299,7 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
           ) : null}
         </div>
       </div>
-      <div className="eng-reading__side">
+      <div ref={sideRef} className="eng-reading__side">
         {ctx.readAloud !== 'off' ? (
           <Tap
             label={reading ? 'よむのを とめる' : 'ほんぶんを きく'}

@@ -14,6 +14,7 @@ import {
   useLiftedSvgText,
   useStaggerLabels,
   useSvgTextFloor,
+  useWidenToText,
 } from './svgText';
 import './figure.css';
 
@@ -43,7 +44,10 @@ export function Figure({ fig, ctx }: { fig: FigureData; ctx: Ctx }): ReactNode {
     case 'row':
     case 'column':
       return (
-        <div className={`fig-${fig.kind}`} style={{ gap: `calc(var(--u) * ${fig.gap ?? 2})` }}>
+        <div
+          className={`fig-${fig.kind}${fig.kind === 'column' && fig.items.length > 1 && fig.items.every((f) => f.kind === 'blocks') ? ' fig-column--blocks' : ''}`}
+          style={{ gap: `calc(var(--u) * ${fig.gap ?? 2})` }}
+        >
           {fig.items.map((f, i) => (
             <Fragment key={i}>
               <Figure fig={f} ctx={ctx} />
@@ -271,6 +275,7 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
   const pad = 40;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   const span = fig.max - fig.min || 1;
   const X = (v: number) => pad + ((v - fig.min) / span) * (W - pad * 2);
   const ticks: ReactNode[] = [];
@@ -342,9 +347,14 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
   const R = 100;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, 260);
+  useWidenToText(svgRef, floor);
   // 数字は最小以上。大きくなるぶん、時の数字は内に、分の数字（0・5・10…）は外にずらす
   const numSize = Math.max(20, floor);
   const mnumSize = Math.max(11, floor);
+  // 時の数字の輪の半径と、となりの数字の間隔（弦の長さ 2r·sin15°）。2けたの数字（約 1.1 字）が入らないほど
+  // 混み合うときは 12・3・6・9 だけにする（DESINGN.md 17章。小さい選択肢の時計で「10」「11」「12」が重なっていた）
+  const numR = R - 14 - numSize * 0.55 - 5;
+  const crowded = 2 * numR * Math.sin(Math.PI / 12) < numSize * 1.15 + 2;
   const hourAngle = ((h % 12) + m / 60) * 30;
   const minAngle = m * 6;
   const hand = (deg: number, len: number) => {
@@ -377,12 +387,13 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
       })}
       {Array.from({ length: 12 }, (_, i) => {
         const n = i + 1;
+        if (crowded && n % 3 !== 0) return null;
         const a = ((n * 30 - 90) * Math.PI) / 180;
         return (
           <text
             key={n}
-            x={Math.cos(a) * (R - 14 - numSize * 0.55 - 5)}
-            y={Math.sin(a) * (R - 14 - numSize * 0.55 - 5) + numSize * 0.35}
+            x={Math.cos(a) * numR}
+            y={Math.sin(a) * numR + numSize * 0.35}
             className="clk-num"
           >
             {n}
@@ -416,6 +427,7 @@ function Chart({ fig, ctx }: { fig: Extract<FigureData, { kind: 'bar' | 'line' }
   const H = 420;
   const svgRef = useRef<SVGSVGElement>(null);
   const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   // 横軸の札は棒・点の位置（同じ幅の枠）の下。入らなければ縮め、なお入らなければ2段にずらす
   const labelsRef = useRef<HTMLDivElement>(null);
   useStaggerLabels(labelsRef, fig.labels.map((l) => plainText(l)).join('|'));

@@ -208,3 +208,85 @@ test('スクロールさせる枠（data-scroll-region）: 枠ごとに印と高
   const r2 = await inspectText(page, { stage: 'g3' });
   expect(r2.issues.filter((i) => i.kind === 'scroll-hidden').length).toBeGreaterThan(1);
 });
+
+test('不透明な板の下に隠れた字は covered だけ・透明な枠どうしの重なりは overlap-text に出す', async ({
+  page,
+}) => {
+  // 板（不透明な背景）の下に隠れた選択肢の字が、板の字と重なっても、overlap-text には数えない（covered で出る）
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*20);left:calc(var(--u)*10)">かくれる せんたくし</p>
+     <div class="abs box" style="top:calc(var(--u)*19);left:calc(var(--u)*8);width:calc(var(--u)*30);height:calc(var(--u)*6)">
+       <p style="position:absolute;top:calc(var(--u)*1);left:calc(var(--u)*2)">かいせつの ぶん</p></div>`,
+  );
+  const hidden = await kinds(page, 'g3');
+  expect(hidden).toContain('covered');
+  expect(hidden).not.toContain('overlap-text');
+  // 背景も線も透明な枠どうし（どちらも手前でも奥でもない）は、今までどおり overlap-text
+  await show(
+    page,
+    `<div class="abs" style="top:calc(var(--u)*20);left:calc(var(--u)*10)"><p>かさなる もじ</p></div>
+     <div class="abs" style="top:calc(var(--u)*20.5);left:calc(var(--u)*12)"><p>うえの もじ</p></div>`,
+  );
+  expect(await kinds(page, 'g3')).toContain('overlap-text');
+});
+
+test('スクロールの枠の種類: work・explain は印があっても1件・transcript は印だけ', async ({
+  page,
+}) => {
+  const long = 'ながい ぶんしょうが つづいて います。'.repeat(8);
+  const region = (kind: string, withCue: boolean) =>
+    `<div class="abs box" data-scroll-region="${kind}" style="top:calc(var(--u)*3);left:calc(var(--u)*5);width:calc(var(--u)*40);height:calc(var(--u)*12);overflow:auto;font-size:calc(var(--u)*2.4);line-height:1.5">
+       <p>${long}</p></div>
+     ${withCue ? `<span class="abs" data-scroll-cue style="top:calc(var(--u)*16);left:calc(var(--u)*5)">▼</span>` : ''}`;
+  for (const kind of ['work', 'explain']) {
+    await show(page, region(kind, true));
+    const r = await inspectText(page, { stage: 'g3' });
+    const sh = r.issues.filter((i) => i.kind === 'scroll-hidden');
+    expect(sh).toHaveLength(1);
+    expect(sh[0]!.detail).toMatch(kind === 'work' ? /作業領域が .*u 足りず/ : /解説が板に .*行分/);
+    expect(r.issues.filter((i) => i.kind === 'clipped')).toEqual([]);
+  }
+  await show(page, region('transcript', true));
+  expect(
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'scroll-hidden' || i.kind === 'clipped',
+    ),
+  ).toEqual([]);
+  await show(page, region('transcript', false));
+  expect(
+    (await inspectText(page, { stage: 'g3' })).issues.filter((i) => i.kind === 'scroll-hidden'),
+  ).toHaveLength(1);
+});
+
+test('分かち書きの「・」: 2字以上の語のあとは出さない・1字の並びは出す', async ({ page }) => {
+  // 「・」のあとで折れる（<wbr> + keep-all）。「くに・／まち・／ひと」は語と語の区切りなので出さない
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:5.5em;word-break:keep-all">ある くに・<wbr>まち・<wbr>ひと</p>`,
+  );
+  const ok = await inspectText(page, { stage: 'g2' });
+  expect(ok.issues.filter((i) => i.kind === 'wakachi-split')).toEqual([]);
+  // 1字の並び（き・つ・つ・き）は、「・」のあとの改行でも出す
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:4em;word-break:keep-all">あ き・<wbr>つ・<wbr>つ・<wbr>き</p>`,
+  );
+  const ng = await inspectText(page, { stage: 'g2' });
+  expect(ng.issues.some((i) => i.kind === 'wakachi-split' && i.text.includes('・／'))).toBe(true);
+});
+
+test('文字の大きさ: 最小の 1% までの差は出さない・それ以上は出す（小数2桁）', async ({ page }) => {
+  // g1 の最小は 2u。1.99u は丸めの誤差、1.9u は小さすぎる
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);font-size:calc(var(--u)*1.99)">まるめの さ</p>`,
+  );
+  expect((await inspectText(page, { stage: 'g1' })).issues).toEqual([]);
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);font-size:calc(var(--u)*1.9)">ちいさい</p>`,
+  );
+  const r = await inspectText(page, { stage: 'g1' });
+  expect(r.issues.find((i) => i.kind === 'small-text')?.detail).toContain('1.9u（最小 2u');
+});

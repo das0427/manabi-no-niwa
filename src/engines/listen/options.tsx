@@ -12,6 +12,7 @@ import {
   autoLayout,
   checkChoice,
   judgeChoice,
+  picsProps,
   visibleOptionIndices,
   type ChoiceResponse,
 } from '../choice/choice';
@@ -63,6 +64,8 @@ interface Props {
    * 2列にすると1行6〜7字で語の途中で折れる）
    */
   autoArrange?: boolean;
+  /** 選択肢の横に並ぶものの幅（u）。絵の縮み（picsProps）の見積りに使う */
+  picsSide?: number;
 }
 
 export function ChoiceOptions({
@@ -76,6 +79,7 @@ export function ChoiceOptions({
   pressed,
   className,
   autoArrange = true,
+  picsSide = 0,
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
@@ -110,9 +114,20 @@ export function ChoiceOptions({
         part.layout,
         part.figure !== undefined,
       );
+  const pics = picsProps(
+    shown.map((i) => ({
+      label: typeof part.options[i]!.label === 'string' ? part.options[i]!.label : undefined,
+      figure: part.options[i]!.figure,
+    })),
+    layout,
+    picsSide,
+  );
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
-      <div className={`eng-opts__list eng-opts__list--${layout}`}>
+      <div
+        className={`eng-opts__list eng-opts__list--${layout}${pics.className}`}
+        style={pics.style}
+      >
         {shown
           .map((i) => ({ o: part.options[i]!, i }))
           .map(({ o, i }) => (

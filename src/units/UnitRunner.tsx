@@ -63,6 +63,19 @@ import {
 } from './unitFlow';
 import './unit.css';
 
+/** 図を左・エンジンを右に並べない種類（数の入力・読解・なぞり・解説。もともと自前の配置） */
+const SIDE_EXCLUDED: ReadonlySet<string> = new Set(['number', 'reading', 'trace', 'explain']);
+
+/**
+ * 作業領域をスクロールの枠にしない種類。
+ * - 読解: 本文の枠が自分でスクロールする（data-scroll-region="passage"）
+ * - 数の入力: 足りないのは数字キーの区画（--u0 で縮まない 6u のキー）で、枠にすると「こたえあわせ」のキーが枠で切れて押せない
+ *   （g2.math.mult-beyond/2 のヒント②・1280×720）。図も縮めない（図の高さは number.css が cqh で決める）
+ */
+const NO_WORK_SCROLL: ReadonlySet<string> = new Set(['reading', 'number']);
+/** 図を --fig-max で縮めない種類（自前で図の高さを決める） */
+const NO_FIG_FIT: ReadonlySet<string> = new Set(['number']);
+
 // 分かち書きの段階（DESINGN.md 17章。改行の規則・S2 が data-wakachi を使う）
 const WAKACHI_STAGES: ReadonlySet<string> = new Set(['p23', 'p4', 'p5', 'g1', 'g2']);
 
@@ -558,46 +571,8 @@ export function UnitRound({
     };
   }, [isDone]);
 
-  // 作業領域の中身が空きに収まらないとき、--fit（0.8〜1）で中身の寸法 --u を縮める。
-  // 子の寸法は --fit=1 に戻して測り直す（文字の折り返しが変わるので 2 回まで補正）。問題が変わったら 1 から
+  // 作業領域の fit は板の高さ（--panel-h）を使うので、板の測りを先に（同じ描画の中で作業領域の高さを確定させる）
   const phaseKey = `${s.index}:${s.phase}:${s.hintsShown}`;
-  useLayoutEffect(() => {
-    const root = rootRef.current;
-    const work = root?.querySelector<HTMLElement>('.unit__work') ?? null;
-    if (!root || !work) return;
-    const fitNow = () => {
-      work.style.removeProperty('--fit');
-      let fit = 1;
-      for (let i = 0; i < 3; i++) {
-        const avail = work.clientHeight;
-        const need = work.scrollHeight;
-        if (avail <= 0 || need <= avail + 1) break;
-        const next = Math.max(0.8, fit * (avail / need));
-        if (Math.abs(next - fit) < 0.005) break;
-        fit = next;
-        work.style.setProperty('--fit', fit.toFixed(3));
-      }
-      if (fit >= 1) work.style.removeProperty('--fit');
-    };
-    fitNow();
-    if (typeof ResizeObserver === 'undefined') return;
-    // 観測の通知の中で寸法を書くと ResizeObserver の loop エラーになるので、次のフレームで測り直す
-    let raf = 0;
-    const ro = new ResizeObserver(() => {
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        fitNow();
-      });
-    });
-    ro.observe(work);
-    for (const c of Array.from(work.children)) ro.observe(c);
-    return () => {
-      ro.disconnect();
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, [phaseKey]);
-
   // 解説の板の高さを --panel-h に書き（作業領域は板の上まで）、スクロールが要るときは ▼ の印を出す
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -634,6 +609,123 @@ export function UnitRound({
       panel.removeEventListener('scroll', measure);
     };
   }, [phaseKey, isDone]);
+
+  // 作業領域の中身が空きに収まらないとき、まず図を縮め（--fig-max）、足りない分を --fit（0.8〜1。解説は 0.6〜1）で
+  // 中身の寸法 --u ごと縮める。図が高く幅が狭いときは図を左・エンジンを右の横並び（data-layout="side"）にする。
+  // それでも収まらなければ重ねずに作業領域の中でスクロールさせ（data-scroll-region="work"・▼）、1件として検査に残す。
+  // 子の寸法は --fit=1 に戻して測り直す（文字の折り返しが変わるので 2 回まで補正）。問題が変わったら 1 から
+  const engineId = item?.engine ?? '';
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const work = root?.querySelector<HTMLElement>('.unit__work') ?? null;
+    if (!root || !work) return;
+    const minFit = s.phase === 'explain' ? 0.6 : 0.8;
+    const sideOk = !SIDE_EXCLUDED.has(engineId);
+    const cue = () => {
+      if (!work.hasAttribute('data-scroll-region')) {
+        work.removeAttribute('data-scroll-cue');
+        return;
+      }
+      const atEnd = work.scrollTop + work.clientHeight >= work.scrollHeight - 2;
+      if (atEnd) work.removeAttribute('data-scroll-cue');
+      else work.setAttribute('data-scroll-cue', '');
+    };
+    const fitNow = () => {
+      // 測り直しでスクロールの枠を外すと位置が 0 に戻るので、覚えておいて戻す（中身の大きさが変わったときの測り直し）
+      const keepTop = work.scrollTop;
+      work.style.removeProperty('--fit');
+      work.style.removeProperty('--fig-max');
+      work.removeAttribute('data-fig-fit');
+      work.querySelector<HTMLElement>(':scope > .unit__figure')?.style.removeProperty('--fig-k');
+      work.removeAttribute('data-layout');
+      work.removeAttribute('data-scroll-region');
+      const fig = work.querySelector<HTMLElement>(':scope > .unit__figure');
+      const textFig = !!fig?.querySelector('.fig-text, .fig-table');
+      // 横に並べるか: 図の自然な高さが空きの 45% を超え、幅が作業領域の 55% 以下
+      if (fig && sideOk && work.clientHeight > 0) {
+        const r = fig.getBoundingClientRect();
+        if (r.height > work.clientHeight * 0.45 && r.width <= work.clientWidth * 0.55) {
+          work.setAttribute('data-layout', 'side');
+        }
+      }
+      // 図を先に縮める: 自然な高さ figH と不足から --fig-max = max(min(figH, 12u), figH − 不足)
+      if (fig && !textFig && !NO_FIG_FIT.has(engineId) && work.clientHeight > 0) {
+        const shortage = work.scrollHeight - work.clientHeight;
+        const figH = fig.getBoundingClientRect().height;
+        if (shortage > 1 && figH > 0) {
+          const probe = document.createElement('div');
+          probe.style.cssText =
+            'position:absolute;visibility:hidden;pointer-events:none;width:calc(var(--u0, var(--u)) * 12)';
+          work.appendChild(probe);
+          const u12 = probe.getBoundingClientRect().width;
+          probe.remove();
+          const figMax = Math.max(Math.min(figH, u12), figH - shortage);
+          work.style.setProperty('--fig-max', `${figMax.toFixed(1)}px`);
+          // 中の SVG・画像の寸法の上書き（max-height・height: auto）は、縮めるときだけ（unit.css）
+          work.setAttribute('data-fig-fit', '');
+          // 絵を並べた図（行・格子）は SVG 1つずつの高さでは縮まないので、図の中の --u ごと縮める（--fig-k）
+          let k = 1;
+          for (let i = 0; i < 2; i++) {
+            // 高さの上限で切られていても、中身の高さで測る
+            const h = Math.max(fig.getBoundingClientRect().height, fig.scrollHeight);
+            if (h <= figMax + 1) break;
+            k = Math.max(0.35, k * (figMax / h));
+            fig.style.setProperty('--fig-k', k.toFixed(3));
+          }
+        }
+      }
+      let fit = 1;
+      for (let i = 0; i < 6; i++) {
+        const avail = work.clientHeight;
+        const need = work.scrollHeight;
+        if (avail <= 0 || need <= avail + 1) break;
+        let next = Math.max(minFit, fit * (avail / need));
+        // 比で縮めても数 px 足りないまま止まる（縮まない段・折り返しの変化）ときは、少しずつ下げて下限まで試す
+        // （下限より上で止めてスクロールにしない: g2.ja.culture/22 の解説が fit 0.81 で 4px 足りずスクロールしていた）
+        if (fit - next < 0.005) next = Math.max(minFit, fit - 0.02);
+        if (next >= fit) break;
+        fit = next;
+        work.style.setProperty('--fit', fit.toFixed(3));
+      }
+      if (fit >= 1) work.style.removeProperty('--fit');
+      // 下限でも収まらないときは重ねずに作業領域の中でスクロール（上そろえ。右下に ▼）。
+      // 読解・数の入力は作業領域を枠にしない（NO_WORK_SCROLL）。0.5u までの不足は枠にしない
+      // （下の 2.4u の余白に収まり、板・吹き出しに重ならない。枠にすると数 px のために ▼ とスクロールが出る）
+      const tol = Math.max(1, (work.clientWidth / 92) * 0.5);
+      if (
+        !NO_WORK_SCROLL.has(engineId) &&
+        work.clientHeight > 0 &&
+        work.scrollHeight > work.clientHeight + tol
+      ) {
+        work.setAttribute('data-scroll-region', 'work');
+        if (keepTop > 0) work.scrollTop = keepTop;
+      }
+      cue();
+    };
+    work.scrollTop = 0;
+    fitNow();
+    work.addEventListener('scroll', cue, { passive: true });
+    if (typeof ResizeObserver === 'undefined') {
+      return () => work.removeEventListener('scroll', cue);
+    }
+    // 観測の通知の中で寸法を書くと ResizeObserver の loop エラーになるので、次のフレームで測り直す
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        fitNow();
+      });
+    });
+    ro.observe(work);
+    for (const c of Array.from(work.children)) ro.observe(c);
+    return () => {
+      ro.disconnect();
+      if (raf) cancelAnimationFrame(raf);
+      work.removeEventListener('scroll', cue);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phaseKey]);
 
   if (s.phase === 'done')
     return (
@@ -731,7 +823,7 @@ export function UnitRound({
       ) : null}
 
       {s.phase === 'explain' && item ? (
-        <div className="unit__explain" data-testid="explain">
+        <div className="unit__explain" data-testid="explain" data-scroll-region="explain">
           {!ux.softJudgement ? (
             <p className="unit__explain-head">
               {s.results[s.results.length - 1]?.outcome === 'skipped' ? 'こたえ' : 'せいかい'}

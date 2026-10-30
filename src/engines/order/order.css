@@ -30,7 +30,8 @@
 /* 縦（文のカード）: 左に並べる所、右に おくもの。4枚まで */
 .eng-order__main--column {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr): 長い文の札で列が作業領域より広がらない */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   column-gap: calc(var(--u) * 3);
   width: 100%;
@@ -50,6 +51,22 @@
   max-width: none;
 }
 .eng-order__main--column .tk-card__label {
-  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
+  /* 縮む --u の --text-small（作業領域の --fit で札と一緒に縮む。下限は --text-min） */
+  font-size: var(--text-small);
   text-align: left;
+}
+/* 番号の丸は札の中（左の余白）に置く。角に突き出して作業領域・舞台の外に出ない（read-info/33 の「2」） */
+.eng-order__main--column .tk-card {
+  align-items: stretch;
+}
+.eng-order__track .tk-card:has(.tk-badge) {
+  /* 丸（--badge）の右に、ふりがなが左へはみ出す分の余白 */
+  padding-left: calc(var(--u) * 0.6 + var(--badge, calc(var(--u) * 3)) + var(--u) * 1.6);
+}
+.eng-order__main--column .tk-badge {
+  /* 札の align-items: stretch で番号の丸が札の幅いっぱいに伸びないように */
+  align-self: flex-start;
+  top: 50%;
+  left: calc(var(--u) * 0.6);
+  transform: translateY(-50%);
 }

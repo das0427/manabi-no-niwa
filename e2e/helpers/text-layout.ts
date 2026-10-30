@@ -135,6 +135,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
   const u = Math.min(W / 100, (H * 1.7778) / 100);
   const maxPerKind = opt.maxPerKind ?? 20;
   const r1 = (n: number) => Math.round(n * 10) / 10;
+  const r2 = (n: number) => Math.round(n * 100) / 100;
 
   // ---- 規則の表
   /** 行頭に来てはいけない字（JIS X 4051 の行頭禁則＋小書きの仮名・長音・中黒） */
@@ -672,6 +673,29 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         const qr = q.getBoundingClientRect();
         return qr.width >= 1 && qr.height >= 1;
       });
+      const kindOfReg = reg.getAttribute('data-scroll-region') ?? '';
+      if (kindOfReg === 'work' || kindOfReg === 'explain') {
+        // 作業領域（work）・解説の板（explain）は、印があっても枠につき1件を残す。設計で受け入れたスクロールではなく、
+        // パックの文・図を短くする手がかりなので消さない（1行ずつ数えると文の長さに比例して膨らむだけ）
+        const needY = he.scrollHeight - he.clientHeight;
+        const needX = he.scrollWidth - he.clientWidth;
+        const fs0 = parseFloat(s.fontSize) || 16;
+        const lh0 = parseFloat(s.lineHeight) || fs0 * 1.5;
+        const detail =
+          kindOfReg === 'explain' && ovY
+            ? `解説が板に ${r1(needY / lh0)} 行分入らずスクロール`
+            : kindOfReg === 'explain'
+              ? `解説が板に ${r1(needX / u)}u 分入らずスクロール（横）`
+              : `作業領域が ${r1(Math.max(ovY ? needY : 0, ovX ? needX : 0) / u)}u 足りずスクロール`;
+        add(
+          'scroll-hidden',
+          textOf(reg),
+          `${describe(reg)}（data-scroll-region=${kindOfReg}）`,
+          rect,
+          detail,
+        );
+        continue;
+      }
       if (!hasCue)
         add(
           'scroll-hidden',
@@ -680,7 +704,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           rect,
           'スクロールできる印（data-scroll-cue）が無い',
         );
-      if (ovY) {
+      // 4 行の高さは、本文を読む枠（passage・strip）だけ見る（書き起こしは印だけ）
+      if (ovY && kindOfReg !== 'transcript') {
         const fs = parseFloat(s.fontSize) || 16;
         const lh = parseFloat(s.lineHeight) || fs * 1.5;
         if (he.clientHeight < 4 * lh - 1)
@@ -696,6 +721,39 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
 
     // ---- (6) 重なり: 文字どうし（em の高さに詰めた箱で比べる）
     // 枠で隠れた部分は重なりに数えない（隠れたことは (5) で出す）
+    /** 背景が不透明（alpha 1）で、見えているか */
+    const opaqueBg = (el: Element): boolean => {
+      const st = cs(el);
+      const c = st.backgroundColor;
+      if (clear(c) || Number(st.opacity) < 1) return false;
+      const m = /(?:,|\/)\s*([\d.]+)(%?)\s*\)$/.exec(c);
+      if (!m) return true;
+      const a = m[2] ? Number(m[1]) / 100 : Number(m[1]);
+      return a >= 0.999;
+    };
+    /** 重なりの中心で、片方の字を含む不透明な背景の要素が、もう片方を含まずに手前にあるか */
+    const hiddenUnderOpaque = (
+      A: { el: Element },
+      Bx: { el: Element },
+      x: number,
+      y: number,
+    ): boolean => {
+      if (x < 0 || y < 0 || x >= W || y >= H) return false;
+      const stack = document.elementsFromPoint(x, y);
+      const topOf = (t: Element) => {
+        const i = stack.findIndex((e) => e === t || t.contains(e));
+        return i < 0 ? Infinity : i;
+      };
+      const over = (hide: Element, other: Element): boolean => {
+        const idxOther = topOf(other);
+        for (let i = 0; i < stack.length && i < idxOther; i++) {
+          const e = stack[i]!;
+          if (e.contains(hide) && !e.contains(other) && opaqueBg(e)) return true;
+        }
+        return false;
+      };
+      return over(A.el, Bx.el) || over(Bx.el, A.el);
+    };
     const shownBoxes = boxes
       .map((bx) => {
         const v = visible(bx.el, bx);
@@ -723,6 +781,17 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           if ((rtB.t + rtB.b) / 2 < (other.t + other.b) / 2 && ow <= 0.5 * rtFs + 1) continue;
         }
         if (ow > 1.5 && oh > 0.3 * Math.min(A.b - A.t, Bx.b - Bx.t)) {
+          // 一方が、不透明な背景の板・吹き出しの下に隠れているときは、文字どうしの重なりに数えない
+          // （隠れたことは (8) の covered で出る。二重に出さない）
+          if (
+            hiddenUnderOpaque(
+              A,
+              Bx,
+              (Math.max(A.l, Bx.l) + Math.min(A.r, Bx.r)) / 2,
+              (Math.max(A.t, Bx.t) + Math.min(A.b, Bx.b)) / 2,
+            )
+          )
+            continue;
           add(
             'overlap-text',
             `${A.text}｜${Bx.text}`,
@@ -938,14 +1007,15 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           if (m) px *= Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
         }
         const min = isRt ? MIN_RUBY_U : MIN_TEXT_U;
-        if (px > 0 && px / u < min - 0.05) {
+        // 最小の 1% までの差は px の丸め・SVG の拡大率の誤差なので数えない（1.998u を「1.9u」と出していた）
+        if (px > 0 && px / u < min * 0.99) {
           const r = p.getBoundingClientRect();
           add(
             'small-text',
             (node.textContent ?? '').trim(),
             describe(p),
             r,
-            `${r1(px / u)}u（最小 ${min}u${isRt ? '・ふりがな' : ''}）`,
+            `${r2(px / u)}u（最小 ${min}u${isRt ? '・ふりがな' : ''}）`,
           );
         }
       }
@@ -1088,6 +1158,26 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             right: Math.max(a.r, b.r),
             bottom: Math.max(a.b, b.b),
           });
+          /** 改行の直前が「・」で、前後の部分（空白か「・」で区切った語）がどちらも2字以上か。1字の並び（き・つ・つ・き）は数える */
+          const nakaguroBreak = (ps: Pos[], a: Pos, b: Pos): boolean => {
+            if (a.ch !== '・') return false;
+            const ai = ps.indexOf(a);
+            const bi = ps.indexOf(b);
+            if (ai < 0 || bi !== ai + 1) return false;
+            let before = 0;
+            for (let k = ai - 1; k >= 0; k--) {
+              if (ps[k]!.ch === '・') break;
+              before++;
+              if (ps[k]!.spaceBefore) break;
+            }
+            let after = 0;
+            for (let k = bi; k < ps.length; k++) {
+              if (ps[k]!.ch === '・') break;
+              if (k > bi && ps[k]!.spaceBefore) break;
+              after++;
+            }
+            return before >= 2 && after >= 2;
+          };
           const ctx = (li: number) => {
             const a = lines[li]!.map((p) => (p.spaceBefore ? ' ' : '') + p.ch).join('');
             const b = lines[li + 1]!.map((p) => (p.spaceBefore ? ' ' : '') + p.ch).join('');
@@ -1139,6 +1229,10 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               add('word-split', text, where, rect, '時刻・小数・分数の途中');
             else if (a.ruby && a.ruby === b.ruby)
               add('word-split', text, where, rect, 'ふりがな付きの語の途中');
+            // 分かち書きの「・」のあとの改行（語と語の区切り。JIS X 4051 で改行してよい）
+            else if (nakaguroBreak(para, a, b)) {
+              /* 数えない */
+            }
             // (d) 分かち書きの語の途中
             else if (
               wakachi &&

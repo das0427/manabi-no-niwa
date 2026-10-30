@@ -45,16 +45,59 @@
 }
 /* こたえあわせは下の帯の主操作の位置（つぎへ の左 3u） */
 .eng-opts__check {
-  position: absolute;
-  /* 作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
-  right: calc(var(--u0, var(--u)) * 17.5);
-  bottom: calc(var(--u0, var(--u)) * -12);
+  /* 舞台（.stage は transform を持つので fixed の基準になる）の右から 21.5u・下から 2u。
+     absolute（作業領域の下 -12u）だと作業領域の scrollHeight を押し上げ、fit を下限まで縮め、
+     収まらないときの作業領域のスクロール（data-scroll-region="work"）で こたえあわせ が枠の外に切れて押せなかった。
+     作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
   min-width: calc(var(--u) * 14);
-  font-size: calc(var(--u) * 2.8);
+  font-size: max(calc(var(--u) * 2.8), var(--text-min, 0px));
   z-index: 4;
 }
 /* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語） */
 .eng-listen .eng-opts__opt .fig-row svg {
   width: calc(var(--u) * 6) !important;
   height: calc(var(--u) * 6) !important;
+}
+
+.eng-listen .eng-opts {
+  min-width: 0;
+}
+/* 札が上の段（絵のあるとき・解説のとき）は、選択肢の列を段の幅いっぱいにする（2列のグリッドの幅の元） */
+.eng-listen--pics .eng-opts,
+.eng-listen--explain .eng-opts {
+  width: 100%;
+}
+/* 絵・時計の選択肢は折り返さず、1行に収める（text-layout-fixes R3）。幅が足りないときは各選択肢が縮む。
+   文字の選択肢は折り返しのまま（縮めると語の途中で折れる） */
+.eng-listen .eng-opts__list.is-pics {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+.eng-listen .eng-opts__list.is-pics .eng-opts__opt {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* 絵・時計の選択肢は幅を min(既定, (作業領域の幅 − 札の幅 --pics-side − 間隔) ÷ 数) に縮める（札が上の段なら --pics-side は 0。
+   上の段に置くのは eng-listen--pics。choice.tsx の earOnTop）。g4.en.time-days/14 */
+.eng-listen .eng-opts__list.is-pics {
+  /* 高さの上限（--fit で縮む u）: 作業領域（27u）から 札の段（7.1u）・選択肢の余白と文字（約 7.5u）を引いた分に近い */
+  --pic-max: min(
+    calc(
+      (
+          var(--u0, var(--u)) * 88 - var(--u) * var(--pics-side, 0) - var(--u) * 2.4 *
+            (var(--pics-n) - 1) - var(--u) * 3.6 * var(--pics-n) - var(--u) * 0.6 *
+            var(--pics-total)
+        ) /
+        var(--pics-total)
+    ),
+    calc(var(--u) * (15 + var(--pics-side, 0) * 0.14))
+  );
+}
+.eng-listen .eng-opts__list.is-pics .eng-opts__opt svg,
+.eng-listen .eng-opts__list.is-pics .fig-illust__group > * {
+  max-width: var(--pic-max);
+  max-height: var(--pic-max);
 }

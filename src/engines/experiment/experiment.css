@@ -80,6 +80,11 @@
   font-weight: 700;
   color: var(--ink);
   line-height: 1.2;
+  /* 空白のところだけで折り、行の長さをそろえる（pretty だと最後の行が「円」1字になる）。
+     auto-phrase は付けない（balance と組み合わさると字の途中で折る） */
+  text-wrap: balance;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 .exp-factor.is-inactive .exp-factor__label {
   color: var(--ink-soft);
@@ -111,7 +116,12 @@
 .exp-factor__value,
 .exp-factor__fixed {
   min-width: calc(var(--u) * 7);
-  white-space: nowrap;
+  /* 矢印のボタンの下に入らないよう、入らないときは空白・かっこの前で折る（「0まい／（当てない）」） */
+  min-inline-size: 0;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: balance;
   text-align: center;
   font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
@@ -148,6 +158,10 @@
 .exp__record .mk-btn--ok {
   min-height: calc(var(--u) * 6);
 }
+/* 「やってみる」は fit で u が縮んでも --text-min より小さくしない */
+.exp .mk-btn--ok {
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, calc(var(--u) * 1.7)));
+}
 .exp-note {
   margin: 0;
   font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
@@ -175,11 +189,23 @@
   padding: calc(var(--u) * 0.15) calc(var(--u) * 0.3);
   text-align: center;
   line-height: 1.1;
+  /* 文字の大きさは表から受ける（入らないとき useFitWidth が表の font-size を縮める） */
+  font-size: inherit;
 }
 .exp-table th {
   background: var(--paper-2);
   font-weight: 700;
-  font-size: max(calc(var(--u) * 1.8), var(--text-min, calc(var(--u) * 1.7)));
+  /* 見出し（「水の／量」）は途中で折らない。入らなければ表ごと縮める */
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+/* 最小まで縮めても入らないとき、長い見出し（短いもの .is-short 以外）だけ、空白のところで折る */
+.exp-table[data-wrap] th:not(.is-short) {
+  white-space: normal;
+  text-wrap: pretty;
+  /* 語の中では折らない（overflow-wrap: anywhere だと列が1字まで縮み「とか／す 物」になる） */
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 .exp-table tr.is-last td {
   font-weight: 700;
@@ -202,7 +228,10 @@
 
 /* 表の結果の札（table） */
 .exp-card {
+  box-sizing: border-box;
+  max-width: 100%;
   min-width: calc(var(--u) * 15);
+  height: auto;
   min-height: calc(var(--u) * 16);
   display: flex;
   flex-direction: column;
@@ -214,7 +243,14 @@
   border-radius: var(--radius);
 }
 .exp-card__text {
-  white-space: nowrap;
+  /* 空白のところで折る（長い結果「27℃・いちばん 明るい」が札の外に出ない）。語の中では折らない */
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 calc(var(--u) * 0.6);
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: normal;
+  word-break: keep-all;
   font-size: max(calc(var(--u) * 2.4), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
   color: var(--ink);
@@ -248,17 +284,18 @@
   fill: var(--ink);
 }
 .exp-svgtext {
-  /* SVG の中の文字は viewBox の単位。--vb（= viewBox の高さ / 19）で u に直す（Apparatus.tsx） */
-  font-size: calc(var(--vb, 15) * 2.2px);
+  /* SVG の中の文字は viewBox の単位。--vb（= viewBox の高さ / 19）で u に直す（Apparatus.tsx）。
+     --svg-floor（useSvgTextFloor）は --text-min を viewBox の単位にしたもの。これを下限にする */
+  font-size: max(calc(var(--vb, 15) * 2.2px), var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .exp-svgtext--small {
-  font-size: calc(var(--vb, 15) * 2px);
+  font-size: max(calc(var(--vb, 15) * 2px), var(--svg-floor, 0px));
 }
 .exp-svgtext--tiny {
-  font-size: calc(var(--vb, 15) * 1.9px);
+  font-size: max(calc(var(--vb, 15) * 1.9px), var(--svg-floor, 0px));
 }
 .exp-swing {
   transform-origin: 0 0;

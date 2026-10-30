@@ -5,7 +5,7 @@
  *         ◀▶ で1目盛りずつ直せる）
  * 量は基準の単位（scale.unit）の値で持ち、有理数で比べる（src/core/answer/number.ts）。
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { eq, parseNumberInput, RETRY_MESSAGE, type Rational } from '../../core/answer/number';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import type { Judgement } from '../types';
@@ -23,6 +23,7 @@ import {
   type KitProps,
 } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry } from '../numberline/NumPad';
+import { floorStyle, useSvgTextFloor, useWidenToText } from '../figure/svgText';
 import './measure.css';
 
 export type MeasureInstrument = 'ruler' | 'masu' | 'scale';
@@ -307,18 +308,37 @@ interface InstrProps {
   onTap?: (tick: number) => void;
 }
 
+/**
+ * 目盛りの数字を最小（--text-min）まで大きくしたとき、隣と重なるなら major の何個おきに書くか。
+ * spacing は隣り合う major の間（viewBox の単位）、fs は字の大きさ、extent は字の長さ方向の大きさ（横は字数×0.62×fs、縦は 1.15×fs）
+ */
+function labelStride(spacing: number, extent: number): number {
+  return spacing > 0 ? Math.max(1, Math.ceil((extent + 6) / spacing)) : 1;
+}
+
 function Ruler({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
   const W = 1000;
   const H = 230;
   const L = 40;
   const X = (i: number) => L + (i / sc.n) * (W - L * 2);
   const vb = { x: 0, y: 0, w: W, h: H };
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   const fromTick = tickOfValue(sc, toRational(item.from ?? item.scale.min ?? 0)!);
   const endTick =
     item.task === 'read'
       ? fromTick + tickOfValue(sc, ratAdd(sc.min, toRational(item.value)!))
       : tick;
   const ticks = [];
+  // 最小まで大きくした数字が隣と重なるときは、1つおき（2つおき…）に書く
+  const majors: number[] = [];
+  for (let i = 0; i <= sc.n; i++) if (tickKind(item, sc, i) === 'major') majors.push(i);
+  const rulerLen = Math.max(...majors.map((i) => labelOf(item, tickValue(sc, i)).length), 1);
+  const rulerStride = labelStride(
+    majors.length > 1 ? X(majors[1]!) - X(majors[0]!) : 0,
+    rulerLen * 0.62 * Math.max(34, floor),
+  );
   for (let i = 0; i <= sc.n; i++) {
     const k = tickKind(item, sc, i);
     const len = k === 'major' ? 38 : k === 'mid' ? 26 : 15;
@@ -332,7 +352,7 @@ function Ruler({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
         className={`ms-tick ms-tick--${k}`}
       />,
     );
-    if (k === 'major')
+    if (k === 'major' && majors.indexOf(i) % rulerStride === 0)
       ticks.push(
         <text key={`l${i}`} x={X(i)} y={186} className="ms-label">
           {labelOf(item, tickValue(sc, i))}
@@ -353,7 +373,9 @@ function Ruler({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
     );
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
+      style={floorStyle(floor)}
       className={`mk-svg ms-ruler${wrong ? ' is-wrong' : ''}`}
       role="img"
       aria-label="ものさし"
@@ -407,6 +429,16 @@ function Masu({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
   const W = levels.length * (BW + gap) + 20;
   const H = BH + TOP + 40;
   const vb = { x: 0, y: 0, w: W, h: H };
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
+  const masuFs = Math.max(44, floor);
+  const masuMajors: number[] = [];
+  for (let i = 1; i <= cap; i++) if (tickKind(item, sc, i) === 'major') masuMajors.push(i);
+  const masuStride = labelStride(
+    masuMajors.length > 1 ? ((masuMajors[1]! - masuMajors[0]!) / cap) * BH : BH,
+    masuFs * 0.9,
+  );
   const lastX = (levels.length - 1) * (BW + gap) + 70;
   const ticksFor = (x0: number) => {
     const out = [];
@@ -423,7 +455,7 @@ function Masu({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
           className={`ms-tick ms-tick--${k}`}
         />,
       );
-      if (k === 'major' && i > 0)
+      if (k === 'major' && i > 0 && masuMajors.indexOf(i) % masuStride === 0)
         out.push(
           <text key={`l${i}`} x={x0 - 8} y={Y(i) + 9} className="ms-label ms-label--left">
             {labelOf(item, tickValue(sc, i))}
@@ -434,7 +466,9 @@ function Masu({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
   };
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
+      style={floorStyle(floor)}
       className={`mk-svg ms-masu${wrong ? ' is-wrong' : ''}`}
       role="img"
       aria-label="ます"
@@ -487,11 +521,23 @@ function Dial({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
   const R = 120;
   const vb = { x: -160, y: -170, w: 320, h: 330 };
   const A = (i: number) => (i / sc.n) * 360;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, vb.w);
+  useWidenToText(svgRef, floor);
   const P = (deg: number, r: number) => {
     const rad = ((deg - 90) * Math.PI) / 180;
     return { x: Math.cos(rad) * r, y: Math.sin(rad) * r };
   };
   const ticks = [];
+  const dialMajors: number[] = [];
+  for (let i = 0; i < sc.n; i++) if (tickKind(item, sc, i) === 'major') dialMajors.push(i);
+  const dialLen = Math.max(...dialMajors.map((i) => labelOf(item, tickValue(sc, i)).length), 1);
+  // 数字の円（半径 R-44）の上で、隣の major との弦の長さ
+  const dialGap =
+    dialMajors.length > 1
+      ? 2 * (R - 44) * Math.sin((Math.PI * (dialMajors[1]! - dialMajors[0]!)) / sc.n)
+      : 0;
+  const dialStride = labelStride(dialGap, Math.max(dialLen * 0.62, 1.1) * Math.max(27, floor));
   for (let i = 0; i < sc.n; i++) {
     const k = tickKind(item, sc, i);
     const len = k === 'major' ? 22 : k === 'mid' ? 15 : 8;
@@ -500,7 +546,7 @@ function Dial({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
     ticks.push(
       <line key={i} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className={`ms-tick ms-tick--${k}`} />,
     );
-    if (k === 'major') {
+    if (k === 'major' && dialMajors.indexOf(i) % dialStride === 0) {
       const t = P(A(i), R - 44);
       ticks.push(
         <text key={`l${i}`} x={t.x} y={t.y + 8} className="ms-label ms-label--dial">
@@ -515,7 +561,9 @@ function Dial({ item, sc, tick, wrong, answerTick, onTap }: InstrProps) {
   const gh = answerTick !== null && answerTick !== tick ? P(A(answerTick), R - 6) : null;
   return (
     <svg
+      ref={svgRef}
       viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
+      style={floorStyle(floor)}
       className={`mk-svg ms-dial${wrong ? ' is-wrong' : ''}`}
       role="img"
       aria-label="はかり"

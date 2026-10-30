@@ -32,10 +32,11 @@
 .eng-number__field:has(.eng-number__label) .eng-number__label {
   grid-column: 1;
   grid-row: 1;
-  /* 札と回答欄は同じ幅の列（回答欄が札の幅まで広がる）。長い札だけ 28u で折る */
-  max-width: calc(var(--u) * 28);
-  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
-  line-height: 1.3;
+  /* 札は回答欄の中の上の段（1行・--text-min）。段の高さは回答欄（field）の高さに含まれる
+     （札を2行に折ると回答欄が作業領域の下にはみ出した: text-layout-fixes.md R7） */
+  font-size: var(--text-min, calc(var(--u) * 2.2));
+  line-height: 1.2;
+  white-space: nowrap;
   text-align: center;
 }
 .eng-number__field:has(.eng-number__label) .eng-number__box {
@@ -135,14 +136,33 @@
 .unit__work--number .eng-number__fields {
   min-width: 0;
 }
+/* キーの区画は作業領域の高さまで（grid-row: 1 / span 2 は unit.css）。ヒント②③で つぎへ に重ならない */
+.unit__work--number .eng-number__pad {
+  max-height: 100%;
+  min-height: 0;
+}
 /* 図は左の列の幅の中、回答欄（札つきで約 15u）を除いた高さの中に収める */
 .unit__work--number .unit__figure svg {
   max-width: 100%;
-  max-height: calc(100cqh - var(--u0) * 17);
+  max-height: calc(100cqh - var(--u0) * 15);
 }
-/* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らない */
+/* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らず、文字は --text-min 以上
+   （fig-table の 2.4u は fit 0.8 で 1.9u になり、最小の 2.2u（幼児）を割る） */
 .unit__work--number .fig-table th {
   white-space: nowrap;
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
+}
+.unit__work--number .fig-table td {
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
+}
+/* 筆算の表は回答欄の上に置くので、行を詰める（行の高さ 5.5u → 約 3.8u。4行で 15u。表が作業領域を越えて回答欄の札に重ならない）。
+   セルの字は数字・ひらがなの見出しで、ふりがなの行（.rt の 1.7）を取らなくてよい */
+.unit__work--number .fig-table th,
+.unit__work--number .fig-table td {
+  padding-block: 0.12em;
+}
+.unit__work--number .fig-table .rt {
+  line-height: 1.3;
 }
 
 /* ---- 筆算（column）: ますの幅 6u・答えのます 5.6u（キーと同じ）・式の数字の行 3.6u。寸法は column.ts と合わせる ---- */

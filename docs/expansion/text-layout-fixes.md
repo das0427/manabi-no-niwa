@@ -364,3 +364,19 @@ S1〜S9・C1・C2 を実装した。設計から変えたところと、レビ�
 - **文の札・選択肢が長い**: g6-ja（write-opinion・read-argument・info-relations・read-literature）、g4-ja（write-report・idioms・read-summary・info-compare）、g5-ja（write-fact-opinion・read-gist・read-relations・figurative・classics・spoken-written）、g3-ja（write-reasons・proverbs・read-paragraphs）、soc-g34（city-changes・safety）。読解の「中心となる文はどれ」は、引用の文でなく「⑤の 1文め」等の短い札にする案も含めて検討。
 - **本文の図を札と同じ作業領域に置く問題**: g1.ja.read-info/33（R1 の横並びで足りなければ、本文を読解のエンジンに移す）。
 - **解説が板に入らない（図なし）**: g4.ja.idioms・g3.ja.proverbs・g2.life.town・g2.math.add-column・g3.ja.romaji など（第3回の結果で一覧にする）。
+
+### 6. 第2回の実施とレビュー（2026-10-31）
+
+R1〜R8・C2 の続き・C3・C5・C7 を実装した（C6 は待っても同じ covered が出たので入れていない。docs/test-plan.md 3.2）。設計から変えたところと、レビューで直したところ:
+
+- R1: 作業領域を枠にする（`data-scroll-region="work"`）と、choice・listen の複数選択の「こたえあわせ」（`position: absolute; bottom: -12u`）が枠の中に入って切れ、押せなかった（g1.ja.listen/12）。sort と同じく `position: fixed`（基準は transform を持つ舞台）にして、作業領域の高さにも数えないようにした（fit も不要に 0.8 まで縮んでいた）。
+- R1: 数の入力は作業領域を枠にしない・図を `--fig-max` で縮めない（足りないのは縮まない数字キーで、枠にするとキーの「こたえあわせ」が切れ、図だけが不要に小さくなった。g2.math.mult-beyond/2 ヒント②）。
+- R1: fit の比で縮めても数 px 残るときは 0.02 ずつ下限まで試す。0.5u 以下の不足は枠にしない。測り直しでスクロールの位置を戻す。枠の上の余白 1.4u（ふりがな・番号の丸が枠の上で切れていた）。
+- R1: 図の中の SVG・画像の `height: auto`・`max-height` は縮めるとき（`data-fig-fit`）だけにした（いつも付けると CSS で高さを決めた図の形が変わる）。
+- R3: ○ を字の後ろにする z-index は作業領域の中だけにした（幼児ホーム・v1 モードの選択肢の字が z-index の無い重ね物より上に出るのを防ぐ）。番号の丸は除く。
+- R3: 解説で時計など絵が3つ以下のとき、左の列の書き起こしが列の高さに縛られず伸びていた（g2.ja.culture/30 で作業領域が 45u 足りない）。列を行の高さまでにし、札の分を4行の下限に足した。
+- R6: 時計の時の数字は、となりと入らないほど混み合うとき 12・3・6・9 だけにした（17章の規約どおり。g4.en.time-days/15 の「10・11・12」の重なり）。図の表・文（m）・テープ・数直線の札の字に `--text-min` の下限を付けた（解説の fit 0.6 で 1.45u になっていた。g6.sci.lever/4）。
+- R8: てこの目盛りを間引くとき、おもりを下げた位置の数字は残す（問題文が「2の 位置」と言うのに 2 が消えていた）。
+- DESINGN.md に R3〜R8 の規約（sort の列とこたえあわせ、番号の丸、数の入力の札、読解の data-tight と行間 1.8、図・実験の最小）を書き足した。
+
+第3回に残るもの: g2.math.box/1（縦長の面の選択肢4つで作業領域が約 4 倍。選択肢の図・文の直し）、g2.math.mult-meaning（●のアレイの図が大きく問題文に重なる。図の size の直し）、g1.ja.read-info/33 の order の「こたえあわせ」が作業領域の枠の下（order・match・fill・build の こたえあわせ も帯へ移すか）、g4.ja.read-summary の右の列のはみ出し、g2.math.time の clock エンジンの「？」、番号の丸が ふりがなに重なる covered（g3.ja.proverbs/35・g4.ja.idioms の解説）。

@@ -120,7 +120,7 @@ export const SCENES: Scene[] = [
       rightKey: 'sink',
       result: ['rock', 'しずむ'],
       explain:
-        'こいしは しずむよ。ちいさくても しずむ ものが あるね。おふろで、こいしと ボールを みずに いれて くらべて みよう。',
+        'こいしは しずむよ。ちいさくても しずむ ものが あるね。おうちの ひとと いっしょに、こいしと ボールを みずに いれて くらべて みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。しずんだ ものは どれ？',
@@ -481,7 +481,7 @@ export const SCENES: Scene[] = [
       prompt: 'おおきい こおりと ちいさい こおり。はやく とけるのは どっち？',
       right: ['ちいさい こおり'],
       wrong: ['おおきい こおり', undefined, 'opposite'],
-      h2: 'こおりが ぜんぶ とけるまで、どっちが みじかいかな。',
+      h2: 'こおりが ぜんぶ とけるまでの じかんを くらべよう。',
       ask: 'small',
       rightKey: 'fast',
       result: ['p5-ice', 'ちいさい ほうが はやい'],
@@ -580,7 +580,7 @@ export const SCENES: Scene[] = [
     },
     q3: {
       figure: 'p5-can',
-      prompt: 'つつを さかに よこに おくと どう なる？',
+      prompt: 'つつを よこに して、さかに おくと どう なる？',
       right: ['ころがる'],
       wrong: ['ころがらない', undefined, 'flat-side'],
       h2: 'よこに した つつには、まるい ところが あるね。',

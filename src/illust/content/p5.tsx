@@ -167,8 +167,8 @@ const rain: IllustDef = {
           [28, 58],
           [50, 62],
           [72, 58],
-          [39, 78],
-          [61, 80],
+          [39, 74],
+          [61, 76],
         ].map(([x, y]) => (
           <path
             key={`${x}-${y}`}
@@ -199,68 +199,71 @@ const ice: IllustDef = {
   ),
 };
 
-/** しおれた はな: 途中で曲がって下を向いた茎と花、垂れた葉 */
+/** しおれた はな: 植木鉢から伸びて途中で大きく曲がり、下を向いた茎と花、垂れた葉 */
 const wilted: IllustDef = {
   id: 'p5-wilted',
   label: 'しおれた はな',
   status: 'final',
-  draw: () => (
-    <g>
-      <path
-        d="M50 46 C40 44 30 48 26 58 C36 60 48 56 50 46 Z"
-        fill={P.greenDark}
-        {...line}
-        strokeWidth="3"
-      />
-      <path
-        d="M50 52 C44 54 40 62 42 70 C48 66 52 60 50 52 Z"
-        fill={P.greenDark}
-        {...line}
-        strokeWidth="3"
-      />
-      <path
-        d="M50 58 L50 36 C50 20 78 20 78 38 L78 50"
-        fill="none"
-        stroke={INK}
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M50 58 L50 36 C50 20 78 20 78 38 L78 50"
-        fill="none"
-        stroke={P.greenDark}
-        strokeWidth="4"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <ellipse
-        cx="71"
-        cy="60"
-        rx="4.5"
-        ry="7"
-        transform="rotate(20 71 60)"
-        fill={P.pink}
-        {...line}
-        strokeWidth="2.5"
-      />
-      <ellipse
-        cx="85"
-        cy="60"
-        rx="4.5"
-        ry="7"
-        transform="rotate(-20 85 60)"
-        fill={P.pink}
-        {...line}
-        strokeWidth="2.5"
-      />
-      <ellipse cx="78" cy="64" rx="5" ry="7" fill={P.pink} {...line} strokeWidth="2.5" />
-      <circle cx="78" cy="54" r="4.5" fill={P.yellow} {...line} strokeWidth="2.5" />
-      <path d="M31 64 L69 64 L63 94 L37 94 Z" fill={P.brown} {...line} />
-      <rect x="27" y="56" width="46" height="11" rx="4" fill={P.brown} {...line} />
-      <ellipse cx="50" cy="56" rx="23" ry="3.5" fill={P.redDark} {...line} strokeWidth="2.5" />
-    </g>
-  ),
+  draw: () => {
+    const stem = 'M50 66 L50 30 C50 12 78 10 78 28 L78 34';
+    return (
+      <g>
+        <path
+          d="M50 50 C42 48 32 52 28 62 C38 64 46 60 50 50 Z"
+          fill={P.green}
+          {...line}
+          strokeWidth="3"
+        />
+        <path
+          d="M50 42 C56 44 62 50 62 58 C56 57 51 51 50 42 Z"
+          fill={P.green}
+          {...line}
+          strokeWidth="3"
+        />
+        <path
+          d={stem}
+          fill="none"
+          stroke={INK}
+          strokeWidth="8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d={stem}
+          fill="none"
+          stroke={P.greenDark}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <ellipse
+          cx="71"
+          cy="47"
+          rx="5.5"
+          ry="9"
+          transform="rotate(25 71 47)"
+          fill={P.pink}
+          {...line}
+          strokeWidth="2.5"
+        />
+        <ellipse
+          cx="85"
+          cy="47"
+          rx="5.5"
+          ry="9"
+          transform="rotate(-25 85 47)"
+          fill={P.pink}
+          {...line}
+          strokeWidth="2.5"
+        />
+        <ellipse cx="78" cy="50" rx="6" ry="9" fill={P.pink} {...line} strokeWidth="2.5" />
+        <circle cx="78" cy="38" r="5" fill={P.yellow} {...line} strokeWidth="2.5" />
+        <path d="M32 72 L68 72 L63 95 L37 95 Z" fill={P.orange} {...line} />
+        <rect x="27" y="64" width="46" height="11" rx="4" fill={P.orange} {...line} />
+        <ellipse cx="50" cy="64" rx="22" ry="3.5" fill={P.brown} {...line} strokeWidth="2.5" />
+      </g>
+    );
+  },
 };
 
 /** てがみ: 封筒とハートのシール。宛名・文字は描かない */

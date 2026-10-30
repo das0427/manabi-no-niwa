@@ -1170,6 +1170,21 @@
     "engine": "choice"
   },
   {
+    "id": "g3.math.abacus",
+    "pack": "g3-math",
+    "title": "そろばん",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "subj-sansu",
+    "prereq": [
+      "g3.math.large-numbers"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g3.math.add-sub-column",
     "pack": "g3-math",
     "title": "たし算《ざん》と ひき算《ざん》の 筆算《ひっさん》",
@@ -1700,6 +1715,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "sort"
+  },
+  {
+    "id": "g4.math.abacus",
+    "pack": "g4-math",
+    "title": "そろばん",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "subj-sansu",
+    "prereq": [
+      "g3.math.abacus"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g4.math.angle",

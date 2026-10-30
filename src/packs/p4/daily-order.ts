@@ -122,7 +122,7 @@ export const SCENES: Scene[] = [
       S('めが でる', 'life-sprout'),
       S('はなが さく', 'flower'),
     ],
-    why: 'たねから めが でて、はなが さくね。',
+    why: 'たねを まいて みずを やると、めが でて、はなが さくね。',
   },
   {
     id: 'tamago',
@@ -298,13 +298,16 @@ export const ALTS: Alt[] = [
   {
     kind: 'first',
     scene: 'shokuji',
-    prompt: 'ごはんの よういを するよ。いちばん はじめに するのは どれ？',
+    prompt: 'ごはんの よういを するよ。はじめに するのは どれ？',
     right: P('テーブルを ふく', 'p23-towel'),
     wrong: [
       P('ごはんを たべる', 'p23-spoon', 'order-skip'),
       P('おさらを かたづける', 'p4-plate', 'order-reverse'),
     ],
-    hints: ['おさらを ならべる まえに する ことは なにかな。', 'テーブルを きれいに するよ。'],
+    hints: [
+      'おさらを ならべる まえに する ことは なにかな。',
+      'おさらを おく ところを、さきに どう するかな。',
+    ],
     explain: 'はじめに テーブルを ふくね。それから おさらを ならべるよ。',
   },
   {

@@ -203,3 +203,25 @@ describe('p4.env.daily-order: 手順表と問題', () => {
     }
   });
 });
+
+describe('p4 の P2 単元: 画面での収まり・ヒント', () => {
+  const cardsOf = (it: Item) =>
+    it.engine === 'order' || it.engine === 'sort' ? it.cards : optionsOf(it);
+  it('問題文 26字・選択肢とカード 10字（空白を除く）', () => {
+    for (const id of ['p4.env.seasons', 'p4.env.daily-order'])
+      for (const it of unitItems(id)) {
+        expect([...strip(it.prompt)].length, it.id).toBeLessThanOrEqual(26);
+        for (const c of cardsOf(it))
+          expect([...strip(c.label)].length, `${it.id} ${String(c.label)}`).toBeLessThanOrEqual(10);
+      }
+  });
+  it('daily-order 別例: ヒントに正解の手順の語（はじめの語）を書かない', () => {
+    for (const it of unitItems('p4.env.daily-order')) {
+      if (it.engine !== 'choice') continue;
+      const right = String(it.options.find((o) => o.correct)!.label);
+      const head = right.split(' ')[0]!;
+      for (const h of it.hints ?? []) expect(String(h), it.id).not.toContain(right);
+      expect(String(lastHint(it)), it.id).not.toContain(head);
+    }
+  });
+});

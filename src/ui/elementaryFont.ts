@@ -7,8 +7,8 @@
 import { gradeOf } from '../audience/audience';
 import type { AudienceId } from '../audience/audience';
 
-/** 漢字のおおまかな範囲（CJK 統合漢字・拡張 A・互換漢字）。かなと英数は通常のフォントを使う */
-export const KANJI_UNICODE_RANGE = 'U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF';
+/** 漢字のおおまかな範囲（CJK 統合漢字・拡張 A・互換漢字・拡張 B 以降。scripts/fonts/chars-lib.ts の isIdeograph と同じ）。かなと英数は通常のフォントを使う */
+export const KANJI_UNICODE_RANGE = 'U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF, U+20000-2FFFF';
 
 export const ELEMENTARY_FONT_FILES = [
   { weight: '400', file: 'fonts/zen-maru-gothic-kanji-400.woff2' },

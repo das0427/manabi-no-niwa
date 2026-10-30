@@ -5,6 +5,9 @@
  * 入れる字 = 学年別漢字配当表の 1026 字
  *          + src の中の漢字（コード・教材パックの .ts / .json・音声台本。コメントと単体テストは除く）
  * 配当外の漢字（教材の文中の「《よみ》」付きの字など）も、src に現れる限り入る。
+ *
+ * コアのフォント（used-chars.txt）は collectCoreChars。教材パックと配当表の「漢字」は小学生用フォントに任せて
+ * コアには入れないが、教材パックの漢字以外の字（℃・²・◯・≦ など）はコアに入れる（小学生用フォントは漢字だけのため）。
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
@@ -40,6 +43,36 @@ export function walkSources(dir: string, exts: RegExp): string[] {
 
 export function stripComments(code: string): string {
   return code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
+const toPosix = (p: string): string => p.replaceAll('\\', '/');
+
+/** コアのフォントで漢字を入れないファイルか（教材パックと配当表のデータ） */
+export function isElementaryOnlyKanjiSource(root: string, file: string): boolean {
+  const rel = toPosix(path.relative(root, file));
+  return rel.startsWith('src/packs/') || rel === 'src/text/kanji-grades.ts';
+}
+
+/**
+ * コアのフォント（Zen Maru Gothic 400/700・Klee One）に入れる字（整列済みの配列）。
+ * かな・英数・記号の基本セット（漢字を除く）＋ src のコード中の字（コメントと単体テストを除く。
+ * 教材パック・配当表は漢字以外だけ）＋ 音声台本の文。
+ */
+export function collectCoreChars(root: string): string[] {
+  const chars = new Set<string>();
+  for (const ch of readFileSync(path.join(root, 'scripts/fonts/base-chars.txt'), 'utf8')) {
+    if (!isIdeograph(ch) && ch !== '\n' && ch !== '\r') chars.add(ch);
+  }
+  for (const file of walkSources(path.join(root, 'src'), /\.(tsx?|css)$/)) {
+    const noKanji = isElementaryOnlyKanjiSource(root, file);
+    for (const ch of stripComments(readFileSync(file, 'utf8'))) {
+      if ((ch.codePointAt(0) ?? 0) <= 0x7f) continue;
+      if (noKanji && isIdeograph(ch)) continue;
+      chars.add(ch);
+    }
+  }
+  for (const e of Object.values(VOICE_CATALOG)) for (const ch of voiceText(e)) chars.add(ch);
+  return [...chars].sort();
 }
 
 /** 小学生用フォントに入れる漢字（整列済みの配列） */

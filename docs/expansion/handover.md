@@ -30,7 +30,7 @@
 | 復習のときに「別の表現」の問題を優先して出す | 未対応 | 復習の段階（1・3・7・21日）とおすすめはある |
 | おえかき: テンプレート背景（学習連携）・ドラッグで大きさを決める図形・虫めがね・保存失敗の案内・1.0 の作品の一覧表示 | 一部 | 文書モデルにテンプレート背景の型はある（src/drawing/model.ts）。画面は未対応 |
 | おえかきの利き手を保護者設定・バックアップに入れる | 未対応 | いまは端末内（localStorage） |
-| 小学生用のフォントの字の絞り込み（review-1 #22）・check:design の大きな文字の閾値（review-1 #18） | 対応済み（2.1.0） | #22: 漢字だけの「小学生用フォント」（zen-maru-gothic-kanji-400/700.woff2。配当 1026 字 + src・教材パック・音声台本の漢字 計 1254 字。各約 245KiB）を作り、小学生のプロフィールで FontFace（unicode-range 漢字）読み込み。字の集め方は scripts/fonts/chars-lib.ts、単体テストで欠け・古さを検査。#18: scripts/contrast.ts と check:design が 3.1 の表と tokens.css の一致・組み合わせのコントラスト（大きな文字の条件、ふりがな・補助は常に 4.5）を検査。残し: Zen Maru Gothic に無い部品の字（亻 氵 艹）はシステムのフォントで表示。fonts は .cache の TTF から作成（無ければ初回に google/fonts から取得）。決めたこと: コアのフォントから教材パックと配当表の漢字を外し、小学生用側に集約 |
+| 小学生用のフォントの字の絞り込み（review-1 #22）・check:design の大きな文字の閾値（review-1 #18） | 対応済み（2.1.0） | #22: 漢字だけの「小学生用フォント」（zen-maru-gothic-kanji-400/700.woff2。配当 1026 字 + src・教材パック・音声台本の漢字 計 1254 字。各約 245KiB）を作り、小学生のプロフィールで FontFace（unicode-range 漢字）読み込み。字の集め方は scripts/fonts/chars-lib.ts、単体テストで欠け・古さを検査。#18: scripts/contrast.ts と check:design が 3.1 の表と tokens.css の一致・組み合わせのコントラスト（大きな文字の条件、ふりがな・補助は常に 4.5）を検査。残し: Zen Maru Gothic に無い部品の字（亻 氵 艹）はシステムのフォントで表示。fonts は .cache の TTF から作成（無ければ初回に google/fonts から取得）。決めたこと: コアのフォントから教材パックと配当表の漢字を外し、小学生用側に集約（漢字以外の記号・単位 ℃ ² ◯ ≦ などはコアに残す。コア・小学生用とも used-chars の古さを単体テストで検査）。check:design は 3.1 の表のコントラストの数値も計算と照合 |
 | P2 の単元（curriculum-matrix.md の P2 57 のうち 53） | 未対応 | docs/expansion/curriculum-report.md に一覧 |
 
 ## D. エンジンへの要望（教材担当から。未対応）

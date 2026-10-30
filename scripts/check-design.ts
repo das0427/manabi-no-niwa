@@ -179,6 +179,39 @@ for (const file of walk(path.join(root, 'src/illust'), ['.tsx'])) {
   }
   if (rows < 20) problems.push(`DESINGN.md 3.1 の色の表を読み取れない（${rows} 行）`);
 
+  // 1b) 表の「主な組み合わせとコントラスト」の数値が計算と一致する（表が古くならないように）
+  //     「ink 9.85」「surface 上の文字 5.39」の形は、その行のトークンと名前のトークン。
+  //     数値だけ（教科色の行）は surface との比。sun の行（不透明度をかけた面）は計算の対象外
+  let ratios = 0;
+  for (const line of section.split('\n')) {
+    const cells = line.split('|').map((c) => c.trim());
+    if (cells.length < 6 || !cells[1]!.includes('`--')) continue;
+    const self = /`--([a-z0-9-]+)`/.exec(cells[1]!)?.[1];
+    if (!self || self === 'sun' || !tokenValue.has(self)) continue;
+    const cell = cells[4]!;
+    const check = (other: string, stated: number) => {
+      if (!tokenValue.has(other)) return;
+      ratios++;
+      const got = contrast(tv(self), tv(other));
+      if (Math.abs(got - stated) > 0.011) {
+        problems.push(
+          `DESINGN.md 3.1 の --${self} / --${other} のコントラストは ${stated} と書いてあるが計算は ${got.toFixed(2)}`,
+        );
+      }
+    };
+    if (/^\d+\.\d{2}$/.test(cell)) {
+      check('surface', Number(cell));
+      continue;
+    }
+    for (const m of cell.matchAll(
+      /([a-z][a-z0-9-]*)(?:\s*(?:上の文字|上の境界|文字))?\s+(\d+\.\d{2})/g,
+    )) {
+      check(m[1]!, Number(m[2]));
+    }
+  }
+  if (ratios < 25)
+    problems.push(`DESINGN.md 3.1 のコントラストの数値を読み取れない（${ratios} 件）`);
+
   // 2) 文字色×背景色の組み合わせ。大きな文字の条件は scripts/contrast.ts（3.1）
   //    px は u の大きさ × 12.8（想定の最小 u）。alwaysNormal はふりがな・補助の文字（常に 4.5）
   const paperBgs = ['paper', 'paper-2', 'surface'];

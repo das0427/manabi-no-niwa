@@ -27,6 +27,11 @@ const MIS_NEAR_NUMBER = {
   id: 'near-number',
   explain: 'ひとつ ちがいだね。いっしょに かぞえて みよう。',
 };
+/** ±2 以上の数（3択の 1・5、4択では ±1 だけでは足りない）。「ひとつ ちがい」と言わない */
+const MIS_OTHER_NUMBER = {
+  id: 'other-number',
+  explain: 'かずが ちがうね。いっしょに かぞえて みよう。',
+};
 const MIS_SAME_START = {
   id: 'same-start',
   explain: 'はじめの おとが にて いたね。さいごまで きいて みよう。',
@@ -113,7 +118,14 @@ function numberItem(num: number, o: Countable, level: number, n: number, alt: bo
     audio: alt ? [nounSound(num, o)] : twice(numberSound(num)),
     options: [
       numOpt(num, o, { correct: true }, alt),
-      ...wrongNumbers(num, n - 1).map((k) => numOpt(k, o, { misconception: 'near-number' }, alt)),
+      ...wrongNumbers(num, n - 1).map((k) =>
+        numOpt(
+          k,
+          o,
+          { misconception: Math.abs(k - num) === 1 ? 'near-number' : 'other-number' },
+          alt,
+        ),
+      ),
     ],
     hints: HINTS,
     explain: `「${COUNT_JA[num]}」の ことだよ。`,
@@ -148,7 +160,7 @@ export const p4ColorsNumbers: UnitSpec = preUnit({
     { id: 'color', title: 'いろの えいごを きく' },
     { id: 'number', title: 'かずの えいごを きく' },
   ],
-  misconceptions: [MIS_OTHER_COLOR, MIS_NEAR_NUMBER, MIS_SAME_START],
+  misconceptions: [MIS_OTHER_COLOR, MIS_NEAR_NUMBER, MIS_OTHER_NUMBER, MIS_SAME_START],
   levels: [
     { label: 'いろ（3たく）', chance: 1 / 3 },
     { label: 'かず 1〜5（3たく）', chance: 1 / 3 },

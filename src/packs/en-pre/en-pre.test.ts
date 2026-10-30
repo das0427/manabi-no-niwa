@@ -314,4 +314,23 @@ describe('en-pre の教材検査（設計書 11.1）', () => {
         }))
           expect(/[A-Za-z]/.test(t), `${it.id}: ${t}`).toBe(false);
   });
+
+  it('「ひとつ ちがい」（near-number）の選択肢は、正解と数が ちょうど1 ちがう', () => {
+    const countOf = (o: ChoiceOption): number | undefined =>
+      o.figure && o.figure.kind === 'illust' ? o.figure.count : undefined;
+    let seen = 0;
+    for (const u of pack.units)
+      for (const it of listens(u)) {
+        const right = it.options.find((o) => o.correct)!;
+        for (const o of it.options) {
+          if (o.misconception !== 'near-number') continue;
+          const a = countOf(right);
+          const b = countOf(o);
+          expect(a, `${it.id}`).toBeDefined();
+          expect(Math.abs(b! - a!), `${it.id}`).toBe(1);
+          seen++;
+        }
+      }
+    expect(seen).toBeGreaterThan(0);
+  });
 });

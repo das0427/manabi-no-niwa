@@ -8,10 +8,23 @@ import { history1, history1Allow } from './history-1';
 import { history2, history2Allow } from './history-2';
 import { history3, history3Allow } from './history-3';
 import { world, worldAllow } from './world';
+import { information, informationAllow } from './information';
+import { environment, environmentAllow } from './environment';
 
 const pack: PackContent = {
   packId: 'soc-g56',
-  units: [land, food, industry, politics, history1, history2, history3, world],
+  units: [
+    land,
+    food,
+    industry,
+    politics,
+    history1,
+    history2,
+    history3,
+    world,
+    information,
+    environment,
+  ],
 };
 
 /** 単元ごとの、学年より上の字を使ってよい理由（テストの許可リスト） */
@@ -24,6 +37,8 @@ export const ALLOW: Readonly<Record<string, Allow>> = {
   'g6.soc.history-2': history2Allow,
   'g6.soc.history-3': history3Allow,
   'g6.soc.world': worldAllow,
+  'g5.soc.information': informationAllow,
+  'g5.soc.environment': environmentAllow,
 };
 
 export default pack;

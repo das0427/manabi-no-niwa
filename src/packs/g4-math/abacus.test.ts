@@ -240,3 +240,29 @@ describe('g4.math.abacus: 文の長さ（画面の収まり）', () => {
     expect([...new Set(bad)]).toEqual([]);
   });
 });
+
+describe('g4.math.abacus: 文の中身（レビューで足した検査）', () => {
+  const many = sampleItems(abacus, 1500);
+  it('ヒントに「0こしか」が出ない', () => {
+    for (const it of many) {
+      const hs = it.hints.map(plainText).join(' / ');
+      expect(hs, it.id).not.toMatch(/ 0こしか/);
+    }
+  });
+  it('multi-step: 誤りの step-order は「下の位を先に した」か「最後まで した」', () => {
+    const ms = many.filter((it) => it.identity.startsWith('multi-step:')) as ChoiceItem[];
+    expect(ms.length).toBeGreaterThan(5);
+    for (const it of ms) {
+      const m = /^multi-step:(\d+)([＋−])(\d+)$/.exec(it.identity)!;
+      const [a, op, b] = [Number(m[1]), m[2]!, Number(m[3])];
+      const lowP = String(b)
+        .split('')
+        .reverse()
+        .findIndex((c) => c !== '0');
+      const low = Number(String(b).split('').reverse()[lowP]) * 10 ** lowP;
+      const ok = [calc(a, op, low), calc(a, op, b)].map((v) => smallM(v));
+      for (const o of it.options)
+        if (o.misconception === 'step-order') expect(ok).toContain(markupOf(o.figure));
+    }
+  });
+});

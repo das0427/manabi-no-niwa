@@ -315,7 +315,9 @@ function genSet(level: number, rng: Rng, alt: boolean): ChoiceItem {
       ? `0.01を ${h}こ 集めた 数を おいた そろばんは どれ？`
       : `${v}を おいた そろばんは どれ？`,
     hints: [
-      '▲の けたが 一の 位。小数点の すぐ 右は [[1/10]]の 位だよ。',
+      alt
+        ? '0.01を 10こ 集めると 0.1、100こ 集めると 1だよ。'
+        : '▲の けたが 一の 位。小数点の すぐ 右は [[1/10]]の 位だよ。',
       `${v}の 一の 位は ${Math.floor(h / 100) % 10}。`,
       '0の 位は たまを おかずに 1けた あけるよ。',
     ],
@@ -400,11 +402,13 @@ function genMulti(level: number, rng: Rng, alt: boolean): Item {
 function multiStepItem(level: number, a: number, op: Op, b: number): ChoiceItem {
   const { trail } = multiCommon(a, op, b);
   const first = trail[0]!;
+  const last = trail[trail.length - 1]!;
   const topVal = first.e * 10 ** first.p;
   const iv = apply(a, inv(op), topVal);
   const cands: Cand[] = [
     [valDigits(G4_SMALL, first.run), undefined],
-    [valDigits(G4_SMALL, apply(a, op, b % 10)), 'step-order'],
+    // 下の 位（いちばん下の 0でない位）から 先に 計算した
+    [valDigits(G4_SMALL, apply(a, op, last.e * 10 ** last.p)), 'step-order'],
     [valDigits(G4_SMALL, apply(a, op, b)), 'step-order'],
     [iv >= 0 ? valDigits(G4_SMALL, iv) : null, 'in-out'],
   ];
@@ -418,7 +422,7 @@ function multiStepItem(level: number, a: number, op: Op, b: number): ChoiceItem 
     hints: [
       'そろばんは 上の 位から 計算するよ。',
       `${PLX(first.p)}に ${first.e}を ${inOut(op)}よ。下の 位は まだ 計算しないよ。`,
-      `${PLX(first.p)}の たまだけが うごいた そろばんを さがそう。`,
+      `${PLX(first.p)}より 下の 位は、${a}の ときと 同じ そろばんだよ。`,
     ],
     explain: `上の 位から 1けたずつ 計算するよ。${PLX(first.p)}で ${first.e}を ${inOutTe(op)} ${first.run}。`,
     explainFigure: smallFig(first.run, { lit: true, mark: [G4_SMALL.unitRod - first.p] }),
@@ -439,12 +443,16 @@ function genHosu(level: number, rng: Rng, alt: boolean): Item {
   const ans = apply(A, op, b);
   const hints = plus
     ? [
-        `一の 位は ${a1}。一だまは ${a1 - 5}こしか ないね。`,
+        a1 === 5
+          ? `一の 位は ${a1}。一だまが 1こも ないね。`
+          : `一の 位は ${a1}。一だまは ${a1 - 5}こしか ないね。`,
         `${c}を はらう かわりに、5を はらって、はらいすぎた ぶんを 入れるよ。`,
         `${c} と □ で 5。`,
       ]
     : [
-        `一の 位は ${a1}。一だまは あと ${4 - a1}こしか 入《はい》らないね。`,
+        a1 === 4
+          ? `一の 位は ${a1}。一だまは もう 入《はい》らないね。`
+          : `一の 位は ${a1}。一だまは あと ${4 - a1}こしか 入《はい》らないね。`,
         `${c}を 入れる かわりに、5を 入れて、多い ぶんを はらうよ。`,
         `${c} と □ で 5。`,
       ];

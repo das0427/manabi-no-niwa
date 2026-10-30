@@ -446,12 +446,16 @@ function genFive(level: number, rng: Rng, alt: boolean): Item {
   const ans = apply(a, op, b);
   const hints = plus
     ? [
-        `一《いち》だまは あと ${4 - a}こしか 入《はい》らないね。`,
+        a === 4
+          ? '一《いち》だまは もう 入《はい》らないね。'
+          : `一《いち》だまは あと ${4 - a}こしか 入《はい》らないね。`,
         `5を 入《い》れると、${b}より 多《おお》く 入《い》れた ことに なるよ。`,
         `${b} と □ で 5。□を はらうよ。`,
       ]
     : [
-        `一《いち》だまは ${a - 5}こしか ないので、${b}こは はらえないね。`,
+        a === 5
+          ? `一《いち》だまが ないので、${b}こは はらえないね。`
+          : `一《いち》だまは ${a - 5}こしか ないので、${b}こは はらえないね。`,
         '5を はらうと ひきすぎるので、ひきすぎた ぶんを 入《い》れて おくよ。',
         `${b} と □ で 5。□を 入《い》れるよ。`,
       ];
@@ -525,7 +529,7 @@ function genTen(level: number, rng: Rng, alt: boolean): Item {
   const a1 = A % 10;
   const hints = plus
     ? [
-        `${A} ＋ ${b}は 10を こえるね。`,
+        A + b === 10 ? `${A} ＋ ${b}は ちょうど 10に なるね。` : `${A} ＋ ${b}は 10を こえるね。`,
         '十《じゅう》の くらいに 1 入《い》れると、10 たした ことに なるよ。',
         `${b} と □ で 10。□を はらうよ。`,
       ]
@@ -589,7 +593,7 @@ function genTen(level: number, rng: Rng, alt: boolean): Item {
     fields: [{ answer: { kind: 'int', value: c } }],
     wrongAnswers: wrongList(String(c), 1, [
       [b, 'complement-same'],
-      [b < 5 ? 5 - b : null, 'complement-mix'],
+      [b <= 5 ? 5 - b : null, 'complement-mix'],
       [b > 5 ? b - 5 : null, 'complement-mix'],
     ]),
   };
@@ -670,7 +674,9 @@ function rodItem(
     figure,
     hints: [
       '▲の けたが 一《いち》の くらいだよ。',
-      `${B}の ${b}は ${dec ? '0.1が いくつ' : `${P(k)}の くらい`}を あらわすよ。`,
+      dec
+        ? `${B}の ${b}は、0.1が いくつ あるかを あらわすよ。`
+        : `${B}の ${b}は ${P(k)}の くらいを あらわすよ。`,
       '一《いち》の くらいから 1けたずつ 数《かぞ》えて みよう。',
     ],
     explain: `${b}は ${dec ? '▲の すぐ 右《みぎ》の けたの 数字《すうじ》' : `${P(k)}の くらいの 数字《すうじ》`}なので、${posLabel(correct)}の けたで ${inOutRen(op)}ます。`,

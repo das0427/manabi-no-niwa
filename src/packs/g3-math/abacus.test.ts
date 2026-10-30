@@ -213,3 +213,19 @@ describe('g3.math.abacus: 文の長さ（画面の収まり）', () => {
     expect([...new Set(bad)]).toEqual([]);
   });
 });
+
+describe('g3.math.abacus: 文の中身（レビューで足した検査）', () => {
+  const many = sampleItems(abacus, 1500);
+  it('number の問題には 誤答例が 1つ以上ある（ten の b=5 も）', () => {
+    for (const it of many)
+      if (it.engine === 'number') expect(it.wrongAnswers?.length ?? 0, it.id).toBeGreaterThan(0);
+  });
+  it('ヒントに「0こしか」が出ない。ちょうど 10 の たし算で「10を こえる」と言わない', () => {
+    for (const it of many) {
+      const hs = it.hints.map(plainText).join(' / ');
+      expect(hs, it.id).not.toMatch(/ 0こしか/);
+      const m = /^ten(?:-alt)?:(\d+)＋(\d+)$/.exec(it.identity);
+      if (m && Number(m[1]) + Number(m[2]) === 10) expect(hs, it.id).not.toContain('こえる');
+    }
+  });
+});

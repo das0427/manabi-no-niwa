@@ -34,7 +34,7 @@ type Row = [word: string, correct: string, w1: string, m1: string, w2: string, m
 const LIKE_ROWS: Row[] = [
   ['apples', 'apple', 'airplane', 'same-start', 'ant', 'same-start'],
   ['bananas', 'banana', 'bear', 'same-start', 'p5-book', 'same-start'],
-  ['strawberries', 'strawberry', 'p23-sheep', 'same-start', 'ship', 'same-start'],
+  ['strawberries', 'strawberry', 'p23-star', 'same-start', 'p23-spoon', 'same-start'],
   ['peaches', 'peach', 'p23-pig', 'same-start', 'pencil', 'same-start'],
   ['tomatoes', 'tomato', 'train', 'same-start', 'peach', 'same-group'],
   ['carrots', 'carrot', 'cat', 'same-start', 'car-red', 'same-start'],
@@ -93,7 +93,7 @@ function likeQaItems(): Item[] {
       id: `like-qa:${slugOf(text)}`,
       objective: 'like',
       level: 0,
-      prompt: 'すきな ものを たずねて、こたえて いるよ。こたえた 人《ひと》の すきな ものは どれ？',
+      prompt: 'たずねて、こたえて いるよ。こたえた 人《ひと》の すきな ものは？',
       audio: [en('like', 'What do you like?'), en('like', text)],
       gapMs: 800,
       options: [
@@ -119,7 +119,7 @@ const NOT_ROWS: [word: string, ja: string, neg: boolean, other: string][] = [
   ['carrots', 'にんじん', true, 'ねこ'],
   ['peaches', 'もも', false, 'ぶた'],
   ['frogs', 'かえる', true, 'きつね'],
-  ['strawberries', 'いちご', false, 'ひつじ'],
+  ['strawberries', 'いちご', false, 'ほし'],
   ['tomatoes', 'トマト', true, 'でんしゃ'],
   ['cats', 'ねこ', false, 'にんじん'],
   ['bears', 'くま', true, 'バナナ'],
@@ -209,8 +209,7 @@ function markItems(): Item[] {
       id: `not-mark:${slugOf(text)}`,
       objective: 'not',
       level: 1,
-      prompt:
-        'すきな ものに ○、すきではない ものに × が ついて いるよ。聞《き》こえた 文《ぶん》に あうのは どれ？',
+      prompt: '○は すき、×は すきではない。聞《き》こえた 文《ぶん》に あうのは どれ？',
       audio: en('like', text),
       options: [
         { ...mark(c, neg), correct: true },
@@ -301,7 +300,7 @@ function askItems(): Item[] {
       id: `ask:${r.scene}`,
       objective: 'ask',
       level: 2,
-      prompt: `${r.prompt}で 話《はな》して いるよ。こたえた 人《ひと》は どう おもって いる？`,
+      prompt: `${r.prompt}で 話《はな》して いるよ。こたえた 人《ひと》の きもちは？`,
       audio: [en('likeq', q), en('reply', a)],
       gapMs: 800,
       options: [

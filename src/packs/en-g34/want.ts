@@ -18,8 +18,8 @@ type WantRow = [text: string, c: string, w1: string, m1: string, w2: string, m2:
 const WANT_ROWS: WantRow[] = [
   ['I want a banana.', 'banana', 'bread', 'same-start', 'lemon', 'same-group'],
   ['I want an apple.', 'apple', 'peach', 'same-group', 'banana', 'same-group'],
-  // 設計書は りんご（赤）と ピーマン（緑）が 並ぶので、りんごを バナナに かえた（0.7・2.7）
-  ['I want a peach.', 'peach', 'green-pepper', 'same-start', 'banana', 'same-group'],
+  // 設計書の ピーマン（英語は green pepper で、はじめの 音が peach と にていない）を えんぴつに かえた（レビュー）
+  ['I want a peach.', 'peach', 'pencil', 'same-start', 'apple', 'same-group'],
   ['I want a lemon.', 'lemon', 'peach', 'same-group', 'banana', 'same-group'],
   ['I want a tomato.', 'tomato', 'eggplant', 'same-group', 'carrot', 'same-group'],
   ['I want a carrot.', 'carrot', 'cucumber', 'same-start', 'p5-cake', 'same-start'],
@@ -56,7 +56,7 @@ const WORD_ROWS: [text: string, ja: string, other: string][] = [
   ['I want a banana.', 'バナナ', 'パン'],
   ['I want a carrot.', 'にんじん', 'きゅうり'],
   ['I want an egg.', 'たまご', 'なす'],
-  ['I want a peach.', 'もも', 'ピーマン'],
+  ['I want a peach.', 'もも', 'えんぴつ'],
 ];
 
 function wantWordItems(): Item[] {
@@ -265,7 +265,7 @@ function shopItems(): Item[] {
       id: `shop:${r.scene}`,
       objective: 'shop',
       level: 2,
-      prompt: `${r.prompt}で かいものを して いるよ。おきゃくさんが かう ものは どれ？`,
+      prompt: `${r.prompt}の かいもの。おきゃくさんが かう ものは どれ？`,
       audio: r.say.map((s) => en(s.startsWith('I want') ? 'want' : 'shop', s)),
       gapMs: 800,
       options: [
@@ -279,7 +279,10 @@ function shopItems(): Item[] {
         'なにが ほしいかと、いくつ ほしいかの 2つを 聞《き》きとろう。',
         `「${nm(r.mix)}」の 絵《え》では ないよ。かずを もういちど 聞《き》こう。`,
       ],
-      explain: `おきゃくさんは「${nm(r.c)}を ${r.n}こ ください」と いって います。`,
+      // おきゃくさんの こたえが I want 〜. の ときは「ほしい」、〜, please. の ときは「ください」
+      explain: r.say.some((s) => s.startsWith('I want'))
+        ? `おきゃくさんは「${nm(r.c)}が ${r.n}こ ほしい」と いって います。`
+        : `おきゃくさんは「${nm(r.c)}を ${r.n}こ ください」と いって います。`,
       explainFigure: enText(r.say.join('  →  '), 'm'),
       identity: `shop:${r.scene}`,
     }),
@@ -303,7 +306,7 @@ function shopTwoItems(): Item[] {
       id: `shop-two:${slugOf(text)}`,
       objective: 'shop',
       level: 2,
-      prompt: 'おきゃくさんが 2しゅるいの ものを たのんで いるよ。かう ものは どれ？',
+      prompt: '2しゅるいの ものを たのんで いるよ。かう ものは どれ？',
       audio: en('want', text),
       options: [
         { ...pairFig(a, b), correct: true },

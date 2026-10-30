@@ -141,7 +141,7 @@ levels: `[{ label: 'すきな もの' }, { label: 'すき・すきではない' 
 |---|---|---|---|---|
 | 1 | I like apples. | apple / りんご | airplane / ひこうき・same-start | ant / あり・same-start |
 | 2 | I like bananas. | banana / バナナ | bear / くま・same-start | p5-book / ほん・same-start |
-| 3 | I like strawberries. | strawberry / いちご | p23-sheep / ひつじ・same-start | ship / ふね・same-start |
+| 3 | I like strawberries. | strawberry / いちご | p23-star / ほし・same-start | p23-spoon / スプーン・same-start |
 | 4 | I like peaches. | peach / もも | p23-pig / ぶた・same-start | pencil / えんぴつ・same-start |
 | 5 | I like tomatoes. | tomato / トマト | train / でんしゃ・same-start | peach / もも・same-group |
 | 6 | I like carrots. | carrot / にんじん | cat / ねこ・same-start | car-red / くるま・same-start |
@@ -158,7 +158,7 @@ levels: `[{ label: 'すきな もの' }, { label: 'すき・すきではない' 
 
 #### (b) like の別例（alt, level 0）: やりとりの中で聞いて、ことばを選ぶ — 5問
 - id/identity: `like-qa:<slugOf(こたえの英文)>`
-- prompt: `すきな ものを たずねて、こたえて いるよ。こたえた 人《ひと》の すきな ものは どれ？`
+- prompt: `たずねて、こたえて いるよ。こたえた 人《ひと》の すきな ものは？`
 - audio: `[en('like', 'What do you like?'), en('like', こたえ)]`、`gapMs: 800`
 - options: **ことばだけ**（label のみ。絵なし）
 - hints: ① `あとの ほうの こたえを よく 聞《き》こう。` ② `こたえの さいごの ことばが すきな ものだよ。` ③ `notHint(誤り1)`
@@ -190,7 +190,7 @@ levels: `[{ label: 'すきな もの' }, { label: 'すき・すきではない' 
 | 1 | I don't like carrots. | にんじんが すきではない | にんじんが すき | ねこが すきではない |
 | 2 | I like peaches. | ももが すき | ももが すきではない | ぶたが すき |
 | 3 | I don't like frogs. | かえるが すきではない | かえるが すき | きつねが すきではない |
-| 4 | I like strawberries. | いちごが すき | いちごが すきではない | ひつじが すき |
+| 4 | I like strawberries. | いちごが すき | いちごが すきではない | ほしが すき |
 | 5 | I don't like tomatoes. | トマトが すきではない | トマトが すき | でんしゃが すきではない |
 | 6 | I like cats. | ねこが すき | ねこが すきではない | にんじんが すき |
 | 7 | I don't like bears. | くまが すきではない | くまが すき | バナナが すきではない |
@@ -212,7 +212,7 @@ levels: `[{ label: 'すきな もの' }, { label: 'すき・すきではない' 
 
 #### (d) not の別例（alt, level 1）: ○と×の絵で選ぶ — 4問
 - id/identity: `not-mark:<slugOf(英文)>`
-- prompt: `すきな ものに ○、すきではない ものに × が ついて いるよ。聞《き》こえた 文《ぶん》に あうのは どれ？`
+- prompt: `○は すき、×は すきではない。聞《き》こえた 文《ぶん》に あうのは どれ？`
 - audio: `en('like', 英文)`
 - options: `{ figure: { kind: 'illust', id }, label: '<名前> ○' または '<名前> ×' }`（○・× は全角の記号。label の名前と記号の間は半角空白1つ）
 - hints: ① `さいごの ことばで「なにが」が わかるよ。` ② `「すき」の ことばの まえに、もう ひとつ 音《おと》が あったかな。` ③ `notHint(same-start の label)`
@@ -227,7 +227,7 @@ levels: `[{ label: 'すきな もの' }, { label: 'すき・すきではない' 
 
 #### (e) ask（level 2）: たずねる・こたえる（8場面）— 8問
 - id/identity: `ask:<場面ID>`
-- prompt: `${場面}で 話《はな》して いるよ。こたえた 人《ひと》は どう おもって いる？`
+- prompt: `${場面}で 話《はな》して いるよ。こたえた 人《ひと》の きもちは？`
 - audio: `[en('likeq', 問い), en('reply', こたえ)]`、`gapMs: 800`
 - options: ことば（label のみ）
 - hints:
@@ -332,7 +332,7 @@ levels: `[{ label: 'ほしい もの' }, { label: 'かずと もの' }, { label:
 |---|---|---|---|---|
 | 1 | I want a banana. | banana / バナナ | bread / パン・same-start | lemon / レモン・same-group |
 | 2 | I want an apple. | apple / りんご | peach / もも・same-group | banana / バナナ・same-group |
-| 3 | I want a peach. | peach / もも | green-pepper / ピーマン・same-start | apple / りんご・same-group |
+| 3 | I want a peach. | peach / もも | pencil / えんぴつ・same-start | apple / りんご・same-group |
 | 4 | I want a lemon. | lemon / レモン | peach / もも・same-group | banana / バナナ・same-group |
 | 5 | I want a tomato. | tomato / トマト | eggplant / なす・same-group | carrot / にんじん・same-group |
 | 6 | I want a carrot. | carrot / にんじん | cucumber / きゅうり・same-start | p5-cake / ケーキ・same-start |
@@ -351,7 +351,7 @@ levels: `[{ label: 'ほしい もの' }, { label: 'かずと もの' }, { label:
 | 1 | I want a banana. | バナナが ほしい | バナナが すき | パンが ほしい |
 | 2 | I want a carrot. | にんじんが ほしい | にんじんが すき | きゅうりが ほしい |
 | 3 | I want an egg. | たまごが ほしい | たまごが すき | なすが ほしい |
-| 4 | I want a peach. | ももが ほしい | ももが すき | ピーマンが ほしい |
+| 4 | I want a peach. | ももが ほしい | ももが すき | えんぴつが ほしい |
 
 #### (c) count（level 1）: かずと ものを聞いて、その数の絵を選ぶ — 10問
 - id/identity: `count:<slugOf(英文)>`
@@ -395,11 +395,11 @@ num-sound の数は numbers-colors の `SAME_START`（2→3, 3→2, 4→5, 5→4
 
 #### (e) shop（level 2）: かいものの やりとり（8場面）— 8問
 - id/identity: `shop:<場面ID>`
-- prompt: `${場面}で かいものを して いるよ。おきゃくさんが かう ものは どれ？`
+- prompt: `${場面}の かいもの。おきゃくさんが かう ものは どれ？`
 - audio: 下の表の順の配列（`en('shop', …)` か `en('want', …)`。`I want 〜.` で始まる文は `want`、それ以外は `shop`）、`gapMs: 800`
 - options: 数の絵（label なし。(c) と同じ）、`layout: 'column'`
 - hints: ① `おみせの 人《ひと》の しつもんと、おきゃくさんの こたえを 聞《き》こう。` ② `なにが ほしいかと、いくつ ほしいかの 2つを 聞《き》きとろう。` ③ `「${item-mix の物の名前}」の 絵《え》では ないよ。かずを もういちど 聞《き》こう。`
-- explain: `おきゃくさんは「${名前}を ${n}こ ください」と いって います。`
+- explain: `おきゃくさんは「${名前}を ${n}こ ください」と いって います。`（こたえが `I want 〜.` の場面 4・5 は `おきゃくさんは「${名前}が ${n}こ ほしい」と いって います。`）
 - explainFigure: `enText(音声を ' → ' でつないだ文, 'm')`
 
 | # | 場面ID | 場面 | 音声（順に） | 正答 | num-sound | item-mix（③） |
@@ -415,7 +415,7 @@ num-sound の数は numbers-colors の `SAME_START`（2→3, 3→2, 4→5, 5→4
 
 #### (f) shop の別例（alt, level 2）: 2しゅるいを たのむ — 4問
 - id/identity: `shop-two:<slugOf(英文)>`
-- prompt: `おきゃくさんが 2しゅるいの ものを たのんで いるよ。かう ものは どれ？`
+- prompt: `2しゅるいの ものを たのんで いるよ。かう ものは どれ？`
 - audio: `en('want', 英文)`
 - options: `{ figure: { kind: 'row', items: [{ kind: 'illust', id: A, count: a }, { kind: 'illust', id: B, count: b }] } }`（label なし）、`layout: 'column'`
 - hints: ① `「と」に あたる ことばの まえと あとで、2つの ものを いって いるよ。` ② `かずの すぐ あとの ことばが、その かずの ものだよ。` ③ `${Aの名前}は ${a}こ だよ。もう 1つの ものを 聞《き》こう。`
@@ -723,3 +723,10 @@ npm run check:design
 - 数の語は 1〜10（g3.en.numbers-colors の範囲）だけ。
 - 人名・商品名・実在の店名は出さない。問題・文・図はこの単元のために作ったもの。
 - **要確認（統括へ）**: basis の「言語の使用場面の例『買物』『道案内』」は外国語活動の内容の取扱いの例示を記憶で書いた（文言は指導要領で確認してほしい）。会話の2人を同じ声で読むと区別しにくいので、台本から音声を作るときに声を分けられるなら分けてほしい（`What do you want?` などの店の人の文と、おきゃくさんの文）。
+
+## 6. レビューでの変更（2026-10-30）
+- 1.5(a) 3・(c) 4: いちご（strawberries）の same-start の誤りを ひつじ（sheep）・ふね（ship）から ほし（p23-star）・スプーン（p23-spoon）に かえた。str- と sh- は はじめの 音が ちがうため（star・spoon は s＋子音で にている）。
+- 2.5(a) 3・(b) 4: もも（peach）の same-start の誤りを ピーマンから えんぴつ（pencil）に かえた。ピーマンの 英語は green pepper で、はじめの 音が peach と にていないため。誤り2は 設計どおり りんご（ピーマンが 消えて 赤と 緑が 並ばない）。
+- 2.5(e): 場面 4・5（こたえが I want 〜.）の 解説を「ください」ではなく「ほしい」に した（聞こえた 文と 合わせる）。
+- 問題文を 既存の P1 の 長さ（35字ほど）に そろえて みじかく した（1.5(b)(d)(e)・2.5(e)(f)）。
+- 0.8 の表: ひつじ・ふね・ピーマンは 使わなく なった。ほし（p23-star）・スプーン（p23-spoon）を 使う。

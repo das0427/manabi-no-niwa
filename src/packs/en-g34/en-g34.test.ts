@@ -369,12 +369,58 @@ describe('g4.en.want', () => {
     }
     expect(bad).toEqual([]);
   });
+  it('want・count・shop-two: 正答の 絵は 英文の 語と 一致（絵の 取りちがえ 防止）', () => {
+    const single = (w: string) =>
+      w.endsWith('ies')
+        ? `${w.slice(0, -3)}y`
+        : /(ches|toes)$/.test(w)
+          ? w.slice(0, -2)
+          : w.endsWith('s')
+            ? w.slice(0, -1)
+            : w;
+    for (const it of items.filter((x) => /^(want|count|shop-two):/.test(x.id))) {
+      const t = textsOfAudio(it)[0]!;
+      const words = [
+        ...t.matchAll(/(?:\ban?|one|two|three|four|five|six|seven|eight|nine|ten) (\w+)/g),
+      ].map((m) => single(m[1]!));
+      expect(
+        figCounts(correctOf(it)).map((c) => c[0]),
+        it.id,
+      ).toEqual(words);
+    }
+    // want-word・count-word の ことばの 選択肢も 英文の 語の 名前で 始まる
+    for (const it of items.filter((x) => /^(want-word|count-word):/.test(x.id))) {
+      const w = /(\w+)\.$/.exec(textsOfAudio(it)[0]!)![1]!;
+      expect(correctOf(it).label!.startsWith(NAMES[single(w)]!), it.id).toBe(true);
+    }
+  });
 });
 
 describe('g4.en.directions', () => {
   const items = itemsOf('g4.en.directions');
   it('isReady', () => {
     expect(isReady(checkUnit(unitOf('g4.en.directions')))).toBe(true);
+  });
+  it('place・place-go: 正答は 英文の 場所の 語と 一致', () => {
+    const PLACE: Record<string, string> = {
+      station: 'life-station',
+      'fire station': 'life-firestation',
+      hospital: 'life-hospital',
+      library: 'life-library',
+      'police box': 'life-police',
+      bakery: 'life-bakery',
+      'flower shop': 'life-flowershop',
+    };
+    const list = items.filter((x) => /^place(-go)?:/.test(x.id));
+    expect(list.length).toBe(11);
+    for (const it of list) {
+      const w = /the ([a-z ]+)[?.]$/.exec(textsOfAudio(it)[0]!)![1]!;
+      const id = PLACE[w]!;
+      expect(id, it.id).toBeTruthy();
+      const o = correctOf(it);
+      expect(o.label, it.id).toBe(NAMES[id]);
+      if (o.figure) expect(o.figure.id, it.id).toBe(id);
+    }
   });
   const stepOf = (t: string): Step | null =>
     t === 'Go straight.' ? 'S' : t === 'Turn right.' ? 'R' : t === 'Turn left.' ? 'L' : null;

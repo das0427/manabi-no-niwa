@@ -7,6 +7,9 @@ import { lever } from './lever';
 import { combustion } from './combustion';
 import { moonSun } from './moon-sun';
 import { electricityUse } from './electricity-use';
+import { electromagnet } from './electromagnet';
+import { birth } from './birth';
+import { flowingWater } from './flowing-water';
 
 const pack: PackContent = {
   packId: 'sci-g56',
@@ -19,6 +22,9 @@ const pack: PackContent = {
     combustion,
     moonSun,
     electricityUse,
+    electromagnet,
+    birth,
+    flowingWater,
   ],
 };
 export default pack;

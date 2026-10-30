@@ -208,11 +208,11 @@ const hideBox: IllustDef = {
   status: 'final',
   draw: () => (
     <g>
-      <rect x="14" y="50" width="72" height="42" rx="3" fill={P.tan} {...line} />
-      <path d="M14 50 L8 38 L32 42 L32 50 Z" fill={P.tan} {...line} />
-      <path d="M86 50 L92 38 L68 42 L68 50 Z" fill={P.tan} {...line} />
-      <path d="M40 50 L40 62 L60 62 L60 50" fill="none" stroke={P.brown} strokeWidth="3" />
-      <path d="M14 62 L86 62" fill="none" stroke={P.brown} strokeWidth="2.5" />
+      <rect x="20" y="50" width="60" height="42" rx="3" fill={P.tan} {...line} />
+      <path d="M20 50 L14 38 L36 42 L36 50 Z" fill={P.tan} {...line} />
+      <path d="M80 50 L86 38 L64 42 L64 50 Z" fill={P.tan} {...line} />
+      <path d="M42 50 L42 62 L58 62 L58 50" fill="none" stroke={P.brown} strokeWidth="3" />
+      <path d="M20 62 L80 62" fill="none" stroke={P.brown} strokeWidth="2.5" />
     </g>
   ),
 };

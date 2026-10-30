@@ -25,6 +25,8 @@ interface Story {
   notIn: Thing;
   /** ヒントの人物（〜さん） */
   actor: string;
+  /** ヒント2 を人物の形で言えないときの文（S5: とんだのは だれかの もの では なく かぜの ところ） */
+  hint2?: string;
   explain: string;
 }
 
@@ -96,7 +98,7 @@ const STORIES: Story[] = [
   {
     n: 'S5',
     text: [
-      'きつねさんが くつを はいて おでかけ。',
+      'きつねさんが ぼうしを かぶって、くつを はいて おでかけ。',
       'かぜが ぴゅーっと ふいて、ぼうしが とんで いったよ。',
       'とりさんが ぼうしを ひろって きて くれたよ。',
     ],
@@ -107,6 +109,7 @@ const STORIES: Story[] = [
     otherRole: T('くつ', 'p23-shoe'),
     notIn: T('かさ', 'umbrella'),
     actor: 'きつね',
+    hint2: 'かぜが ぴゅーっと ふいた ところを よく きいてね。',
     explain: 'とんで いったのは ぼうしだね。',
   },
   {
@@ -114,7 +117,7 @@ const STORIES: Story[] = [
     text: [
       'うしさんと ひつじさんが やまに のぼったよ。',
       'うしさんの おべんとうは おにぎり。',
-      'ひつじさんの おべんとうは いちご だったよ。',
+      'ひつじさんの おべんとうは いちごだったよ。',
     ],
     who: T('うし', 'cow'),
     whoWrong: T('じてんしゃ', 'bicycle'),
@@ -161,7 +164,10 @@ const STORIES: Story[] = [
 
 const opt = (t: Thing) => ({ label: t.label, figure: ill(t.illust) });
 const GAP_MS = 700;
-const COVER = ill('p23-book');
+const COVER_ID = 'p23-book';
+/** 図は表紙の絵。ただし えほん が選択肢にあるときは出さない（図と同じ絵の選択肢が手がかりに なるため） */
+const cover = (ts: Thing[]) =>
+  ts.some((t) => t.illust === COVER_ID) ? {} : { figure: ill(COVER_ID) };
 
 function whoItem(s: Story): Item {
   const id = `who:${s.n}`;
@@ -173,7 +179,7 @@ function whoItem(s: Story): Item {
     prompt: 'きいてね。でて きたのは どっち？',
     audio: s.text.map((text) => ({ text })),
     gapMs: GAP_MS,
-    figure: COVER,
+    ...cover([s.who, s.whoWrong]),
     hints: ['もういちど おはなしを きいて みよう。', 'だれが でて きたか、ゆっくり おもいだそう。'],
     explain: `${s.who.label}さんが でて きたね。`,
     correct: opt(s.who),
@@ -191,10 +197,10 @@ function thingItem(s: Story): Item {
     prompt: s.ask,
     audio: s.text.map((text) => ({ text })),
     gapMs: GAP_MS,
-    figure: COVER,
+    ...cover([s.right, s.otherRole, s.notIn]),
     hints: [
       'もういちど おはなしを きいて みよう。',
-      `${s.actor}さんが でて くる ところを よく きいてね。`,
+      s.hint2 ?? `${s.actor}さんが でて くる ところを よく きいてね。`,
     ],
     explain: s.explain,
     correct: opt(s.right),
@@ -306,8 +312,8 @@ function featureItem(f: Feature): Item {
     prompt: f.obj === 'who' ? 'きいてね。きたのは だれ？' : 'きいてね。どれの ことかな？',
     audio: f.text.map((text) => ({ text })),
     gapMs: GAP_MS,
-    figure: COVER,
-    hints: ['もういちど おはなしを きいて みよう。', `${f.clue}の ところを おもいだそう。`],
+    ...cover([f.right, ...f.wrong]),
+    hints: ['もういちど おはなしを きいて みよう。', `「${f.clue}」の ところを おもいだそう。`],
     explain: f.explain,
     correct: opt(f.right),
     wrong: f.wrong.map((w) => ({ ...opt(w), misconception: 'feature' })),
@@ -354,7 +360,7 @@ export const pictureBook: UnitSpec = {
     { label: '2さいの だんかい: おはなしを きいて ゆびさし（2つから）', chance: 0.5 },
     { label: '3さいの だんかい: だれが なにを したか（3つから）', chance: 1 / 3 },
   ],
-  intro: [{ text: 'おはなしを きいて、でて きた ものを さがそう。', figure: ill('p23-book') }],
+  intro: [{ text: 'おはなしを きいて、でて きた ものを さがそう。', figure: ill(COVER_ID) }],
   source: { kind: 'items', items: build() },
   review: 'none',
   basis:

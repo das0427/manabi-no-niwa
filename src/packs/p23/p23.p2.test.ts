@@ -4,7 +4,7 @@ import { checkUnit, isReady } from '../../curriculum/qa';
 import type { Item, UnitSpec } from '../../curriculum/types';
 import { ILLUST } from '../../illust/registry';
 import pack from './index';
-import { BOARDS, dirsAt, tileAt, tileAtXY, type Tile } from './road';
+import { BOARDS, boardFig, dirsAt, tileAt, tileAtXY, tileFig, type Tile } from './road';
 
 const unit = (id: string): UnitSpec => pack.units.find((u) => u.id === id)!;
 const itemsOf = (id: string): Item[] => {
@@ -91,6 +91,13 @@ describe('p23.ja.first-sound', () => {
       const r2 = rowOf(HEAD[wrong]!);
       expect(r1, it.id).not.toBe(r2);
       expect([r1, r2].sort().join(''), it.id).not.toBe(['は', 'ば'].sort().join(''));
+      // 正解: sound・chant は問う語そのもの、same・ear は問う語と同じ語頭の別の語
+      const right = os.find((o) => o.correct)!.label as string;
+      if (/^(sound|chant):/.test(it.id)) expect(right, it.id).toBe(key);
+      else {
+        expect(right, it.id).not.toBe(key);
+        expect(HEAD[right], it.id).toBe(HEAD[key]);
+      }
     }
   });
 
@@ -185,37 +192,63 @@ describe('p23.think.road', () => {
       ).toEqual(exp[b]);
   });
 
-  it('練習: 正しい形は経路どおり・誤りの形は前後の両方とはつながらない', () => {
+  const mk = (f: unknown): string | undefined => (f as { markup?: string }).markup;
+  const TILES: Tile[] = ['EW', 'NS', 'NE', 'ES', 'SW', 'NW'];
+  const straight = (t: Tile) => t === 'EW' || t === 'NS';
+  /** 誤概念と形の組が合うか: rotated は同じ種類（まっすぐ／まがる）、straight-instead は まがる所に まっすぐ、turn-instead は その逆 */
+  const misFits = (mis: string | undefined, right: Tile, wrong: Tile): boolean =>
+    mis === 'rotated'
+      ? straight(right) === straight(wrong)
+      : mis === 'straight-instead'
+        ? !straight(right) && straight(wrong)
+        : mis === 'turn-instead'
+          ? straight(right) && !straight(wrong)
+          : false;
+
+  it('練習: 正しい形は経路どおり・誤りの形は前後の両方とはつながらない・誤概念が形に合う', () => {
     const gaps = items.filter((it) => it.id.startsWith('gap:'));
     expect(gaps.length).toBe(16);
+    const tileByMarkup = new Map(TILES.map((t) => [mk(tileFig(t)), t]));
     for (const it of gaps) {
       const [, b, xy] = it.id.split(':') as [string, string, string];
       const [x, y] = xy.split('-').map(Number) as [number, number];
       const path = BOARDS[b]!;
       const right = tileAtXY(path, [x, y]);
+      expect(right.length, it.id).toBe(2);
+      expect(it.objective, it.id).toBe(straight(right) ? 'straight' : 'turn');
       const os = options(it);
       expect(os.length, it.id).toBe(2);
-      // 図の svg 文字列から形を直接は読めないので、正誤の図が異なることと、誤りの形の向きが違うことを確かめる
-      expect(fig(os[0]!).markup, it.id).not.toBe(fig(os[1]!).markup);
-      expect(right.length, it.id).toBe(2);
+      const r = tileByMarkup.get(fig(os.find((o) => o.correct)!).markup!);
+      const wo = os.find((o) => !o.correct)!;
+      const w = tileByMarkup.get(fig(wo).markup!);
+      expect(r, it.id).toBe(right);
+      expect(w, it.id).toBeDefined();
+      expect(w, it.id).not.toBe(right);
+      expect(misFits(wo.misconception, right, w!), `${it.id} ${wo.misconception}`).toBe(true);
+      expect((it.figure as { markup?: string }).markup, it.id).toBe(
+        mk(boardFig(path, { gap: [x, y] })),
+      );
     }
   });
 
-  it('別例: 正しい盤と1マスだけ違う', () => {
+  it('別例: 正しい盤と1マスだけ違い、その1マスは つながらない形', () => {
     const wholes = items.filter((it) => it.id.startsWith('whole:'));
     expect(wholes.length).toBe(6);
     for (const it of wholes) {
-      const [r, w] = [options(it).find((o) => o.correct)!, options(it).find((o) => !o.correct)!];
-      const a = fig(r).markup!;
-      const b = fig(w).markup!;
-      expect(a, it.id).not.toBe(b);
-      const rects = (s: string): string[] => s.match(/<rect [^>]*\/>/g) ?? [];
-      const ra = rects(a);
-      const rb = rects(b);
-      const onlyA = ra.filter((x) => !rb.includes(x)).length;
-      const onlyB = rb.filter((x) => !ra.includes(x)).length;
-      expect(onlyA + onlyB, it.id).toBeGreaterThan(0);
-      expect(onlyA + onlyB, it.id).toBeLessThanOrEqual(8);
+      const [, b, xy] = it.id.split(':') as [string, string, string];
+      const at = xy.split('-').map(Number) as [number, number];
+      const path = BOARDS[b]!;
+      const right = tileAtXY(path, at);
+      expect(it.objective, it.id).toBe(straight(right) ? 'straight' : 'turn');
+      const ro = options(it).find((o) => o.correct)!;
+      const wo = options(it).find((o) => !o.correct)!;
+      expect(fig(ro).markup, it.id).toBe(mk(boardFig(path)));
+      const w = TILES.find(
+        (t) => mk(boardFig(path, { replace: { at, tile: t } })) === fig(wo).markup,
+      );
+      expect(w, it.id).toBeDefined();
+      expect(w, it.id).not.toBe(right);
+      expect(misFits(wo.misconception, right, w!), `${it.id} ${wo.misconception}`).toBe(true);
     }
   });
 
@@ -259,6 +292,21 @@ describe('p23.ja.picture-book', () => {
         if (o.misconception === 'other-role') expect(text, it.id).toContain(name);
         if (o.correct && it.alt) expect(text, it.id).not.toContain(name);
       }
+    }
+  });
+
+  it('図の表紙の絵と同じ絵の選択肢を出さない（図が答えの手がかりに ならない）', () => {
+    for (const it of items) {
+      const f = (it.figure as { id?: string } | undefined)?.id;
+      if (f) for (const o of options(it)) expect(fig(o).id, it.id).not.toBe(f);
+    }
+  });
+
+  it('ヒントの最後の段は 正解の名前を言わない・文の終わりが「〜の ところ」の形で崩れない', () => {
+    for (const it of items) {
+      const right = options(it).find((o) => o.correct)!.label as string;
+      expect(it.hints.at(-1), it.id).not.toContain(right);
+      expect(it.hints.at(-1), it.id).not.toMatch(/[いうる]の ところ/);
     }
   });
 });

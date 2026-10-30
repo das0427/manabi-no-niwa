@@ -3503,6 +3503,21 @@
     "engine": "choice"
   },
   {
+    "id": "g6.sci.body",
+    "pack": "sci-g56",
+    "title": "人《ひと》の 体《からだ》の つくりと 働《はたら》き",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.body"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g6.sci.combustion",
     "pack": "sci-g56",
     "title": "物《もの》の 燃《も》え方《かた》",
@@ -3512,6 +3527,19 @@
     "icon": "subj-rika",
     "prereq": [],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.ecosystem",
+    "pack": "sci-g56",
+    "title": "生物《せいぶつ》と かん境《きょう》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -3557,6 +3585,49 @@
       "g4.sci.moon-stars"
     ],
     "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.plant-water",
+    "pack": "sci-g56",
+    "title": "植物《しょくぶつ》の 養分《ようぶん》と 水《みず》の 通《とお》り道《みち》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g5.sci.germination"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g6.sci.solutions",
+    "pack": "sci-g56",
+    "title": "水《すい》よう液《えき》の 性質《せいしつ》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.strata",
+    "pack": "sci-g56",
+    "title": "土地《とち》の つくりと 変化《へんか》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g5.sci.flowing-water"
+    ],
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },

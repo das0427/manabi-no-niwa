@@ -490,6 +490,130 @@ const fireStation = def('life-firestation', 'しょうぼうしょ', () => (
   </g>
 ));
 
+// ---- みんなで つかう もの・つたえる どうぐ ----
+const slide = def('life-slide', 'すべりだい', () => (
+  <g>
+    {/* かいだん（はしご形） */}
+    <path d="M10 90 L28 36" fill="none" {...line} strokeWidth="5" />
+    <path d="M34 90 L40 36" fill="none" {...line} strokeWidth="5" />
+    <path d="M14 76 L36 76 M18 62 L38 62 M22 48 L39 48" fill="none" {...line} strokeWidth="4" />
+    {/* だいと てすり */}
+    <rect x="22" y="30" width="26" height="8" rx="2" fill={P.blue} {...line} />
+    <path d="M24 30 L24 12 M46 30 L46 12 M24 12 L46 12" fill="none" {...line} strokeWidth="4" />
+    {/* すべりめん */}
+    <path d="M48 30 C64 34 76 58 90 80 L98 76 C84 52 68 24 48 22 Z" fill={P.yellow} {...line} />
+    <path
+      d="M56 28 C68 34 78 54 88 72"
+      fill="none"
+      stroke={HIGHLIGHT}
+      strokeWidth="3"
+      opacity="0.6"
+      strokeLinecap="round"
+    />
+    <path d="M4 92 L98 92" fill="none" {...line} strokeWidth="3" />
+  </g>
+));
+
+const bench = def('life-bench', 'ベンチ', () => (
+  <g>
+    {/* うしろの くさ */}
+    <path d="M6 88 L10 74 L16 86 L22 70 L26 88 Z" fill={P.green} {...line} strokeWidth="2.5" />
+    <path d="M80 88 L84 72 L90 86 L95 74 L96 88 Z" fill={P.green} {...line} strokeWidth="2.5" />
+    {/* せもたれ */}
+    <rect x="14" y="26" width="72" height="10" rx="3" fill={P.brown} {...line} />
+    <rect x="14" y="40" width="72" height="10" rx="3" fill={P.brown} {...line} />
+    {/* あし（うしろ） */}
+    <path d="M20 36 L20 62 M80 36 L80 62" fill="none" {...line} strokeWidth="5" />
+    {/* ざめん */}
+    <path d="M8 58 L92 58 L98 70 L2 70 Z" fill={P.wood} {...line} />
+    <path d="M6 64 L94 64" fill="none" {...line} strokeWidth="2.5" />
+    {/* あし（まえ） */}
+    <rect x="10" y="70" width="7" height="20" rx="2" fill={P.gray} {...line} />
+    <rect x="83" y="70" width="7" height="20" rx="2" fill={P.gray} {...line} />
+  </g>
+));
+
+const letter = def('life-letter', 'てがみ', () => (
+  <g>
+    {/* びんせん（はんぶん でている） */}
+    <rect x="22" y="12" width="56" height="46" rx="3" fill={P.white} {...line} />
+    <path
+      d="M30 24 L70 24 M30 34 L70 34 M30 44 L58 44"
+      fill="none"
+      stroke={P.gray}
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+    {/* ふうとう */}
+    <rect x="8" y="42" width="84" height="48" rx="4" fill={P.cream} {...line} />
+    <path d="M8 44 L50 72 L92 44" fill="none" {...line} />
+    <path d="M8 88 L38 64 M92 88 L62 64" fill="none" {...line} strokeWidth="2.5" />
+    {/* ふうの シール */}
+    <circle cx="50" cy="72" r="6" fill={P.red} {...line} strokeWidth="2.5" />
+  </g>
+));
+
+const phone = def('life-phone', 'でんわ', () => (
+  <g>
+    {/* ボタンの だい */}
+    <path d="M12 56 L88 56 L94 90 L6 90 Z" fill={P.cream} {...line} />
+    {Array.from({ length: 9 }, (_, i) => (
+      <circle
+        key={i}
+        cx={34 + (i % 3) * 16}
+        cy={64 + Math.floor(i / 3) * 8.5}
+        r="3.2"
+        fill={P.gray}
+        {...line}
+        strokeWidth="2"
+      />
+    ))}
+    {/* じゅわき */}
+    <path
+      d="M10 30 C10 18 22 14 30 18 L70 18 C78 14 90 18 90 30 L90 34 L76 34 L76 28 L24 28 L24 34 L10 34 Z"
+      fill={P.blue}
+      {...line}
+    />
+    <rect x="6" y="32" width="22" height="14" rx="5" fill={P.blue} {...line} />
+    <rect x="72" y="32" width="22" height="14" rx="5" fill={P.blue} {...line} />
+    {/* コード */}
+    <path d="M16 46 C10 50 22 52 14 56 C8 60 20 60 14 64" fill="none" {...line} strokeWidth="3" />
+  </g>
+));
+
+const obsCard = def('life-obscard', 'かんさつカード', () => (
+  <g>
+    <rect x="18" y="4" width="64" height="92" rx="5" fill={P.paper} {...line} />
+    {/* うえきばち */}
+    <path d="M38 52 L62 52 L58 70 L42 70 Z" fill={P.orange} {...line} strokeWidth="3" />
+    <rect x="35" y="47" width="30" height="7" rx="3" fill={P.orange} {...line} strokeWidth="3" />
+    {/* くき・は・はな */}
+    <path d="M50 47 L50 22" fill="none" {...line} strokeWidth="3.5" />
+    <path
+      d="M50 40 C42 42 34 38 33 30 C41 29 48 33 50 40 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="3"
+    />
+    <path
+      d="M50 36 C58 38 66 34 67 26 C59 25 52 29 50 36 Z"
+      fill={P.green}
+      {...line}
+      strokeWidth="3"
+    />
+    <circle cx="50" cy="19" r="9" fill={P.purple} {...line} strokeWidth="3" />
+    <circle cx="50" cy="19" r="3" fill={P.yellow} />
+    {/* ぶんの らん */}
+    <path
+      d="M28 80 L72 80 M28 88 L72 88"
+      fill="none"
+      stroke={P.gray}
+      strokeWidth="3"
+      strokeLinecap="round"
+    />
+  </g>
+));
+
 export const lifeG12Illust: IllustGroup = {
   'life-mushroom': reuse(mushroom, 'life-mushroom', 'きのこ'),
   'life-sun': reuse(sun, 'life-sun', 'おひさま'),
@@ -515,4 +639,9 @@ export const lifeG12Illust: IllustGroup = {
   'life-flowershop': flowerShop,
   'life-vegeshop': vegeShop,
   'life-firestation': fireStation,
+  'life-slide': slide,
+  'life-bench': bench,
+  'life-letter': letter,
+  'life-phone': phone,
+  'life-obscard': obsCard,
 };

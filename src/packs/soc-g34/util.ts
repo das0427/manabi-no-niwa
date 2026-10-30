@@ -144,6 +144,8 @@ export interface OrderSpec {
   ends?: [string, string];
   /** 逆の順の誤概念 */
   mis: string;
+  /** 逆順のほかの、ありがちな誤りの並びと誤概念（省略可） */
+  wrongOrders?: { order: number[]; misconception: string }[];
   hints: Hints;
   explain: string;
   alt?: boolean;
@@ -162,6 +164,7 @@ export function orderItem(s: OrderSpec): OrderItem {
     ...(s.ends ? { ends: s.ends } : {}),
     layout: s.layout ?? (s.cards.length <= 4 ? 'column' : 'row'),
     reverseMisconception: s.mis,
+    ...(s.wrongOrders ? { wrongOrders: s.wrongOrders } : {}),
     hints: s.hints,
     explain: s.explain,
     identity: s.id,

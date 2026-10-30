@@ -6,10 +6,12 @@ import { cityChanges, cityChangesAllow } from './city-changes';
 import { prefectures, prefecturesAllow } from './prefectures';
 import { waterWaste, waterWasteAllow } from './water-waste';
 import { disaster, disasterAllow } from './disaster';
+import { safety, safetyAllow } from './safety';
+import { tradition, traditionAllow } from './tradition';
 
 const pack: PackContent = {
   packId: 'soc-g34',
-  units: [mapSymbols, shopWork, cityChanges, prefectures, waterWaste, disaster],
+  units: [mapSymbols, shopWork, cityChanges, prefectures, waterWaste, disaster, safety, tradition],
 };
 
 /** 単元ごとの、学年より上の字を使ってよい理由（テストの許可リスト） */
@@ -20,6 +22,8 @@ export const ALLOW: Readonly<Record<string, Allow>> = {
   'g4.soc.prefectures': prefecturesAllow,
   'g4.soc.water-waste': waterWasteAllow,
   'g4.soc.disaster': disasterAllow,
+  'g3.soc.safety': safetyAllow,
+  'g4.soc.tradition': traditionAllow,
 };
 
 export default pack;

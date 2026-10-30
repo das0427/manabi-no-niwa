@@ -183,3 +183,74 @@ describe('soc-g34 レビューの再発防止', () => {
       for (const h of it.hints) expect(plainText(h)).not.toMatch(/「じょう」がつく/);
   });
 });
+
+describe('soc-g34 P2 単元（safety・tradition）', () => {
+  const safety = units.find((u) => u.id === 'g3.soc.safety')!;
+  const tradition = units.find((u) => u.id === 'g4.soc.tradition')!;
+  const byId = (u: UnitSpec, id: string) => (u.source.items ?? []).find((it) => it.id === id)!;
+
+  it('両単元が P2・ready', () => {
+    for (const u of [safety, tradition]) {
+      expect(u.priority).toBe('P2');
+      expect(u.status).toBe('ready');
+    }
+  });
+
+  it('safety: 119・110 と通信指令室の問題の答え', () => {
+    expect(answersOf(byId(safety, 'call-c1'))).toEqual(['119番']);
+    expect(answersOf(byId(safety, 'call-c2'))).toEqual(['110番']);
+    expect(answersOf(byId(safety, 'call-c3'))).toEqual(['通信指令室']);
+    expect(answersOf(byId(safety, 'call-a4'))).toEqual(['通信指令室']);
+    expect(answersOf(byId(safety, 'call-a2'))).toEqual(['119', '110']);
+  });
+
+  it('safety: 順序の問題に direct-call の誤りの並びがある', () => {
+    for (const id of ['call-o1', 'call-o2']) {
+      const it = byId(safety, id);
+      expect(it.engine).toBe('order');
+      if (it.engine === 'order')
+        expect(it.wrongOrders?.map((w) => w.misconception)).toEqual(['direct-call']);
+    }
+  });
+
+  it('tradition: 本文は6種類、文種は2種類以上', () => {
+    const ps = new Map<string, string>();
+    for (const it of tradition.source.items ?? [])
+      if (it.engine === 'reading') ps.set(it.passage.id, it.passage.genre);
+    expect([...ps.keys()].sort()).toEqual(
+      [
+        'tr-hashi',
+        'tr-matsubayashi',
+        'tr-matsuri',
+        'tr-shishi',
+        'tr-yousui',
+        'tr-yousui-now',
+      ].sort(),
+    );
+    expect(new Set(ps.values()).size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('tradition: reading はすべて hintFocus 付き、sen-r9 以外は evidence 付き', () => {
+    for (const it of tradition.source.items ?? []) {
+      if (it.engine !== 'reading') continue;
+      if (it.id !== 'sen-r9') {
+        expect(it.hintFocus, it.id).toBeTruthy();
+        expect(it.evidence, it.id).toBeTruthy();
+      }
+    }
+  });
+
+  it('tradition: sen-r9 の答えは年表の（できあがる年 − 始める年）', () => {
+    const it = byId(tradition, 'sen-r9');
+    if (it.engine !== 'reading' || it.passage.figure?.kind !== 'table') throw new Error('形が違う');
+    const rows = it.passage.figure.rows.map((r) => r.map((c) => plainText(c)));
+    const year = (kw: string) =>
+      Number(rows.find((r) => r[1]!.includes(kw))![0]!.match(/\d{4}/)![0]);
+    expect(answersOf(it)).toEqual([`${year('できあがる') - year('始める')}年`]);
+  });
+
+  it('tradition: 架空の人名（新助・平六）以外の人名らしい語を出さない', () => {
+    const bad = allTexts(tradition).filter((x) => /衛門|兵衛|太郎|次郎|三郎/.test(x.text));
+    expect(bad).toEqual([]);
+  });
+});

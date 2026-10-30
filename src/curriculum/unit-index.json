@@ -1524,6 +1524,19 @@
     "engine": "map"
   },
   {
+    "id": "g3.soc.safety",
+    "pack": "soc-g34",
+    "title": "まちの安全《あんぜん》を守《まも》るはたらき",
+    "stage": "g3",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g3.soc.shop-work",
     "pack": "soc-g34",
     "title": "お店《みせ》のしごと",
@@ -2089,6 +2102,19 @@
     "priority": "P1",
     "status": "ready",
     "engine": "map"
+  },
+  {
+    "id": "g4.soc.tradition",
+    "pack": "soc-g34",
+    "title": "地《ち》いきの伝統《でんとう》と先人《せんじん》の働《はたら》き",
+    "stage": "g4",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "reading"
   },
   {
     "id": "g4.soc.water-waste",

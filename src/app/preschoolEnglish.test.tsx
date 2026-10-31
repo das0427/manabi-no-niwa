@@ -85,7 +85,7 @@ describe('幼児ホームの「えいご」の札', () => {
     expect(screen.getByTestId('home-eigo')).toBeTruthy();
   });
 
-  it('押すと、単元が複数なら選ぶ画面（card eigo）・1つなら直接開く', () => {
+  it('押すと、単元が複数なら選ぶ画面（card eigo）。3歳段階も words・move の2つなので選ぶ画面', () => {
     setApp({ audience: 'p4' });
     home('p4');
     screen.getByTestId('home-eigo').click();
@@ -95,7 +95,7 @@ describe('幼児ホームの「えいご」の札', () => {
     setApp({ audience: 'toddler', stage: 3 });
     home('toddler');
     screen.getByTestId('home-eigo').click();
-    expect(h.navigate).toHaveBeenCalledWith({ name: 'unit', unitId: 'p23.en.words' });
+    expect(h.navigate).toHaveBeenCalledWith({ name: 'card', stage: 'p23', cardId: 'eigo' });
   });
 
   it('「ほかの がくねん」は上の帯にある（2歳段階も）。押すと ほかの がくねん へ', () => {
@@ -143,6 +143,7 @@ describe('えいごの選ぶ画面（CardChooser）', () => {
       'p4.en.move',
       'p4.en.hello',
       'p4.en.picture-book',
+      'p4.en.where',
     ])
       expect(screen.getByTestId(`card-unit-${id}`)).toBeTruthy();
     screen.getByTestId('card-unit-p4.en.hello').click();

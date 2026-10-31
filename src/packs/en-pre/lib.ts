@@ -98,6 +98,8 @@ export interface ListenSpec {
   identity: string;
   alt?: boolean;
   revealAudio?: ListenSound[];
+  /** true なら選択肢を混ぜない（音声を選択肢の画面の並び順に鳴らす問題。単元の側で mix してから渡す） */
+  keepOrder?: boolean;
 }
 
 /**
@@ -114,7 +116,7 @@ export function listen(s: ListenSpec): ListenItem {
     ...(s.figure ? { figure: s.figure } : {}),
     audio: s.audio,
     gapMs: s.gapMs ?? 700,
-    options: mix(s.id, s.options),
+    options: s.keepOrder ? s.options : mix(s.id, s.options),
     hints: s.hints ?? HINTS,
     explain: s.explain,
     ...(s.explainFigure ? { explainFigure: s.explainFigure } : {}),
@@ -153,6 +155,10 @@ export function preUnit(
     stage: Extract<StageId, 'p23' | 'p4' | 'p5'>;
     prereq?: string[];
     status?: UnitSpec['status'];
+    /** 既定は P1（P2 の単元は P2 と書く） */
+    priority?: UnitSpec['priority'];
+    /** 既定は play（p5.en.abc だけ knowledge: 設計書 5.13） */
+    kind?: UnitSpec['kind'];
   },
 ): UnitSpec {
   const { prereq, status, ...rest } = u;
@@ -166,7 +172,7 @@ export function preUnit(
     review: 'none',
     basis: BASIS,
     gradeIsAppProposal: true,
-    revised: '2026-10-30',
+    revised: '2026-10-31',
     gentleJudgement: true,
     ...rest,
   };

@@ -5,8 +5,11 @@
  *   enpre-touch-*（6）… うさぎがその部分をさわっている絵（さわっている所に sun の丸。色だけに頼らず丸の形で）
  *   enpre-ball-*（8）… 色の名前の聞き取りに使うボール（1つの関数で色だけ変える）
  *   enpre-meet / enpre-bye / enpre-gift … あいさつの場面
+ *   enpre-touch-tummy / -knees / -shoulders … 版 0.2 で足したさわる部分（p4.en.move・p23.en.move）
+ *   enpre-sorry / enpre-birthday … 版 0.2 で足したあいさつの場面（p4.en.hello）
+ *   enpre-where-<cat|dog|rabbit>-<in|on|under>（9）… 同じベッドと動物の位置（p4.en.where。P2）
+ *   enpre-blocks … つみき3つ（p5.en.abc の札の絵。面には ○・△・□ の形だけ。P2）
  * 画風は DESINGN.md 6章（輪郭 INK・太さ 3.5・平塗り・palette の色だけ・文字・アルファベットを描かない）。
- * P2 の絵（enpre-cat-in など）は、その単元を作るときに足す。
  */
 import type { ReactElement } from 'react';
 import { CHEEK, HIGHLIGHT, INK, line, type IllustDef, type IllustGroup } from '../types';
@@ -308,6 +311,46 @@ const touchHands = def('enpre-touch-hands', 'りょうてを だす うさぎ', 
   />
 ));
 
+// 版 0.2 で足した3つ（既存と同じ形: うさぎがその部分を両手でさわり、後ろに sun の丸）
+const touchTummy = def('enpre-touch-tummy', 'おなかを さわる うさぎ', () => (
+  <Bunny
+    behindArms={<Spot at={[50, 72]} r={11} />}
+    armL={{ to: [45, 72], ctrl: [28, 70] }}
+    armR={{ to: [55, 72], ctrl: [72, 70] }}
+  />
+));
+
+const touchKnees = def('enpre-touch-knees', 'ひざを さわる うさぎ', () => (
+  <g>
+    <Bunny
+      behindArms={
+        <g>
+          <Spot at={[30, 82]} r={9} />
+          <Spot at={[70, 82]} r={9} />
+        </g>
+      }
+      armL={{ to: [30, 82], ctrl: [14, 66] }}
+      armR={{ to: [70, 82], ctrl: [86, 66] }}
+    />
+    {/* すこし かがむ しるし */}
+    <Motion d="M8 52 Q4 62 8 72" />
+    <Motion d="M92 52 Q96 62 92 72" />
+  </g>
+));
+
+const touchShoulders = def('enpre-touch-shoulders', 'かたを さわる うさぎ', () => (
+  <Bunny
+    behindArms={
+      <g>
+        <Spot at={[35, 57]} r={9} />
+        <Spot at={[65, 57]} r={9} />
+      </g>
+    }
+    armL={{ to: [35, 57], ctrl: [10, 52] }}
+    armR={{ to: [65, 57], ctrl: [90, 52] }}
+  />
+));
+
 // ---- ボール（8色） ----
 function Ball({ color }: { color: string }) {
   return (
@@ -428,6 +471,254 @@ const gift = def('enpre-gift', 'リボンの はこを さしだす て', () => 
   </g>
 ));
 
+const sorry = def('enpre-sorry', 'ごめんね（たおれた コップと うさぎ）', () => (
+  <g>
+    {/* みている くま */}
+    <g transform="translate(62 34) scale(0.46)">
+      <Pal x={20} kind="bear" hand={{ to: [4, 90], ctrl: [8, 82] }} />
+    </g>
+    {/* ぺこりと あたまを さげる うさぎ */}
+    <g transform="translate(-18 4) rotate(18 50 92)">
+      <Bunny scale={0.8} />
+    </g>
+    {/* こぼれた みず */}
+    <ellipse cx="68" cy="94" rx="22" ry="3.5" fill={P.sky} {...line} strokeWidth="2.5" />
+    {/* たおれた コップ */}
+    <g transform="translate(-2 6) rotate(-78 56 86)">
+      <path d="M47 68 L67 68 L64 92 L50 92 Z" fill={P.white} {...line} />
+    </g>
+  </g>
+));
+
+const birthday = def('enpre-birthday', 'おたんじょうびの ケーキと くま', () => (
+  <g>
+    {/* とんがりぼうしの くま */}
+    <Pal x={30} kind="bear" hand={{ to: [48, 76], ctrl: [44, 84] }} />
+    <path d="M21 38 L30 12 L39 38 Z" fill={P.blue} {...line} />
+    <circle cx="30" cy="12" r="4" fill={P.yellow} {...line} strokeWidth="2.5" />
+    {/* ろうそくを たてた ケーキ */}
+    <rect x="50" y="68" width="40" height="26" rx="4" fill={P.pink} {...line} />
+    <path
+      d="M50 74 Q56 82 62 74 Q68 82 74 74 Q80 82 86 74 L90 74 L90 68 L50 68 Z"
+      fill={P.white}
+      {...line}
+      strokeWidth="2.5"
+    />
+    <rect x="67" y="50" width="6" height="18" rx="2" fill={P.yellow} {...line} strokeWidth="2.5" />
+    <path d="M70 36 Q76 44 70 49 Q64 44 70 36 Z" fill={P.orange} {...line} strokeWidth="2.5" />
+  </g>
+));
+
+// ---- ベッドと どうぶつ（where。P2） ----
+type Kind = 'cat' | 'dog' | 'rabbit';
+type Pos = 'in' | 'on' | 'under';
+const FUR: Record<Kind, string> = { cat: P.orange, dog: P.tan, rabbit: P.cream };
+const KIND_JA: Record<Kind, string> = { cat: 'ねこ', dog: 'いぬ', rabbit: 'うさぎ' };
+const POS_JA: Record<Pos, string> = { in: 'なか', on: 'うえ', under: 'した' };
+const thin = { ...line, strokeWidth: 2.5 } as const;
+
+interface HeadProps {
+  kind: Kind;
+  hx: number;
+  hy: number;
+  r: number;
+  /** ねている（目をとじる） */
+  closed?: boolean;
+  /** ふせている（うさぎの耳を うしろへ ねかせる） */
+  lie?: boolean;
+}
+
+/** 耳（ねこ: とがった耳／いぬ: たれ耳／うさぎ: 長い耳） */
+function Ears({ kind, hx, hy, r, lie }: HeadProps) {
+  if (kind === 'cat') {
+    const ear = (sx: number) =>
+      `M${hx + sx * r * 0.95} ${hy - r * 0.2} L${hx + sx * r * 0.75} ${hy - r * 1.55} L${hx + sx * r * 0.05} ${hy - r * 0.85} Z`;
+    return (
+      <g>
+        <path d={ear(-1)} fill={P.orange} {...thin} />
+        <path d={ear(1)} fill={P.orange} {...thin} />
+      </g>
+    );
+  }
+  if (kind === 'dog') {
+    const ear = (sx: number) => (
+      <ellipse
+        cx={hx + sx * r * 0.95}
+        cy={hy + r * 0.1}
+        rx={r * 0.4}
+        ry={r * 0.75}
+        transform={`rotate(${-sx * 12} ${hx + sx * r * 0.95} ${hy + r * 0.1})`}
+        fill={P.brown}
+        {...thin}
+      />
+    );
+    return (
+      <g>
+        {ear(-1)}
+        {ear(1)}
+      </g>
+    );
+  }
+  if (lie)
+    return (
+      <g>
+        <ellipse
+          cx={hx - r * 1.1}
+          cy={hy - r * 0.9}
+          rx={r}
+          ry={r * 0.38}
+          transform={`rotate(-18 ${hx - r * 1.1} ${hy - r * 0.9})`}
+          fill={P.cream}
+          {...thin}
+        />
+        <ellipse
+          cx={hx - r * 0.9}
+          cy={hy - r * 0.3}
+          rx={r}
+          ry={r * 0.38}
+          transform={`rotate(-6 ${hx - r * 0.9} ${hy - r * 0.3})`}
+          fill={P.cream}
+          {...thin}
+        />
+      </g>
+    );
+  const ear = (sx: number) => (
+    <g>
+      <ellipse
+        cx={hx + sx * r * 0.5}
+        cy={hy - r * 1.3}
+        rx={r * 0.38}
+        ry={r * 0.95}
+        fill={P.cream}
+        {...thin}
+      />
+      <ellipse cx={hx + sx * r * 0.5} cy={hy - r * 1.2} rx={r * 0.16} ry={r * 0.6} fill={P.pink} />
+    </g>
+  );
+  return (
+    <g>
+      {ear(-1)}
+      {ear(1)}
+    </g>
+  );
+}
+
+/** あたま（顔は既存の どうぶつと同じ: 点の目・はな・ほっぺ） */
+function Head(p: HeadProps) {
+  const { kind, hx, hy, r, closed } = p;
+  const eye = (sx: number) =>
+    closed ? (
+      <path
+        d={`M${hx + sx * r * 0.65} ${hy - r * 0.1} Q${hx + sx * r * 0.4} ${hy + r * 0.2} ${hx + sx * r * 0.15} ${hy - r * 0.1}`}
+        fill="none"
+        {...thin}
+        strokeWidth="2"
+      />
+    ) : (
+      <circle cx={hx + sx * r * 0.4} cy={hy - r * 0.1} r={r * 0.17} fill={INK} />
+    );
+  return (
+    <g>
+      <Ears {...p} />
+      <circle cx={hx} cy={hy} r={r} fill={FUR[kind]} {...thin} />
+      {eye(-1)}
+      {eye(1)}
+      <ellipse
+        cx={hx}
+        cy={hy + r * 0.28}
+        rx={r * 0.2}
+        ry={r * 0.14}
+        fill={kind === 'dog' ? INK : P.pink}
+        stroke={INK}
+        strokeWidth="1.2"
+      />
+      <circle cx={hx - r * 0.62} cy={hy + r * 0.4} r={r * 0.2} fill={CHEEK} opacity="0.7" />
+      <circle cx={hx + r * 0.62} cy={hy + r * 0.4} r={r * 0.2} fill={CHEEK} opacity="0.7" />
+    </g>
+  );
+}
+
+/** すわっている どうぶつ（baseY が足もと） */
+function Sitter({ kind, cx, baseY, s }: { kind: Kind; cx: number; baseY: number; s: number }) {
+  return (
+    <g>
+      <ellipse cx={cx} cy={baseY - 10 * s} rx={10 * s} ry={11 * s} fill={FUR[kind]} {...thin} />
+      <Head kind={kind} hx={cx} hy={baseY - 27 * s} r={11 * s} />
+    </g>
+  );
+}
+
+/** ふせている どうぶつ（ベッドの下。全身が見える） */
+function Lier({ kind, cx, baseY }: { kind: Kind; cx: number; baseY: number }) {
+  return (
+    <g>
+      {kind === 'cat' ? (
+        <path
+          d={`M${cx - 22} ${baseY - 6} Q${cx - 34} ${baseY - 10} ${cx - 30} ${baseY - 22}`}
+          fill="none"
+          stroke={P.orange}
+          strokeWidth="5"
+          strokeLinecap="round"
+        />
+      ) : null}
+      <ellipse cx={cx - 6} cy={baseY - 8} rx="17" ry="8" fill={FUR[kind]} {...thin} />
+      <Head kind={kind} hx={cx + 14} hy={baseY - 12} r={10} lie />
+    </g>
+  );
+}
+
+/** ベッド（木の枠・脚4本（横から見て2本）・白い ふとん・まくら）。3つの絵で同じ形・同じ位置 */
+function Bed({ kind, pos }: { kind: Kind; pos: Pos }) {
+  return (
+    <g>
+      <rect x="9" y="62" width="6" height="32" rx="2" fill={P.wood} {...thin} />
+      <rect x="85" y="62" width="6" height="32" rx="2" fill={P.wood} {...thin} />
+      <rect x="6" y="30" width="12" height="40" rx="4" fill={P.brown} {...line} />
+      <rect x="82" y="46" width="12" height="24" rx="4" fill={P.brown} {...line} />
+      <rect x="14" y="58" width="72" height="8" rx="2" fill={P.wood} {...line} />
+      {pos === 'under' ? <Lier kind={kind} cx={50} baseY={93} /> : null}
+      <ellipse cx="28" cy="48" rx="12" ry="6" fill={P.cream} {...thin} />
+      <rect
+        x="16"
+        y={pos === 'in' ? 50 : 46}
+        width="68"
+        height={pos === 'in' ? 8 : 12}
+        rx="4"
+        fill={P.white}
+        {...line}
+      />
+      {pos === 'in' ? (
+        <g>
+          <Head kind={kind} hx={28} hy={38} r={10} closed />
+          <path
+            d="M38 58 L38 44 Q38 36 48 36 L78 38 Q86 38 86 48 L86 58 Z"
+            fill={P.white}
+            {...line}
+          />
+        </g>
+      ) : null}
+      {pos === 'on' ? <Sitter kind={kind} cx={56} baseY={46} s={0.8} /> : null}
+    </g>
+  );
+}
+
+const whereDef = (kind: Kind, pos: Pos) =>
+  def(`enpre-where-${kind}-${pos}`, `ベッドの ${POS_JA[pos]}の ${KIND_JA[kind]}`, () => (
+    <Bed kind={kind} pos={pos} />
+  ));
+
+// ---- つみき（abc の札の絵。面に ○・△・□ の形だけ） ----
+const blocks = def('enpre-blocks', 'つみき', () => (
+  <g>
+    <rect x="10" y="56" width="38" height="38" rx="4" fill={P.blue} {...line} />
+    <circle cx="29" cy="75" r="9" fill={P.white} {...thin} />
+    <rect x="52" y="56" width="38" height="38" rx="4" fill={P.yellow} {...line} />
+    <path d="M71 64 L81 85 L61 85 Z" fill={P.white} {...thin} />
+    <rect x="31" y="16" width="38" height="38" rx="4" fill={P.orange} {...line} />
+    <rect x="41" y="26" width="18" height="18" rx="1" fill={P.white} {...thin} />
+  </g>
+));
+
 // ---- 札の絵 ----
 const icon = def('enpre-icon', 'えいご（ふきだしの なかで てを ふる）', () => (
   <g>
@@ -466,6 +757,9 @@ export const enPreIllust: IllustGroup = Object.fromEntries(
     touchMouth,
     touchToes,
     touchHands,
+    touchTummy,
+    touchKnees,
+    touchShoulders,
     ballOf('red', 'あかい ボール', P.red),
     ballOf('blue', 'あおい ボール', P.blue),
     ballOf('yellow', 'きいろい ボール', P.yellow),
@@ -477,5 +771,11 @@ export const enPreIllust: IllustGroup = Object.fromEntries(
     meet,
     bye,
     gift,
+    sorry,
+    birthday,
+    ...(['cat', 'dog', 'rabbit'] as const).flatMap((k) =>
+      (['in', 'on', 'under'] as const).map((p) => whereDef(k, p)),
+    ),
+    blocks,
   ].map((d) => [d.id, d]),
 );

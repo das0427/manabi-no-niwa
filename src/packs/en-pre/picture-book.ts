@@ -9,20 +9,21 @@ import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
 import type { Figure } from '../../engines/figure/types';
 import { enKey, HINTS, ill, intro, listen, mix, opt, preUnit, type EnSound } from './lib';
 
-interface Page {
+export interface Page {
   text: string;
   /** 絵 */
   figure: Figure;
   /** ページの日本語の名前（選択肢の label・解説） */
   ja: string;
 }
-interface Book {
+export interface Book {
   id: string;
   ja: string;
-  pages: [Page, Page, Page, Page];
+  /** p4 は4ページ、p5（picture-book-p5.ts）は6ページ */
+  pages: Page[];
 }
 
-const P = (text: string, illust: string, ja: string): Page => ({
+export const P = (text: string, illust: string, ja: string): Page => ({
   text,
   figure: ill(illust),
   ja,
@@ -91,9 +92,9 @@ export const BOOKS: Book[] = [
   },
 ];
 
-const pageSound = (b: Book, i: number): EnSound =>
+export const pageSound = (b: Book, i: number): EnSound =>
   enKey('book', `${b.id}-${i + 1}`, b.pages[i]!.text);
-const pageOpt = (
+export const pageOpt = (
   b: Book,
   i: number,
   extra: { correct?: true; misconception?: string },
@@ -106,7 +107,7 @@ const strip = (b: Book): Figure => ({
   gap: 1.6,
 });
 
-const allPages = (b: Book): EnSound[] => b.pages.map((_, i) => pageSound(b, i));
+export const allPages = (b: Book): EnSound[] => b.pages.map((_, i) => pageSound(b, i));
 
 const MIS_OTHER_PAGE = {
   id: 'other-page',

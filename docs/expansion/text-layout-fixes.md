@@ -670,3 +670,466 @@ R1〜R8・C2 の続き・C3・C5・C7 を実装した（C6 は待っても同じ
   - g3-math: add-sub-column（6.2 行）・mult-2digit
   - g4-math: oku-cho（33.6 行）・decimal-add-sub・div-1digit
   - kanji-g12: kanji-read-g2
+
+## 第4回（2026-10-31・分析と設計）
+
+### 0. 元の結果と、追加で測ったもの
+
+- 元: 第3回の直し（d161b80）と幼児の英語の追加5単元・p4.en.move・p4.en.hello の拡充（f4337a1）のあとに流した `docs/screenshots/text-layout-report/`（313 単元・10,043 問・191,600 画面。全件は `.cache/text-layout/units/`）。件 1,883（第3回のあとは 2,471）。違反のない単元 114 / 313。
+  - 件の内訳: scroll-hidden 959・small-text 282・button-split 176・clipped 153・orphan 93・overlap-text 67・covered 57・kinsoku-start 17・overlap-button 14・wakachi-split 9・text-on-figure 8・out-of-stage 7・word-split 7・markup-leak 6・text-outside-box 1。
+- **検査から外れた 11 単元**: unit-index の 324 単元のうち、`engine: 'legacy'`（v1 のモードを使う単元）の 11 単元。
+  - p23.hand.lines・p4.hand.lines（trace の lines・maze）・p4.hand.letters-classic（trace の letters）
+  - p4.ja.hiragana-classic・p4.math.classic・p4.math.compare・p4.math.shapes・p4.math.shop
+  - p4.think.memory・p4.think.road・p4.think.sort
+
+  `e2e/text-layout.tl.ts` は `u.engine !== 'legacy'` で外している。v1 のモードは単元の画面（`#/dev/unit/…`）を通らず、`e2e/layout.spec.ts` が受け持つ設計（test-plan 3.2 の「v1 のモード以外」）なので、外す理由は正しい。新しく足した幼児の英語の単元（p5.en.abc を含む）は、313 単元に入っている。ただし `layout.spec.ts` の `MODES` は trace を `lines` しか開かず、p4.hand.letters-classic（letters）と p4.hand.lines の maze を見ていない。これを C19 で足す。
+- 全件を「単元 × 種類 × 要素 × 説明」でまとめ直し、代表例を開発サーバー（127.0.0.1:4351、`MNW_DEV_NO_HMR=1`。4299 は使っていない）で開いた。同じ `inspectText` で測り、約 60 画面を撮影した。分かったこと:
+  - **解説の図が 0×0 で見えない**（不具合・見落とし）:
+    - 起きること: パックの SVG（`.fig-svg` の width の無い svg）を解説の図にすると、`.unit__explain-figure` の高さが 0、中の svg が 0×0 になる。字だけが板の外（舞台の下、y=974px）に描かれる。
+    - 例: g4.en.directions/35 の地図、g5.math.speed/3 の数直線（1280×720）。
+    - 原因: unit.css の `.unit__explain-figure svg { width: auto }` が、T2 の幅（`.fig-svg` の `--fig-k` から決める幅）を消す。そのため flex の中で内容の幅 0 に縮む。
+    - 検査での出方: この字が clipped（text ⊂ svg、説明なし）と small-text（解説の状態の `text`）として、約 130 件・1,300 画面に出ている。対象は g4.en.directions・g5.math.speed・angle-sum・per-unit・g4.math.fraction-kinds・p5.math.compose ほか。
+    - 字の無い図は検査に出ないので、実際の数はもっと多い。絵・10の棒（`.fig-illust`・`.fig-svgbox`）は出ている（g1.math.add-carry は右置き、g5.en.where は下の段）。
+  - **幼児の選択肢の語が途中で折れる**:
+    - 例: 「じてんし／ゃ」「おめでと／う」「こんにち／は」「おつきさ／ま」「おなかい／っぱい」「（くさばな／）」。
+    - 原因: 札は 14u 前後で、ラベル 3.2u の 5〜7 字が入らない。分かち書きの `keep-all`＋`anywhere` で、好きな所で折れる。
+    - 範囲: 次の単元で、orphan・kinsoku-start・button-split の 146 件・約 3,000 画面。
+      - 幼児: p4.en.hello・p4.en.words・p23.en.words・p4.en.picture-book・p5.en.first-sound・p23.ja.*・p4.ja.story-listen・p5.ja.story-listen
+      - 小学校の英語の解説: g6.en.future「パイ／ロット」・g5.en.where「つくえの／中」・g3.en.*
+    - 4歳には読めない形（語が2行に割れ、行頭に「ゃ」「っ」「う」が来る）。
+  - **幼児の絵の選択肢が作業領域の下で切れる**:
+    - 例と不足: p4.en.words/20・p4.en.picture-book/7・p5.en.phrases は 2.6〜3.8u、p5.math.numbers-10/4 は 3.8u、p23.math.shape-match/28 は 7.5u。
+    - 原因: 絵の札の大きさ `--pic-max` は作業領域の幅だけから計算し、高さを見ない。そのため札の下半分（ラベル）が作業領域の下端で切れ、▼ が出る。
+    - 上の段に「きいてね」や絵の列（p5.math.numbers-10 の動物の列）があると、もっと足りない。
+    - 幼児はスクロールに気づけず、ラベルが見えないので受け入れない。
+    - 幼児の英語の残り（p23.en.move・p4.en.where・p4.en.move・p5.en.abc・p5.en.picture-book・p4.en.colors-numbers・p5.en.shop）は 0 件。幼児の規約で目視した。
+      - 1280×620 の解説でも、文字は 2.2u 以上
+      - 絵は 10u 以上
+      - 札は 14u×18u 以上
+      - 「きいてね」は 14u×9u
+  - **ヒントの吹き出しの最後の行が見えない**:
+    - 原因: `.unit__bubble` は `max-height: 11.6u; overflow: auto` で、▼ が無い。ヒントが4行を超えると、最後の行（「よ。」「かな。」「くらべよう。」）が吹き出しの中に隠れる。
+    - 主操作（こたえあわせ）のある画面は、吹き出しの右端が 39u で幅が狭く、行が増える。
+    - 例: g6.ja.write-opinion/0 h2・g3.ja.reference-connectives/22 h2・g1.prog.condition/20 h3・g2.prog.repeat/22 h3・g3.ja.romaji/245 h2・g6.ja.language-change/14 h3 で、176 画面。
+    - 数字キーとの重なり: 数字キーは帯の右（70〜96u）にあるが、吹き出しの右端（24u）がその列にかかる。3行の問題文で数字キーが下がると、「0」のキーを隠す（g3.math.length-km/6 h1、1536×864）。
+  - **読解の右の列が、ヒントの吹き出し・解説の板の下に入る**:
+    - 例: g4.ja.read-summary/33 h2・g5.ja.read-gist/29 h3・g5.ja.read-relations/7 解説・g6.ja.read-argument/8 解説・g6.ja.read-literature/7 解説。
+    - 原因: 読解は作業領域をスクロールの枠にしない（NO_WORK_SCROLL）。そのため、引用の文の選択肢4つ（各2〜3行）が下に伸び、4つ目の選択肢が板や吹き出しに隠れる（covered 約 70 画面）。
+  - **正解の ○ が長い文の字を横切る**:
+    - 例: g6.ja.write-opinion/6 の解説の sort の札4枚、g5.ja.read-relations/7 の解説の選択肢。
+    - ○ は字の後ろにある（第2回 R3）が、札の短い辺に合わせた輪が文の真ん中の字を横切り、読みにくい。match だけは、第3回 T4 で「緑の太い輪郭＋角の小さな ○」にした。
+    - 輪の中は透明で当たり判定が通り抜けるので、検査は数えていない（見落とし）。
+  - **fill の解説で、埋まった空欄の文が舞台の外へ**: 解説で正解の文が入った空欄（`.eng-fill__blank.is-revealed`）が折り返さず、1行のまま舞台の左右の外に出る（g4.ja.write-report/31・32、1536×864。out-of-stage 7 件）。
+  - **sort の解説で、ふたと札が重なる**: 箱に入った長い文の札が箱の高さを越え、次の段のふた（`.eng-sort__lid`）に重なる（g4.ja.write-report・g6.ja.write-opinion。overlap-button 14 件・covered 12 件）。
+  - **数の入力の図の段**:
+    - 10の棒・筆算の表が縮まず、図の段だけがスクロールする（第3回 T7 の逃げ。246 件・2,786 画面・57 単元）。
+    - 子供から見ると、次のものが見えず、数えられない・計算できない。
+      - たし算の 10 の棒の下半分（g2.math.add-column/0）
+      - 筆算の × の行と答えの行（g3.math.mult-2digit/5）
+    - 一方、作業領域の下（回答欄の下）には 6〜8u の空きがある。印があっても、解く手がかりが隠れるので受け入れない。
+    - 解説の状態では、板の分だけ図の段が 1.4〜3.8 行に減り、clipped（4行未満）が 143 画面出る。
+    - 大きい字の式（`fig-text--xl`）のふりがな（g3.math.time/0「びょう」）は、図の段のスクロールの枠の上端で切れる。
+  - **読解の本文の枠の上端・左端で、ふりがなが切れる**（clipped 17 件・574 画面）:
+    - g1.ja.read-info/24 の表（「なまえ」「だんごむし」）は、本文の枠より広く、左にはみ出す。
+    - g5.ja.text-figure・g4.soc.tradition は、本文の1行目の rt が `padding-top: 0.6u` に入らない。
+  - **記法の漏れ**（markup-leak 6 件）:
+    - 起きること: soc-g34 の g3.soc.map-symbols のヒント・解説に、「×《ばつ》」「Y《ワイ》」がそのまま出る。
+    - 原因: `rich.ts` の《》は、直前の漢字の並びだけを親字にする。そのため、記号・英字の後ろの《》は記法として読まれず、字として出る。教材の書き方の誤り。
+  - **分かち書きの記号のあとの改行**（wakachi-split 9 件）: 記号・分数・空欄と、続く助詞の間で折れる。
+    - 例: 「○／が つまれるよ」（g1.math.picture-graph）、「□／は 2こ」（g2.math.fraction-simple の分数）、「〜／が」（g2.ja.subject-predicate）、「○／を つみます」（g2.math.tables-graphs）。
+    - 記号は keep-all でも前後で折れる。
+    - 「二年／一組」（g2.ja.read-info/24）は、本文の語が行に入らず、`anywhere` で折れたもの。
+  - **小3以上の式の図の文**（orphan）: 「（7 ＋ 9） ＝／□」（g4.math.order-ops）・「3 − 5919 ＝／□」のように、最後の □ だけが次の行に落ちる。
+  - **パックの SVG の字**（small-text 282 件の大半と、overlap-text の text と text）: T2 のあとに次の2種類が残った。
+    - (a) 最小の 0.97〜0.99 倍で、1920×1080・1280×620 だけに出るもの。g4.soc.prefectures 268 画面・g2.math.time・g6.math.frequency・g5.math.area-formulas・g3.math.bar-graph・g4.math.angle ほかで、約 450 画面。
+    - (b) パックが width を書いた図や、viewBox が極端に大きい図で、0.36〜0.8 倍のもの。
+      - g6.soc.world の ⑥ 0.62u
+      - g6.prog.efficient 0.41
+      - g2.prog.debug 0.78（ロボットの盤が幅 9u）
+      - g4.en.directions のスタート 0.46
+      - g4.prog.prefecture-finder の解説の A・B・C の重なり
+      - g5.math.angle-sum の細い三角形で、75°・90° が重なる
+- 検査の側で分かったこと:
+  - **word-split の誤検出**: 「12−1801＝11／で」「4は自然科学、7／は芸術」「資料2／は」「＝ 9／で」は、数のあとの助詞の前の改行で、組版として正しい。
+    - 検査は「数字のあとに仮名・漢字が続けば助数詞」としている。
+    - 7 件・78 画面が全部これだった（g4.soc.tradition・g5.ja.read-gist・g5.ja.text-figure・g5.math.average）。
+  - **button-split の複合辞**: `Intl.Segmenter` は「という」「について」を1語として返すので、「〜と／いう」「〜に／ついて」「〜と／して」が「語の途中」になる。
+    - これらは助詞と動詞の境目（文節の切れ目）で、改行してよい所（g6.ja.write-opinion・g5.ja.write-fact-opinion・g3.soc.city-changes・g4.ja.info-compare などで約 40 件）。
+    - 一方、次のものは語の途中で、本当の違反。
+      - 「方／向」「一年／生」「の／びる」「落と／す」
+      - 「パイ／ロット」
+    - 原因は、文節が札の幅より長く、`break-word` の最後の手段で折れること。
+  - **見落とし（足す）**:
+    - 0×0 の図（C15）
+    - 字を横切る正解の輪（C16）
+    - 親字の無い《》を、教材の段階で止める静的な検査（C18。今は画面で出るまで分からない）
+
+### 1. 原因の分類（第4回）
+
+| 分類 | 内容 | 主な件（件・画面の延べ） |
+|---|---|---|
+| (1) 共通の画面の作り | 解説の図が 0×0／吹き出しが伸びず ▼ も無い・数字キーにかかる／幼児の語のラベルが途中で折れる／絵の札の高さを見ない／正解の ○ が文を横切る／fill の空欄の文が折れない・sort の札がふたに重なる／数の入力の図が縮まない／読解の右の列が板・吹き出しの下・本文の枠の上端のふりがな・表のはみ出し／分かち書きの記号・式の □ の改行／SVG の字の 0.97〜0.99 倍 | 解説の図 約 130 件・1,300 画面、語のラベル 146 件・3,056 画面、絵の高さ 54 件・660 画面、数の入力の図 246 件・2,786 画面、吹き出し 14 件・208 画面、読解 36 件・640 画面、sort・fill 25 件、改行 約 20 件、SVG の字 約 60 件・450 画面 |
+| (2) パックの文・選択肢・図 | 書く単元の札・選択肢の文が長い（作業領域が 8u 以上足りない）／長いヒント・解説／筆算・表・10の棒が大きい／パックの SVG の width・viewBox／教材の記法の誤り（×《ばつ》） | work のスクロール 454 件の大半・explain のスクロール 254 件の一部・small-text の (b)・markup-leak 6 |
+| (3) 検査の誤検出 | 数のあとの助詞を助数詞とみなす（C14）／複合辞の文節の切れ目を語の途中とみなす（C17） | word-split 7 件・78 画面、button-split 約 40 件 |
+| (3') 検査の見落とし（足す） | 0×0 の図（C15）／字を横切る正解の輪（C16）／親字の無い《》（C18、静的）／v1 の trace letters・maze（C19、layout.spec） | 新しく出る（解説の図の単元・sort と読解の解説） |
+| (4) 設計上受け入れる | 読解の本文の枠のスクロール（印あり）／表の解説の板のスクロール（印あり・上から読める）／text-on-figure（参考） | 下の 4. |
+
+### 2. 共通の直し（systemic。項目ごとにファイルを分ける）
+
+#### V1 単元の枠: 解説の図・吹き出し・作業領域の高さ（UnitRunner・unit.css・DESINGN.md）
+
+ファイル: `src/units/UnitRunner.tsx`、`src/units/unit.css`、`DESINGN.md`
+
+1. **解説の図を 0×0 にしない（不具合）**:
+   - `.unit__explain-figure svg` の `width: auto` を、width の無いパックの SVG（`.fig-svg` の svg）には当てない。
+   - 下の段に置く図は、次のようにする。
+     - 高さ: `min(12u, 自然な高さ)`
+     - 幅: `width: auto`・`max-width: 100%`（width の無い svg は viewBox の比で幅が決まる）
+   - 右置き（data-fig-side）の図は、幅を `min(30%, 24u)` にし、高さは比から決める。
+   - 字の大きさは、T2 の `liftSvgText`（2 倍まで）に任せる。
+   - `decideSide` は `figW <= 0` のとき右置きをやめているので、0×0 だった図は、直すと右置きにも乗る。
+   - 確かめ方: 解説の状態で、すべての `.unit__explain-figure svg, img` が幅・高さ 1px 以上であること（C15 で検査に入る）。
+     - 開く画面: `#/dev/unit/g5.math.speed/3?state=explain`・`g4.en.directions/35?state=explain`・`g5.math.angle-sum/5?state=explain`・`g4.math.fraction-kinds/4?state=explain`（1280×720・1280×620）。
+     - 図が出ると板が高くなるので、`--panel-h` と作業領域の縮みが合っていることも見る。
+2. **吹き出しが中身に合わせて伸びる・最後の行を隠さない**:
+   - ヒントの吹き出しの高さを測る（板の `--panel-h` と同じ所で、`phaseKey` ごとに測り直す）。
+   - `scrollHeight > clientHeight` なら `data-tall` を付け、次のようにする。
+     - 字: `--text-min`・行間 1.3
+     - `max-height`: 11.6u から 16u（`--u0` で。下の帯の上端から問題文の下まで）
+   - 吹き出しの高さは root の `--bubble-h` に書き、作業領域の下端を `max(--panel-h, --bubble-h)` の上までにする（fit の測りに入る）。
+   - それでも入らないときは、板と同じく下端に ▼（`data-scroll-cue`）を出す。scroll-hidden を1件残し、パックのヒントを短くする（5. の content）。
+   - 数字キーのある画面（`.unit:has(.numkey)`）では、吹き出しの右端を主操作と同じ 39u にし、数字キーの列 70〜96u にかけない（g3.math.length-km/6 h1）。
+3. **作業領域の高さを子に渡す**:
+   - fit を測るとき、`.unit__work` に `--work-h`（fit=1 での clientHeight、px）を書く。V2 の絵の札の高さの上限に使う。
+   - V2 は `var(--work-h, 9999px)` で読むので、どちらが先に入っても壊れない。
+4. **DESINGN.md**: この項目の担当がまとめて書く（V2〜V7 は DESINGN.md を触らない）。
+   - 18章: 解説の図の大きさ（width の無い SVG は高さ 12u まで・比で幅）と、吹き出しの伸び方（16u まで・▼・`--bubble-h`）。
+   - 17章:
+     - V2: 語のラベル・絵の札の高さ
+     - V3: 正解の印（文の札・長い文の選択肢は、輪郭＋角の ○）
+     - V4: 数の入力の図の縮み
+     - V5: 読解の右の列の下端
+     - V6: 記号のまとまり
+     - V7: SVG の字の余裕
+- 減る見込み: 解説の図の clipped・small-text 約 130 件、吹き出し 14 件・208 画面、covered（numkey）8 画面。
+- 確かめ方:
+  - 上の画面と、`#/dev/unit/g6.ja.write-opinion/0?state=h2`（1280×720）・`g3.ja.reference-connectives/22?state=h2`・`g3.math.length-km/6?state=h1`（1536×864）を開く。
+  - テスト: `npm run test`（unitFlow）・`npm run check:design`。
+
+#### V2 選択肢と聞く問題: 語のラベル・絵の札の高さ（choice・listen・options）
+
+ファイル: `src/engines/choice/choice.css`、`src/engines/choice/choice.tsx`、`src/engines/listen/listen.css`、`src/engines/listen/listen.tsx`、`src/engines/listen/options.css`、`src/engines/listen/options.tsx`
+
+1. **語のラベルは語の途中で折らない**:
+   - tsx（choice.tsx の `optionTraits` と options.tsx）で、ラベルを次の2つに分け、`data-word` と `--len`（字数）を付ける。
+     - 一つの語: 空白が無く 8 字以下（「じてんしゃ」「おめでとう」「パイロット」「すいぞくかん」）。
+     - 空白で区切った短い句: 各語 8 字以下・全体 14 字以下（「つくえの 中」「したの いぬ」「アイスクリームを たべた」）。
+   - 一つの語は `white-space: nowrap` にする。
+     - 字は、札の中の幅に入る大きさにする: `min(既定, 100cqi ÷ (--len × 1.05))`（札に `container-type: inline-size`）。下限は `--text-min`。
+     - 下限でも入らないときは、札の `min-width` を `--len × --text-min ＋ 余白` にして札を広げる（is-pics の縮みより優先）。
+   - 空白で区切った句は、空白でだけ折る: `word-break: keep-all; overflow-wrap: normal`・`text-wrap: balance`。
+   - 「はな（くさばな）」のように括弧で読みを足したラベルは、括弧の前でだけ折る。「（」の前は keep-all でも折れるので、括弧の中を nowrap の span にする。
+   - 12 字を超える文のラベル（`data-long`）は今のまま。
+2. **絵の札の高さの上限**:
+   - `--pic-max` を、次の2つの小さいほうにする。
+     - 今の幅の式
+     - 高さの式 `var(--work-h) − 札の段・絵の列・問題の段の高さ − (ラベルの行 × 行の高さ ＋ 札の余白 ＋ 間隔)`
+   - 札の段・絵の列の高さは tsx で測り、`--pics-above` に書く（listen の「きいてね」が上の段のとき、choice の `--fig` の絵の列があるとき）。
+   - 幼児の絵の下限は 10u（DESINGN 17章の絵の大きさ）。下限でも入らないときだけ、作業領域のスクロールが残る。
+   - 対象: p4.en.words/20・p4.en.picture-book/7・p5.en.phrases/4・p5.math.numbers-10/4・p23.math.shape-match/28（1280×720）。
+3. **4つの短い文字の選択肢は1行に**:
+   - choice の文字だけの選択肢が4つで、いちばん長いラベルが 9 字以下なら、2×2 の格子でなく横1行にする（`data-row4`。各札 `flex: 1 1 0`、字は `max(2.6u, --text-min)`）。
+   - 例: g6.soc.world/0 の「北アメリカ大陸／アフリカ大陸／ユーラシア大陸／オーストラリア大陸」は、2段で作業領域が 4.7〜12u 足りなかった。
+4. **長い文の選択肢の正解の印**: `data-long` の選択肢（読解・聞く問題の引用の文）の ○ は、ui.css の V3 の規則（輪郭＋角の ○）に従う。options.css で輪の大きさを上書きしている所があれば外す。
+- 減る見込み: 語のラベルの orphan・kinsoku-start・button-split 146 件・約 3,000 画面、幼児の作業領域のスクロール 54 件・660 画面、g6.soc.world の scroll-hidden。
+- 確かめ方:
+  - 開く画面: `#/dev/unit/p4.en.hello/0`・`p4.en.words/69?state=explain`（1280×620）・`p4.en.words/87`・`p4.en.picture-book/7`・`p5.en.first-sound/3`・`g6.en.future/0?state=explain`・`g5.en.where/0?state=explain`・`p5.math.numbers-10/4`・`p23.math.shape-match/28`・`g6.soc.world/0`（1536×864）。4つの画面サイズで開く。
+  - 幼児の札の字が 2.2u 以上、絵が 10u 以上、札が 14u×10u 以上であること。
+  - テスト: choice・listen のテスト（`data-word` の判定の単体テスト）。
+
+#### V3 札のエンジンの解説と正解の印（sort・fill・order・ui）
+
+ファイル: `src/engines/sort/sort.css`、`src/engines/sort/sort.tsx`、`src/engines/fill/fill.css`、`src/engines/fill/fill.tsx`、`src/engines/order/shared.css`、`src/engines/order/shared.tsx`、`src/ui/ui.css`
+
+1. **正解の ○ を文の上に重ねない**:
+   - ui.css で、単元の作業領域の中の文の札と長い文の選択肢の正解の印を、match（第3回 T4）と同じにする。
+     - 札の輪郭: 緑の太線（0.6u）
+     - 印: 右上の角に小さな ○（3.2u、白地）
+     - 対象: `.unit__work .tk-card`、`.unit__work :is(.eng-opts__list, .eng-choice__options)[data-long] > .choice`
+   - match.css の同じ規則は、ui.css に移したあとも残してよい（重複は害が無い）。
+   - 絵・短い語の札（幼児の絵の札など）は、今の大きな ○ のまま。
+   - 確かめ方: `#/dev/unit/g6.ja.write-opinion/6?state=explain`（1280×720）・`g5.ja.read-relations/7?state=explain`（1536×864）・`g3.ja.proverbs/35?state=explain`。C16 で検査に入る。
+2. **fill の埋まった空欄の文を折る**:
+   - `.eng-fill__blank.is-revealed` を `display: inline; white-space: normal; box-decoration-break: clone`（行ごとに枠）にする。字は文と同じ大きさにする。
+   - 空欄の元の幅（`min-width`）は、埋まったら外す。文の段は `max-width: 100%`。
+   - g4.ja.write-report/31・32 の解説で、out-of-stage 7 件が消える。
+3. **sort の解説で、札をふたに重ねない**:
+   - 解説で箱に入った札の段（`.eng-sort__box` の中身）は、今の固定の高さをやめて `height: auto` にする。ふたの段と重ねない（`grid` の行を `auto`）。
+   - 長い文の札の字は `max(--prompt-size × 0.85, --text-min)`、行間は 1.4 にする。
+   - それでも作業領域を越える分は、作業領域のスクロール（1件）にし、パックの札の文の長さで直す（5. の g4-ja・g6-ja）。
+- 減る見込み: overlap-button 14 件、covered（lid・span.rt）12 件、out-of-stage 7 件。
+- 確かめ方:
+  - 開く画面: `#/dev/unit/g4.ja.write-report/1?state=explain`（1536×864）・`g4.ja.write-report/31?state=explain`・`g6.ja.write-opinion/6?state=explain`（1280×720）。
+  - テスト: sort・fill・order のテスト。
+
+#### V4 数の入力の図の段（number）
+
+ファイル: `src/engines/number/number.css`、`src/engines/number/number.tsx`
+
+1. **図の段に入らない 10の棒・表・筆算を縮める**:
+   - 図の段の高さを測り、図の自然な高さが段を越えるときは、図の中の `--u` を `--fig-k = max(0.6, 段の高さ ÷ 図の高さ)` で縮める（`.fig-blocks`・`.fig-column`・`.fig-table`・筆算の表）。UnitRunner の `--fig-k` と同じ考えで、number は NO_FIG_FIT なので number.tsx で行う。
+   - 縮める前に、表の行の高さ（今 4.4u）を 3.4u まで詰める（`td, th { padding-block: 0.3u }`）。
+   - 縮めた表・式の字は `max(…, --text-min)` を割らない。
+   - 0.6 でも入らないものだけ、今の図の段のスクロール（印あり・1件）を残し、パックで図を直す（5. の content）。
+2. **回答欄の下の空き**:
+   - 左の列の `grid-template-rows: minmax(0, 1fr) auto` で、回答欄の段の下に空き（6〜8u）が残っている（g2.math.add-column/0・g3.math.mult-2digit/5）。
+   - `align-content: safe center` をやめて上そろえ（`start`）にし、図の段がその空きまで使えるようにする。
+3. **解説の状態**:
+   - 板の分だけ図の段が 4 行未満になるときは、まず 1. の縮みで入れる。
+   - 答えが入った回答欄の段は、解説では1行に詰める（札は回答欄の上でなく左）。
+4. **大きい字の式のふりがな**: 図の段がスクロールの枠になるとき、枠の `padding-top` を `0.6em` 以上にし、1行目のふりがな（g3.math.time/0「びょう」）を枠の上端で切らない。
+- 減る見込み: 数の入力の図の段の scroll-hidden・clipped 246 件のうち、不足が図の高さの 40% 以下のもの（約 150 件）、解説の 4 行未満の clipped 143 画面。
+- 確かめ方:
+  - 開く画面: `#/dev/unit/g2.math.add-column/0`（1280×720）・`g3.math.mult-2digit/5`（1536×864）・`g3.math.time/0`・`g1.math.add-sub-2digit/4?state=explain`（1280×720）・`g1.math.numbers-120/0`・`g4.math.two-way-table/1`。
+  - 10の棒が数えられる大きさ（棒 1 本の幅 1.2u 以上）であること。
+  - テスト: `number.render.test.tsx`。
+
+#### V5 読解: 右の列の下端・本文の枠の上端・表（reading）
+
+ファイル: `src/engines/reading/reading.css`、`src/engines/reading/reading.tsx`
+
+1. **右の列を板・吹き出しの下に入れない**:
+   - 右の列（選択肢）の下端を、V1 が root に書く `max(--panel-h, --bubble-h)` の上までにする（`max-height: calc(100% − …)`）。読解は作業領域を枠にしないので、列の側で切る。
+   - 入らないときは、第3回の data-tight（字 2.2u・行間 1.4・本文:右 1:1.3）を、ヒント・解説の状態でも測り直して付ける。
+   - それでも入らないときは `data-tighter` にする。
+     - 字: `--text-min`、行間 1.35
+     - 選択肢の余白 0.6u、間隔 0.8u
+   - 右の列はスクロールさせない（第1回の条件のまま）。下限でも入らないものは、パックの選択肢・解説を短くする（5. の g4-ja・g5-ja・g6-ja）。
+2. **本文の枠の上端のふりがな**:
+   - `.eng-reading__passage` の `padding-top` を 0.6u から `max(0.6u, 0.6em)` にする（1行目の rt が入る高さ）。
+   - 第3回で詰めた「枠の見える高さ 4 行以上」は、印の段を変えずに保つ。足りなければ、大の行の高さ 1.8 を 1.75 にする。
+3. **本文の中の表**:
+   - 今は表が本文の枠より広く、左の列「なまえ」が枠の左で切れる（g1.ja.read-info/24）。
+   - `table { max-width: 100%; margin-inline: auto }`、セルの余白を 0.4u 0.6u にし、枠の左にはみ出さないようにする。列が狭いときは、字を `--text-min` まで下げる。
+   - 表のセルでは、「だんご／むし」のような分かち書きの語の途中の改行は、`word-break: keep-all; overflow-wrap: anywhere` のままでよい（狭い列の逃げ）。ただし `table-layout: auto` にして、列の幅を語の長さに合わせる。
+4. **印の無い本文の枠**: g1.ja.read-story/25 の問題（1536×864）で、本文の枠に ▼ が無い（scroll-hidden「スクロールできる印が無い」2 画面）。枠の大きさが変わったとき（ResizeObserver）にも、印の付け外しを行う。
+- 減る見込み: covered（読解の選択肢・本文の上の板・吹き出し）約 70 画面、clipped（本文の枠の上・左）17 件・574 画面、scroll-hidden（印なし）2 画面。
+- 確かめ方:
+  - 開く画面: `#/dev/unit/g4.ja.read-summary/33?state=h2`（1536×864）・`g5.ja.read-gist/29?state=h3`（1280×720）・`g5.ja.read-relations/7?state=explain`（1536×864）・`g6.ja.read-argument/8?state=explain`・`g1.ja.read-info/24`・`g5.ja.text-figure/25`・`g1.ja.read-story/25`。
+  - テスト: reading のテスト。
+
+#### V6 改行: 記号のまとまり・式の □（base.css・Rt）
+
+ファイル: `src/styles/base.css`、`src/text/Rt.tsx`、`src/text/rt.css`、`src/text/rt-wrap.test.ts`
+
+1. **分かち書きの段階で、記号・分数・空欄を、続く仮名とまとめる**:
+   - Rt は、ふりがな付きの語・空欄を `.rt-nobr` にまとめている。
+   - 分かち書きの段階（`data-wakachi`）では、次のものも、すぐ後ろの空白までの仮名とまとめる。
+     - 記号（`○●□■△▲◎×〜…`）
+     - 分数（`[[a/b]]`）
+     - 空欄（`{{ }}`）
+   - 例: 「○／が つまれるよ」→「○が」、「□／は 2こ」→「（分数）は」、「〜／が」→「〜が」。
+   - まとまりが行より長いとき（12 字を超える）は、まとめない。
+   - rt-wrap.test.ts に例を足す（g1.math.picture-graph・g2.math.fraction-simple・g2.ja.subject-predicate・g2.math.tables-graphs）。
+2. **式の最後の □**:
+   - 演算子（`＋−×÷＝`）と、後ろの1つの数・空欄・□（間の空白を含む）を `.rt-nobr` にまとめる。「＝／□」で □ だけが次の行に落ちないようにする。
+   - 対象: g4.math.order-ops・g3.math.add-sub-column・g3.math.mult-rules・g6.math.letters の `fig-text--xl`、g6.math.approx-area の「÷／2」（「÷ 2」をまとめる）。
+3. 第3回の auto-phrase の組み合わせ（break-word＋min-width: 0＋text-wrap: wrap）は変えない。文節が札より長く、語の途中で折れるもの（「方／向」「一年／生」「は／っきり」）は、CSS の規則ではなく文節の長さが原因なので、パックの文・札の幅で直す（5. の content）。
+- 減る見込み: wakachi-split 9 件のうち 6 件、orphan（`fig-text`・`eng-choice__label` の □・2）約 20 件。
+- 確かめ方:
+  - 開く画面: `#/dev/unit/g2.math.fraction-simple/51?state=explain`（1536×864）・`g1.math.picture-graph/4?state=h2`・`g4.math.order-ops/0`（1920×1080）・`g6.math.approx-area/0`。
+  - テスト: `npm run test`（rt-wrap.test.ts）。
+
+#### V7 図の字の余裕・グラフの札・プログラムの印（figure・graph・program）
+
+ファイル: `src/engines/figure/svgText.ts`、`src/engines/figure/Figure.tsx`、`src/engines/figure/figure.css`、`src/engines/graph/graph.css`、`src/engines/graph/graph.tsx`、`src/engines/program/program.tsx`、`src/engines/program/program.css`
+
+1. **最小のわずかな割り込み（0.97〜0.99 倍）**:
+   - `lift` の目標の `floor` と、`useSvgTextFloor` の床を、最小の 1.02 倍にする。今は最小ちょうどで、拡大率の丸めや、あとからの fit の変化で 1〜3% 割る。
+   - `liftSvgText` を、svg の ResizeObserver でも測り直す。今は描画のあとと viewBox の変化だけなので、fit が変わって svg の表示の大きさが変わったとき、引き上げが古いまま残る。
+   - map エンジンの字も `useSvgTextFloor` を使うので、この直しで入る。
+   - 確かめる画面: g4.soc.prefectures/201（1536×864・1920×1080）・g2.math.time/2 h1（1920×1080）・g6.math.frequency・g5.math.area-formulas・g3.math.bar-graph/0。
+2. **グラフの横軸の札**（`.gr-xlabel--btn`）:
+   - ふりがな付きの長い名前（「オートバイ」のように5字以上のもの）で、rt が札の枠の外に出る（g3.math.bar-graph/7、text-outside-box 1 件）。
+   - 札の `padding-top` を rt の高さ（0.6em）だけ取り、札の高さを `max(4.8u, 内容)` にする。
+3. **プログラムの命令の列の印**: g2.prog.debug/8 の問題・g3.prog.decompose の解説で、命令の列（`.prog-strip`）がスクロールするのに ▼ が無い（2 画面）。列の大きさが変わったとき（ResizeObserver）にも、印の付け外しを測り直す。
+4. 2 倍を超えて小さい図（width を書いた図・viewBox が大きい図）の引き上げは、広げない（字が線や他の字に重なる）。これらはパックで直す（5. の prog-g16・soc-g56・en-g34・g5-math）。
+- 減る見込み: small-text の (a) 約 450 画面・60 件、text-outside-box 1 件、scroll-hidden（印なし）2 画面。
+- 確かめ方: 上の画面を4つの画面サイズで開く。テストは figure・graph・program のテスト。
+
+### 3. 検査の誤検出として直すこと・足すこと（checkerChanges）
+
+ファイル（V1〜V7 とは重ならない）:
+- `e2e/helpers/text-layout.ts`
+- `e2e/text-layout-probe.tl.ts`（見本を足す）
+- `e2e/layout.spec.ts`
+- `src/text/rich.ts`・`src/text/rich.test.ts`・`src/curriculum/qa.ts`（静的な検査）
+- `docs/test-plan.md`（3.2 に理由と 11 単元を書く）
+
+- **C14 数のあとの助詞（誤検出）**:
+  - word-split の「数と単位・助数詞の間」で、数字の次の字が助詞（`は が を に で と の も や へ か`）なら数えない。
+    - 仮名で書いた助数詞の頭は、今どおり数える: 「に＋ん」（人《にん》）・「と＋う」（頭《とう》）・「は＋い」（杯《はい》）・「か＋い」（回《かい》）・「か＋げつ」。
+  - 理由: 「11／で」「7／は芸術」「資料2／は」「9／で」は、数と助詞の境目で、改行してよい所。7 件・78 画面が全部これだった（g4.soc.tradition/8・g5.ja.read-gist/12・g5.ja.text-figure/25・29・32・g5.math.average/2・7）。
+  - 英字の単位（cm・kg など）・漢字の助数詞（年・人・本）・「2こ」「3ばんめ」は今どおり出す。
+  - プローブに見本を足す（「11で」「2は」は出さない／「3にん」「2こ」は出す）。
+- **C15 0×0 の図（見落とし）**:
+  - 舞台の中の `svg`・`img`・`.fig-svg`・`.fig-illust` で、子（`text`・図形）を持つのに幅か高さが 1px 未満のものを、`clipped` で1件出す（説明「図の大きさが 0（見えない）」）。
+    - 除くもの: `display: none`・`visibility: hidden`・`aria-hidden` の祖先・`.sr-only`
+    - その中の `text` は、clipped・small-text に1字ずつ数えない（二重に数えない）。
+  - 理由: 解説の図（width の無いパックの SVG）が 0×0 で見えないのに、字の無い図は何も出なかった。字のある図も「text ⊂ svg（説明なし）」「small-text」として出ていて、原因が分からなかった（g5.math.speed/3・g4.en.directions/35 の解説）。
+- **C16 字を横切る正解の輪（見落とし）**:
+  - 見えている `.mark--correct` ごとに、同じ札（`.mark` の親のボタン・札）の中の字のうち、中心が輪の線の帯（外接の円から、内側の円 `半径 − border-width` を除いた輪）に入るものを数える。2字以上なら、`covered` で1件出す（説明「正解の ○ が字を横切る」）。
+  - 当たり判定（`elementsFromPoint`）は輪の中（透明）を通り抜けるので使わず、円の式で判定する。
+  - 字の後ろか前かは問わない。輪の線は、字の後ろでも字を横切って読みにくい。
+  - 対象外: 幼児の絵の札（文字が1行・6字以下の札は、輪が字の上下を通るだけなので数えない）。
+- **C17 複合辞の文節の切れ目（誤検出）**:
+  - 分かち書きでない段階の button-split の「語の途中」で、次の両方を満たすときは数えない。
+    - `Intl.Segmenter` の語が、次の複合辞である: という・といった・として・について・にとって・によって・にして・にたいして・をして・とする・とした・とともに・のように
+    - 改行が、頭の助詞（と・に・を・の）の直後にある。
+  - 理由: 「〜と／いう」「〜に／ついて」は助詞と動詞の境目（文節の切れ目）で、改行してよい所。
+  - 同じ語の中のほかの位置（「とい／う」）と、ほかの語の途中（「方／向」「落と／す」）は、今どおり出す。
+  - プローブに見本を足す。
+- **C18 親字の無い《》（静的な検査を足す）**:
+  - `rich.ts` に `findOrphanReading(src)` を足す（直前が漢字の並びでない《》を返す）。
+  - `qa.ts` の `findBareKanji` と同じ所で、`よみの親字が無い《…》` を誤りにする。
+  - 理由: g3.soc.map-symbols の「×《ばつ》」「Y《ワイ》」は、画面の検査（markup-leak）で初めて見つかった。教材を作った段階（`npm run test` の qa）で止める。
+  - rich.test.ts に例を足す。
+- **C19 v1 のモードの単元**:
+  - `e2e/layout.spec.ts` の `MODES` に `{ id: 'trace', variant: 'letters' }`・`{ id: 'trace', variant: 'maze' }` を足す。p4.hand.letters-classic と p4.hand.lines の maze が、どちらの検査にも入っていなかったため。
+  - `e2e/text-layout.tl.ts` の対象（legacy を外す）は変えない。
+  - test-plan 3.2 の「対象」に、外れる 11 単元の名前と理由を書く。理由は、v1 のモード（`engine: 'legacy'`）は単元の画面を通らないので、`layout.spec.ts` が受け持つこと。
+- 緩めないもの:
+  - covered・out-of-stage・clipped の判定
+  - small-text の最小（1% の丸めのまま。V7 の 1.02 倍は画面の側の余裕で、検査は変えない）
+  - overlap-text の閾値
+  - work・explain・figure のスクロールの1件
+  - 分かち書きのラベル・語の途中の判定（C17 の複合辞の頭の位置だけを外す）
+- どれも、直す前のコードで、プローブの壊した見本が検出されることを確かめる。
+
+### 4. 受け入れるもの（accepted）
+
+画面で確かめたうえで、理由で決めた。子供が読めない・押せない・意味が変わるものは入れていない。
+
+- **読解の本文の枠のスクロール**（印あり）:
+  - g4.ja.read-summary/33 h2・g5.ja.read-relations/7 の解説（1536×864）で確かめた。
+    - 本文は枠の中で上から読める。
+    - 下に「▼ つづき」の段（2.9u・破線・押すと進む）がある。
+    - 枠の見える高さは 4 行以上ある。
+    - 右の列はスクロールしない。
+  - 第1回からの条件どおりで、件には出ない（印が無いもの・4 行未満のものだけが出る）。
+- **表の解説の板のスクロール**（印あり）: g2.math.times-tables/2 の解説の九九の表（板の中で 625px）・g5.en.read-words の対応表。
+  - 板に ▼ があり、上から読める。表は切らない設計（DESINGN 18章）。
+  - 1件として残す。パックで短くできるもの（5. の g2-math の times-tables の解説の図）は直す。
+- **text-on-figure**（参考。8 件・11 画面）: 解説の板のふりがなが、作業領域の図の線の上にわずかにかかるもの（g1.math.numbers-20/4・g3.soc.safety/21 ほか）。
+  - 字は読め、図は板の後ろにある。
+  - V1 の図の出し方と V4 の縮みで変わるので、そのあとに残ったものだけ見る。
+- **unstable の 2 画面**（g5.ja.text-figure の作業領域）: 描き直しが 1 秒で終わらない画面。V2・V5 で作業領域の測りが変わるので、次の検査で残ったら調べる（隠さず残す）。
+- 受け入れないもの（念のため）: どれも上の V で直す。
+  - 幼児の絵の札の作業領域のスクロール（印はあるが、幼児は気づけない）
+  - 数の入力の図の段のスクロール（数える・計算する手がかりが隠れる）
+  - 吹き出しの最後の行（印が無い）
+  - 読解の4つ目の選択肢が板の下（押せない）
+
+### 5. このラウンドで直すもの（content。パックごと）
+
+V1〜V7 のファイルは触らない。教材の文を短くするときは、意味・学年の漢字・《よみ》・分かち書き・ヒントと解説の対応を保つ。英語の文を変えたら、`src/packs/<p>/script-en.json` と `voice/script-en.json` も合わせる。
+
+目安:
+- 作業領域: 1280×720 で、fit 0.8 の下限まで縮めずに入ること。V の直しのあとの残りを見込んで、長い文の札は1枚 2 行まで。
+- ヒント: 吹き出しの幅 49u（主操作のある画面）で 3 行まで（小3以上 約 60 字、分かち書きの段階 約 45 字）。
+- 解説: 板の幅で 4 行まで（図があれば 3 行）。
+
+確かめ方: それぞれの単元を `MNW_UNITS=<単元> MNW_FRESH=1 npm run check:text-layout` で流し、開発用の画面で代表の問題を4つの画面サイズで開く。
+
+- **soc-g34**（g3.soc.map-symbols・g3.soc.city-changes・g3.soc.safety・g3.soc.shop-work・g4.soc.disaster・g4.soc.tradition）:
+  - 記法の誤り（必ず直す）: 「×《ばつ》」「Y《ワイ》」を、記号を親字にしない書き方にする（例: 「ばつ（×）」「Y（ワイ）の 形」）。
+    - 読み上げ（`yomi.ts` の記号の読み）でも「ばつ」「ワイ」と読まれることを、`npm run voice:packs` の台本で確かめる。
+  - city-changes の order・choice の札（19u 足りない）と safety（26u）の文を、1枚 2 行までに短くする。
+  - shop-work の graph の札「しんせんさ」の切れと、れいのデータの小さい字（1.78u）を直す。
+  - disaster の SVG の字（0.6〜0.87 倍）は、viewBox を詰めて直す。
+- **g6-ja**（g6.ja.write-opinion・info-relations・read-argument・read-literature・language-change・classics-read）:
+  - write-opinion の order・sort・choice の札（作業領域 38u 足りない）を短くし、根拠などの例文を1枚 2 行までにする。
+  - write-opinion のヒント② の長文（吹き出し4行超）と、language-change のヒント③ を、3行にする。
+  - read-argument・read-literature の引用の文の選択肢を短くし、解説を4行までにする（右の列が板の下に入る）。
+  - info-relations の札（11u）を短くする。
+- **g4-ja**（g4.ja.write-report・idioms・info-compare・read-summary・read-feelings・tanka・kanji-read-g4）:
+  - write-report の sort・choice・fill の札と選択肢（48u 足りない）を短くする。fill の正解の引用の文は、V3 で折れるようになるが、2 行までに寄せる。
+  - idioms の match の札（19.5u）と、解説（3.4 行の超過）を短くする。
+  - info-compare・read-summary の引用の選択肢を短くする（右の列が吹き出しの下に入る）。
+- **g5-ja**（g5.ja.write-fact-opinion・figurative・text-figure・read-gist・read-relations・spoken-written・classics・honorifics・sentence-relations・kanji-read-g5）:
+  - 次の単元を短くする。
+    - write-fact-opinion（31u）・figurative（12u）
+    - text-figure（48.9u。資料の図と本文を同じ作業領域に置く問題は、図を小さくするか本文を短くする）
+    - spoken-written（「は／っきり」「方／向」のように、文節の長さで折れる選択肢）
+  - read-gist・read-relations の選択肢と解説を短くする。
+- **g3-ja**（g3.ja.write-reasons・read-paragraphs・reference-connectives・romaji・proverbs・read-character・haiku・listen-memo）:
+  - write-reasons（13u）・read-paragraphs（21u）の札と選択肢を短くする。
+  - reference-connectives のヒント②（つなぎ言葉の種類を全部並べている）と、romaji のヒント② を、3行にする。
+  - read-character の「→」を使った長い選択肢を、2行までにする。
+- **g2-ja**（g2.ja.write-structure・read-info・read-story・listen-notes・subject-predicate・kanji-read-g2）:
+  - write-structure の札（18u）を短くする。
+  - read-info/24 の「二年一組」の折れは、本文の分かち書きの区切り（読点のあと）を pack-brief どおりにする。
+  - read-story/15 の「歌いはじめました／。」の1字の行は、本文の語を1つ減らすか、区切りを変える。
+  - kanji-read-g2 の解説を4行までにする。
+- **g1-ja**（g1.ja.read-info・read-story・write-order・listen）:
+  - read-info/33・read-story/33 は、order の作業領域に本文（6文）を図として置いていて、49u・98u 足りない。本文を札そのものにする（札＝本文の文）か、並べる文を4つにして本文の図を外す。問いの意味（説明の順・お話の順）は変えない。
+  - write-order の解説（6.9u）を短くする。
+- **p5**（p5.ja.story-listen・p5.math.shapes・p5.think.pattern・p5.think.why・p5.math.add-sub・p5.env.predict）:
+  - story-listen の order の札（11.5u）を、1枚 6 字までの句に短くする。
+  - shapes（24u）・pattern（37u）は、絵の数か列を、並びの規則が分かる最小の数に減らす。
+  - think.why（29u）の「ほかの わけ（えで かこう）」の札と、絵を描く欄の大きさを、作業領域に入る形にする。
+  - env.predict・add-sub の解説を3行までにする。
+- **en-g56**（g5.en.where・read-words・listen-self・g6.en.past・places・future・sentence-write）:
+  - 解説の英文の図（`fig-text` の大きい字。g6.en.future/0 で 1 行 5u）を `--m` にして、板に入れる（where 6.7 行・past・future 5.9 行の超過）。
+  - past・places・future の絵＋文の選択肢（12u）の文を、語の数を減らして短くする（例: 「アイスクリームを たべた」）。
+  - read-words の作業領域（18u）と、解説の対応表を短くする。
+  - 英文を変えたら script-en を合わせる。
+- **en-g34**（g4.en.directions・want・time-days・g3.en.greetings・likes・numbers-colors）:
+  - directions の地図の SVG（width を書いた図。字 0.46 倍）の viewBox を詰めて、字（「スタート」「パンやさん」）を大きくする。
+  - greetings の解説の図と want の解説を、板に入れる。
+- **soc-g56**（g6.soc.world・g5.soc.food・land・environment・information・g6.soc.history-1・history-2・history-3・politics）:
+  - world の地図の ⑥（0.62u。南極の帯の中の番号）と番号の字を、最小以上にする（viewBox を詰めるか、番号を外に出す）。
+  - food・land の graph の作業領域と字を直す。
+  - history-1〜3・politics の選択肢と札の文を、2行までにする。
+- **prog-g16**（g2.prog.debug・g6.prog.efficient・g4.prog.prefecture-finder・g6.prog.sensor・g1.prog.condition・g2.prog.repeat・g5.prog.debug-plan）:
+  - debug の盤（width を書いた幅 9u の盤。字 0.78 倍）と efficient（0.41 倍）について、`kit.ts` の gridFigure の大きさを、字が最小以上になる幅にする。
+  - prefecture-finder の解説で、A・B・C の印が名前に重なる配置を直す。
+  - sensor の時刻の目盛りの重なりを直す。
+  - condition・repeat のヒント③ を3行にする。
+- **g6-math**（g6.math.approx-area・scale・prism-volume・circle-area・frequency・letters・fraction-mult・proportion・inverse・symmetry）:
+  - approx-area の図（6.2u 足りない・字 0.61 倍）と、選択肢の式「÷ 2」を直す。
+  - scale の「C」と「10cm」の重なりを直す。
+  - prism-volume・frequency・letters の図の段の不足（7〜22u）を、図を小さくして入れる。
+- **g5-math**（g5.math.speed・angle-sum・per-unit・pie-band・area-formulas・congruence・fraction-equiv・polygon-circle・proportion-simple・decimal-shift・decimal-mult・decimal-div・percent・average）:
+  - angle-sum（75°・90° の重なり）は、三角形を次のどちらかにし、角の字を図の外側に置く。
+    - 極端に細くならない角の組（どの角も 25° 以上）
+    - 「図は正確ではありません」の模式図
+  - speed・per-unit の数直線の字（解説で 0.4〜0.9 倍）と、pie-band（18u）・fraction-equiv（23u）・polygon-circle（19u）の図の大きさを直す。
+- **g4-math**（g4.math.two-way-table・oku-cho・order-ops・div-1digit・div-2digit・decimal-add-sub・decimal-int・abacus・area・cuboid・ratio-intro・fraction-same・fraction-kinds・angle・quadrilaterals・line-graph）:
+  - two-way-table の 12 行の表（42u）を、行と列を入れかえて横長の表にする。
+  - oku-cho の解説（33.6 行分・横にもはみ出す）は、位取りの表を短くして4行までにする。
+  - abacus（26u）・area（13u）・cuboid（14.6u）の図を小さくする。
+  - div-1digit・decimal-add-sub・decimal-int の解説を短くする。
+- **g3-math**（g3.math.mult-1digit・mult-2digit・add-sub-column・division-remainder・abacus・time・weight・circle-sphere・mult-rules・fractions・length-km）:
+  - division-remainder（139u）・mult-1digit（56u）の図（●の並び・筆算）を、まとまり（10 ずつの列など）で描いて小さくする。
+  - abacus（24u）・circle-sphere（23u）・weight（11u）の図を小さくする。
+  - add-sub-column・mult-2digit の解説（6 行）を、4行までにする。
+- **g2-math**（g2.math.add-column・sub-column・add-sub-3digit・times-tables・mult-meaning・fraction-simple・box・time・length・numbers-1000・numbers-10000・mult-beyond・volume）:
+  - mult-meaning（46u）・box（13.6u。縦長の面の選択肢4つ）・times-tables（43u の解説の表）の図を小さくする。
+  - add-column・sub-column・add-sub-3digit の解説（3.8 行の超過）と、numbers-10000 の解説の横のはみ出しを直す。
+  - fraction-simple の図の段の不足（0.5〜2u）は V4 で消える見込み。残れば図の高さを詰める。
+- **g1-math**（g1.math.numbers-120・numbers-20・sub-borrow・add-sub-2digit・story-expression・position・add-carry・picture-graph）:
+  - numbers-120（31.8u）・numbers-20（16.8u）・sub-borrow（17.9u）の 10 の棒・数の表を、まとまり（10 の棒を横に並べる）で小さくする。
+  - story-expression の explain・match の作業領域（15u）を短くする。
+  - position（13u）の選択肢の文を短くする。
+- **sci-g56**（g5.sci.weather-change・g6.sci.moon-sun・combustion・solutions・body・electricity-use・strata・plant-water・ecosystem・g5.sci.electromagnet・dissolve）:
+  - weather-change（30u）・moon-sun（34.5u）の図を小さくし、札を短くする。
+  - ecosystem の表の見出し「ふくろの／中」と、plant-water・dissolve・body の札の語の途中の折れを、札の文を短くして直す。
+- **sci-g34**（g3.sci.magnets・wind-rubber・circuits・light-sound・weight・g4.sci.rainwater・air-water・seasons-life・weather・current・moon-stars）:
+  - rainwater（10u）・magnets（9.9u）・circuits（9.2u）・seasons-life・air-water を、札・選択肢を短くして作業領域に入れる。
+  - weather の `exp-note` がふりがなを隠すもの（covered 16 画面）は、注の位置か文で直す。
+  - 分かち書きの札の折れ（「は／かる」「の／せる」）を直す。
+- **kanji-g12・kanji-g34・kanji-g56**（g2.ja.kanji-read-g2・g4.ja.kanji-read-g4・g5.ja.kanji-read-g5）: 解説（2.6〜3.6 行の超過）と、g5 の fill の作業領域（4.7u）を短くする。
+- **p23**（p23.math.shape-match・p23.ja.picture-book・sound-play・word-listen）・**en-pre**・**p4** は、文を変えない。V2（語のラベル・絵の札の高さ）で消える見込み。
+  - V2 のあとの検査で残ったもの（「はな（くさばな）」が2行になる札など）は、統括がまとめて見る。
+  - shape-match/28 の「はんぶんの まる」「ながしかく」の札は、V2 で入らなければ、ラベルを省いて絵だけの札にする（名前は音声で言う）。

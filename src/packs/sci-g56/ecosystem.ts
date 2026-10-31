@@ -61,7 +61,7 @@ const PLANT_AIR = {
   factors: [
     {
       id: 'plant',
-      label: 'ふくろの 中《なか》',
+      label: 'ふくろ',
       values: [
         { id: 'yes', label: '植物《しょくぶつ》が ある' },
         { id: 'no', label: '植物《しょくぶつ》が ない' },
@@ -166,6 +166,7 @@ const foodItems: Item[] = [
       ['牛《うし》が 飲《の》んだ 水《みず》', 'ec-water-food'],
       ['牛《うし》が 吸《す》った 空気《くうき》', 'ec-water-food'],
     ],
+    layout: 'grid',
   }),
   choice({
     id: 'fd-who-eats',
@@ -533,7 +534,7 @@ const waterItems: Item[] = [
       '海《うみ》の 水《みず》が 蒸発《じょうはつ》する',
       '水蒸気《すいじょうき》が 冷《ひ》やされて 雲《くも》に なる',
       '雨《あめ》や 雪《ゆき》に なって ふる',
-      '川《かわ》を 流《なが》れて 海《うみ》に もどる',
+      '川《かわ》を 流《なが》れて 海《うみ》へ',
     ],
     ends: ['はじめ', 'おわり'],
     mis: 'ec-water-cycle',

@@ -20,7 +20,7 @@ const DID: Did[] = [
   { text: 'I went to the sea.', ja: 'うみに いった', verb: 'went' },
   { text: 'I went to the mountains.', ja: 'やまに いった', verb: 'went' },
   { text: 'I went to the zoo.', ja: 'どうぶつえんに いった', verb: 'went', il: 'elephant' },
-  { text: 'I ate ice cream.', ja: 'アイスクリームを たべた', verb: 'ate', il: 'p5-icecream' },
+  { text: 'I ate ice cream.', ja: 'アイスを たべた', verb: 'ate', il: 'p5-icecream' },
   { text: 'I ate watermelon.', ja: 'すいかを たべた', verb: 'ate', il: 'watermelon' },
   { text: 'I saw fireworks.', ja: 'はなびを 見《み》た', verb: 'saw' },
   { text: 'I saw a rainbow.', ja: 'にじを 見《み》た', verb: 'saw' },
@@ -29,7 +29,7 @@ const DID: Did[] = [
   { text: 'I watched a movie.', ja: 'えいがを 見《み》た', verb: 'watched' },
   {
     text: 'I visited my grandmother.',
-    ja: 'おばあさんの いえに いった',
+    ja: 'おばあさんを たずねた',
     verb: 'visited',
     il: 'house',
   },
@@ -69,7 +69,7 @@ function didItems(): Item[] {
           'どちらの ことばも もういちど 聞《き》いて、2つを あわせよう。',
         ],
         explain: `「${d.ja}」と いって います。すぎた ことを いう 形《かたち》です。`,
-        explainFigure: enText(d.text),
+        explainFigure: enText(d.text, 'm'),
         identity: `did:${d.text}`,
       }),
     );
@@ -486,7 +486,8 @@ function storyItems(): Item[] {
             `${q.at}つめの 文《ぶん》の さいごの ほうを よく 聞《き》こう。`,
           ],
           explain: `${q.at}つめの 文《ぶん》から、こたえは「${q.right}」です。`,
-          explainFigure: { kind: 'column', items: s.lines.map((l) => enText(l, 'm')) },
+          // 3文の列は板に入らないので、こたえの ある 文だけを出す
+          explainFigure: enText(s.lines[q.at - 1]!, 'm'),
           identity: `story:${s.id}:${qi}`,
         }),
       );
@@ -510,7 +511,6 @@ function storyItems(): Item[] {
           'ぜんぶの 文《ぶん》に あう ものを えらぼう。',
         ],
         explain: `「${s.gist.right}」です。`,
-        explainFigure: { kind: 'column', items: s.lines.map((l) => enText(l, 'm')) },
         identity: `gist:${s.id}`,
         alt: true,
       }),

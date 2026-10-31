@@ -7,7 +7,6 @@
 import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
 import type { ExperimentItem } from '../../engines/experiment/experiment';
 import type { ExpSetup } from '../../engines/experiment/model';
-import type { Figure } from '../../engines/figure/types';
 import { choiceItem, ill, opts } from './lib';
 
 type TableSetup = Extract<ExpSetup, { kind: 'table' }>;
@@ -120,7 +119,7 @@ export const SCENES: Scene[] = [
       rightKey: 'sink',
       result: ['rock', 'しずむ'],
       explain:
-        'こいしは しずむよ。ちいさくても しずむ ものが あるね。おうちの ひとと いっしょに、こいしと ボールを みずに いれて くらべて みよう。',
+        'こいしは しずむよ。ちいさくても しずむ ものが あるね。おうちで ためして みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。しずんだ ものは どれ？',
@@ -166,7 +165,7 @@ export const SCENES: Scene[] = [
       rightKey: 'fast',
       result: ['p5-sun', 'とける'],
       explain:
-        'ひなたに おくと、こおりは はやく とけるよ。おうちで、こおりを 2つ ひなたと ひかげに おいて くらべて みよう。',
+        'ひなたの こおりは、ひかげより はやく とけるよ。おうちで くらべて みよう。',
     },
     q2: {
       prompt: 'りょうほう やって みよう。はやく とけたのは どっち？',
@@ -210,7 +209,7 @@ export const SCENES: Scene[] = [
       rightKey: 'roll',
       result: ['ball', 'ころがる'],
       explain:
-        'まるい ボールは さかで ころがるよ。ほんを たてかけて さかを つくり、ボールを ころがして みよう。',
+        'まるい ボールは さかで ころがるよ。ほんで さかを つくって みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。ころがらなかった ものは どれ？',
@@ -259,7 +258,7 @@ export const SCENES: Scene[] = [
       rightKey: 'move',
       result: ['leaf', 'とぶ'],
       explain:
-        'かるい はっぱは、かぜで とんで いくよ。かみを ちいさく ちぎって、うちわで あおいで みよう。',
+        'かるい はっぱは、かぜで とんで いくよ。かみを うちわで あおいで みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。うごかなかった ものは どれ？',
@@ -305,7 +304,7 @@ export const SCENES: Scene[] = [
       rightKey: 'ice',
       result: ['p5-ice', 'こおる'],
       explain:
-        'みずは れいとうこで こおって、こおりに なるよ。おうちの ひとと いっしょに、こおりを つくって みよう。',
+        'みずは れいとうこで こおって、こおりに なるよ。おうちで つくって みよう。',
     },
     q2: {
       prompt: 'りょうほう やって みよう。こおったのは どっち？',
@@ -589,8 +588,6 @@ export const SCENES: Scene[] = [
   },
 ];
 
-const row = (...items: Figure[]): Figure => ({ kind: 'row', items, gap: 8 });
-
 function predictItem(s: Scene): Item {
   const q = s.q1;
   const id = `${s.id}:predict`;
@@ -604,7 +601,8 @@ function predictItem(s: Scene): Item {
     ...(q.figure ? { figure: ill(q.figure) } : {}),
     hints: ['まえに みた ことや、あそんだ ことを おもいだそう。', q.h2],
     explain: q.explain,
-    explainFigure: row(ill(q.result[0]), { kind: 'text', text: q.result[1], size: 'l' }),
+    // 結果の絵だけ（文字の図は板の右に置けず、下の段では板に入らない）。結果のことばは解説の文の はじめに ある
+    explainFigure: ill(q.result[0]),
     identity: id,
     layout: all.every((o) => o[1] !== undefined) ? 'row' : 'column',
     correct: toOpt(q.right),

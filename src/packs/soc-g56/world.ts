@@ -51,7 +51,7 @@ const SEA_OF_JAPAN = '日本海《にほんかい》';
 
 const N = {
   usa: 'アメリカ合衆国《がっしゅうこく》',
-  china: '中華人民共和国《ちゅうかじんみんきょうわこく》',
+  china: '中華《ちゅうか》人民《じんみん》共和国《きょうわこく》',
   korea: '大韓民国《だいかんみんこく》',
   brazil: 'ブラジル',
   saudi: 'サウジアラビア',
@@ -76,55 +76,84 @@ const KANA_N: Record<Nk, string> = {
   saudi: 'お',
 };
 
+/**
+ * 図の寸法（字を最小以上にしたまま、図を「縦に並べる」大きさに収める。text-layout-fixes 第4回）。
+ * 図の字は 32（viewBox の単位）にそろえる。SVG の字は最小 1.8u になるよう図が広げられ、図の高さは
+ * 1.8u × 高さ ÷ 字 になる。作業領域の高さの 45%（約 11.8u）を超えると、選択肢が右の細い列に押し込まれ、
+ * 4つ横並びの札（約 13u）に「オーストラリア大陸」「中華人民共和国」が入らない。高さ ÷ 字 ≦ 6.5 にするため、
+ * viewBox の高さは 190（= 字の 5.9 倍。図の最小幅 23u のとき高さ 10.9u）にする。形は位置関係を示す模式なので、
+ * 縦をつめて描く（Y() は元の絵の y を、上を 4・縦 0.78 倍につめた y に直す）。
+ */
+const FONT = 32;
+const VB_W = 400;
+const VB_H = 190;
+const Y = (y: number): number => Math.round((4 + (y - 12) * 0.78) * 10) / 10;
+/** "x,y x,y …" の y をつめる */
+const squash = (pts: string): string =>
+  pts
+    .split(' ')
+    .map((q) => {
+      const [x, y] = q.split(',').map(Number);
+      return `${x},${Y(y!)}`;
+    })
+    .join(' ');
+
 const SHAPES: Record<Ck, string> = {
   eurasia:
     '30,30 120,15 220,12 240,20 238,40 232,60 225,80 210,95 190,100 175,86 160,105 140,95 125,82 105,76 90,70 70,65 50,60 35,50',
   africa: '60,80 100,80 115,95 112,125 95,160 80,165 70,140 55,110 50,90',
   namerica: '290,20 360,15 385,30 375,55 350,70 330,90 315,95 300,75 285,50 275,30',
-  samerica: '320,105 345,105 365,120 355,150 340,175 330,185 322,160 315,125',
-  australia: '200,140 240,135 255,150 245,170 210,170 198,158',
-  antarctica: '20,194 380,194 380,206 20,206',
+  samerica: '320,105 345,105 365,120 355,150 340,172 330,180 322,160 315,125',
+  australia: '198,128 245,122 260,150 250,178 208,180 194,156',
+  // 南極の帯（字の高さより少し高く。Y() を通さない）
+  antarctica: '20,150 380,150 380,186 20,186',
 };
+/** 大陸の番号の位置（元の絵の座標。Y() を通す。南極だけ帯の中の座標） */
 const NUM_AT: Record<Ck, [number, number]> = {
   eurasia: [150, 50],
-  africa: [85, 120],
-  namerica: [345, 38],
-  samerica: [336, 160],
-  australia: [226, 157],
-  antarctica: [200, 204],
+  africa: [85, 122],
+  namerica: [345, 40],
+  samerica: [338, 150],
+  australia: [228, 152],
+  antarctica: [200, 168],
 };
+/** 海洋の字の位置（元の絵の座標。Y() を通す） */
 const OCEAN_AT: [Ok, number, number][] = [
   ['pacific', 275, 115],
-  ['atlantic', 14, 120],
-  ['atlantic', 392, 100],
-  ['indian', 155, 140],
+  ['atlantic', 20, 125],
+  ['atlantic', 382, 105],
+  ['indian', 150, 150],
 ];
+/**
+ * 国のしるし（白い丸の中に あ〜お。元の絵の座標。Y() を通す）。丸は半径 18 で、字を丸の中に置く。
+ * 日本（x 240〜254）にかさならないよう、韓国は西の岸に寄せる
+ */
 const PIN_AT: Record<Nk, [number, number]> = {
   usa: [330, 58],
-  china: [195, 58],
-  korea: [229, 46],
-  brazil: [345, 130],
+  china: [172, 66],
+  korea: [215, 46],
+  brazil: [345, 135],
   saudi: [113, 72],
 };
 const JAPAN = '247,42 254,48 251,62 244,70 240,66 246,56';
 
 function worldMap(show: { cont?: boolean; ocean?: boolean; pins?: Nk[] }): Figure {
-  const t = (x: number, y: number, s: string, size = 14) =>
-    `<text x="${x}" y="${y}" font-size="${size}" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-weight="bold">${s}</text>`;
+  const t = (x: number, y: number, s: string) =>
+    `<text x="${x}" y="${y}" font-size="${FONT}" text-anchor="middle" dominant-baseline="middle" fill="var(--ink)" font-weight="bold">${s}</text>`;
   const body = [
-    '<rect x="0" y="0" width="400" height="210" fill="var(--sky)"/>',
-    ...CK.map(
-      (k) =>
-        `<polygon points="${SHAPES[k]}" fill="${k === 'antarctica' ? 'var(--white)' : 'var(--leaf)'}" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`,
-    ),
-    `<polygon points="${JAPAN}" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`,
+    `<rect x="0" y="0" width="${VB_W}" height="${VB_H}" fill="var(--sky)"/>`,
+    ...CK.map((k) => {
+      const pts = k === 'antarctica' ? SHAPES[k] : squash(SHAPES[k]);
+      return `<polygon points="${pts}" fill="${k === 'antarctica' ? 'var(--white)' : 'var(--leaf)'}" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`;
+    }),
+    `<polygon points="${squash(JAPAN)}" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`,
     ...(show.cont
-      ? CK.map((k) => t(NUM_AT[k][0], NUM_AT[k][1], NUM[k], k === 'antarctica' ? 11 : 16))
+      ? CK.map((k) => t(NUM_AT[k][0], k === 'antarctica' ? NUM_AT[k][1] : Y(NUM_AT[k][1]), NUM[k]))
       : []),
-    ...(show.ocean ? OCEAN_AT.map(([k, x, y]) => t(x, y, KANA_O[k], 16)) : []),
+    ...(show.ocean ? OCEAN_AT.map(([k, x, y]) => t(x, Y(y), KANA_O[k])) : []),
     ...(show.pins ?? []).map((k) => {
       const [x, y] = PIN_AT[k];
-      return `<circle cx="${x}" cy="${y}" r="4" fill="var(--white)" stroke="var(--ink)" stroke-width="2"/>${t(x + 9, y - 8, KANA_N[k], 13)}`;
+      return `<circle cx="${x}" cy="${Y(y)}" r="18" fill="var(--white)" stroke="var(--ink)" stroke-width="2"/>${t(x, Y(y), KANA_N[k])}`;
     }),
   ].join('');
   const what = [
@@ -135,7 +164,7 @@ function worldMap(show: { cont?: boolean; ocean?: boolean; pins?: Nk[] }): Figur
     .filter(Boolean)
     .join('、');
   return svg(
-    '0 0 400 210',
+    `0 0 ${VB_W} ${VB_H}`,
     body,
     `日本《にっぽん》をまん中《なか》にしたかんたんな世界《せかい》の図《ず》（形《かたち》はおおよそ。日本《にっぽん》は黄色《きいろ》でぬった細長《ほそなが》い形《かたち》）。${what}`,
   );
@@ -431,7 +460,7 @@ const oceanAlts: Item[] = [
       '図《ず》の左《ひだり》はしと右《みぎ》はしに、同《おな》じ「イ」があるよ。どうしてかな？',
     figure: MAP_O,
     right:
-      '地球《ちきゅう》は丸《まる》く、図《ず》の左《ひだり》はしと右《みぎ》はしはつながっているから',
+      '地球《ちきゅう》は丸《まる》く、左《ひだり》はしと右《みぎ》はしがつながるから',
     wrongs: [
       ['同《おな》じ名前《なまえ》の海洋《かいよう》が二《ふた》つあるから', 'mis-map-edge'],
       ['図《ず》のまちがいだから', 'mis-map-edge'],
@@ -442,7 +471,7 @@ const oceanAlts: Item[] = [
       '右《みぎ》はしからさらに右《みぎ》へ進《すす》むと、どこに出《で》るかな。',
     ],
     explain:
-      '地球《ちきゅう》は丸《まる》いので、平《たい》らな世界《せかい》の図《ず》では左《ひだり》はしと右《みぎ》はしがつながっているよ。だからイの大西洋《たいせいよう》は両《りょう》はしに分《わ》かれて見《み》えるんだ。',
+      '地球《ちきゅう》は丸《まる》いので、図《ず》の左《ひだり》はしと右《みぎ》はしはつながるよ。だからイの大西洋《たいせいよう》は両《りょう》はしに見《み》えるんだ。',
   }),
 ];
 
@@ -807,10 +836,9 @@ const lifeAlts: Item[] = [
     level: 1,
     alt: true,
     prompt:
-      '外国《がいこく》のくらしについての言《い》い方《かた》を、「ちがいを大切《たいせつ》にする」と「決《き》めつけている」に分《わ》けよう。',
+      '外国《がいこく》のくらしの言《い》い方《かた》を、2つの箱《はこ》に分《わ》けよう。',
     boxes: ['ちがいを大切《たいせつ》にする', '決《き》めつけている'],
     cards: [
-      ['この国《くに》には、こういうくらしの例《れい》もあるんだね', 0],
       ['どうしてそのやり方《かた》なのか調《しら》べてみよう', 0],
       ['日本《にっぽん》とにているところもあるね', 0],
       ['あの国《くに》の人《ひと》はみんな○○だ', 1],
@@ -823,7 +851,7 @@ const lifeAlts: Item[] = [
       'わけを知《し》ろうとする言《い》い方《かた》は、ちがいを大切《たいせつ》にしているよ。',
     ],
     explain:
-      '「〜の例《れい》もある」「わけを調《しら》べよう」「にているところもある」は、ちがいを大切《たいせつ》にする言《い》い方《かた》。「みんな○○だ」「ちがうからへん」は決《き》めつけている言《い》い方《かた》だよ。',
+      '「わけを調《しら》べよう」「にているところもある」は、ちがいを大切《たいせつ》にする言《い》い方《かた》。「みんな○○だ」「ちがうからへん」は決《き》めつけている言《い》い方《かた》だよ。',
   }),
   matchItem({
     id: 'life-alt-match',

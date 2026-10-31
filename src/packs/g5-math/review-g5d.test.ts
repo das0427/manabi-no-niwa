@@ -96,9 +96,10 @@ describe('review g5d: g5.math.pie-band', () => {
         const others = it.alt
           ? [...q.replace(/。.*$/, '').matchAll(/(\d+)%/g)].map((m) => Number(m[1]))
           : it.figure && it.figure.kind === 'table'
-            ? it.figure.rows
-                .slice(0, -1)
-                .map((r) => strip(r[1]))
+            ? // 表は 横長（見出し: 種類 … 合計、行: 割合）
+              (it.figure.rows[0] ?? [])
+                .slice(1, -1)
+                .map((c) => strip(c))
                 .filter((x) => x !== '？')
                 .map(Number)
             : [];

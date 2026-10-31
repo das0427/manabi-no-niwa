@@ -12,6 +12,7 @@ import {
   G3_READ,
   G3_SET,
   G3_SMALL,
+  optionWidth,
   rodDigits,
 } from './abacus-svg';
 import {
@@ -34,6 +35,9 @@ const markupOf = (f: Figure | undefined): string | undefined => {
   return undefined;
 };
 const smallM = (n: number) => markupOf(abacusFig(G3_SMALL, rodDigits(G3_SMALL, n)));
+/** 選択肢の図は 幅を決めて 小さく描く（abacus-svg.ts の optionWidth） */
+const smallOpt = (n: number) =>
+  markupOf(abacusFig(G3_SMALL, rodDigits(G3_SMALL, n), { w: optionWidth(G3_SMALL) }));
 const answerOf = (it: NumberItem) => (it.fields[0]!.answer as { value: number }).value;
 
 describe('g3.math.abacus: 珠と数字', () => {
@@ -161,7 +165,9 @@ describe('g3.math.abacus: 選択肢の図', () => {
     expect(ss.length).toBeGreaterThan(10);
     for (const it of ss) {
       const n = Number(it.identity.split(':')[1]);
-      const want = markupOf(abacusFig(G3_SET, rodDigits(G3_SET, n * 10)));
+      const want = markupOf(
+        abacusFig(G3_SET, rodDigits(G3_SET, n * 10), { w: optionWidth(G3_SET) }),
+      );
       const hit = it.options.filter((o) => markupOf(o.figure) === want);
       expect(hit).toHaveLength(1);
       expect(hit[0]!.correct).toBe(true);
@@ -173,7 +179,7 @@ describe('g3.math.abacus: 選択肢の図', () => {
     for (const it of alts) {
       const m = /-alt:(\d+)([＋−])(\d+)$/.exec(it.identity)!;
       const res = m[2] === '＋' ? Number(m[1]) + Number(m[3]) : Number(m[1]) - Number(m[3]);
-      const hit = it.options.filter((o) => markupOf(o.figure) === smallM(res));
+      const hit = it.options.filter((o) => markupOf(o.figure) === smallOpt(res));
       expect(hit).toHaveLength(1);
       expect(hit[0]!.correct).toBe(true);
       expect(markupOf(it.figure)).toBe(smallM(Number(m[1])));

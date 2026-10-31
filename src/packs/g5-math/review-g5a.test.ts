@@ -182,7 +182,8 @@ describe('review g5a: g5.math.area-formulas', () => {
       const ps = polygonPts(markupOf(it));
       const k = (ps[1]![0] - ps[0]![0]) / b;
       const H = (ps[0]![1] - ps[2]![1]) / k;
-      if (Math.abs(H - h) > 1e-6) errs.push(`${it.id}: 図の高さ ${H}`);
+      // 座標は 0.1 に まるめて 描く（r1）ので、まるめの 分の ずれは ゆるす
+      if (Math.abs(H - h) > 0.05) errs.push(`${it.id}: 図の高さ ${H}`);
       const cms = [...markupOf(it).matchAll(/>(\d+)cm</g)].map((t) => Number(t[1]));
       if (!cms.includes(b) || !cms.includes(h)) errs.push(`${it.id}: 図の 長さの 文字`);
       const slant = [...cms];

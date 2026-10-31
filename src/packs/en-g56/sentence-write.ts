@@ -110,7 +110,7 @@ function chooseItems(): Item[] {
         '聞《き》いた ことの ある ことばと、いみを むすびつけよう。',
       ],
       explain: `「${c.ja}」は、空《あ》いた ところに ${c.answer}を 入《い》れます。`,
-      explainFigure: enText(c.text.replace('{{}}', c.answer)),
+      explainFigure: enText(c.text.replace('{{}}', c.answer), 'm'),
       identity: `choose:${c.text.replace('{{}}', c.answer)}`,
     };
     out.push(item);
@@ -171,7 +171,7 @@ function chooseItems(): Item[] {
         'えらぶ ことばを 入《い》れて、文《ぶん》を 読《よ》んで みよう。',
       ],
       explain: `「${f.ja}」なので、${f.answer}を 入《い》れます。`,
-      explainFigure: enText(f.text.replace('{{}}', f.answer)),
+      explainFigure: enText(f.text.replace('{{}}', f.answer), 'm'),
       identity: `form:${f.text}`,
       alt: true,
     });
@@ -300,7 +300,7 @@ function swapItem(s: Swap, alt: boolean): BuildItem {
       'おてほんの ことばの タイルは つかわないよ。',
     ],
     explain: `おてほんの「${s.from}」を「${s.to}」に かえると、この 文《ぶん》に なります。`,
-    explainFigure: enText(s.answer),
+    explainFigure: enText(s.answer, 'm'),
     identity: `${alt ? 'swap-pic' : 'swap'}:${s.answer}`,
     ...(alt ? { alt: true } : {}),
   };
@@ -377,7 +377,7 @@ function copyItems(): Item[] {
       ],
       explain:
         '文《ぶん》の はじめと、人《ひと》・国《くに》の なまえの はじめは 大文字《おおもじ》で 書《か》きます。',
-      explainFigure: enText(s),
+      explainFigure: enText(s, 'm'),
       identity: `copy-sent:${s}`,
       alt: true,
     });

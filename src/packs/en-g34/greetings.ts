@@ -136,7 +136,7 @@ function meaningItems(): Item[] {
           notHint(others[0]!.ja),
         ],
         explain: `「${p.ja}」と いう いみの あいさつです。${p.when}に つかいます。`,
-        explainFigure: enText(p.text),
+        explainFigure: enText(p.text, 'm'),
         identity: `meaning:${slugOf(p.text)}`,
       }),
     );
@@ -169,7 +169,7 @@ function meaningItems(): Item[] {
           notHint(others[0]!.when),
         ],
         explain: `「${p.ja}」の あいさつなので、${p.when}に いいます。`,
-        explainFigure: enText(p.text),
+        // 聞いた英語は 上の 書き起こしの 札に 出て いる。同じ 英文の 図を 足すと 板が 高くなり、作業領域が 足りなくなる
         identity: `when:${slugOf(p.text)}`,
         alt: true,
       }),
@@ -277,7 +277,6 @@ function sceneItems(): Item[] {
           `この ばめんでは「${ja}」と いいたいね。`,
         ],
         explain: `${pos + 1}ばんめの あいさつは「${ja}」と いう いみ。この ばめんに あいます。`,
-        explainFigure: enText(seq.join('  /  '), 'm'),
         identity: `scene:${s.id}`,
       }),
     );
@@ -335,8 +334,8 @@ function sceneItems(): Item[] {
           'あとの 3つは へんじの こうほだよ。いみを ひとつずつ おもいだそう。',
           `「${r.ja}」と いう いみの へんじを さがそう。`,
         ],
-        explain: `${pos + 1}ばんめは「${r.ja}」と いう いみ。さいしょの ことばへの へんじに なります。`,
-        explainFigure: enText(`${r.q}  →  ${r.right}`, 'm'),
+        // 書き起こしには さいしょの ことばも ならぶので、「あとの 3つの うち」と 数え方を そえる
+        explain: `あとの 3つの うち、${pos + 1}ばんめは「${r.ja}」と いう いみ。さいしょの ことばへの へんじに なります。`,
         identity: `reply:${slugOf(r.q)}`,
         alt: true,
       }),
@@ -374,7 +373,7 @@ function feelItems(): Item[] {
           notHint([...diff, ...same][0]!.ja),
         ],
         explain: `「${f.ja}」と いう いみです。`,
-        explainFigure: enText(f.text),
+        explainFigure: enText(f.text, 'm'),
         identity: `feel:${slugOf(f.text)}`,
       }),
     );

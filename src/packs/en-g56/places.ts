@@ -81,7 +81,7 @@ function hearItems(): Item[] {
           'さいごの ほうの ことばが、ばしょの なまえだよ。2つの ことばで 1つの ばしょを いう ことも あるよ。',
         ],
         explain: `この まちには ${p.ja}が あります。`,
-        explainFigure: enText(text),
+        explainFigure: enText(text, 'm'),
         identity: `have:${text}`,
       }),
     );
@@ -340,7 +340,7 @@ function compareItems(): Item[] {
       id: `compare:${i}`,
       objective: 'compare',
       level: 2,
-      prompt: `2つの まち（きたまち・みなみまち）の しょうかいを 読《よ》もう。${t.ask}`,
+      prompt: `しょうかいを 読《よ》もう。${t.ask}`,
       figure: {
         kind: 'table',
         header: ['まち', 'しょうかい'],
@@ -350,9 +350,9 @@ function compareItems(): Item[] {
         ],
       },
       options: [
-        { ...placeOpt(P(t.right)), correct: true },
-        { ...placeOpt(P(t.wrong[0])), misconception: t.mis[0] },
-        { ...placeOpt(P(t.wrong[1])), misconception: t.mis[1] },
+        { label: P(t.right).ja, correct: true },
+        { label: P(t.wrong[0]).ja, misconception: t.mis[0] },
+        { label: P(t.wrong[1]).ja, misconception: t.mis[1] },
       ],
       hints: [
         'きたまちに ある ものを 2つ さがそう。',
@@ -381,9 +381,9 @@ function compareItems(): Item[] {
         audio: [en('town', ta), en('town', tb)],
         gapMs: 1000,
         options: [
-          { ...placeOpt(P(t.right)), correct: true },
-          { ...placeOpt(P(t.wrong[0])), misconception: t.mis[0] },
-          { ...placeOpt(P(t.wrong[1])), misconception: t.mis[1] },
+          { label: P(t.right).ja, correct: true },
+          { label: P(t.wrong[0]).ja, misconception: t.mis[0] },
+          { label: P(t.wrong[1]).ja, misconception: t.mis[1] },
         ],
         hints: [
           '1人《ひとり》めの まちに ある ものを 2つ 聞《き》きとろう。',
@@ -391,7 +391,6 @@ function compareItems(): Item[] {
           '2つの まちを くらべよう。',
         ],
         explain: `1人《ひとり》めの まちには ${t.a.map((w) => P(w).ja).join('と ')}、2人《ふたり》めの まちには ${t.b.map((w) => P(w).ja).join('と ')}が あります。`,
-        explainFigure: { kind: 'column', items: [enText(ta, 'm'), enText(tb, 'm')] },
         identity: `compare-hear:${ta}|${tb}|${t.ask}`,
         alt: true,
       }),

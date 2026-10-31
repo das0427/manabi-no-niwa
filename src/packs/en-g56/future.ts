@@ -110,7 +110,7 @@ function beItems(): Item[] {
         GROUP_HINT[j.group],
       ],
       explain: `「${j.ja}に なりたい」と いって います。`,
-      explainFigure: enText(s),
+      explainFigure: enText(s, 'm'),
       identity: `be:${slugOf(s)}`,
     });
   });
@@ -164,9 +164,7 @@ function descItems(): Item[] {
       id: `desc:${slugOf(d.lines[d.at]!)}`,
       objective: 'be',
       level: 0,
-      prompt:
-        '3つの 文《ぶん》を 聞《き》こう。書《か》かれて いる しごとに なりたい 人《ひと》は なんばんめ？',
-      figure: { kind: 'text', text: d.desc, size: 'm' },
+      prompt: `聞《き》こう。「${d.desc}」に なりたい 文《ぶん》は なんばんめ？`,
       audio: d.lines.map((l) => en('future', l)),
       gapMs: 900,
       options: ordinalOptions(3, d.at, (i) => d.mis[i]!),
@@ -177,7 +175,7 @@ function descItems(): Item[] {
         '1つずつ 聞《き》いて、しごとの なまえが あう 文《ぶん》を さがそう。',
       ],
       explain: `${d.at + 1}ばんめの 文《ぶん》が「${d.ja}に なりたい」です。`,
-      explainFigure: { kind: 'column', items: d.lines.map((l) => enText(l, 'm')) },
+      explainFigure: enText(d.lines[d.at]!, 'm'),
       identity: `desc:${slugOf(d.lines[d.at]!)}`,
       alt: true,
     }),
@@ -267,7 +265,7 @@ function wantItems(): Item[] {
         'さいごの ほうの ことばが「なにを・どこで」だよ。2つを あわせよう。',
       ],
       explain: `「${w.ok}」と いって います。`,
-      explainFigure: enText(w.text),
+      explainFigure: enText(w.text, 'm'),
       identity: `want:${slugOf(w.text)}`,
     }),
   );
@@ -489,11 +487,6 @@ const DREAMS: Dream[] = [
   },
 ];
 
-const linesFig = (lines: string[]): Figure => ({
-  kind: 'column',
-  items: lines.map((l) => enText(l, 'm')),
-});
-
 function dreamItems(): Item[] {
   const out: Item[] = [];
   for (const d of DREAMS) {
@@ -517,7 +510,8 @@ function dreamItems(): Item[] {
           `${d.at}つめの 文《ぶん》の さいごの ほうを よく 聞《き》こう。`,
         ],
         explain: `${d.at}つめの 文《ぶん》から、こたえは「${d.ok}」です。`,
-        explainFigure: linesFig(d.lines),
+        // 3文の列は板に入らないので、こたえの ある 文だけを出す
+        explainFigure: enText(d.lines[d.at - 1]!, 'm'),
         identity: `dream:${d.id}`,
       }),
     );
@@ -541,7 +535,6 @@ function dreamItems(): Item[] {
           'ぜんぶの 文《ぶん》に あう ものを えらぼう。',
         ],
         explain: `「${d.gist}」です。`,
-        explainFigure: linesFig(d.lines),
         identity: `gist:${d.id}`,
         alt: true,
       }),

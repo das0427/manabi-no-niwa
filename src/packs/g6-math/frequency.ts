@@ -87,15 +87,31 @@ function makeCounts(rng: Rng, k: number, n: number, max = 9): number[] {
   return Array.from({ length: k }, (_, i) => base + (i < n - base * k ? 1 : 0));
 }
 
-function freqTable(c: Ctx, cnt: number[]): Figure {
-  return {
-    kind: 'table',
-    header: [`${c.what}（${c.unit}）`, '人数（人）'],
-    rows: [
-      ...cnt.map((v, i) => [`${lab(c, i)}`, String(v)]),
-      ['合計', String(cnt.reduce((a, b) => a + b, 0))],
-    ],
-  };
+/**
+ * 度数分布表の図。縦に 8 行 ならべると、図の 段の 高さに 入らず（10〜18u 足りない）、表の 字は 最小より 縮められない
+ * （text-layout-fixes 第4回）。SVG に すると 漢字・かなが 書けないので、表の まま 行を 減らす。
+ * - wide: 幅の ある 画面（選択肢の 問題）。階級を 横に ならべた 2 行の 表（上が 階級、下が 人数、いちばん 右に 合計）。
+ * - ふつう: 数の 入力の 左の 列（幅 約 55u）。階級を 半分ずつ 左右に 折りたたんだ 5 行の 表
+ *   （1行に 〔階級・人数・階級・人数〕、いちばん 下に 合計。左の 列 → 右の 列の 順に 階級の 小さい 順）。
+ */
+function freqTable(c: Ctx, cnt: number[], wide = false): Figure {
+  const total = String(cnt.reduce((a, b) => a + b, 0));
+  if (wide)
+    return {
+      kind: 'table',
+      header: [`階級（${c.unit}）`, ...cnt.map((_, i) => lab(c, i)), '合計'],
+      rows: [['人数（人）', ...cnt.map(String), total]],
+    };
+  const half = Math.ceil(cnt.length / 2);
+  const head = [`階級（${c.unit}）`, '人数（人）'];
+  const rows: string[][] = [];
+  for (let r = 0; r < half; r++) {
+    const left = [lab(c, r), String(cnt[r])];
+    const right = r + half < cnt.length ? [lab(c, r + half), String(cnt[r + half])] : ['', ''];
+    rows.push([...left, ...right]);
+  }
+  rows.push(['合計', total, '', '']);
+  return { kind: 'table', header: [...head, ...head], rows };
 }
 const NOTE = (c: Ctx) => `（「${lab(c, 0)}」は ${c.lo}以上 ${c.lo + c.w}未満の 階級です）`;
 
@@ -122,8 +138,8 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       hints: [
         `${up ? `${edge}${c.unit}以上` : `${edge}${c.unit}未満`}に 入る 階級を 全部 さがそう。`,
         up
-          ? `${lab(c, i)}の 階級から 下の 階級 全部だね。`
-          : `${lab(c, i - 1)}の 階級から 上の 階級 全部だね。`,
+          ? `${lab(c, i)}の 階級から 大きい ほうの 階級 全部だね。`
+          : `${lab(c, i - 1)}の 階級から 小さい ほうの 階級 全部だね。`,
         'それらの 階級の 人数を たそう。',
       ],
       explain: `${up ? `${lab(c, i)}から ${lab(c, c.k - 1)}` : `${lab(c, 0)}から ${lab(c, i - 1)}`}の 階級の 人数を たして ${ans}人です。`,
@@ -304,7 +320,7 @@ function classItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
         ? 'いちばん 大きい 階級から 順に 人数を たして いこう。'
         : 'いちばん 小さい 階級から 順に 人数を たして いこう。',
       `人数を たして いって、はじめて ${r}人 以上に なる 階級を さがそう。`,
-      `表の ${c.higherBetter ? 'いちばん 大きい 階級（合計の すぐ 上）から 上へ' : 'いちばん 小さい 階級（表の いちばん 上）から 下へ'}、人数を たした 合計を 書きこんで いこう。`,
+      `表の ${c.higherBetter ? 'いちばん 大きい 階級（合計の すぐ 左）から 左へ' : 'いちばん 小さい 階級（いちばん 左の 階級）から 右へ'}、人数を たした 合計を 書きこんで いこう。`,
     ];
     explain = `${c.higherBetter ? '大きい' : '小さい'} 階級から 人数を たして いくと、「${lab(c, i)}」で はじめて ${r}人 以上に なるので、${r}番目の 人は この 階級に 入ります。`;
     wrongs = [
@@ -336,7 +352,7 @@ function classItem(level: number, rng: Rng, alt: boolean): ChoiceItem {
     objective: 'class',
     level,
     prompt,
-    figure: alt ? undefined : freqTable(c, cnt),
+    figure: alt ? undefined : freqTable(c, cnt, true),
     hints,
     explain,
     identity: alt ? `class:edge:${c.id}:${i}` : `class:rank:${c.id}:${cnt.join(',')}:${tag}`,

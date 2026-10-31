@@ -21,6 +21,7 @@ import {
   G3_SET,
   G3_SMALL,
   lowerAway,
+  optionWidth,
   rodDigits,
   rodDigitsOrNull,
   shiftLeft,
@@ -71,8 +72,8 @@ function distinctCands(cands: Cand[], max = 4): [number[], string | undefined][]
 function figOpts(layout: AbacusLayout, cands: Cand[], max = 4): ChoiceOption[] {
   return distinctCands(cands, max).map(([ds, m]) =>
     m
-      ? { figure: abacusFig(layout, ds), misconception: m }
-      : { figure: abacusFig(layout, ds), correct: true },
+      ? { figure: abacusFig(layout, ds, { w: optionWidth(layout) }), misconception: m }
+      : { figure: abacusFig(layout, ds, { w: optionWidth(layout) }), correct: true },
   );
 }
 const valDigits = (layout: AbacusLayout, n: number) => rodDigitsOrNull(layout, n);
@@ -356,7 +357,6 @@ function genSet(level: number, rng: Rng, alt: boolean): ChoiceItem {
       '5から 9の 数字《すうじ》の けたは、五《ご》だまが はりに ついて いるかを 見《み》よう。',
     ],
     explain: `${alt ? `数字《すうじ》で 書《か》くと ${n}。` : ''}▲の けたが 一《いち》の くらい。${parts}。`,
-    explainFigure: abacusFig(G3_SET, cands[0]![0]!, { lit: true }),
     identity: `set${alt ? '-kanji' : ''}:${n}`,
     alt,
     layout: 'grid',

@@ -304,8 +304,6 @@ function genSet(level: number, rng: Rng, alt: boolean): ChoiceItem {
   } while (!cands);
   const dg = cands[0]![0]!;
   const v = dec(h, 2);
-  const places = spanPlaces(G4_SET, dg);
-  const parts = places.map((p) => `${PLX(p)}は ${dg[G4_SET.unitRod - p]}`).join('、');
   return {
     engine: 'choice',
     id: `set${alt ? '-units' : ''}:${alt ? h : v}`,
@@ -321,11 +319,11 @@ function genSet(level: number, rng: Rng, alt: boolean): ChoiceItem {
       `${v}の 一の 位は ${Math.floor(h / 100) % 10}。`,
       '0の 位は たまを おかずに 1けた あけるよ。',
     ],
-    explain: `${alt ? `0.01を ${h}こ 集めると ${v}。` : ''}▲の けたが 一の 位。${parts}。`,
+    explain: `${alt ? `0.01を ${h}こ 集めると ${v}。` : ''}▲の けたが 一の 位。上の 位から じゅんに ${v}の 数字を おく。`,
     explainFigure: abacusFig(G4_SET, dg, { lit: true }),
     identity: `set${alt ? '-units' : ''}:${alt ? h : v}`,
     alt,
-    layout: 'grid',
+    layout: 'row',
     options: figOpts(G4_SET, cands),
   };
 }

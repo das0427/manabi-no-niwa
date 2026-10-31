@@ -19,25 +19,17 @@ function mulFig(a: string, b: string): Figure {
       .padStart(w, ' ')
       .split('')
       .map((c) => (c === ' ' ? '' : c));
-  return {
-    kind: 'table',
-    header: Array.from({ length: w + 1 }, () => ''),
-    rows: [
-      ['', ...cells(a)],
-      ['×', ...cells(b)],
-    ],
-  };
+  // 1つ目の 数を 見出しの 行に 置いて 2 行にする（空の 見出しの 行を 作らない。解説の 板に 文と 入れるため）
+  return { kind: 'table', header: ['', ...cells(a)], rows: [['×', ...cells(b)]] };
 }
 
 /** わり算の筆算の形（わる数 ）わられる数） */
 function divFig(a: string, n: number): Figure {
+  // 商の 行を 見出しの 行に 置いて 2 行にする（空の 見出しの 行を 作らない）
   return {
     kind: 'table',
-    header: ['', ...a.split('').map(() => '')],
-    rows: [
-      ['商', ...a.split('').map((c) => (c === '.' ? '.' : ''))],
-      [`${n} ）`, ...a.split('')],
-    ],
+    header: ['商', ...a.split('').map((c) => (c === '.' ? '.' : ''))],
+    rows: [[`${n} ）`, ...a.split('')]],
   };
 }
 
@@ -69,7 +61,7 @@ function mul(obj: 'mul1' | 'mul2', level: number, rng: Rng, alt: boolean): Numbe
       `${v} × ${b} ＝ ${prod}。`,
       `${zeros(p)}が ${prod}こで いくつかな。小数点は かけられる数と 同じ けたに 打つよ。`,
     ],
-    explain: `${zeros(p)}が ${v} × ${b} ＝ ${prod}こなので、${a} × ${b} ＝ ${dec(prod, p)}。筆算は 右に そろえて 書き、かけられる数の 小数点に そろえて 小数点を 打ちます。`,
+    explain: `${zeros(p)}が ${v} × ${b} ＝ ${prod}こ。${a} × ${b} ＝ ${dec(prod, p)}。小数点は かけられる数と 同じ けたに 打ちます。`,
     explainFigure: mulFig(a, String(b)),
     identity: `${a}x${b}`,
     alt,
@@ -106,7 +98,7 @@ function div(level: number, rng: Rng, alt: boolean): NumberItem {
         : '整数と 同じように わって、わられる数の 小数点に そろえて 商の 小数点を 打とう。',
       `${av} ÷ ${n} ＝ ${qv}。${zeros(p)}が ${qv}こで…`,
     ],
-    explain: `${zeros(p)}が ${av} ÷ ${n} ＝ ${qv}こなので、${a} ÷ ${n} ＝ ${q}。商の 小数点は わられる数の 小数点に そろえます。`,
+    explain: `${zeros(p)}が ${av} ÷ ${n} ＝ ${qv}こ。${a} ÷ ${n} ＝ ${q}。商の 小数点は わられる数の 小数点に そろえます。`,
     explainFigure: divFig(a, n),
     identity: `${a}÷${n}`,
     alt,
@@ -152,7 +144,7 @@ function further(level: number, rng: Rng, alt: boolean): NumberItem {
         `${a}を ${decFixed(av * 10 ** k, P)}と 考えると、${zeros(P)}が ${av * 10 ** k}こ。`,
         `${av * 10 ** k} ÷ ${n} ＝ ${qv}。${zeros(P)}が ${qv}こで…`,
       ],
-      explain: `${a}を ${decFixed(av * 10 ** k, P)}と 考えて わり進むと、${a} ÷ ${n} ＝ ${q}。わりきれるまで 0を つけたして 計算します。`,
+      explain: `${a}を ${decFixed(av * 10 ** k, P)}と 考えて わり進むと、${a} ÷ ${n} ＝ ${q}。わりきれるまで 0を つけたします。`,
       explainFigure: divFig(decFixed(av * 10 ** k, P), n),
       identity: `${a}÷${n}`,
       alt,

@@ -205,18 +205,24 @@ export function townSvg(codes: PlaceCode[], opts: TownOpts = {}): Figure {
       `<polyline points="${q.map((p) => p.join(',')).join(' ')}" fill="none" stroke="var(--sky-dark)" stroke-width="6" stroke-linejoin="round" stroke-dasharray="10 8"/>` +
       `<polygon points="${head}" ${HEAD}/>`;
   }
+  // 解説の図（route）は 12u の高さに入れるので、1 viewBox 単位が小さい。そこで 場所の札を 56・字を 40 にして、
+  // 字の引き上げ（最大 2 倍）が わずかで すむようにする。「スタート」の字は 問題の地図（左）に ある ので 省く。
+  const half = opts.route ? 28 : 22;
+  const fs = opts.route ? 40 : 26;
   for (const c of codes) {
     const [cx, cy] = placeCenter(c, turned);
     s +=
-      `<rect x="${cx - 22}" y="${cy - 22}" width="44" height="44" rx="6" fill="var(--sun)" stroke="var(--ink)" stroke-width="3"/>` +
-      `<text x="${cx}" y="${cy}" font-size="26" font-weight="700" fill="var(--ink)" text-anchor="middle" dominant-baseline="central">${letters[c]}</text>`;
+      `<rect x="${cx - half}" y="${cy - half}" width="${half * 2}" height="${half * 2}" rx="6" fill="var(--sun)" stroke="var(--ink)" stroke-width="3"/>` +
+      `<text x="${cx}" y="${cy}" font-size="${fs}" font-weight="700" fill="var(--ink)" text-anchor="middle" dominant-baseline="central">${letters[c]}</text>`;
   }
-  // スタートの ▲（ふつうは 上向き、逆さの地図では 下向き）
+  // スタートの ▲（ふつうは 上向き、逆さの地図では 下向き）。問題の地図には「スタート」の字を そえる（24 = 最小の 1.8u に近い大きさ）
   const tri = turned ? '160,50 172,24 148,24' : '160,290 148,316 172,316';
   const ty = turned ? 42 : 308;
   s +=
     `<polygon points="${tri}" fill="var(--sky-dark)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>` +
-    `<text x="180" y="${ty}" font-size="16" font-weight="700" fill="var(--ink)" text-anchor="start">スタート</text>` +
+    (opts.route
+      ? ''
+      : `<text x="180" y="${ty}" font-size="24" font-weight="700" fill="var(--ink)" text-anchor="start">スタート</text>`) +
     '</svg>';
   return {
     kind: 'svg',
@@ -306,7 +312,7 @@ function placeItems(): Item[] {
         notHint(nm(w1)),
       ],
       explain: `「${nm(c)}は どこですか」と たずねて います。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `place:${slugOf(text)}`,
     }),
   );
@@ -367,7 +373,7 @@ function placeGoItems(): Item[] {
         notHint(nm(w1)),
       ],
       explain: `「${nm(c)}へ いこう」と いって います。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `place-go:${slugOf(text)}`,
       alt: true,
     }),
@@ -467,7 +473,7 @@ function moveItems(): Item[] {
         h3,
       ],
       explain: ex,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `move:${slugOf(text)}`,
     });
   });
@@ -493,7 +499,7 @@ function moveWordItems(): Item[] {
         h3,
       ],
       explain: ex,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `move-word:${slugOf(text)}`,
       alt: true,
     });

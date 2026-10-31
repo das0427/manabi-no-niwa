@@ -252,13 +252,13 @@ describe('soc-g34 P2 単元（safety・tradition）', () => {
     }
   });
 
-  it('tradition: sen-r9 の答えは年表の（できあがる年 − 始める年）', () => {
+  it('tradition: sen-r9 の答えは年表の（完成する年 − 始める年）', () => {
     const it = byId(tradition, 'sen-r9');
     if (it.engine !== 'reading' || it.passage.figure?.kind !== 'table') throw new Error('形が違う');
     const rows = it.passage.figure.rows.map((r) => r.map((c) => plainText(c)));
     const year = (kw: string) =>
       Number(rows.find((r) => r[1]!.includes(kw))![0]!.match(/\d{4}/)![0]);
-    expect(answersOf(it)).toEqual([`${year('できあがる') - year('始める')}年`]);
+    expect(answersOf(it)).toEqual([`${year('完成する') - year('始める')}年`]);
   });
 
   it('tradition: 架空の人名（新助・平六）以外の人名らしい語を出さない', () => {

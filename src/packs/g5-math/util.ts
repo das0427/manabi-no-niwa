@@ -153,10 +153,16 @@ export const STROKE =
 export const svgText = (x: number, y: number, s: string, size = 16, anchor = 'middle') =>
   `<text x="${x}" y="${y}" font-size="${size}" text-anchor="${anchor}" dominant-baseline="middle" fill="var(--ink)">${s}</text>`;
 
-export const svg = (w: number, h: number, body: string, label: string): Figure => ({
+/**
+ * SVG の図。widthU（u 単位）を書くと、その幅で描く。
+ * 書かないと、図の幅は「いちばん小さい字が最小になる幅」か 23u の大きいほうになるので、
+ * 字が少ない・縦長の図は 23u の幅で縦に伸びて、図の段（約 14u）に入らない（text-layout-fixes.md 第4回）。
+ * 字は viewBox の単位で、画面では 字 × widthU ÷ w（u）。最小（1.73u）以上になるよう w と字を決める。
+ */
+export const svg = (w: number, h: number, body: string, label: string, widthU?: number): Figure => ({
   kind: 'svg',
   label,
-  markup: `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+  markup: `<svg viewBox="0 0 ${w} ${h}"${widthU ? ` style="width:calc(var(--u) * ${widthU})"` : ''} xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
 });
 
 /** a ÷ b が 有限小数（3けたまで）なら その表示、でなければ null */
@@ -169,6 +175,10 @@ export function divText(a: number, b: number): string | null {
 /**
  * 2本の数直線（上と下で 対応する量）。marks の at は 0〜1 の位置、text は数字か「?」。
  * 文字は数字・英字だけ（何の量かは 図の名前と問題文で示す）。
+ *
+ * 大きさ: 字は 20（viewBox の単位）にそろえ、図の全体を 376 × 118 に収める。
+ * 図の幅は「いちばん小さい字が最小（--text-min）になる幅」で決まるので、字を小さく・図を大きくすると
+ * 画面では 図が大きくなって 段に入らず、解説の小さな枠では字が最小を割る（text-layout-fixes.md 第4回）。
  */
 export function doubleLine(
   top: { at: number; text: string }[],
@@ -177,21 +187,22 @@ export function doubleLine(
   topUnit = '',
   bottomUnit = '',
 ): Figure {
-  const X = (t: number) => 40 + t * 300;
+  const X = (t: number) => 34 + t * 270;
+  const FS = 20;
   let body = '';
-  body += `<line x1="${X(0)}" y1="40" x2="${X(1) + 20}" y2="40" ${STROKE}/>`;
-  body += `<line x1="${X(0)}" y1="90" x2="${X(1) + 20}" y2="90" ${STROKE}/>`;
+  body += `<line x1="${X(0)}" y1="36" x2="${X(1) + 20}" y2="36" ${STROKE}/>`;
+  body += `<line x1="${X(0)}" y1="80" x2="${X(1) + 20}" y2="80" ${STROKE}/>`;
   for (const m of top) {
-    body += `<line x1="${X(m.at)}" y1="32" x2="${X(m.at)}" y2="48" ${STROKE}/>`;
-    body += svgText(X(m.at), 18, m.text, 15);
+    body += `<line x1="${X(m.at)}" y1="28" x2="${X(m.at)}" y2="44" ${STROKE}/>`;
+    body += svgText(X(m.at), 16, m.text, FS);
   }
   for (const m of bottom) {
-    body += `<line x1="${X(m.at)}" y1="82" x2="${X(m.at)}" y2="98" ${STROKE}/>`;
-    body += svgText(X(m.at), 114, m.text, 15);
+    body += `<line x1="${X(m.at)}" y1="72" x2="${X(m.at)}" y2="88" ${STROKE}/>`;
+    body += svgText(X(m.at), 106, m.text, FS);
   }
-  if (topUnit) body += svgText(X(1) + 40, 40, topUnit, 13, 'start');
-  if (bottomUnit) body += svgText(X(1) + 40, 90, bottomUnit, 13, 'start');
-  return svg(400, 128, body, label);
+  if (topUnit) body += svgText(X(1) + 34, 36, topUnit, FS, 'start');
+  if (bottomUnit) body += svgText(X(1) + 34, 80, bottomUnit, FS, 'start');
+  return svg(376, 118, body, label);
 }
 
 export const KATA = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク'] as const;

@@ -82,7 +82,8 @@ export function abacusFig(
   return {
     kind: 'svg',
     label: 'そろばん',
-    markup: `<svg viewBox="0 0 ${W} 240" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+    // 幅は けたの数に比例（1 単位 0.05u。高さは どの図も 12u）。幅を書かないと 23u になり、4けたの図が 25u の高さになる
+    markup: `<svg viewBox="0 0 ${W} 240" style="width:calc(var(--u) * ${(W * 0.05).toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
   };
 }
 

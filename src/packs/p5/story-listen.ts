@@ -52,9 +52,14 @@ interface Who {
 interface Story {
   id: string;
   title: string;
+  /** 「おきた じゅん」の問題文に出す1文のあらすじ（本文を全部出すと作業領域に入らない）。起きた順に書く */
+  recap: string;
   lines: string[];
   who: Who;
-  /** 起きた順の 3場面（絵, 文） */
+  /**
+   * 起きた順の 3場面（絵, 文）。文は 札に 入るよう 空白を のぞいて 6字まで。だれ・なには 絵で わかるので、
+   * 助詞を 落とした 書き方（「ぞう ひろった」）には しないで、動きだけ（「ひろった」）に する
+   */
   events: [string, string][];
   feel: { q: string; ans: Feel; wrong: Feel[]; why: string };
   /** 別例 */
@@ -67,6 +72,7 @@ const STORIES: Story[] = [
     id: 'carrot',
     // 定番教材（おおきな かぶ）の「ひっぱっても ぬけない」くりかえしに 似せない
     title: 'うさぎの はたけ',
+    recap: 'うさぎは にんじんを みつけ、くまと ほって たべました。',
     lines: [
       'うさぎが はたけで、にんじんの はっぱを みつけました。',
       'でも、つちが かたくて、ひとりでは ほれません。',
@@ -82,9 +88,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['carrot', 'にんじんを みつけた'],
+      ['carrot', 'みつけた'],
       ['bear', 'くまが きた'],
-      ['rabbit', 'ふたりで たべた'],
+      ['rabbit', 'わけて たべた'],
     ],
     feel: {
       q: 'さいごに、うさぎは どんな きもち？',
@@ -109,6 +115,7 @@ const STORIES: Story[] = [
   {
     id: 'umbrella',
     title: 'はっぱの かさ',
+    recap: 'ひよこは あめに ふられ、かえるに はっぱを かりました。',
     lines: [
       'ひよこが さんぽを して いると、あめが ふって きました。',
       'ひよこは かさを もって いません。',
@@ -124,9 +131,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['umbrella', 'あめが ふって きた'],
+      ['umbrella', 'あめが ふった'],
       ['frog', 'かえるが きた'],
-      ['leaf', 'はっぱを かりた'],
+      ['leaf', 'かりた'],
     ],
     feel: {
       q: 'かさが なくて、ひよこは どんな きもち だったかな？',
@@ -147,6 +154,7 @@ const STORIES: Story[] = [
   {
     id: 'banana',
     title: 'おちた バナナ',
+    recap: 'さるは きに のぼり、おちた バナナを ぞうが ひろいました。',
     lines: [
       'さるが きに のぼって、バナナを とりました。',
       'ところが、バナナが ぽとんと おちて しまいました。',
@@ -163,8 +171,8 @@ const STORIES: Story[] = [
     },
     events: [
       ['monkey', 'きに のぼった'],
-      ['banana', 'バナナが おちた'],
-      ['elephant', 'ぞうが ひろった'],
+      ['banana', 'おちた'],
+      ['elephant', 'ひろった'],
     ],
     feel: {
       q: 'バナナが おちた とき、さるは どんな きもち？',
@@ -181,6 +189,7 @@ const STORIES: Story[] = [
   {
     id: 'cake',
     title: 'たんじょうびの ケーキ',
+    recap: 'ケーキを つくって くまの いえへ いくと、くまが わらいました。',
     lines: [
       'きつねと うさぎが、ケーキを つくりました。',
       'ふたりは、ケーキを くまの いえに もって いきました。',
@@ -197,9 +206,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['p5-cake', 'ケーキを つくった'],
-      ['fox', 'くまの いえへ いった'],
-      ['bear', 'くまが わらった'],
+      ['p5-cake', 'つくった'],
+      ['fox', 'もって いった'],
+      ['bear', 'わらった'],
     ],
     feel: {
       q: 'さいごに、くまは どんな きもち？',
@@ -211,6 +220,7 @@ const STORIES: Story[] = [
   {
     id: 'ball',
     title: 'いけの ボール',
+    recap: 'ねこが あそんで いた ボールが いけに おち、かめが はこびました。',
     lines: [
       'ねこが ボールで あそんで いました。',
       'ボールが ころころ ころがって、いけに おちて しまいました。',
@@ -225,9 +235,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['cat', 'ボールで あそんだ'],
+      ['cat', 'あそんだ'],
       ['ball', 'いけに おちた'],
-      ['turtle', 'かめが はこんだ'],
+      ['turtle', 'はこんだ'],
     ],
     feel: {
       q: 'ボールが いけに おちた とき、ねこは どんな きもち？',
@@ -247,6 +257,7 @@ const STORIES: Story[] = [
   {
     id: 'onigiri',
     title: 'はんぶんこ',
+    recap: 'いぬの おにぎりを とりが つつき、いぬは はんぶん あげました。',
     lines: [
       'いぬが こうえんで、おにぎりを たべようと しました。',
       'すると、とりが とんで きて、おにぎりを つつきました。',
@@ -262,9 +273,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['onigiri', 'おにぎりを たべようと した'],
-      ['bird', 'とりが つついた'],
-      ['dog', 'はんぶん あげた'],
+      ['onigiri', 'たべる ところ'],
+      ['bird', 'つついた'],
+      ['dog', 'わけて あげた'],
     ],
     feel: {
       q: 'おにぎりを つつかれた とき、いぬは どんな きもち？',
@@ -276,6 +287,7 @@ const STORIES: Story[] = [
   {
     id: 'jump',
     title: 'かえるの ジャンプ',
+    recap: 'かえるは れんしゅうで いしで ころび、もういちど とびこえました。',
     lines: [
       'かえるが、いけの そばで ジャンプの れんしゅうを して いました。',
       'いしを とびこえようと して、ころんで しまいました。',
@@ -290,9 +302,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['frog', 'れんしゅうを はじめた'],
-      ['rock', 'いしで ころんだ'],
-      ['frog', 'とびこえられた'],
+      ['frog', 'れんしゅう'],
+      ['rock', 'ころんだ'],
+      ['frog', 'とびこえた'],
     ],
     feel: {
       q: 'さいごに、かえるは どんな きもち？',
@@ -309,6 +321,7 @@ const STORIES: Story[] = [
   {
     id: 'apple',
     title: 'りんごの おみやげ',
+    recap: 'きつねは りんごを ひろい、ひよこに ひとつ あげました。',
     lines: [
       'きつねが やまで、りんごを みっつ ひろいました。',
       'かえりみちで、ひよこに あいました。',
@@ -323,9 +336,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['apple', 'りんごを ひろった'],
-      ['chick', 'ひよこに あった'],
-      ['fox', 'りんごを あげた'],
+      ['apple', 'ひろった'],
+      ['chick', 'であった'],
+      ['fox', 'ひとつ あげた'],
     ],
     feel: {
       q: 'りんごを もらって、ひよこは どんな きもち？',
@@ -337,6 +350,7 @@ const STORIES: Story[] = [
   {
     id: 'water',
     title: 'ぞうの みずあそび',
+    recap: 'あつい ひ、ぞうが みずを かけ、みんなで みずあそびを しました。',
     lines: [
       'あつい ひ でした。',
       'ぞうが はなで、みずを ぴゅーっと かけました。',
@@ -352,9 +366,9 @@ const STORIES: Story[] = [
       ],
     },
     events: [
-      ['p5-sun', 'あつい ひ だった'],
+      ['p5-sun', 'あつい ひ'],
       ['elephant', 'みずを かけた'],
-      ['monkey', 'みんなで あそんだ'],
+      ['monkey', 'みずあそび'],
     ],
     feel: {
       q: 'みずを かけられた とき、さるは どんな きもち？',
@@ -366,6 +380,7 @@ const STORIES: Story[] = [
   {
     id: 'bread',
     title: 'いい におい',
+    recap: 'うしが パンを やくと、いぬと ねこが きて、みんなで たべました。',
     lines: [
       'うしが パンを やきました。',
       'いい においが して、いぬと ねこが やって きました。',
@@ -381,8 +396,8 @@ const STORIES: Story[] = [
     },
     events: [
       ['bread', 'パンを やいた'],
-      ['dog', 'いぬと ねこが きた'],
-      ['cow', 'みんなで たべた'],
+      ['dog', 'やって きた'],
+      ['cow', 'たべた'],
     ],
     feel: {
       q: 'パンを たべて、みんなは どんな きもち？',
@@ -431,7 +446,7 @@ function orderItem(s: Story): OrderItem {
     id: `order:${s.id}`,
     objective: 'order',
     level: 1,
-    prompt: `おはなし「${s.title}」。${s.lines.join('')} おきた じゅんに ならべよう。`,
+    prompt: `${s.recap} おきた じゅんに ならべよう。`,
     cards: s.events.map(([il, text]) => ({ figure: ill(il), label: text })),
     ends: ['はじめ', 'おわり'],
     reverseMisconception: 'order-reverse',
@@ -440,7 +455,8 @@ function orderItem(s: Story): OrderItem {
       { order: [0, 2, 1], misconception: 'order-middle' },
     ],
     hints: ['いちばん はじめに おきた ことは なにかな。', 'おはなしの さいごは どう なったかな。'],
-    explain: `${s.events.map((e) => e[1]).join(' → ')}。`,
+    // 札の文は 動きだけで 短いので、解説は だれが なにを したかが わかる あらすじで いう（起きた順）
+    explain: s.recap,
     identity: `order:${s.id}`,
   };
 }

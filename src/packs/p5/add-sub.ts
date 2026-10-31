@@ -58,7 +58,8 @@ function opts(key: string, t: Task): ChoiceOption[] {
   return mix(key, out);
 }
 
-function picture(t: Task, thing: string): Figure {
+/** withEq: 絵の下に「3 ＋ 5 ＝ ？」を付ける（問題の図）。解説の図は式を解説の文に書くので付けない（板に入らなくなる） */
+function picture(t: Task, thing: string, withEq = true): Figure {
   const blocks = t.rep === 'blocks';
   const g = (n: number, muted = false): Figure =>
     blocks
@@ -68,6 +69,7 @@ function picture(t: Task, thing: string): Figure {
     t.op === '+'
       ? { kind: 'row', items: [g(t.a), { kind: 'text', text: '＋', size: 'l' }, g(t.b)], gap: 3 }
       : { kind: 'row', items: [...(t.a - t.b > 0 ? [g(t.a - t.b)] : []), g(t.b, true)], gap: 4 };
+  if (!withEq) return row;
   return {
     kind: 'column',
     items: [row, { kind: 'text', text: `${t.a} ${sym(t.op)} ${t.b} ＝ ？`, size: 'l' }],
@@ -123,7 +125,7 @@ function make(t: Task, level: number, rng: Rng): Item {
             : `${t.a}から ${t.b}つ もどって かぞえよう。`,
         ],
         explain,
-        explainFigure: picture({ ...t, rep: 'blocks' }, th.id),
+        explainFigure: picture({ ...t, rep: 'blocks' }, th.id, false),
         identity: id,
         options: opts(id, t),
       };
@@ -145,7 +147,7 @@ function make(t: Task, level: number, rng: Rng): Item {
           'ゆびを つかって かぞえて みよう。',
         ],
         explain,
-        explainFigure: picture({ ...t, rep: 'pic' }, th.id),
+        explainFigure: picture({ ...t, rep: 'pic' }, th.id, false),
         identity: id,
         options: opts(id, t),
       };

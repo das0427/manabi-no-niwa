@@ -247,6 +247,7 @@ function reasonItem(w: Why): Item {
 }
 
 const TELL_H2 = 'かいたら、どうして そう おもったか、おうちの ひとに おはなし しよう。';
+const TELL_REASON_H2 = 'えらんだら、どうして そう おもったか、おうちの ひとに おはなし しよう。';
 
 /** つづきを かく（練習） */
 const DRAWS: [id: string, figure: string, prompt: string][] = [
@@ -303,10 +304,9 @@ function tellItem([id, figure, prompt, reasons]: (typeof TELLS)[number]): Explai
     alt: true,
     prompt,
     figure: ill(figure),
-    canvas: { aspect: 4 / 3 },
-    reasons: [...reasons, 'ほかの わけ（えで かこう）'].map((label) => ({ label })),
+    reasons: [...reasons, 'ほかの わけ'].map((label) => ({ label })),
     require: { reason: true, drawing: false },
-    hints: ['かおを よく みて、どんな きもちか かんがえよう。', TELL_H2],
+    hints: ['かおを よく みて、どんな きもちか かんがえよう。', TELL_REASON_H2],
     explain: 'わけは いろいろ あるね。じぶんの かんがえを おうちの ひとに おはなし しよう。',
     identity: id,
   };

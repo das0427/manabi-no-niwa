@@ -10,7 +10,7 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { FillItem } from '../../engines/fill/fill';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { blocks, expr, pickFrom, REVISED } from './util';
+import { expr, pickFrom, REVISED, tenBars } from './util';
 
 type Obj = 'genka' | 'gengen' | 'shiki' | 'kyuuzan' | 'kyuusa' | 'erabu';
 
@@ -270,7 +270,7 @@ export function generateSubBorrow(level: number, rng: Rng, index: number): Item 
         a,
         b,
         `${a} − ${b} を、10から ひいて かんがえよう。`,
-        { kind: 'column', items: [expr(`${a} − ${b} ＝ {{}}`), blocks(a)], gap: 2 },
+        { kind: 'row', items: [expr(`${a} − ${b} ＝ {{}}`), tenBars(a)], gap: 4 },
         false,
         [
           `ばらの ${u}から ${b}は ひけないね。10の まとまりから ひこう。`,
@@ -286,7 +286,7 @@ export function generateSubBorrow(level: number, rng: Rng, index: number): Item 
         a,
         b,
         `${a} − ${b} を、さきに ばらの ${u}を ひいて かんがえよう。`,
-        { kind: 'column', items: [expr(`${a} − ${b} ＝ {{}}`), blocks(a)], gap: 2 },
+        { kind: 'row', items: [expr(`${a} − ${b} ＝ {{}}`), tenBars(a)], gap: 4 },
         false,
         [
           `ひく かず ${b}を ${u}と ${b - u}に わけよう。`,
@@ -437,7 +437,7 @@ export const subBorrow: UnitSpec = {
   intro: [
     {
       text: '13この ブロックから 8こ とります。ばらの 3こからは 8こ とれません。',
-      figure: blocks(13),
+      figure: tenBars(13),
     },
     {
       text: '10の まとまりから 8こ とると、のこりは 2こ。',

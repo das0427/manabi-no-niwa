@@ -7,6 +7,10 @@
  *
  * 同一性キー: 式（ひき算は順序が意味を持つので a−b のまま）。文章題は「場面 × 式」。
  * 定義域: a は 10〜99、b は 1〜(a−1)。数千通り。
+ *
+ * 解説の板（22u まで）には図を置かない（第4回）: 筆算の表（見出し＋3行で約 22u）を explainFigure にすると、
+ * 文2〜3行と合わせて板に 3.7 行ぶん入らなかった。別例（ブロック・式）の問題の図は解説でもそのまま見え、
+ * 位ごとの計算は解説の文に書いてある。
  */
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
@@ -192,7 +196,6 @@ function calcItem(
       figure: blocks ? blocksFig(a, b) : { kind: 'text', text: `${a} − ${b} ＝ {{}}`, size: 'xl' },
       hints: hints(a, b),
       explain: explain(a, b),
-      explainFigure: columnFigure(a, b, '−', String(d).length),
       identity: key(a, b),
       alt: true,
       fields: [{ answer: { kind: 'int', value: d } }],
@@ -244,7 +247,6 @@ function wordItem(level: number, a: number, b: number, alt: boolean, rng: Rng): 
       hints(a, b)[2]!,
     ],
     explain: `しきは ${a} − ${b} ＝ ${d}。こたえは ${d}${sc.unit} です。`,
-    explainFigure: columnFigure(a, b, '−', String(d).length),
     identity: `${sc.id}:${key(a, b)}`,
     alt,
     fields: [{ label: sc.unit, answer: { kind: 'int', value: d } }],

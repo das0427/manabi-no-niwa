@@ -16,7 +16,7 @@ type Seg = 'r' | 'd' | 'c30' | 'c50' | 'c65';
 
 const R = 80;
 /** 円と、太い線（半径・直径・中心を通らない線）。rot は回転（度。見た目だけ） */
-function circleFig(seg: Seg, rot: number): Figure {
+function circleFig(seg: Seg, rot: number, w?: number): Figure {
   const rad = (rot * Math.PI) / 180;
   const rp = (x: number, y: number) => {
     const X = x * Math.cos(rad) - y * Math.sin(rad) + 100;
@@ -37,7 +37,7 @@ function circleFig(seg: Seg, rot: number): Figure {
   return {
     kind: 'svg',
     label: '円《えん》と 線《せん》',
-    markup: `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="${R}" fill="var(--paper)" stroke="var(--ink)" stroke-width="3.5"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--berry)" stroke-width="7" stroke-linecap="round"/><circle cx="100" cy="100" r="5" fill="var(--ink)"/></svg>`,
+    markup: `<svg viewBox="0 0 200 200"${w ? ` style="width:calc(var(--u) * ${w})"` : ''} xmlns="http://www.w3.org/2000/svg"><circle cx="100" cy="100" r="${R}" fill="var(--paper)" stroke="var(--ink)" stroke-width="3.5"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--berry)" stroke-width="7" stroke-linecap="round"/><circle cx="100" cy="100" r="5" fill="var(--ink)"/></svg>`,
   };
 }
 
@@ -74,10 +74,13 @@ function parts(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberItem {
       alt: true,
       layout: 'grid',
       options: [
-        { figure: circleFig(want, rot), correct: true },
-        { figure: circleFig(want === 'd' ? 'r' : 'd', rot), misconception: 'radius-diameter-swap' },
-        { figure: circleFig(chords[0], rot + 60), misconception: 'chord-as-diameter' },
-        { figure: circleFig(chords[1], rot + 120), misconception: 'chord-as-diameter' },
+        { figure: circleFig(want, rot, 9.5), correct: true },
+        {
+          figure: circleFig(want === 'd' ? 'r' : 'd', rot, 9.5),
+          misconception: 'radius-diameter-swap',
+        },
+        { figure: circleFig(chords[0], rot + 60, 9.5), misconception: 'chord-as-diameter' },
+        { figure: circleFig(chords[1], rot + 120, 9.5), misconception: 'chord-as-diameter' },
       ],
     };
   }

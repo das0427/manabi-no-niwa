@@ -222,12 +222,10 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
   const figure: Figure | undefined = alt
     ? undefined
     : {
+        // 横長の表（種類を横に並べる）。たてに 並べると 7 行になり、図の段（約 14u）に入らない
         kind: 'table',
-        header: ['種類', '割合（%）'],
-        rows: [
-          ...d.labels.map((l, j) => [l, j === i ? '？' : String(d.values[j])]),
-          ['合計', '100'],
-        ],
+        header: ['', ...d.labels, '合計'],
+        rows: [['割合（%）', ...d.labels.map((_, j) => (j === i ? '？' : String(d.values[j]))), '100']],
       };
   const listText = d.labels
     .map((l, j) => (j === i ? null : `${l} ${d.values[j]}%`))

@@ -23,7 +23,11 @@ const S = (x: D) => dec(x.v, x.p);
 const at = (x: D, P: number) => x.v * 10 ** (P - x.p);
 
 /** 筆算の形の表（小数点を そろえる） */
-function columnFig(a: D, b: D, op: '＋' | '−'): Figure {
+/**
+ * 筆算の 形の 図。names=false は 位の名前の 見出しを 付けず、1つ目の 数を 見出しの 行に 置く（2 行）。
+ * 解説の 板（高さ 22u）に 文と いっしょに 入れるため（見出しの [[1/10]]の位 は 2 段の 分数で 高い）。
+ */
+function columnFig(a: D, b: D, op: '＋' | '−', names = true): Figure {
   const P = Math.max(a.p, b.p);
   const sa = S(a).split('.');
   const sb = S(b).split('.');
@@ -39,6 +43,7 @@ function columnFig(a: D, b: D, op: '＋' | '−'): Figure {
       .split('')
       .map((c) => (c === ' ' ? '' : c)),
   ];
+  if (!names) return { kind: 'table', header: ['', ...row(sa)], rows: [[op, ...row(sb)]] };
   const fracNames = ['[[1/10]]の位', '[[1/100]]の位', '[[1/1000]]の位'];
   const intNames = ['一の位', '十の位', '百の位'];
   return {
@@ -145,8 +150,10 @@ function calc(obj: 'add' | 'sub' | 'align', level: number, rng: Rng, alt: boolea
       `${S(a)}は 0.${'0'.repeat(P - 1)}1が ${at(a, P)}こ、${S(b)}は ${at(b, P)}こ。`,
       `${at(a, P)} ${sym} ${at(b, P)}を 計算して、0.${'0'.repeat(P - 1)}1が いくつ分か 考えよう。`,
     ],
-    explain: `0.${'0'.repeat(P - 1)}1が ${at(a, P)} ${sym} ${at(b, P)} ＝ ${w.ans}こ。${S(a)} ${sym} ${S(b)} ＝ ${dec(w.ans, P)}です。小数点を そろえて 計算します。`,
-    explainFigure: columnFig(a, b, sym),
+    // 小数点を そろえる ことは ヒント①と 筆算の図に ある。解説は 短く する（板に 文と 図が 入る）
+    explain: `0.${'0'.repeat(P - 1)}1が ${at(a, P)} ${sym} ${at(b, P)} ＝ ${w.ans}こ。${S(a)} ${sym} ${S(b)} ＝ ${dec(w.ans, P)}です。`,
+    // 筆算の 形が 問題に 出ている ときは、解説で 同じ 図を くり返さない（解説の 板が 低くなり、問題の 図が 入る）
+    explainFigure: alt ? undefined : columnFig(a, b, sym, false),
     identity: key(a, b, op),
     alt,
     fields: [{ answer: w.answers[0]! }],
@@ -386,7 +393,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
       `0.${'0'.repeat(w.P - 1)}1の いくつ分で 考えると ${at(a, w.P)} ${sym} ${at(b, w.P)}。`,
     ],
     explain: `${S(a)} ${sym} ${S(b)} ＝ ${dec(w.ans, w.P)}。答えは ${dec(w.ans, w.P)}${sc.unit}です。`,
-    explainFigure: columnFig(a, b, sym),
+    explainFigure: columnFig(a, b, sym, false),
     identity: `story:${sc.id}:${key(a, b, sc.op)}`,
     alt,
     fields: [{ label: sc.unit, answer: w.answers[0]! }],

@@ -19,14 +19,47 @@ const DOMAIN: [number, number, number, number][] = [];
 for (let d = 2; d <= 9; d++)
   for (let q = 1; q <= 9; q++) for (let r = 1; r < d; r++) DOMAIN.push([d * q + r, d, q, r]);
 
-const groups = (d: number, q: number, r: number): Figure => ({
-  kind: 'row',
-  items: [
-    ...Array.from({ length: q }, () => ({ kind: 'illust', id: 'ball', count: d }) as Figure),
-    { kind: 'illust', id: 'ball', count: r, tone: 'muted' },
-  ],
-  gap: 10,
-});
+/**
+ * 「d こずつ q つ ＋ あまり r こ」の図（SVG）。1つのまとまりを 1つの枠にして、枠の中に ● を
+ * 5つずつ（6つ以上は 2段）ならべる。枠は 5つずつ 2段まで。ボールの絵を d × q 個ならべると
+ * 横に 139u になった（text-layout の第4回）ので、まとまりの枠で小さく描く（文字は描かない）。
+ * あまりの枠は点線・● は白ぬき（色だけで区別しない）。
+ */
+const groups = (d: number, q: number, r: number): Figure => {
+  const P = 3; // ● の間隔
+  const GAP = 2.6; // 枠と枠の間隔
+  const box = (n: number) => {
+    const rows = n > 5 ? 2 : 1;
+    const cols = Math.ceil(n / rows);
+    return { cols, w: cols * P + 1, h: rows * P + 1 };
+  };
+  const b = box(d);
+  const total = q + (r > 0 ? 1 : 0);
+  const perRow = total <= 5 ? total : Math.ceil(total / 2);
+  const rowsN = Math.ceil(total / perRow);
+  const W = perRow * b.w + (perRow - 1) * GAP;
+  const H = rowsN * b.h + (rowsN - 1) * GAP;
+  let body = '';
+  for (let g = 0; g < total; g++) {
+    const rem = g >= q;
+    const x0 = (g % perRow) * (b.w + GAP);
+    const y0 = Math.floor(g / perRow) * (b.h + GAP);
+    body += `<rect x="${x0}" y="${y0}" width="${b.w}" height="${b.h}" rx="0.9" fill="var(--paper)" stroke="var(--ink)" stroke-width="0.35"${rem ? ' stroke-dasharray="1 0.7"' : ''}/>`;
+    for (let k = 0; k < (rem ? r : d); k++) {
+      const cx = x0 + 0.5 + P / 2 + (k % b.cols) * P;
+      const cy = y0 + 0.5 + P / 2 + Math.floor(k / b.cols) * P;
+      body += `<circle cx="${cx}" cy="${cy}" r="1.15" fill="${rem ? 'var(--paper)' : 'var(--sun)'}" stroke="var(--ink)" stroke-width="0.35"/>`;
+    }
+  }
+  // 1 つの単位を何 u にするか（横 56u・縦 12u に入り、大きくても 1.4u まで）
+  const k = Math.min(1.4, 56 / W, 12 / H);
+  return {
+    kind: 'svg',
+    // 答え（まとまりの数・あまり）を 読み上げで 言わないよう、まとめ方だけを書く
+    label: `ボールを ${d}こずつ まとめた え`,
+    markup: `<svg viewBox="-0.3 -0.3 ${W + 0.6} ${H + 0.6}" style="width:calc(var(--u) * ${((W + 0.6) * k).toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+  };
+};
 
 const steps = (D: number, d: number, q: number, r: number) =>
   `${d}の だんの 九九《くく》で、${D}を こえない いちばん 大《おお》きい 答《こた》えは ${d} × ${q} ＝ ${d * q}。${D} − ${d * q} ＝ ${r}。`;
@@ -52,7 +85,7 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
       : '計算《けいさん》しよう。しょうと あまりを 書《か》こう。',
     figure: alt
       ? groups(d, q, r)
-      : { kind: 'text', text: `${D} ÷ ${d} ＝ {{}} あまり {{}}`, size: 'xl' },
+      : { kind: 'text', text: `${D} ÷ ${d} ＝ {{}} あまり {{}}`, size: 'l' },
     hints: [
       `わる数《かず》の ${d}の だんの 九九《くく》を つかおう。`,
       `${d} × □ が ${D}を こえない いちばん 大《おお》きい □を さがそう。`,

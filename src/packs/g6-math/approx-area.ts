@@ -9,7 +9,7 @@
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
 import type { GeometryItem } from '../../engines/geometry/geometry';
 import type { Figure } from '../../engines/figure/types';
-import { finishUnit, opts, REVISED, STROKE, svg, svgText } from './util';
+import { finishUnit, opts, r1, REVISED, STROKE, svg, svgText } from './util';
 
 type ObjId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H';
 type Overlay = 'fit' | 'big' | 'small' | 'wrong' | 'none';
@@ -45,8 +45,18 @@ interface Obj {
   /** 輪郭を 囲む 長方形（x0, y0, x1, y1） */
   bbox: [number, number, number, number];
   wrong: Draw;
-  /** 長さの 文字と 補助線（ds は 単位つきの 文字の 配列） */
-  dims: (ds: string[]) => string;
+  /** 長さの 補助線（lines）と 文字（labels）。ds は 単位つきの 文字の 配列 */
+  dims: (ds: string[]) => Dims;
+}
+
+/**
+ * 長さの 文字: [x, y, 文字, anchor, dx, dy]。x・y は 形の 座標（縮めた 形の 上の 位置）、dx・dy は 縮めたあとの 画面の 座標での ずれ。
+ * 文字は 形の 縮め（SHRINK）の 外に 置く（字は 縮めない）。
+ */
+type Lab = [number, number, string, ('start' | 'middle')?, number?, number?];
+interface Dims {
+  lines: string;
+  labels: Lab[];
 }
 
 export const OBJS: Record<ObjId, Obj> = {
@@ -58,11 +68,14 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: polygon('110,40 210,40 260,190 60,190'),
     bbox: [58, 34, 262, 196],
     wrong: circle(160, 115, 70),
-    dims: (d) =>
-      svgText(160, 26, d[0]!, 15) +
-      svgText(160, 208, d[1]!, 15) +
-      line(160, 40, 160, 190) +
-      svgText(168, 115, d[2]!, 15, 'start'),
+    dims: (d) => ({
+      lines: line(160, 40, 160, 190),
+      labels: [
+        [160, 40, d[0]!, 'middle', 0, -21],
+        [160, 190, d[1]!, 'middle', 0, 21],
+        [160, 115, d[2]!, 'start', 6, 0],
+      ],
+    }),
   },
   B: {
     name: '葉',
@@ -73,11 +86,13 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: polygon('160,35 205,110 160,185 115,110'),
     bbox: [122, 32, 198, 188],
     wrong: polygon('160,35 210,188 110,188'),
-    dims: (d) =>
-      line(115, 110, 205, 110) +
-      line(160, 35, 160, 185) +
-      svgText(184, 100, d[0]!, 15) +
-      svgText(168, 60, d[1]!, 15, 'start'),
+    dims: (d) => ({
+      lines: line(115, 110, 205, 110) + line(160, 35, 160, 185),
+      labels: [
+        [205, 110, d[0]!, 'start', 8, 0],
+        [160, 35, d[1]!, 'start', 8, -6],
+      ],
+    }),
   },
   C: {
     name: '広場',
@@ -87,10 +102,10 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: circle(160, 110, 80),
     bbox: [78, 28, 242, 192],
     wrong: polygon('160,30 240,190 80,190'),
-    dims: (d) =>
-      `<circle cx="160" cy="110" r="3" fill="var(--ink)"/>` +
-      line(160, 110, 240, 110) +
-      svgText(200, 98, d[0]!, 15),
+    dims: (d) => ({
+      lines: `<circle cx="160" cy="110" r="3" fill="var(--ink)"/>` + line(160, 110, 240, 110),
+      labels: [[200, 110, d[0]!, 'middle', 0, -14]],
+    }),
   },
   D: {
     name: '公園',
@@ -99,7 +114,13 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: rectD(55, 50, 265, 170),
     bbox: [50, 46, 268, 176],
     wrong: polygon('160,48 266,172 54,172'),
-    dims: (d) => svgText(160, 192, d[0]!, 15) + svgText(280, 110, d[1]!, 15, 'start'),
+    dims: (d) => ({
+      lines: '',
+      labels: [
+        [160, 176, d[0]!, 'middle', 0, 21],
+        [268, 110, d[1]!, 'start', 8, 0],
+      ],
+    }),
   },
   E: {
     name: '畑',
@@ -108,11 +129,14 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: polygon('90,50 290,50 230,170 30,170'),
     bbox: [32, 46, 286, 172],
     wrong: circle(160, 110, 60),
-    dims: (d) =>
-      svgText(130, 188, d[0]!, 15) +
-      line(90, 50, 90, 170) +
-      svgText(98, 110, d[1]!, 15, 'start') +
-      (d[2] ? svgText(268, 108, d[2], 15, 'start') : ''),
+    dims: (d) => ({
+      lines: line(90, 50, 90, 170),
+      labels: [
+        [130, 172, d[0]!, 'middle', 0, 21],
+        [90, 110, d[1]!, 'start', 6, 0],
+        ...(d[2] ? [[262, 108, d[2], 'start', 10, 0] as Lab] : []),
+      ],
+    }),
   },
   F: {
     name: '島',
@@ -121,10 +145,13 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: polygon('170,35 260,185 60,185'),
     bbox: [58, 34, 262, 196],
     wrong: circle(160, 120, 70),
-    dims: (d) =>
-      svgText(160, 204, d[0]!, 15) +
-      line(170, 35, 170, 185) +
-      svgText(178, 120, d[1]!, 15, 'start'),
+    dims: (d) => ({
+      lines: line(170, 35, 170, 185),
+      labels: [
+        [160, 190, d[0]!, 'middle', 0, 21],
+        [170, 150, d[1]!, 'start', 6, 0],
+      ],
+    }),
   },
   G: {
     name: 'スケートリンク',
@@ -135,11 +162,13 @@ export const OBJS: Record<ObjId, Obj> = {
       `<path d="M 100 70 L 220 70 A 40 40 0 0 1 220 150 L 100 150 A 40 40 0 0 1 100 70 Z" ${st}/>`,
     bbox: [58, 64, 264, 156],
     wrong: polygon('160,60 262,156 58,156'),
-    dims: (d) =>
-      line(100, 70, 100, 150) +
-      line(220, 70, 220, 150) +
-      svgText(160, 170, d[0]!, 15) +
-      svgText(108, 110, d[1]!, 15, 'start'),
+    dims: (d) => ({
+      lines: line(100, 70, 100, 150) + line(220, 70, 220, 150),
+      labels: [
+        [160, 154, d[0]!, 'middle', 0, 21],
+        [100, 110, d[1]!, 'start', 6, 0],
+      ],
+    }),
   },
   H: {
     name: '湖',
@@ -149,7 +178,10 @@ export const OBJS: Record<ObjId, Obj> = {
     fit: circle(160, 110, 80),
     bbox: [76, 26, 246, 194],
     wrong: polygon('160,30 240,190 80,190'),
-    dims: (d) => line(80, 110, 240, 110) + svgText(160, 98, d[0]!, 15),
+    dims: (d) => ({
+      lines: line(80, 110, 240, 110),
+      labels: [[160, 110, d[0]!, 'middle', 0, -14]],
+    }),
   },
 };
 
@@ -185,15 +217,24 @@ function overlayOf(o: Obj, kind: Overlay): string {
   }
 }
 
-/** 物の 図（輪郭、重ねる 形、長さ）。dims: null なら 長さを 描かない */
+/** 長さの 文字を 入れる 図で、形を 縮める 割合（字を 最小に 保ちながら、図の 段の 高さに 入れる ため） */
+const SHRINK = 0.8;
+/** 長さの 文字を 入れる 図の 画布（x0, y0, x1, y1。縮めた 形と 字が 入る 大きさ） */
+const CANVAS = [28, 16, 292, 212] as const;
+/** 長さの 文字の 大きさ（viewBox の 単位） */
+const DIM_FS = 22;
+
+/**
+ * 物の 図（輪郭、重ねる 形、長さ）。dims: null なら 長さを 描かない。
+ * 長さを 描く ときは、形と 補助線を 縮めて（SHRINK）、字は 縮めずに 形の まわりに 置く。viewBox は 形と 字の 外接に 合わせる。
+ */
 function objFig(
   id: ObjId,
   opt: { overlay?: Overlay; dims?: string[] | null; label?: string } = {},
 ): Figure {
   const o = OBJS[id];
   const overlay = opt.overlay ?? 'fit';
-  let body = outlineOf(o) + overlayOf(o, overlay);
-  if (opt.dims) body += o.dims(opt.dims);
+  const shapes = outlineOf(o) + overlayOf(o, overlay);
   const label =
     opt.label ??
     (overlay === 'fit'
@@ -201,7 +242,62 @@ function objFig(
       : overlay === 'none'
         ? `${o.name}の 形`
         : `${o.name}の 形に 重ねた 図形`);
-  return svg(320, 220, body, label);
+  const [bx0, by0, bx1, by1] = o.bbox;
+  if (!opt.dims) {
+    // 重ねる 形が 輪郭の まわりに はみ出す ぶん（big: 左右 20・上下 15）を 見込む。選択肢の どの 図も 同じ 大きさに する
+    const pad = 6;
+    let x0 = clamp(bx0 - 20, 0, 320) - pad;
+    const y0 = clamp(by0 - 15, 0, 220) - pad;
+    let x1 = clamp(bx1 + 20, 0, 320) + pad;
+    const y1 = clamp(by1 + 15, 0, 220) + pad;
+    // 細長い 形（葉など）は 選択肢の 札の 中で 縦に のびて 作業領域に 入らない。横に 余白を 足して、縦横の 比を 0.9 以上にする
+    const minW = (y1 - y0) * 0.9;
+    if (x1 - x0 < minW) {
+      const d = (minW - (x1 - x0)) / 2;
+      x0 -= d;
+      x1 += d;
+    }
+    return svg(
+      r1(x1 - x0),
+      r1(y1 - y0),
+      `<g transform="translate(${r1(-x0)} ${r1(-y0)})">${shapes}</g>`,
+      label,
+    );
+  }
+  const { lines, labels } = o.dims(opt.dims);
+  const k = SHRINK;
+  const mx = (x: number) => 160 + (x - 160) * k;
+  const my = (y: number) => 110 + (y - 110) * k;
+  // どの 物の 図も 同じ 大きさの 画布に する（2つ 並べても、同じ 縮尺で 見える）。字が はみ出す ときだけ 広げる
+  let box: [number, number, number, number] = [
+    Math.min(CANVAS[0], mx(bx0) - 4),
+    Math.min(CANVAS[1], my(by0) - 4),
+    Math.max(CANVAS[2], mx(bx1) + 4),
+    Math.max(CANVAS[3], my(by1) + 4),
+  ];
+  let text = '';
+  for (const [x, y, t, anchor = 'middle', dx = 0, dy = 0] of labels) {
+    const tx = mx(x) + dx;
+    const ty = my(y) + dy;
+    text += svgText(tx, ty, t, DIM_FS, anchor);
+    // 字の 外接（1字 ＝ 字の 大きさの 0.62）
+    const tw = t.length * DIM_FS * 0.62;
+    const x0 = anchor === 'start' ? tx : tx - tw / 2;
+    const x1 = anchor === 'start' ? tx + tw : tx + tw / 2;
+    box = [
+      Math.min(box[0], x0 - 2),
+      Math.min(box[1], ty - DIM_FS * 0.6),
+      Math.max(box[2], x1 + 2),
+      Math.max(box[3], ty + DIM_FS * 0.6),
+    ];
+  }
+  const w = box[2] - box[0];
+  const h = box[3] - box[1];
+  const body =
+    `<g transform="translate(${r1(-box[0])} ${r1(-box[1])})">` +
+    `<g transform="translate(160 110) scale(${k}) translate(-160 -110)">${shapes}${lines}</g>` +
+    `${text}</g>`;
+  return svg(r1(w), r1(h), body, label);
 }
 
 /** 2つの 形 A・B を 重ねた 図（compare の c5〜c8） */
@@ -1013,8 +1109,8 @@ const compareItems: ChoiceItem[] = [
       objFig('B', { overlay: 'fit', dims: ['6cm', '10cm'] }),
       objFig('F', { overlay: 'fit', dims: ['12cm', '9cm'] }),
     ),
-    options: opts('三角形に 近い 葉', [
-      ['ひし形に 近い 葉', 'half-forgot'],
+    options: opts('三角形に 近い 葉の ほうが 広い', [
+      ['ひし形に 近い 葉の ほうが 広い', 'half-forgot'],
       ['同じ くらい', 'same-approx'],
     ]),
   },

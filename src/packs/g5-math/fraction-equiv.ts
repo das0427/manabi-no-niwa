@@ -15,6 +15,7 @@ import {
   lcm,
   pick,
   pickObj,
+  r1,
   REVISED,
   STROKE,
   svg,
@@ -30,16 +31,36 @@ const F = (n: number, d: number) => `[[${n}/${d}]]`;
 const PROPER: [number, number][] = [];
 for (let b = 2; b <= 12; b++) for (let a = 1; a < b; a++) if (gcd(a, b) === 1) PROPER.push([a, b]);
 
-/** 分数の形の図（□は 空欄） */
-function fracBox(top: string | null, bottom: string | null): Figure {
-  const part = (s: string | null, y: number) =>
-    s === null
-      ? `<rect x="14" y="${y - 18}" width="36" height="36" rx="4" fill="none" ${STROKE}/>`
-      : svgText(32, y, s, 26);
+/**
+ * 「n/d ＝ □/d'」の1つの図（□は 空欄）。左の分数も SVG で描く。
+ * 式（大きな文字）と 小さな SVG を 横に並べると、SVG が 23u の幅の下限で縦に伸びて 図の段に入らなかった
+ * （text-layout-fixes.md 第4回）ので、1つの横長の SVG にする。字は 26（23u の幅で 3.7u）。
+ */
+function fracEq(given: [number, number], top: number | null, bottom: number | null): Figure {
+  const FS = 26;
+  const cw = (s: string) => Math.ceil(s.length * 0.56 * FS);
+  const stack = (cx: number, t: number | null, b: number | null) => {
+    const w = Math.max(48, cw(String(t ?? '')) + 16, cw(String(b ?? '')) + 16);
+    const part = (v: number | null, y: number) =>
+      v === null
+        ? `<rect x="${cx - 18}" y="${y - 17}" width="36" height="34" rx="4" fill="none" ${STROKE}/>`
+        : svgText(cx, y, String(v), FS);
+    return {
+      w,
+      body: `${part(t, 22)}<line x1="${cx - w / 2}" y1="42" x2="${cx + w / 2}" y2="42" ${STROKE}/>${part(b, 62)}`,
+    };
+  };
+  const w1 = Math.max(48, cw(String(given[0])) + 16, cw(String(given[1])) + 16);
+  const w2 = Math.max(48, cw(String(top ?? 0)) + 16, cw(String(bottom ?? 0)) + 16);
+  const x1 = 8 + w1 / 2;
+  const xEq = 8 + w1 + 14 + 8;
+  const x2 = xEq + 8 + 14 + w2 / 2;
+  const left = stack(x1, given[0], given[1]);
+  const right = stack(x2, top, bottom);
   return svg(
-    64,
-    100,
-    `${part(top, 26)}<line x1="6" y1="50" x2="58" y2="50" ${STROKE}/>${part(bottom, 76)}`,
+    r1(x2 + w2 / 2 + 8),
+    84,
+    `${left.body}${svgText(xEq, 42, '=', FS)}${right.body}`,
     '分数の くうらん',
   );
 }
@@ -98,11 +119,11 @@ function equal(level: number, rng: Rng, alt: boolean): NumberItem {
   // up: a/b = ?/B（または A/?）、down: A/B = ?/b（または a/?）
   const [given, ansV, fig] = down
     ? askNum
-      ? [F(A, B), a, fracBox(null, String(b))]
-      : [F(A, B), b, fracBox(String(a), null)]
+      ? [F(A, B), a, fracEq([A, B], null, b)]
+      : [F(A, B), b, fracEq([A, B], a, null)]
     : askNum
-      ? [F(a, b), A, fracBox(null, String(B))]
-      : [F(a, b), B, fracBox(String(A), null)];
+      ? [F(a, b), A, fracEq([a, b], null, B)]
+      : [F(a, b), B, fracEq([a, b], A, null)];
   const answers = [{ kind: 'int' as const, value: ansV }];
   const known = askNum
     ? down
@@ -118,7 +139,7 @@ function equal(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'equal',
     level,
     prompt: `${given}と 等しい 分数に なるように、□に 入る 数を 答えましょう。`,
-    figure: { kind: 'row', items: [expr(`${given} ＝`), fig], gap: 8 },
+    figure: fig,
     hints: [
       '分母と 分子に 同じ 数を かけても、同じ 数で わっても、分数の 大きさは 変わらないよ。',
       `${known} するには、${down ? `${m}で わる` : `${m}を かける`}ね。`,

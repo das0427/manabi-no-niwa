@@ -100,15 +100,23 @@ const NOT_NETS = HEXES.filter((c) => !foldNet(c));
 const netKey = (c: Cell[]) => c.map((p) => p.join(',')).join(' ');
 
 function netFig(cells: Cell[], numbers: boolean, mark?: number): Figure {
-  const s = 34;
+  // 番号つき: 字 20（図を 15u 前後に 収める）。番号なし（選択肢の 4つの 図）: 字が 無いので 幅を 書いて 1 ますを 2.6u に する
+  // （幅を 書かないと 23u に なり、2×2 の 格子で 作業領域に 入らない）
+  const s = numbers ? 30 : 34;
   const w = Math.max(...cells.map((c) => c[0])) + 1;
   const h = Math.max(...cells.map((c) => c[1])) + 1;
   let body = '';
   cells.forEach(([x, y], i) => {
     body += `<rect x="${4 + x * s}" y="${4 + y * s}" width="${s}" height="${s}" fill="${i === mark ? 'var(--sun)' : 'var(--white)'}" ${STROKE}/>`;
-    if (numbers) body += svgText(4 + x * s + s / 2, 4 + y * s + s / 2, String(i + 1), 16);
+    if (numbers) body += svgText(4 + x * s + s / 2, 4 + y * s + s / 2, String(i + 1), 20);
   });
-  return svg(w * s + 8, h * s + 8, body, '展開図');
+  if (numbers) return svg(w * s + 8, h * s + 8, body, '展開図');
+  const wu = ((w * s + 8) * 2.6) / 34;
+  return {
+    kind: 'svg',
+    label: '展開図',
+    markup: `<svg viewBox="0 0 ${w * s + 8} ${h * s + 8}" style="width:calc(var(--u) * ${wu.toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+  };
 }
 
 /** 展開図: 向かい合う 面（alt: 立方体の 展開図を 選ぶ） */
@@ -130,7 +138,7 @@ function net(level: number, rng: Rng, alt: boolean): ChoiceItem {
       explain: '組み立てた ときに 6つの 面が 重ならずに 立方体に なる ものが 展開図です。',
       identity: `net-pick:${netKey(right)}:${wrongs.map(netKey).sort().join('|')}`,
       alt: true,
-      layout: 'grid',
+      layout: 'row',
       options: [
         { figure: netFig(right, false), correct: true },
         ...wrongs.map((c) => ({ figure: netFig(c, false), misconception: 'net-overlap' })),

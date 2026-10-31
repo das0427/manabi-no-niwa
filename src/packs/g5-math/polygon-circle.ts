@@ -38,11 +38,14 @@ const NAME: Record<number, string> = {
   12: '正十二角形',
 };
 
-/** 円と、中心から 頂点へ 線を ひいた 正多角形 */
+/**
+ * 円と、中心から 頂点へ 線を ひいた 正多角形。
+ * 160 × 148 を 13u の幅で描く（字 22 → 1.79u、高さ 12u）。23u の幅の下限で描くと 21u になり、図の段に入らない
+ */
 function regFig(n: number, mark: string): Figure {
-  const R = 80;
-  const cx = 110;
-  const cy = 100;
+  const R = 66;
+  const cx = 80;
+  const cy = 74;
   const pts = Array.from({ length: n }, (_, i) => {
     const t = -Math.PI / 2 + (2 * Math.PI * i) / n;
     return [r1(cx + R * Math.cos(t)), r1(cy + R * Math.sin(t))];
@@ -52,23 +55,25 @@ function regFig(n: number, mark: string): Figure {
   for (const p of pts)
     body += `<line x1="${cx}" y1="${cy}" x2="${p[0]}" y2="${p[1]}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
   const t = -Math.PI / 2 + Math.PI / n;
-  body += svgText(r1(cx + 24 * Math.cos(t)), r1(cy + 24 * Math.sin(t)), mark, 14);
-  return svg(220, 200, body, `円の 中に かいた ${NAME[n] ?? '正多角形'}`);
+  // 字は、となりあう 半径の 間（くさび）の 中に 置く。くさびが せまい（n が 大きい）ほど 中心から はなし、辺の 内がわに 入る 位置までに する
+  const rm = Math.min(50, R * Math.cos(Math.PI / n) - 19);
+  body += svgText(r1(cx + rm * Math.cos(t)), r1(cy + rm * Math.sin(t)), mark, 22);
+  return svg(160, 148, body, `円の 中に かいた ${NAME[n] ?? '正多角形'}`, 13);
 }
 
 /** 円の図（直径か半径の 線と 長さ） */
 function circleFig(len: string, kind: 'd' | 'r'): Figure {
-  const cx = 100;
-  const cy = 90;
-  const R = 70;
+  const cx = 80;
+  const cy = 70;
+  const R = 62;
   let body = `<circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--sky)" fill-opacity="0.3" ${STROKE}/>`;
   body += `<circle cx="${cx}" cy="${cy}" r="3" fill="var(--ink)"/>`;
   body +=
     kind === 'd'
       ? `<line x1="${cx - R}" y1="${cy}" x2="${cx + R}" y2="${cy}" ${STROKE}/>`
       : `<line x1="${cx}" y1="${cy}" x2="${cx + R}" y2="${cy}" ${STROKE}/>`;
-  body += svgText(kind === 'd' ? cx : cx + R / 2, cy - 14, len, 15);
-  return svg(200, 180, body, kind === 'd' ? '直径を かいた 円' : '半径を かいた 円');
+  body += svgText(kind === 'd' ? cx : cx + R / 2, cy - 16, len, 22);
+  return svg(160, 140, body, kind === 'd' ? '直径を かいた 円' : '半径を かいた 円', 13);
 }
 
 /** 円周（直径 d の 3.14 倍）を 0.01 の いくつ分で */
@@ -85,6 +90,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
         90,
         `<polygon points="${pts.map((p) => p.map(r1).join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`,
         label,
+        14,
       );
     const ring = (k: (i: number) => number) =>
       Array.from({ length: n }, (_, i) => {
@@ -122,7 +128,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
       explain: `${NAME[n]}は、辺の 長さも 角の 大きさも みんな 等しいので 正多角形です。長方形は 辺が、ひし形は 角が 等しく ありません。`,
       identity: `regular-pick:${n}`,
       alt: true,
-      layout: 'grid',
+      layout: 'row',
       options: [
         { figure: shape(reg, 'かたち'), correct: true },
         { figure: shape(bumpy, 'かたち'), misconception: 'reg-looks' },
@@ -296,7 +302,7 @@ function pi(level: number, rng: Rng, alt: boolean): ChoiceItem {
 
 function squareCircleFig(): Figure {
   const body = `<rect x="30" y="20" width="140" height="140" fill="none" ${STROKE}/><circle cx="100" cy="90" r="70" fill="var(--sky)" fill-opacity="0.3" ${STROKE}/>`;
-  return svg(200, 180, body, '正方形の 中に 入った 円');
+  return svg(200, 180, body, '正方形の 中に 入った 円', 13);
 }
 
 /** 円周の 長さ（直径・半径から）。alt: 図・タイヤが 1回転で 進む 長さ */

@@ -45,9 +45,10 @@ const col = (id: string, w: string): Figure => ({
   items: [{ kind: 'illust', id }, enText(w, 'm')],
 });
 
+/** 解説の図: 絵と英文を横に並べる（縦に積むと 22u の板に入らない） */
 const sceneFig = (o: Obj, p: Prep, c: Cont, lines: string[]): Figure => ({
-  kind: 'column',
-  items: [illFig(o, p, c), ...lines.map((l) => enText(l, 'm'))],
+  kind: 'row',
+  items: [illFig(o, p, c), { kind: 'column', items: lines.map((l) => enText(l, 'm')) }],
 });
 
 // ---- prep 練習（12問） ----
@@ -201,7 +202,7 @@ function thingItems(): Item[] {
         'えらぶ 絵《え》は、ものか、つくえ・ベッドかが ちがうよ。',
         'ものの なまえと さいごの ことばを 聞《き》いて、2つに あう 絵《え》を えらぼう。',
       ],
-      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に ${aru(o)}。もの・ばしょ・ようすの 3つが あう 絵《え》です。`,
+      explain: `${OBJ_JA[o]}は ${posJa(p, c)}に ${aru(o)}。`,
       explainFigure: sceneFig(o, p, c, [s]),
       identity: `thing:${slugOf(s)}`,
     });
@@ -275,7 +276,8 @@ function picItems(): Item[] {
         '絵《え》に あう ことばが ぜんぶ そろって いる 文《ぶん》を さがそう。',
       ],
       explain: `${at + 1}ばんめの 文《ぶん》が 絵《え》と あいます。`,
-      explainFigure: { kind: 'column', items: lines.map(([t]) => enText(t, 'm')) },
+      // 3文の列は板に入らないので、あう 文だけを出す
+      explainFigure: enText(lines[at]![0], 'm'),
       identity: `pic:${il(o, p, c)}`,
       alt: true,
     }),
@@ -489,7 +491,7 @@ function notItems(): Item[] {
         '2つめの こたえの ばしょを 聞《き》こう。',
       ],
       explain: `${posJa(n.np, n.nc)}には ${nakute(n.o)}、${posJa(n.p, n.c)}に ${aru(n.o)}。`,
-      explainFigure: sceneFig(n.o, n.p, n.c, [n.q, n.a]),
+      explainFigure: illFig(n.o, n.p, n.c),
       identity: `not:${slugOf(n.q)}:${slugOf(n.a)}`,
       alt: true,
     }),

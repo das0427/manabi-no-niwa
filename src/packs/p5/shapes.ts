@@ -588,7 +588,6 @@ function splitItem(s: (typeof SPLIT)[number]): Item {
     ],
     explain: `${PIECES[s.right]!.label}で できるね。`,
     identity: `split:${s.id}`,
-    layout: 'column',
     correct: { label: PIECES[s.right]!.label, figure: PIECES[s.right]!.svg },
     wrong: s.wrong.map((w) => ({
       label: PIECES[w]!.label,

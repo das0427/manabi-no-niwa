@@ -10,7 +10,16 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { columnFigure, digits, pickObj, placeFields, placeName, toFields, wrongList } from './util';
+import {
+  bundleFigure,
+  columnFigure,
+  digits,
+  pickObj,
+  placeFields,
+  placeName,
+  toFields,
+  wrongList,
+} from './util';
 
 type Obj = 'tens' | 'nocarry' | 'carry' | 'three' | 'bunshou';
 
@@ -68,6 +77,22 @@ function steps(a: number, b: number): string[] {
   });
 }
 
+/** 位ごとの計算（わけなし。くり上がりは かけたあとに たす） */
+function shortSteps(a: number, b: number): string[] {
+  let c = 0;
+  return digits(a).map((d, i) => {
+    const p = d * b + c;
+    const line = `${placeName(i)}: ${d} × ${b}${c ? ` ＋ ${c}` : ''} ＝ ${p}`;
+    c = Math.floor(p / 10);
+    return line;
+  });
+}
+
+/** 解説の文字数（《よみ》を除く）の上限。図つき（横書きの式を 筆算に なおす問題）は 図が 板の右か下に入る */
+const EXPLAIN_MAX = 100;
+const EXPLAIN_MAX_FIG = 78;
+const plainLen = (t: string) => t.replace(/《[^》]*》/g, '').length;
+
 function wrongs(a: number, b: number, n: number): NumberItem['wrongAnswers'] {
   const ans = a * b;
   const f = (v: number) => (n === 1 ? String(v) : toFields(v, n));
@@ -99,15 +124,12 @@ function pick(rng: Rng, kind: 'nocarry' | 'carry' | 'three'): [number, number] {
 const blocks = (a: number, b: number): Figure => {
   const hundreds = a >= 100;
   const t = hundreds ? a / 100 : a / 10;
-  return {
-    kind: 'row',
-    items: Array.from({ length: b }, () =>
-      hundreds
-        ? ({ kind: 'blocks', hundreds: t, ones: 0 } as Figure)
-        : ({ kind: 'blocks', tens: t, ones: 0 } as Figure),
-    ),
-    gap: 6,
-  };
+  return bundleFigure(
+    `${hundreds ? '100' : '10'}の まとまり ${t}こずつの かたまりが ${b}つ`,
+    b,
+    t,
+    hundreds ? 'plate' : 'bar',
+  );
 };
 
 function tens(level: number, rng: Rng, alt: boolean): NumberItem {
@@ -150,7 +172,13 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
     `${st[0]!.replace(/（.*$/, '')}。`,
     'くり上《あ》がった 数《かず》は、つぎの くらいの かけ算《ざん》の 答《こた》えに たそう（かける 前《まえ》に たさない）。',
   ];
-  const explain = `${st.join('。')}。答《こた》えは ${ans}です。`;
+  // 4行に入らないときは、くり上げの書き方（9を 書いて 4 くり上げる）を 省いて 式だけにする
+  const tail = `答《こた》えは ${ans}です。`;
+  const full = `${st.join('。')}。${tail}`;
+  const explain =
+    plainLen(full) <= (alt ? EXPLAIN_MAX_FIG : EXPLAIN_MAX)
+      ? full
+      : `${shortSteps(a, b).join('。')}。${tail}`;
   if (alt)
     return {
       engine: 'number',
@@ -162,7 +190,7 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
       figure: { kind: 'text', text: `${a} × ${b} ＝ {{}}`, size: 'xl' },
       hints,
       explain,
-      explainFigure: columnFigure(a, b, '×', String(ans).length),
+      explainFigure: columnFigure(a, b, '×', String(ans).length, [], ans),
       identity: `${a}x${b}`,
       alt: true,
       fields: [{ answer: { kind: 'int', value: ans } }],
@@ -302,7 +330,7 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
       `${steps(a, b)[0]!.replace(/（.*$/, '')}。つづきも 筆算《ひっさん》で。`,
     ],
     explain: `式《しき》は ${a} × ${b} ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`,
-    explainFigure: columnFigure(a, b, '×', String(ans).length),
+    explainFigure: columnFigure(a, b, '×', String(ans).length, [], ans),
     identity: `${sc.id}:${a}x${b}`,
     alt,
     fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],

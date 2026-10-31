@@ -241,7 +241,7 @@ function repeatHints(sol: Cmd[], maxCards: number): [string, string, string] {
     'おなじ ふだが つづく ところや、おなじ ならびが でてくる ところを さがそう。',
     `ふだは ${maxCards}まい いかだよ。「くりかえす」の ふだも ふだ 1まいと かぞえるよ。`,
     first && first.op === 'repeat'
-      ? `はじめの かたまりは「${cmdText(first.body)}」を くりかえすよ。なんかい くりかえすかは かぞえてみよう。`
+      ? `はじめは「${cmdText(first.body)}」を くりかえすよ。なんかい くりかえすか かぞえよう。`
       : 'ふだを ならべたら「うごかす」を おして たしかめよう。',
   ];
 }

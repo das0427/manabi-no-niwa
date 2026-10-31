@@ -48,11 +48,18 @@ export function valueOf(digits: number[]): number {
   return Number(digits.join(''));
 }
 
-/** そろばんの図（Figure の kind 'svg'） */
+/**
+ * 選択肢にならべる図の幅（u）。高さ 8.6u（2段で 作業領域に入る大きさ）になる幅。
+ * 幅を決めないと 札いっぱいに広がり、4つで 36u を こえた（text-layout の第4回）。
+ */
+export const optionWidth = (layout: AbacusLayout): number =>
+  Math.round(((8.6 * (44 + layout.rods * 44)) / 240) * 10) / 10;
+
+/** そろばんの図（Figure の kind 'svg'）。w: 幅（u。決めないと 入れ物の幅いっぱい） */
 export function abacusFig(
   layout: AbacusLayout,
   digits: number[],
-  opt: { lit?: boolean; mark?: number[] } = {},
+  opt: { lit?: boolean; mark?: number[]; w?: number } = {},
 ): Figure {
   const { rods, unitRod } = layout;
   if (digits.length !== rods) throw new Error('けたの数が合わない');
@@ -82,7 +89,7 @@ export function abacusFig(
   return {
     kind: 'svg',
     label: 'そろばん',
-    markup: `<svg viewBox="0 0 ${W} 240" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+    markup: `<svg viewBox="0 0 ${W} 240"${opt.w ? ` style="width:calc(var(--u) * ${opt.w})"` : ''} xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
   };
 }
 

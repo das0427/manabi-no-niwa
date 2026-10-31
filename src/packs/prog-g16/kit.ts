@@ -1217,7 +1217,7 @@ export function bestChoice(s: BestSpec): ChoiceItem {
       'それぞれの てじゅんの ふだを、くりかえす の なかも ふくめて 数《かぞ》えよう。',
       'なかに ある ふだの 数《かず》に「くりかえす」の 1まいを たして、くらべよう。',
     ],
-    explain: `${s.progs.map((p) => `「${cmdText(p.prog)}」は ふだ ${cardCount(p.prog)}まい`).join('。')}。だから「${cmdText(s.progs[bi]!.prog)}」の ほうが 少《すく》ないよ。`,
+    explain: `${s.progs.map((p, i) => `${'AB'[i]}は「${cmdText(p.prog)}」で ふだ ${cardCount(p.prog)}まい`).join('。')}。だから ${'AB'[bi]}が 少《すく》ないよ。`,
   });
 }
 
@@ -1227,6 +1227,8 @@ const ROUTE_STYLE = [
   { dash: '2 6', color: 'var(--sky-dark)' },
 ] as const;
 const ROUTE_LETTER = ['A', 'B', 'C'] as const;
+/** みちの凡例の文字の大きさ（--u の何個分）。いちばん大きい最小（小2 の 2u）に届く 2.1 */
+const LEGEND_U = 2.1;
 
 /** 地図に いくつかの みちを かいた 図（線の しゅるいと 文字 A・B・C で見わける） */
 export function routesFigure(l: Layout, trails: Cell[][], label: string, hU = 9): Figure {
@@ -1250,20 +1252,24 @@ export function routesFigure(l: Layout, trails: Cell[][], label: string, hU = 9)
     const st = ROUTE_STYLE[i]!;
     body += `<polyline points="${pts}" fill="none" stroke="${st.color}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"${st.dash ? ` stroke-dasharray="${st.dash}"` : ''}/>`;
   });
-  trails.forEach((tr, i) => {
-    // 文字は、みちの まんなかあたりに
-    const mid = tr[Math.floor(tr.length / 2)]!;
-    const off = (i - (trails.length - 1) / 2) * 5;
-    const x = cx(mid[0]) + off;
-    const y = cy(mid[1]) + off;
-    body += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="9" fill="var(--white)" stroke="var(--ink)" stroke-width="2"/><text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${ROUTE_LETTER[i]}</text>`;
+  // みちの文字（A・B・C）は、地図の右の凡例（線の見本＋文字）に出す。図の高さは hU（--u 何個分）で決まるので、
+  // 字を地図の中のマス（1.8u 前後）に入れると最小に届かない。凡例なら字を最小以上の大きさ（LEGEND_U）にできる（第4回）
+  const hu = gridHeightU(l, hU);
+  const f = Math.round((LEGEND_U * H) / hu);
+  const lx = W + 10;
+  trails.forEach((_, i) => {
+    const st = ROUTE_STYLE[i]!;
+    const y = (H * (i + 0.5)) / trails.length;
+    body += `<line x1="${lx}" y1="${y.toFixed(1)}" x2="${lx + 46}" y2="${y.toFixed(1)}" stroke="${st.color}" stroke-width="3.5" stroke-linecap="round"${st.dash ? ` stroke-dasharray="${st.dash}"` : ''}/>`;
+    body += `<text x="${lx + 54}" y="${(y + f * 0.36).toFixed(1)}" font-size="${f}" font-weight="700" fill="var(--ink)">${ROUTE_LETTER[i]}</text>`;
   });
+  const VW = lx + 54 + Math.round(f * 0.8);
   body += `<polygon points="${STAR(cx(l.goal[0]), cy(l.goal[1]))}" fill="var(--sun)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>`;
   body += `<g transform="translate(${cx(l.start[0])} ${cy(l.start[1])}) rotate(${ANGLE[l.dir]})"><polygon points="0,-13 10,-2 4,-2 4,12 -4,12 -4,-2 -10,-2" fill="var(--leaf)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></g>`;
   return {
     kind: 'svg',
     label,
-    markup: `<svg viewBox="0 0 ${W} ${H}" style="height:calc(var(--u) * ${gridHeightU(l, hU).toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+    markup: `<svg viewBox="0 0 ${VW} ${H}" style="height:calc(var(--u) * ${hu.toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
   };
 }
 
@@ -1319,6 +1325,8 @@ const CW = 24; // 札の幅
 const CH = 28; // 札の高さ
 const CG = 3; // 札のすきま
 const PADBOX = 4; // くりかえす・もし の外わくの内側のよゆう
+/** 札の列の番号の字の大きさ（--u の何個分）。いちばん大きい最小（小2 の 2u）に届く 2.2 */
+const NUMBER_U = 2.2;
 
 function cardIcon(op: string, cx: number, cy: number): string {
   // 40×40 の絵を 0.45 倍にして札の中央に置く
@@ -1352,7 +1360,13 @@ interface Drawn {
 }
 
 /** 札の列を x0,y0 から描く。top: いちばん外の列（番号を付ける） */
-function drawCmds(cmds: readonly Cmd[], x0: number, y0: number, numberFrom: number | null): Drawn {
+function drawCmds(
+  cmds: readonly Cmd[],
+  x0: number,
+  y0: number,
+  numberFrom: number | null,
+  numFs = 11,
+): Drawn {
   let x = x0;
   let svg = '';
   cmds.forEach((c, i) => {
@@ -1382,18 +1396,18 @@ function drawCmds(cmds: readonly Cmd[], x0: number, y0: number, numberFrom: numb
         body += `<rect x="${inner + CW / 2 - 5}" y="${my - 5}" width="10" height="10" fill="${wall ? 'var(--ink)' : 'var(--white)'}" stroke="var(--ink)" stroke-width="1.6"/>`;
       }
       inner += CW + CG;
-      const sub = drawCmds(c.body, inner, y0 + PADBOX, null);
+      const sub = drawCmds(c.body, inner, y0 + PADBOX, null, numFs);
       const width = CW + CG + sub.w + PADBOX * 2;
       const frame = `<rect x="${x}" y="${y0}" width="${width - CG * 0}" height="${CH + PADBOX * 2}" rx="8" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2" stroke-dasharray="${c.op === 'if' ? '5 3' : ''}"/>`;
       svg += frame + body + sub.svg;
       if (numberFrom !== null)
-        svg += `<text x="${x + 8}" y="${y0 - 3}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink-soft)">${numberFrom + i + 1}</text>`;
+        svg += `<text x="${x + 8}" y="${y0 - 3}" text-anchor="middle" font-size="${numFs}" font-weight="700" fill="var(--ink-soft)">${numberFrom + i + 1}</text>`;
       x += width + CG;
     } else {
       svg += `<rect x="${x}" y="${y0}" width="${CW}" height="${CH}" rx="5" fill="var(--white)" stroke="var(--ink)" stroke-width="2.2"/>`;
       svg += cardIcon(c.op, x + CW / 2, y0 + CH / 2);
       if (numberFrom !== null)
-        svg += `<text x="${x + CW / 2}" y="${y0 - 3}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink-soft)">${numberFrom + i + 1}</text>`;
+        svg += `<text x="${x + CW / 2}" y="${y0 - 3}" text-anchor="middle" font-size="${numFs}" font-weight="700" fill="var(--ink-soft)">${numberFrom + i + 1}</text>`;
       x += CW + CG;
     }
   });
@@ -1405,11 +1419,17 @@ export function stripFigure(
   prog: readonly Cmd[],
   opt: { label: string; hU?: number; numbered?: boolean; letter?: string } = { label: '札の列' },
 ): Figure {
-  const top = opt.numbered ? 14 : 2;
-  const lead = opt.letter ? 24 : 0;
-  const d = drawCmds(prog, lead + 2, top, opt.numbered ? 0 : null);
-  const W = lead + d.w + 6;
   const hasBox = prog.some((c) => c.op === 'repeat' || c.op === 'if');
+  // 番号の字は、図の高さ hU（--u 何個分）で決まる大きさになるので、最小以上（NUMBER_U）になる viewBox の単位に直す。
+  // 字の分だけ上を空ける（f = NUMBER_U × H ÷ hU、H = f + 3 + 札の高さ + 4 を解く）。hU が足りなければ 11 のまま
+  const body = CH + (hasBox ? PADBOX * 2 : 0);
+  const hu = opt.hU ?? 5;
+  const numFs =
+    opt.numbered && hu > NUMBER_U + 1 ? Math.ceil((NUMBER_U * (body + 7)) / (hu - NUMBER_U)) : 11;
+  const top = opt.numbered ? numFs + 3 : 2;
+  const lead = opt.letter ? 24 : 0;
+  const d = drawCmds(prog, lead + 2, top, opt.numbered ? 0 : null, numFs);
+  const W = lead + d.w + 6;
   const H = top + CH + (hasBox ? PADBOX * 2 : 0) + 4;
   const letter = opt.letter
     ? `<circle cx="11" cy="${top + (CH + (hasBox ? PADBOX * 2 : 0)) / 2}" r="9" fill="var(--white)" stroke="var(--ink)" stroke-width="2"/><text x="11" y="${top + (CH + (hasBox ? PADBOX * 2 : 0)) / 2 + 5}" text-anchor="middle" font-size="14" font-weight="700" fill="var(--ink)">${opt.letter}</text>`

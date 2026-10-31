@@ -9,7 +9,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { expr, finishUnit, pick, pickObj, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import { expr, finishUnit, pick, pickObj, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
 
 type Obj = 'para' | 'tri' | 'trap' | 'rhombus' | 'inverse';
 type P = [number, number];
@@ -34,30 +34,162 @@ interface Fig {
   dotted?: [P, P][];
   /** 直角の しるし（点線の 足） */
   right?: P[];
-  labels: { at: P; text: string; dx?: number; dy?: number }[];
+  /**
+   * 長さの 字。seg の上に 置く（字は at の 点から dx・dy の 向きに はなす: dx<0 は 左、dx>0 は 右、dy>0 は 下、dy<0 は 上）。
+   * 辺や 点線に かさなるときは、seg の 上で 位置を ずらす。
+   */
+  labels: { at: P; text: string; dx?: number; dy?: number; seg?: [P, P]; flip?: boolean }[];
 }
 
-/** 図（座標は 数学の向き: y が上）。文字は 数字と cm だけ */
+/**
+ * 線分 p→q（字の 置き場所の もとの 点 → 字の 中心）が 辺 a→b を またぐか。
+ * もとの 点が 辺の 上に あるとき（ななめの辺の 字）は、その 辺は またがない とみなす。
+ */
+function crosses(p: P, q: P, a: P, b: P): boolean {
+  const rx = q[0] - p[0];
+  const ry = q[1] - p[1];
+  const sx = b[0] - a[0];
+  const sy = b[1] - a[1];
+  const d = rx * sy - ry * sx;
+  if (Math.abs(d) < 1e-9) return false;
+  // もとの 点が この 辺の 上（0.5 より 近い）なら またがない
+  const len = Math.hypot(sx, sy) || 1;
+  const dist = Math.abs((p[0] - a[0]) * sy - (p[1] - a[1]) * sx) / len;
+  const along = ((p[0] - a[0]) * sx + (p[1] - a[1]) * sy) / (len * len);
+  if (dist < 0.5 && along >= -0.01 && along <= 1.01) return false;
+  const t = ((a[0] - p[0]) * sy - (a[1] - p[1]) * sx) / d; // p→q の 上の 位置（0〜1）
+  const u = ((a[0] - p[0]) * ry - (a[1] - p[1]) * rx) / d; // a→b の 上の 位置（0〜1）
+  return t > 0 && t <= 1 && u >= 0 && u <= 1;
+}
+
+/** 長さの字の大きさ（viewBox の単位）。図は、この字が 画面で 1.8u（最小より 大きい）に なる 幅（widthU）で 描く */
+const FS = 17;
+/** 図の高さの上限（viewBox の単位）。字 1.8u のとき 12.5u に収まる: 12.5 ÷ 1.8 × 17 */
+const MAX_VB_H = 118;
+const textW = (t: string) =>
+  [...t].reduce((w, ch) => w + (/[0-9]/.test(ch) ? 0.56 : ch === 'c' ? 0.5 : ch === 'm' ? 0.85 : 1) * FS, 0);
+
+/**
+ * 図（座標は 数学の向き: y が上）。文字は 数字と cm だけ。
+ * 図形は 150 × 72 の中に収め、長さの字は 図の 外がわ・点線の わきに 置く。
+ * 図全体の 高さが MAX_VB_H を こえるときは 図形を 小さくする。幅は 字が 1.8u になる 幅（widthU）。
+ */
 function draw(f: Fig, label: string): Figure {
   const xs = f.poly.map((p) => p[0]).concat((f.dotted ?? []).flatMap((s) => [s[0][0], s[1][0]]));
-  const ys = f.poly.map((p) => p[1]);
   const minX = Math.min(...xs);
   const W = Math.max(...xs) - minX;
-  const H = Math.max(...ys);
-  const k = Math.max(6, Math.min(18, Math.floor(220 / Math.max(W, H))));
-  const pad = 36;
-  const X = (x: number) => pad + (x - minX) * k;
-  const Y = (y: number) => pad / 2 + (H - y) * k;
-  let body = `<polygon points="${f.poly.map((p) => `${X(p[0])},${Y(p[1])}`).join(' ')}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
-  for (const [a, b] of f.dotted ?? [])
-    body += `<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2 4"/>`;
-  for (const [a, b] of f.dashed ?? [])
-    body += `<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"/>`;
-  for (const p of f.right ?? [])
-    body += `<polyline points="${X(p[0]) + 8},${Y(p[1])} ${X(p[0]) + 8},${Y(p[1]) - 8} ${X(p[0])},${Y(p[1]) - 8}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
-  for (const l of f.labels)
-    body += svgText(X(l.at[0]) + (l.dx ?? 0), Y(l.at[1]) + (l.dy ?? 0), l.text, 13);
-  return svg(W * k + pad * 2, H * k + pad, body, label);
+  const H = Math.max(...f.poly.map((p) => p[1]));
+  let boxW = 150;
+  let boxH = 72;
+  for (let tries = 0; ; tries++) {
+    const k = Math.min(boxW / W, boxH / H);
+    const X = (x: number) => (x - minX) * k;
+    const Y = (y: number) => (H - y) * k;
+    // 図形の辺（字との重なりを調べる点列）
+    const edges: [number, number][][] = [];
+    const lines: [P, P][] = [
+      ...f.poly.map((p, i) => [p, f.poly[(i + 1) % f.poly.length]!] as [P, P]),
+      ...(f.dashed ?? []),
+      ...(f.dotted ?? []),
+    ];
+    // 直角の しるし（点線の 足の 右上 8 × 8）
+    for (const p of f.right ?? []) {
+      const [x, y] = [X(p[0]), Y(p[1])];
+      edges.push(Array.from({ length: 9 }, (_, i) => [x + 8, y - i] as [number, number]));
+      edges.push(Array.from({ length: 9 }, (_, i) => [x + i, y - 8] as [number, number]));
+    }
+    const polyEdges: [P, P][] = f.poly.map((p, i) => {
+      const q = f.poly[(i + 1) % f.poly.length]!;
+      return [
+        [X(p[0]), Y(p[1])],
+        [X(q[0]), Y(q[1])],
+      ];
+    });
+    for (const [a, b] of lines)
+      edges.push(
+        Array.from({ length: 41 }, (_, i) => [
+          X(a[0] + ((b[0] - a[0]) * i) / 40),
+          Y(a[1] + ((b[1] - a[1]) * i) / 40),
+        ]),
+      );
+    const placed: { x: number; y: number; anchor: string; text: string; box: [number, number, number, number] }[] = [];
+    for (const l of f.labels) {
+      const seg = l.seg ?? [l.at, l.at];
+      const w = textW(l.text);
+      let best: (typeof placed)[number] | null = null;
+      let bestScore = Infinity;
+      // 辺から はなす 距離を 近い順に、seg の 上の 位置を ずらしながら、辺・点線・ほかの字に かさならない 所を さがす。
+      // 高さ（flip）は 点線の 右・左の どちらにも 置ける。図形の 辺を またいだ 所（例: 高さの 字が ななめの 辺の 外）は、
+      // その 辺の 長さに 見えるので 使わない（大きな 減点）
+      const sides: number[] = l.dx ? (l.flip ? [Math.sign(l.dx), -Math.sign(l.dx)] : [Math.sign(l.dx)]) : [0];
+      const tries2: [number, number, number][] = [];
+      for (const gap of [0, 5, 10, 16, 24, 34])
+        for (const side of sides) for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]) tries2.push([gap, side, t]);
+      for (const [gap, side, t] of tries2) {
+        const px = X(seg[0][0] + (seg[1][0] - seg[0][0]) * t);
+        const py = Y(seg[0][1] + (seg[1][1] - seg[0][1]) * t);
+        let x = px;
+        let y = py;
+        let anchor = 'middle';
+        if (side) {
+          anchor = side < 0 ? 'end' : 'start';
+          x = px + (side < 0 ? -(7 + gap) : 7 + gap);
+        } else y = py + (l.dy! < 0 ? -(FS / 2 + 6 + gap) : FS / 2 + 6 + gap);
+        const x0 = anchor === 'middle' ? x - w / 2 : anchor === 'end' ? x - w : x;
+        const box: [number, number, number, number] = [x0, y - FS / 2, x0 + w, y + FS / 2];
+        let score = 0;
+        for (const pts of edges)
+          for (const [ex, ey] of pts)
+            if (ex > box[0] - 1 && ex < box[2] + 1 && ey > box[1] - 1 && ey < box[3] + 1) score++;
+        if (polyEdges.some(([a, b]) => crosses([px, py], [(box[0] + box[2]) / 2, y], a, b))) score += 1000;
+        // 決めた 向きを 先に（反対がわは、決めた 向きより はっきり よいときだけ）
+        if (side && side !== Math.sign(l.dx ?? 0)) score += 3;
+        for (const o of placed)
+          if (box[0] < o.box[2] + 2 && o.box[0] < box[2] + 2 && box[1] < o.box[3] && o.box[1] < box[3]) score += 100;
+        if (score < bestScore) {
+          bestScore = score;
+          best = { x, y, anchor, text: l.text, box };
+        }
+        if (score === 0) break;
+      }
+      placed.push(best!);
+    }
+    const all: [number, number, number, number][] = [
+      [0, 0, W * k, H * k],
+      ...placed.map((p) => p.box),
+    ];
+    const x0 = Math.min(...all.map((q) => q[0])) - 4;
+    const y0 = Math.min(...all.map((q) => q[1])) - 4;
+    const x1 = Math.max(...all.map((q) => q[2])) + 4;
+    const y1 = Math.max(...all.map((q) => q[3])) + 4;
+    if (y1 - y0 > MAX_VB_H && tries < 12) {
+      boxW *= 0.92;
+      boxH *= 0.92;
+      continue;
+    }
+    const sh = (x: number, y: number) => [r1(x - x0), r1(y - y0)] as P;
+    const pt = (p: P) => sh(X(p[0]), Y(p[1])).join(',');
+    let body = `<polygon points="${f.poly.map(pt).join(' ')}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
+    const line = (a: P, b: P, attrs: string) => {
+      const [ax, ay] = sh(X(a[0]), Y(a[1]));
+      const [bx, by] = sh(X(b[0]), Y(b[1]));
+      return `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" ${attrs}/>`;
+    };
+    for (const [a, b] of f.dotted ?? [])
+      body += line(a, b, 'stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2 4"');
+    for (const [a, b] of f.dashed ?? [])
+      body += line(a, b, 'stroke="var(--ink)" stroke-width="2" stroke-dasharray="6 4"');
+    for (const p of f.right ?? []) {
+      const [x, y] = sh(X(p[0]), Y(p[1]));
+      body += `<polyline points="${x + 8},${y} ${x + 8},${y - 8} ${x},${y - 8}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    }
+    for (const p of placed) {
+      const [x, y] = sh(p.x, p.y);
+      body += svgText(x, y, p.text, FS, p.anchor);
+    }
+    const vbW = r1(x1 - x0);
+    return svg(vbW, r1(y1 - y0), body, label, Math.ceil(((1.8 * vbW) / FS) * 2) / 2);
+  }
 }
 
 const mid = (a: P, b: P): P => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -77,8 +209,8 @@ function paraFig(b: number, o: number, h: number, s: number, showH = true): Figu
       right: showH ? [[o, 0]] : [],
       labels: [
         { at: mid(A, B), text: `${b}cm`, dy: 16 },
-        { at: mid(A, D), text: `${s}cm`, dx: -24 },
-        ...(showH ? [{ at: [o, h / 2] as P, text: `${h}cm`, dx: 24 }] : []),
+        { at: mid(A, D), text: `${s}cm`, dx: -24, seg: [A, D] },
+        ...(showH ? [{ at: [o, h / 2] as P, text: `${h}cm`, dx: 24, seg: [D, [o, 0]] as [P, P], flip: true }] : []),
       ],
     },
     outside ? '平行四辺形（高さが 外に ある）' : '平行四辺形',
@@ -100,9 +232,9 @@ function triFig(b: number, x: number, h: number, s: number): Figure {
       labels: [
         { at: mid(A, B), text: `${b}cm`, dy: 16 },
         outside
-          ? { at: mid(B, C), text: `${s}cm`, dx: -26 }
-          : { at: mid(A, C), text: `${s}cm`, dx: -24 },
-        { at: [x, h / 2], text: `${h}cm`, dx: 24 },
+          ? { at: mid(B, C), text: `${s}cm`, dx: -26, seg: [B, C] }
+          : { at: mid(A, C), text: `${s}cm`, dx: -24, seg: [A, C] },
+        { at: [x, h / 2], text: `${h}cm`, dx: 24, seg: [C, [x, 0]], flip: true },
       ],
     },
     outside ? '三角形（高さが 外に ある）' : '三角形',
@@ -123,8 +255,8 @@ function trapFig(a: number, b: number, o1: number, o2: number, h: number, s: num
       labels: [
         { at: mid(A, B), text: `${b}cm`, dy: 16 },
         { at: mid(D, C), text: `${a}cm`, dy: -12 },
-        { at: mid(A, D), text: `${s}cm`, dx: -24 },
-        { at: [o1, h / 2], text: `${h}cm`, dx: 24 },
+        { at: mid(A, D), text: `${s}cm`, dx: -24, seg: [A, D] },
+        { at: [o1, h / 2], text: `${h}cm`, dx: 24, seg: [D, [o1, 0]], flip: true },
       ],
     },
     '台形',
@@ -145,8 +277,9 @@ function rhombusFig(d1: number, d2: number): Figure {
         [Bt, T],
       ],
       labels: [
-        { at: [d1 * 0.75, d2 / 2], text: `${d1}cm`, dy: 12 },
-        { at: [d1 / 2, d2 * 0.75], text: `${d2}cm`, dx: 22 },
+        // 対角線の はしに 置く（ひし形の 中に 置くと、平たい ひし形で 辺や 点線に かさなる）
+        { at: R, text: `${d1}cm`, dx: 4 },
+        { at: T, text: `${d2}cm`, dy: -4 },
       ],
     },
     'ひし形',

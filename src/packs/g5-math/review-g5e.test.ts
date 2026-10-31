@@ -136,14 +136,14 @@ describe('g5e review: g5.math.speed', () => {
     let n = 0;
     const check = (fig: Figure | undefined, t: number, id: string) => {
       if (!fig || fig.kind !== 'svg') return;
-      // 下の 数直線の 文字（y=114）: 0・1・t
-      const xs = [...fig.markup.matchAll(/<text x="([\d.]+)" y="114"[^>]*>([^<]*)<\/text>/g)].map(
+      // 下の 数直線の 文字（y=106）: 0・1・t
+      const xs = [...fig.markup.matchAll(/<text x="([\d.]+)" y="106"[^>]*>([^<]*)<\/text>/g)].map(
         (m) => ({ x: Number(m[1]), s: m[2] }),
       );
       const one = xs.find((m) => m.s === '1');
       const end = xs.find((m) => m.s === String(t));
       expect(one && end, id).toBeTruthy();
-      const at = (one!.x - 40) / (end!.x - 40);
+      const at = (one!.x - 34) / (end!.x - 34);
       expect(Math.abs(at - Math.max(1 / t, 0.15)) < 1e-6, `${id} at=${at}`).toBe(true);
       n++;
     };

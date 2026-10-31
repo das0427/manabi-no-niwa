@@ -54,6 +54,20 @@ export function longDivFigure(a: number, d: number): Figure {
   };
 }
 
+/**
+ * 解説用の 筆算の 形（商を 入れる）。位の名前の 見出しを 付けず、商の 行を 見出しの 行に 置いて 2 行にする
+ * （位の名前は ふりがな付きで 高く、解説の 板に 文と いっしょに 入らない）。
+ */
+export function answerDivFigure(a: number, d: number, q: number): Figure {
+  const s = String(a);
+  const qs = String(q).padStart(s.length, ' ');
+  return {
+    kind: 'table',
+    header: ['商', ...qs.split('').map((c) => (c === ' ' ? '' : c))],
+    rows: [[`${d} ）`, ...s.split('')]],
+  };
+}
+
 const QR = (q: number, r: number) => [
   { kind: 'int' as const, value: q },
   { kind: 'int' as const, value: r },
@@ -162,8 +176,9 @@ function column(obj: 'two' | 'three' | 'zero', level: number, rng: Rng, alt: boo
         ? `${steps.slice(0, -1).join('。')}。のこりの 位も 同じように。`
         : `${d} × □ が ${a}を こえない いちばん大きい□を 考えよう。`,
     ],
-    explain: `${steps.join('。')}。${a} ÷ ${d} ＝ ${q}${r ? ` あまり ${r}` : '（わりきれる）'}。たしかめ: ${d} × ${q}${r ? ` ＋ ${r}` : ''} ＝ ${a}`,
-    explainFigure: alt ? undefined : longDivFigure(a, d),
+    // 手順は ヒントと 筆算の図に ある。解説は 上の 位から わる 流れと 答え・たしかめだけに 短くする（板に 3 行で 入る）
+    explain: `上の 位から じゅんに わると、${a} ÷ ${d} ＝ ${q}${r ? ` あまり ${r}` : '（わりきれる）'}。たしかめ: ${d} × ${q}${r ? ` ＋ ${r}` : ''} ＝ ${a}`,
+    explainFigure: alt ? undefined : answerDivFigure(a, d, q),
     identity: `${a}÷${d}`,
     alt,
     fields: qrFields(q, r),
@@ -207,7 +222,8 @@ function check(level: number, rng: Rng, alt: boolean): Item {
     objective: 'check',
     level,
     prompt: '□に あてはまる 数を 求めよう。',
-    figure: expr(`□ ÷ ${d} ＝ ${q} あまり ${r}`),
+    // 「あまり」と 数の 間で 折れて 数だけが 次の 行に 残らない ように、間を 折れない 空白（U+00A0）に する
+    figure: expr(`□ ÷ ${d} ＝ ${q} あまり\u00a0${r}`),
     hints: [
       '答えの たしかめの 式を 使おう。',
       'わる数 × 商 ＋ あまり ＝ わられる数',

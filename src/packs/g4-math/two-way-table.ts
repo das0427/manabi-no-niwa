@@ -27,7 +27,7 @@ const SCENES: Scene[] = [
     title: 'けがの 記録（れいの データ）',
     rowName: '場所',
     colName: 'けがの 種類',
-    rows: ['教室', 'ろうか', '運動場', '体育館'],
+    rows: ['教室', '運動場'],
     cols: ['すりきず', '切りきず', '打ぼく'],
     unit: '人',
   },
@@ -45,7 +45,7 @@ const SCENES: Scene[] = [
     title: 'わすれ物の 記録（れいの データ）',
     rowName: '曜日',
     colName: 'わすれ物',
-    rows: ['月曜日', '火曜日', '水曜日', '木曜日', '金曜日'],
+    rows: ['月曜日', '火曜日'],
     cols: ['教科書', 'ノート', 'ハンカチ'],
     unit: 'こ',
   },
@@ -54,7 +54,7 @@ const SCENES: Scene[] = [
     title: '通学の しかた（れいの データ）',
     rowName: '組',
     colName: '通学の しかた',
-    rows: ['1組', '2組', '3組'],
+    rows: ['1組', '2組'],
     cols: ['歩き', '自転車', 'バス'],
     unit: '人',
   },
@@ -99,14 +99,18 @@ function tableFig(sc: Scene, g: number[][], hide: [number, number][], totals = t
   };
 }
 
-/** 記録を 数える（2×2: 犬と ねこ。alt: けがの 記録から 1つの ますを 数える） */
+/** 記録を 数える（2×2: 犬と ねこ。alt: すきな 色の 記録から 1つの ますを 数える） */
 function tally(level: number, rng: Rng, alt: boolean): NumberItem {
   if (alt) {
-    const sc = SCENES[0]!;
+    // 記録の 表は 横に ならべる（番号が 1〜12 の 列）。1つの ますは 1字（男・女、赤・青・黄）で、12 列でも 作業領域の 幅に 入る
+    const rowsA = ['男', '女'];
+    const colsA = ['赤', '青', '黄'];
+    // 文の 中では「黄」だけでは 読みにくい（き）ので「黄色」と 書く
+    const colWord = ['赤', '青', '黄色'];
     const n = rng.int(9, 12);
     const recs = Array.from(
       { length: n },
-      () => [rng.int(0, sc.rows.length - 1), rng.int(0, sc.cols.length - 1)] as [number, number],
+      () => [rng.int(0, rowsA.length - 1), rng.int(0, colsA.length - 1)] as [number, number],
     );
     const [ri, cj] = pick(rng, recs);
     const ans = recs.filter(([a, b]) => a === ri && b === cj).length;
@@ -116,18 +120,21 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
       id: `tally-alt:${recs.map((r) => r.join('')).join('.')}:${ri}${cj}`,
       objective: 'tally',
       level,
-      prompt: `けがの 記録です（れいの データ）。${sc.rows[ri]}で ${sc.cols[cj]}を した 人は 何人ですか。`,
+      prompt: `すきな 色の 記録です（れいの データ）。${rowsA[ri]}の 子で ${colWord[cj]}が すきな 人は 何人ですか。`,
       figure: {
         kind: 'table',
-        header: ['番号', '場所', 'けがの 種類'],
-        rows: recs.map(([a, b], i) => [String(i + 1), sc.rows[a]!, sc.cols[b]!]),
+        header: ['番号', ...recs.map((_, i) => String(i + 1))],
+        rows: [
+          ['男女', ...recs.map(([a]) => rowsA[a]!)],
+          ['色', ...recs.map(([, b]) => colsA[b]!)],
+        ],
       },
       hints: [
-        '場所と けがの 種類の 2つが どちらも 合う 記録を さがそう。',
-        `まず 場所が ${sc.rows[ri]}の 記録に しるしを つけよう。`,
-        `その 中で ${sc.cols[cj]}の ものを 数えよう。`,
+        '男女と 色の 2つが どちらも 合う 記録を さがそう。',
+        `まず 「${rowsA[ri]}」の 記録に しるしを つけよう。`,
+        `その 中で 「${colsA[cj]}」の ものを 数えよう。`,
       ],
-      explain: `${sc.rows[ri]}で ${sc.cols[cj]}の 記録は ${ans}こ。${ans}人です。`,
+      explain: `${rowsA[ri]}の 子で ${colWord[cj]}の 記録は ${ans}こ。${ans}人です。`,
       identity: `tally-rec:${recs.map((r) => r.join('')).join('.')}:${ri}${cj}`,
       alt: true,
       fields: [{ label: '人', answer: answers[0]! }],
@@ -150,10 +157,14 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt:
       '犬と ねこを かって いるかを 調べました（○: かって いる、×: かって いない）。落ちや 重なりが ないように 数えよう。',
+    // 12 人でも 3 行に おさまるよう、番号を 横に ならべる（たての 表は 12 行で 作業領域に 入らない）
     figure: {
       kind: 'table',
-      header: ['番号', '犬', 'ねこ'],
-      rows: recs.map(([a, b], i) => [String(i + 1), mark(a), mark(b)]),
+      header: ['番号', ...recs.map((_, i) => String(i + 1))],
+      rows: [
+        ['犬', ...recs.map(([a]) => mark(a))],
+        ['ねこ', ...recs.map(([, b]) => mark(b))],
+      ],
     },
     hints: [
       '犬と ねこの ○×の 組み合わせは 4通り あるよ。',
@@ -459,12 +470,11 @@ export const twoWayTable: UnitSpec = finishUnit({
     {
       text: 'けがの 記録を、場所と けがの 種類の 2つの ことがらで 整理すると、どこで どんな けがが 多いか わかります。',
       figure: tableFig(
-        SCENES[0]!,
+        { ...SCENES[0]!, rows: ['教室', 'ろうか', '運動場'] },
         [
           [2, 1, 0],
           [1, 0, 2],
           [5, 2, 3],
-          [1, 0, 4],
         ],
         [],
       ),

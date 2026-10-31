@@ -8,6 +8,7 @@
  * 同一性キー: 'a x b'（かけられる数が上、かける数が2位数。向きは固定）。文章題は「場面 × 式」。
  */
 import type { Rng } from '../../core/util/rng';
+import type { Figure } from '../../engines/figure/types';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
 import { columnFigure, pickObj, placeFields, toFields, wrongList } from './util';
 
@@ -43,10 +44,17 @@ function pick(rng: Rng, kind: 'two' | 'three'): [number, number] {
   }
 }
 
+/** 解説の筆算（1だんめ・2だんめ・答えを 書いた形） */
+function partialFigure(a: number, b: number): Figure {
+  const p1 = a * (b % 10);
+  const p2 = a * Math.floor(b / 10);
+  return columnFigure(a, b, '×', String(a * b).length, [String(p1), `${p2}\u3000`], a * b);
+}
+
 function explainOf(a: number, b: number): string {
   const b1 = b % 10;
   const b10 = Math.floor(b / 10);
-  return `${a} × ${b1} ＝ ${a * b1}（一《いち》のくらいの ${b1}を かける）。${a} × ${b10} ＝ ${a * b10}（十《じゅう》のくらいの ${b10}を かける。じっさいは ${a} × ${b10 * 10} ＝ ${a * b10 * 10}なので、1けた 左《ひだり》に ずらして 書《か》く）。${a * b1} ＋ ${a * b10 * 10} ＝ ${a * b}。答《こた》えは ${a * b}です。`;
+  return `一《いち》のくらい: ${a} × ${b1} ＝ ${a * b1}。十《じゅう》のくらい: ${a} × ${b10} ＝ ${a * b10}（1けた 左《ひだり》に ずらして ${a * b10 * 10}）。${a * b1} ＋ ${a * b10 * 10} ＝ ${a * b}。答《こた》えは ${a * b}です。`;
 }
 
 function hintsOf(a: number, b: number): string[] {
@@ -182,7 +190,7 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
       figure: { kind: 'text', text: `${a} × ${b} ＝ {{}}`, size: 'xl' },
       hints: hintsOf(a, b),
       explain: explainOf(a, b),
-      explainFigure: columnFigure(a, b, '×', String(ans).length),
+      explainFigure: partialFigure(a, b),
       identity: `${a}x${b}`,
       alt: true,
       fields: [{ answer: { kind: 'int', value: ans } }],
@@ -292,7 +300,7 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
       hintsOf(a, b)[1]!,
     ],
     explain: `式《しき》は ${a} × ${b} ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`,
-    explainFigure: columnFigure(a, b, '×', String(ans).length),
+    explainFigure: partialFigure(a, b),
     identity: `${sc.id}:${a}x${b}`,
     alt,
     fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],

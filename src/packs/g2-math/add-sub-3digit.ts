@@ -6,6 +6,10 @@
  * 筆算は number の複数欄（ひゃく・じゅう・いち の3欄）で代用する。
  * 同一性キー: たし算は交換で同一視（小さい数+大きい数）。ひき算は式のまま。何百・何十の計算も式。
  * 定義域: 数千通り。
+ *
+ * 解説の板（22u まで）には図を置かない（第4回）: 筆算の表（見出し＋3行で約 22u）を explainFigure にすると、
+ * 文2〜3行と合わせて板に 3.7 行ぶん入らなかった。別例（ブロック・式）の問題の図は解説でもそのまま見え、
+ * 位ごとの計算は解説の文に書いてある。
  */
 import type { Rng } from '../../core/util/rng';
 import type { Item, NumberItem, UnitSpec } from '../../curriculum/types';
@@ -150,7 +154,6 @@ function calcItem(
       figure: { kind: 'text', text: `${a} ${op} ${b} ＝ {{}}`, size: 'xl' },
       hints,
       explain,
-      explainFigure: columnFigure(a, b, op, 3),
       identity,
       alt: true,
       fields: [{ answer: { kind: 'int', value: ans } }],

@@ -61,7 +61,7 @@ function likeItems(): Item[] {
           'まえの ことばは「〜が すきです」と いう いみ。さいごの ことばを もういちど 聞《き》こう。',
         ],
         explain: `「${t.ja}が すきです」と いって います。`,
-        explainFigure: enText(text),
+        explainFigure: enText(text, 'm'),
         identity: `like:${t.word}`,
       }),
     );
@@ -152,7 +152,7 @@ function canItems(): Item[] {
           'からだを うごかす ことか、なにかを つくる ことか、かんがえながら もういちど 聞《き》こう。',
         ],
         explain: `「${a.ja}ことが できます」と いって います。`,
-        explainFigure: enText(text),
+        explainFigure: enText(text, 'm'),
         identity: `can:${slugOf(a.verb)}`,
       }),
     );
@@ -186,7 +186,7 @@ function canItems(): Item[] {
           '1つめの 文《ぶん》の はじめの ほうは「できない」の いみだよ。',
           '2つめの 文《ぶん》の さいごを 聞《き》こう。',
         ],
-        explain: `${a.ja}ことは できないけれど、${b.ja}ことは できます。`,
+        explain: `「${a.ja}」は できなくて、「${b.ja}」は できます。`,
         explainFigure: enText(text, 'm'),
         identity: `cant:${slugOf(a.verb)}-${slugOf(b.verb)}`,
         alt: true,
@@ -274,7 +274,7 @@ function birthdayItems(): Item[] {
           monthHint3(n),
         ],
         explain: `${n}がつ です。月《つき》の なまえの あとの ことばは「なん日《にち》」を あらわして います。`,
-        explainFigure: enText(text),
+        explainFigure: enText(text, 'm'),
         identity: `bday:${m}`,
       }),
     );

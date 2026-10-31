@@ -12,7 +12,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, wrongList } from './util';
+import { dotArrayFig, opts, pickObj, wrongList } from './util';
 
 type Obj = 'ikutsubun' | 'shiki' | 'ruika' | 'bai' | 'bunshou';
 
@@ -33,17 +33,7 @@ function groupsFig(id: string, a: number, b: number): Figure {
 }
 
 /** アレイ（●を a こずつ b れつ） */
-function arrayFig(a: number, b: number): Figure {
-  return {
-    kind: 'column',
-    gap: 1,
-    items: Array.from({ length: b }, () => ({
-      kind: 'text' as const,
-      text: '●'.repeat(a),
-      size: 'l' as const,
-    })),
-  };
-}
+const arrayFig = dotArrayFig;
 
 interface Scene {
   id: string;

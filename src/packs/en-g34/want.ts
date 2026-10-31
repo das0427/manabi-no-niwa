@@ -46,7 +46,7 @@ function wantItems(): Item[] {
         notHint(nm(w1)),
       ],
       explain: `「${nm(c)}が 1つ ほしい」と いって います。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `want:${slugOf(text)}`,
     }),
   );
@@ -78,7 +78,7 @@ function wantWordItems(): Item[] {
         notHint(`${other}が ほしい`),
       ],
       explain: `「${ja}が ほしい」と いって います。「すき」と いう ときの ことばとは ちがうね。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `want-word:${slugOf(text)}`,
       alt: true,
     }),
@@ -135,7 +135,7 @@ function countItems(): Item[] {
         `「${nm(mix)}」の 絵《え》では ないよ。かずを もういちど 聞《き》こう。`,
       ],
       explain: `「${nm(c)}が ${n}こ ほしい」と いって います。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `count:${slugOf(text)}`,
     });
   });
@@ -167,7 +167,7 @@ function countWordItems(): Item[] {
         notHint(`${mixJa} ${n}こ`),
       ],
       explain: `「${ja}が ${n}こ ほしい」と いって います。`,
-      explainFigure: enText(text),
+      explainFigure: enText(text, 'm'),
       identity: `count-word:${slugOf(text)}`,
       alt: true,
     }),
@@ -283,7 +283,6 @@ function shopItems(): Item[] {
       explain: r.say.some((s) => s.startsWith('I want'))
         ? `おきゃくさんは「${nm(r.c)}が ${r.n}こ ほしい」と いって います。`
         : `おきゃくさんは「${nm(r.c)}を ${r.n}こ ください」と いって います。`,
-      explainFigure: enText(r.say.join('  →  '), 'm'),
       identity: `shop:${r.scene}`,
     }),
   );
@@ -320,7 +319,6 @@ function shopTwoItems(): Item[] {
         `${nm(a[0])}は ${a[1]}こ だよ。もう 1つの ものを 聞《き》こう。`,
       ],
       explain: `「${nm(a[0])}を ${a[1]}こと、${nm(b[0])}を ${b[1]}こ ほしい」と いって います。`,
-      explainFigure: enText(text, 'm'),
       identity: `shop-two:${slugOf(text)}`,
       alt: true,
     }),

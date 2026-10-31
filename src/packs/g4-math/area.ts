@@ -26,11 +26,18 @@ function cellsFig(cells: [number, number][], w: number, h: number): Figure {
   return svg(w * C + 16, h * C + 16, body, '1ますが 1cm²の 方がん');
 }
 
+/**
+ * 図の中の 寸法の 字（viewBox の単位）。字を 大きく、図を 小さく 描く（text-layout-fixes 第4回）。
+ * 図の幅は「字が 最小の 大きさに なる 幅」で 決まるので、字が 小さい（13）と 図が 40u 近くに なり、
+ * 数の入力の 図の段（高さ 約 16u）に 入らない。字 18 に して 図の 全体を 縮める。
+ */
+const F = 18;
+
 /** L字の 図形（外の 長方形 W×H から 右上の w×h を 切り取った 形） */
 function lFig(W: number, H: number, w: number, h: number, unit: string): Figure {
-  const k = Math.min(22, Math.floor(220 / Math.max(W, H)));
-  const X = (x: number) => 40 + x * k;
-  const Y = (y: number) => 20 + y * k;
+  const k = Math.max(6, Math.min(12, Math.floor(110 / Math.max(W, H))));
+  const X = (x: number) => 58 + x * k;
+  const Y = (y: number) => 26 + y * k;
   const pts = [
     [0, 0],
     [W - w, 0],
@@ -40,20 +47,20 @@ function lFig(W: number, H: number, w: number, h: number, unit: string): Figure 
     [0, H],
   ].map(([x, y]) => `${X(x!)},${Y(y!)}`);
   let body = `<polygon points="${pts.join(' ')}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
-  body += svgText(X(W / 2), Y(H) + 16, `${W}${unit}`, 13);
-  body += svgText(X(0) - 22, Y(H / 2), `${H}${unit}`, 13);
-  body += svgText(X((W - w) / 2), Y(0) - 8, `${W - w}${unit}`, 13);
-  body += svgText(X(W) + 24, Y(h + (H - h) / 2), `${H - h}${unit}`, 13);
-  return svg(X(W) + 50, Y(H) + 28, body, 'L字の 形');
+  body += svgText(X(W / 2), Y(H) + 18, `${W}${unit}`, F);
+  body += svgText(X(0) - 32, Y(H / 2), `${H}${unit}`, F);
+  body += svgText(X((W - w) / 2), Y(0) - 12, `${W - w}${unit}`, F);
+  body += svgText(X(W) + 30, Y(h + (H - h) / 2), `${H - h}${unit}`, F);
+  return svg(X(W) + 64, Y(H) + 34, body, 'L字の 形');
 }
 
 /** 長方形の 図（たて・横の 長さ つき） */
 function rectFig(a: number, b: number, unit: string): Figure {
-  const k = Math.min(24, Math.floor(200 / Math.max(a, b)));
-  let body = `<rect x="40" y="16" width="${b * k}" height="${a * k}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
-  body += svgText(40 + (b * k) / 2, 16 + a * k + 16, `${b}${unit}`, 13);
-  body += svgText(20, 16 + (a * k) / 2, `${a}${unit}`, 13);
-  return svg(b * k + 60, a * k + 36, body, '長方形');
+  const k = Math.max(8, Math.min(14, Math.floor(120 / Math.max(a, b))));
+  let body = `<rect x="46" y="12" width="${b * k}" height="${a * k}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
+  body += svgText(46 + (b * k) / 2, 12 + a * k + 18, `${b}${unit}`, F);
+  body += svgText(22, 12 + (a * k) / 2, `${a}${unit}`, F);
+  return svg(b * k + 62, a * k + 40, body, '長方形');
 }
 
 const sq = (u: string) => `${u}²`;
@@ -232,12 +239,11 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
     const r = rng.int(1, 2);
     const S = W * H - (W - 2 * r) * (H - 2 * r);
     const answers = [{ kind: 'int' as const, value: S }];
-    const k = Math.min(18, Math.floor(220 / W));
-    let body = `<rect x="30" y="20" width="${W * k}" height="${H * k}" fill="var(--sky)" fill-opacity="0.5" ${STROKE}/>`;
-    body += `<rect x="${30 + r * k}" y="${20 + r * k}" width="${(W - 2 * r) * k}" height="${(H - 2 * r) * k}" fill="var(--white)" ${STROKE}/>`;
-    body += svgText(30 + (W * k) / 2, 20 + H * k + 16, `${W}m`, 13);
-    body += svgText(14, 20 + (H * k) / 2, `${H}m`, 13);
-    body += svgText(30 + r * k + 4, 20 + (r * k) / 2 + 2, `${r}m`, 11, 'start');
+    const k = Math.max(6, Math.min(10, Math.floor(120 / W)));
+    let body = `<rect x="34" y="14" width="${W * k}" height="${H * k}" fill="var(--sky)" fill-opacity="0.5" ${STROKE}/>`;
+    body += `<rect x="${34 + r * k}" y="${14 + r * k}" width="${(W - 2 * r) * k}" height="${(H - 2 * r) * k}" fill="var(--white)" ${STROKE}/>`;
+    body += svgText(34 + (W * k) / 2, 14 + H * k + 18, `${W}m`, F);
+    body += svgText(16, 14 + (H * k) / 2, `${H}m`, F);
     return {
       engine: 'number',
       id: `compound-alt:${W}x${H}:${r}`,

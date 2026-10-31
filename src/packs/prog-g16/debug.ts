@@ -308,7 +308,7 @@ function spotItem(opt: {
         gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 5.5 }),
         stripFigure(opt.bad, {
           label: `うまく いかない てじゅん: ${cmdText(opt.bad)}`,
-          hU: 5,
+          hU: 6.5,
           numbered: true,
         }),
       ],

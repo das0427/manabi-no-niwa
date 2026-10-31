@@ -12,7 +12,15 @@
  *     replay … 不正解の後・ヒントを出した後に、問題の音声をもう一度鳴らす
  *     revealAudio … 正答を見せるとき（解説）に1回だけ鳴らす音声
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { audio } from '../../core/audio/index';
 import type { ChoiceOption, Item, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -345,6 +353,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         .filter(Boolean)
         .join(' ')}
       data-heard={heard ? '1' : '0'}
+      style={sideHead ? ({ '--side-n': item.options.length } as CSSProperties) : undefined}
     >
       {showTranscript ? (
         <div className="eng-listen__head">

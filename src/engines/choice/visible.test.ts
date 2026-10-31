@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoLayout, displayOrder, picsProps, visibleOptionIndices } from './choice';
+import { autoLayout, displayOrder, optionTraits, picsProps, visibleOptionIndices } from './choice';
 
 describe('選択肢の並び', () => {
   const opts = (labels: string[]) => labels.map((label, i) => ({ label, correct: i === 0 }));
@@ -92,5 +92,32 @@ describe('絵・図だけの選択肢（text-layout-fixes R3）', () => {
     expect(p.style).toMatchObject({ '--pics-n': 3, '--pics-total': 8 });
     expect(picsProps([f(1), f(2)], 'column').className).toBe('');
     expect(picsProps([f(1), { label: 'あ' }], 'row').className).toBe('');
+  });
+});
+
+describe('optionTraits（text-layout-fixes T3）', () => {
+  const t = (label: string) => ({ label });
+  it('文字だけで12字を超えるラベルがあれば long', () => {
+    expect(optionTraits([t('あいうえおかきくけこさしす'), t('あ')], 'grid', false).long).toBe(true);
+    expect(optionTraits([t('あいうえおかきくけこさし'), t('あ')], 'grid', false).long).toBe(false);
+  });
+  it('絵が付く選択肢は long にしない', () => {
+    expect(
+      optionTraits([{ label: 'あいうえおかきくけこさしすせ', figure: {} }, t('あ')], 'row', false)
+        .long,
+    ).toBe(false);
+  });
+  it('絵に5字以上の文が付く4つ以下の横一列は caption', () => {
+    const o = [1, 2, 3].map(() => ({ label: 'アイスを たべた', figure: {} }));
+    expect(optionTraits(o, 'row', false).caption).toBe(true);
+    expect(optionTraits(o, 'row', true).caption).toBe(false);
+    expect(optionTraits([...o, ...o], 'row', false).caption).toBe(false);
+    expect(
+      optionTraits(
+        o.map((x) => ({ ...x, label: 'あか' })),
+        'row',
+        false,
+      ).caption,
+    ).toBe(false);
   });
 });

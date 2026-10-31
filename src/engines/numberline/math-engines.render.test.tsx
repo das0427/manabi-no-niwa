@@ -76,6 +76,9 @@ describe.each(sets)('%s の画面', (_name, def, samples, texts) => {
       }
     }
     const check = screen.queryByTestId('check');
+    // こたえあわせ は下の帯の主操作（.eng-check。作業領域の中だと枠で切れる。DESINGN.md 5.1）。数字キーの区画の ok（mnp-key--ok）は区画の中のまま
+    if (check && !check.classList.contains('mnp-key--ok'))
+      expect(check.classList.contains('eng-check')).toBe(true);
     const opt = screen.queryByTestId('opt-0');
     if (check && (check as HTMLButtonElement).disabled && opt) fireEvent.click(opt);
     if (check && !(check as HTMLButtonElement).disabled) fireEvent.click(check);

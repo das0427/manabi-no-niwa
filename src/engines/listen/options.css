@@ -40,8 +40,38 @@
   min-height: calc(var(--u) * 7);
 }
 .eng-opts__label {
-  font-size: calc(var(--u) * 3.2);
+  /* 下限は補助の文字の最小。解説の fit 0.6 で割らない（text-layout-fixes T3） */
+  font-size: max(calc(var(--u) * 3.2), var(--text-min, 0px));
   font-weight: 700;
+}
+/* 12字を超えるラベル（choice.tsx の optionTraits が data-long を付ける）は問題文と同じ大きさ・左そろえ・行間1.5 */
+.eng-opts__list[data-long] > .eng-opts__opt {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2);
+  align-items: stretch;
+}
+.eng-opts__list[data-long] .eng-opts__label {
+  font-size: max(calc(var(--prompt-size) * var(--ts, 1)), var(--text-min, 0px));
+  line-height: 1.5;
+  text-align: left;
+}
+/* 絵に5字以上の文が付く選択肢（4つ以下）は折り返さず、各 1/n の幅で並べる。文は札の中で折る */
+.eng-opts__list.is-caption {
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+.eng-opts__list.is-caption > .eng-opts__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-opts__list.is-caption > .eng-opts__opt svg,
+.eng-opts__list.is-caption > .eng-opts__opt .fig-illust__group > * {
+  max-width: 100%;
+}
+.eng-opts__list.is-caption .eng-opts__label {
+  text-align: center;
+  line-height: 1.3;
 }
 /* こたえあわせは下の帯の主操作の位置（つぎへ の左 3u） */
 .eng-opts__check {

@@ -91,6 +91,18 @@
   z-index: 3;
 }
 
+/* 番号の丸は札の左の余白に置く（角に突き出さない。作業領域・舞台の外に出ず、ふりがなにも重ならない）。
+   文字の開始位置は丸の幅の分だけ右へ。丸（--badge）の右に、ふりがなが左へはみ出す分の余白（1.6u） */
+.tk-card:has(> .tk-badge) {
+  padding-left: calc(var(--u) * 0.6 + var(--badge) + var(--u) * 1.6);
+}
+.tk-card > .tk-badge.tk-badge {
+  top: 50%;
+  left: calc(var(--u) * 0.6);
+  transform: translateY(-50%);
+  align-self: flex-start;
+}
+
 /* ui.css の `.tk-card > :not(.mark) { position: relative }`（字を ○ の前に出す）に負けない詳しさで、丸は絶対配置のまま */
 .tk-card > .tk-badge.tk-badge {
   position: absolute;
@@ -119,10 +131,10 @@
   background: var(--white);
 }
 
-/* こたえあわせ（作業領域の右） */
+/* こたえあわせ（band=false のとき作業領域の右。既定は下の帯 .tk-check--band） */
 .tk-check {
   min-width: calc(var(--u) * 16);
-  font-size: calc(var(--u) * 2.6);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   white-space: nowrap;
 }
 
@@ -156,7 +168,8 @@
   min-width: calc(var(--u) * 14);
   max-width: calc(var(--u0, var(--u)) * 17.5);
   padding-inline: calc(var(--u) * 0.8);
-  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
+  /* 「こたえあわせ」6字 = 14.4u。作業領域が縮んでも読める大きさ（舞台の --u0 で 2.4u・--text-min が下限） */
+  font-size: max(calc(var(--u0, var(--u)) * 2.4), var(--text-min, 0px));
   z-index: 4;
 }
 /* 帯に置くときは、札の列が作業領域の幅いっぱい（こたえあわせ の列を取らない） */

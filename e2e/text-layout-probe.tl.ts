@@ -231,7 +231,7 @@ test('不透明な板の下に隠れた字は covered だけ・透明な枠ど�
   expect(await kinds(page, 'g3')).toContain('overlap-text');
 });
 
-test('スクロールの枠の種類: work・explain は印があっても1件・transcript は印だけ', async ({
+test('スクロールの枠の種類: work・explain・figure は印があっても1件・transcript は印だけ', async ({
   page,
 }) => {
   const long = 'ながい ぶんしょうが つづいて います。'.repeat(8);
@@ -247,6 +247,13 @@ test('スクロールの枠の種類: work・explain は印があっても1件�
     expect(sh[0]!.detail).toMatch(kind === 'work' ? /作業領域が .*u 足りず/ : /解説が板に .*行分/);
     expect(r.issues.filter((i) => i.kind === 'clipped')).toEqual([]);
   }
+  // 数の入力の図の段（figure。T7）: 印があっても1件。見える高さが4行未満（12u ÷ 3.6u ＝ 3.3行）の clipped も今までどおり出す
+  await show(page, region('figure', true));
+  const fig = await inspectText(page, { stage: 'g3' });
+  const figSh = fig.issues.filter((i) => i.kind === 'scroll-hidden');
+  expect(figSh).toHaveLength(1);
+  expect(figSh[0]!.detail).toMatch(/図の段が .*u 足りず/);
+  expect(fig.issues.filter((i) => i.kind === 'clipped')).toHaveLength(1);
   await show(page, region('transcript', true));
   expect(
     (await inspectText(page, { stage: 'g3' })).issues.filter(
@@ -289,4 +296,146 @@ test('文字の大きさ: 最小の 1% までの差は出さない・それ以�
   );
   const r = await inspectText(page, { stage: 'g1' });
   expect(r.issues.find((i) => i.kind === 'small-text')?.detail).toContain('1.9u（最小 2u');
+});
+
+test('スクロールの枠の下端で半分切れた行: 枠の外の段に当たっても covered にしない（C9）・枠の中にかぶされば出す', async ({
+  page,
+}) => {
+  const long = 'ながい ぶんしょうが つづいて います。'.repeat(8);
+  const build = async (cueOverlapPx: number) => {
+    await show(
+      page,
+      `<div id="reg" class="abs" data-scroll-region="passage" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*40);height:calc(var(--u)*20);overflow:auto;font-size:calc(var(--u)*2.4);line-height:1.5;border:0;padding:0">
+         <p>${long}</p></div>
+       <button id="cue" class="abs" aria-label="つづき" style="left:calc(var(--u)*5);width:calc(var(--u)*40);height:calc(var(--u)*4)"></button>`,
+    );
+    // 3 行目の字の中心がちょうど枠の下端（+0.3px）になるように枠の高さを決め、「つづき」の段を枠の下端に置く
+    await page.evaluate((overlap) => {
+      const reg = document.getElementById('reg') as HTMLElement;
+      const node = reg.querySelector('p')!.firstChild as Text;
+      const rg = document.createRange();
+      let line = 0;
+      let lastTop = -1;
+      let cy = 0;
+      for (let i = 0; i < node.data.length; i++) {
+        if (/\s/.test(node.data[i]!)) continue;
+        rg.setStart(node, i);
+        rg.setEnd(node, i + 1);
+        const r = rg.getBoundingClientRect();
+        if (lastTop >= 0 && Math.abs(r.top - lastTop) > 2) line++;
+        lastTop = r.top;
+        if (line === 2) {
+          cy = (r.top + r.bottom) / 2;
+          break;
+        }
+      }
+      const top = reg.getBoundingClientRect().top;
+      reg.style.height = `${cy + 0.3 - top}px`;
+      const cue = document.getElementById('cue') as HTMLElement;
+      // 枠の下端より 0.4px 上から始める（当たり判定は画面のピクセルに丸まる）
+      cue.style.top = `${cy + 0.3 - 0.4 - overlap}px`;
+    }, cueOverlapPx);
+  };
+  await build(0);
+  const edge = await inspectText(page, { stage: 'g3' });
+  expect(edge.issues.filter((i) => i.kind === 'covered')).toEqual([]);
+  // 枠の中に 60px かぶさる段は、字の真上なので出す
+  await build(60);
+  expect((await inspectText(page, { stage: 'g3' })).issues.some((i) => i.kind === 'covered')).toBe(
+    true,
+  );
+});
+
+test('ボタンの上の飾り: pointer-events: none・同じ親・文字なしのボタンは出さない（C10）・文字のあるボタンは出す', async ({
+  page,
+}) => {
+  const decor =
+    '<div class="box" style="position:absolute;inset:0;pointer-events:none;border-radius:50%"></div>';
+  const wrap = (label: string, inner: string) =>
+    `<div class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5)">
+       <button ${label ? '' : 'aria-label="あか"'} style="display:block;width:calc(var(--u)*14);height:calc(var(--u)*8)">${label}</button>${inner}</div>`;
+  const covered = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter((i) => i.kind === 'covered');
+  // 文字なし（aria-label だけ）のボタンの上の飾り: 出さない
+  await show(page, wrap('', decor));
+  expect(await covered()).toEqual([]);
+  // 文字のあるボタンの上の飾り: 出す
+  await show(page, wrap('あか', decor));
+  expect((await covered()).length).toBeGreaterThan(0);
+  // pointer-events が none でない飾り（押せなくなる）: 出す
+  await show(page, wrap('', decor.replace('pointer-events:none;', '')));
+  expect((await covered()).length).toBeGreaterThan(0);
+  // ボタンの親の外にある飾り: 出す
+  await show(
+    page,
+    `${wrap('', '')}<div class="abs box" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*14);height:calc(var(--u)*8);pointer-events:none"></div>`,
+  );
+  expect((await covered()).length).toBeGreaterThan(0);
+  // 祖先の overflow の枠で切ると、ボタンより小さくなる札（外接はボタンより大きい）: 出さない。枠が無ければ出す
+  const big = (clip: boolean) =>
+    `<div class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5)">
+       <button style="display:block;width:calc(var(--u)*14);height:calc(var(--u)*8)">あか</button>
+       <div style="position:absolute;left:0;top:0;${clip ? 'width:calc(var(--u)*5);height:calc(var(--u)*4);overflow:hidden' : ''}">
+         <div class="box" style="width:calc(var(--u)*30);height:calc(var(--u)*30)"></div></div></div>`;
+  await show(page, big(true));
+  expect(await covered()).toEqual([]);
+  await show(page, big(false));
+  expect((await covered()).length).toBeGreaterThan(0);
+});
+
+test('ボタンの中の空白でない所の改行: 空白が1つの文は出さない・空白の多いラベルは出す（C11）', async ({
+  page,
+}) => {
+  const btn = (w: string, label: string) =>
+    `<button class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:${w};height:calc(var(--u)*20)">${label}</button>`;
+  // 名前の空白が1つ（空白の数 × 12 < 字数）: 文節の切れ目でも「空白でない所で改行」にしない
+  await show(page, btn('7em', 'もりかわ はるかさんがきょうのおはなしをしてくれる'));
+  const one = await inspectText(page, { stage: 'g4' });
+  expect(one.issues.filter((i) => i.detail === '空白でない所で改行')).toEqual([]);
+  // 空白が多い（空白の数 ≧ 字数 ÷ 12）: 空白でない所の改行を出す（分かち書きでない段階でも）
+  await show(page, btn('4.5em', 'あいうえおか きくけこさし たちつてとな'));
+  const many = await inspectText(page, { stage: 'g4' });
+  expect(
+    many.issues.some((i) => i.kind === 'button-split' && i.detail === '空白でない所で改行'),
+  ).toBe(true);
+});
+
+test('記法の漏れ: 《》・{{ }} が画面に出ていたら出す（C12）・ふつうの文は出さない', async ({
+  page,
+}) => {
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5)">終《お》わり</p>
+     <p class="abs" style="top:calc(var(--u)*15);left:calc(var(--u)*5)">{{name}}さん</p>`,
+  );
+  const r = await inspectText(page, { stage: 'g3' });
+  expect(r.issues.filter((i) => i.kind === 'markup-leak')).toHaveLength(2);
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5)">おわり（おしまい）</p>`,
+  );
+  expect(
+    (await inspectText(page, { stage: 'g3' })).issues.filter((i) => i.kind === 'markup-leak'),
+  ).toEqual([]);
+});
+
+test('正誤の印（.mark）: 誤答の ？と字の後ろの ○ は出さない・字の上の ○ は出す（C13）', async ({
+  page,
+}) => {
+  const mark = (cls: string, style: string) =>
+    `<span class="mark ${cls}" aria-hidden="true" style="position:absolute;pointer-events:none;${style}"></span>`;
+  const card = (inner: string) =>
+    `<div class="abs box" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*14);height:calc(var(--u)*8)"><span style="position:relative;z-index:1">ここ</span>${inner}</div>`;
+  const covered = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter((i) => i.kind === 'covered');
+  const over = 'inset:0;background:#cfc;z-index:2';
+  // 誤答の ？: 札の上に重ねる設計
+  await show(page, card(mark('mark--wrong', over)));
+  expect(await covered()).toEqual([]);
+  // 正解の ○ が字の後ろ（z-index 0、字は 1）: 出さない
+  await show(page, card(mark('mark--correct', 'inset:0;background:#cfc;z-index:0')));
+  expect(await covered()).toEqual([]);
+  // 正解の ○ が字の上: 出す
+  await show(page, card(mark('mark--correct', over)));
+  expect((await covered()).length).toBeGreaterThan(0);
 });

@@ -243,7 +243,7 @@ function SortView({
         </div>
       </div>
       {!auto && !revealed ? (
-        <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} band />
+        <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} />
       ) : null}
     </div>
   );

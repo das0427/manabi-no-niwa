@@ -247,6 +247,15 @@ describe('program: 画面（タップだけ）', () => {
     expect(screen.queryByTestId('card-5')).toBeNull();
   });
 
+  it('もどす・けす・うごかす は下の帯（.eng-band）に入り、のこりの枚数は札の置き場に残る', () => {
+    show(PROGRAM_SAMPLES[0]!);
+    const band = screen.getByTestId('run-button').closest('.eng-band');
+    expect(band).toBeTruthy();
+    expect(band!.contains(screen.getByTestId('undo-button'))).toBe(true);
+    expect(band!.contains(screen.getByTestId('clear-button'))).toBe(true);
+    expect(band!.contains(screen.getByTestId('prog-count'))).toBe(false);
+  });
+
   it('札の上限で、使える札が押せなくなる', () => {
     show(PROGRAM_SAMPLES[0]!);
     for (let i = 0; i < 4; i++) tap('palette-right');

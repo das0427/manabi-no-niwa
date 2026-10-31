@@ -106,7 +106,7 @@ export function floorStyle(floor: number): CSSProperties {
  * 文字が viewBox の外に出るときは viewBox を文字の外接まで広げる（clipped: text ⊂ svg）。
  * 文字の大きさが viewBox の単位で直に書かれているので、描画のあとに測って直す。
  */
-export function liftSvgText(root: Element): void {
+export function liftSvgText(root: Element, opts?: { fitWidth?: boolean }): void {
   const min = textMinPx(root);
   for (const svg of Array.from(root.querySelectorAll('svg'))) {
     const d = svg.dataset;
@@ -115,7 +115,11 @@ export function liftSvgText(root: Element): void {
     if (d.w0) svg.setAttribute('width', d.w0);
     if (d.h0) svg.setAttribute('height', d.h0);
     const texts = Array.from(svg.querySelectorAll('text'));
-    for (const t of texts) t.style.fontSize = '';
+    for (const t of texts) {
+      t.style.fontSize = '';
+      delete t.dataset.fs0;
+    }
+    if (opts?.fitWidth) fitWidthToText(svg, texts, min);
     // 引き上げると外接が広がり、viewBox を広げると拡大率が下がる。収まるまで数回くり返し、
     // 最後は広げずに引き上げだけやり直す（広げた直後の拡大率で最小を満たす）
     let widened = false;
@@ -124,8 +128,43 @@ export function liftSvgText(root: Element): void {
       widened = widenToText(svg, texts);
       if (!widened) break;
     }
-    if (widened) lift(svg, texts, min);
+    if (widened) {
+      lift(svg, texts, min);
+      // 最後の引き上げで外接がまた viewBox を超えたら、字は切らずに広げる（拡大率の下がりはわずか）
+      widenToText(svg, texts);
+    }
   }
+}
+
+/**
+ * width を書いていない図の幅: 一番小さい字が最小（--text-min）の 1.05 倍になる幅 = vbW × 1.05 ÷ f × --text-min。
+ * 画面の大きさ（--u）が変わっても JS で測り直さずに済むよう、倍率 K = vbW × 1.05 ÷ f だけを --fig-k に書く
+ * （幅は CSS の calc(var(--text-min) * var(--fig-k))）。下限の 23u と親の幅（上限）も CSS 側（figure.css の .fig-svg）。
+ * <g transform> の中の字は字ごとの拡大率で換算する。測れないとき・width を書いた図は何もしない（--fig-k を消す）。
+ * あわせて縦横比を --fig-ar に書く（number.css が図の段で縮める下限に使う）
+ */
+function fitWidthToText(svg: SVGSVGElement, texts: SVGTextElement[], min: number): void {
+  svg.style.removeProperty('--fig-k');
+  svg.style.removeProperty('--fig-ar');
+  if (svg.hasAttribute('width') || !(min > 0)) return;
+  const vb = svg.viewBox.baseVal;
+  const ctm = svg.getScreenCTM?.();
+  if (!vb || !(vb.width > 0) || !ctm) return;
+  const inv = ctm.inverse();
+  let f = Infinity;
+  for (const t of texts) {
+    if (!t.textContent?.trim()) continue;
+    const fs = parseFloat(getComputedStyle(t).fontSize);
+    const tc = (t as SVGGraphicsElement).getScreenCTM?.();
+    if (!Number.isFinite(fs) || fs <= 0 || !tc) continue;
+    const m = inv.multiply(tc);
+    const k = Math.min(Math.hypot(m.a, m.b), Math.hypot(m.c, m.d));
+    if (Number.isFinite(k) && k > 0) f = Math.min(f, fs * k);
+  }
+  if (!Number.isFinite(f)) return;
+  svg.style.setProperty('--fig-k', ((vb.width * 1.05) / f).toFixed(3));
+  // 縦横比（高さ ÷ 幅）。高さで縮める所（数の入力の図の段）が、字を引き上げで補える高さの下限を CSS で出すのに使う
+  svg.style.setProperty('--fig-ar', (vb.height / vb.width).toFixed(4));
 }
 
 /** 字ごとの拡大率で、最小に足りない字を引き上げる。測れなければ false */
@@ -153,8 +192,11 @@ function lift(svg: SVGSVGElement, texts: SVGTextElement[], min: number): boolean
     const floor = min / (ppu * k);
     // 2倍までの引き上げだけ行う。それ以上小さく描かれた図は、文字を大きくすると他の文字や線に重なるので、
     // 図の描き方（viewBox の大きさ）を直す（content の側）。検査には small-text として残る
+    // 比べるのは元の大きさ（くり返しで引き上げた分を足して 2倍を超えないように。幅を広げた図で字が viewBox を超えて切れる）
+    const orig = t.dataset.fs0 ? parseFloat(t.dataset.fs0) : fs;
+    if (!t.dataset.fs0 && !t.style.fontSize) t.dataset.fs0 = String(fs);
     const target = Math.ceil(floor * 100) / 100;
-    if (fs < floor - 0.005 && floor / fs <= 2) t.style.fontSize = `${target}px`;
+    if (fs < floor - 0.005 && floor / orig <= 2) t.style.fontSize = `${target}px`;
   }
   return true;
 }
@@ -249,14 +291,19 @@ export function useWidenToText(ref: RefObject<SVGSVGElement | null>, ...deps: un
 }
 
 /** liftSvgText を、描画と大きさの変化のたびに実行する */
-export function useLiftedSvgText(ref: RefObject<Element | null>, key: unknown): void {
+export function useLiftedSvgText(
+  ref: RefObject<Element | null>,
+  key: unknown,
+  opts?: { fitWidth?: boolean },
+): void {
+  const fitWidth = opts?.fitWidth;
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const run = () => liftSvgText(el);
+    const run = () => liftSvgText(el, { fitWidth });
     run();
     return observeResize([el], run);
-  }, [ref, key]);
+  }, [ref, key, fitWidth]);
 }
 
 /**

@@ -49,7 +49,8 @@
   grid-row: 2;
 }
 .eng-number__box {
-  min-width: calc(var(--u) * 14);
+  /* 下限 10u（札つきの回答欄が4〜5つ並ぶとき1段に入る: text-layout-fixes.md T7） */
+  min-width: calc(var(--u) * 10);
   min-height: calc(var(--u) * 8);
   padding: 0 calc(var(--u) * 1.2);
   font: inherit;
@@ -128,9 +129,53 @@
 .unit__work--number {
   container-type: size;
 }
-/* 左の列（図と回答欄）が広くても、キーの区画を作業領域の外へ押し出さない */
+/* 左の列（図と回答欄）が広くても、キーの区画を作業領域の外へ押し出さない。
+   図の段は縮み（minmax(0,1fr)）、回答欄の段は中身の高さ（auto）。上は問題文に、下は回答欄に重ねない（T7）。
+   unit.css の `.unit__work--number` を詳しさで上書きする */
 .unit__work.unit__work--number {
   grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: safe center;
+}
+.unit__work.unit__work--number > .unit__figure {
+  align-self: stretch;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: center;
+}
+/* 入らない表・10の棒は、図の段だけを枠にして縦にスクロール（number.tsx が印を付ける）。キーと回答欄は枠の外 */
+.unit__work--number > .unit__figure[data-scroll-region='figure'] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-right: calc(var(--u) * 3.6);
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure'][data-scroll-cue]::after {
+  content: '▼';
+  position: sticky;
+  bottom: 0;
+  align-self: flex-end;
+  flex: none;
+  width: calc(var(--text-min) * 1.2);
+  height: calc(var(--text-min) * 1.2);
+  margin: calc(var(--text-min) * -1.2) calc(var(--u) * -3.4) 0 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  pointer-events: none;
+}
+/* 札つきの回答欄が4つ以上: 1段に並べる（最小 10u。5つまで） */
+.eng-number__fields--many {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--u) * 10), 1fr));
+  justify-items: center;
+  width: 100%;
+}
+.eng-number__fields--many .eng-number__field {
+  min-width: 0;
 }
 .unit__work--number .unit__figure,
 .unit__work--number .eng-number__fields {
@@ -144,7 +189,28 @@
 /* 図は左の列の幅の中、回答欄（札つきで約 15u）を除いた高さの中に収める */
 .unit__work--number .unit__figure svg {
   max-width: 100%;
-  max-height: calc(100cqh - var(--u0) * 15);
+  max-height: 100%;
+  min-height: 0;
+}
+/* パックの SVG の箱（.fig-svg）は図の段の中で縮める。箱の高さが auto のままだと中の svg の max-height: 100% が効かず、
+   縮められる SVG まで図の段のスクロールになる（g6.math.scale/0 の三角形が 1280×720 で下が切れていた）。
+   スクロールは縮まない表・10の棒だけ（T7） */
+.unit__work--number > .unit__figure > .fig-svg {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* ただし、字を引き上げ（liftSvgText。元の 2 倍まで）で無理なく最小に戻せる大きさまでしか縮めない（字が最小の 1.05÷1.5 ＝ 0.7 倍まで。引き上げは約 1.4 倍。
+   ÷2 のちょうど 2 倍の境目では丸めで引き上げが外れ、small-text・overlap-text が出た）。
+   それより低い図の段では、図の段のスクロール（▼。検査は1件）にして、第4回で図の viewBox・字を直す
+   （g6.math.scale/0 の 1280×620 で、高さいっぱいに縮めると辺の長さの字が 0.72u になり重なった）。
+   設計（T2）の「縮めて引き上げる」のうち、引き上げで補えない分だけをスクロールに回す。
+   --fig-k・--fig-ar は liftSvgText の fitWidth が書く（無ければ下限なし） */
+.unit__work--number > .unit__figure > .fig-svg > svg:not([width]) {
+  min-height: calc(var(--text-min, 0px) * var(--fig-k, 0) * var(--fig-ar, 0) / 1.5);
 }
 /* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らず、文字は --text-min 以上
    （fig-table の 2.4u は fit 0.8 で 1.9u になり、最小の 2.2u（幼児）を割る） */

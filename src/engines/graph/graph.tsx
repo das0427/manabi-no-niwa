@@ -973,7 +973,7 @@ function ChoiceReadView({
         {t.multi && !revealed ? (
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             disabled={disabled || picked.length === 0}
             onClick={() => submit({ pick: picked })}
             data-testid="check"
@@ -1115,7 +1115,7 @@ function MakeView({
         </div>
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => submit({ values })}
           disabled={locked || (d.kind === 'line' && values.some((v) => v === null))}
           data-testid="check"

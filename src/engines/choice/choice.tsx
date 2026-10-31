@@ -66,6 +66,29 @@ export function autoLayout(
   return declared === 'column' ? 'row' : (declared ?? 'row');
 }
 
+/**
+ * 選択肢の文字・並びの目印（text-layout-fixes T3）。
+ * long: 文字だけの選択肢で、いちばん長いラベルが12字を超える（ラベルを問題文と同じ大きさ・左そろえ・行間1.5にする）。
+ * caption: 絵・図に5字以上の文が付く選択肢が4つ以下で横一列（折り返さず各 1/n の幅に分け、文は札の中で折る）。
+ */
+export function optionTraits(
+  options: readonly { label?: string; figure?: unknown }[],
+  layout: 'row' | 'grid' | 'column',
+  isPics: boolean,
+): { long: boolean; caption: boolean } {
+  const len = (o: { label?: string }) => [...plainText(o.label ?? '')].length;
+  const textOnly =
+    options.length > 0 && options.every((o) => o.figure === undefined && o.label !== undefined);
+  const long = textOnly && options.some((o) => len(o) > 12);
+  const caption =
+    !isPics &&
+    layout === 'row' &&
+    options.length >= 2 &&
+    options.length <= 4 &&
+    options.some((o) => o.figure !== undefined && len(o) >= 5);
+  return { long, caption };
+}
+
 /** 図 1 つに並ぶ絵の数（横幅の見積り用。絵以外の図は 1） */
 function picCount(fig: unknown): number {
   const f = fig as { kind?: string; count?: number; items?: unknown[] } | undefined;
@@ -216,11 +239,20 @@ function ChoiceView({
     })),
     layout,
   );
+  const traits = optionTraits(
+    shown.map((i) => ({
+      label: typeof item.options[i]!.label === 'string' ? item.options[i]!.label : undefined,
+      figure: item.options[i]!.figure,
+    })),
+    layout,
+    pics.className !== '',
+  );
   return (
     <div className="eng-choice">
       <div
-        className={`eng-choice__options eng-choice__options--${layout}${pics.className}`}
+        className={`eng-choice__options eng-choice__options--${layout}${pics.className}${traits.caption ? ' is-caption' : ''}`}
         style={pics.style}
+        data-long={traits.long ? '' : undefined}
       >
         {shown
           .map((i) => ({ o: item.options[i]!, i }))

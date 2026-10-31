@@ -593,7 +593,7 @@ function HandControls({
       </div>
       <button
         type="button"
-        className="mk-btn mk-btn--ok"
+        className="mk-btn mk-btn--ok eng-check"
         onClick={onSubmit}
         disabled={locked}
         data-testid="check"

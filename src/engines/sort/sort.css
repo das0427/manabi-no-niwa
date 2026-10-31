@@ -63,6 +63,22 @@
   width: calc(var(--u) * 4.4);
   height: calc(var(--u) * 4.4);
 }
+/* ふたの中の名前の図（色の丸など）: ふたの高さ（5.5u）から 1u 引いた高さまで。幅は比で決め、上下を切らない（p23.think.sort） */
+.eng-sort__name .tk-card__fig {
+  max-width: none;
+  max-height: calc(var(--u) * 4.5);
+  overflow: visible;
+}
+.eng-sort__name .tk-card__fig .fig-svg {
+  display: flex;
+  max-height: calc(var(--u) * 4.5);
+}
+.eng-sort__name .tk-card__fig .fig-svg svg:not([width]),
+.eng-sort__name .tk-card__fig svg {
+  width: auto;
+  height: calc(var(--u) * 4.5);
+  max-height: calc(var(--u) * 4.5);
+}
 .eng-sort__inside {
   position: relative;
   z-index: 1;

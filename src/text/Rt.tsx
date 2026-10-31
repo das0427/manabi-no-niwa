@@ -103,9 +103,17 @@ function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
       const cs = [...body];
       [body, tail] = [cs.slice(0, -1).join(''), cs[cs.length - 1]!];
     }
+    // まとまりの先頭が行頭禁則の字（「…のに／、{{}}」の「、」）なら、さらに前の1字も含める
+    while (tail && LINE_START_NG.test(tail) && /\S$/u.test(body)) {
+      const cs = [...body];
+      [body, tail] = [cs.slice(0, -1).join(''), cs[cs.length - 1]! + tail];
+    }
   }
   return [head, body, tail];
 }
+
+/** 行頭に置かない字（句読点・終わり括弧・長音・小さい仮名）。nobr のまとまりの先頭がこれなら、さらに前の1字を含める */
+const LINE_START_NG = /^[、。，．」』）)〕\]】ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ]/u;
 
 const NOBR_MAX = 10;
 /** 1字の並びの上限（回文の「た・け・や・ぶ・や・け・た」は13字。解説の1行は20字ほど） */

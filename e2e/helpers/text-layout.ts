@@ -26,6 +26,8 @@
  *   - narrow-wrap      … 1行1〜2文字で縦に並ぶような極端に狭い折り返し
  *   文字の大きさ
  *   - small-text       … DESINGN.md 17章の最小（補助の文字・ふりがな 1.1u）より小さい
+ *   記法の漏れ
+ *   - markup-leak      … 画面に《》・{{・}} の記法（ふりがな・差し込みの書き方）がそのまま出ている
  */
 import type { Page } from '@playwright/test';
 
@@ -48,6 +50,7 @@ export const TEXT_ISSUE_KINDS = [
   'button-split',
   'narrow-wrap',
   'small-text',
+  'markup-leak',
 ] as const;
 export type TextIssueKind = (typeof TEXT_ISSUE_KINDS)[number];
 
@@ -71,6 +74,7 @@ export const TEXT_ISSUE_LABEL: Record<TextIssueKind, string> = {
   'button-split': 'ボタン・選択肢の中で語が折れる',
   'narrow-wrap': '極端に狭い折り返し',
   'small-text': '文字が小さすぎる',
+  'markup-leak': '《》・{{ }} の記法がそのまま出る',
 };
 
 export interface TextIssue {
@@ -175,6 +179,15 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
   const peStyle = document.createElement('style');
   peStyle.textContent = '.stage, .stage * { pointer-events: auto !important; }';
   document.head.appendChild(peStyle);
+  /** 元の pointer-events（検査用に全部 auto にする前の値）。覆うものが pointer-events: none の飾りかを見る */
+  const originalPointerEvents = (el: Element): string => {
+    peStyle.disabled = true;
+    try {
+      return getComputedStyle(el).pointerEvents;
+    } finally {
+      peStyle.disabled = false;
+    }
+  };
   try {
     return probeBody();
   } finally {
@@ -540,6 +553,32 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       visCache.set(el, v);
       return v;
     };
+    /** 舞台と、overflow が visible でない祖先の padding box（小数のまま）の重なり。当たり判定の点を切るのに使う */
+    const paddingClip = (el: Element) => {
+      const v = { l: B.l, t: B.t, r: B.r, b: B.b };
+      for (let a = el.parentElement; a && a !== root && a !== document.body; a = a.parentElement) {
+        const s = cs(a);
+        if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+        const ar = a.getBoundingClientRect();
+        const he = a as HTMLElement;
+        const bl = parseFloat(s.borderLeftWidth) || 0;
+        const br = parseFloat(s.borderRightWidth) || 0;
+        const bt = parseFloat(s.borderTopWidth) || 0;
+        const bb = parseFloat(s.borderBottomWidth) || 0;
+        // 縦・横のスクロールバーの分（offset − client − 線）
+        const sbX = Math.max(0, he.offsetWidth - he.clientWidth - bl - br);
+        const sbY = Math.max(0, he.offsetHeight - he.clientHeight - bt - bb);
+        if (s.overflowX !== 'visible') {
+          v.l = Math.max(v.l, ar.left + bl);
+          v.r = Math.min(v.r, ar.right - br - sbX);
+        }
+        if (s.overflowY !== 'visible') {
+          v.t = Math.max(v.t, ar.top + bt);
+          v.b = Math.min(v.b, ar.bottom - bb - sbY);
+        }
+      }
+      return v;
+    };
     /** 見えている部分だけに切った箱（見えなければ null） */
     const visible = (el: Element, r: { l: number; t: number; r: number; b: number }) => {
       const v = visClip(el);
@@ -696,6 +735,17 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         );
         continue;
       }
+      if (kindOfReg === 'figure' && ovY) {
+        // 数の入力の図の段（number。text-layout-fixes 第3回 T7）: 問題文・回答欄に重ねないための逃げなので、
+        // 印があっても枠につき1件を残す（第4回の content で図を直す手がかり）。印・4行の高さも下で今までどおり見る
+        add(
+          'scroll-hidden',
+          textOf(reg),
+          `${describe(reg)}（data-scroll-region=figure）`,
+          rect,
+          `図の段が ${r1((he.scrollHeight - he.clientHeight) / u)}u 足りずスクロール`,
+        );
+      }
       if (!hasCue)
         add(
           'scroll-hidden',
@@ -840,10 +890,14 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         if (p.closest('svg')) continue;
         for (const c of charsOf(node)) {
           if (!c) continue;
-          const v = visClip(p);
+          // 見える範囲は、overflow が visible でない祖先の padding box（線の内側。スクロールバーを除く）を
+          // 小数のまま使い、1px 内側に寄せる。clientHeight は整数に丸まる（最大 0.5px 外へ出る）うえ、当たり判定は
+          // 画面のピクセルに丸まるので、枠の下端でちょうど半分切れた行の字の中心は、枠の外の段（「▼ つづき」）に当たる。
+          // 枠で切れて見えない字は (5) の clipped・scroll-hidden で出すので、ここでは数えない
+          const v = paddingClip(p);
           const cx = (c.l + c.r) / 2;
           const cy = (c.t + c.b) / 2;
-          if (cx < v.l || cx > v.r || cy < v.t || cy > v.b) continue; // 枠で隠れた字
+          if (cx < v.l + 1 || cx > v.r - 1 || cy < v.t + 1 || cy > v.b - 1) continue; // 枠で隠れた字
           samples.push({
             x: (c.l + c.r) / 2,
             y: (c.t + c.b) / 2,
@@ -868,8 +922,9 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             continue;
           }
           if (!reached) {
-            // 意図した重ね: 正誤の印（.mark）は札の上に重ねる設計
-            if (e.classList.contains('mark')) continue;
+            // 意図した重ね: 誤答の ？（.mark--wrong）は札の角に重ねる設計。正解の ○（.mark--correct）は字の後ろに
+            // 置く設計なので、字の上に来ていれば数える（match の解説で ○ が字に重なっていた）
+            if (e.classList.contains('mark--wrong')) continue;
             if (paints(e, s.x, s.y)) {
               const k = coveredBy.get(s.where);
               if (k) k.text += s.label;
@@ -931,18 +986,33 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           for (const e of document.elementsFromPoint(x, y)) {
             if (el.contains(e) || e.contains(el)) break;
             // 意図した重ね: 透明な当たり判定の札（sort-box__hit 等）は paints が false
-            if (e.classList.contains('mark')) continue;
+            if (e.classList.contains('mark--wrong')) continue;
             if (paints(e, x, y)) {
-              // 意図した重ね: ボタンの上に置いた、ボタンより小さい札（箱の中のカード・印など）
-              const er = e.getBoundingClientRect();
+              // 意図した重ね: ボタンの上に置いた、ボタンより小さい札（箱の中のカード・印など）。
+              // 上に来た要素の外接は、祖先の overflow の枠で切ってから比べる（枠からはみ出す部分は見えない）
+              const er0 = e.getBoundingClientRect();
+              const er = visible(e, { l: er0.left, t: er0.top, r: er0.right, b: er0.bottom }) ?? {
+                l: er0.left,
+                t: er0.top,
+                r: er0.right,
+                b: er0.bottom,
+              };
               if (
-                er.left >= r0.left - 1 &&
-                er.top >= r0.top - 1 &&
-                er.right <= r0.right + 1 &&
-                er.bottom <= r0.bottom + 1 &&
-                er.width * er.height < 0.9 * r0.width * r0.height
+                er.l >= r0.left - 1 &&
+                er.t >= r0.top - 1 &&
+                er.r <= r0.right + 1 &&
+                er.b <= r0.bottom + 1 &&
+                (er.r - er.l) * (er.b - er.t) < 0.9 * r0.width * r0.height
               )
                 break;
+              // 意図した重ね: ボタンの飾り（押せることも文字も損なわない）。元の pointer-events が none で、
+              // ボタンと同じ親の中にあり、ボタンに見える文字が無い（aria-label だけ）。文字のあるボタンの上の飾りは数える
+              if (
+                originalPointerEvents(e) === 'none' &&
+                !!el.parentElement?.contains(e) &&
+                textOf(el) === ''
+              )
+                continue;
               who = e;
               break;
             }
@@ -1018,6 +1088,25 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             `${r2(px / u)}u（最小 ${min}u${isRt ? '・ふりがな' : ''}）`,
           );
         }
+      }
+    }
+
+    // ---- (10b) 記法の漏れ: ふりがな《よみ》・差し込み {{ }} がそのまま出ている
+    {
+      const done = new Set<Element>();
+      for (const node of textNodes) {
+        const m = /《|》|\{\{|\}\}/.exec(node.data);
+        if (!m) continue;
+        const p = node.parentElement!;
+        if (done.has(p)) continue;
+        done.add(p);
+        add(
+          'markup-leak',
+          node.data.trim(),
+          describe(p),
+          p.getBoundingClientRect(),
+          `「${m[0]}」が画面に出ている`,
+        );
       }
     }
 
@@ -1152,6 +1241,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
 
           const paraText = para.map((p) => (p.spaceBefore ? ' ' : '') + p.ch).join('');
           const hasSpaces = /\S \S/.test(paraText.trim());
+          const spaceCount = para.filter((p) => p.spaceBefore).length;
           const box = (a: Pos, b: Pos) => ({
             left: Math.min(a.l, b.l),
             top: Math.min(a.t, b.t),
@@ -1249,7 +1339,10 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             }
             // (f) ボタン・選択肢の中で語が途中で折れる（分かち書きでない語は Intl.Segmenter の単語で見る）
             else if (inBtn && !b.spaceBefore && !START_NG.has(b.ch) && !BREAK_OK_AFTER.has(a.ch)) {
-              if (hasSpaces) add('button-split', text, where, rect, '空白でない所で改行');
+              // 空白でない所の改行を見るのは、分かち書きの段階か、空白が多い（空白の数 ≧ 字数 ÷ 12）ラベルだけ。
+              // 名前の空白（森川 はるか）が1つあるだけの普通の文は、文節の切れ目の改行まで違反にしない
+              if (hasSpaces && (wakachi || spaceCount * 12 >= para.length))
+                add('button-split', text, where, rect, '空白でない所で改行');
               else if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
                 seg ??= new Intl.Segmenter('ja', { granularity: 'word' });
                 const pText = para.map((p) => p.ch).join('');

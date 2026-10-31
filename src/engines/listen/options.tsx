@@ -12,6 +12,7 @@ import {
   autoLayout,
   checkChoice,
   judgeChoice,
+  optionTraits,
   picsProps,
   visibleOptionIndices,
   type ChoiceResponse,
@@ -122,11 +123,20 @@ export function ChoiceOptions({
     layout,
     picsSide,
   );
+  const traits = optionTraits(
+    shown.map((i) => ({
+      label: typeof part.options[i]!.label === 'string' ? part.options[i]!.label : undefined,
+      figure: part.options[i]!.figure,
+    })),
+    layout,
+    pics.className !== '',
+  );
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
       <div
-        className={`eng-opts__list eng-opts__list--${layout}${pics.className}`}
+        className={`eng-opts__list eng-opts__list--${layout}${pics.className}${traits.caption ? ' is-caption' : ''}`}
         style={pics.style}
+        data-long={traits.long ? '' : undefined}
       >
         {shown
           .map((i) => ({ o: part.options[i]!, i }))

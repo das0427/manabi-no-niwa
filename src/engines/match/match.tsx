@@ -264,6 +264,7 @@ function MatchView({
     <div
       className={[
         'tk-frame',
+        'tk-frame--band',
         'eng-match',
         rows ? 'eng-match--rows' : '',
         toddler ? 'tk--big' : '',

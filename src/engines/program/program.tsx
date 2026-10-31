@@ -588,13 +588,13 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
                   <span className="prog-card__name">{CARD_NAME[k]}</span>
                 </button>
               ))}
-            </div>
-            <div className="prog-tools">
               {item.maxCards !== undefined ? (
                 <span className="prog-count" data-testid="prog-count">
                   のこり {Math.max(0, item.maxCards - count)}まい
                 </span>
               ) : null}
+            </div>
+            <div className="eng-band prog-band">
               <button
                 type="button"
                 className="tap tap--white tap--aux"
@@ -617,7 +617,7 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
               </button>
               <button
                 type="button"
-                className="tap tap--main prog-go"
+                className="tap tap--main prog-go eng-check"
                 onClick={go}
                 disabled={locked || prog.length === 0}
                 data-testid="run-button"

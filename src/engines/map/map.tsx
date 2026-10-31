@@ -1197,7 +1197,7 @@ function FindView({ item, revealed, wrongMark, disabled, submit }: View) {
           </button>
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => submit({ prefs: picked })}
             disabled={locked || picked.length === 0}
             data-testid="check"
@@ -1286,7 +1286,7 @@ function SpellView({ item, ctx, revealed, wrongMark, disabled, submit }: View) {
         {!revealed ? (
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => submit({ tiles: placed })}
             disabled={locked || placed.length === 0}
             data-testid="check"
@@ -1406,7 +1406,7 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
           <p className="map-count">{picked !== null ? 'えらんだよ' : 'きごうを タップ'}</p>
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => picked !== null && submit({ value: picked })}
             disabled={locked || picked === null}
             data-testid="check"

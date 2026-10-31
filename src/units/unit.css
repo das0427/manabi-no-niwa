@@ -315,6 +315,25 @@
 .unit__explain-figure:has(.fig-table, .fig-text) > * {
   max-height: none;
 }
+/* 図を文の右に置く（data-fig-side。UnitRunner が板の測りで付ける）: 見出し｜文｜図の3列。
+   図は幅 min(30%, 24u)・高さ 12u まで。表・文の図と、板の幅の 40% を超える図は付けない（下の段のまま） */
+.unit__explain[data-fig-side] {
+  grid-template-columns: auto minmax(0, 1fr) min(30%, calc(var(--u) * 24));
+  column-gap: calc(var(--u) * 1.6);
+}
+.unit__explain[data-fig-side] .unit__explain-head {
+  margin-right: 0;
+}
+.unit__explain[data-fig-side] .unit__explain-text {
+  grid-column: 2;
+  grid-row: 1;
+}
+.unit__explain[data-fig-side] .unit__explain-figure {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  justify-content: center;
+}
 /* 板が 22u を超えて縦にスクロールするとき、下端に ▼（UnitRunner が data-scroll-cue を付け外しする） */
 .unit__scroll-cue {
   grid-column: 1 / -1;
@@ -342,4 +361,38 @@
   color: var(--ink);
   background: var(--paper);
   border-radius: calc(var(--u) * 0.6);
+}
+
+/* 下の帯の主操作（全エンジン共通。DESINGN.md 5.1）。つぎへ の左 3u（右端から 21.5u・下端から 2u）。
+   .stage は transform を持つので position: fixed の基準は舞台になる。fixed は作業領域のスクロールの範囲に入らず、
+   fit の測り・スクロールの要否を押し上げず、作業領域が枠で切れても隠れない。作業領域の中の --u は --fit で縮むので、
+   位置と最大幅は舞台の --u0 で置く。幅は吹き出しの右端（右から 39u。:has(.eng-check)）に入る 17.5u まで。
+   .unit を頭に付けて、エンジンごとの CSS（choice.css・order/shared.css）より詳しくする */
+.unit .eng-check {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  min-width: calc(var(--u0, var(--u)) * 14);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  /* 帯は作業領域の外なので、字も fit で縮めない（舞台の --u0。--text-min が下限） */
+  font-size: max(calc(var(--u0, var(--u)) * 2.4), var(--text-min, 0px));
+  z-index: 4;
+}
+/* 主操作が複数あるエンジン（program の もどす・けす・うごかす）は、同じ位置に横に並べる箱に入れる。
+   幅は吹き出しの右端までに入る 24u まで。ボタンは箱の中で並べるので position は付けない */
+.unit .eng-band {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  max-width: calc(var(--u0, var(--u)) * 24);
+  display: flex;
+  gap: calc(var(--u0, var(--u)) * 1.6);
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 4;
+}
+.unit .eng-band .eng-check {
+  position: static;
+  min-width: 0;
+  max-width: none;
 }

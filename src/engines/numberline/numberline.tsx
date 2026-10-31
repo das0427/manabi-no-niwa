@@ -602,7 +602,7 @@ function PlaceView({
         </div>
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => tick !== null && submit({ tick })}
           disabled={locked || tick === null}
           data-testid="check"

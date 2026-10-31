@@ -37,6 +37,10 @@
   flex-direction: column;
   align-items: center;
 }
+/* テープ図の列は親の幅いっぱい（内容の幅まで縮むと、割合の幅のテープが 10u になり「18ページ」が切れる） */
+.fig-column:has(> .fig-tape-wrap) {
+  width: 100%;
+}
 /* 10の棒のまとまりを並べた図（かけ算の配列）は横に並べ、入らないときだけ折り返す
    （縦に積むと 30u を超えて回答欄が舞台の下に出る。g2.math.mult-beyond） */
 .fig-column--blocks {
@@ -97,9 +101,12 @@
 /* テープ図 */
 .fig-tape-wrap {
   width: 100%;
-  max-width: calc(var(--u) * 70);
+  /* 括弧・合計がテープの下にそろうよう、テープと同じ 48u まで */
+  max-width: calc(var(--u) * 48);
 }
 .fig-tape {
+  width: min(100%, calc(var(--u) * 48));
+  min-width: min(100%, calc(var(--u) * 30));
   display: flex;
   height: calc(var(--u) * 6);
   border: calc(var(--u) * 0.3) solid var(--ink);
@@ -113,6 +120,10 @@
   justify-content: center;
   font-size: max(calc(var(--u) * 2.6), var(--text-min, 0px));
   font-weight: 700;
+  /* ラベルは折らず、枠の取り分より長いときは枠のほうを広げる（「18ページ」が切れる） */
+  white-space: nowrap;
+  min-width: min-content;
+  padding-inline: calc(var(--u) * 1.2);
   border-right: calc(var(--u) * 0.3) solid var(--ink);
 }
 .fig-tape__part:last-child {
@@ -348,7 +359,8 @@ button .fig-chart {
   max-width: 100%;
   height: auto;
 }
-/* width を書いていない図は、親が内容の幅になる（flex の中など）と幅が 0 になる。大きさは 23u（ブラウザの既定 300px 相当） */
+/* width を書いていない図は、親が内容の幅になる（flex の中など）と幅が 0 になる。大きさは 23u（ブラウザの既定 300px 相当）を下限に、
+   一番小さい字が最小になる幅（最小 × --fig-k。liftSvgText の fitWidth が書く）まで広げる。上限は親の幅（max-width） */
 .fig-svg :where(svg:not([width])) {
-  width: calc(var(--u) * 23);
+  width: max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)));
 }

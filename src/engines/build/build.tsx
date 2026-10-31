@@ -287,7 +287,7 @@ function BuildView({
   };
 
   return (
-    <div className="tk-frame eng-build">
+    <div className="tk-frame tk-frame--band eng-build">
       <div className="tk-frame__main">
         <div className="eng-build__answer" role="group" aria-label="こたえ">
           {revealed && !tiling ? (

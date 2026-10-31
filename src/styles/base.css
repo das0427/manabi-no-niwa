@@ -70,19 +70,25 @@ button {
   text-wrap: balance;
 }
 /* 小3以上は文節で折る（ボタン・札だけ。本文・解説は右端がそろわなくなるので付けない）。
-   単元の画面（.unit）だけ。幼児ホーム・v1 モードの data-stage（D1 等）には付けない */
-.stage
-  .unit[data-stage]:not([data-wakachi])
-  :is(.choice, .tk-card__label, .eng-opts__label, .eng-choice__label) {
-  word-break: auto-phrase;
-  overflow-wrap: anywhere;
-}
-/* Chrome では auto-phrase と balance を同じ要素に付けると字の途中で折る（「みんながそろ／うまで」）。
-   小3以上のボタン・札は balance をやめて pretty にする（overflow-wrap は上の anywhere のまま。break-word にすると
-   枠が狭いボタンで文字が枠の外に出る: g3.ja.haiku/33・39）。
+   単元の画面（.unit）だけ。幼児ホーム・v1 モードの data-stage（D1 等）には付けない。
+   Chrome では auto-phrase と balance/pretty を同じ要素に付けると字の途中で折る（「みんながそろ／うまで」「たい／へん」）。
+   anywhere も「できまし／た。」のように文節が入る幅でも途中で折る。
+   Chrome 156 で g3.soc.city-changes/17・g3.ja.write-reasons/19 を比べた結果、
+   overflow-wrap: break-word＋min-width: 0＋text-wrap: wrap の組み合わせだけが両方とも語の途中で折れなかった
+   （break-word だけ・text-wrap: wrap だけは片方が残る）。字が枠の外に出ないことは g3.ja.haiku/33・39 で確かめた。
+   break-word は anywhere と違って最小幅を縮めないので、文節が札の幅より長いと札からはみ出す（g3.ja.write-reasons/19）。
+   max-width: 100% で札の中に収め、入らない文節だけを最後に折る。
    分かち書き（keep-all）と th・td は balance のまま */
 .stage
   .unit[data-stage]:not([data-wakachi])
   :is(.choice, .tk-card__label, .eng-opts__label, .eng-choice__label) {
-  text-wrap: pretty;
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
+  text-wrap: wrap;
+}
+/* 小3以上の図の文は文節で折る（空白の無い文を keep-all のまま anywhere で折ると、好きな所で折れる） */
+.stage .unit[data-stage]:not([data-wakachi]) .fig-text {
+  word-break: auto-phrase;
 }

@@ -4,7 +4,7 @@
  * 数字キーは作業領域の右側（DESINGN.md 18章、review-1 #21）。主操作の大きさ。
  * column があれば筆算の形（位ごとのます）で出す（column.ts）。判定は同じ（各欄の値）。
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   judgeNumber,
   normalizeInput,
@@ -300,6 +300,54 @@ function NumberView(props: EngineProps<NumberItem, NumberResponse>) {
   return <FieldsView {...props} />;
 }
 
+/**
+ * 図の段（作業領域の直下の .unit__figure。UnitRunner が描く）の高さを超える表・10の棒は、図の段だけを枠にして
+ * 縦にスクロールさせる（data-scroll-region="figure"・▼ の data-scroll-cue）。キーと回答欄は枠の外（text-layout-fixes.md T7）
+ */
+function useFigureScroll(ref: { current: HTMLElement | null }) {
+  useLayoutEffect(() => {
+    const work = ref.current?.closest<HTMLElement>('.unit__work') ?? null;
+    const fig = work?.querySelector<HTMLElement>(':scope > .unit__figure') ?? null;
+    if (!work || !fig) return;
+    const cue = () => {
+      if (!fig.hasAttribute('data-scroll-region')) return fig.removeAttribute('data-scroll-cue');
+      if (fig.scrollTop + fig.clientHeight >= fig.scrollHeight - 2)
+        fig.removeAttribute('data-scroll-cue');
+      else fig.setAttribute('data-scroll-cue', '');
+    };
+    const measure = () => {
+      const keep = fig.scrollTop;
+      fig.removeAttribute('data-scroll-region');
+      if (fig.clientHeight > 0 && fig.scrollHeight > fig.clientHeight + 2) {
+        fig.setAttribute('data-scroll-region', 'figure');
+        fig.scrollTop = keep;
+      }
+      cue();
+    };
+    measure();
+    fig.addEventListener('scroll', cue, { passive: true });
+    let raf = 0;
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+              raf = 0;
+              measure();
+            });
+          });
+    ro?.observe(work);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro?.disconnect();
+      fig.removeEventListener('scroll', cue);
+      fig.removeAttribute('data-scroll-region');
+      fig.removeAttribute('data-scroll-cue');
+    };
+  }, [ref]);
+}
+
 function FieldsView({
   item,
   ctx,
@@ -322,9 +370,17 @@ function FieldsView({
     });
   };
   const ready = vals.every((v) => v.trim() !== '');
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  useFigureScroll(fieldsRef);
+  const manyLabels = item.fields.filter((f) => f.label).length >= 4;
   return (
     <div className="eng-number">
-      <div className="eng-number__fields">
+      <div
+        ref={fieldsRef}
+        className={
+          manyLabels ? 'eng-number__fields eng-number__fields--many' : 'eng-number__fields'
+        }
+      >
         {item.fields.map((f, i) => (
           <label key={i} className="eng-number__field">
             {f.label ? (

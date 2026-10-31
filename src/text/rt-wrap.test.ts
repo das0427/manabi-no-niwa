@@ -94,3 +94,18 @@ describe('数と助数詞・式・1字の並びを nowrap にまとめる（表�
     expect(html('くに・まち・ひと')).not.toContain('rt-nobr');
   });
 });
+
+describe('まとまりの先頭が行頭禁則の字なら、さらに前の1字を含める', () => {
+  const ctx = { furigana: 'unlearned', learnerGrade: 1 } as const;
+  const html = (text: string) => renderToStaticMarkup(createElement(Rt, { text, ctx }));
+  it('「…のに、{{}}」の「、」を行頭に置かない', () => {
+    expect(html('あるのに、{{}}は')).toContain(
+      'あるの<span class="rt-nobr">に、<span class="rt-blank" aria-label="あいている ところ"></span>は</span>',
+    );
+  });
+  it('小さい仮名・長音も同じ', () => {
+    expect(html('あかっ{{}}')).toContain('あ<span class="rt-nobr">かっ<span');
+    expect(html('あかっ{{}}')).not.toContain('あか<span class="rt-nobr">っ<span');
+    expect(html('あスキー{{}}')).toContain('あス<span class="rt-nobr">キー<span');
+  });
+});

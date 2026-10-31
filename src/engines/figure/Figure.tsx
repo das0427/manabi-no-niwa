@@ -105,7 +105,7 @@ function FigTable({ fig, ctx }: { fig: Extract<FigureData, { kind: 'table' }>; c
 /** パックが用意した SVG。中の文字は最小まで引き上げる（S6） */
 function PackSvg({ markup, label }: { markup: string; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  useLiftedSvgText(ref, markup);
+  useLiftedSvgText(ref, markup, { fitWidth: true });
   return (
     <div
       ref={ref}

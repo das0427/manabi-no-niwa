@@ -63,3 +63,21 @@
   stroke: var(--correct);
   stroke-width: calc(var(--u) * 0.7);
 }
+/* 正解の ○: 大きな輪を札の字の上に重ねない（横長の札で輪が字を横切って読めなかった。g3.ja.proverbs/35 の解説）。
+   札の輪郭を太い緑にし、形でも分かるよう右上の角に小さな ○ を足す（色だけにしない） */
+.eng-match .tk-card.is-correct {
+  border-color: var(--correct);
+  border-width: calc(var(--u) * 0.6);
+}
+.eng-match .tk-card > .mark--correct {
+  top: calc(var(--u) * -1.4);
+  right: calc(var(--u) * -1.4);
+  left: auto;
+  width: calc(var(--u) * 3.2);
+  height: calc(var(--u) * 3.2);
+  max-height: none;
+  transform: none;
+  border-width: calc(var(--u) * 0.6);
+  background: var(--white);
+  z-index: 2;
+}

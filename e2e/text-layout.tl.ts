@@ -72,11 +72,43 @@ function pick(count: number): number[] {
   return Array.from({ length: MAX_ITEMS }, (_, i) => Math.floor((i * count) / MAX_ITEMS));
 }
 
-/** 描画が落ち着くのを待つ（2フレーム＋有限のアニメーションの終わり、最大 1 秒） */
-async function settle(page: Page): Promise<void> {
-  await page.evaluate(async () => {
+/**
+ * 描き直しが終わるのを待つ。次の印が2フレーム続けて同じになるまで（最大 1 秒）。
+ * 印: 各 svg の viewBox・--svg-floor・最初の text の font-size、.unit__work の --fit・--fig-max・scrollHeight、
+ * 解説の板の高さ。
+ * 理由: reducedMotion: 'reduce' ではアニメーションを待てないので、画面サイズを変えた直後の
+ * 「ResizeObserver → React の状態 → 描き直し」の途中を測っていた（g1.math.numbers-10/0 で 1920×1080 → 1280×620
+ * にした直後に overlap-text 20 件。600ms 後と撮った画像は正常）。終わらない画面は unstable と書いてそのまま残す
+ * （違反の detail の先頭に「unstable: 描き直しが 1 秒たっても終わらない」を付ける）。
+ */
+async function settle(page: Page): Promise<boolean> {
+  return page.evaluate(async () => {
     const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
-    await frame();
+    const mark = (): string => {
+      const parts: string[] = [];
+      for (const svg of Array.from(document.querySelectorAll('.stage svg'))) {
+        const t = svg.querySelector('text');
+        parts.push(
+          [
+            svg.getAttribute('viewBox') ?? '',
+            getComputedStyle(svg).getPropertyValue('--svg-floor'),
+            t ? getComputedStyle(t).fontSize : '',
+          ].join('/'),
+        );
+      }
+      const work = document.querySelector('.unit__work') as HTMLElement | null;
+      if (work) {
+        const w = getComputedStyle(work);
+        parts.push(
+          `work:${w.getPropertyValue('--fit')}/${w.getPropertyValue('--fig-max')}/${work.scrollHeight}`,
+        );
+      }
+      const ex = document.querySelector('[data-testid="explain"]') as HTMLElement | null;
+      if (ex) parts.push(`explain:${ex.getBoundingClientRect().height}`);
+      return parts.join('|');
+    };
+    // 有限のアニメーション（reduce でも残るもの）は、今までどおり終わるまで待つ（最大 1 秒）。印だけでは
+    // transform・opacity の動きは見えないので、待たないと動きの途中を測る
     const anims = document
       .getAnimations()
       .filter((a) => a.playState === 'running' && a.effect?.getTiming().iterations !== Infinity);
@@ -85,7 +117,17 @@ async function settle(page: Page): Promise<void> {
         Promise.all(anims.map((a) => a.finished.catch(() => null))),
         new Promise((r) => setTimeout(r, 1000)),
       ]);
-    await frame();
+    const t0 = performance.now();
+    let prev = mark();
+    let same = 0;
+    // 2フレーム続けて同じ印になるまで。1 秒たっても変わり続けるときは、そのまま測る
+    while (same < 2 && performance.now() - t0 < 1000) {
+      await frame();
+      const now = mark();
+      same = now === prev ? same + 1 : 0;
+      prev = now;
+    }
+    return same >= 2;
   });
 }
 
@@ -216,10 +258,13 @@ for (const meta of UNITS) {
               const vp = page.viewportSize();
               if (!vp || vp.width !== w || vp.height !== h)
                 await page.setViewportSize({ width: w, height: h });
-              await settle(page);
+              const stable = await settle(page);
               const r = await inspectText(page, { stage: meta.stage });
               result.screens++;
               if (r.issues.length === 0) continue;
+              if (!stable)
+                for (const i of r.issues)
+                  i.detail = `unstable: 描き直しが 1 秒たっても終わらない${i.detail ? `／${i.detail}` : ''}`;
               const row: UnitRow = {
                 n,
                 level: it.level,

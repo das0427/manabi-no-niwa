@@ -6,6 +6,8 @@
  */
 import { useState } from 'react';
 import type { ItemBase, RichText } from '../../curriculum/types';
+import { Rt } from '../../text/Rt';
+import { plainText } from '../../text/rich';
 import type { Judgement } from '../types';
 import {
   cardErrors,
@@ -201,13 +203,17 @@ function OrderView({
   };
 
   const column = item.layout === 'column';
-  const endLabel = (pos: number) =>
+  // 文の札（8字超）が4枚以上: 札の列を2列にして縦を詰める（右の空きを使う）
+  const twoCols =
+    column &&
+    item.cards.filter((c) => c.label !== undefined && plainText(c.label).length > 8).length >= 4;
+  const ends = (pos: number) =>
     item.ends ? (pos === 0 ? item.ends[0] : pos === k - 1 ? item.ends[1] : null) : null;
 
   return (
-    <div className={['tk-frame', 'eng-order', auto ? 'tk--big' : ''].join(' ')}>
+    <div className={['tk-frame', 'tk-frame--band', 'eng-order', auto ? 'tk--big' : ''].join(' ')}>
       <div
-        className={`tk-frame__main eng-order__main eng-order__main--${column ? 'column' : 'row'}`}
+        className={`tk-frame__main eng-order__main eng-order__main--${column ? 'column' : 'row'}${twoCols ? ' eng-order__main--two' : ''}`}
       >
         <ol className="eng-order__track" aria-label="ならべる ところ">
           {shown.map((c, pos) => (
@@ -217,7 +223,7 @@ function OrderView({
                   className={['tk-slot', pos === nextEmpty && !locked ? 'is-next' : ''].join(' ')}
                   data-testid={`slot-${pos}`}
                 >
-                  {endLabel(pos) ?? pos + 1}
+                  {ends(pos) !== null ? <Rt text={ends(pos)!} ctx={ctx} /> : pos + 1}
                 </span>
               ) : (
                 <TapCard

@@ -164,3 +164,25 @@
   outline-offset: calc(var(--u) * 0.4);
   border-radius: calc(var(--u) * 1);
 }
+
+/* 主操作（こたえあわせ・これで こたえる）は作業領域の中でなく、下の帯の つぎへ の左に置く（DESINGN.md 5.1。
+   unit.css の .unit .eng-check と同じ位置）。作業領域の中は fit で --u が縮み、枠で切れて押せなくなっていた
+   （g2.math.triangles-quads/0）。fixed の基準は舞台（.stage は transform を持つ）。字・位置は舞台の --u0 で決め、
+   字は --text-min を下回らない。geometry・graph・map・measure・clock・numberline・experiment が使う */
+.mk-btn.mk-btn--ok.eng-check {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  min-width: calc(var(--u0, var(--u)) * 14);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  font-size: max(calc(var(--u0, var(--u)) * 2.4), var(--text-min, 0px));
+  /* 「これで こたえる」は 17.5u に1行で入らない。折れるのは空白（分かち書き）の所だけ（「こた／える」にしない） */
+  word-break: keep-all;
+  line-height: 1.2;
+  z-index: 4;
+}
+/* 答えたあと（解説の板が出ているあいだ）は消す。帯に残すと解説の板の下になり、こたえあわせ が文字を隠す・隠される
+   （g1.math.clock・g4.math.line-graph の解説。choice の こたえあわせ も答えたあとは出ない） */
+.unit:has(.unit__explain) .mk-btn.mk-btn--ok.eng-check {
+  display: none;
+}

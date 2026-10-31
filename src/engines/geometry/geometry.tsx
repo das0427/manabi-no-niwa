@@ -614,7 +614,7 @@ function DrawView({
         </div>
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => submit({ path, closed })}
           disabled={locked || !ready}
           data-testid="check"
@@ -828,7 +828,7 @@ function PickView({
       {t.multi && !revealed ? (
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           disabled={disabled || picked.length === 0}
           onClick={() => submit({ pick: picked })}
           data-testid="check"

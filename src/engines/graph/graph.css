@@ -12,17 +12,28 @@
   min-height: 0;
 }
 .gr-title {
+  line-height: 1.25;
   text-align: center;
   font-size: calc(var(--u) * 2.4);
   font-weight: 700;
 }
 .gr-unit {
+  line-height: 1.25;
   font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   font-weight: 700;
 }
+/* ふりがなの無い題・単位・横軸の札は、行間を詰める（Rt の 1.7 はふりがなの分の高さ）。題・単位・2段の札で
+   合わせて約 50px（3u）を取り、作業領域が枠でスクロールした（g4.soc.water-waste/19）。ふりがながあるときは 1.7 のまま。
+   札は、どれにもふりがなが無いときだけ詰める（2段のずらしの量は 1つ目の札の高さで決めるので、高さがそろわないと重なる） */
+.gr-title .rt:not(:has(ruby)),
+.gr-unit .rt:not(:has(ruby)),
+.gr-xlabels:not(:has(ruby)) .gr-xlabel .rt {
+  line-height: 1.3;
+}
 .gr-xy {
   width: 100%;
-  /* 縦 18u に収まる幅（viewBox 720×360）。x の項目名を棒にそろえる */
+  /* 縦 18u に収まる幅（viewBox 720×360）。x の項目名を棒にそろえる（狭めると横軸の札が重なる。
+     g4.soc.water-waste/31・g3.math.bar-graph/7 で確かめた）。題・単位の行間は 1.25 に詰める */
   max-width: calc(var(--u) * 18 * 720 / 360);
   align-self: center;
 }
@@ -393,6 +404,14 @@
    作業領域（26.25u）に収める。2本の折れ線は凡例の分も入る */
 .eng-graph__nummain .gr-xy {
   max-width: calc(var(--u) * 16 * 720 / 360);
+}
+/* 数を答える問題の絵・点グラフ: 9 列だと 6u × 9 ＋ 間 で幅が 64u になり、横の欄（答えの箱）が数字キーに重なった
+   （g6.math.representative/4 の解説。fit が 1 に近いと u が縮まない）。列は 4.4u まで縮める（点は 4u 以内） */
+.eng-graph__nummain .gr-picstack {
+  min-width: calc(var(--u) * 4.4);
+}
+.eng-graph__nummain .gr-picture {
+  gap: calc(var(--u) * 0.8);
 }
 .eng-graph__nummain .gr-xlabel {
   font-size: max(calc(var(--u) * 1.8), var(--text-min, 0px));

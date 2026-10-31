@@ -184,7 +184,7 @@ function FillView({
   };
 
   return (
-    <div className="tk-frame eng-fill">
+    <div className="tk-frame tk-frame--band eng-fill">
       <div className="tk-frame__main">
         <p className="eng-fill__text">
           {edges.map(([, body], i) => (

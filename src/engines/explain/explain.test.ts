@@ -129,6 +129,8 @@ describe('explain: 画面', () => {
     );
     const done = screen.getByTestId('done-button') as HTMLButtonElement;
     expect(done.disabled).toBe(true);
+    // 下の帯の主操作の印（unit.css の .unit .eng-check が位置を決め、吹き出しがその左までになる）
+    expect(done.classList.contains('eng-check')).toBe(true);
     act(() => screen.getByTestId('reason-2').click());
     act(() => screen.getByTestId('reason-0').click());
     expect(done.disabled).toBe(false);

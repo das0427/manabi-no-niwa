@@ -255,14 +255,14 @@ export function TapCard({
 }
 
 /**
- * 「こたえあわせ」（主操作）。既定は作業領域の右に置く。
- * band: 下の帯の主操作の位置（つぎへ の左。DESINGN.md 5.1）に置く。札の列が作業領域の幅いっぱいを使える。
+ * 「こたえあわせ」（主操作）。既定は下の帯の主操作の位置（つぎへ の左。DESINGN.md 5.1）。札の列が作業領域の幅いっぱいを使える。
+ * band: false にすると作業領域の右に置く（今は使うエンジンが無い）。
  * 位置は choice の `.eng-check` と同じ（unit.css の `:has(.eng-check)` が吹き出しをその左までにする）
  */
 export function CheckButton({
   disabled,
   onPress,
-  band = false,
+  band = true,
 }: {
   disabled: boolean;
   onPress: () => void;

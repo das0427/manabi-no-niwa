@@ -55,18 +55,16 @@
   font-size: var(--text-small);
   text-align: left;
 }
+/* 文の札（8字超）が4枚以上: 左に並べる所（1列）、右に おくもの（2列）。右の空きを使って縦を詰める */
+.eng-order__main--two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+}
+.eng-order__main--two .eng-order__pool {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--u) * 1) calc(var(--u) * 1.2);
+}
 /* 番号の丸は札の中（左の余白）に置く。角に突き出して作業領域・舞台の外に出ない（read-info/33 の「2」） */
 .eng-order__main--column .tk-card {
   align-items: stretch;
-}
-.eng-order__track .tk-card:has(.tk-badge) {
-  /* 丸（--badge）の右に、ふりがなが左へはみ出す分の余白 */
-  padding-left: calc(var(--u) * 0.6 + var(--badge, calc(var(--u) * 3)) + var(--u) * 1.6);
-}
-.eng-order__main--column .tk-badge {
-  /* 札の align-items: stretch で番号の丸が札の幅いっぱいに伸びないように */
-  align-self: flex-start;
-  top: 50%;
-  left: calc(var(--u) * 0.6);
-  transform: translateY(-50%);
 }

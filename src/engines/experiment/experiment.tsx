@@ -548,7 +548,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
       mode === 'setup' && !revealed ? (
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => setMode('answer')}
           disabled={locked || trials.length < minTrials}
           data-testid="to-answer"
@@ -571,7 +571,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
           {t.multi ? (
             <button
               type="button"
-              className="mk-btn mk-btn--ok"
+              className="mk-btn mk-btn--ok eng-check"
               onClick={() => submit({ pick: picked })}
               disabled={locked || picked.length === 0}
               data-testid="check"
@@ -585,7 +585,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
     mainButton = (
       <button
         type="button"
-        className="mk-btn mk-btn--ok"
+        className="mk-btn mk-btn--ok eng-check"
         onClick={() =>
           submit(t.kind === 'reach' ? { cond } : { trials: trials.map((x) => x.cond) })
         }

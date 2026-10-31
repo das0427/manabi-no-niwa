@@ -189,6 +189,41 @@ describe('画面', () => {
     fireEvent.click(check);
     expect(p.submit).toHaveBeenCalledWith([0, 2, 1, 3]);
   });
+  it('端の札の言葉（ends）の《よみ》は記法のまま出さず、ふりがなにする', () => {
+    const { container } = render(
+      createElement(orderEngine.Component, props(item({ ends: ['始《はじ》め', '終《お》わり'] }))),
+    );
+    const last = screen.getByTestId('slot-3');
+    expect(last.textContent).not.toMatch(/[《》]/);
+    expect(last.querySelector('ruby rt')?.textContent).toBe('お');
+    expect(container.textContent).not.toMatch(/[《》]/);
+  });
+  it('こたえあわせは下の帯の位置（band）。文の札（8字超）が4枚以上の縦並びは、おくものを2列にする', () => {
+    const long = (n: number): OrderItem =>
+      item({
+        layout: 'column',
+        cards: Array.from({ length: n }, (_, i) => ({
+          label: `とても ながい ぶんの カード ${i + 1}`,
+        })),
+        alsoAccept: undefined,
+        wrongOrders: undefined,
+        reverseMisconception: undefined,
+        initial: undefined,
+        ends: undefined,
+      });
+    const run = (n: number) => {
+      const { container, unmount } = render(createElement(orderEngine.Component, props(long(n))));
+      expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+      const check = screen.getByTestId('check');
+      expect(check.classList.contains('tk-check--band')).toBe(true);
+      expect(check.classList.contains('eng-check')).toBe(true);
+      const two = container.querySelector('.eng-order__main--two') !== null;
+      unmount();
+      return two;
+    };
+    expect(run(3)).toBe(false);
+    expect(run(4)).toBe(true);
+  });
   it('2〜3歳: 少ない枚数で、置き終わると自動で答える', () => {
     const p = props(item(), ctxFor('toddler2'));
     render(createElement(orderEngine.Component, p));

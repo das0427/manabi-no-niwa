@@ -49,8 +49,12 @@
 /* 下にまだ文があるときの印（読み切ると消える）。本文の字にかぶせない（かぶせると字が隠れる）よう、
    枠の下に印だけの段を常に取っておく。DESINGN.md 14章はグラデーション禁止なので、平らな面の札＋上の破線 */
 .eng-reading__cue-slot {
+  /* 高さは max(2.9u, 1.3em) に固定（data-tight でも縮めない）。字は --text-min・行間 1.2 */
   flex: none;
-  height: calc(var(--u) * 2.9);
+  box-sizing: border-box;
+  font-size: var(--text-min, calc(var(--u) * 2.2));
+  height: max(calc(var(--u) * 2.9), 1.3em);
+  min-height: max(calc(var(--u) * 2.9), 1.3em);
   display: flex;
 }
 .eng-reading__cue {
@@ -61,7 +65,7 @@
   background: var(--white);
   color: var(--ink);
   font: inherit;
-  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 2.2)));
+  font-size: inherit;
   font-weight: 700;
   line-height: 1.2;
   cursor: pointer;
@@ -153,5 +157,15 @@
   min-height: calc(var(--u) * 4.4);
 }
 .eng-reading[data-tight] .eng-reading__opts .eng-opts__label {
+  line-height: 1.4;
+}
+
+/* data-tight でも右の列に入らないとき（data-tighter）: 選択肢の字を max(2.2u, --text-min)・行間 1.4、本文:右 を 1:1.3 に。
+   右の列はスクロールさせない */
+.eng-reading[data-tighter] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+}
+.eng-reading[data-tighter] .eng-reading__opts .eng-opts__label {
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   line-height: 1.4;
 }

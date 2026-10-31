@@ -221,15 +221,16 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
   // 右の列の選択肢が収まらないとき（scrollHeight > clientHeight）は、本文:右 を 1:1・選択肢の余白を詰める。
   // 右の列はスクロールさせない。問題が変わるたびに戻して測り直す（一度詰めたら、その問題の間は詰めたまま）
   const sideRef = useRef<HTMLDivElement | null>(null);
-  const [tight, setTight] = useState(false);
+  // 段階: 0 = 通常、1 = data-tight（余白を詰める）、2 = data-tighter（字を 2.2u・行間 1.4・本文:右 = 1:1.3）
+  const [tight, setTight] = useState<0 | 1 | 2>(0);
   useLayoutEffect(() => {
-    setTight(false);
+    setTight(0);
   }, [item]);
   useEffect(() => {
     const el = sideRef.current;
-    if (!el || tight) return undefined;
+    if (!el || tight === 2) return undefined;
     const check = () => {
-      if (el.scrollHeight > el.clientHeight + 1) setTight(true);
+      if (el.scrollHeight > el.clientHeight + 1) setTight((t) => (t === 0 ? 1 : 2));
     };
     check();
     return observeResize([el], check);
@@ -237,7 +238,11 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
 
   const size = ctx.learnerGrade >= 5 ? 's' : ctx.learnerGrade >= 3 ? 'm' : 'l';
   return (
-    <div className="eng-reading" data-tight={tight ? '' : undefined}>
+    <div
+      className="eng-reading"
+      data-tight={tight >= 1 ? '' : undefined}
+      data-tighter={tight >= 2 ? '' : undefined}
+    >
       <div className="eng-reading__passage-wrap">
         <section
           ref={boxRef}

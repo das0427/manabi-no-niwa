@@ -222,18 +222,50 @@
   flex-wrap: wrap;
   gap: calc(var(--u) * 1);
 }
-.prog-tools {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: calc(var(--u) * 1.6);
-}
+/* 「のこり N まい」は札の置き場の最後に（別の段にすると 40px 余計に取り、作業領域が枠でスクロールした） */
 .prog-count {
-  margin-right: auto;
+  align-self: center;
+  margin-left: auto;
   font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 1.7)));
   font-weight: 700;
 }
 .prog-go {
   font-size: max(calc(var(--u) * 2.4), var(--text-min, calc(var(--u) * 1.7)));
+}
+/* もどす・けす・うごかす は下の帯（unit.css の .eng-band。つぎへ の左）に置く。作業領域の中だと 2〜3u 足りずに
+   枠でスクロールし、うごかす の段が下で切れた（g1.prog.sequence/22・g3.prog.condition-combo）。
+   帯は fixed なので作業領域の --fit で縮まない。大きさは舞台の --u0 で決める（字は --text-min を下回らない）。
+   幅は 17.5u（吹き出しの右端が右から 39u。うごかす に .eng-check を付けて :has で吹き出しをその左までにする）。
+   3つを1段に並べると約 28u になり、吹き出しを右から 51u までに狭めるしかなく、長いヒントが吹き出しの中で
+   スクロールした（g6.prog.efficient・g3.prog.condition-combo）。もどす・けす を上の段、うごかす を下の段（つぎへ と同じ高さ）にする */
+.unit .eng-band.prog-band {
+  flex-wrap: wrap;
+  width: calc(var(--u0, var(--u)) * 17.5);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  /* 高さは 5.5 + 0.6 + 5.5 = 11.6u（下から 2u と合わせて 13.6u）。作業領域の下端（下から 14u）に重ならない */
+  gap: calc(var(--u0, var(--u)) * 0.6) calc(var(--u0, var(--u)) * 1.2);
+}
+.prog-band > .tap {
+  flex: none;
+  white-space: nowrap;
+}
+.prog-band > .tap--aux {
+  min-width: calc(var(--u0, var(--u)) * 5.5);
+  min-height: calc(var(--u0, var(--u)) * 5.5);
+}
+.prog-band > .tap--aux .tap__icon {
+  width: calc(var(--u0, var(--u)) * 4);
+  height: calc(var(--u0, var(--u)) * 4);
+}
+.unit .prog-band > .prog-go {
+  flex: 1 1 100%;
+  min-width: 0;
+  min-height: calc(var(--u0, var(--u)) * 5.5);
+  gap: calc(var(--u0, var(--u)) * 0.6);
+  padding-inline: calc(var(--u0, var(--u)) * 1.2);
+  font-size: max(calc(var(--u0, var(--u)) * 2.2), var(--text-min, calc(var(--u) * 1.7)));
+}
+.prog-band > .prog-go .tap__icon {
+  width: calc(var(--u0, var(--u)) * 3.2);
+  height: calc(var(--u0, var(--u)) * 3.2);
 }

@@ -124,6 +124,24 @@ type Loaded =
       history: HistoryAttempt[];
     };
 
+/** 文の行数（ふりがなで行の高さが変わるので、高さでなく ruby の rt を除いた字の行の位置を数える） */
+function countLines(el: HTMLElement): number {
+  const lh = parseFloat(getComputedStyle(el).lineHeight);
+  const tops: number[] = [];
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const range = document.createRange();
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent?.trim() || n.parentElement?.closest('rt')) continue;
+    range.selectNodeContents(n);
+    for (const r of Array.from(range.getClientRects())) {
+      if (r.width <= 0) continue;
+      const mid = (r.top + r.bottom) / 2;
+      if (!tops.some((t) => Math.abs(t - mid) < (lh > 0 ? lh * 0.4 : 8))) tops.push(mid);
+    }
+  }
+  return tops.length || 99;
+}
+
 export function UnitRunner({ unitId }: { unitId: string }) {
   const app = useApp();
   const profile = app.profile!;
@@ -582,7 +600,41 @@ export function UnitRound({
       root.style.removeProperty('--panel-h');
       return;
     }
+    // 図を文の右に置けるか（data-fig-side）: 図が SVG・絵・10の棒で（表・文の図は下の段のまま）、
+    // 自然な幅が板の幅の 40% 以下、文が右置きの幅で3行以下（下の段のままでは板に入らないときは4行以下）のとき。付け外しは同じ描画の中で測り直す
+    const decideSide = () => {
+      const keep = panel.scrollTop;
+      panel.removeAttribute('data-fig-side');
+      const figBox = panel.querySelector<HTMLElement>('.unit__explain-figure');
+      const text = panel.querySelector<HTMLElement>('.unit__explain-text');
+      const inner = figBox?.firstElementChild as HTMLElement | null | undefined;
+      if (
+        !figBox ||
+        !text ||
+        !inner ||
+        // 図の根は SVG（絵・10の棒の svg は class なし）か、fig-* の箱
+        !(
+          inner instanceof SVGElement ||
+          inner.matches('.fig-svg, .fig-illust, .fig-blocks, .fig-column')
+        ) ||
+        inner.querySelector('.fig-table, .fig-text')
+      ) {
+        return;
+      }
+      const figW = inner.getBoundingClientRect().width;
+      if (figW <= 0 || figW > panel.clientWidth * 0.4) return;
+      // 下の段のままでは板に入らない（スクロールになる）ときは、4行まで許す（右に置くほうが必ず低くなる）
+      const overflow = panel.scrollHeight > panel.clientHeight + 1;
+      panel.setAttribute('data-fig-side', '');
+      const lines = countLines(text);
+      if (lines > (overflow ? 4 : 3)) panel.removeAttribute('data-fig-side');
+      if (keep > 0) panel.scrollTop = keep;
+    };
     const measure = () => {
+      decideSide();
+      measureH();
+    };
+    const measureH = () => {
       root.style.setProperty('--panel-h', `${panel.offsetHeight}px`);
       const more = panel.scrollHeight > panel.clientHeight + 1;
       const atEnd = panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 2;
@@ -590,9 +642,9 @@ export function UnitRound({
       else panel.removeAttribute('data-scroll-cue');
     };
     measure();
-    panel.addEventListener('scroll', measure, { passive: true });
+    panel.addEventListener('scroll', measureH, { passive: true });
     if (typeof ResizeObserver === 'undefined') {
-      return () => panel.removeEventListener('scroll', measure);
+      return () => panel.removeEventListener('scroll', measureH);
     }
     let raf = 0;
     const ro = new ResizeObserver(() => {
@@ -606,7 +658,7 @@ export function UnitRound({
     return () => {
       ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
-      panel.removeEventListener('scroll', measure);
+      panel.removeEventListener('scroll', measureH);
     };
   }, [phaseKey, isDone]);
 

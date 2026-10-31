@@ -166,6 +166,16 @@ describe('画面', () => {
     disabled: false,
     submit: vi.fn(),
   });
+  it('こたえあわせは下の帯の位置（band）。むすんだ組の番号の丸は札の中の左（字は丸の右）', () => {
+    const { container } = render(createElement(matchEngine.Component, props()));
+    expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+    const check = screen.getByTestId('check');
+    expect(check.classList.contains('tk-check--band')).toBe(true);
+    expect(check.classList.contains('eng-check')).toBe(true);
+    fireEvent.click(screen.getByTestId('left-0'));
+    fireEvent.click(screen.getByTestId('right-1'));
+    expect(screen.getByTestId('left-0').querySelector(':scope > .tk-badge')).not.toBeNull();
+  });
   it('上→下、下→上 のどちらでもむすべて、むすび直せる', () => {
     const p = props();
     render(createElement(matchEngine.Component, p));

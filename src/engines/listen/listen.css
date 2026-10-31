@@ -93,8 +93,8 @@
     max(
       calc(var(--u) * 28),
       calc(
-        var(--u0, var(--u)) * 88 - var(--u) * 14 * var(--side-n, 3) - var(--u) * 2.4 *
-          (var(--side-n, 3) - 1) - var(--u) * 4
+        var(--u0, var(--u)) * 88 - var(--u) * var(--side-w, calc(14 * var(--side-n, 3))) -
+          var(--u) * 2.4 * (var(--side-n, 3) - 1) - var(--u) * 4
       )
     )
   );

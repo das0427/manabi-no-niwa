@@ -152,6 +152,32 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
   const END_NG = new Set(Array.from('「『（(【［〔〈《“‘'));
   /** 分かち書きで、空白が無くても後ろで改行してよい字（句読点・閉じ括弧） */
   const BREAK_OK_AFTER = new Set(Array.from('、。，．！？!?」』）)…:：'));
+  /** 数字のあとに来る助詞。数との境目の改行は組版として正しい（C14） */
+  const NUM_PARTICLES = new Set(Array.from('はがをにでとのもやへか'));
+  /** 仮名で書いた助数詞の頭（に＋ん=人・に＋ち=日・と＋う=頭・は＋い=杯・か＋い=回・か＋げつ=か月・か＋しょ／所=か所・
+   * か＋国=か国）。助詞でなく助数詞なので、数との間の改行は数える */
+  const KANA_COUNTER_NEXT: Record<string, Set<string>> = {
+    に: new Set(['ん', 'ち']),
+    と: new Set(['う']),
+    は: new Set(['い']),
+    か: new Set(['い', 'げ', 'し', '所', '国']),
+  };
+  /** 複合辞（Intl.Segmenter が1語として返す）。頭の助詞の直後は、助詞と動詞の境目で改行してよい（C17） */
+  const COMPOUND_PARTICLES = new Set([
+    'という',
+    'といった',
+    'として',
+    'について',
+    'にとって',
+    'によって',
+    'にして',
+    'にたいして',
+    'をして',
+    'とする',
+    'とした',
+    'とともに',
+    'のように',
+  ]);
   const preschool = /^p/.test(opt.stage);
   const wakachi = /^(p23|p4|p5|g1|g2)$/.test(opt.stage);
   /** 補助の文字の最小（DESINGN.md 17章）。ふりがなは 1.1u */
@@ -481,9 +507,52 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         }
       }
     }
+    // ---- (3b) 大きさが 0 の図（C15）: 子（図形・字・絵）があるのに幅か高さが 1px 未満で、見えない。
+    // 解説の図（width の無いパックの SVG）が 0×0 になる不具合が、字の無い図では何も出ず、字のある図では
+    // 「text ⊂ svg」「small-text」という原因の分からない形で出ていた。図ごとに1件にまとめ、中の text は1字ずつ数えない。
+    // 除く: display:none・visibility:hidden・opacity 0（shown）、aria-hidden の祖先、.sr-only・.visually-hidden、
+    // display:contents（箱が無い）、defs・symbol だけの svg（グラデーションなどの置き場）
+    const zeroFigs: Element[] = [];
+    {
+      const NON_DRAWN = 'defs, symbol, clipPath, mask, pattern, marker, style, title, desc';
+      const drawn = (el: Element): boolean => {
+        const tag = el.tagName.toLowerCase();
+        if (tag === 'img') {
+          const im = el as HTMLImageElement;
+          return im.complete && im.naturalWidth > 0;
+        }
+        if (el instanceof SVGElement) {
+          return Array.from(
+            el.querySelectorAll(
+              'text, path, rect, circle, ellipse, line, polyline, polygon, image, use, foreignObject',
+            ),
+          ).some((c) => !c.closest(NON_DRAWN));
+        }
+        return el.childElementCount > 0 || (el.textContent ?? '').trim().length > 0;
+      };
+      for (const el of Array.from(root.querySelectorAll('svg, img, .fig-svg, .fig-illust'))) {
+        if (el.parentElement?.closest('svg')) continue; // 入れ子の svg は外側で見る
+        if (zeroFigs.some((z) => z.contains(el))) continue; // 外側の枠が 0 なら、中は数えない
+        if (!shown(el)) continue;
+        if (el.closest('[aria-hidden="true"], .sr-only, .visually-hidden, .mnw-tl-mark')) continue;
+        if (cs(el).display === 'contents') continue;
+        const r = el.getBoundingClientRect();
+        if (r.width >= 1 && r.height >= 1) continue;
+        if (!drawn(el)) continue;
+        zeroFigs.push(el);
+        add(
+          'clipped',
+          el.getAttribute('aria-label') ?? textOf(el),
+          describe(el),
+          r,
+          '図の大きさが 0（見えない）',
+        );
+      }
+    }
     // SVG の <text>（図の文字）: 要素の外接で扱う
     for (const t of Array.from(root.querySelectorAll('svg text'))) {
       if (!shown(t) || !(t.textContent ?? '').trim()) continue;
+      if (zeroFigs.some((z) => z.contains(t))) continue; // 大きさが 0 の図の中の字は、図の1件にまとめた
       const r = t.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
       boxes.push({
@@ -1069,6 +1138,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         const p = node.parentElement!;
         if (done.has(p)) continue;
         done.add(p);
+        if (zeroFigs.some((z) => z.contains(p))) continue; // 大きさが 0 の図の中の字は、図の1件（C15）にまとめた
         const isRt = !!p.closest('rt');
         let px = parseFloat(cs(p).fontSize) || 0;
         if (p instanceof SVGElement) {
@@ -1308,7 +1378,11 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               (/^(cm|mm|km|m|kg|mg|g|mL|dL|kL|L|ha|a|%|℃|°|度)/.test(
                 str.slice(b.i, b.i + 3).replace(/\s/g, ''),
               ) ||
-                (!b.spaceBefore && /^[ぁ-ゖァ-ヺ一-鿿㐀-䶿]$/.test(b.ch)))
+                (!b.spaceBefore &&
+                  /^[ぁ-ゖァ-ヺ一-鿿㐀-䶿]$/.test(b.ch) &&
+                  // 数のあとの助詞（「11／で」「7／は芸術」）は、数と助詞の境目で改行してよい（C14）。
+                  // 仮名で書いた助数詞の頭（に＋ん・と＋う・は＋い・か＋い・か＋げつ）は、今までどおり数える
+                  !(NUM_PARTICLES.has(b.ch) && !KANA_COUNTER_NEXT[b.ch]?.has(str[b.i + 1] ?? ''))))
             )
               add('word-split', text, where, rect, '数と単位・助数詞の間');
             else if (
@@ -1350,6 +1424,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
                 for (const sgm of seg.segment(pText)) {
                   const end = sgm.index + sgm.segment.length;
                   if (at > sgm.index && at < end && sgm.isWordLike) {
+                    // 複合辞（という・について…）の頭の助詞の直後は文節の切れ目（C17）。同じ語のほかの位置は出す
+                    if (at === sgm.index + 1 && COMPOUND_PARTICLES.has(sgm.segment)) break;
                     add('button-split', text, where, rect, `語「${sgm.segment}」の途中`);
                     break;
                   }
@@ -1360,6 +1436,48 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           }
         }
       }
+    }
+
+    // ---- (8b) 字を横切る正解の輪（C16）: 見えている .mark--correct の輪の線の帯（外の円 − 内の円）に、同じ札の字の
+    // 中心が 2 つ以上入るもの。輪の中は透明で当たり判定（elementsFromPoint）が通り抜けるので、(8) では数えられない。
+    // 字の後ろか前かは問わない（線は字の後ろでも字を横切って読みにくい）。1 行・6 字以下の札（絵の札・短い語）は、
+    // 輪が字の上下を通るだけなので数えない。輪は円の式で判定する（paints と同じ式）
+    for (const mk of Array.from(root.querySelectorAll('.mark--correct'))) {
+      if (!shown(mk)) continue;
+      const card = mk.parentElement;
+      if (!card) continue;
+      const mr = mk.getBoundingClientRect();
+      if (mr.width < 2 || mr.height < 2) continue;
+      const bw = parseFloat(cs(mk).borderTopWidth) || 0;
+      if (bw <= 0) continue; // 線の無い印（背景だけ）は帯が無い
+      const rx = mr.width / 2;
+      const ry = mr.height / 2;
+      const cx = mr.left + rx;
+      const cy = mr.top + ry;
+      const inner = 1 - bw / Math.min(rx, ry);
+      const chars: Ch[] = [];
+      for (const node of textNodes) {
+        if (!card.contains(node)) continue;
+        for (const c of charsOf(node)) if (c && !c.rt) chars.push(c);
+      }
+      const rows: number[] = [];
+      for (const c of chars) {
+        const y = (c.t + c.b) / 2;
+        if (!rows.some((q) => Math.abs(q - y) < (c.b - c.t) / 2)) rows.push(y);
+      }
+      if (rows.length <= 1 && chars.length <= 6) continue;
+      const hit = chars.filter((c) => {
+        const d = Math.hypot(((c.l + c.r) / 2 - cx) / rx, ((c.t + c.b) / 2 - cy) / ry);
+        return d <= 1 && d >= inner;
+      });
+      if (hit.length >= 2)
+        add(
+          'covered',
+          hit.map((c) => c.ch).join(''),
+          `${describe(card)} の上に ${describe(mk)}`,
+          card.getBoundingClientRect(),
+          '正解の ○ が字を横切る',
+        );
     }
 
     return { u: r1(u), viewport: [W, H], chars: charCount, issues };

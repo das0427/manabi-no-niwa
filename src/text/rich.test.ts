@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { findBareKanji, numberReading, parseRich, plainText, spokenReading } from './rich';
+import {
+  findBareKanji,
+  findOrphanReading,
+  numberReading,
+  parseRich,
+  plainText,
+  spokenReading,
+} from './rich';
 
 describe('parseRich', () => {
   it('よみ付きの語', () => {
@@ -47,6 +54,18 @@ describe('findBareKanji（ふりがなの規則の検査）', () => {
     expect(findBareKanji('犬《いぬ》と猫がいる')).toEqual(['猫']);
     expect(findBareKanji('**大**きい')).toEqual(['大']);
     expect(findBareKanji('ひらがなと123')).toEqual([]);
+  });
+});
+
+describe('findOrphanReading（親字の無い《》。C18）', () => {
+  it('記号・英字・かなの後ろの《》を見つける（画面に字のまま出る）', () => {
+    expect(findOrphanReading('×《ばつ》は ばつ')).toEqual(['《ばつ》']);
+    expect(findOrphanReading('Y《ワイ》と X《エックス》')).toEqual(['《ワイ》', '《エックス》']);
+    expect(findOrphanReading('**×《ばつ》**')).toEqual(['《ばつ》']);
+  });
+  it('漢字の後ろの《》は親字があるので誤りにしない', () => {
+    expect(findOrphanReading('犬《いぬ》と**山《!やま》**')).toEqual([]);
+    expect(findOrphanReading('ひらがなと123')).toEqual([]);
   });
 });
 

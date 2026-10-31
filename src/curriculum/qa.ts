@@ -5,7 +5,7 @@
 import { createRng, hashSeed } from '../core/util/rng';
 import { engineOf } from '../engines/registry';
 import { MODE_BY_ID } from '../modes/registry';
-import { findBareKanji } from '../text/rich';
+import { findBareKanji, findOrphanReading } from '../text/rich';
 import type { Item, UnitKind, UnitSpec } from './types';
 
 /** 種別ごとの量の基準 N・M（curriculum-matrix 1.3） */
@@ -176,6 +176,12 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     ...unit.misconceptions.map((m) => m.explain),
   ])
     for (const k of findBareKanji(t)) err(`よみの無い漢字「${k}」: ${t.slice(0, 30)}`);
+  for (const t of [
+    unit.title,
+    ...unit.intro.map((s) => s.text),
+    ...unit.misconceptions.map((m) => m.explain),
+  ])
+    for (const k of findOrphanReading(t)) err(`よみの親字が無い${k}: ${t.slice(0, 30)}`);
 
   // 問題
   const items = sampleItems(unit, opts.seeds);
@@ -199,6 +205,8 @@ export function checkUnit(unit: UnitSpec, opts: { seeds?: number } = {}): UnitRe
     if (!it.explain.trim()) itemErr('解説が無い');
     for (const t of textsOf(it))
       for (const k of findBareKanji(t)) itemErr(`よみの無い漢字「${k}」`);
+    for (const t of textsOf(it))
+      for (const k of findOrphanReading(t)) itemErr(`よみの親字が無い${k}`);
     for (const m of engineOf(it).check(it)) itemErr(m);
     for (const s of unsafeSvgsOf(it)) itemErr(`図の SVG に使えない要素・属性がある: ${s}`);
     // 誤概念IDが定義にあるか（全エンジン共通）

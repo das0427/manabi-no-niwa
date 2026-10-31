@@ -239,4 +239,82 @@ describe('listen: 画面', () => {
     expect(list.style.getPropertyValue('--pics-n')).toBe('3');
     expect(list.style.getPropertyValue('--pics-total')).toBe('6');
   });
+
+  it('語のラベルには data-word と --len を付け、文のラベルには付けない（V2 1）', () => {
+    const { container } = render(
+      createElement(listenEngine.Component, {
+        item: base({
+          options: [
+            { label: 'じてんしゃ', correct: true },
+            { label: 'つくえの 中' },
+            { label: 'はな（くさばな）' },
+            { label: 'いろえんぴつ' },
+          ],
+        }),
+        ctx,
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: () => undefined,
+      }),
+    );
+    const cards = [...container.querySelectorAll<HTMLElement>('.eng-opts__opt')];
+    expect(cards).toHaveLength(4);
+    const word = (i: number) => cards[i]!.querySelector('[data-word]');
+    expect(word(0)?.getAttribute('data-word')).toBe('word');
+    expect(cards[0]!.style.getPropertyValue('--len')).toBe('5');
+    expect(cards[0]!.className).toContain('has-word');
+    expect(word(1)?.getAttribute('data-word')).toBe('phrase');
+    expect(cards[1]!.style.getPropertyValue('--len')).toBe('6');
+    // 括弧の中は nowrap の span（括弧の前でだけ折る）
+    expect(word(2)?.getAttribute('data-word')).toBe('paren');
+    expect(word(2)?.querySelector('.opt-nobr')?.textContent).toBe('（くさばな）');
+    expect(word(3)?.getAttribute('data-word')).toBe('word');
+  });
+
+  it('12字を超える文があるときは、語のラベルにも data-word を付けず今までどおり折り返す（V2 1）', () => {
+    const { container } = render(
+      createElement(listenEngine.Component, {
+        item: base({
+          options: [
+            { label: 'いぬ', correct: true },
+            { label: 'これは ながい ぶんしょうの せんたくしです' },
+          ],
+        }),
+        ctx,
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: () => undefined,
+      }),
+    );
+    expect(container.querySelector('[data-word]')).toBeNull();
+    expect(container.querySelector('.has-word')).toBeNull();
+    expect(container.querySelector('.eng-opts__list')?.hasAttribute('data-long')).toBe(true);
+  });
+
+  it('文字だけの4つで9字以下は横1行の印（data-row4）を付け、9字の語も語として扱う（V2 3）', () => {
+    const { container } = render(
+      createElement(listenEngine.Component, {
+        item: base({
+          options: [
+            { label: '北アメリカ大陸', correct: true },
+            { label: 'アフリカ大陸' },
+            { label: 'ユーラシア大陸' },
+            { label: 'オーストラリア大陸' },
+          ],
+        }),
+        ctx,
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: () => undefined,
+      }),
+    );
+    const list = container.querySelector('.eng-opts__list') as HTMLElement;
+    expect(list.hasAttribute('data-row4')).toBe(true);
+    const last = container.querySelectorAll<HTMLElement>('.eng-opts__opt')[3]!;
+    expect(last.querySelector('[data-word]')?.getAttribute('data-word')).toBe('word');
+    expect(last.style.getPropertyValue('--len')).toBe('9');
+  });
 });

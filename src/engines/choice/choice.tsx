@@ -2,15 +2,16 @@
  * choice エンジン: 選択肢から選ぶ（1つ、またはすべて選ぶ）。
  * 1つ選ぶ問題はタップでそのまま答える（v1 と同じ）。すべて選ぶ問題は「こたえあわせ」で答える。
  */
-import { useState, type CSSProperties } from 'react';
-import type { ChoiceItem } from '../../curriculum/types';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import type { ChoiceItem, RichText } from '../../curriculum/types';
 import { displayOrder as sharedOrder, displayPosition } from '../shared/order';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
-import type { EngineDef, EngineProps, Judgement } from '../types';
+import { observeResize } from '../figure/svgText';
+import type { EngineDef, EngineProps, Judgement, RenderCtx } from '../types';
 import './choice.css';
 
 /** 答え: 選んだ選択肢の番号（multi は複数） */
@@ -75,7 +76,7 @@ export function optionTraits(
   options: readonly { label?: string; figure?: unknown }[],
   layout: 'row' | 'grid' | 'column',
   isPics: boolean,
-): { long: boolean; caption: boolean } {
+): { long: boolean; caption: boolean; row4: boolean } {
   const len = (o: { label?: string }) => [...plainText(o.label ?? '')].length;
   const textOnly =
     options.length > 0 && options.every((o) => o.figure === undefined && o.label !== undefined);
@@ -86,7 +87,156 @@ export function optionTraits(
     options.length >= 2 &&
     options.length <= 4 &&
     options.some((o) => o.figure !== undefined && len(o) >= 5);
-  return { long, caption };
+  // 文字だけの選択肢が4つで、いちばん長いラベルが9字以下: 2×2 の格子でなく横1行（V2 3。g6.soc.world/0）
+  const row4 =
+    textOnly &&
+    !long &&
+    options.length === 4 &&
+    layout !== 'column' &&
+    options.every((o) => len(o) <= 9);
+  return { long, caption, row4 };
+}
+
+/** 語のラベルの種類（V2 1）。word: 空白なし8字以下／phrase: 空白で区切った短い句／paren: 「はな（くさばな）」 */
+export interface WordTrait {
+  kind: 'word' | 'phrase' | 'paren';
+  /** 札の幅を決める字数（word は全体、paren は前＋括弧の全体（入らなければ括弧の前で折る）、phrase は 7字までなら空白を含めた全体、それより長ければ最長の語。入らなければ空白で折る） */
+  len: number;
+}
+
+const WORD_MAX = 8;
+const PHRASE_MAX = 14;
+const PHRASE_ONE_LINE = 7;
+
+/**
+ * 語の途中で折らないラベルか。一語（空白なし・8字以下）／空白で区切った短い句（各語8字以下・全体14字以下）／
+ * 括弧で読みを足した語（前も括弧も8字以下・全体14字以下）。それ以外（文）は null で、今までどおり折り返す。
+ * wordMax は一語の字数の上限（横1行の data-row4 の列だけ 9。g6.soc.world/0 の「オーストラリア大陸」）
+ */
+export function wordTrait(label: string | undefined, wordMax = WORD_MAX): WordTrait | null {
+  if (label === undefined) return null;
+  const t = plainText(label).trim();
+  const n = [...t].length;
+  if (n === 0 || n > PHRASE_MAX) return null;
+  const words = t.split(/\s+/u);
+  const lens = words.map((w) => [...w].length);
+  if (words.length === 1) {
+    const m = /^([^（(]+)([（(].*[）)])$/u.exec(t);
+    if (m) {
+      const a = [...m[1]!].length;
+      const b = [...m[2]!].length;
+      return a <= wordMax && b <= wordMax ? { kind: 'paren', len: a + b } : null;
+    }
+    return n <= wordMax ? { kind: 'word', len: n } : null;
+  }
+  if (!lens.every((l) => l <= wordMax)) return null;
+  // 短い句（7字まで）は1行に入る幅にする。それより長い句は、いちばん長い語が入る幅にして空白で折る
+  return { kind: 'phrase', len: n <= PHRASE_ONE_LINE ? n : Math.max(...lens) };
+}
+
+/** 括弧で読みを足したラベルを、括弧の前までと括弧からに分ける（書き方の記号は切らない側で分ける） */
+export function splitParen(label: string): [string, string] {
+  const i = label.search(/[（(]/u);
+  return i <= 0 ? [label, ''] : [label.slice(0, i), label.slice(i)];
+}
+
+/** 選択肢のラベル（choice・listen・reading 共通）。語のラベルは data-word と --len を付ける（choice.css） */
+export function OptionLabel({
+  label,
+  ctx,
+  className,
+  word,
+}: {
+  label: RichText;
+  ctx: RenderCtx;
+  className: string;
+  word: WordTrait | null;
+}) {
+  if (!word) {
+    return (
+      <span className={className}>
+        <Rt text={label} ctx={ctx} />
+      </span>
+    );
+  }
+  if (word.kind === 'paren') {
+    const [head, paren] = splitParen(label);
+    return (
+      <span className={className} data-word="paren">
+        <Rt text={head} ctx={ctx} />
+        <span className="opt-nobr">
+          <Rt text={paren} ctx={ctx} />
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className={className} data-word={word.kind}>
+      <Rt text={label} ctx={ctx} />
+    </span>
+  );
+}
+
+/** 語のラベルを持つ札に付ける、クラスと --len（札の幅の基準。choice.css の container 単位に使う） */
+export function wordCardProps(word: WordTrait | null): { cls: string; style?: CSSProperties } {
+  return word ? { cls: ' has-word', style: { '--len': word.len } as CSSProperties } : { cls: '' };
+}
+
+/**
+ * 絵の札の高さの上限の手がかり（V2 2）: 選択肢の列より上に積まれるものの高さ（px）を --pics-above に、
+ * 札のうち絵の下にある分（ラベルの行・札の余白・間隔。いちばん大きい札）を --pics-below に書く。
+ * 上は、列から作業領域（.unit__work）まで親をたどり、縦に積む親（flex の column・block）で、前の兄弟の高さ＋間隔と、
+ * 親の上の余白を足す。横に並べる親（左の列）は数えない。--work-h（作業領域の高さ）は UnitRunner が書く。
+ * ラベルが2行になる札（「はな（くさばな）」）は、行の数のぶん --pics-below が大きくなる（推測でなく測る）。
+ */
+export function usePicsGeometry(listRef: RefObject<HTMLElement | null>, enabled: boolean): void {
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list || !enabled) return undefined;
+    const work = list.closest('.unit__work');
+    if (!work) return undefined;
+    const watch: Element[] = [work, ...Array.from(list.children)];
+    const put = (name: string, px: number) => {
+      const v = `${Math.round(px)}px`;
+      if (list.style.getPropertyValue(name) !== v) list.style.setProperty(name, v);
+    };
+    const measure = () => {
+      let above = 0;
+      for (let el: HTMLElement = list; el !== work && el.parentElement; el = el.parentElement) {
+        const parent = el.parentElement as HTMLElement;
+        const st = getComputedStyle(parent);
+        const stacked = !(st.display.includes('flex') && st.flexDirection.startsWith('row'));
+        if (!stacked) continue;
+        const gap = parseFloat(st.rowGap) || 0;
+        above += parseFloat(st.paddingTop) || 0;
+        for (let s = parent.firstElementChild; s && s !== el; s = s.nextElementSibling) {
+          const pos = getComputedStyle(s).position;
+          if (pos === 'absolute' || pos === 'fixed') continue;
+          if (!watch.includes(s)) watch.push(s);
+          above += (s as HTMLElement).offsetHeight + gap;
+        }
+        if (parent === work) break;
+      }
+      put('--pics-above', above);
+      let below = 0;
+      for (const card of Array.from(list.children) as HTMLElement[]) {
+        const cs = getComputedStyle(card);
+        const label = card.querySelector<HTMLElement>('[class$="__label"]');
+        const edge =
+          (parseFloat(cs.paddingTop) || 0) +
+          (parseFloat(cs.paddingBottom) || 0) +
+          (parseFloat(cs.borderTopWidth) || 0) +
+          (parseFloat(cs.borderBottomWidth) || 0);
+        below = Math.max(
+          below,
+          edge + (label ? label.offsetHeight + (parseFloat(cs.rowGap) || 0) : 0),
+        );
+      }
+      put('--pics-below', below);
+    };
+    measure();
+    return observeResize([...watch], measure);
+  }, [listRef, enabled]);
 }
 
 /** 図 1 つに並ぶ絵の数（横幅の見積り用。絵以外の図は 1） */
@@ -130,6 +280,8 @@ export function picsProps(
       '--pics-n': options.length,
       '--pics-total': total,
       '--pics-side': side,
+      // 1つの選択肢に絵が複数（数えるりんご）は、絵1つの下限（10u）を当てない（札から絵がはみ出す）
+      ...(total > options.length ? { '--pic-floor': '0px' } : {}),
     } as CSSProperties,
   };
 }
@@ -204,6 +356,7 @@ function ChoiceView({
   submit,
 }: EngineProps<ChoiceItem, ChoiceResponse>) {
   const [picked, setPicked] = useState<number[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
   const shown = displayOrder(
     item,
@@ -247,33 +400,51 @@ function ChoiceView({
     layout,
     pics.className !== '',
   );
+  usePicsGeometry(listRef, pics.className !== '' || traits.caption);
+  const hasLabel = shown.some((i) => item.options[i]!.label !== undefined);
   return (
     <div className="eng-choice">
       <div
+        ref={listRef}
         className={`eng-choice__options eng-choice__options--${layout}${pics.className}${traits.caption ? ' is-caption' : ''}`}
-        style={pics.style}
+        style={
+          pics.className
+            ? ({ ...pics.style, '--pics-label': hasLabel ? 1 : 0 } as CSSProperties)
+            : pics.style
+        }
         data-long={traits.long ? '' : undefined}
+        data-row4={traits.row4 ? '' : undefined}
       >
         {shown
           .map((i) => ({ o: item.options[i]!, i }))
-          .map(({ o, i }, pos) => (
-            <Choice
-              key={i}
-              label={o.label !== undefined ? plainText(o.label) : `${pos + 1}ばん`}
-              state={stateOf(i)}
-              disabled={disabled || revealed}
-              onPress={() => press(i)}
-              testId={`opt-${i}`}
-              className={`eng-choice__opt${o.figure ? '' : ' eng-choice__opt--text'}`}
-            >
-              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-              {o.label !== undefined ? (
-                <span className="eng-choice__label">
-                  <Rt text={o.label} ctx={ctx} />
-                </span>
-              ) : null}
-            </Choice>
-          ))}
+          .map(({ o, i }, pos) => {
+            const word = traits.long
+              ? null
+              : wordTrait(typeof o.label === 'string' ? o.label : undefined, traits.row4 ? 9 : 8);
+            const wc = wordCardProps(word);
+            return (
+              <Choice
+                key={i}
+                label={o.label !== undefined ? plainText(o.label) : `${pos + 1}ばん`}
+                state={stateOf(i)}
+                disabled={disabled || revealed}
+                onPress={() => press(i)}
+                testId={`opt-${i}`}
+                className={`eng-choice__opt${o.figure ? '' : ' eng-choice__opt--text'}${wc.cls}`}
+                style={wc.style}
+              >
+                {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+                {o.label !== undefined ? (
+                  <OptionLabel
+                    label={o.label}
+                    ctx={ctx}
+                    className="eng-choice__label"
+                    word={word}
+                  />
+                ) : null}
+              </Choice>
+            );
+          })}
       </div>
       {item.multi && !revealed ? (
         <button

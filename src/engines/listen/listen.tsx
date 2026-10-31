@@ -29,7 +29,7 @@ import { speechYomi } from '../../text/yomi';
 import { Tap } from '../../ui/Tap';
 import { VOICE_CATALOG, type VoiceSeq } from '../../voice/catalog/index';
 import { registerRich } from '../../voice/dynamic';
-import { earOnTop, type ChoiceResponse } from '../choice/choice';
+import { earOnTop, wordTrait, type ChoiceResponse } from '../choice/choice';
 import { observeResize } from '../figure/svgText';
 import type { EngineProps, Judgement } from '../types';
 import { checkOptions, ChoiceOptions, correctLabels, judgeOptions } from './options';
@@ -234,6 +234,17 @@ function Transcript({
   );
 }
 
+/**
+ * 解説で札を左の列に置くとき、右の選択肢の列が取る幅（u）の見積り。語のラベルの札は 14u より広い
+ * （choice.css の --word-min-w。字が下限 2.2u で入る幅、上限 30u）ので、その分を左の列（head）から引く
+ */
+export function sideWidth(options: readonly { label?: string }[]): number {
+  return options.reduce((a, o) => {
+    const w = wordTrait(o.label);
+    return a + (w ? Math.min(30, Math.max(14, Math.ceil(w.len * 2.2 * 1.05 + 3.2))) : 14);
+  }, 0);
+}
+
 function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsShown }: Props) {
   /** 最初の再生が終わった（選択肢を押せる） */
   const [heard, setHeard] = useState(false);
@@ -353,7 +364,14 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         .filter(Boolean)
         .join(' ')}
       data-heard={heard ? '1' : '0'}
-      style={sideHead ? ({ '--side-n': item.options.length } as CSSProperties) : undefined}
+      style={
+        sideHead
+          ? ({
+              '--side-n': item.options.length,
+              '--side-w': sideWidth(item.options),
+            } as CSSProperties)
+          : undefined
+      }
     >
       {showTranscript ? (
         <div className="eng-listen__head">

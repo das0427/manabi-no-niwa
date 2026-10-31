@@ -33,7 +33,7 @@
    入らないときは絵を min(既定, (作業領域の幅 − 間隔) ÷ (数 × 1つの中の絵の数)) に縮める（g1.math.numbers-10/4）。
    絵の既定の寸法は Figure のインライン指定なので max-width・max-height で抑える */
 .eng-choice__options.is-pics {
-  --pic-max: calc(
+  --pic-w: calc(
     (
         var(--u0, var(--u)) * 90 - var(--u) * 2.4 * (var(--pics-n) - 1) - var(--u) * 3.6 *
           var(--pics-n) - var(--u) * 0.6 * var(--pics-total)
@@ -99,4 +99,166 @@
   min-width: calc(var(--u) * 14);
   font-size: max(calc(var(--u) * 2.8), var(--text-min, 0px));
   z-index: 4;
+}
+
+/* 文字だけの選択肢が4つで最長9字以下（choice.tsx の optionTraits が data-row4 を付ける）: 横1行。各札 flex: 1 1 0。
+   字は max(2.6u, --text-min)（V2 3。g6.soc.world/0） */
+.eng-choice__options[data-row4] {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-choice__options[data-row4] > .eng-choice__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-choice__options[data-row4] .eng-choice__label {
+  --w-font: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+}
+
+/* 語のラベル（V2 1。choice.tsx の wordTrait が data-word・--len を付け、札に .has-word）。語の途中で折らない。
+   札を container（inline-size）にし、字を max(--text-min, min(既定, 札の中の幅 ÷ (字数 × 1.05))) にする。
+   inline-size の container は中身の幅を持たないので、札の min-width を 字数 × 既定の字 × 1.05 ＋ 余白（下限 14u）にして
+   既定の字が入る幅にする（上限 30u。入らなければ字が下限まで縮み、句は空白で折る）。listen・reading の選択肢も同じ */
+.choice.has-word {
+  container-type: inline-size;
+  --w-font: max(calc(var(--u) * 3.2), var(--text-min, 0px));
+  --word-min-w: min(
+    calc(var(--u) * 30),
+    max(
+      calc(var(--u) * 14),
+      calc(var(--len) * var(--w-min-font, var(--w-font)) * 1.05 + var(--u) * 3.2)
+    )
+  );
+}
+.eng-choice__options .eng-choice__opt.has-word,
+.eng-opts__list .eng-opts__opt.has-word {
+  min-width: var(--word-min-w);
+  max-width: 100%;
+}
+/* 2列のグリッドは列の幅（約 43u）に任せる */
+.eng-choice__options--grid > .eng-choice__opt.has-word,
+.eng-opts__list--grid > .eng-opts__opt.has-word {
+  min-width: 0;
+}
+.eng-choice__options[data-row4] > .eng-choice__opt.has-word {
+  min-width: 0;
+}
+.has-word [data-word] {
+  display: block;
+  font-size: max(var(--text-min, 0px), min(var(--w-font), calc(100cqi / (var(--len) * 1.05))));
+  line-height: 1.25;
+  text-align: center;
+}
+.has-word [data-word='word'] {
+  white-space: nowrap;
+}
+/* 空白で区切った句は空白でだけ折る（語の途中では折らない） */
+.has-word [data-word='phrase'] {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  text-wrap: balance;
+}
+/* 「はな（くさばな）」は括弧の前でだけ折る（括弧の中は nowrap の span） */
+.has-word [data-word='paren'] {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.opt-nobr {
+  white-space: nowrap;
+}
+
+/* 絵の札の高さの上限（V2 2。choice・listen・reading 共通）: 作業領域の高さ（--work-h。UnitRunner が書く）から、
+   列より上の段（--pics-above。tsx が測る）と、札のうち絵の下の分（--pics-below。ラベルの行・札の余白。tsx が測る。
+   測る前は 余白と輪郭 3.6u ＋ ラベルの1行 4.8u の見積り）と、輪郭の影（1u）を引いた分。
+   --pic-max は、これと幅の式（--pic-w）の小さいほう。下限は幼児の絵の 10u（--pic-floor。DESINGN 17章）。
+   下限でも入らないときだけ作業領域のスクロールが残る */
+.eng-choice__options,
+.eng-opts__list {
+  --pic-h: calc(
+    var(--work-h, 9999px) - var(--pics-above, 0px) -
+      var(--pics-below, calc(var(--u) * (3.6 + var(--pics-label, 0) * 4.8))) - var(--u)
+  );
+}
+.eng-choice__options.is-pics,
+.eng-opts__list.is-pics {
+  --pic-max: max(var(--pic-floor, 0px), min(var(--pic-w), var(--pic-h)));
+}
+/* 絵に文が付く札（is-caption）の絵も、高さの上限に従う。幅は札の中（100%） */
+.eng-choice__options.is-caption,
+.eng-opts__list.is-caption {
+  --pic-max: max(var(--pic-floor, 0px), var(--pic-h));
+}
+.eng-choice__options.is-caption > .choice svg,
+.eng-choice__options.is-caption > .choice .fig-illust__group > *,
+.eng-opts__list.is-caption > .choice svg,
+.eng-opts__list.is-caption > .choice .fig-illust__group > * {
+  max-height: var(--pic-max);
+  max-width: min(100%, var(--pic-max));
+}
+/* 幼児の絵は、作業領域の縮み（--fit）でも 10u を割らない */
+.eng-choice__options.is-pics .fig-illust__group > *,
+.eng-opts__list.is-pics .fig-illust__group > *,
+.eng-choice__options.is-caption .fig-illust__group > *,
+.eng-opts__list.is-caption .fig-illust__group > * {
+  min-width: var(--pic-floor, 0px);
+  min-height: var(--pic-floor, 0px);
+}
+
+/* 札を折り返さず 1/n ずつ並べる列（caption・data-row4）は、札の幅の下限を「字が下限（--text-min）で入る幅」にして、
+   札の幅は列の分け前に任せる（字は分け前に合わせて縮む） */
+.eng-choice__options.is-caption,
+.eng-choice__options[data-row4],
+.eng-opts__list.is-caption,
+.eng-opts__list[data-row4] {
+  --w-min-font: var(--text-min, 0px);
+}
+
+/* 絵の下限: 幼児は 10u（上）、ほかの段階は 6u（絵が 1u にまで潰れて何の絵か分からなくならないように） */
+.unit {
+  --pic-floor: calc(var(--u0, var(--u)) * 6);
+}
+.unit[data-stage='p23'],
+.unit[data-stage='p4'],
+.unit[data-stage='p5'] {
+  --pic-floor: calc(var(--u0, var(--u)) * 10);
+}
+/* 絵の札は上下の余白と絵・ラベルの間隔を詰める（縦が足りない作業領域で、ラベルを枠の外に出さない） */
+.eng-choice__options.is-pics > .eng-choice__opt,
+.eng-choice__options.is-caption > .eng-choice__opt,
+.eng-opts__list.is-pics > .eng-opts__opt,
+.eng-opts__list.is-caption > .eng-opts__opt {
+  padding-block: calc(var(--u) * 0.8);
+  gap: calc(var(--u) * 0.4);
+}
+/* ふりがなの無い語のラベルは、Rt の行間 1.7 を詰める（ふりがなの高さを空けない。絵の札の縦を節約） */
+.has-word [data-word] .rt:not(:has(ruby)) {
+  line-height: 1.25;
+}
+
+/* 小3以上（data-wakachi が無い）の札・ラベルには base.css が min-width: 0・word-break: auto-phrase・
+   overflow-wrap: break-word・text-wrap: wrap を付ける（詳しさ 0,5,0）。語のラベルはそれより詳しい指定で、
+   札の幅（--word-min-w）と「語の途中で折らない」を保つ（g5.en.where・g6.en.future・g6.soc.world。V2 1） */
+.stage
+  .unit[data-stage]:not([data-wakachi])
+  :is(.eng-choice__options, .eng-opts__list):not(
+    .eng-choice__options--grid,
+    .eng-opts__list--grid,
+    [data-row4]
+  )
+  > .choice.has-word {
+  min-width: var(--word-min-w);
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word] {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word='phrase'] {
+  text-wrap: balance;
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word='word'] {
+  text-wrap: nowrap;
 }

@@ -300,9 +300,17 @@ function NumberView(props: EngineProps<NumberItem, NumberResponse>) {
   return <FieldsView {...props} />;
 }
 
+/** 10の棒 1 本の幅の下限（--u0 の倍数。数えられる大きさ: text-layout-fixes.md V4） */
+const BAR_MIN_U = 1.2;
+/** 図の段の縮み --num-k の下限 */
+const FIG_K_MIN = 0.6;
+
 /**
- * 図の段（作業領域の直下の .unit__figure。UnitRunner が描く）の高さを超える表・10の棒は、図の段だけを枠にして
- * 縦にスクロールさせる（data-scroll-region="figure"・▼ の data-scroll-cue）。キーと回答欄は枠の外（text-layout-fixes.md T7）
+ * 図の段（作業領域の直下の .unit__figure。UnitRunner が描く）の高さを超える表・10の棒は、まず図の中の --u を
+ * 縮めて（--num-k = max(0.6, 段の高さ ÷ 図の高さ)。UnitRunner の --fig-k と同じ考え。number は NO_FIG_FIT で
+ * UnitRunner が --fig-k を測り直すたびに消すので、別の名前で持つ）段に入れる。10の棒は 1 本が 1.2u を割らない所まで。
+ * 下限でも入らないときだけ、図の段を枠にして縦にスクロールさせる（data-scroll-region="figure"・▼ の data-scroll-cue。
+ * キーと回答欄は枠の外。text-layout-fixes.md T7・V4）
  */
 function useFigureScroll(ref: { current: HTMLElement | null }) {
   useLayoutEffect(() => {
@@ -315,12 +323,34 @@ function useFigureScroll(ref: { current: HTMLElement | null }) {
         fig.removeAttribute('data-scroll-cue');
       else fig.setAttribute('data-scroll-cue', '');
     };
+    const overflowing = () => fig.scrollHeight > fig.clientHeight + 2;
     const measure = () => {
       const keep = fig.scrollTop;
       fig.removeAttribute('data-scroll-region');
-      if (fig.clientHeight > 0 && fig.scrollHeight > fig.clientHeight + 2) {
-        fig.setAttribute('data-scroll-region', 'figure');
-        fig.scrollTop = keep;
+      fig.style.removeProperty('--num-k');
+      if (fig.clientHeight > 0 && overflowing()) {
+        // 10の棒 1 本の幅から、縮みの下限を決める
+        let floor = FIG_K_MIN;
+        const bar = fig.querySelector<SVGGraphicsElement>('.blk--t');
+        if (bar) {
+          const probe = document.createElement('div');
+          probe.style.cssText =
+            'position:absolute;visibility:hidden;pointer-events:none;width:calc(var(--u0, var(--u)) * 1)';
+          work.appendChild(probe);
+          const u0 = probe.getBoundingClientRect().width;
+          probe.remove();
+          const w = bar.getBoundingClientRect().width;
+          if (u0 > 0 && w > 0) floor = Math.min(1, Math.max(floor, (BAR_MIN_U * u0) / w));
+        }
+        let k = 1;
+        for (let i = 0; i < 4 && overflowing() && k > floor + 0.001; i++) {
+          k = Math.max(floor, k * (fig.clientHeight / fig.scrollHeight));
+          fig.style.setProperty('--num-k', k.toFixed(3));
+        }
+        if (overflowing()) {
+          fig.setAttribute('data-scroll-region', 'figure');
+          fig.scrollTop = keep;
+        }
       }
       cue();
     };
@@ -337,13 +367,17 @@ function useFigureScroll(ref: { current: HTMLElement | null }) {
               measure();
             });
           });
+    // 作業領域（解説の板で狭くなる）と、図の中身（UnitRunner の --fit で大きさが変わる）を見る
     ro?.observe(work);
+    ro?.observe(fig);
+    for (const c of Array.from(fig.children)) ro?.observe(c);
     return () => {
       if (raf) cancelAnimationFrame(raf);
       ro?.disconnect();
       fig.removeEventListener('scroll', cue);
       fig.removeAttribute('data-scroll-region');
       fig.removeAttribute('data-scroll-cue');
+      fig.style.removeProperty('--num-k');
     };
   }, [ref]);
 }
@@ -374,7 +408,7 @@ function FieldsView({
   useFigureScroll(fieldsRef);
   const manyLabels = item.fields.filter((f) => f.label).length >= 4;
   return (
-    <div className="eng-number">
+    <div className={revealed ? 'eng-number eng-number--revealed' : 'eng-number'}>
       <div
         ref={fieldsRef}
         className={

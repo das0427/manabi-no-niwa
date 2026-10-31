@@ -2,9 +2,8 @@
  * 選択肢の部品（listen・reading で使う）。見た目と操作は choice エンジンと同じ。
  * 判定・検査は choice の judgeChoice・checkChoice をそのまま使う（選択肢の約束を1つにする）。
  */
-import { useState } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import type { ChoiceItem, ChoiceOption } from '../../curriculum/types';
-import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
@@ -12,8 +11,12 @@ import {
   autoLayout,
   checkChoice,
   judgeChoice,
+  OptionLabel,
   optionTraits,
   picsProps,
+  usePicsGeometry,
+  wordCardProps,
+  wordTrait,
   visibleOptionIndices,
   type ChoiceResponse,
 } from '../choice/choice';
@@ -83,6 +86,7 @@ export function ChoiceOptions({
   picsSide = 0,
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const wrong = new Set(Array.isArray(wrongMark) ? (wrongMark as number[]) : []);
   const shown = visibleOptionIndices(
     part.options,
@@ -131,33 +135,46 @@ export function ChoiceOptions({
     layout,
     pics.className !== '',
   );
+  usePicsGeometry(listRef, pics.className !== '' || traits.caption);
+  const hasLabel = shown.some((i) => part.options[i]!.label !== undefined);
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
       <div
+        ref={listRef}
         className={`eng-opts__list eng-opts__list--${layout}${pics.className}${traits.caption ? ' is-caption' : ''}`}
-        style={pics.style}
+        style={
+          pics.className
+            ? ({ ...pics.style, '--pics-label': hasLabel ? 1 : 0 } as CSSProperties)
+            : pics.style
+        }
         data-long={traits.long ? '' : undefined}
+        data-row4={traits.row4 ? '' : undefined}
       >
         {shown
           .map((i) => ({ o: part.options[i]!, i }))
-          .map(({ o, i }) => (
-            <Choice
-              key={i}
-              label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
-              state={stateOf(i)}
-              disabled={locked || revealed}
-              onPress={() => press(i)}
-              testId={`opt-${i}`}
-              className={`eng-opts__opt${o.figure ? '' : ' eng-opts__opt--text'}`}
-            >
-              {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
-              {o.label !== undefined ? (
-                <span className="eng-opts__label">
-                  <Rt text={o.label} ctx={ctx} />
-                </span>
-              ) : null}
-            </Choice>
-          ))}
+          .map(({ o, i }) => {
+            const word = traits.long
+              ? null
+              : wordTrait(typeof o.label === 'string' ? o.label : undefined, traits.row4 ? 9 : 8);
+            const wc = wordCardProps(word);
+            return (
+              <Choice
+                key={i}
+                label={o.label !== undefined ? plainText(o.label) : `${i + 1}ばん`}
+                state={stateOf(i)}
+                disabled={locked || revealed}
+                onPress={() => press(i)}
+                testId={`opt-${i}`}
+                className={`eng-opts__opt${o.figure ? '' : ' eng-opts__opt--text'}${wc.cls}`}
+                style={wc.style}
+              >
+                {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+                {o.label !== undefined ? (
+                  <OptionLabel label={o.label} ctx={ctx} className="eng-opts__label" word={word} />
+                ) : null}
+              </Choice>
+            );
+          })}
       </div>
       {part.multi && !revealed ? (
         <button

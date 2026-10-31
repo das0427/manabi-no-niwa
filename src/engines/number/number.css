@@ -51,7 +51,8 @@
 .eng-number__box {
   /* 下限 10u（札つきの回答欄が4〜5つ並ぶとき1段に入る: text-layout-fixes.md T7） */
   min-width: calc(var(--u) * 10);
-  min-height: calc(var(--u) * 8);
+  /* 8u → 7u（数字キーと同じ高さ。図の段が 1u 余計に使える。V4）。押す所は数字キー側で、ここは欄を選ぶ補助 */
+  min-height: calc(var(--u) * 7);
   padding: 0 calc(var(--u) * 1.2);
   font: inherit;
   font-size: calc(var(--u) * 4.4);
@@ -135,7 +136,14 @@
 .unit__work.unit__work--number {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: minmax(0, 1fr) auto;
-  align-content: safe center;
+  /* 上そろえ: 図の段（1fr）が、中央そろえで余る分を残さず使う（V4。safe center だと余りが上下に割れる） */
+  align-content: start;
+  /* 図の段と回答欄の間: 2u → 1.2u（回答欄の外枠 0.8u は間に収まる）。図の段が 1〜2u 足りずに枠になるのを防ぐ（V4） */
+  row-gap: calc(var(--u) * 1.2);
+}
+/* 図の中の --u を --num-k（number.tsx。0.6〜1）で縮める。--fig-k は UnitRunner が測り直すたびに消すので別の名前 */
+.unit__work.unit__work--number > .unit__figure {
+  --u: calc(var(--u0) * var(--fit, 1) * var(--num-k, 1));
 }
 .unit__work.unit__work--number > .unit__figure {
   align-self: stretch;
@@ -150,6 +158,14 @@
   overflow-y: auto;
   justify-content: flex-start;
   padding-right: calc(var(--u) * 3.6);
+  /* 1行目のふりがな（rt。字の上に出る）が枠の上端で切れない（g3.math.time/0 の「びょう」）。0.6em 以上 */
+  padding-top: max(0.6em, calc(var(--u) * 1.4));
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure']:has(.fig-text--xl) {
+  padding-top: calc(var(--u) * 4.4);
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure']:has(.fig-text--l) {
+  padding-top: calc(var(--u) * 3.2);
 }
 .unit__work--number > .unit__figure[data-scroll-region='figure'][data-scroll-cue]::after {
   content: '▼';
@@ -221,11 +237,12 @@
 .unit__work--number .fig-table td {
   font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
 }
-/* 筆算の表は回答欄の上に置くので、行を詰める（行の高さ 5.5u → 約 3.8u。4行で 15u。表が作業領域を越えて回答欄の札に重ならない）。
-   セルの字は数字・ひらがなの見出しで、ふりがなの行（.rt の 1.7）を取らなくてよい */
+/* 表の行を詰める（行の高さ 4.4u → 約 3.4u。字 2.4u の行間 1.2 ＋ 上下 0.3u。V4）。表が図の段に入りやすく、
+   縮み（--num-k）の前に空きを作る。セルの字は数字・ひらがなの見出しで、ふりがなの行（.rt の 1.7）を取らなくてよい */
 .unit__work--number .fig-table th,
 .unit__work--number .fig-table td {
-  padding-block: 0.12em;
+  padding-block: calc(var(--u) * 0.3);
+  line-height: 1.2;
 }
 .unit__work--number .fig-table .rt {
   line-height: 1.3;
@@ -340,4 +357,23 @@
 .num-frac-show__f > span:first-child {
   border-bottom: 0.08em solid currentColor;
   padding: 0 0.15em;
+}
+
+/* ---- 解説（答えの入った回答欄）: 1行に詰める（V4）。解説の板で作業領域が狭く、図の段を 4 行以上残す ----
+   札つきの回答欄が3つまでは、札を回答欄の左に置く。4つ以上（1段に並べる）は札を上のまま、回答欄を低くする */
+.eng-number--revealed .eng-number__box {
+  min-height: calc(var(--u) * 5.4);
+  /* 答えは数字（ふりがなの行が要らない）。.rt の行の高さ 1.7 が箱を 8u に押し広げていた */
+  line-height: 1.2;
+}
+.eng-number--revealed .eng-number__box .rt {
+  line-height: 1.2;
+}
+.eng-number--revealed
+  .eng-number__fields:not(.eng-number__fields--many)
+  .eng-number__field:has(.eng-number__label) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(var(--u) * 1);
 }

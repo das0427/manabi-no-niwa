@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { autoLayout, displayOrder, optionTraits, picsProps, visibleOptionIndices } from './choice';
+import {
+  autoLayout,
+  displayOrder,
+  optionTraits,
+  picsProps,
+  splitParen,
+  visibleOptionIndices,
+  wordTrait,
+} from './choice';
 
 describe('選択肢の並び', () => {
   const opts = (labels: string[]) => labels.map((label, i) => ({ label, correct: i === 0 }));
@@ -118,6 +126,62 @@ describe('optionTraits（text-layout-fixes T3）', () => {
         'row',
         false,
       ).caption,
+    ).toBe(false);
+  });
+});
+
+describe('wordTrait（語のラベルは語の途中で折らない。V2 1）', () => {
+  it('空白なし8字以下は一語（札の幅は字数）', () => {
+    expect(wordTrait('じてんしゃ')).toEqual({ kind: 'word', len: 5 });
+    expect(wordTrait('パイロット')).toEqual({ kind: 'word', len: 5 });
+    expect(wordTrait('すいぞくかん')).toEqual({ kind: 'word', len: 6 });
+    expect(wordTrait('あいうえおかきく')?.kind).toBe('word');
+    // ふりがなの書き方（《》）は字数に入れない
+    expect(wordTrait('医者《いしゃ》')).toEqual({ kind: 'word', len: 2 });
+  });
+  it('9字以上の一語は語ではない（横1行の列だけ 9字まで）', () => {
+    expect(wordTrait('あいうえおかきくけ')).toBeNull();
+    expect(wordTrait('オーストラリア大陸', 9)).toEqual({ kind: 'word', len: 9 });
+  });
+  it('空白で区切った短い句は、各語8字以下・全体14字以下', () => {
+    expect(wordTrait('つくえの 中')).toEqual({ kind: 'phrase', len: 6 });
+    expect(wordTrait('アイスクリームを たべた')).toEqual({ kind: 'phrase', len: 8 });
+    expect(wordTrait('ベッドの 上の ボール')).toEqual({ kind: 'phrase', len: 4 });
+    expect(wordTrait('したの いぬ')?.kind).toBe('phrase');
+    expect(wordTrait('あいうえおかきくけ こ')).toBeNull();
+    expect(wordTrait('あいうえお かきくけこ さしすせそ')).toBeNull();
+  });
+  it('括弧で読みを足したラベルは括弧の前で折る', () => {
+    expect(wordTrait('はな（くさばな）')).toEqual({ kind: 'paren', len: 8 });
+    expect(splitParen('はな（くさばな）')).toEqual(['はな', '（くさばな）']);
+    expect(splitParen('はな')).toEqual(['はな', '']);
+  });
+  it('文・ラベルなしは語ではない', () => {
+    expect(wordTrait('これは ながい ぶんしょうの せんたくしです')).toBeNull();
+    expect(wordTrait(undefined)).toBeNull();
+    expect(wordTrait('  ')).toBeNull();
+  });
+});
+
+describe('optionTraits row4（文字だけの4つで最長9字以下は横1行。V2 3）', () => {
+  const t = (...labels: string[]) => labels.map((label) => ({ label }));
+  it('文字だけ4つ・9字以下なら row4', () => {
+    expect(
+      optionTraits(
+        t('北アメリカ大陸', 'アフリカ大陸', 'ユーラシア大陸', 'オーストラリア大陸'),
+        'grid',
+        false,
+      ).row4,
+    ).toBe(true);
+  });
+  it('10字以上・4つでない・絵がある・long のときは row4 にしない', () => {
+    expect(optionTraits(t('あ', 'い', 'う', 'あいうえおかきくけこ'), 'grid', false).row4).toBe(
+      false,
+    );
+    expect(optionTraits(t('あ', 'い', 'う'), 'row', false).row4).toBe(false);
+    expect(optionTraits(t('あ', 'い', 'う', 'え', 'お'), 'grid', false).row4).toBe(false);
+    expect(
+      optionTraits([{ label: 'あ', figure: {} }, ...t('い', 'う', 'え')], 'row', false).row4,
     ).toBe(false);
   });
 });

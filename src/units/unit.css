@@ -50,7 +50,7 @@
   /* 問題文が2行以上のときは問題文の下から（--prompt-bottom は UnitRunner が測る） */
   top: max(calc(var(--u) * 15), calc(var(--prompt-bottom, 0px) + var(--u)));
   /* 下の帯（14u）: ヒント・つぎへ・誤答の説明の吹き出し。作業領域と重ならない */
-  bottom: calc(var(--u) * 14);
+  bottom: max(calc(var(--u) * 14), calc(var(--bubble-h, 0px) + var(--u) * 2.4));
   left: calc(var(--u) * 4);
   right: calc(var(--u) * 4);
   display: flex;
@@ -76,7 +76,7 @@
 }
 /* 解説の板が開いているときは、作業領域を板の上までにする（--panel-h は UnitRunner が測る） */
 .unit[data-phase='explain'] .unit__work {
-  bottom: calc(var(--panel-h, calc(var(--u) * 11.6)) + var(--u) * 2.4);
+  bottom: calc(max(var(--panel-h, calc(var(--u) * 11.6)), var(--bubble-h, 0px)) + var(--u) * 2.4);
 }
 /* 数の入力: 左に図と回答欄、右に数字キー（DESINGN.md 18章、review-1 #21） */
 .unit__work--number {
@@ -229,8 +229,34 @@
   line-height: 1.4;
   color: var(--ink);
 }
-/* 「こたえあわせ」（複数を選ぶ問題。つぎへ の左 3u、右端から約 21.5〜38u）があるときは、吹き出しをその左まで */
-.unit:has(.eng-check, .eng-opts__check) .unit__bubble {
+/* 吹き出しが 11.6u に入らないとき（data-tall。UnitRunner が測って --bubble-h に高さを書く）: 字は最小・行間 1.3・16u まで。
+   それでも入らないときは下端に ▼（data-scroll-cue） */
+.unit__bubble[data-tall] {
+  max-height: calc(var(--u0, var(--u)) * 16);
+  font-size: var(--text-min);
+  line-height: 1.3;
+}
+.unit__bubble[data-tall] .unit__hint-mark {
+  font-size: var(--text-min);
+}
+.unit__bubble[data-scroll-cue]::after {
+  content: '▼';
+  display: block;
+  position: sticky;
+  bottom: 0;
+  width: fit-content;
+  height: 1.2em;
+  margin: -1.2em 0 0 auto;
+  padding: 0 calc(var(--u) * 0.6);
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--white);
+  pointer-events: none;
+}
+/* 「こたえあわせ」（複数を選ぶ問題。つぎへ の左 3u、右端から約 21.5〜38u）と数字キー（右の列 70〜96u）があるときは、
+   吹き出しをその左まで */
+.unit:has(.eng-check, .eng-opts__check, .numkey) .unit__bubble {
   right: calc(var(--u) * 39);
 }
 .unit__msg {
@@ -307,12 +333,28 @@
   max-height: calc(var(--u) * 12);
   width: auto;
 }
-/* 表・文の図は切らない（SVG だけ 12u まで。長いときは板が 22u でスクロール） */
-.unit__explain-figure:has(.fig-table, .fig-text) {
+/* width の無いパックの SVG（.fig-svg）は、上の width: auto を当てない。flex の中で width: auto は内容の幅 0 に縮み、
+   T2（figure.css）の幅も消えて 0×0 になる。下の段は高さ 12u まで・縦横比（--fig-ar = 高さ ÷ 幅。UnitRunner が書く）で幅を決め、
+   自然な幅（T2）を超えない。箱は板の幅いっぱい。字の大きさは liftSvgText に任せる */
+.unit__explain-figure .fig-svg {
+  width: 100%;
+}
+.unit__explain-figure .fig-svg svg:not([width]) {
+  width: min(
+    calc(var(--u) * 12 / max(var(--fig-ar, 0.5), 0.05)),
+    max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)))
+  );
+  max-width: 100%;
+  /* 字の引き上げで viewBox が広がって比が少し変わっても、箱（12u）からはみ出さない */
+  max-height: calc(var(--u) * 12);
+  height: auto;
+}
+/* 表・文の図・縦に並べた図（数直線2本など）は切らない（SVG だけ 12u まで。長いときは板が 22u でスクロール） */
+.unit__explain-figure:has(.fig-table, .fig-text, .fig-column) {
   max-height: none;
   overflow: visible;
 }
-.unit__explain-figure:has(.fig-table, .fig-text) > * {
+.unit__explain-figure:has(.fig-table, .fig-text, .fig-column) > * {
   max-height: none;
 }
 /* 図を文の右に置く（data-fig-side。UnitRunner が板の測りで付ける）: 見出し｜文｜図の3列。
@@ -333,6 +375,10 @@
   grid-row: 1;
   align-self: center;
   justify-content: center;
+}
+/* 右置きは列の幅（min(30%, 24u)）に収め、中央に置く。高さは比から決まる（12u まで） */
+.unit__explain[data-fig-side] .unit__explain-figure .fig-svg svg:not([width]) {
+  margin-inline: auto;
 }
 /* 板が 22u を超えて縦にスクロールするとき、下端に ▼（UnitRunner が data-scroll-cue を付け外しする） */
 .unit__scroll-cue {

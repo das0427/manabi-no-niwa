@@ -126,6 +126,27 @@
   position: relative;
   z-index: 1;
 }
+/* 文の札・長い文の選択肢の正解の ○: 大きな輪を文の上に重ねない（輪が文を横切って読めなかった。g6.ja.write-opinion/6・g5.ja.read-relations/7 の解説）。
+   match（第3回 T4）と同じく、札の輪郭を太い緑にし、右上の角に小さな ○（白地）を置く（色だけにしない）。絵・短い語の札は上の大きな ○ のまま。
+   .tk-card は絵の札・語の札も含む（幼児の絵の札は .choice や .tk-card__illust で別系統。ここは単元の作業領域の札に限る） */
+.unit__work .tk-card:has(> .mark--correct),
+.unit__work :is(.eng-opts__list, .eng-choice__options)[data-long] > .choice:has(> .mark--correct) {
+  border-color: var(--correct);
+  border-width: calc(var(--u) * 0.6);
+}
+.unit__work .tk-card > .mark--correct,
+.unit__work :is(.eng-opts__list, .eng-choice__options)[data-long] > .choice > .mark--correct {
+  top: calc(var(--u) * -1.4);
+  right: calc(var(--u) * -1.4);
+  left: auto;
+  width: calc(var(--u) * 3.2);
+  height: calc(var(--u) * 3.2);
+  max-height: none;
+  transform: none;
+  border-width: calc(var(--u) * 0.6);
+  background: var(--white);
+  z-index: 2;
+}
 /* 誤答の？: 小さな吹き出しの形（しっぽ付き）。札の中身と違って薄くならない */
 .mark--wrong {
   top: calc(var(--u) * -1.8);

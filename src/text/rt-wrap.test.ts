@@ -109,3 +109,34 @@ describe('まとまりの先頭が行頭禁則の字なら、さらに前の1字
     expect(html('あスキー{{}}')).toContain('あス<span class="rt-nobr">キー<span');
   });
 });
+
+describe('記号・分数・式の演算子のまとまり（V6）', () => {
+  const ctx = { furigana: 'unlearned', learnerGrade: 1 } as const;
+  const html = (text: string) => renderToStaticMarkup(createElement(Rt, { text, ctx }));
+  const nb = (s: string) => `<span class="rt-nobr">${s}</span>`;
+  it('記号と、すぐ後ろの空白までの仮名（g1.math.picture-graph・g2.ja.subject-predicate・g2.math.tables-graphs）', () => {
+    expect(html('○が つまれるよ')).toContain(nb('○が'));
+    expect(html('〜が どうする')).toContain(nb('〜が'));
+    expect(html('○を かぞえる')).toContain(nb('○を'));
+    expect(html('△は さんかく')).toContain(nb('△は'));
+  });
+  it('12字を超える仮名のまとまりは作らない', () => {
+    expect(html('○あいうえおかきくけこさし')).not.toContain('rt-nobr');
+  });
+  it('分数と、すぐ後ろの仮名（g2.math.fraction-simple）', () => {
+    const h = html('[[1/2]]は ぜんぶの はんぶん');
+    expect(h).toMatch(
+      /<span class="rt-nobr"><span class="rt-frac-wrap">.*<\/span>は<\/span> ぜんぶ/,
+    );
+  });
+  it('演算子と後ろの1つの数・□を空白ごとまとめる（g4.math.order-ops・g6.math.approx-area）', () => {
+    expect(html('3 ＝ □ です')).toContain(nb('＝ □'));
+    expect(html('12 ÷ 2 です')).toContain(nb('÷ 2'));
+    expect(html('□＝□')).toContain('rt-nobr');
+  });
+  it('演算子と後ろの空欄（{{}}）も空白ごとまとめる', () => {
+    expect(html('3 ＝ {{}}')).toContain(
+      `3 ${nb('＝ <span class="rt-blank" aria-label="あいている ところ"></span>')}`,
+    );
+  });
+});

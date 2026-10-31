@@ -185,7 +185,7 @@ function SortView({
   return (
     <div className={['tk-frame', 'tk-frame--band', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
       <div className="tk-frame__main">
-        <div className="eng-sort__boxes">
+        <div className="eng-sort__boxes" data-long={sentences ? '' : undefined}>
           {shownBoxes.map((b) => (
             <div
               key={b}

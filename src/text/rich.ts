@@ -106,6 +106,23 @@ export function findBareKanji(src: string): string[] {
   return bad;
 }
 
+/**
+ * 親字の無い《》（直前が漢字の並びでない《…》）を返す。「×《ばつ》」「Y《ワイ》」のように、記号・英字・かなの後ろの《》は
+ * 記法として読まれず、字のまま画面に出る（g3.soc.map-symbols。画面の検査 markup-leak で初めて見つかった）。
+ * 教材を作った段階（qa.ts）で止める。直前が漢字（と々〆ヶ）なら親字になるので誤りではない。
+ */
+export function findOrphanReading(src: string): string[] {
+  const bad: string[] = [];
+  const walk = (ts: Token[]) => {
+    for (const tk of ts) {
+      if (tk.t === 'text') for (const m of tk.s.matchAll(/《[^》]*》/g)) bad.push(m[0]);
+      if (tk.t === 'strong') walk(tk.children);
+    }
+  };
+  walk(parseRich(src));
+  return bad;
+}
+
 /** 画面に出す文（ふりがな・記号を取り除いた素の文。長さの検査や aria 用） */
 export function plainText(src: string): string {
   const walk = (ts: Token[]): string =>

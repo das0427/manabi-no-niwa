@@ -209,7 +209,13 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
     const b = boxRef.current;
     if (!b) return undefined;
     measure();
-    return observeResize([b], measure);
+    // 字の読み込みで行の折り返しが変わったとき（枠の大きさは変わらない）にも測り直す
+    void document.fonts?.ready.then(measure);
+    // 枠の大きさだけでなく中身の高さが変わったとき（字の読み込み・ふりがな・表の縮み）にも印を付け外しする
+    return observeResize(
+      [b, ...Array.from(b.children).filter((c): c is HTMLElement => c instanceof HTMLElement)],
+      measure,
+    );
   }, [measure, p]);
   const scrollCue = () => {
     const b = boxRef.current;
@@ -229,8 +235,18 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
   useEffect(() => {
     const el = sideRef.current;
     if (!el || tight === 2) return undefined;
+    // 収まる下端: 右の列の枠の下端と、板・吹き出しの上端のうち上のほう（ヒント・解説の状態でも測る）
     const check = () => {
-      if (el.scrollHeight > el.clientHeight + 1) setTight((t) => (t === 0 ? 1 : 2));
+      const limit = Math.min(
+        el.getBoundingClientRect().bottom,
+        ...Array.from(
+          document.querySelectorAll<HTMLElement>('.unit__explain, .unit__bubble'),
+          (x) => x.getBoundingClientRect().top,
+        ).filter((t) => t > 0),
+      );
+      const last = el.lastElementChild?.getBoundingClientRect().bottom ?? 0;
+      if (el.scrollHeight > el.clientHeight + 1 || last > limit + 1)
+        setTight((t) => (t === 0 ? 1 : 2));
     };
     check();
     return observeResize([el], check);

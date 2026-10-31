@@ -170,7 +170,8 @@
   margin-top: var(--gr-stagger, 0px);
 }
 .gr-xlabel--btn {
-  min-height: calc(var(--u) * 6);
+  /* 高さは max(4.8u, 内容)。上の余白に rt（0.6em）を取る（「オートバイ」の rt が枠の外に出た: 第4回 V7） */
+  min-height: calc(var(--u) * 4.8);
   font: inherit;
   font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
@@ -178,7 +179,7 @@
   background: var(--white);
   border: calc(var(--u) * 0.3) solid var(--ink);
   border-radius: calc(var(--u) * 1);
-  padding: 0 calc(var(--u) * 0.4);
+  padding: 0.6em calc(var(--u) * 0.4) 0;
 }
 .gr-xlabel--btn.is-on {
   outline: calc(var(--u) * 0.5) solid var(--ink);

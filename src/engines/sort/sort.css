@@ -124,3 +124,22 @@
 .eng-sort__pool--cols .tk-card__label {
   font-size: var(--text-small);
 }
+/* 箱の中の長い文の札（8字を超える札がある問題。sort.tsx の data-long）: 字は問題文の 0.85 倍（下限 --text-min）・行間 1.4。
+   箱の中身の段は内容の高さ（height: auto）で、ふたに重ねない。作業領域を越える分は作業領域のスクロールに任せる（g4.ja.write-report/1・g3.ja.proverbs/35 の解説） */
+.eng-sort__boxes[data-long] .eng-sort__inside {
+  height: auto;
+  align-content: flex-start;
+}
+.eng-sort__boxes[data-long] .eng-sort__inside .tk-card__label {
+  font-size: max(calc(var(--prompt-size, var(--text-label)) * 0.85), var(--text-min, 0px));
+  line-height: 1.4;
+}
+/* 箱の中の札は箱の幅を越えない（越えると隣の箱のふたに重なる。g4.ja.write-report/1 の解説）。箱の幅の中で札の字が折れる */
+.eng-sort__inside {
+  max-width: 100%;
+  min-width: 0;
+}
+.eng-sort__inside .tk-card {
+  max-width: 100%;
+  min-width: 0;
+}

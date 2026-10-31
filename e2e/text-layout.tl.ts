@@ -73,9 +73,13 @@ function pick(count: number): number[] {
 }
 
 /**
- * 描き直しが終わるのを待つ。次の印が2フレーム続けて同じになるまで（最大 1 秒）。
+ * 描き直しが終わるのを待つ。次の印が4フレーム続けて同じになるまで（最大 1 秒）。
  * 印: 各 svg の viewBox・--svg-floor・最初の text の font-size、.unit__work の --fit・--fig-max・scrollHeight、
- * 解説の板の高さ。
+ * 解説の板の高さ、吹き出しの --bubble-h、数の入力の図の段の --num-k。
+ * 4フレーム（第4回で2から変えた）の理由: SVG の字の引き上げ（V7）は「ResizeObserver → 次のフレームの rAF」の
+ * 2フレームかけて測り直すので、2フレームでは画面サイズを変えた直後の引き上げ前を測り、g5.math.area-formulas で
+ * small-text が約 20 画面出ていた（同じ画面を読み込み直して測ると出ない＝子供が見る落ち着いた画面では起きない）。
+ * 印が変わり続ける画面は今までどおり unstable として残すので、本当の不具合は隠れない。
  * 理由: reducedMotion: 'reduce' ではアニメーションを待てないので、画面サイズを変えた直後の
  * 「ResizeObserver → React の状態 → 描き直し」の途中を測っていた（g1.math.numbers-10/0 で 1920×1080 → 1280×620
  * にした直後に overlap-text 20 件。600ms 後と撮った画像は正常）。終わらない画面は unstable と書いてそのまま残す
@@ -105,6 +109,12 @@ async function settle(page: Page): Promise<boolean> {
       }
       const ex = document.querySelector('[data-testid="explain"]') as HTMLElement | null;
       if (ex) parts.push(`explain:${ex.getBoundingClientRect().height}`);
+      const unit = document.querySelector('.unit') as HTMLElement | null;
+      if (unit) parts.push(`bubble:${unit.style.getPropertyValue('--bubble-h')}`);
+      const fig = document.querySelector(
+        '.unit__work--number > .unit__figure',
+      ) as HTMLElement | null;
+      if (fig) parts.push(`num:${fig.style.getPropertyValue('--num-k')}/${fig.scrollHeight}`);
       return parts.join('|');
     };
     // 有限のアニメーション（reduce でも残るもの）は、今までどおり終わるまで待つ（最大 1 秒）。印だけでは
@@ -120,14 +130,14 @@ async function settle(page: Page): Promise<boolean> {
     const t0 = performance.now();
     let prev = mark();
     let same = 0;
-    // 2フレーム続けて同じ印になるまで。1 秒たっても変わり続けるときは、そのまま測る
-    while (same < 2 && performance.now() - t0 < 1000) {
+    // 4フレーム続けて同じ印になるまで。1 秒たっても変わり続けるときは、そのまま測る
+    while (same < 4 && performance.now() - t0 < 1000) {
       await frame();
       const now = mark();
       same = now === prev ? same + 1 : 0;
       prev = now;
     }
-    return same >= 2;
+    return same >= 4;
   });
 }
 

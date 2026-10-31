@@ -621,7 +621,10 @@ export function UnitRound({
       ) {
         return;
       }
-      const figW = inner.getBoundingClientRect().width;
+      // パックの SVG は箱（.fig-svg）が板の幅いっぱいなので、中の svg の幅で測る
+      const figW = (
+        inner.matches('.fig-svg') ? (inner.querySelector('svg') ?? inner) : inner
+      ).getBoundingClientRect().width;
       if (figW <= 0 || figW > panel.clientWidth * 0.4) return;
       // 下の段のままでは板に入らない（スクロールになる）ときは、4行まで許す（右に置くほうが必ず低くなる）
       const overflow = panel.scrollHeight > panel.clientHeight + 1;
@@ -631,6 +634,17 @@ export function UnitRound({
       if (keep > 0) panel.scrollTop = keep;
     };
     const measure = () => {
+      // width の無いパックの SVG の縦横比（高さ ÷ 幅）を、箱（.fig-svg）の --fig-ar に書く。unit.css が
+      // 「高さ 12u まで・比で幅」を決めるのに使う。svg 自身の --fig-ar は svgText が字から測って書くが、
+      // 字の無い図には無く、描き直しで消えることもあるので、箱に書いて継ぐ
+      for (const svg of panel.querySelectorAll<SVGSVGElement>(
+        '.unit__explain-figure .fig-svg svg:not([width])',
+      )) {
+        const vb = svg.viewBox.baseVal;
+        if (vb && vb.width > 0 && vb.height > 0) {
+          svg.parentElement?.style.setProperty('--fig-ar', (vb.height / vb.width).toFixed(4));
+        }
+      }
       decideSide();
       measureH();
     };
@@ -662,6 +676,54 @@ export function UnitRound({
     };
   }, [phaseKey, isDone]);
 
+  // ヒントの吹き出し: 中身が 11.6u に入らないときは伸ばし（data-tall: 字は最小・行間 1.3・16u まで）、高さを
+  // --bubble-h に書いて作業領域をその上までにする。それでも入らないときは ▼（data-scroll-cue）
+  const bubbleKey = `${phaseKey}:${s.message?.text ?? ''}`;
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    const bubble = root?.querySelector<HTMLElement>('.unit__bubble') ?? null;
+    if (!root) return;
+    if (!bubble) {
+      root.style.removeProperty('--bubble-h');
+      return;
+    }
+    const cue = () => {
+      const more = bubble.scrollHeight > bubble.clientHeight + 1;
+      const atEnd = bubble.scrollTop + bubble.clientHeight >= bubble.scrollHeight - 2;
+      if (more && !atEnd) bubble.setAttribute('data-scroll-cue', '');
+      else bubble.removeAttribute('data-scroll-cue');
+    };
+    const measureBubble = () => {
+      bubble.removeAttribute('data-tall');
+      bubble.removeAttribute('data-scroll-cue');
+      if (bubble.scrollHeight > bubble.clientHeight + 1) {
+        bubble.setAttribute('data-tall', '');
+        root.style.setProperty('--bubble-h', `${bubble.offsetHeight}px`);
+      } else {
+        root.style.removeProperty('--bubble-h');
+      }
+      cue();
+    };
+    measureBubble();
+    bubble.addEventListener('scroll', cue, { passive: true });
+    // 画面の大きさが変わると吹き出しの高さ（u で決まる）も変わる。--bubble-h は px なので、古いままだと作業領域の
+    // 下端が吹き出しに重なる・空きすぎる。舞台（root）の大きさの変化で測り直す（次のフレームにまとめる）
+    let raf = 0;
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(measureBubble);
+          });
+    ro?.observe(root);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro?.disconnect();
+      bubble.removeEventListener('scroll', cue);
+    };
+  }, [bubbleKey, isDone]);
+
   // 作業領域の中身が空きに収まらないとき、まず図を縮め（--fig-max）、足りない分を --fit（0.8〜1。解説は 0.6〜1）で
   // 中身の寸法 --u ごと縮める。図が高く幅が狭いときは図を左・エンジンを右の横並び（data-layout="side"）にする。
   // それでも収まらなければ重ねずに作業領域の中でスクロールさせ（data-scroll-region="work"・▼）、1件として検査に残す。
@@ -683,6 +745,8 @@ export function UnitRound({
       else work.setAttribute('data-scroll-cue', '');
     };
     const fitNow = () => {
+      // 作業領域の高さ（fit=1。px）を子に渡す（絵の札の高さの上限: V2 が var(--work-h, 9999px) で読む）
+      work.style.setProperty('--work-h', `${work.clientHeight}px`);
       // 測り直しでスクロールの枠を外すと位置が 0 に戻るので、覚えておいて戻す（中身の大きさが変わったときの測り直し）
       const keepTop = work.scrollTop;
       work.style.removeProperty('--fit');

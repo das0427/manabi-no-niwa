@@ -114,7 +114,7 @@
    上の段に置くのは eng-listen--pics。choice.tsx の earOnTop）。g4.en.time-days/14 */
 .eng-listen .eng-opts__list.is-pics {
   /* 高さの上限（--fit で縮む u）: 作業領域（27u）から 札の段（7.1u）・選択肢の余白と文字（約 7.5u）を引いた分に近い */
-  --pic-max: min(
+  --pic-w: min(
     calc(
       (
           var(--u0, var(--u)) * 88 - var(--u) * var(--pics-side, 0) - var(--u) * 2.4 *
@@ -130,4 +130,35 @@
 .eng-listen .eng-opts__list.is-pics .fig-illust__group > * {
   max-width: var(--pic-max);
   max-height: var(--pic-max);
+}
+
+/* 文字だけの選択肢が4つで最長9字以下: 横1行（choice.css の data-row4 と同じ。V2 3） */
+.eng-opts__list[data-row4] {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-opts__list[data-row4] > .eng-opts__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-opts__list[data-row4] .eng-opts__label {
+  --w-font: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+}
+
+/* 語のラベルの札は、絵の札の縮み（is-pics の min-width: 0）より札の幅を優先する（V2 1）。幅は choice.css の --word-min-w */
+.eng-listen .eng-opts__list .eng-opts__opt.has-word {
+  min-width: var(--word-min-w);
+  max-width: 100%;
+}
+.eng-listen .eng-opts__list--grid .eng-opts__opt.has-word,
+.eng-listen .eng-opts__list[data-row4] .eng-opts__opt.has-word {
+  min-width: 0;
+}
+
+/* 折り返さず 1/n ずつ並べる列（is-caption・data-row4）の札は container（inline-size）で中身の幅を持たないので、
+   列は親の幅いっぱいにする（横に並ぶ「きく」の札の隣では残りの幅を取る。choice.css の語のラベル） */
+.eng-opts:has(.eng-opts__list.is-caption, .eng-opts__list[data-row4]) {
+  flex: 1 1 0;
 }

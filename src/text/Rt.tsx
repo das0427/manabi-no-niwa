@@ -97,11 +97,23 @@ function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
     [head, body] = splitAfterBlank(body);
     if (!head && /^\S/u.test(body)) [head, body] = [[...body][0]!, [...body].slice(1).join('')];
   }
+  // 分数のすぐ後ろの仮名（空白まで）は分数と離さない（「□／は」）
+  if (ts[i - 1]?.t === 'frac') {
+    const m = KANA_RUN.exec(body);
+    if (m && [...m[0]].length <= FRAC_RUN_MAX) [head, body] = [m[0], body.slice(m[0].length)];
+  }
   if (isGlue(ts[i + 1], ctx)) {
-    [body, tail] = splitBeforeBlank(body);
-    if (!tail && /\S$/u.test(body)) {
-      const cs = [...body];
-      [body, tail] = [cs.slice(0, -1).join(''), cs[cs.length - 1]!];
+    // 式の演算子と空白（「＝ {{}}」「÷ {{}}」）は空欄と離さない
+    const op = /[＋−×÷＝][ \u3000]+$/u.exec(body);
+    if (op) {
+      tail = op[0];
+      body = body.slice(0, op.index);
+    } else {
+      [body, tail] = splitBeforeBlank(body);
+      if (!tail && /\S$/u.test(body)) {
+        const cs = [...body];
+        [body, tail] = [cs.slice(0, -1).join(''), cs[cs.length - 1]!];
+      }
     }
     // まとまりの先頭が行頭禁則の字（「…のに／、{{}}」の「、」）なら、さらに前の1字も含める
     while (tail && LINE_START_NG.test(tail) && /\S$/u.test(body)) {
@@ -115,6 +127,14 @@ function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
 /** 行頭に置かない字（句読点・終わり括弧・長音・小さい仮名）。nobr のまとまりの先頭がこれなら、さらに前の1字を含める */
 const LINE_START_NG = /^[、。，．」』）)〕\]】ーぁぃぅぇぉっゃゅょゎァィゥェォッャュョヮヵヶ]/u;
 
+/** 記号・分数のすぐ後ろの仮名（空白・句読点・数字の前まで）。後ろの終わり括弧・句読点は別に付ける */
+const KANA_RUN = /^[ぁ-ゖァ-ヺー]+(?=$|[\s、。，．！？!?」』）)\d])/u;
+const FRAC_RUN_MAX = 8;
+/** 記号（○●□■△▲◎×〜…）＋仮名の最大字数（12 字を超えるまとまりは作らない） */
+const SYMBOL_MAX = 12;
+const SYMBOL_RE = String.raw`(?<sym>[○●□■△▲◎×〜…][ぁ-ゖァ-ヺー]+(?=$|[\s、。，．！？!?」』）)\d]))`;
+/** 演算子＋空白＋後ろの1つの数・□（「＝ □」「÷ 2」） */
+const OP_RE = String.raw`(?<op>[＋−×÷＝][ \u3000]*(?:\d+(?:[.,]\d+)*|□))`;
 const NOBR_MAX = 10;
 /** 1字の並びの上限（回文の「た・け・や・ぶ・や・け・た」は13字。解説の1行は20字ほど） */
 const NOBR_MAX_DOTS = 15;
@@ -125,7 +145,7 @@ const EXPR = String.raw`(?:\d+(?:[.,]\d+)*|[＋−×÷＝＜＞=<>+()（）□])
 /** 1字ずつ「・」でつないだ並び（き・つ・つ・き）。前後が語の続きでないものだけ */
 const BOUND = String.raw`[\s、。，．！？!?「」『』（）()\[\]【】〈〉《》“”‘’]`;
 const NOBR_RE = new RegExp(
-  String.raw`(?<=^|${BOUND})[^\s・]・(?:[^\s・]・)*[^\s・](?=$|${BOUND})|${EXPR}`,
+  String.raw`(?<=^|${BOUND})[^\s・]・(?:[^\s・]・)*[^\s・](?=$|${BOUND})|${SYMBOL_RE}|${OP_RE}|${EXPR}`,
   'gu',
 );
 
@@ -154,7 +174,9 @@ export function wrapNobr(s: string, key = ''): ReactNode[] {
     }
     const piece = s.slice(m.index, end);
     const len = [...piece].length;
-    if (
+    if (m.groups?.sym !== undefined || m.groups?.op !== undefined) {
+      if (len > (m.groups.sym !== undefined ? SYMBOL_MAX : NOBR_MAX)) continue;
+    } else if (
       len > (m[0].includes('・') ? NOBR_MAX_DOTS : NOBR_MAX) ||
       len < 2 ||
       (len < 3 && end === m.index + m[0].length)
@@ -236,9 +258,10 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
         }
         return <Fragment key={k}>{tk.base}</Fragment>;
       }
-      case 'frac':
-        return (
-          <span key={k} className="rt-frac-wrap">
+      case 'frac': {
+        const after = textParts(ts, i + 1, ctx)[0];
+        const fr = (
+          <span key={after ? undefined : k} className="rt-frac-wrap">
             {tk.whole !== undefined ? <span className="rt-frac-whole">{tk.whole}</span> : null}
             <span
               className="rt-frac"
@@ -250,6 +273,15 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
             </span>
           </span>
         );
+        return after ? (
+          <span key={k} className="rt-nobr">
+            {fr}
+            {after}
+          </span>
+        ) : (
+          fr
+        );
+      }
       case 'strong':
         return (
           <strong key={k} className="rt-strong">

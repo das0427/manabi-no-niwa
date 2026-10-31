@@ -301,8 +301,27 @@ function ProgramView({ item, revealed, wrongMark, disabled, submit }: Props) {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(measure);
     });
-    ro.observe(el);
-    const mo = new MutationObserver(measure);
+    // 枠そのものの大きさが変わらなくても、中の札の大きさ（折り返し・文字・ふりがな）が変われば
+    // はみ出し（scrollHeight）は変わる。枠と中の札を観測し、札が増減したら観測し直す
+    const watched = new Set<Element>();
+    const watch = () => {
+      const now = new Set<Element>([el, ...Array.from(el.querySelectorAll('*'))]);
+      for (const n of watched)
+        if (!now.has(n)) {
+          ro.unobserve(n);
+          watched.delete(n);
+        }
+      for (const n of now)
+        if (!watched.has(n)) {
+          ro.observe(n);
+          watched.add(n);
+        }
+    };
+    watch();
+    const mo = new MutationObserver(() => {
+      watch();
+      measure();
+    });
     mo.observe(el, { childList: true, subtree: true });
     return () => {
       el.removeEventListener('scroll', measure);

@@ -6,6 +6,12 @@
  */
 import { useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
 
+/**
+ * 最小に足す余裕（2%）。拡大率の丸めや、あとからの fit の変化で、最小ちょうどの字が 0.97〜0.99 倍に
+ * 割り込むのを防ぐ（text-layout-fixes.md 第4回 V7）
+ */
+export const TEXT_MIN_MARGIN = 1.02;
+
 /** --text-min が無い（S1 より前の）ときの既定: 1.8u */
 const FALLBACK_MIN = 'calc(var(--u) * 1.8)';
 
@@ -78,7 +84,7 @@ export function useSvgTextFloor(
     const measure = () => {
       const ppu = pxPerUnit(el, viewBoxWidth);
       const min = minUnits === undefined ? textMinPx(el) : 0;
-      const next = ppu > 0 ? (minUnits ?? min / ppu) : 0;
+      const next = ppu > 0 ? (minUnits ?? (min * TEXT_MIN_MARGIN) / ppu) : 0;
       // 0.1 単位に切り上げて（四捨五入だと最小をわずかに割る: 1.998u）、わずかな揺れで描き直さない
       setFloor((prev) => (prev >= next && prev - next < 0.1 ? prev : Math.ceil(next * 10) / 10));
     };
@@ -123,7 +129,7 @@ export function liftSvgText(root: Element, opts?: { fitWidth?: boolean }): void 
     // 引き上げると外接が広がり、viewBox を広げると拡大率が下がる。収まるまで数回くり返し、
     // 最後は広げずに引き上げだけやり直す（広げた直後の拡大率で最小を満たす）
     let widened = false;
-    for (let pass = 0; pass < 5; pass++) {
+    for (let pass = 0; pass < 8; pass++) {
       if (!lift(svg, texts, min)) break;
       widened = widenToText(svg, texts);
       if (!widened) break;
@@ -189,14 +195,15 @@ function lift(svg: SVGSVGElement, texts: SVGTextElement[], min: number): boolean
       const s2 = Math.min(Math.hypot(m.a, m.b), Math.hypot(m.c, m.d));
       if (Number.isFinite(s2) && s2 > 0) k = s2;
     }
-    const floor = min / (ppu * k);
+    const need = min / (ppu * k);
+    const floor = need * TEXT_MIN_MARGIN;
     // 2倍までの引き上げだけ行う。それ以上小さく描かれた図は、文字を大きくすると他の文字や線に重なるので、
     // 図の描き方（viewBox の大きさ）を直す（content の側）。検査には small-text として残る
     // 比べるのは元の大きさ（くり返しで引き上げた分を足して 2倍を超えないように。幅を広げた図で字が viewBox を超えて切れる）
     const orig = t.dataset.fs0 ? parseFloat(t.dataset.fs0) : fs;
     if (!t.dataset.fs0 && !t.style.fontSize) t.dataset.fs0 = String(fs);
     const target = Math.ceil(floor * 100) / 100;
-    if (fs < floor - 0.005 && floor / orig <= 2) t.style.fontSize = `${target}px`;
+    if (fs < floor - 0.005 && need / orig <= 2) t.style.fontSize = `${target}px`;
   }
   return true;
 }
@@ -302,7 +309,9 @@ export function useLiftedSvgText(
     if (!el) return;
     const run = () => liftSvgText(el, { fitWidth });
     run();
-    return observeResize([el], run);
+    // 中の svg の表示の大きさが変わった（fit で枠が縮んだ・広がった）ときも、引き上げを測り直す
+    const svgs = Array.from(el.querySelectorAll('svg'));
+    return observeResize([el, ...svgs], run);
   }, [ref, key, fitWidth]);
 }
 

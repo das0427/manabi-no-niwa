@@ -439,3 +439,144 @@ test('正誤の印（.mark）: 誤答の ？と字の後ろの ○ は出さな�
   await show(page, card(mark('mark--correct', over)));
   expect((await covered()).length).toBeGreaterThan(0);
 });
+
+test('数のあとの助詞: 数と助詞の境目の改行は出さない・仮名の助数詞と単位は出す（C14）', async ({
+  page,
+}) => {
+  // 幅 1em: 数字の次の字は必ず次の行になる（「7／で」のような境目）
+  const narrow = (s: string, top: number) =>
+    `<p class="abs" style="top:calc(var(--u)*${top});left:calc(var(--u)*3);width:1em;line-break:anywhere">${s}</p>`;
+  const wordSplit = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'word-split' && i.detail === '数と単位・助数詞の間',
+    );
+  // 助詞（で・は・が・に・を・と・の・も・や・へ・か）: 数えない
+  await show(
+    page,
+    narrow('7で', 3) + narrow('2は', 3).replace('left:calc(var(--u)*3)', 'left:calc(var(--u)*10)'),
+  );
+  expect(await wordSplit()).toEqual([]);
+  await show(
+    page,
+    narrow('9に', 3) + narrow('5の', 3).replace('left:calc(var(--u)*3)', 'left:calc(var(--u)*10)'),
+  );
+  expect(await wordSplit()).toEqual([]);
+  // 仮名の助数詞の頭（に＋ん・と＋う・は＋い・か＋い・か＋げつ）: 数える
+  // （助数詞の仮名は nowrap の塊にして、数の直後でだけ折れるようにする）
+  for (const [n, k] of [
+    ['3', 'にん'],
+    ['2', 'とう'],
+    ['5', 'はい'],
+    ['4', 'かい'],
+    ['6', 'かげつ'],
+    ['3', 'にち'],
+    ['2', 'か所'],
+  ] as const) {
+    const s = n + k;
+    await show(page, narrow(`${n}<span style="white-space:nowrap">${k}</span>`, 3));
+    expect(await wordSplit(), s).not.toEqual([]);
+  }
+  // 助詞でない仮名（こ）・漢字の助数詞・英字の単位は今までどおり数える
+  for (const s of ['2こ', '3年', '3 <span style="white-space:nowrap">cm</span>']) {
+    await show(page, narrow(s, 3));
+    expect(await wordSplit(), s).not.toEqual([]);
+  }
+});
+
+test('0×0 の図: 子があるのに大きさが 0 の svg・img・.fig-svg・.fig-illust を1件出す（C15）', async ({
+  page,
+}) => {
+  const zeroFig = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.detail === '図の大きさが 0（見えない）',
+    );
+  const all = async () => (await inspectText(page, { stage: 'g3' })).issues;
+  // 字のある図（text ⊂ svg の clipped を1字ずつ出さず、1件にまとめる）
+  await show(
+    page,
+    `<div class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5);display:flex">
+       <svg class="fig-svg" style="width:0;height:0" viewBox="0 0 100 50"><rect width="100" height="50" fill="#cde"/><text x="10" y="30" font-size="20">A地てん</text><text x="10" y="45" font-size="20">B地てん</text></svg></div>`,
+  );
+  expect(await zeroFig()).toHaveLength(1);
+  expect((await all()).filter((i) => i.kind === 'clipped')).toHaveLength(1);
+  expect((await all()).filter((i) => i.kind === 'small-text' || i.kind === 'overlap-text')).toEqual(
+    [],
+  );
+  // 字の無い図（図形だけ）
+  await show(
+    page,
+    `<div class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5);height:calc(var(--u)*10)">
+       <svg style="width:0;height:calc(var(--u)*10)" viewBox="0 0 100 50"><circle cx="50" cy="25" r="20" fill="#cde"/></svg></div>`,
+  );
+  expect(await zeroFig()).toHaveLength(1);
+  // .fig-illust（子のあるラッパー）が高さ 0
+  await show(
+    page,
+    `<div class="abs fig-illust" style="top:calc(var(--u)*5);left:calc(var(--u)*5);height:0;overflow:hidden"><span style="display:block;width:calc(var(--u)*10);height:calc(var(--u)*5);background:#cde"></span></div>`,
+  );
+  expect(await zeroFig()).toHaveLength(1);
+  // 普通の図・display:none・visibility:hidden・aria-hidden の祖先・defs だけの svg・.sr-only は出さない
+  await show(
+    page,
+    `<svg class="abs fig-svg" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*20);height:calc(var(--u)*10)" viewBox="0 0 100 50"><rect width="100" height="50" fill="#cde"/></svg>
+     <svg style="display:none;width:0;height:0"><rect width="9" height="9"/></svg>
+     <svg style="visibility:hidden;width:0;height:0"><rect width="9" height="9"/></svg>
+     <div aria-hidden="true"><svg style="width:0;height:0"><rect width="9" height="9"/></svg></div>
+     <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g"><stop offset="0" stop-color="#fff"/></linearGradient></defs></svg>
+     <div class="sr-only"><svg style="width:0;height:0"><rect width="9" height="9"/></svg></div>`,
+  );
+  expect(await zeroFig()).toEqual([]);
+});
+
+test('字を横切る正解の輪: 輪の線の帯に字の中心が2つ以上入れば出す・1行6字以下の札と輪の中に収まる文は出さない（C16）', async ({
+  page,
+}) => {
+  const crossing = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '正解の ○ が字を横切る',
+    );
+  const ring = (diameter: number, z = 0) =>
+    `<span class="mark mark--correct" aria-hidden="true" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--u)*${diameter});height:calc(var(--u)*${diameter});border:calc(var(--u)*3) solid #0a0;border-radius:50%;box-sizing:border-box;pointer-events:none;z-index:${z}"></span>`;
+  const card = (text: string, inner: string) =>
+    `<div class="abs box" style="top:calc(var(--u)*10);left:calc(var(--u)*10);width:calc(var(--u)*40);height:calc(var(--u)*16);display:grid;place-items:center"><span style="position:relative;z-index:1;white-space:nowrap">${text}</span>${inner}</div>`;
+  // 10字の1行の文の真ん中に直径 14u の輪（線 3u）: 左右の字が帯に入る（字の後ろ・z-index 0 でも出す）
+  await show(page, card('あいうえおかきくけこ', ring(14)));
+  expect(await crossing()).toHaveLength(1);
+  // 1行・6字以下の札（絵の札・短い語）は数えない
+  await show(page, card('あいうえお', ring(14)));
+  expect(await crossing()).toEqual([]);
+  // 輪が文より外（直径 36u）にあって字の帯に入らない
+  await show(page, card('あいうえおかきくけこ', ring(36)));
+  expect(await crossing()).toEqual([]);
+  // 輪の線が無い（背景だけの印）は数えない
+  await show(
+    page,
+    card(
+      'あいうえおかきくけこ',
+      `<span class="mark mark--correct" aria-hidden="true" style="position:absolute;inset:0;background:#cfc;z-index:0"></span>`,
+    ),
+  );
+  expect(await crossing()).toEqual([]);
+});
+
+test('複合辞の切れ目: 頭の助詞の直後の「と／いう」「に／ついて」は出さない・同じ語のほかの位置とほかの語の途中は出す（C17）', async ({
+  page,
+}) => {
+  const btn = (w: string, label: string) =>
+    `<button class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:${w};height:calc(var(--u)*30)">${label}</button>`;
+  const splits = async (w: string, label: string) => {
+    await show(page, btn(w, label));
+    return (await inspectText(page, { stage: 'g4' })).issues.filter(
+      (i) => i.kind === 'button-split',
+    );
+  };
+  // 「はなすと／いうこと」「はなすに／ついて」: 助詞と動詞の境目（文節の切れ目）。数えない
+  expect(await splits('5em', 'ことばをはなすということ')).toEqual([]);
+  expect(await splits('5em', 'はなすについて')).toEqual([]);
+  // 同じ語のほかの位置（「につい／て」）は今までどおり出す
+  const inner = await splits('4em', 'はなすについて');
+  expect(inner.map((i) => i.detail)).toEqual(['語「について」の途中']);
+  // ほかの語の途中（「方／向」）は今までどおり出す
+  const other = await splits('1em', '方向');
+  expect(other.map((i) => i.detail)).toEqual(['語「方向」の途中']);
+});

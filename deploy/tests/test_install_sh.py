@@ -30,6 +30,7 @@ SCRIPT_FILES = [
     "install.sh",
     "uninstall.sh",
     "manabi.sh",
+    "mnwwindow.py",
     "serve.py",
     "manabi-no-niwa.desktop",
     "manabi-no-niwa.service",
@@ -279,6 +280,7 @@ class InstallShTestBase(unittest.TestCase):
             "dist/audio/g1-kokugo/q1.mp3",
             "deploy/zorin/serve.py",
             "deploy/zorin/manabi.sh",
+            "deploy/zorin/mnwwindow.py",
             "deploy/zorin/install.sh",
             "deploy/zorin/uninstall.sh",
             "deploy/zorin/manabi-no-niwa.desktop",
@@ -418,6 +420,15 @@ class InstallTest(InstallShTestBase):
         r = self.install(rel)
         self.assertEqual(r.returncode, 1)
         self.assertIn("mnwupdate/__init__.py", r.stderr)
+        self.assertFalse(self.base.exists())
+
+    def test_mnwwindow_is_required(self):
+        # 起動中の窓を前に出す補助。無い配布物では、何も変えずに止まる
+        rel = self.make_release("a", "2.1.0")
+        (rel / "deploy" / "zorin" / "mnwwindow.py").unlink()
+        r = self.install(rel)
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("mnwwindow.py", r.stderr)
         self.assertFalse(self.base.exists())
 
     def test_missing_audio_stops_before_changing_anything(self):

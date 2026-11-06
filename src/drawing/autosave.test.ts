@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CheckedSaveResult } from '../core/storage/repo-v2';
 import type { ArtworkRecord } from '../core/types';
 import { AUTOSAVE_DELAY_MS, AutoSaver, type Prepared, type SaveState } from './autosave';
+import { pendingWriteCount, waitPendingWrites } from '../core/pendingWrites';
 
 /** 1つの「DB」（updatedAt の確認つき書き込みの再現）を2つのタブで共有する */
 class FakeDb {
@@ -190,5 +191,33 @@ describe('自動保存（review-1 #9）', () => {
     await a.saver.flush();
     expect(finals(dbx)).toHaveLength(1);
     expect(a.saver.state).toBe('saved');
+  });
+
+  it('flush・下書き・ページを閉じる書き込みは、終わるまで waitPendingWrites が待つ（引き下がるとき保存を切らない）', async () => {
+    const dbx = new FakeDb();
+    const a = tab(dbx, { known: null, clock });
+    a.edit();
+    void a.saver.flush();
+    expect(pendingWriteCount()).toBeGreaterThan(0);
+    let waited = false;
+    void waitPendingWrites().then(() => {
+      waited = true;
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS * 2);
+    expect(waited).toBe(true);
+    expect(pendingWriteCount()).toBe(0);
+    expect(finals(dbx)).toHaveLength(1);
+  });
+
+  it('ページを閉じる書き込み（pageHide）も待つ', async () => {
+    const dbx = new FakeDb();
+    const a = tab(dbx, { known: null, clock });
+    a.edit();
+    a.saver.pageHide();
+    expect(pendingWriteCount()).toBeGreaterThan(0);
+    await waitPendingWrites();
+    expect(pendingWriteCount()).toBe(0);
+    expect(dbx.writes.some((w) => w.dirty)).toBe(true);
   });
 });

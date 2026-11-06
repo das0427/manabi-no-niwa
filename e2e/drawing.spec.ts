@@ -8,6 +8,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { defaultSupport } from '../src/audience/audience';
 import {
   activeProfileId,
+  allowMultiWindow,
   boot,
   clickUntil,
   gotoApp,
@@ -602,6 +603,8 @@ test.describe('おえかき（マウス）', () => {
   });
 
   test('同じ作品を2つのタブで開いたら、古い方のタブは保存を止める', async ({ page, context }) => {
+    // 2つのタブを同時に使う試験。「画面は1つ」の守り（引き下がり）は止めておく（それは single-instance.spec.ts で試す）
+    await allowMultiWindow(context);
     await openDraw(page);
     await mouseLine(page, [
       [200, 200],

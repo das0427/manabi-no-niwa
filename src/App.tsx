@@ -164,7 +164,8 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: bool
             type="button"
             className="tap tap--main tap--big"
             onClick={() => {
-              location.hash = '#/';
+              // 履歴を増やさずに先頭へ戻して読み込み直す
+              history.replaceState(null, '', '#/');
               location.reload();
             }}
           >

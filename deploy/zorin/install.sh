@@ -86,7 +86,7 @@ if [ ! -f "$DIST_SRC/index.html" ]; then
   echo "エラー: $DIST_SRC/index.html がありません。配布物（dist フォルダ入り）を展開した場所の deploy/zorin から実行してください。" >&2
   exit 1
 fi
-for f in serve.py manabi.sh uninstall.sh manabi-no-niwa.desktop manabi-no-niwa.service mnwupdate/__init__.py; do
+for f in serve.py manabi.sh mnwwindow.py uninstall.sh manabi-no-niwa.desktop manabi-no-niwa.service mnwupdate/__init__.py; do
   if [ ! -f "$HERE/$f" ]; then echo "エラー: $HERE/$f がありません。" >&2; exit 1; fi
 done
 if ! command -v python3 >/dev/null 2>&1; then
@@ -245,7 +245,7 @@ if [ -f "$ROOT/docs/device-checklist.md" ]; then
   cp "$ROOT/docs/device-checklist.md" "$APP_NEXT/docs/device-checklist.md"
 fi
 chmod +x "$APP_NEXT/deploy/zorin/"*.sh "$APP_NEXT/deploy/zorin/serve.py"
-for f in dist/index.html dist/icons/icon-192.png deploy/zorin/serve.py deploy/zorin/manabi.sh deploy/zorin/uninstall.sh deploy/zorin/mnwupdate/__init__.py; do
+for f in dist/index.html dist/icons/icon-192.png deploy/zorin/serve.py deploy/zorin/manabi.sh deploy/zorin/mnwwindow.py deploy/zorin/uninstall.sh deploy/zorin/mnwupdate/__init__.py; do
   if [ ! -f "$APP_NEXT/$f" ]; then
     echo "エラー: 新しい版の組み立てに失敗しました（$APP_NEXT/$f がありません）。" >&2
     exit 1

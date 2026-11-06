@@ -159,6 +159,17 @@
   color: var(--ink-soft);
 }
 
+/* 「画面」の節（全画面）の文。最後の行が1〜2字だけ（「す。」など）になるのを避ける。
+   Chromium・Firefox とも balance に対応している（長くて行が多いときは、ブラウザが通常の折り返しに戻す） */
+.p-fullscreen-text,
+.p-fullscreen .p-note {
+  text-wrap: balance;
+}
+/* キーの名前・カタカナの語・「」の名前は、行の途中で切らない（SettingsTab.tsx の keepTogether） */
+.p-keep {
+  white-space: nowrap;
+}
+
 .p-small {
   font-size: 13px;
 }

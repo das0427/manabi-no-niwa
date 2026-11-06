@@ -5,6 +5,7 @@ import { chromium, expect, firefox, test } from '@playwright/test';
 import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { CSP } from '../scripts/vite-plugin-precache.ts';
 import type { OfflineState } from '../src/core/offline/index';
+import { allowMultiWindow } from './helpers/app';
 import { prepareDist } from './helpers/dist';
 import type { PreparedDist } from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
@@ -187,6 +188,8 @@ test.describe('オフライン再起動（E-10 / E-13 / OF-03）', () => {
     context,
     page,
   }) => {
+    // 後で同じ context に2つ目のページ（新しいタブ）を開く。「画面は1つ」の守り（引き下がり）は止めておく
+    await allowMultiWindow(context);
     const external = watchExternal(context);
     const d = await dist();
     const server = await serve(d);
@@ -371,6 +374,8 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
   test('旧版は動いたまま新版を準備 → 適用で切り替え。データは残り、旧タブは直前の版の部品を使える', async ({
     context,
   }) => {
+    // 旧タブ A と別タブ B を同時に開く。「画面は1つ」の守り（引き下がり）は止めておく
+    await allowMultiWindow(context);
     const external = watchExternal(context);
     const port = await getFreePort();
     // v1 にだけある部品（旧タブが後から遅延読み込みするもの）、v2 / v3 にだけある部品

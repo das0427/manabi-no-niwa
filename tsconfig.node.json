@@ -19,6 +19,7 @@
     "vite.config.ts",
     "playwright.config.ts",
     "playwright.text-layout.config.ts",
+    "playwright.app-layout.config.ts",
     "scripts/**/*.ts",
     "e2e/**/*.ts"
   ]

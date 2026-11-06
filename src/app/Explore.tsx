@@ -43,16 +43,28 @@ export function ownStage(audience: string, enrolledGrade?: number): ExploreStage
   return (g >= 1 && g <= 6 ? `g${g}` : 'g1') as ExploreStage;
 }
 
+/**
+ * 幼児の札の名前。空白の所で 2 行にする。分かち書きの段階なので data-wakachi を付ける
+ * （空白の所でだけ折る。base.css の `.stage [data-wakachi]`。text-layout-fixes A1）
+ */
 function TwoLine({ text }: { text: string }) {
   const [a, ...rest] = text.split(' ');
   return (
-    <span className="home-card__name">
+    <span className="home-card__name" data-wakachi="">
       {a}
       {rest.length ? <br /> : null}
       {rest.join('')}
     </span>
   );
 }
+
+/** 札の名前を分かち書きで折る小学生の区分（小1・小2。幼児は TwoLine。DESINGN.md 17章） */
+const WAKACHI_SCHOOL_STAGES: ReadonlySet<ExploreStage> = new Set(['g1', 'g2']);
+
+/** 幼児の格子（4 列 × 3 行）。ふつうの札は 3 列 × 3 行で def.cards の位置 i、「えいご」は 4 列目の 3 段目（右下） */
+const PRE_COLUMNS = 3;
+const PRE_CARD_MAX = 9;
+const EIGO_CELL = { col: 4, row: 3 } as const;
 
 export function Explore({ stage: stageParam }: { stage?: string }) {
   const app = useApp();
@@ -74,18 +86,28 @@ export function Explore({ stage: stageParam }: { stage?: string }) {
   let body;
   if (stage === 'p23' || stage === 'p4' || stage === 'p5') {
     const def = PRESCHOOL_HOMES[stage];
-    // ふつうの札の後に「えいご」の札。ここでは2歳段階・保護者の設定にかかわらず出す（保護者といっしょにのぞく入口）
-    const cards = [...(def?.cards ?? []), PRESCHOOL_EN_CARDS[stage]].filter(
-      (c) => cardUnits(c, settings.unitsOpened).length > 0,
-    );
+    // ふつうの札は def.cards の位置 i に置く（出せる単元の無い札は、その位置を空ける。ホームと同じで並べ直さない）。
+    // 「えいご」の札は 4 列目の 3 段目（右下）。ここでは2歳段階・保護者の設定にかかわらず出す（保護者といっしょにのぞく入口）
+    const cells = (def?.cards ?? []).slice(0, PRE_CARD_MAX).map((c, i) => ({
+      c,
+      col: (i % PRE_COLUMNS) + 1,
+      row: Math.floor(i / PRE_COLUMNS) + 1,
+    }));
+    cells.push({ c: PRESCHOOL_EN_CARDS[stage], ...EIGO_CELL });
+    const shown = cells.filter(({ c }) => cardUnits(c, settings.unitsOpened).length > 0);
     body = (
-      <div className="explore-cards" role="list" aria-label={`${STAGE_LABEL[stage]}の あそび`}>
-        {cards.map((c) => (
+      <div
+        className="explore-cards explore-cards--pre"
+        role="list"
+        aria-label={`${STAGE_LABEL[stage]}の あそび`}
+      >
+        {shown.map(({ c, col, row }) => (
           <button
             key={c.id}
             type="button"
             role="listitem"
             className="home-card"
+            style={{ gridColumn: col, gridRow: row }}
             aria-label={c.title.replace(/ /g, '')}
             onClick={() => openCard(c, stage)}
             data-testid={`explore-card-${c.id}`}
@@ -113,7 +135,10 @@ export function Explore({ stage: stageParam }: { stage?: string }) {
             data-testid={`explore-subject-${s.id}`}
           >
             <Illust id={s.icon} className="school-subject__illust" decorative />
-            <span className="school-subject__name">
+            <span
+              className="school-subject__name"
+              data-wakachi={WAKACHI_SCHOOL_STAGES.has(stage) ? '' : undefined}
+            >
               <Rt text={subjectName(s, grade)} ctx={ctx} />
             </span>
           </button>

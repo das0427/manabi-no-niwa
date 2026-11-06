@@ -274,6 +274,13 @@ test('分かち書きの「・」: 2字以上の語のあとは出さない・1�
   );
   const ok = await inspectText(page, { stage: 'g2' });
   expect(ok.issues.filter((i) => i.kind === 'wakachi-split')).toEqual([]);
+  // 項目が空白を含む句（「ちいさい じ」）でも、「・」のあとは項目の境目なので出さない（選ぶ画面の札の名前。check:app-layout のレビュー）
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:7em;word-break:keep-all">ちいさい じ・<wbr>のばす おと</p>`,
+  );
+  const phrase = await inspectText(page, { stage: 'p5' });
+  expect(phrase.issues.filter((i) => i.kind === 'wakachi-split')).toEqual([]);
   // 1字の並び（き・つ・つ・き）は、「・」のあとの改行でも出す
   await show(
     page,

@@ -6,6 +6,8 @@ release/
 coverage/
 test-results/
 playwright-report/
+# アプリの画面の配置の検査（npm run check:app-layout）の報告書は commit しない（docs/test-plan.md 3.3）
+docs/screenshots/app-layout-report/
 scripts/voice/samples/
 *.tsbuildinfo
 __pycache__/

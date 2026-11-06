@@ -95,6 +95,28 @@ export interface TextProbeOptions {
   pack?: string;
   /** 1画面で1種類あたり返す件数の上限 */
   maxPerKind?: number;
+  /**
+   * 調べる範囲の CSS セレクタ（アプリの画面の検査 e2e/app-layout.al.ts が使う。省略時は今までどおり `.stage`、無ければ body）。
+   * 板（aria-modal・.draw-panel・.draw-confirm）が出ているときは、その板を渡して中だけを見る
+   * （後ろの画面は板で隠すのが設計なので、covered・overlap-button に数えない）。
+   * 舞台の外の判定の範囲は、root が舞台の中なら舞台、外（保護者画面など）なら画面
+   */
+  root?: string;
+  /**
+   * 大人の文字の範囲の CSS セレクタ（保護者画面・ゲートの板・起動画面の保護者向けの表示）。
+   * この中と、「（保護者の方へ）」で始まる文は、最小の大きさを px（minAdultPx）で見る。
+   * 分かち書き（wakachi-split）とボタンの中の語の折れ（button-split）は見ない（大人の文は漢字かな交じりで書くため）。
+   * 行頭・行末の禁則、数と単位の折れ（word-split）、重なり、切れは見る
+   */
+  adultSel?: string;
+  /** 大人の文字の最小（px）。既定 12 */
+  minAdultPx?: number;
+  /**
+   * 画面全体のスクロールの枠の CSS セレクタ（保護者画面の `.parent-root`）。
+   * この枠の縦のはみ出し（画面の下にあって見えない字・ボタン）は検査の対象外にする。
+   * 呼び出し側が scrollTop をずらして、そのたびに検査する。横にスクロールが出るときは page-scroll にする
+   */
+  pageScroll?: string;
 }
 
 export interface TextProbeResult {
@@ -195,8 +217,16 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
   const MIN_RUBY_U = 1.1;
 
   const stageEl = document.querySelector('.stage');
-  const root: Element = stageEl ?? document.body;
-  const sr = stageEl ? stageEl.getBoundingClientRect() : new DOMRect(0, 0, W, H);
+  // 調べる範囲（opt.root。省略時と見つからないときは今までどおり .stage、無ければ body）
+  const rootEl = opt.root ? document.querySelector(opt.root) : null;
+  const root: Element = rootEl ?? stageEl ?? document.body;
+  // 舞台の外の判定の範囲: root が舞台の中なら舞台、外（保護者画面など）なら画面
+  const inStage = !!stageEl && stageEl.contains(root);
+  const sr = inStage && stageEl ? stageEl.getBoundingClientRect() : new DOMRect(0, 0, W, H);
+  // 画面全体のスクロールの枠（保護者画面）。縦に画面の外にある字・ボタンは、その位置では検査しない
+  const pageScrollEl = opt.pageScroll ? document.querySelector(opt.pageScroll) : null;
+  const inPageScroll = (el: Element) => !!pageScrollEl && pageScrollEl.contains(el);
+  const minAdultPx = opt.minAdultPx ?? 12;
   const B = {
     l: Math.max(0, sr.left),
     t: Math.max(0, sr.top),
@@ -207,7 +237,10 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
   // 当たり判定（elementsFromPoint）で描く順を調べるため、検査の間だけ pointer-events を全部有効にする
   // （pointer-events: none の文字の札が、下のボタンに隠れていると誤って判定しないように）
   const peStyle = document.createElement('style');
-  peStyle.textContent = '.stage, .stage * { pointer-events: auto !important; }';
+  peStyle.textContent =
+    opt.root && !inStage
+      ? `.stage, .stage *, ${opt.root}, ${opt.root} * { pointer-events: auto !important; }`
+      : '.stage, .stage * { pointer-events: auto !important; }';
   document.head.appendChild(peStyle);
   /** 元の pointer-events（検査用に全部 auto にする前の値）。覆うものが pointer-events: none の飾りかを見る */
   const originalPointerEvents = (el: Element): string => {
@@ -351,6 +384,31 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       }
       return true;
     };
+    /**
+     * 大人の文字か（opt.adultSel の中、または「（保護者の方へ）」で始まる文）。大人の文字は、最小の大きさを px で見て、
+     * 分かち書き・ボタンの中の語の折れは見ない（子供の規則を大人の文に当てた誤検出になるため）
+     */
+    const ADULT_MARK = '（保護者の方へ）';
+    const adultCache = new Map<Element, boolean>();
+    const markCache = new Map<Element, boolean>();
+    const isAdult = (el: Element): boolean => {
+      const hit = adultCache.get(el);
+      if (hit !== undefined) return hit;
+      let v = !!opt.adultSel && !!el.closest(opt.adultSel);
+      if (!v) {
+        const blk = el.closest('p, li, h1, h2, h3, div');
+        if (blk) {
+          let m = markCache.get(blk);
+          if (m === undefined) {
+            m = (blk.textContent ?? '').trimStart().startsWith(ADULT_MARK);
+            markCache.set(blk, m);
+          }
+          v = m;
+        }
+      }
+      adultCache.set(el, v);
+      return v;
+    };
     const INLINE = new Set([
       'inline',
       'ruby',
@@ -375,6 +433,15 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         `scroll ${de.scrollWidth}×${de.scrollHeight} / client ${de.clientWidth}×${de.clientHeight}`,
         'document',
         { left: 0, top: 0, right: W, bottom: H },
+      );
+    }
+
+    if (pageScrollEl && pageScrollEl.scrollWidth > pageScrollEl.clientWidth + 1) {
+      add(
+        'page-scroll',
+        `横にスクロール scroll ${pageScrollEl.scrollWidth} / client ${pageScrollEl.clientWidth}`,
+        describe(pageScrollEl),
+        pageScrollEl.getBoundingClientRect(),
       );
     }
 
@@ -612,13 +679,14 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       const v = { l: B.l, t: B.t, r: B.r, b: B.b };
       for (let a = el.parentElement; a && a !== root && a !== document.body; a = a.parentElement) {
         const s = cs(a);
-        if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+        const oy = a === pageScrollEl ? 'visible' : s.overflowY;
+        if (s.overflowX === 'visible' && oy === 'visible') continue;
         const c = clientBox(a);
         if (s.overflowX !== 'visible') {
           v.l = Math.max(v.l, c.l);
           v.r = Math.min(v.r, c.r);
         }
-        if (s.overflowY !== 'visible') {
+        if (oy !== 'visible') {
           v.t = Math.max(v.t, c.t);
           v.b = Math.min(v.b, c.b);
         }
@@ -631,7 +699,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       const v = { l: B.l, t: B.t, r: B.r, b: B.b };
       for (let a = el.parentElement; a && a !== root && a !== document.body; a = a.parentElement) {
         const s = cs(a);
-        if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+        const oy = a === pageScrollEl ? 'visible' : s.overflowY;
+        if (s.overflowX === 'visible' && oy === 'visible') continue;
         const ar = a.getBoundingClientRect();
         const he = a as HTMLElement;
         const bl = parseFloat(s.borderLeftWidth) || 0;
@@ -645,7 +714,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           v.l = Math.max(v.l, ar.left + bl);
           v.r = Math.min(v.r, ar.right - br - sbX);
         }
-        if (s.overflowY !== 'visible') {
+        if (oy !== 'visible') {
           v.t = Math.max(v.t, ar.top + bt);
           v.b = Math.min(v.b, ar.bottom - bb - sbY);
         }
@@ -665,8 +734,14 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     };
 
     // ---- (5) はみ出し: 親の overflow で切れる・スクロールが要る・舞台の外・枠の外
-    const outOfStage = (r: { l: number; t: number; r: number; b: number }) =>
-      r.l < B.l - 1 || r.t < B.t - 1 || r.r > B.r + 1 || r.b > B.b + 1;
+    const outOfStage = (r: { l: number; t: number; r: number; b: number }, el?: Element) =>
+      r.l < B.l - 1 ||
+      r.r > B.r + 1 ||
+      // 画面全体のスクロールの枠の中は、縦に画面の外にあるのは当たり前（スクロールの位置ごとに検査する）
+      (!(el && inPageScroll(el)) && (r.t < B.t - 1 || r.b > B.b + 1));
+    /** 画面全体のスクロールの枠の中で、いまの位置では縦に全部画面の外にある（この位置では検査しない） */
+    const offscreen = (el: Element, r: { l: number; t: number; r: number; b: number }) =>
+      inPageScroll(el) && (r.b <= B.t + 1 || r.t >= B.b - 1);
     /** 祖先の overflow で切れるか（切れる祖先と種類） */
     const clipBy = (
       el: Element,
@@ -676,7 +751,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       for (let a = el.parentElement; a && a !== root && a !== document.body; a = a.parentElement) {
         const s = cs(a);
         const ox = s.overflowX;
-        const oy = s.overflowY;
+        const oy = a === pageScrollEl ? 'visible' : s.overflowY;
         if (ox === 'visible' && oy === 'visible') continue;
         const c = clientBox(a);
         const outX = ox !== 'visible' && (r.l < c.l - 1 || r.r > c.r + 1);
@@ -718,6 +793,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     };
     for (const bx of boxes) {
       const rr = { left: bx.l, top: bx.t, right: bx.r, bottom: bx.b };
+      if (offscreen(bx.el, bx)) continue;
       // 先に祖先の枠で切れるかを見る（スクロールの枠の中の文字は、舞台の外にあっても枠の問題として出す）
       const c = clipBy(bx.el, bx);
       if (c) {
@@ -725,7 +801,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         add(c.kind, bx.text, `${describe(bx.el)} ⊂ ${describe(c.anc)}`, rr, c.detail);
         continue;
       }
-      if (outOfStage(bx)) {
+      if (outOfStage(bx, bx.el)) {
         add('out-of-stage', bx.text, describe(bx.el), rr);
         continue;
       }
@@ -761,12 +837,13 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     }
     for (const { el, r } of [...buttons, ...figures]) {
       const b = { l: r.left, t: r.top, r: r.right, b: r.bottom };
+      if (offscreen(el, b)) continue;
       const label = el.getAttribute('aria-label') ?? textOf(el);
       const c = clipBy(el, b);
       if (c) {
         if (c.kind !== 'region')
           add(c.kind, label, `${describe(el)} ⊂ ${describe(c.anc)}`, r, c.detail);
-      } else if (outOfStage(b)) add('out-of-stage', label, describe(el), r);
+      } else if (outOfStage(b, el)) add('out-of-stage', label, describe(el), r);
     }
 
     // ---- (5b) スクロールさせる設計の枠（data-scroll-region）: 枠ごとに、スクロールできる印と高さを見る
@@ -1005,6 +1082,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               break;
             }
           } else {
+            // root を指定したとき（板の中だけを見るとき）は、板の外（後ろの画面）の図は文字の下に数えない
+            if (opt.root && !root.contains(e)) break;
             // 文字の下にある図（SVG の線・面、画像）。図の中の foreignObject 等の文字は除く
             const tag = e.tagName.toLowerCase();
             const fig =
@@ -1150,6 +1229,20 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           const m = (p as unknown as SVGGraphicsElement).getScreenCTM?.();
           if (m) px *= Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
         }
+        // 大人の文字は px で見る（ふりがな付きの大人の文は無い）
+        if (!isRt && !(p instanceof SVGElement) && isAdult(p)) {
+          if (px > 0 && px < minAdultPx * 0.99) {
+            const r = p.getBoundingClientRect();
+            add(
+              'small-text',
+              (node.textContent ?? '').trim(),
+              describe(p),
+              r,
+              `${r2(px)}px（大人の文字の最小 ${minAdultPx}px）`,
+            );
+          }
+          continue;
+        }
         const min = isRt ? MIN_RUBY_U : MIN_TEXT_U;
         // 最小の 1% までの差は px の丸め・SVG の拡大率の誤差なので数えない（1.998u を「1.9u」と出していた）
         if (px > 0 && px / u < min * 0.99) {
@@ -1292,6 +1385,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         if (cur.length) paras.push(cur);
 
         const inBtn = fr.closest(BTN_SEL);
+        // 大人の文は、分かち書き・ボタンの中の語の折れを見ない（禁則・語や数の折れ・最後の行は見る）
+        const adult = isAdult(fr);
         const where = describe(fr);
         const full = textOf(fr);
         let seg: Intl.Segmenter | null = null;
@@ -1323,7 +1418,10 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             bottom: Math.max(a.b, b.b),
           });
           /**
-           * 改行の直前が「・」で、前後の部分（空白か「・」で区切った語）がどちらも2字以上か。1字の並び（き・つ・つ・き）は数える。
+           * 改行の直前が「・」で、前後の項目（「・」か文の始め・終わりで区切った部分）がどちらも2字以上か。1字の並び（き・つ・つ・き）は数える。
+           * 項目は空白を含む句でもよい（「ちいさい じ・のばす おと」の「ちいさい じ」。アプリの画面の選ぶ画面の札の名前）。
+           * 前の部分を空白の所で止めて「じ」の 1 字と数えると、項目の境目の自然な改行（「ちいさい じ・／のばす おと」）を
+           * 語の途中として出す誤検出だった（check:app-layout のレビュー）。字の数は空白を除いて数える。
            * 文の終わり（。．.!?！？）のすぐ後ろの「・」は、文と文の区切り（聞く問題の書き起こし。listen.tsx）なので、後ろの部分が
            * 1字（英語の「I」）でも改行してよい（第6回のレビュー。「・」を字にしたあと「summer.・／I swam」が出た）
            */
@@ -1337,12 +1435,10 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             for (let k = ai - 1; k >= 0; k--) {
               if (ps[k]!.ch === '・') break;
               before++;
-              if (ps[k]!.spaceBefore) break;
             }
             let after = 0;
             for (let k = bi; k < ps.length; k++) {
               if (ps[k]!.ch === '・') break;
-              if (k > bi && ps[k]!.spaceBefore) break;
               after++;
             }
             return before >= 2 && after >= 2;
@@ -1408,6 +1504,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             }
             // (d) 分かち書きの語の途中
             else if (
+              !adult &&
               wakachi &&
               hasSpaces &&
               !b.spaceBefore &&
@@ -1423,6 +1520,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             // (f) ボタン・選択肢の中で語が途中で折れる（分かち書きでない語は Intl.Segmenter の単語で見る）
             // 始め括弧の前の改行は組版として正しい（C23。JIS X 4051。(d) と同じ扱い）
             else if (
+              !adult &&
               inBtn &&
               !b.spaceBefore &&
               !START_NG.has(b.ch) &&

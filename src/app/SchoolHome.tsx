@@ -1,6 +1,10 @@
 /**
  * 小学生ホーム（ux-by-age 2.2）: 上に教科の札、右に きょうの おすすめ（復習を含む）・おえかき・がんばりノート。
  * 教科の札には「とりくみちゅう」の単元数を小さく出す（点数は出さない）。
+ *
+ * 札の名前・題は AppLabel（中身の段階で折る。text-layout-fixes「アプリの画面」A0・A3）。
+ * おすすめの題は札（30u × 8.6u）に入るまで縮める（fit。下限は画面の --text-min）。
+ * 「ふくしゅう」は題の中の字の札をやめ、絵の右下の時計の印（単元の地図と同じ MarkIcon）で示す。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { gradeOf, type Grade } from '../audience/audience';
@@ -11,11 +15,12 @@ import { subjectName, subjectsForGrade } from '../curriculum/subjects';
 import type { StageId } from '../curriculum/types';
 import { unitMeta, UNIT_INDEX } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
-import { Rt } from '../text/Rt';
 import { plainText } from '../text/rich';
+import { AppLabel } from '../ui/AppLabel';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate } from './router';
+import { MarkIcon } from './SubjectMap';
 import './home.css';
 import './school-home.css';
 
@@ -51,8 +56,15 @@ export function SchoolHome() {
     progress.filter((p) => p.review.stage === 'learning' && unitMeta(p.unitId)?.subject === subject)
       .length;
 
+  // data-stage: 学年の段階。app-label.css の --text-min（アプリの画面の補助の文字の最小）が効く。
+  // --ts: 文字の大きさの設定。おすすめの題の縮め始め（fit の fromU）にかかる（AppLabel が読む）
   return (
-    <div className="screen home school-home" data-testid="school-home">
+    <div
+      className="screen home school-home"
+      data-testid="school-home"
+      data-stage={stage}
+      style={{ ['--ts' as string]: String(settings.support.textScale) }}
+    >
       <div className="home-top">
         <div className="home-profile">
           <Illust id={profile.avatar} className="home-profile__avatar" decorative />
@@ -78,9 +90,7 @@ export function SchoolHome() {
               data-testid={`subject-${s.id}`}
             >
               <Illust id={s.icon} className="school-subject__illust" decorative />
-              <span className="school-subject__name">
-                <Rt text={name} ctx={ctx} />
-              </span>
+              <AppLabel text={name} stage={stage} ctx={ctx} className="school-subject__name" />
               {n > 0 ? (
                 <span className="school-subject__count" aria-hidden>
                   <span className="school-subject__half" />
@@ -116,16 +126,22 @@ export function SchoolHome() {
             <button
               key={r.unitId}
               type="button"
-              className="home-rec"
+              className="home-rec school-rec"
               aria-label={`おすすめ ${plainText(u.title)}${r.kind === 'review' ? ' ふくしゅう' : ''}`}
               onClick={() => navigate({ name: 'unit', unitId: r.unitId })}
               data-testid={`rec-${r.unitId}`}
             >
-              <Illust id={u.icon} className="home-rec__illust" decorative />
-              <span className="home-rec__name">
-                <Rt text={u.title} ctx={ctx} />
-                {r.kind === 'review' ? <span className="school-rec__tag">ふくしゅう</span> : null}
+              <span className="school-rec__icon">
+                <Illust id={u.icon} className="school-rec__illust" decorative />
+                {r.kind === 'review' ? <MarkIcon mark="review-due" /> : null}
               </span>
+              <AppLabel
+                text={u.title}
+                stage={u.stage}
+                ctx={ctx}
+                className="school-rec__name"
+                fit={{ fromU: 2.6 }}
+              />
             </button>
           );
         })}

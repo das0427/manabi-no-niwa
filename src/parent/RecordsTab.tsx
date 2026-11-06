@@ -318,7 +318,7 @@ export function RecordsTab() {
             <Note>
               「直近」は、いまの段階での直近10問までの結果です。「もういちど」はヒント1の後に自分で選び直して正解、「ヒント後」は具体的なヒントの後に正解、「見直し後」は見直し機能を使って正解した数です。
             </Note>
-            <table className="p-table" data-testid="skill-table">
+            <table className="p-table p-table--skills" data-testid="skill-table">
               <thead>
                 <tr>
                   <th>スキル</th>

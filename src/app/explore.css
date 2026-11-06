@@ -47,6 +47,13 @@
   grid-auto-rows: calc(var(--u) * 14);
   gap: calc(var(--u) * 1.6);
 }
+/* 幼児の区分: 4 列 × 3 行の格子（左 30u・上 8u から右 96.4u・下 53.2u）。ふつうの札 9 枚は def.cards の位置 i
+   （列 i%3+1・行 ⌊i/3⌋+1。Explore.tsx がインラインで置く）、「えいご」は 4 列目の 3 段目（右下。ホームの右の列の一番下と同じ）。
+   スクロールにしない（幼児が 1 回のタップで全部の札を押せる）。札は 15.4u × 14u、間は 1.6u。
+   札の字（2.2u・最大 5 字 × 2 行 ≒ 11u）は札の内側 13.5u（15.4u − 線 − 余白）に入る。出せる単元の無い札の位置は空ける */
+.explore-cards--pre {
+  grid-template-columns: repeat(4, calc(var(--u) * 15.4));
+}
 .explore-empty {
   position: absolute;
   top: calc(var(--u) * 20);

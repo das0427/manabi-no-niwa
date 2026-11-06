@@ -111,12 +111,16 @@ export function AboutTab() {
           2〜3歳の2歳の段階では、ホームに英語の札を出しません。「ほかの
           がくねん」から、おうちの方と一緒に遊べます。
         </p>
-        <table className="p-table p-table--compact" data-testid="preschool-english-units">
+        <table
+          className="p-table p-table--compact p-table--units"
+          data-testid="preschool-english-units"
+        >
           <tbody>
             {UNIT_INDEX.filter((u) => u.pack === 'en-pre').map((u) => (
               <tr key={u.id}>
                 <th>
-                  {plainText(u.title)}（{STAGE_LABEL[u.stage] ?? u.stage}）
+                  <span className="p-keep">{plainText(u.title)}</span>
+                  <span className="p-nowrap">（{STAGE_LABEL[u.stage] ?? u.stage}）</span>
                 </th>
                 <td>{u.parentNote}</td>
               </tr>

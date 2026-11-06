@@ -14,6 +14,7 @@ import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
 import { clearLegacyHand, hasLegacyHand, localKeyStore, migrateLegacyHand } from '../drawing/hand';
 import { defaultSettings, type ChildSettings, type ModeId, type Profile } from '../core/types';
+import { DEV_OPEN, devOpenParent } from './devOpen';
 
 export interface AppStateValue {
   ready: boolean;
@@ -70,8 +71,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [settings, setSettings] = useState<ChildSettings | null>(null);
   const [favorites, setFavorites] = useState<ModeId[]>([]);
-  const [started, setStarted] = useState(false);
-  const [parentUnlocked, setParentUnlocked] = useState(false);
+  // 開発用の ?dev-open（開発サーバーだけ。本番では false に畳まれる）は、起動画面とゲートを通らずに hash の画面を開く
+  const [started, setStarted] = useState(DEV_OPEN);
+  const [parentUnlocked, setParentUnlocked] = useState(devOpenParent);
 
   const load = useCallback(async () => {
     await initOnce();

@@ -1,11 +1,13 @@
+/* 日の一覧（ScrollList。一つのスクロール）。外側の枠（.notebook）は位置と大きさだけ。
+   スクロールする枠・右の余白・▼（幼児は ▲▼ の札）は ui/scroll-list.css が持つ。
+   枠の下は舞台の端から 2u（単元の地図・さくひんと同じ）。枠を舞台の下の端まで伸ばすと、▼ の印と ▼ の札が
+   舞台の下の端に付き、▼ の字は舞台の下へ 0.2u はみ出していた（check:app-layout の screen-overflow） */
 .notebook {
   position: absolute;
+  top: calc(var(--u) * 8);
   left: var(--edge);
   right: var(--edge);
-  bottom: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding-bottom: calc(var(--u) * 2);
+  bottom: var(--edge);
 }
 .notebook-day {
   display: flex;
@@ -14,11 +16,15 @@
   padding: calc(var(--u) * 1.2) 0;
   border-bottom: calc(var(--u) * 0.25) dashed var(--paper-2);
 }
+/* 日付は 1 行（「10がつ 30にち」が「にち」だけ次の行に折れていた。text-layout-fixes「アプリの画面」A6）。
+   幅は中身の幅（最小 16u）にして、右の絵と重ならないようにする */
 .notebook-day__date {
   flex: none;
-  width: calc(var(--u) * 16);
+  width: max-content;
+  min-width: calc(var(--u) * 16);
   margin: 0;
   font-size: var(--text-label);
+  white-space: nowrap;
 }
 .notebook-day__items {
   display: flex;

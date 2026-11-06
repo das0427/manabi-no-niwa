@@ -7,12 +7,14 @@
  */
 import { Component, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from '../app/AppState';
+import { ownStage } from '../app/Explore';
 import { navigate } from '../app/router';
 import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
-import type { ArtworkRecord, WorkRecord } from '../core/types';
+import { profileAudience, type ArtworkRecord, type WorkRecord } from '../core/types';
 import { Illust } from '../illust/Illust';
 import { WorkThumb } from '../modes/workThumb';
+import { ScrollList } from '../ui/ScrollList';
 import { DrawIcon } from './icons';
 import { viewableWorks } from './oldWorks';
 import { duplicateArtwork } from './persist';
@@ -75,6 +77,9 @@ export function GalleryScreen() {
 
   if (!profile) return null;
 
+  // 見ている子供の区分。幼児は ▲▼ の札、小学生は ▼ の印が出る（ScrollList。text-layout-fixes「アプリの画面」A7）
+  const viewer = ownStage(profileAudience(profile), profile.enrolledGrade ?? undefined);
+
   const fmt = (t: number) => {
     const d = new Date(t);
     return `${d.getMonth() + 1}/${d.getDate()}`;
@@ -120,111 +125,118 @@ export function GalleryScreen() {
           あたらしく かく
         </button>
       </header>
-      <div
-        className="gallery-grid"
-        role="list"
-        data-testid="gallery-grid"
-        data-count={cards?.length ?? -1}
+      <ScrollList
+        viewer={viewer}
+        className="gallery-list"
+        label="さくひんの いちらん"
+        testId="gallery-scroll"
       >
-        {cards?.map((c) => (
-          <div
-            key={c.rec.id}
-            className="gallery-card"
-            role="listitem"
-            data-testid="gallery-card"
-            data-id={c.rec.id}
-          >
-            <button
-              type="button"
-              className="gallery-thumb"
-              aria-label={`ひらく ${fmt(c.rec.updatedAt)}`}
-              data-testid="gallery-open"
-              onClick={() => {
-                audio.sfx('tap');
-                navigate({ name: 'draw', artId: c.rec.id });
-              }}
+        <div
+          className="gallery-grid"
+          role="list"
+          data-testid="gallery-grid"
+          data-count={cards?.length ?? -1}
+        >
+          {cards?.map((c) => (
+            <div
+              key={c.rec.id}
+              className="gallery-card"
+              role="listitem"
+              data-testid="gallery-card"
+              data-id={c.rec.id}
             >
-              {c.url ? <img src={c.url} alt="" draggable={false} /> : null}
-              {c.dirty ? (
-                <span className="gallery-wip" data-testid="gallery-wip">
-                  つくりかけ
-                </span>
-              ) : null}
-            </button>
-            <div className="gallery-card__row">
-              <span className="gallery-date">{fmt(c.rec.updatedAt)}</span>
               <button
                 type="button"
-                className="tap tap--white tap--aux"
-                aria-label="うつして かく"
-                data-testid="gallery-copy"
-                disabled={busy}
-                onClick={async () => {
-                  if (busy) return;
-                  setBusy(true);
-                  audio.sfx('tap');
-                  const id = await duplicateArtwork(c.rec.id);
-                  setBusy(false);
-                  // 複製が終わってからの移動なので、連続の遷移の制限（400ms）は使わない
-                  if (id) navigate({ name: 'draw', artId: id }, { force: true });
-                }}
-              >
-                <DrawIcon id="new" className="tap__icon" />
-              </button>
-              <button
-                type="button"
-                className="tap tap--white tap--aux"
-                aria-label="すてる"
-                data-testid="gallery-delete"
+                className="gallery-thumb"
+                aria-label={`ひらく ${fmt(c.rec.updatedAt)}`}
+                data-testid="gallery-open"
                 onClick={() => {
                   audio.sfx('tap');
-                  setConfirm({ id: c.rec.id, step: 1 });
+                  navigate({ name: 'draw', artId: c.rec.id });
                 }}
               >
-                <DrawIcon id="trash" className="tap__icon" />
+                {c.url ? <img src={c.url} alt="" draggable={false} /> : null}
+                {c.dirty ? (
+                  <span className="gallery-wip" data-testid="gallery-wip">
+                    つくりかけ
+                  </span>
+                ) : null}
               </button>
+              <div className="gallery-card__row">
+                <span className="gallery-date">{fmt(c.rec.updatedAt)}</span>
+                <button
+                  type="button"
+                  className="tap tap--white tap--aux"
+                  aria-label="うつして かく"
+                  data-testid="gallery-copy"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (busy) return;
+                    setBusy(true);
+                    audio.sfx('tap');
+                    const id = await duplicateArtwork(c.rec.id);
+                    setBusy(false);
+                    // 複製が終わってからの移動なので、連続の遷移の制限（400ms）は使わない
+                    if (id) navigate({ name: 'draw', artId: id }, { force: true });
+                  }}
+                >
+                  <DrawIcon id="new" className="tap__icon" />
+                </button>
+                <button
+                  type="button"
+                  className="tap tap--white tap--aux"
+                  aria-label="すてる"
+                  data-testid="gallery-delete"
+                  onClick={() => {
+                    audio.sfx('tap');
+                    setConfirm({ id: c.rec.id, step: 1 });
+                  }}
+                >
+                  <DrawIcon id="trash" className="tap__icon" />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-        {cards && cards.length === 0 && olds.length === 0 ? (
-          <p className="label-text gallery-empty" data-testid="gallery-empty">
-            まだ さくひんが ないよ
-          </p>
-        ) : null}
-        {olds.length > 0 ? (
-          <h2 className="gallery-heading" data-testid="gallery-old-heading">
-            <Illust id="mode-trace" className="tap__icon" decorative />
-            なぞりと みちの さくひん
-          </h2>
-        ) : null}
-        {olds.map((w) => (
-          <div
-            key={w.id}
-            className="gallery-card"
-            role="listitem"
-            data-testid="gallery-old"
-            data-id={w.id}
-          >
-            <button
-              type="button"
-              className="gallery-thumb"
-              aria-label={`みる ${fmt(w.createdAt)}`}
-              data-testid="gallery-old-open"
-              onClick={() => {
-                audio.sfx('tap');
-                setViewing(w);
-              }}
+          ))}
+          {cards && cards.length === 0 && olds.length === 0 ? (
+            <p className="label-text gallery-empty" data-testid="gallery-empty">
+              まだ さくひんが ないよ
+            </p>
+          ) : null}
+          {olds.length > 0 ? (
+            <h2 className="gallery-heading" data-testid="gallery-old-heading">
+              <Illust id="mode-trace" className="tap__icon" decorative />
+              なぞりと みちの さくひん
+            </h2>
+          ) : null}
+          {olds.map((w) => (
+            <div
+              key={w.id}
+              className="gallery-card"
+              role="listitem"
+              data-testid="gallery-old"
+              data-id={w.id}
             >
-              <SafeThumb>
-                <WorkThumb work={w} />
-              </SafeThumb>
-            </button>
-            <div className="gallery-card__row">
-              <span className="gallery-date">{fmt(w.createdAt)}</span>
+              <button
+                type="button"
+                className="gallery-thumb"
+                aria-label={`みる ${fmt(w.createdAt)}`}
+                data-testid="gallery-old-open"
+                onClick={() => {
+                  audio.sfx('tap');
+                  setViewing(w);
+                }}
+              >
+                <SafeThumb>
+                  <WorkThumb work={w} />
+                </SafeThumb>
+              </button>
+              <div className="gallery-card__row">
+                <span className="gallery-date">{fmt(w.createdAt)}</span>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </ScrollList>
       {viewing ? (
         <div
           className="draw-confirm"

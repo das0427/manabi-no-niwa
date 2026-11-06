@@ -130,8 +130,9 @@
   cursor: pointer;
   touch-action: manipulation;
 }
+/* くわしく（小学生向け）の色の札は 4.5u（道具欄と図形の選択板。19章）。かんたん は図形の選択板でも 6u */
 .draw-side--detailed .draw-color,
-.draw-colors--panel .draw-color {
+.draw-screen--detailed .draw-colors--panel .draw-color {
   width: calc(var(--u) * 4.5);
   height: calc(var(--u) * 4.5);
 }
@@ -412,7 +413,14 @@
   align-items: center;
   gap: var(--gap-min);
 }
+/* 図形の選択板の色の札。かんたん（幼児。6〜8 色）は道具欄と同じ 6u・間 1.6u を 4 列（28.8u。板の右の列 30u に入る）。
+   くわしく（24 色）は 4.5u・間 0.8u を 6 列。かんたん でも 4.5u にしていて、幼児の主操作の 6u（2章）を割っていた
+   （check:app-layout の tap-size） */
 .draw-colors--panel {
+  grid-template-columns: repeat(4, var(--tap-main));
+  gap: var(--gap-min);
+}
+.draw-screen--detailed .draw-colors--panel {
   grid-template-columns: repeat(6, calc(var(--u) * 4.5));
   gap: calc(var(--u) * 0.8);
 }
@@ -442,15 +450,24 @@
 }
 
 /* ---- さくひん ---- */
-.gallery-grid {
-  flex: 1;
+/* 一覧は一つのスクロール（ScrollList。text-layout-fixes「アプリの画面」A7）。おえかきの作品・見出し・なぞりの作品を同じ枠に入れる。
+   .gallery-list は位置と大きさだけ。上の帯の下 0.6u から、左右は端、下は 2u の余白にする
+   （上の 0.6u は、幼児の ▲ の札が右上の「あたらしく かく」の影に近すぎないようにするため）。
+   スクロールする枠・右の余白（幼児 7u・小学生 3.6u）・▼ の印と ▲▼ の札は ui/scroll-list.css が持つ。
+   4 列の札の幅は、その右の余白の分だけ詰まる（幼児で約 20.8u。19章の 16u 以上）。
+   枠は overflow で切るので、札の影（--step）と押せる札の焦点の輪（0.4u＋間 0.3u）が切れないように、格子の四方に 0.8u の余白を取る。
+   左だけ枠を 0.8u 外へ出し、札の左端は今までどおり端（2u）にそろえる */
+.gallery-list {
+  flex: 1 1 0;
   min-height: 0;
-  overflow-y: auto;
+  margin: calc(var(--u) * 0.6) var(--edge) var(--edge) calc(var(--edge) - var(--u) * 0.8);
+}
+.gallery-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gap-min);
   align-content: start;
-  padding: 0 var(--edge) var(--edge);
+  padding: calc(var(--u) * 0.8);
 }
 .gallery-card {
   display: flex;

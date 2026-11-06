@@ -102,7 +102,7 @@
 - 誤検出の直し（第2回）と理由:
   - **隠れた字との overlap-text（C3）**: 不透明な解説の板・吹き出しの下に隠れた選択肢の字を、板の字と重なったものとして `overlap-text` にも数えていた（同じ所が covered と二重）。文字どうしの重なりの中心で `elementsFromPoint` を見て、片方の字を含む要素のうち不透明な背景（`background-color` の alpha が 1、opacity 1）をもつものが、もう片方を含まずに手前にあるときは `overlap-text` に数えない（隠れたことは covered で出る）。同じ層の字どうし・背景が透明な枠どうしは今までどおり出す。covered・overlap-text の閾値は変えていない。
   - **スクロールさせる枠の種類（C2 の続き）**: `data-scroll-region` に `explain`（解説の板）・`work`（収まらない作業領域）・`transcript`（書き起こし）を足した。枠の中の字は1行ずつ数えない。`work`・`explain` は印（`data-scroll-cue`）があっても枠につき1件の `scroll-hidden`（「作業領域が N u 足りずスクロール」「解説が板に N 行分入らずスクロール」）を残す。設計で受け入れたスクロールではなく、パックの文・図を短くする手がかりなので消さない（1行ずつ数えると件数が文の長さに比例して膨らむだけ）。`passage`・`strip`・`transcript` は印が無いときだけ出す（4行未満の `clipped` は passage・strip のみ）。
-  - **分かち書きの「・」（C5）**: 改行の直前が「・」で、その前後の部分（空白か「・」で区切った語）がどちらも2字以上なら `wakachi-split`・`button-split` に数えない（中黒のあとは JIS X 4051 で改行してよい語の区切り。g2.ja.katakana-words「くに・／まち」）。1字の並び（き・つ・つ・き）は今までどおり出す。
+  - **分かち書きの「・」（C5）**: 改行の直前が「・」で、その前後の項目（「・」か文の始め・終わりで区切った部分。空白を含む句でもよい）がどちらも2字以上（空白を除いて数える）なら `wakachi-split`・`button-split` に数えない（中黒のあとは JIS X 4051 で改行してよい語の区切り。g2.ja.katakana-words「くに・／まち」）。1字の並び（き・つ・つ・き）は今までどおり出す。前の部分を空白の所で止めていたときは、項目が句の「ちいさい じ・／のばす おと」（アプリの選ぶ画面の札）を「じ」の 1 字と数えて出していた（誤検出。3.3 のレビューで直した）。
   - **字の大きさの丸め（C7）**: 最小の 1% までの差（px の丸め・SVG の拡大率の誤差）は `small-text` にしない（しきい値は `最小 × 0.99`。以前の「最小 − 0.05u」より厳しいので、2.15〜2.2u のような小さい不足も出る）。表示は小数2桁。
   - **スクロールが止まるまで待つ（C6）は入れていない**: 読解の自動スクロール中に測って reading-cue が本文に重なる covered（g1.ja.folktales/5 ヒント②）を、検査と同じ手順（4サイズを往復）で再現した。スクロールできる要素の scrollTop が2フレーム変わらなくなるまで待っても、さらに 1.5 秒待っても同じ covered（rt の上に button.eng-reading__cue）が出た。測るタイミングの誤検出ではなく画面の不具合（R5）なので、`settle` は変えていない。
 - 誤検出の直しと見落としの直し（第3回）と理由:
@@ -136,6 +136,97 @@
   - **緩めていないもの**: `covered`・`out-of-stage`・`clipped` の判定、`small-text` の最小（1% の丸め）、`overlap-text` の閾値、`work`・`explain`・`figure` のスクロールの 1 件、分かち書きの判定（C17 の複合辞の頭の位置と、C23 の始め括弧の前だけを外し、C22 で対象を増やした）。C20 も、`overflow: hidden` の svg と祖先の枠で切れるものは残る。どれも `e2e/text-layout-probe.tl.ts` に見本を足し（助詞と仮名の助数詞・0×0 の図と除くもの・輪が字を横切る札と数えない札・複合辞の頭と同じ語のほかの位置・C20〜C25 の見本）、直す前のコードでは失敗すること（壊した見本が検出されること）と、直したあとも通ることを確かめた。
 - 検査自体の確認: `npm run check:text-layout:probe`（わざと壊した見本で検出すること、普通の見本で何も出さないこと）。
 - 検出できないこと: 字形の中の重なり（字のすき間に線がかかる程度）、色・コントラスト、Canvas に描いた文字、意味の切れ目（分かち書きでない文の語の切れ目は、ボタンの中だけ Intl.Segmenter で見る）。
+
+### 3.3 アプリの画面の配置の検査（アプリの全画面。`npm run check:app-layout`）
+
+単元の画面は 3.2 が全問題を見ている。それ以外のアプリの画面（起動・プロフィール選択・ホーム・ほかの がくねん・選ぶ画面・単元の地図・ノート・さくひん・おえかき・保護者の入り口・保護者画面）は、これが同じ考え（重なり・切れ・舞台の外・押せない・小さすぎる字・変な改行）で見る。設計は docs/expansion/text-layout-fixes.md「アプリの画面」（AC-1〜AC-7）。モードの遊ぶ画面と完了画面は、これまでどおり E-14（3.1。`e2e/layout.spec.ts`）が受け持つ。
+
+- 開発サーバー（127.0.0.1:4298。`MNW_PORT` で変える。全体の文字の検査 3.2 は 4299）を `MNW_DEV_NO_HMR=1`（ファイルの変更を見ない）で起動して流す。`playwright.app-layout.config.ts`。違反は失敗にせず、`docs/screenshots/app-layout-report/`（`summary.md`・`report.json`・種類ごとの代表のスクリーンショット `shots/<種類>/`）に出す。**報告書と `.cache/` は commit しない。** テストが失敗するのは、画面に行けないとき（目印が出ない・例外・止まった）だけで、そのときも結果は `.cache` に残す。
+- 目安の時間: 3 並列で 3 分前後（画面 約 420〔プロフィール × 状態 × 画面〕・検査 約 2,000 回〔画面 × 4 サイズ。保護者画面はスクロールの位置ごと〕。2026-11-07 の実測）。ほかの担当が動いているときは長くなる。
+
+#### 範囲
+
+- **プロフィール 13 通り**（`e2e/helpers/app-layout-fixtures.ts`）:
+
+  | キー | 区分 | 設定 | 見るもの |
+  |---|---|---|---|
+  | `p23-2`・`p23-3` | 2〜3さい（2さいの段階・3さいの段階） | 既定 | 札 4 枚のホーム・おすすめなし・えいごなし／3さいの段階 |
+  | `p4`・`p4-noen` | 4さい | `p4-noen` は `showPreschoolEnglish: false` | えいごの札あり／なし |
+  | `p5` | 5さい | `unitsOpened: ['p5.en.abc']` | えいごの選ぶ画面が 6 枚 |
+  | `g1`〜`g6` | 小1〜小6 | 区分の既定 | |
+  | `g3-big` | 小3 | `textScale: 1.3`・`furigana: 'all'` | 字がいちばん大きく、ふりがなが多い |
+  | `g4-left` | 小4 | `drawingHand: 'left'` | おえかきだけ（道具欄が右） |
+
+- **中身の状態は二つ**。`fresh`（作ったばかり。プロフィール 1 人）と `full`（遊んだ記録 14 日分〔12月31日から数える＝日付の字がいちばん長い〕・すき 3 つ・作品 18 枚＋なぞり・みち 5 枚・メモ 10 件・記録・単元の進度。名前が 20 字・空白のある・英字・ふつうのプロフィール 4 人。小学生は、その学年でいちばん長い題の 2 単元を「ふくしゅう まち」〔教科は別々〕、次に長い 6 単元を「とりくみちゅう」、2 単元を「できた」「しっかり」。p4 は v1 のモードの単元に「つづきから？」の下書き）。fresh と full は別の context（別の IndexedDB）で流す。設定と中身は IndexedDB に直接書いて読み込み直す（テスト専用。`e2e/helpers/app.ts` と同じ）。作品は、1 枚を描く画面で描き（線 1 本）、残りを開発サーバーの `duplicateArtwork` で増やす（画像の形を検査の側で作り直さない）。
+- **画面**（`e2e/helpers/app-layout.ts` の `screenDefs`）。段階（stage）は、その画面の中身の段階（ほかの がくねん のタブ・単元の地図の学年のタブでは、子供の区分でなく表示している区分）。
+
+  | 画面の ID | 行き方 | プロフィール・状態 |
+  |---|---|---|
+  | `start` | `/` | 全部・fresh |
+  | `start-setup-<preparing・renewing・failed・offline>` | `/?dev-setup=…&dev-notes=2` | p4・g3・fresh |
+  | `profile-picker` | `/`（4 人）→ はじめる | p4・full |
+  | `home` | `#/home` | 全部・fresh と full |
+  | `explore-own`・`explore-<p23〜g6>` | `#/explore`・`#/explore/<区分>` | 全部・fresh |
+  | `card-<札>` | `#/card/<区分>/<札>`（単元が 2 つ以上の札。えいごを含む） | 幼児・fresh |
+  | `variant-<単元>`・`resume-<単元>` | `#/legacy/<単元>`（遊び方を選ぶ画面）・下書きを入れて `#/legacy/<単元>/<遊び方>`（つづきから？） | p23-3・p4／p4（full）。遊び方の選ぶ画面が出ない単元は「飛ばした」と要約に残す |
+  | `subject-<教科>-g<学年>` | `#/subject/<教科>/g<学年>` | 小学生は自分の学年の全教科（fresh・full）。p4 と g3 は全部の教科 × 学年 |
+  | `notebook` | `#/notebook` | 全部・fresh と full |
+  | `gallery`・`gallery-old-view`・`gallery-confirm`（幼児は `gallery-confirm-2`＝「ほんとうに？」） | `#/gallery`・なぞりの作品を開く・すてる | p23-3・p4・g4・full |
+  | `draw`・`draw-stamp`・`draw-shape`・`draw-paper`・`draw-select` | `#/draw/new`・各板を開く・はんこを置いて選ぶ | p23-3・p4・g4・g4-left・fresh |
+  | `parent-gate` | ホームで鍵を長押し（2 秒） | p4・g3・fresh |
+  | `parent-<records・settings・works・memos・profiles・data・packs・about>` | `/?dev-open#/parent/<タブ>` | p23-2・p4・g3・g6・full |
+  | `parent-profiles-confirm` | プロフィール削除 → 確認 | p4・full |
+
+- **画面サイズ**は 4 通り（1280×720・1920×1080・1280×620・1536×864）。画面を開いたまま 4 サイズに変えて測る（往復の順）。
+
+#### 開発用の指定（開発サーバーだけ。本番ビルドでは消える）
+
+- **`?dev-open`**（`src/app/devOpen.ts`・`AppState.tsx` の `started`・`parentUnlocked` の初期値）: 起動画面の「はじめる」と保護者ゲートを通らずに、hash の画面を開く。例 `http://127.0.0.1:<port>/?dev-open#/explore/p4`・`/?dev-open#/parent/settings`。音は鳴らない（`audio.unlock` を通らない）。保護者画面の hash（`#/parent…`）で**読み込んだとき**だけゲートも開く（hash の変更だけでは開けない。検査は保護者画面と起動画面を読み込み直して開く）。保護者画面から子供画面へ移るとゲートは閉じる（今までどおり）。`import.meta.env.DEV` が false の本番ビルドでは `DEV_OPEN` が false に畳まれ、`dev-open` の文字も残らない（`devOpen.test.ts` が、指定が無いとき・本番のときに false であることを確かめる）。
+- **`?dev-setup=preparing|renewing|failed|offline`・`?dev-notes=2`**（起動画面。text-layout-fixes A5）: 教材の準備の表示と、保護者向けの表示を最も長い 2 行にする。`start-setup-*` は、画面の根に `data-setup` が付いたときに検査する。付かない（A5 が未実装）ときは検査せず、要約に「**未対応**」と書く。
+
+#### 見るもの
+
+- **文字の重なり・切れ・改行**は `textLayoutProbe`（3.2 と同じ関数）。アプリの画面のために次の項目を足した（**どれも省略時は今と同じ動き**。`check:text-layout:probe` の 29 本が同じに通る）:
+  - `root`: 調べる範囲の CSS セレクタ（既定は `.stage`）。板（ゲート `aria-modal`・おえかきの板 `.draw-panel`・確認 `.draw-confirm`・保護者画面の確認）が出ているときは、板を渡して中だけを見る（後ろの画面は板で隠すのが設計なので covered・overlap-button に数えない）。舞台の外の判定の範囲は、root が舞台の中なら舞台、外（保護者画面）なら画面。
+  - `adultSel`・`minAdultPx`（既定 12）: 大人の文字の範囲（保護者画面 `.parent-root`・ゲートの板 `.gate-panel`・起動画面の保護者向けの表示 `.start-notes`。各画面の「（保護者の方へ）」で始まる文も含む）。この中の字は最小の大きさを px（12px）で見る。分かち書き（wakachi-split）とボタンの中の語の折れ（button-split）は見ない（大人の文は漢字かな交じりで書き、子供の規則を当てると誤検出になるため）。行頭・行末の禁則・数や単位の折れ（word-split）・重なり・切れ・最後の行が 1 文字は見る。
+  - `pageScroll`: 画面全体のスクロールの枠（保護者画面の `.parent-root`）。この枠の縦のはみ出し（いまの位置で画面の外にある字・ボタン）は、その位置では検査しない（out-of-stage・clipped・scroll-hidden にしない）。巡回の側が `scrollTop` を 0 から `clientHeight × 0.8` ずつずらして、そのたびに検査し、同じ違反（種類・文字・場所）を最初の位置の 1 件にまとめる。横にスクロールが出るときは page-scroll にする。
+- **アプリの画面に特有の種類**（`appLayoutProbe`。ページの中で動く）:
+
+  | 種類 | 見るもの |
+  |---|---|
+  | `screen-overflow` | 画面の中身（ボタン・字・図）が舞台の外へ出る。1 画面 1 件で、超えた u と押せない札の名前を書く |
+  | `unreachable` | 押せない札。見えている部分が札の半分未満、中心が別の要素に当たる（`elementsFromPoint`。`pointer-events` も効く）、5 点（中心と四隅の内側）のうち 3 点以上が別の要素に当たる・舞台の外 |
+  | `tap-size` | 子供は補助 5.5u・主操作 6u 未満（主操作は `.tap`〔`tap--aux` 以外〕・`.choice`・`.home-card`・`.home-rec`・`.school-subject`・`.smap-unit`・`.gallery-thumb`・`.draw-tool`。学年のタブ `.explore-tab`・`.smap-tab` は補助）。大人は高さ 44px 未満（button・select・textarea・summary・checkbox/radio/range/hidden 以外の input） |
+  | `tap-gap` | 主操作どうしの間が 1.6u 未満（DESINGN.md 2章。以前の `home-gap` を全部の主操作に広げた） |
+  | `scroll-no-cue` | 子供画面で縦にスクロールする枠（`overflow-y` が auto・scroll で `scrollHeight > clientHeight + 2`）に `data-scroll-region` か、見える印（`data-scroll-cue`）が無い。1 枠 1 件 |
+  | `scroll-no-button` | 幼児が見る画面（プロフィールの区分が p23・p4・p5）のスクロールの枠に ▲▼ の札（`[data-scroll-btn]`）が無い |
+  | `fit-overflow` | `data-fit-overflow`（AppLabel が下限の字まで縮めても入らない）。教材の題を短くする手がかり（要約に一覧が出る） |
+  | `edge-margin`（参考） | 主操作の札の下端・左右が舞台の端から 2u 未満 |
+  | `missing-illust`（参考） | 絵が無くて開発用の点線の枠（`svg[data-illust]` の中が `#c00` の破線の `rect` 1 つ）になっている |
+
+- 同じ枠の二重の報告は除く（印の無いスクロールの枠は、文字の検査の `scroll-hidden`〔印が無い〕でなく `scroll-no-cue` に任せる）。
+- 分かち書きの「・」のあとの改行（3.2 と同じ `textLayoutProbe`）: 「・」の前後の項目がどちらも 2 字以上なら語の途中に数えない。項目は「・」か文の始め・終わりで区切った部分で、空白を含む句でもよい（選ぶ画面の札「ちいさい じ・／のばす おと」。前の部分を空白の所で止めて「じ」の 1 字と数えていたのは誤検出だった）。1 字の並び（き・つ・つ・き）は今までどおり出す。
+
+#### 除くもの（理由。コード `appLayoutProbe`・`e2e/helpers/app-layout.ts` にも書いた）
+
+- **鍵**（`.gate-key` 4.5u）: DESINGN.md 2章で、子供が間違えて押さないよう意図して小さい。
+- **おえかきの「くわしく」の色の札**（`.draw-screen--detailed` の道具欄の `color-*` と、図形の選択板の `shape-color-*`。4.5u）: 19章で意図して小さい（くわしくは小学生向け）。「かんたん」の色の札は道具欄も図形の選択板も 6u なので数える（図形の選択板は かんたん でも 4.5u にしていて、この検査で見つかり 6u に直した）。
+- **選んでいる札の持ち上がり**（`tap-gap`）: 選んでいる札（`.is-selected`）は DESINGN.md 8章の「選択中は 1u 持ち上がる」で `translateY(-1u)` が付き、上の札との間が 1.6u − 1u = 0.6u に見える（おえかきの道具欄・図形の選択板）。持ち上がりは選んだことを示す状態の表示で、並びの間（2章の 1.6u）は置いた位置で決まるので、`tap-gap` はその移動を戻した位置で測る（戻さないと、選んでいる札の上の間がどの並びでも必ず出る誤検出になる）。選んでいない札のずれは戻さない（probe で確かめる）。
+- **板の後ろ**: 板が出ているときは `root` を板にして中だけを見る。後ろの画面は板で隠すのが設計。
+- **印のあるスクロールの枠（`data-scroll-region`）の中**: スクロールで見るのが設計（DESINGN.md 5.3）なので、枠からはみ出した札は押せない札に数えず（枠の見えている範囲に全部は入っていない札は飛ばす）、字は 1 字ずつ数えない（`textLayoutProbe` と同じ）。枠に印・▲▼ の札が無いときだけ `scroll-no-cue`・`scroll-no-button` で出す。印も `data-scroll-region` も無い枠の中の札は、押せない札として数える（見えない札に届く手段が無い）。
+- **保護者画面のページの縦スクロール**: 画面全体のスクロールは許す（横は出さない）。画面の端で半分切れた札・字は、その位置では見ず、別の位置で全部見える。
+- **text-on-figure**: 参考のまま（意図した重ねがある）。
+
+#### 落ち着くのを待つ（settle）
+
+`settleApp`（text-layout の `settle` と同じ考え）。次の印が 4 フレーム続けて同じになるまで（最大 1 秒）待つ。印は `document.fonts`・全部の `img` の `complete`・ボタンの数と外接・`[data-fit]` の値・`[data-scroll-region]` の `scrollHeight`。有限のアニメーションは終わるまで待つ。サイズを変えたら待ち直す。待っても変わり続ける画面は、違反の detail の先頭に `unstable:` を付けて残す。
+
+#### 結果・途中の再開・環境変数
+
+- 結果はプロフィールごとに `.cache/app-layout/<プロフィール>.json`（画面を 1 つ終えるごとに書く）。同じ条件（プロフィール・状態・画面・サイズ・`src/app`・`src/parent`・`src/drawing`・`src/ui`・`src/styles`・`src/text`・`src/curriculum`・`src/illust` と、`e2e/helpers/app-layout*.ts`・`text-layout.ts` の更新時刻の最大）の結果があれば飛ばす。ソースを変えると、その後の実行では自動で作り直す。全部が終わると要約（`summary.md`・`report.json`）を作る（`npm run check:app-layout:summary` で要約だけ作り直す）。画像は、作り直す画面の分だけ消してから撮る。
+- 環境変数: `MNW_APP_PROFILES=p4,g*`（プロフィール。`*` が使える）・`MNW_APP_SCREENS=explore*,parent-*`（画面）・`MNW_FRESH=1`（途中の結果を使わず、はじめから）・`MNW_WORKERS`（既定 3）・`MNW_REUSE_SERVER=1`（起動済みの開発サーバーを使う）・`MNW_PORT`（既定 4298）・`MNW_SHOTS`（種類ごとの代表の画像の枚数。既定 8）。
+- 検査自体の確認: `npm run check:app-layout:probe`（`e2e/app-layout-probe.al.ts`。`page.setContent` の見本だけで、開発サーバーは起動しない）。わざと壊した見本で検出すること、普通の見本で何も出さないことを確かめる: 舞台の下に 4 段目の札がある格子（`screen-overflow`・`unreachable`。3 段なら出ない）、印の無いスクロールの一覧（`scroll-no-cue`。印があれば出ない。幼児で ▲▼ が無ければ `scroll-no-button`）、大人の範囲の 11px の字（13px は出ない）・34px のボタン（44px は出ない）、`aria-modal` の板の後ろのボタン（root が板なら covered にならない。板の中で重なった字は出る）、`.gate-key` 4.5u（出ない）、`data-fit-overflow`、画面全体のスクロールの枠の画面の外で重なった字（スクロールすると出る。端で半分切れた札は出ない）ほか。
+- 検出できないこと: 字形の中の重なり、色・コントラスト、Canvas に描いた文字（おえかきの紙の上）、実機の指での押しやすさ（実寸は実機で測る。5章）。保護者ゲートの長押しが途中で取り消される件（`onPointerLeave`）は、検査が 3 回まで押し直すので見えない（再現の条件を確かめて直す。text-layout-fixes「アプリの画面」4.）。
 
 ## 4. 手動確認（開発PC）
 

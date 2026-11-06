@@ -80,6 +80,11 @@
 | E-18 | 保護者画面: 未実施／むずかしそう／そうさに とまどった の表示が分かれる | PA-04, PA-09 |
 | E-19 | 更新時に旧タブが開いたまま: 旧タブで未読込のモードを開ける（直前の版のキャッシュ） | OF-05 |
 | E-20 | 配信スクリプト `deploy/zorin/serve.py`: 127.0.0.1 のみで待ち受け、MIME（.webmanifest .woff2 .mp3 .js）と Cache-Control、識別用の `/__manabi/health` | IN-03 |
+| E-21 | 自動更新（`e2e/update.spec.ts`。chromium だけ。`npm run e2e:update`。本物のビルド 2 つ・本物の serve.py・偽の GitHub。12 件）: 2.1.0 → 自動の確認 →「更新する」1 回 → 2.2.0（記録・教材パックが残る、変わらない音声の zip は取らない、書いたのは決めた場所だけ、ブラウザは配信以外へ通信しない）。音声の部品も変わる版・途中で切れたら続きから・sha256 違い・電源断のあと続きから・新しい serve.py が動かない・空き容量不足・ほかのオリジンのページ・ほかのページの枠（iframe）・許可外のホストへの転送・自動の確認のオフ・窓口の無い配信 | IN-06〜13, BC-03 |
+
+**更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:
+- Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストと道・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。
+- vitest: `scripts/release-lib.test.ts`（版の情報・zip・版の番号の確かめ）・`src/core/offline/updater.test.ts`・`src/parent/UpdateSection.test.tsx`・`src/app/ParentGate.test.tsx`・`src/core/framed.test.ts`。
 
 ### 3.1 自動のレイアウト検査（E-14）
 - 画面サイズは 1920×1080, 1536×864, 1280×720 に加え、ブラウザの UI 分だけ高さが減った 1920×950・1280×620 でも検査する
@@ -150,6 +155,8 @@
 npm run check        # 型・lint・format
 npm test             # 単体テスト
 npm run e2e          # E2E（Chromium・Firefox）
+npm run e2e:update   # 自動更新の通し（E-21。chromium だけ。約 5 分）
+npm run test:py      # 更新の仕組み・配信・導入スクリプトの Python の試験（Linux は test:py:sh）
 npm run check:audio  # 台本と音声ファイルの突き合わせ
 ```
 

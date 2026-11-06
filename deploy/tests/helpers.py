@@ -33,7 +33,8 @@ if ZORIN not in sys.path:
 from mnwupdate import common, install, manifest, service  # noqa: E402
 
 REPO_PATH = "/das0427/manabi-no-niwa/releases"
-MANIFEST_PATH = REPO_PATH + "/latest/download/manabi-no-niwa-update.json"
+MANIFEST_NAME = "manabi-no-niwa-update.json"
+MANIFEST_PATH = REPO_PATH + "/latest/download/" + MANIFEST_NAME
 IS_ROOT = hasattr(os, "geteuid") and os.geteuid() == 0
 not_root = unittest.skipIf(IS_ROOT, "root で動かすと更新の仕組みを止める（設計 2 章）")
 ISO = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z")
@@ -205,7 +206,9 @@ def app_files(version, g12="a", g34="a", marker=""):
                 "g3-kokugo": {"files": ["assets/packs/g3-kokugo/g3-kokugo.js", "audio/g3-kokugo/q1.mp3"]},
             }
         ).encode(),
+        "dist/icons/icon-192.png": b"png",
         "deploy/zorin/manabi.sh": b"#!/usr/bin/env bash\nexit 0\n",
+        "deploy/zorin/uninstall.sh": b"#!/usr/bin/env bash\nexit 0\n",
         "README.md": ("readme %s" % version).encode(),
     }
     main.update(_real_sources())
@@ -341,6 +344,12 @@ class FakeGitHub:
         self.corrupt = {}  # {名前: 残り回数}
         self.force_status = {}  # {パス: 状態}
         self.redirect_to = None  # 最初の転送先を差し替える（許可外のホスト）
+        self.redirect_status = 302  # 転送の状態（308 も試す）
+        self.tag_redirect = False  # 本物と同じく latest/download を releases/download/<tag>/ へ転送する
+        self.redirect_body_stall = False  # 最初の転送の応答に大きな Content-Length を付け、本文を送らずに止まる
+        self.trickle = {}  # {名前: (1 回に送るバイト数, 間の秒数)}: 少しずつ送る
+        self.bad_range = {}  # {名前: Content-Range の値}: 206 の Content-Range をこの値にする
+        self.content_length = {}  # {名前: Content-Length の値}: この値で送り、送り終えたら接続を切る
         self.log = []
         self.lock = threading.Lock()
         fake = self
@@ -394,20 +403,37 @@ class FakeGitHub:
             )
         if path in self.force_status:
             return self._reply(h, self.force_status[path])
+        if path == MANIFEST_PATH and self.tag_redirect and self.redirect_to is None:
+            target = "%s/download/%s/%s" % (REPO_PATH, self.tag, MANIFEST_NAME)
+            return self._reply(h, self.redirect_status, headers=[("Location", target)])
         if path == MANIFEST_PATH or path.startswith(REPO_PATH + "/download/"):
             name = "manifest" if path == MANIFEST_PATH else path.rsplit("/", 1)[1]
+            name = "manifest" if name == MANIFEST_NAME else name
             if name == "manifest" and self.manifest is None:
                 return self._reply(h, 404)
             target = self.redirect_to or "/hop1/" + name
-            return self._reply(h, 302, headers=[("Location", target)])
+            if self.redirect_body_stall:
+                return self._stalled_redirect(h, target)
+            return self._reply(h, self.redirect_status, headers=[("Location", target)])
         for number in range(1, self.hops + 1):
             if path.startswith("/hop%d/" % number):
                 name = path.rsplit("/", 1)[1]
                 nxt = "/hop%d/%s" % (number + 1, name) if number < self.hops else "/blob/" + name
-                return self._reply(h, 302, headers=[("Location", nxt)])
+                return self._reply(h, self.redirect_status, headers=[("Location", nxt)])
         if path.startswith("/blob/"):
             return self._blob(h, path.rsplit("/", 1)[1])
         self._reply(h, 404)
+
+    def _stalled_redirect(self, h, target):
+        """転送の応答: 本文が 50 MB あると言い、少しだけ送って止まる（本文を読む相手は待たされる）"""
+        h.send_response(self.redirect_status)
+        h.send_header("Location", target)
+        h.send_header("Content-Length", str(50 * 1024 * 1024))
+        h.end_headers()
+        h.wfile.write(b"x" * 1024)
+        h.wfile.flush()
+        time.sleep(8)
+        h.close_connection = True
 
     def _blob(self, h, name):
         body = self.manifest if name == "manifest" else self.blobs.get(name)
@@ -423,16 +449,36 @@ class FakeGitHub:
             if start >= len(body):
                 return self._reply(h, 416, headers=[("Content-Range", "bytes */%d" % len(body))])
             status = 206
+        if name in self.bad_range:
+            status = 206  # Range を付けない要求にも、おかしな Content-Range の 206 で答える
         chunk = body[start:]
         headers = []
         if status == 206:
-            headers.append(("Content-Range", "bytes %d-%d/%d" % (start, len(body) - 1, len(body))))
+            value = self.bad_range.get(name) or "bytes %d-%d/%d" % (start, len(body) - 1, len(body))
+            headers.append(("Content-Range", value))
         cut = self.cut_after.get(name)
         h.send_response(status)
         for key, value in headers:
             h.send_header(key, value)
-        h.send_header("Content-Length", str(len(chunk)))
+        length = self.content_length.get(name)
+        h.send_header("Content-Length", length if length is not None else str(len(chunk)))
         h.end_headers()
+        if length is not None:
+            h.wfile.write(chunk)
+            h.wfile.flush()
+            h.close_connection = True
+            return
+        if name in self.trickle:
+            piece, delay = self.trickle[name]
+            try:
+                for offset in range(0, len(chunk), piece):
+                    h.wfile.write(chunk[offset : offset + piece])
+                    h.wfile.flush()
+                    time.sleep(delay)
+            except OSError:
+                pass  # 相手が切った
+            h.close_connection = True
+            return
         if cut and cut[1] > 0:
             cut[1] -= 1
             h.wfile.write(chunk[: cut[0]])

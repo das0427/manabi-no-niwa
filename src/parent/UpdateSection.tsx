@@ -20,6 +20,10 @@ import { formatBytes, formatDateTime } from './util';
 const GIB = 1024 * 1024 * 1024;
 const SERVER_WORKING = ['downloading', 'extracting', 'testing', 'switching', 'restarting'];
 const ACTIVE_FLOWS = ['server', 'waiting-server', 'sw', 'reloading', 'packs'];
+/** 入れ替えも元に戻すこともできなかった（app が無い）。このときは「いまの版はそのまま使えます」と言わない */
+const SWITCH_BROKEN = 'switch-broken';
+const SWITCH_BROKEN_NEXT =
+  '「もう一度ためす」を押すと、前の版に戻してから入れ直します。直らないときは、README の「新しい版に更新するとき」の手順で入れ直してください（学習の記録は消えません）。';
 
 /** 大きさ（1 GB 未満は MB・KB、それ以上は GB） */
 function sizeText(n: number): string {
@@ -69,6 +73,8 @@ export function updateReasonText(code: string, shortBytes?: number): string {
     case 'self-test':
     case 'switch-failed':
       return '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。';
+    case 'switch-broken':
+      return 'アプリのファイルの切り替えで問題が起き、元に戻せませんでした。';
     case 'interrupted':
       return '前回の更新が途中で止まりました。もう一度押すと続きから始めます。';
     case 'version-changed':
@@ -352,7 +358,11 @@ export function UpdateSection() {
               {failure.detail}
             </p>
           ) : null}
-          <p>いまの版はそのまま使えます</p>
+          {failure.code === SWITCH_BROKEN ? (
+            <p data-testid="update-error-next">{SWITCH_BROKEN_NEXT}</p>
+          ) : (
+            <p>いまの版はそのまま使えます</p>
+          )}
         </div>
       ) : null}
 

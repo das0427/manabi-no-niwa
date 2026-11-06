@@ -12,6 +12,7 @@ import {
   audioGroupOf,
   audioPackIdOf,
   buildManifest,
+  checkReleaseVersion,
   compareVersions,
   computeContentId,
   crc32,
@@ -158,6 +159,44 @@ function manifestInput(over: Record<string, unknown> = {}) {
 }
 
 // ---------------------------------------------------------------- 定数・版・名前
+
+describe('checkReleaseVersion（版の番号の誤りを、出す前に止める）', () => {
+  const tags = ['v1.0.0', 'v2.0.0-beta.1', 'v2.0.0', 'v2.0.1', 'v2.0.2'];
+
+  it('次の版（パッチ・マイナー・メジャーを 1 つ上げる）は通る', () => {
+    for (const v of ['2.0.3', '2.0.9', '2.1.0', '3.0.0', '3.0.1']) {
+      expect(checkReleaseVersion(v, tags), v).toBeNull();
+    }
+    expect(checkReleaseVersion('2.1.0', [])).toBeNull(); // タグが無い（git が無い）ときは比べない
+  });
+
+  it('同じ版のタグがあるなら止める（まだ公開していないタグなら指定で許す）', () => {
+    expect(checkReleaseVersion('2.0.2', tags)).toContain('タグ v2.0.2 はもうあります');
+    expect(checkReleaseVersion('2.0.2', tags, { allowExistingTag: true })).toBeNull();
+    expect(
+      checkReleaseVersion('2.1.0', [...tags, 'v2.1.0'], { allowExistingTag: true }),
+    ).toBeNull();
+  });
+
+  it('これまでのいちばん新しい版より古ければ止める', () => {
+    expect(checkReleaseVersion('2.0.1', ['v2.0.2'], { allowExistingTag: true })).toContain(
+      'より古い',
+    );
+    expect(checkReleaseVersion('1.9.0', tags)).toContain('より古い');
+    expect(checkReleaseVersion('2.0.10', ['v2.0.9'])).toBeNull(); // 数として比べる
+  });
+
+  it('大きく飛ぶ版（打ち間違いの疑い）は止める。わざとなら指定で許す', () => {
+    for (const v of ['2.2.0', '4.0.0', '21.0.0', '3.1.0', '2.10.0']) {
+      expect(checkReleaseVersion(v, tags), v).toContain('大きく飛んで');
+      expect(checkReleaseVersion(v, tags, { allowJump: true }), v).toBeNull();
+    }
+  });
+
+  it('形が X.Y.Z でなければ止める', () => {
+    expect(checkReleaseVersion('2.1', tags)).toContain('X.Y.Z');
+  });
+});
 
 describe('定数と名前', () => {
   it('置き場・版の情報の名前・自動で更新できる最も古い版', () => {

@@ -73,6 +73,42 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/**
+ * 出す版の番号を、これまでのタグ（`git tag` の `vX.Y.Z`。先行版の印つきは見ない）と比べる。
+ * 自動の更新は「今より新しい版」しか入れないので、版の番号を誤って出すと、あとから正しい番号の版を出しても
+ * 家に届かない。それを npm run package の段で止める。問題があればその説明、無ければ null。
+ * - 同じ版のタグがある → すでにその版を入れた家には、直した版が届かない（opts.allowExistingTag で許す。まだ公開していないタグのとき）
+ * - これまでのいちばん新しい版より新しくない → 届かない
+ * - メジャーが 2 以上、またはマイナーが 2 以上飛ぶ（2.0.2 → 2.2.0・4.0.0・21.0.0 など。メジャーを上げるときは X.0.Z）
+ *   → 打ち間違いの疑い（opts.allowJump で許す）
+ */
+export function checkReleaseVersion(
+  version: string,
+  tags: readonly string[],
+  opts: { allowJump?: boolean; allowExistingTag?: boolean } = {},
+): string | null {
+  if (!isVersion(version)) return `版の形が X.Y.Z ではありません: ${version}`;
+  const released = tags
+    .map((t) => /^v(\d{1,4}\.\d{1,4}\.\d{1,6})$/.exec(t.trim())?.[1])
+    .filter((v): v is string => v !== undefined);
+  if (released.includes(version) && !opts.allowExistingTag) {
+    return `タグ v${version} はもうあります。公開した版と同じ番号では、その版を入れた家に届きません。版の番号を上げてください（まだ公開していないタグなら --allow-existing-tag）。`;
+  }
+  const others = released.filter((v) => v !== version).sort(compareVersions);
+  const latest = others.at(-1);
+  if (latest === undefined) return null;
+  if (compareVersions(version, latest) < 0) {
+    return `版 ${version} は、これまでのいちばん新しい版 ${latest} より古いです。自動の更新では届きません（前の中身に戻したいときは、その中身で版の番号を上げて出してください）。`;
+  }
+  const [M, m] = latest.split('.').map(Number) as [number, number];
+  const [M2, m2] = version.split('.').map(Number) as [number, number];
+  const jump = M2 > M + 1 || (M2 === M + 1 && m2 !== 0) || (M2 === M && m2 > m + 1);
+  if (jump && !opts.allowJump) {
+    return `版 ${version} は、これまでのいちばん新しい版 ${latest} から大きく飛んでいます。打ち間違いなら直してください。一度出すと、それより小さい番号の版は自動の更新で届かなくなります（わざとなら --allow-jump）。`;
+  }
+  return null;
+}
+
 /** zip の名前。main は manabi-no-niwa-<版>.zip、ほかは manabi-no-niwa-<版>-<種類>.zip */
 export function zipNameFor(version: string, kind: string): string {
   return kind === MAIN_KIND ? `${TOP}-${version}.zip` : `${TOP}-${version}-${kind}.zip`;

@@ -14,19 +14,22 @@ import time
 import uuid
 import zipfile
 
-from .common import Cancelled, UpdateError, read_json_file, remove_tree, strict_loads
+from .common import Cancelled, UpdateError, os_error_text, read_json_file, remove_tree, strict_loads
 from .manifest import is_safe_rel_path, parse_part_mark
 
 PREFIX = "manabi-no-niwa/"
 SLACK_BYTES = 64 * 1024
 MAX_MARK_BYTES = 1 << 16
 SELF_TEST_TIMEOUT = 60
+# 版をまたいで変えない約束のパス（.desktop・systemd の単位・install.sh の案内が指す。設計 2 章）も含める
 REQUIRED_FILES = (
     "dist/index.html",
     "dist/sw.js",
     "dist/version.json",
+    "dist/icons/icon-192.png",
     "deploy/zorin/serve.py",
     "deploy/zorin/manabi.sh",
+    "deploy/zorin/uninstall.sh",
     "deploy/zorin/mnwupdate/__init__.py",
     "parts/main.json",
 )
@@ -80,6 +83,15 @@ def check_link_support(folder):
 
 def _unsafe(detail):
     return UpdateError("unsafe-zip", detail)
+
+
+def _brief(exc):
+    """失敗の短い説明（OSError はパスを出さない）"""
+    if isinstance(exc, OSError):
+        return os_error_text(exc)
+    if isinstance(exc, UpdateError):
+        return exc.detail
+    return "%s: %s" % (type(exc).__name__, exc)
 
 
 def _check_name(name):
@@ -193,7 +205,7 @@ def extract_zip(zf, entries, app_next, cancel, progress=None):
     except (zipfile.BadZipFile, NotImplementedError, RuntimeError, EOFError) as e:
         raise _unsafe("%s: %s" % (type(e).__name__, e)) from e
     except (FileExistsError, NotADirectoryError, IsADirectoryError) as e:
-        raise UpdateError("content-check", "overlap or path conflict: %s" % e) from e
+        raise UpdateError("content-check", "overlap or path conflict: %s: %s" % (rel, _brief(e))) from e
     return written_total
 
 
@@ -289,7 +301,7 @@ def verify_tree(root, manifest=None):
     try:
         main = parse_part_mark(read_json_file(os.path.join(root, "parts", "main.json"), 1 << 16))
     except (OSError, ValueError, UpdateError) as e:
-        raise UpdateError("content-check", "parts/main.json: %s" % e) from None
+        raise UpdateError("content-check", "parts/main.json: %s" % _brief(e)) from None
     if main.kind != "main":
         raise UpdateError("content-check", "parts/main.json is not main")
     if manifest is not None:
@@ -302,7 +314,7 @@ def verify_tree(root, manifest=None):
                     part.kind,
                 )
             except (OSError, ValueError, UpdateError) as e:
-                raise UpdateError("content-check", "parts/%s.json: %s" % (part.kind, e)) from None
+                raise UpdateError("content-check", "parts/%s.json: %s" % (part.kind, _brief(e))) from None
             if mark.content_id != part.content_id:
                 raise UpdateError("content-check", "contentId of %s" % part.kind)
     dist = os.path.join(root, "dist")
@@ -322,7 +334,7 @@ def _check_packs(dist):
     try:
         packs = read_json_file(path, 64 << 20)
     except (OSError, ValueError) as e:
-        raise UpdateError("content-check", "packs.json: %s" % e) from None
+        raise UpdateError("content-check", "packs.json: %s" % _brief(e)) from None
     if not isinstance(packs, dict):
         raise UpdateError("content-check", "packs.json")
     if isinstance(packs.get("packs"), dict):  # scripts/package-release.ts は {packs: {…}} の形も読む
@@ -338,12 +350,30 @@ def _check_packs(dist):
                 raise UpdateError("content-check", "pack %s: missing %s" % (pack_id, rel))
 
 
-def run_self_test(app_next):
-    """新しい serve.py を別のプロセスで --self-test する（0 が成功）"""
+def self_test_args(argv):
+    """再起動で渡す引数（serve.py の sys.argv[1:]）から、自己検査に渡す分。--dir は除く
+    （自己検査は自分の置き場の dist を見る。--dir を渡すと今の版の dist を見てしまうため）"""
+    out, skip = [], False
+    for arg in argv or ():
+        if skip:
+            skip = False
+            continue
+        if arg == "--dir":
+            skip = True
+            continue
+        if arg.startswith("--dir="):
+            continue
+        out.append(arg)
+    return out
+
+
+def run_self_test(app_next, argv=()):
+    """新しい serve.py を別のプロセスで --self-test する（0 が成功）。
+    再起動で渡すのと同じ引数も付ける（新しい版で引数の名前が変わって起動できない、を入れ替えの前に見つける）"""
     script = os.path.join(app_next, "deploy", "zorin", "serve.py")
     try:
         done = subprocess.run(
-            [sys.executable, "-B", script, "--self-test"],
+            [sys.executable, "-B", script] + self_test_args(argv) + ["--self-test"],
             stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -352,7 +382,7 @@ def run_self_test(app_next):
     except subprocess.TimeoutExpired:
         raise UpdateError("self-test", "timeout") from None
     except OSError as e:
-        raise UpdateError("self-test", "cannot run: %s" % e) from None
+        raise UpdateError("self-test", "cannot run: %s" % _brief(e)) from None
     if done.returncode != 0:
         tail = done.stdout.decode("utf-8", "replace").strip().splitlines()[-3:]
         raise UpdateError("self-test", "exit %d: %s" % (done.returncode, " / ".join(tail)))
@@ -385,15 +415,34 @@ def _rename_retry(src, dst):
             _sleep(0.5)
 
 
+def recover_app(layout):
+    """app が無く app.prev だけがある（前の入れ替えで元に戻せなかった）なら、app.prev を app に戻す。
+    戻せなければ switch-broken（app.prev は消さない。唯一残っている版のため）"""
+    if os.path.isdir(layout.app) or not os.path.isdir(layout.app_prev):
+        return
+    try:
+        _rename_retry(layout.app_prev, layout.app)
+    except OSError as e:
+        raise UpdateError("switch-broken", "app is missing and app.prev cannot be restored: %s" % _errno_name(e)) from None
+
+
+def _errno_name(exc):
+    return os_error_text(exc)
+
+
 def swap_in(layout):
-    """app と app.next を入れ替える。前の版は app.prev。失敗したら元に戻して switch-failed"""
+    """app と app.next を入れ替える。前の版は app.prev。失敗したら元に戻して switch-failed。
+    元に戻すこともできず app が無くなったときは switch-broken（そのとき app.next・app.prev は消さない）"""
+    recover_app(layout)
+    if not os.path.isdir(layout.app):
+        raise UpdateError("switch-broken", "app is missing")
     remove_tree(layout.app_prev)
     if sys.platform.startswith("linux"):
         try:
             _renameat2_exchange(layout.app_next, layout.app)
         except (AttributeError, OSError) as e:
             if isinstance(e, OSError) and e.errno not in (errno.EINVAL, errno.ENOSYS):
-                raise UpdateError("switch-failed", "renameat2: %s" % e) from None
+                raise UpdateError("switch-failed", "renameat2: %s" % _brief(e)) from None
         else:
             try:
                 os.rename(layout.app_next, layout.app_prev)
@@ -403,15 +452,17 @@ def swap_in(layout):
     try:
         _rename_retry(layout.app, layout.app_prev)
     except OSError as e:
-        raise UpdateError("switch-failed", "app -> app.prev: %s" % e) from None
+        raise UpdateError("switch-failed", "app -> app.prev: %s" % _errno_name(e)) from None
     try:
         _rename_retry(layout.app_next, layout.app)
     except OSError as e:
         try:
             _rename_retry(layout.app_prev, layout.app)
         except OSError as e2:
-            raise UpdateError("switch-failed", "rollback failed: %s / %s" % (e, e2)) from None
-        raise UpdateError("switch-failed", "app.next -> app: %s" % e) from None
+            raise UpdateError(
+                "switch-broken", "app.next -> app: %s / rollback: %s" % (_errno_name(e), _errno_name(e2))
+            ) from None
+        raise UpdateError("switch-failed", "app.next -> app: %s" % _errno_name(e)) from None
 
 
 # ---- 取得フォルダの片付け ---------------------------------------------------------

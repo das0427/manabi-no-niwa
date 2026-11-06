@@ -15,7 +15,7 @@ import zipfile
 from unittest import mock
 
 from helpers import Release, SandboxCase, install_app, tree
-from mnwupdate import install, manifest
+from mnwupdate import common, install, manifest
 from mnwupdate.common import Cancelled, Layout, UpdateError
 
 PREFIX = "manabi-no-niwa/"
@@ -284,6 +284,9 @@ class CopyAndVerifyTest(SandboxCase):
         parsed = manifest.parse_manifest(new.manifest_bytes)
         install.verify_tree(app)
         install.verify_tree(app, parsed)
+        # .desktop のアイコンと、install.sh が案内する取り消しのスクリプトも（版をまたいで変えない約束のパス）
+        self.assertIn("dist/icons/icon-192.png", install.REQUIRED_FILES)
+        self.assertIn("deploy/zorin/uninstall.sh", install.REQUIRED_FILES)
         for rel in install.REQUIRED_FILES:
             with self.subTest("missing " + rel):
                 path = os.path.join(app, *rel.split("/"))
@@ -381,6 +384,18 @@ class CopyAndVerifyTest(SandboxCase):
                 install.run_self_test(self.next)
         self.assertIn("timeout", caught.exception.detail)
 
+    def test_self_test_gets_the_restart_arguments_without_dir(self):
+        # 再起動で渡す引数をそのまま付ける（新しい版が知らない引数なら、入れ替えの前に止まる）。--dir は除く
+        script = os.path.join(self.next, "deploy", "zorin", "serve.py")
+        os.makedirs(os.path.dirname(script))
+        with open(script, "w") as f:
+            f.write("import sys\nsys.stderr.write(repr(sys.argv[1:]))\nsys.exit(1)\n")
+        with self.assertRaises(UpdateError) as caught:
+            install.run_self_test(self.next, ["--port", "4801", "--dir", "/x/dist", "--dir=/y"])
+        self.assertIn("['--port', '4801', '--self-test']", caught.exception.detail)
+        self.assertEqual(install.self_test_args(None), [])
+        self.assertEqual(install.self_test_args(["--dir"]), [])
+
 
 class SpaceAndSwapTest(SandboxCase):
     def test_check_space(self):
@@ -469,6 +484,49 @@ class SpaceAndSwapTest(SandboxCase):
         install.swap_in(layout)
         self.assertEqual((self.read("app"), self.read("app.prev")), ("new", "old"))
         self.assertFalse(os.path.exists(layout.app_next))
+
+    def test_failed_rollback_is_switch_broken_and_keeps_both_versions(self):
+        # 2 つ目の名前の変更も、元に戻すのも失敗した: どちらの版も消さない（画面は「元の版のまま」と言わない）
+        layout = self.make_dirs()
+        real = os.rename
+
+        def rename(src, dst):
+            if os.path.basename(src) in ("app.next", "app.prev"):
+                raise OSError(errno.EACCES, "denied", src)
+            return real(src, dst)
+
+        with mock.patch.object(install, "_sleep"), mock.patch.object(os, "rename", rename):
+            with self.assertRaises(UpdateError) as caught:
+                self.swap_without_renameat2(layout)
+        self.assertEqual(caught.exception.code, "switch-broken")
+        self.assertNotIn(self.tmp, caught.exception.detail)
+        self.assertFalse(os.path.exists(layout.app))
+        self.assertEqual((self.read("app.prev"), self.read("app.next")), ("old", "new"))
+        # 次の入れ替えは、まず前の版を app に戻してから行う（残っていた唯一の版を消さない）
+        self.swap_without_renameat2(layout)
+        self.assertEqual((self.read("app"), self.read("app.prev")), ("new", "old"))
+
+    def test_recover_app(self):
+        layout = self.make_dirs()
+        os.rename(layout.app, layout.app_prev)
+        with mock.patch.object(install, "_sleep"), mock.patch.object(os, "rename", side_effect=OSError(errno.EACCES, "denied")):
+            with self.assertRaises(UpdateError) as caught:
+                install.recover_app(layout)
+        self.assertEqual(caught.exception.code, "switch-broken")
+        self.assertEqual(self.read("app.prev"), "old")  # 消さない
+        install.recover_app(layout)
+        self.assertEqual(self.read("app"), "old")
+        self.assertFalse(os.path.exists(layout.app_prev))
+        install.recover_app(layout)  # app があれば何もしない
+        self.assertEqual(self.read("app"), "old")
+
+    def test_swap_without_any_app_is_switch_broken(self):
+        layout = self.make_dirs()
+        common.remove_tree(layout.app)
+        with self.assertRaises(UpdateError) as caught:
+            self.swap_without_renameat2(layout)
+        self.assertEqual(caught.exception.code, "switch-broken")
+        self.assertEqual(self.read("app.next"), "new")
 
     def test_prune_downloads(self):
         folder = os.path.join(self.base, "update", "downloads")

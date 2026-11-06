@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+import errno
 import json
 import os
 import re
@@ -14,6 +15,7 @@ APP_NAME = "manabi-no-niwa"
 SCHEMA = 1
 VERSION_PATTERN = r"[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,6}"
 TEST_ORIGIN_ENV = "MANABI_UPDATE_TEST_ORIGIN"
+PRODUCTION_PORT = 8765  # 本番の待ち受け。この port では試験用の取得先を受け付けない
 _TEST_ORIGIN_RE = re.compile(r"http://127\.0\.0\.1:([0-9]{1,5})")
 _VERSION_RE = re.compile(VERSION_PATTERN)
 
@@ -36,6 +38,14 @@ class UpdateError(Exception):
 
 class Cancelled(Exception):
     """保護者が中止を押した"""
+
+
+def os_error_text(exc):
+    """OSError を「errno の名前: 説明」にする（ファイルのパス・利用者の名前を画面や状態に出さない）"""
+    code = getattr(exc, "errno", None)
+    name = errno.errorcode.get(code, type(exc).__name__) if isinstance(code, int) else type(exc).__name__
+    reason = getattr(exc, "strerror", None) or type(exc).__name__
+    return "%s: %s" % (name, reason)
 
 
 # ---- 時刻 -------------------------------------------------------------------
@@ -196,8 +206,10 @@ def read_main_version(app):
     return version if parse_version(version) else None
 
 
-def detect_layout(serve_py, directory, dir_given, env=None):
-    """更新の仕組みが動く条件（設計 5.1 節）。-> (Layout, None) か (None, 理由)"""
+def detect_layout(serve_py, directory, dir_given, env=None, port=None):
+    """更新の仕組みが動く条件（設計 5.1 節）。-> (Layout, None) か (None, 理由)。
+    port が本番（8765）のときは、試験用の取得先（MANABI_UPDATE_TEST_ORIGIN）を受け付けない（bad-test-origin。
+    環境に残っていても、同じパソコンのほかの利用者の偽の配布元へ向かないように）"""
     env = os.environ if env is None else env
     path = os.path.abspath(serve_py)
     here = os.path.dirname(path)
@@ -216,8 +228,10 @@ def detect_layout(serve_py, directory, dir_given, env=None):
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         return None, "root"
     try:
-        override_origin_from_env(env)
+        origin = override_origin_from_env(env)
     except ValueError:
+        return None, "bad-test-origin"
+    if origin and port == PRODUCTION_PORT:
         return None, "bad-test-origin"
     return Layout(app, config_file_path(env)), None
 

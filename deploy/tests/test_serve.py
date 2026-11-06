@@ -178,7 +178,47 @@ class ReasonsTest(ServeCase):
     @not_root
     def test_bad_test_origin_stops_the_updater_but_not_the_serving(self):
         err = self.assert_reason("bad-test-origin", env={"MANABI_UPDATE_TEST_ORIGIN": "http://localhost:4801"})
-        self.assertEqual(self.stderr_of(err), "")
+        lines = [x for x in self.stderr_of(err).splitlines() if x.strip()]
+        self.assertEqual(len(lines), 1)
+        self.assertIn("MANABI_UPDATE_TEST_ORIGIN", lines[0])
+
+    @not_root
+    def test_test_origin_is_refused_on_the_production_port(self):
+        # 本番の 8765 では、試験用の取得先が環境に残っていても使わない（8765 は試験で使わないので、判定だけを試す）
+        dist = os.path.join(self.app, "dist")
+        env = {"MANABI_UPDATE_TEST_ORIGIN": "http://127.0.0.1:4801"}
+        self.assertEqual(common.detect_layout(self.script, dist, False, env, port=8765), (None, "bad-test-origin"))
+        self.assertIsNotNone(common.detect_layout(self.script, dist, False, env, port=4901)[0])
+        self.assertIsNotNone(common.detect_layout(self.script, dist, False, {}, port=8765)[0])
+
+    @not_root
+    def test_test_origin_is_announced_and_shown_in_the_status(self):
+        port, _proc, err = self.start(self.script, env={"MANABI_UPDATE_TEST_ORIGIN": "http://127.0.0.1:4801"})
+        status, body = self.update_status(port)
+        self.assertEqual((status, body["supported"], body["testOrigin"]), (200, True, True))
+        self.assertIn("http://127.0.0.1:4801", self.stderr_of(err))
+
+    @not_root
+    def test_a_second_server_of_the_same_place_does_not_use_the_updater(self):
+        # 鍵（flock）は Linux だけなので、偽の fcntl で 2 つの配信の始まりを試す
+        from test_service import FakeFcntl
+        from mnwupdate import service
+
+        args = types.SimpleNamespace(dir=None, port=4901)
+        dist = os.path.join(self.app, "dist")
+        server = types.SimpleNamespace(shutdown=mock.Mock())
+        closed = {"MANABI_UPDATE_TEST_ORIGIN": "http://127.0.0.1:9"}  # 外へは決してつながない
+        with mock.patch.object(serve, "__file__", self.script), mock.patch.object(service, "fcntl", FakeFcntl()), mock.patch.dict(os.environ, closed):
+            err = io.StringIO()
+            with mock.patch.object(sys, "stderr", err):
+                first, reason = serve.start_updater(server, args, dist, ["--port", "4901"])
+                self.assertIsNotNone(first, err.getvalue())
+                self.addCleanup(first.stop)
+                self.addCleanup(os.close, first._process_lock_fd)
+                self.assertEqual(first.restart_args, ["--port", "4901"])
+                second, reason = serve.start_updater(server, args, dist, ["--port", "4902"])
+        self.assertEqual((second, reason), (None, "another-server"))
+        self.assertIn("同じ置き場の配信", err.getvalue())
 
     def test_updater_that_cannot_be_imported_does_not_stop_serving(self):
         with open(os.path.join(self.app, "deploy", "zorin", "mnwupdate", "__init__.py"), "w") as f:
@@ -233,6 +273,39 @@ class ReasonsTest(ServeCase):
         layout = common.detect_layout(self.script, dist, False, env)[0]
         self.assertEqual(layout.base, self.base)
         self.assertEqual(layout.config_file, os.path.join(self.config, "manabi-no-niwa", "updater.json"))
+
+
+class FrameHeadersTest(ServeCase):
+    """ほかのサイトの枠（iframe）に入れさせない見出しを、どの応答にも付ける（クリックジャッキング）"""
+
+    @not_root
+    def test_every_response_refuses_to_be_framed(self):
+        port, _proc, _err = self.start(self.script)
+        host = "127.0.0.1:%d" % port
+        token = self.update_status(port)[1]["token"]
+        requests = [
+            ("GET", "/", None, {}),
+            ("GET", "/sw.js", None, {}),
+            ("GET", "/__manabi/health", None, {}),
+            ("GET", "/__manabi/update/status", None, {}),
+            ("GET", "/nothing-here", None, {}),
+            ("POST", "/__manabi/update/check", "{}", {"Origin": "http://evil.example", "Content-Type": "application/json"}),
+            (
+                "POST",
+                "/__manabi/update/settings",
+                '{"autoCheck": true}',
+                {"Origin": "http://" + host, "Content-Type": "application/json", "X-Manabi-Token": token},
+            ),
+            ("OPTIONS", "/__manabi/update/status", None, {}),
+        ]
+        for method, path, body, headers in requests:
+            with self.subTest(method + " " + path):
+                status, got, _ = http_call(port, method, path, headers, body, host=host)
+                names = {k.lower(): v for k, v in got}
+                self.assertEqual(names.get("x-frame-options"), "DENY", status)
+                self.assertEqual(names.get("content-security-policy"), "frame-ancestors 'none'", status)
+                self.assertEqual(names.get("cross-origin-opener-policy"), "same-origin", status)
+                self.assertNotIn("access-control-allow-origin", names)
 
 
 class RestartTest(unittest.TestCase):

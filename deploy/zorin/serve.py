@@ -140,6 +140,11 @@ class Handler(SimpleHTTPRequestHandler):
         if not getattr(self, "_nosniff_sent", False):
             self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
+        # ほかのサイトの枠（iframe）に入れさせない（クリックジャッキングで「更新する」などを押させない）。
+        # index.html の CSP は meta なので frame-ancestors が効かず、見出しで送る（ほかの決まりは meta のまま）
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
         super().end_headers()
 
     def send_head(self):
@@ -376,19 +381,28 @@ def check_update():
 # ---- 更新の仕組みの起動と、再起動 --------------------------------------------
 
 
-def start_updater(server, args, directory):
-    """-> (UpdateService か None, 動かない理由か None)"""
+def start_updater(server, args, directory, argv=()):
+    """-> (UpdateService か None, 動かない理由か None)。argv は再起動で渡す引数（自己検査にも使う）"""
     if IMPORT_ERROR is not None:
         sys.stderr.write("[更新] 更新の仕組みを読み込めませんでした: %s\n" % IMPORT_ERROR)
         return None, "updater-error"
     try:
         layout, reason = common.detect_layout(
-            os.path.abspath(__file__), directory, args.dir is not None
+            os.path.abspath(__file__), directory, args.dir is not None, port=args.port
         )
         if layout is None:
+            if reason == "bad-test-origin":
+                sys.stderr.write("[更新] MANABI_UPDATE_TEST_ORIGIN（試験用）があるため、更新の仕組みを止めました\n")
             return None, reason
-        updater = service_mod.UpdateService(layout, fetch.Fetcher(fetch.endpoint_from_env()))
+        endpoint = fetch.endpoint_from_env()
+        updater = service_mod.UpdateService(layout, fetch.Fetcher(endpoint))
+        if not updater.acquire_process_lock():
+            sys.stderr.write("[更新] 同じ置き場の配信がほかに動いているため、更新の仕組みを使いません\n")
+            return None, "another-server"
+        if endpoint.test:
+            sys.stderr.write("[更新] 試験用の取得先 %s を使います（GitHub にはつなぎません）\n" % endpoint.origin)
         updater.shutdown_callback = server.shutdown
+        updater.restart_args = list(argv)
         updater.start()
         return updater, None
     except Exception as e:  # noqa: BLE001
@@ -466,7 +480,8 @@ def main(argv=None):
         return EXIT_PORT_IN_USE
 
     # ポートを取れてから始める（取れなかった側が、動いている側の作業用フォルダを片付けないように）
-    updater, reason = start_updater(server, args, directory)
+    restart_argv = sys.argv[1:] if argv is None else list(argv)
+    updater, reason = start_updater(server, args, directory, restart_argv)
     server.update_service = updater
     server.update_reason = reason
 
@@ -489,7 +504,7 @@ def main(argv=None):
         if updater is not None:
             updater.stop()
     if updater is not None and updater.restart_event.is_set() and not interrupted:
-        return restart_process(updater.layout, sys.argv[1:] if argv is None else argv)
+        return restart_process(updater.layout, restart_argv)
     return 0
 
 

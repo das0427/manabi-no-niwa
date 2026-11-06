@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """状態・設定・予定・起動時の片付け・apply の受け付けと各段・中止（設計 5.2・5.3・5.5・5.11・5.12 節）"""
+import errno
 import json
 import os
 import threading
@@ -7,7 +8,7 @@ import unittest
 from unittest import mock
 
 from helpers import ISO, Release, ServiceCase, install_app, tree
-from mnwupdate import common, install
+from mnwupdate import common, fetch, install, service
 from mnwupdate.common import Cancelled, UpdateError
 
 class StatusAndSettingsTest(ServiceCase):
@@ -16,8 +17,9 @@ class StatusAndSettingsTest(ServiceCase):
         json.dumps(status)
         self.assertEqual(
             set(status),
-            {"schema", "supported", "reason", "token", "server", "current", "settings", "disk", "check", "latest", "update", "lastApplied"},
+            {"schema", "supported", "reason", "token", "server", "testOrigin", "current", "settings", "disk", "check", "latest", "update", "lastApplied"},
         )
+        self.assertIs(status["testOrigin"], False)
         self.assertEqual((status["schema"], status["supported"], status["reason"]), (1, True, None))
         self.assertRegex(status["token"], r"^[0-9a-f]{32}$")
         self.assertEqual(status["server"]["pid"], os.getpid())
@@ -506,6 +508,15 @@ class StartupCleanupTest(ServiceCase):
                 self.assertFalse(os.path.exists(layout.app_next))
                 self.assertEqual(sorted(os.listdir(layout.downloads)), ["a.zip", "b.zip.part"])  # 続きから使える
 
+    def test_stopped_before_recording_the_switch_but_already_switched_is_done(self):
+        # 入れ替えは済んでいるのに、段の記録（switching・restarting）を書けなかった
+        for phase in ("downloading", "extracting", "testing"):
+            with self.subTest(phase):
+                svc, layout = self.prepare(phase, installed="2.2.0")
+                status = svc.status()
+                self.assertEqual(status["update"]["phase"], "done")
+                self.assertEqual(status["lastApplied"]["version"], "2.2.0")
+
     def test_other_phases_stay_and_leftovers_go(self):
         for phase in ("idle", "done", "failed", "cancelled"):
             with self.subTest(phase):
@@ -561,6 +572,179 @@ class ResumeTest(StartupCleanupTest):
         svc.request_check()
         svc.join(10)
         self.assertEqual(svc.status()["update"]["phase"], "failed")
+
+
+class FakeFcntl:
+    """鍵のファイル 1 つだけの flock の代わり（Windows でも鍵の動きを試すため）"""
+
+    LOCK_EX, LOCK_NB, LOCK_UN = 2, 4, 8
+
+    def __init__(self):
+        self.holder = None
+        self.calls = 0
+
+    def flock(self, fd, operation):
+        self.calls += 1
+        if operation & self.LOCK_UN:
+            if self.holder == fd:
+                self.holder = None
+            return
+        if self.holder not in (None, fd):
+            raise BlockingIOError(errno.EAGAIN, "locked")
+        self.holder = fd
+
+
+class HardeningTest(ServiceCase):
+    """点検（攻撃の目）で見つかったことの直し"""
+
+    def test_status_says_whether_the_test_origin_is_used(self):
+        svc = self.make()
+        self.assertIs(svc.status()["testOrigin"], False)
+        svc.fetcher = fetch.Fetcher(fetch.Endpoint("http://127.0.0.1:4801", True))
+        self.assertIs(svc.status()["testOrigin"], True)
+        svc.fetcher = fetch.Fetcher(fetch.Endpoint(fetch.GITHUB_ORIGIN))
+        self.assertIs(svc.status()["testOrigin"], False)
+
+    def test_process_lock_keeps_a_second_server_out(self):
+        fake = FakeFcntl()
+        with mock.patch.object(service, "fcntl", fake):
+            first, second = self.make(), self.make()
+            self.assertTrue(first.acquire_process_lock())
+            self.addCleanup(os.close, first._process_lock_fd)
+            self.assertFalse(second.acquire_process_lock())
+            self.assertIsNone(second._process_lock_fd)
+            calls = fake.calls
+            self.assertIsNone(first._take_lock())  # 持っている鍵で足りる（同じプロセスで二重に取らない）
+            self.assertEqual(fake.calls, calls)
+            self.checked(first)
+            status = self.apply(first)
+            self.assertEqual(status["update"]["phase"], "restarting", status["update"])
+
+    def test_cancel_accepted_at_the_end_of_extracting_installs_nothing(self):
+        svc = self.checked()
+        real = install.assemble
+
+        def assemble_then_cancel(*args, **kwargs):
+            real(*args, **kwargs)
+            svc.request_cancel()  # 段が extracting のうちに受け付けられる
+
+        with mock.patch.object(install, "assemble", assemble_then_cancel):
+            with mock.patch.object(install, "run_self_test") as self_test:
+                svc.request_apply("2.2.0")
+                svc.join(60)
+        self.assertEqual(svc.status()["update"]["phase"], "cancelled")
+        self_test.assert_not_called()
+        self.assertFalse(svc.restart_event.is_set())
+        self.assertFalse(os.path.exists(self.layout().app_next))
+        with open(os.path.join(self.app, "dist", "index.html"), "rb") as f:
+            self.assertIn(b"2.1.0", f.read())
+
+    def test_switching_that_cannot_be_recorded_does_not_switch(self):
+        svc = self.checked()
+        real = common.write_json_atomic
+
+        def full_at_switching(path, value, fsync=False):
+            if isinstance(value, dict) and value.get("phase") == "switching":
+                raise OSError(errno.ENOSPC, "No space left on device", path)
+            return real(path, value, fsync=fsync)
+
+        with mock.patch.object(service, "write_json_atomic", full_at_switching):
+            with mock.patch.object(install, "swap_in") as swap:
+                status = self.apply(svc)
+        swap.assert_not_called()
+        self.assertEqual((status["update"]["phase"], status["update"]["error"]["code"]), ("failed", "disk-full"))
+        self.assertNotIn(self.tmp, status["update"]["error"]["detail"])
+        self.assertFalse(os.path.exists(self.layout().app_next))
+        self.assertEqual(self.state_file()["phase"], "failed")
+
+    def test_disk_full_while_downloading_reports_the_whole_need(self):
+        svc = self.checked()
+        self.fetcher.hook = mock.Mock(side_effect=UpdateError("disk-full", "write .part: ENOSPC", need_bytes=1))
+        status = self.apply(svc)
+        error = status["update"]["error"]
+        self.assertEqual(error["code"], "disk-full")
+        self.assertGreater(error["needBytes"], 256 * 1024 * 1024)  # 取得の残り＋展開＋予備
+
+    def test_errors_do_not_show_paths(self):
+        secret = os.path.join(self.tmp, "someone-secret", "updater.json")
+        with mock.patch.object(service, "save_autocheck", side_effect=OSError(errno.EACCES, "Permission denied", secret)):
+            with self.assertRaises(UpdateError) as caught:
+                self.make().set_autocheck(False)
+        self.assertEqual(caught.exception.detail, "cannot write settings: EACCES: Permission denied")
+        error = service.UpdateService._to_error(FileExistsError(errno.EEXIST, "File exists", secret))
+        self.assertEqual((error.code, error.detail), ("internal", "EEXIST: File exists"))
+        error = service.UpdateService._to_error(OSError(errno.ENOSPC, "No space left on device", secret))
+        self.assertEqual(error.code, "disk-full")
+        self.assertNotIn("secret", error.detail)
+        if hasattr(errno, "EDQUOT"):
+            self.assertEqual(service.UpdateService._to_error(OSError(errno.EDQUOT, "Disk quota exceeded")).code, "disk-full")
+
+    def test_check_removes_downloads_of_other_versions(self):
+        downloads = self.layout().downloads
+        os.makedirs(downloads)
+        keep = self.new.part("main").name
+        names = ["manabi-no-niwa-2.1.5.zip", "manabi-no-niwa-2.1.5.zip.part", "manabi-no-niwa-2.1.5.zip.part.json", keep + ".part", keep + ".part.json"]
+        for name in names:
+            with open(os.path.join(downloads, name), "wb") as f:
+                f.write(b"x")
+        self.checked()
+        self.assertEqual(sorted(os.listdir(downloads)), sorted([keep + ".part", keep + ".part.json"]))
+        # 確認が失敗したときは消さない
+        with open(os.path.join(downloads, "manabi-no-niwa-2.1.5.zip"), "wb") as f:
+            f.write(b"x")
+        self.fetcher.error = UpdateError("offline", "x")
+        self.clock.now += 100
+        self.checked()
+        self.assertIn("manabi-no-niwa-2.1.5.zip", os.listdir(downloads))
+
+    def test_self_test_gets_the_restart_arguments(self):
+        svc = self.checked()
+        svc.restart_args = ["--port", "4801"]
+        with mock.patch.object(install, "run_self_test") as self_test:
+            svc.request_apply("2.2.0")
+            svc.join(60)
+        self_test.assert_called_once_with(self.layout().app_next, ["--port", "4801"])
+
+    def test_switch_that_cannot_be_rolled_back_keeps_both_versions_and_retry_recovers(self):
+        # 名前の変更 2 回の入れ替え（renameat2 が使えないファイルシステム）で、2 つ目も元に戻すのも失敗した
+        svc = self.checked()
+        lay = self.layout()
+        real = install._rename_retry
+
+        def flaky(src, dst):
+            if dst == lay.app and src in (lay.app_next, lay.app_prev):
+                raise PermissionError(errno.EACCES, "Permission denied", src)
+            return real(src, dst)
+
+        no_exchange = mock.patch.object(install, "_renameat2_exchange", side_effect=OSError(errno.EINVAL, "Invalid argument"))
+        with no_exchange, mock.patch.object(install, "_rename_retry", flaky):
+            status = self.apply(svc)
+        self.assertEqual((status["update"]["phase"], status["update"]["error"]["code"]), ("failed", "switch-broken"))
+        self.assertNotIn(self.tmp, status["update"]["error"]["detail"])
+        self.assertFalse(os.path.exists(lay.app))
+        with open(os.path.join(lay.app_prev, "dist", "index.html"), "rb") as f:
+            self.assertIn(b"2.1.0", f.read())  # 前の版は消さない
+        with open(os.path.join(lay.app_next, "dist", "index.html"), "rb") as f:
+            self.assertIn(b"2.2.0", f.read())  # 新しい版も消さない
+        self.assertFalse(svc.restart_event.is_set())
+        # 「もう一度ためす」: まず前の版を app に戻し、それから普通に入れる
+        status = self.apply(svc)
+        self.assertEqual(status["update"]["phase"], "restarting", status["update"])
+        with open(os.path.join(lay.app, "dist", "index.html"), "rb") as f:
+            self.assertIn(b"2.2.0", f.read())
+        with open(os.path.join(lay.app_prev, "dist", "index.html"), "rb") as f:
+            self.assertIn(b"2.1.0", f.read())
+        self.assertEqual(self.fetcher.downloaded.count("audio-g1-g2"), 0)  # 戻した版から写せた
+
+    def test_missing_app_that_cannot_be_recovered_touches_nothing(self):
+        svc = self.checked()
+        lay = self.layout()
+        os.rename(lay.app, lay.app_prev)
+        with mock.patch.object(install, "_rename_retry", side_effect=PermissionError(errno.EACCES, "Permission denied")):
+            status = self.apply(svc)
+        self.assertEqual((status["update"]["phase"], status["update"]["error"]["code"]), ("failed", "switch-broken"))
+        self.assertTrue(os.path.isdir(lay.app_prev))
+        self.assertEqual(self.fetcher.downloaded, [])
 
 
 if __name__ == "__main__":

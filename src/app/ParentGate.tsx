@@ -3,6 +3,7 @@
  * これは誤操作の防止であり、認証ではない（README・保護者画面に明記）。
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { isFramed } from '../core/framed';
 import * as db from '../core/storage/index';
 import { Illust } from '../illust/Illust';
 import { useApp } from './AppState';
@@ -18,6 +19,8 @@ export function ParentGateButton() {
   const timer = useRef<number | null>(null);
 
   const start = () => {
+    // ほかのページの枠の中では開かない（見えない枠を重ねて保護者の操作を押させる、を防ぐ）
+    if (isFramed()) return;
     setHolding(true);
     timer.current = window.setTimeout(() => {
       setHolding(false);

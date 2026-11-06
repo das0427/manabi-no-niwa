@@ -36,7 +36,10 @@ const m = vi.hoisted(() => ({
   downloadedLists: [] as string[][],
   downloadFailures: [] as { packId: string; reason: string }[],
   downloadGate: null as Promise<void> | null,
+  framed: false,
 }));
+
+vi.mock('../framed', () => ({ isFramed: () => m.framed }));
 
 vi.mock('./index', () => ({
   getOfflineState: () => m.off,
@@ -410,6 +413,19 @@ describe('POST（見出しと合言葉）', () => {
     expect(await requestCheck()).toEqual({ ok: false, code: 'busy', detail: 'working' });
     server.down = true;
     expect(await requestCancel()).toMatchObject({ ok: false, code: 'unreachable' });
+  });
+
+  it('ほかのページの枠（iframe）の中では送らない（framed）', async () => {
+    await refreshUpdaterStatus();
+    m.framed = true;
+    try {
+      expect(await requestCheck()).toMatchObject({ ok: false, code: 'framed' });
+      expect(await setAutoCheck(false)).toMatchObject({ ok: false, code: 'framed' });
+      expect(await requestApply('2.2.0')).toMatchObject({ ok: false, code: 'framed' });
+      expect(server.posts).toEqual([]);
+    } finally {
+      m.framed = false;
+    }
   });
 
   it('成功の応答の状態を保存する（settings）', async () => {

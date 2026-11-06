@@ -5,7 +5,10 @@
  * README.md、LICENSE、licenses/、DESINGN.md、docs/device-checklist.md、部品の印 parts/<kind>.json。
  * zip・部品の印・版の情報の作り方は scripts/release-lib.ts（設計: docs/expansion/updater-design.md 3 章）。
  * 依存なし（zlib の deflate と自前の ZIP 書き出し）。.sh には実行権限を付ける。
+ * 版の番号は git のタグ（vX.Y.Z）と比べ、古い・公開済みと同じ・大きく飛ぶなら止める（release-lib の checkReleaseVersion。
+ * わざとなら `npm run package -- --allow-jump`、まだ公開していないタグなら `-- --allow-existing-tag`）。
  */
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +21,7 @@ import {
   assertNotes,
   audioPackIdOf,
   buildManifest,
+  checkReleaseVersion,
   compareVersions,
   isVersion,
   packPart,
@@ -70,6 +74,23 @@ if (compareVersions(MIN_AUTO_UPDATE_FROM, pkg.version) > 0) {
     `package.json の version（${pkg.version}）が、更新できる最も古い版 MIN_AUTO_UPDATE_FROM（${MIN_AUTO_UPDATE_FROM}、scripts/release-lib.ts）より古いです。版を上げてから npm run build をやり直してください。`,
   );
 }
+// 版の番号の誤り（大きく飛ぶ・古い・公開済みと同じ）は、自動の更新では取り返せないので、出す前に止める
+const releaseTags = (() => {
+  try {
+    return execFileSync('git', ['tag', '--list', 'v*'], { cwd: root, encoding: 'utf8' }).split(
+      /\r?\n/,
+    );
+  } catch {
+    console.warn('警告: git のタグを読めません。版の番号を、これまでの版と比べずに続けます。');
+    return [];
+  }
+})();
+const versionProblem = checkReleaseVersion(pkg.version, releaseTags, {
+  allowJump: process.argv.includes('--allow-jump'),
+  allowExistingTag: process.argv.includes('--allow-existing-tag'),
+});
+if (versionProblem) die(versionProblem);
+
 const distVersion = (() => {
   try {
     return (

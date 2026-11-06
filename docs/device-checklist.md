@@ -84,3 +84,20 @@
 - [ ] 1.0 から更新したとき、1.0 の記録が4歳のホームの初期版のあそびで続きから見える
 - [ ] 本体を更新したあと、教材パックが「あたらしい ばーじょん」になり、取り直せる
 - [ ] 「ほかの がくねん」: 幼児・小学生のホームから開け、タブで区分を選び、ほかの区分の札・教科を開ける。おうちに戻るとふだんのホーム。幼い子が迷い込みすぎないか
+
+## 2.1.0（自動更新）で増えた確認
+Windows では確かめられなかったこと（docs/expansion/updater-design.md 17.2 節）。
+- [ ] `python3 --version`（Zorin OS 17 は 3.10）。`npm run test:py:sh` が通る（鍵・renameat2 の試験は Linux だけで動く）
+- [ ] 2.0.x から 2.1.0 を README の手順で手で入れる → アプリを開いて「更新する」（この1回）→ 取得済みの教材パックが自動で取り直される・記録が残る
+- [ ] 2.1.0 のリリースのあと `python3 ~/.local/share/manabi-no-niwa/app/deploy/zorin/serve.py --check-update` で版の情報が取れる（本物の GitHub・TLS・配布用ホストへの転送・道とリポジトリの番号の確かめ）
+- [ ] 次の版を、保護者画面の「更新する」1回で入れる。終わるまで何も押さない。版の表示・「○○ に更新しました」・記録・教材パック
+- [ ] 手で起動した配信（アイコン）で更新したとき、配信が起動し直す（`os.execv`。PID が変わらない: 更新の前後で `pgrep -f deploy/zorin/serve.py`）
+- [ ] 自動起動（`install.sh --autostart`。systemd）で動いているときに更新する → `systemctl --user status manabi-no-niwa.service` が active のまま・PID が同じ
+- [ ] 入れ替えの直後に `~/.local/share/manabi-no-niwa/` の `app` と `app.prev` がそろい（`renameat2`）、しばらくして `app.prev` と `update/downloads` の中身が消える
+- [ ] 同じ置き場で `python3 …/app/deploy/zorin/serve.py --port 4901` をもう1つ起動すると、`/__manabi/update/status` が `supported:false`・`another-server`（鍵 `flock`）。動いている側の更新は壊れない
+- [ ] 取得の途中でネットを切る → 「インターネットにつながっていないか…」→ つないで「もう一度ためす」で続きから。中止する → 「更新する」で続きから
+- [ ] 取得の途中で電源を切る（または配信を `kill -9`）→ 次に開くと続きから自動で入る
+- [ ] Firefox（Zorin の既定）で、保護者画面からの更新・読み込み直し・教材の取り直しが通る
+- [ ] 保護者画面で自動の確認をオフ → 開き直しても外へつながない（`ss -tnp` などで github への接続が無い）。「今すぐ確かめる」のときだけつながる
+- [ ] systemd で動いているとき、更新の直後（1秒ほど）にアイコンから開いても、アプリが開く（単位が failed になったら、次のログインで戻ることを確かめる）
+- [ ] 遅い回線での大きな音声の zip（約 1.3GB）の取得: 進み具合・中止の効き方

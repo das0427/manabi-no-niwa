@@ -1,6 +1,7 @@
 # 自動更新（アップデーター）の設計（docs/expansion/updater-design.md）
 
 2026-11-06 設計。対象の版: **2.1.0**（この版に入れる）。作業ブランチ: p3/updater。
+2026-11-07 実装・e2e・攻撃の目の点検の直しを反映（点検の結果と直したもの・直さなかったものは 16 章、確かめたこと・確かめていないことは 17 章）。
 
 ---
 
@@ -185,6 +186,12 @@
   - ホストが許可リスト `{"github.com", "objects.githubusercontent.com", "release-assets.githubusercontent.com"}` のどれかと**完全に一致**すること（`github.com.example.com` などは不可）
   - ポートが無いか 443、URL に利用者名・パスワード（`user@`）が無いこと
   - 転送は 5 回まで
+  - **道（パス）も確かめる**（16 章 S1。リポジトリの名前が取り直されたときに、他人のリリースへ行かない）:
+    - `github.com` は、このリポジトリのリリースの取得の道だけ: `/das0427/manabi-no-niwa/releases/latest/download/<名前>` か `/das0427/manabi-no-niwa/releases/download/v<X.Y.Z>/<名前>`（名前は英数字・`.`・`_`・`-`。`%`・`..`・`/` は不可）
+    - 配布用ホストは、2 番目の部分が**このリポジトリの番号 `1431752170`**（GitHub の API の `id`。2026-11-07 に確かめた）の道だけ: `/<置き場の名前>/1431752170/<…>`（各部分は `.` で始まらない。`%` は不可）。本物の転送の形は `https://release-assets.githubusercontent.com/github-production-release-asset/1431752170/<uuid>?…`（2026-11-07 に確かめた）。名前を取り直して作ったリポジトリは別の番号になるので、ここで止まる
+    - 試験用の取得先（下）では、その origin だけを見る（道は偽の GitHub の作りに任せる。道の決まりは test_fetch.py で本番の設定に対して確かめる）
+  - 転送の応答の本文は読まない（読む前に閉じる。大きな本文をメモリに読まない）。301・302・303・307・**308** を同じに扱い、新しい要求は GET で見出し（`Range` を含む）を引き継ぐ（Python 3.10 の urllib は 308 をたどらないため、自分で扱って 3.10 と 3.12 で同じ動きにする）
+  - `latest/download` の転送先（`…/releases/download/<tag>/manabi-no-niwa-update.json`）から分かるリリースの tag と、版の情報の `tag` が違えば `bad-manifest`（古い版の情報を新しいリリースに上げてしまった、などを入れない。転送が無い形のときは確かめない）
   - 合わなければ `redirect-host` で止める（何も保存しない）
 - TLS: `ssl.create_default_context()`（証明書とホスト名の確認あり。OS の証明書を使う）。**確認を切る設定は作らない**（環境変数でも切れない）。
 - プロキシ: 環境変数（`https_proxy`・`no_proxy`）は urllib の既定どおり使う（家庭でプロキシを使う人のため。TLS は相手のホストまでつながったまま確かめる）。
@@ -195,6 +202,7 @@
 - そのときの URL: `<origin>/das0427/manabi-no-niwa/releases/latest/download/manabi-no-niwa-update.json`、`<origin>/das0427/manabi-no-niwa/releases/download/<tag>/<name>`。転送先の許可リストは**その origin（ホストとポート）だけ**になり、GitHub へはつながない。プロキシは使わない。
 - 形が合わない値が入っていたら、**更新の仕組み全体を止める**（`supported:false`・理由 `bad-test-origin`。GitHub にも向けない）。
 - 本番で悪用できない理由: 向けられるのは同じパソコンの 127.0.0.1 だけ。環境変数を書き換えられる者は、すでにその利用者として何でもできる。
+- さらに、**本番のポート 8765 で動く配信では受け付けない**（値があれば `bad-test-origin` で更新の仕組みを止める。16 章 S7）。環境（`~/.profile` など）に残っていても、同じパソコンのほかの利用者が 127.0.0.1 で待ち受けて偽の更新を配る、ができない。試験はどれも 4800〜4999 の `--port` で動かす。効いているときは標準エラーに 1 行出し、状態に `testOrigin: true` を載せる。
 
 ### 3.5 署名を付けるか → **2.1.0 では付けない**
 
@@ -218,6 +226,13 @@
 2. `npm run build` → `npm run package`。`release/` に zip 4つ・`.sha256` 4つ・`manabi-no-niwa-update.json` ができる。
 3. GitHub でタグ `v<版>` の下書きのリリースを作り、zip と `.sha256` を上げ、**最後に** `manabi-no-niwa-update.json` を上げる。先行版にしない。「Set as latest」にして公開する。
 4. （任意）開発機で `py -3 deploy/zorin/serve.py --check-update` を実行し、版の情報が取れることを確かめる（5.1 節）。
+
+- **版の番号の誤りは自動の更新では取り返せない**（家は「今より新しい版」しか入れない。一度 21.0.0 と出すと、あとの 2.2.0 は届かない）。そのため `npm run package` は git のタグ（`vX.Y.Z`）と比べ、次のときは zip を作る前に止める（`scripts/release-lib.ts` の `checkReleaseVersion`。16 章 S8）:
+  - これまでのいちばん新しい版より古い
+  - 同じ版のタグがもうある（公開した版と同じ番号の直しは、その版を入れた家に届かない。まだ公開していないタグなら `npm run package -- --allow-existing-tag`）
+  - メジャーが 2 以上、またはマイナーが 2 以上飛ぶ・メジャーを上げるのにマイナーが 0 でない（打ち間違いの疑い。わざとなら `-- --allow-jump`）
+- 前の版の中身に戻したいときは、その中身で**版の番号を上げて**出す（例: 2.2.0 に問題 → 2.1.0 の中身で 2.2.1 を出す）。
+- **アカウント（das0427）とリポジトリの名前を変えない・消さない・移さない**。道の確かめ（3.4 節）で、名前を取り直した他人のリポジトリからは入らないが、今の家への更新も止まる。どうしても変えるなら、先に新しい場所（名前と番号）を定数に入れた版を出し、全部の家に行き渡ってから変える。
 
 ---
 
@@ -274,7 +289,8 @@ serve.py の変更:
 | `--dir` を指定していないか、`app/dist` と同じ | `custom-dir` |
 | `app/parts/main.json` があり、`version` が `X.Y.Z` | `no-parts` |
 | root で動いていない（`os.geteuid` がある環境で 0 でない） | `root` |
-| `MANABI_UPDATE_TEST_ORIGIN` が空か正しい形 | `bad-test-origin` |
+| `MANABI_UPDATE_TEST_ORIGIN` が空か正しい形。本番のポート 8765 では空（3.4 節） | `bad-test-origin` |
+| 鍵 `update/lock` を取れた（同じ置き場の配信がほかに動いていない。5.11 節） | `another-server` |
 | `mnwupdate` を読み込めた | `updater-error` |
 
 - 新しい引数:
@@ -325,6 +341,7 @@ serve.py の変更:
   "reason": null,
   "token": "9f2c4e0b8a7d6c5b4a3f2e1d0c9b8a7f",
   "server": { "pid": 12345, "startedAt": "2026-11-20T01:23:45Z" },
+  "testOrigin": false,
   "current": { "version": "2.1.0" },
   "settings": { "autoCheck": true },
   "disk": { "freeBytes": 53687091200 },
@@ -371,6 +388,7 @@ serve.py の変更:
 |---|---|
 | `token` | 起動ごとの合言葉（`secrets.token_hex(16)`。32 桁の16進）。POST の見出し `X-Manabi-Token` に付ける。serve.py を起動し直すと変わる |
 | `server.pid` | いまの serve.py のプロセス番号（e2e が後片付けに使う） |
+| `testOrigin` | 試験用の取得先（`MANABI_UPDATE_TEST_ORIGIN`）に向いているか。本番（8765）ではいつも `false`（アプリは読まない。知らない欄は無視する） |
 | `current.version` | `app/parts/main.json` の `version` |
 | `disk.freeBytes` | `<DATA>/manabi-no-niwa` のある場所の空き（`shutil.disk_usage`） |
 | `check.state` | `never`（まだ）・`checking`（確認中）・`ok`・`offline`・`error` |
@@ -422,6 +440,7 @@ serve.py の変更:
 | `content-check` | 組み立てた中身の確かめに通らない |
 | `self-test` | 新しい serve.py の自己検査に通らない |
 | `switch-failed` | 入れ替えに失敗した（元に戻した） |
+| `switch-broken` | 名前の変更 2 回の入れ替えで、2 つ目も元に戻すのも失敗し、`app` が無い（`app.prev` に前の版、`app.next` に新しい版を残す。もう一度押すと `app.prev` を `app` に戻してから入れる。5.9 節） |
 | `interrupted` | 前回の作業が途中で止まった（電源が切れたなど） |
 | `not-cancellable` | 中止できない段階（`testing` 以降） |
 | `forbidden`・`unsupported-media-type`・`payload-too-large`・`bad-request`・`not-found`・`method-not-allowed`・`unsupported` | 窓口の守り・使い方の誤り（5.4 節） |
@@ -442,8 +461,11 @@ serve.py の変更:
 | 7 | POST: 本文が UTF-8 の JSON のオブジェクト。欄の型が合う（`apply` の `version` は `X.Y.Z`、`settings` の `autoCheck` は真偽値）。知らない欄は無視 | 400 `bad-request` |
 
 - 合言葉は `GET status` の本文で渡す。ほかのサイトのページは同一オリジンの決まり（SOP）で本文を読めない（CORS を許可しない）。DNS rebinding は `Host` で断る。JSON の `Content-Type` と独自の見出し `X-Manabi-Token` があるので、ほかのサイトからの送信はプリフライトになり、serve.py は許可を返さないため届かない。
-- 同じパソコンのほかのプログラム（curl など）は、合言葉を読めるので呼べる。それは守らない（範囲外）。呼ばれてもできるのは「公式の最新版への更新」「自動の確認のオン・オフ」「確認」「中止」だけ。
+- 同じパソコンのほかのプログラム（curl など）は、合言葉を読めるので呼べる。それは守らない（範囲外）。**同じパソコンのほかの OS の利用者（子供用のアカウント・ゲストなど）のプログラムも、127.0.0.1 の窓口につながる**ので同じ（16 章 A3）。呼ばれてもできるのは「公式の最新版への更新」「自動の確認のオン・オフ」「確認」「中止」だけ。
 - 状態の応答は JSON（`nosniff`）なので、`<script src>` で読まれても実行されない。
+- **枠（iframe）への埋め込みを断る**（16 章 S2。クリックジャッキング）: serve.py は**すべての応答**（静的なファイル・health・窓口・エラー）に `X-Frame-Options: DENY`・`Content-Security-Policy: frame-ancestors 'none'`・`Cross-Origin-Opener-Policy: same-origin` を付ける。index.html の CSP は meta なので `frame-ancestors` が効かない（仕様）ため、見出しで送る（ほかの決まりは meta のまま。見出しの CSP は `frame-ancestors` だけなので、meta の決まりと重ねても何も緩まない）。枠の中のアプリが送る POST は Origin も Sec-Fetch-Site も正しく、合言葉も読めるので、上の 5 つの守りでは区別できないため。
+  - アプリ側でも、ほかのページの枠の中（`window.self !== window.top`）では保護者ゲートを開かず（`src/app/ParentGate.tsx`）、窓口へ POST しない（`src/core/offline/updater.ts` の `post()` が `framed` を返す）。配り方が serve.py でないとき（開発サーバー・ほかの静的サーバー）の備え。
+- 保護者ゲート（長押しと 2 桁の足し算）は認証ではない。ゲートを通れる子供は、保護者画面から更新・中止・自動の確認のオフができる（できるのは公式の版の更新と、確認を止めることだけ。読み込み直しは子供が遊んでいるあいだは待つ）。人に聞く作業を作らない約束のため、確認の質問は足さない。README に「ゲートを通れる年齢のお子さんがいるときは暗証番号を設定する」を書いた（16 章 A6）。
 
 ### 5.5 更新の手順（`apply` を受けてから）
 
@@ -459,8 +481,10 @@ serve.py の変更:
 8. **再起動**（`restarting`）: 5.10 節。
 9. **確定**（新しい serve.py）: 自分の版（`app/parts/main.json`）が `targetVersion` と同じなら `done`。`lastApplied` を記録し、`app.prev` と `update/downloads/` の中身を別スレッドで消す。
 
-- どの段で失敗しても `failed` にして理由を残し、`app.next` を消す（今の `app` はそのまま）。確かめ済みの zip は残す（もう一度押したとき取り直さない）。
-- `cancel` は `downloading`・`extracting` のときだけ受け付ける。作業を止めて `cancelled` にし、`app.next` を消す（`.part` は残す）。
+- どの段で失敗しても `failed` にして理由を残し、`app.next` を消す（今の `app` はそのまま）。確かめ済みの zip は残す（もう一度押したとき取り直さない）。ただし `app` が無い（`switch-broken`）ときは `app.next` も `app.prev` も消さない（5.9 節）。
+- 作業の始め（鍵を取ったあと）に、`app` が無く `app.prev` だけがあれば `app.prev` を `app` に戻す（前の入れ替えで戻せなかったとき）。戻せなければ `switch-broken`（何も消さない）。
+- `cancel` は `downloading`・`extracting` のときだけ受け付ける。作業を止めて `cancelled` にし、`app.next` を消す（`.part` は残す）。段を進める処理（`_set_phase`）は、中止の受け付けと同じ鍵の中で中止の印を確かめ、立っていれば進まずに `cancelled` にする（`extracting` の終わり際に受け付けた中止で、そのまま `testing` 以降へ進んで入ってしまう、を防ぐ。16 章 A5）。
+- 入れ替えの前に `os.sync()`（Linux。展開したファイルの中身をディスクに書いてから名前を付け替える。ext4 の遅延割り当てで、停電のあとに長さ 0 のファイルが残る、を防ぐ）。`switching` は state.json に**書けなければ入れ替えない**（`disk-full`／`internal`）。入れ替えのあと `<DATA>/manabi-no-niwa` を fsync する（16 章 F1・F2）。
 - 取得の途中でネットが切れたら、5 秒・15 秒・30 秒あけて 3 回まで自動で続きから取り直す。それでもだめなら `failed`（`offline`）。
 
 ### 5.6 取得（変わった zip だけ・続きから・空き容量・sha256）
@@ -468,8 +492,11 @@ serve.py の変更:
 - **変わった部品の決め方**: `app/parts/<kind>.json` が無い、または `contentId` が版の情報の `parts[].contentId` と違う、または（計画の段 2 で）写すはずのファイルの数・大きさが印と合わない → 取得する。`main` はいつも取得する。版の情報に無い種類の部品（今の版にだけある）は新しい版に持っていかない。
 - **続きから**: `update/downloads/<name>.part` と `<name>.part.json`（`{"sha256":…,"bytes":…}`）。`.part.json` の値が今回の部品と違えば `.part` を捨てる。続きは `Range: bytes=<今の大きさ>-` で頼み、206 と `Content-Range: bytes <始め>-…/<全体>` の始めが合えば続きを書く。200 が返ったら最初から書き直す。416 なら全部そろっているとみなして確かめに進む。
 - 書き終えたら大きさが `bytes` と同じかを確かめ（違えば `size-mismatch`）、ファイル全体の sha256 を計算して比べる（続きからのときは、それまでの分も読んで計算する）。違えば捨てて1回だけ最初から取り直し、それでも違えば `sha256-mismatch`。合えば `<name>` に名前を変える（確かめ済み）。すでに `<name>` があり大きさと sha256 が合えば取得しない。
-- 1 MiB ずつ読む。読み取りの時間切れは 60 秒。進み具合は 0.25 秒に 1 回まで更新する。
-- 今回の部品に無い古い `<name>`・`.part` は、作業の始めに消す。
+- 受信 1 回ずつ（最大 1 MiB。`read1`）読み、そのたびに中止・速さ・進み具合を確かめる（1 MiB たまるのを待たない。遅い回線でも中止がすぐ効く）。読み取りの時間切れは 60 秒。進み具合は 0.25 秒に 1 回まで更新する。
+- 遅すぎる取得: 120 秒で 16 KiB より少なければ `offline` として、取得した分を残して続きから取り直す（上の 3 回の取り直しに数える）。版の情報は全体で 60 秒の期限（少しずつ送られ続けても、確認が終わらない、を防ぐ。16 章 N3）。
+- 取得の途中で空きが無くなった（書き込みの `ENOSPC`・`EDQUOT`）ときは、取り直さずにすぐ `disk-full`（`needBytes` は組み立てまでの全体の見積もり）。手元のファイルの失敗は `offline` と取り違えない（ネットの失敗だけを取り直す。16 章 N1）。
+- 取得先がおかしな応答を返しても決まったコードにする: 続きの位置（`Content-Range` の始め）が 2 回とも合わない → `http`。`Content-Length`・`Content-Range` の数は ASCII の数字で桁数に上限（12 桁）があるものだけを信じる（16 章 N4）。
+- 今回の部品に無い古い `<name>`・`.part` は、作業の始めに消す。確認が成功したときも、最新の版の部品に無いものを消す（失敗・中止のあとに古い版の zip が残り続けない。16 章 F6）。
 - **変わらない部品を写す**: `roots` の下のファイルを `os.link`（ハードリンク）で `app.next` に写す。ハードリンクが使えない（`OSError`）ときはコピー（`shutil.copy2`）にする。写した印 `app/parts/<kind>.json` も `app.next/parts/` に写す。写したファイルの数と大きさを印と比べ、違えば `content-check`。
 - **空きの見積もり**（`needBytes`）:
   `Σ(取得する部品の 残りの取得の大きさ) + Σ(取得する部品の unpackedBytes) + (ハードリンクが使えないなら Σ(写す部品の unpackedBytes)) + 256 MiB`
@@ -501,12 +528,12 @@ zip の各項目（`zipfile.ZipInfo`）について確かめ、1つでも合わ�
 ### 5.8 中身の確かめと自己検査
 
 **中身の確かめ**（古い serve.py の `install.verify_tree(app.next, manifest)`）:
-- 必ずあるもの: `dist/index.html`・`dist/sw.js`・`dist/version.json`・`deploy/zorin/serve.py`・`deploy/zorin/manabi.sh`・`deploy/zorin/mnwupdate/__init__.py`・`parts/main.json`
+- 必ずあるもの: `dist/index.html`・`dist/sw.js`・`dist/version.json`・`dist/icons/icon-192.png`（.desktop のアイコン）・`deploy/zorin/serve.py`・`deploy/zorin/manabi.sh`・`deploy/zorin/uninstall.sh`（install.sh が案内する取り消し）・`deploy/zorin/mnwupdate/__init__.py`・`parts/main.json`（版をまたいで変えない約束のパスも含める。16 章 F4。install.sh の確かめにも同じものを足した）
 - `parts/main.json` の `version` が版の情報の `version` と同じ。版の情報の各部品について `parts/<kind>.json` があり `contentId` が同じ。
 - `dist/packs.json` があれば、各パックの `files` が全部ある（install.sh の確かめと同じ）。
 
 **自己検査**（新しい serve.py を別のプロセスで動かす）:
-- 古い serve.py が `[sys.executable, "-B", "app.next/deploy/zorin/serve.py", "--self-test"]` を 60 秒の時間切れで実行し、終了コード 0 を確かめる。環境変数は今のものを引き継ぐ（`MANABI_UPDATE_TEST_ORIGIN` を含む）。
+- 古い serve.py が `[sys.executable, "-B", "app.next/deploy/zorin/serve.py", <再起動で渡す引数（--dir を除く）>, "--self-test"]` を 60 秒の時間切れで実行し、終了コード 0 を確かめる。再起動で渡すのと同じ引数を付けるので、新しい版で引数の名前が変わって起動できない（argparse の終了コード 2 は systemd が再試行しない）を入れ替えの前に見つける（16 章 F3）。本番の起動（manabi.sh・systemd）は引数なし。環境変数は今のものを引き継ぐ（`MANABI_UPDATE_TEST_ORIGIN` を含む）。
 - 新しい serve.py の `--self-test` がすること（新しい版の側で決める。版ごとの条件は新しい版が知っているため）:
   1. `mnwupdate` とその下のすべてのモジュールを読み込む（書き間違い・読み込みの失敗を見つける）
   2. 自分の置き場（`--dir` が無ければ `../../dist`）について上の「中身の確かめ」と同じこと（版の情報なしでできる分）＋ `dist/version.json` の `appVersion` があれば `parts/main.json` の `version` と同じ
@@ -521,6 +548,9 @@ zip の各項目（`zipfile.ZipInfo`）について確かめ、1つでも合わ�
 3. **Linux**: `renameat2(AT_FDCWD, "app.next", AT_FDCWD, "app", RENAME_EXCHANGE)`（`ctypes` で libc を呼ぶ）で、`app` と `app.next` を**一度に**入れ替える（`app` が無い瞬間が無い）。そのあと `app.next`（中身は前の版）を `app.prev` に名前を変える。
 4. `renameat2` が無い・使えない（`AttributeError`・`EINVAL`・`ENOSYS`。Windows を含む）ときは、`os.rename("app", "app.prev")` → `os.rename("app.next", "app")`。2 つ目が失敗したら `os.rename("app.prev", "app")` で戻す。Windows ではファイルを開いているプログラム（ウイルス対策など）で名前の変更が一時的に失敗するので、0.5 秒あけて 10 回まで試す。
 5. 失敗したら元に戻して `failed`（`switch-failed`）。
+6. 4 の 2 つ目の名前の変更も、元に戻す変更も失敗したとき（ecryptfs・FUSE・NFS など `renameat2` を断るファイルシステムで、さらに名前の変更が通らない）は `switch-broken`。このとき `app` は無く、`app.prev` が前の版、`app.next` が新しい版。**どちらも消さない**（16 章 S3。以前は `app.next` を消し、もう一度押すと先頭の「`app.prev` を消す」で唯一の版まで消えた）。
+   - 入れ替えの始めに、`app` が無く `app.prev` があれば、まず `app.prev` を `app` に戻す。戻せなければ止める（`app.prev` は消さない）。`app.prev` を消すのは `app` があるときだけ。
+   - 画面は「元の版のまま」と言わず、「もう一度ためす」（前の版に戻してから入れ直す）と、直らなければ README の手順で入れ直すことを案内する（6.2 節）。動いている古い serve.py は止まらないが、`app/dist` が無いので静的なファイルは 404 になる（アプリの画面は Service Worker のキャッシュで動く）。パソコンを再起動すると配信が起動できないので、README で「再起動の前にもう一度ためす」と案内する。
 
 - 名前の付け替えは同じファイルシステムの中なので、ファイルの量によらず一瞬で終わる。
 - 入れ替えの直後から、古い serve.py のプロセスもパス `…/app/dist` を通して新しいファイルを配る（ファイルの開き方がパスごとのため）。ブラウザの画面は Service Worker のキャッシュで動いているので、子供が遊んでいても見た目は変わらない。
@@ -561,10 +591,11 @@ serve.py が起動したときの片付け（`service.start()` の中。重い�
 |---|---|---|
 | `restarting` | 再起動した（ふつうの流れ） | 自分の版 == `targetVersion` なら `done`・`lastApplied` を記録・`app.prev` と `downloads/` の中身を消す。違えば `failed`（`switch-failed`） |
 | `switching` | 入れ替えの途中で止まった | いま動いている `app` の版 == `targetVersion` なら `done` と同じ扱い。違えば `failed`（`interrupted`）。`app.next`・`app.prev` を消す |
-| `downloading`・`extracting`・`testing` | 途中で止まった（電源・強制終了） | `failed`（`interrupted`）。`app.next` を消す。`.part` と確かめ済みの zip は残す。**自動の確認がオンなら**、最初の確認が成功して `latest.version == targetVersion` のとき、自動で続きから始める（同じ版で `resumeCount` 3 回まで） |
+| `downloading`・`extracting`・`testing` | 途中で止まった（電源・強制終了） | 自分の版 == `targetVersion` なら `done` と同じ扱い（入れ替えは済んでいて、段の記録を書けなかった。16 章 F2）。違えば `failed`（`interrupted`）。`app.next` を消す。`.part` と確かめ済みの zip は残す。**自動の確認がオンなら**、最初の確認が成功して `latest.version == targetVersion` のとき、自動で続きから始める（同じ版で `resumeCount` 3 回まで） |
 | `idle`・`done`・`failed`・`cancelled` | — | そのまま。残っている `app.next`・`app.prev` があれば消す |
 
 - フォールバックの入れ替え（5.9 節の 4）の 2 つの名前の変更のあいだで電源が切れると `app` が無くなり、serve.py も manabi.sh も起動できない（Linux では `renameat2` を使うので起きない）。そのときは README の手順で手で入れ直す（13 章）。
+- **配信のプロセスの鍵**（16 章 A1）: serve.py は更新の仕組みを始める前に `update/lock` を `fcntl.flock(LOCK_EX|LOCK_NB)` で取り、**プロセスが終わるまで持ち続ける**。取れなければ（同じ置き場の配信がほかに `--port` で動いている）、片付けも state.json への書き込みもせず、更新の仕組みを使わない（`supported:false`・理由 `another-server`）。更新の作業の鍵はこの鍵で兼ねる（同じプロセスで二重に取らない）。Linux の exec での再起動では、鍵のファイルは閉じられて（CLOEXEC）新しいプロセスがまた取る。Windows（試験だけ）では鍵を取らない（試験では偽の `fcntl` で確かめる）。ふつうの起動（manabi.sh・systemd）は同じポートなので、ポートを取れなかった側が先に終わる（鍵まで行かない）。
 
 ### 5.12 設定（自動の確認のオン・オフ）
 
@@ -590,7 +621,7 @@ serve.py が起動したときの片付け（`service.start()` の中。重い�
 
 ### 6.2 保護者画面「このアプリについて」の表示（`src/parent/UpdateSection.tsx`）
 
-窓口があるときだけ、「このアプリについて」の最初の節の次に節「**アプリの更新**」を出す（`data-testid="update-section"`）。文言（漢字かな交じり・保護者向け）:
+窓口があるときだけ、「このアプリについて」の最初の節の次に節「**アプリの更新**」を出す（実装は `Section` の `id="update-section"`。e2e も `#update-section` で見る）。文言（漢字かな交じり・保護者向け）:
 
 | 状態 | 表示 |
 |---|---|
@@ -614,6 +645,7 @@ serve.py が起動したときの片付け（`service.start()` の中。重い�
 | `bad-manifest`・`size-mismatch`・`sha256-mismatch`・`unsafe-zip`・`content-check` | 取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。 |
 | `disk-full` | 空き容量が足りません（あと約 X GB 必要です）。不要なファイルを消してから、もう一度お試しください。 |
 | `self-test`・`switch-failed` | 新しい版を動かす準備で問題が見つかったため、元の版のままにしました。 |
+| `switch-broken` | アプリのファイルの切り替えで問題が起き、元に戻せませんでした。（このときだけ「いまの版はそのまま使えます」の代わりに「「もう一度ためす」を押すと、前の版に戻してから入れ直します。直らないときは、README の「新しい版に更新するとき」の手順で入れ直してください（学習の記録は消えません）。」（`update-error-next`）） |
 | `interrupted` | 前回の更新が途中で止まりました。もう一度押すと続きから始めます。 |
 | `version-changed` | さらに新しい版が出ていました。表示を新しくしたので、もう一度「更新する」を押してください。 |
 | `busy` | ほかの更新が進んでいます。終わるまでお待ちください。 |
@@ -702,15 +734,24 @@ serve.py が起動したときの片付け（`service.start()` の中。重い�
 | 脅威 | 守り | 残るもの |
 |---|---|---|
 | 悪意のあるページが窓口を呼ぶ（CSRF） | `Origin`・`Sec-Fetch-Site`・JSON の `Content-Type`（プリフライト）・起動ごとの合言葉・CORS を許可しない | — |
+| 枠への埋め込み（クリックジャッキング。見えない枠で「更新する」・中止・自動の確認のオフを押させる） | すべての応答に `X-Frame-Options: DENY`・`frame-ancestors 'none'`・COOP。アプリは枠の中では保護者ゲートを開かず POST しない（5.4 節） | — |
 | DNS rebinding（悪意のある名前を 127.0.0.1 に向ける） | `Host` の確かめ（窓口では `Host` が無い要求も断る） | — |
-| 同じパソコンのほかのプログラム | 守らない（範囲外） | 公式の最新版への更新・設定の切り替えはできる |
-| 通信の途中での改ざん・偽のサーバー | HTTPS（確認を切らない）、転送先の許可リスト、URL の固定 | — |
+| 同じパソコンのほかのプログラム・ほかの OS の利用者 | 守らない（範囲外。README に書いた） | 公式の最新版への更新・中止・設定の切り替え・確認はできる（16 章 A3） |
+| 保護者ゲートを通れる子供 | ゲートは認証ではない。README で暗証番号を勧める | 公式の版への更新・確認を止めることはできる（16 章 A6） |
+| 同じ置き場からもう 1 つ配信を起動する | 配信のプロセスの鍵（`another-server`。5.11 節） | Windows（試験だけ）は鍵なし |
+| 配信の起動し直しの隙間（1 秒ほどポート 8765 が空く）にほかの利用者が待ち受ける | 守らない（前からある、配信が止まっているあいだの弱さと同じ） | 16 章 A2（ソケットの受け渡しは Windows で確かめられないため入れなかった） |
+| 通信の途中での改ざん・偽のサーバー | HTTPS（確認を切らない）、転送先の許可リスト（ホストと道）、URL の固定 | — |
+| リポジトリの名前を取り直される（repojacking。アカウント・リポジトリの名前を変えた・消した・移したあとに、他人が同じ名前で作る） | `github.com` はこのリポジトリのリリースの道だけ、配布用ホストはこのリポジトリの番号 `1431752170` の道だけ（3.4 節）。運用で名前を変えない（3.6 節） | GitHub が URL の形を変えると確認が止まる（安全な側。直した版を手で入れ直してもらう） |
+| 試験用の取得先の環境変数が本番に残る | 本番の 8765 では受け付けない（3.4 節） | — |
+| 古い版の情報を新しいリリースに上げてしまう・版の番号を誤る | 転送先のタグと版の情報の `tag` を比べる（3.4 節）。`npm run package` で版の番号を確かめる（3.6 節） | — |
 | 版の情報に悪い値を入れる（パス・URL） | タグ・名前・種類を正規表現で確かめる。URL を受け取らない。`notes` は文字として表示 | — |
 | 途中で切れた・壊れた取得 | 大きさと sha256、続きからの取得 | — |
 | 悪い zip（zip slip・リンク・zip 爆弾・重なり） | 5.7 節の検査、別の置き場での組み立て、`O_EXCL` | — |
 | 新しい版が動かない | 中身の確かめ・新しい serve.py の自己検査・入れ替えの失敗で元に戻す | 自己検査に通ったが、実際に動かすと固まる版（まれ）。次の版で直す |
 | 空き容量の不足 | 取得の前と組み立ての前に見積もりで確かめる | — |
-| 停電・強制終了 | 状態ファイル・起動時の片付け・`renameat2` で一度に入れ替え・続きから | Linux 以外の入れ替え（2 回の名前の変更）のあいだの停電 |
+| 停電・強制終了 | 状態ファイル・起動時の片付け・`renameat2` で一度に入れ替え・続きから・入れ替えの前の `os.sync()` | Linux 以外の入れ替え（2 回の名前の変更）のあいだの停電 |
+| 入れ替えも元に戻すこともできない（ファイルシステムが名前の変更を断る） | `switch-broken`。両方の版を残し、もう一度押すと前の版を戻してから入れる（5.9 節） | 再起動すると配信が起動できない（README の手順で入れ直す） |
+| 遅すぎる・止まったままの取得先 | 受信ごとの中止、遅すぎれば続きから取り直す、版の情報の全体の期限（5.6 節） | 何も届かないあいだは、中止が効くまで最長 60 秒（読み取りの時間切れ） |
 | GitHub のアカウント・リポジトリの乗っ取り | 2段階認証・immutable releases（運用） | 署名が無いので、偽の版を配られうる（3.5 節） |
 | ベータ版を配ってしまう | `latest` は先行版を指さない。`X.Y.Z` だけを受け付ける | — |
 | 古い更新の仕組みで入れられない新しい版 | `minVersion`・`schema` で止めて、手での入れ直しを案内 | — |
@@ -791,7 +832,8 @@ serve.py が起動したときの片付け（`service.start()` の中。重い�
 
 ### 11.3 e2e（後の段。units に入れない）
 
-- `e2e/updater.spec.ts`（chromium だけ）と `e2e/helpers/fake-github.ts`（Node の `http`。127.0.0.1 の 4800〜4999 の空いたポート）。8765・4299 は使わない。
+- 実装（2026-11-07）: `e2e/update.spec.ts`（chromium だけ。`npm run e2e:update` = `playwright test -c playwright.update.config.ts`。通常の `npm run e2e` の chromium にも入る）と `e2e/helpers/` の `fake-github.ts`（偽の GitHub）・`release-fixture.ts`（小さな偽のリリース）・`updater-env.ts`（一時の HOME と本物の serve.py）・`ports.ts`（空きポート）、空き容量の試験だけで使う `e2e/helpers/py/sitecustomize.py`。試験は 12 件（下の通しと「ほかに」に加えて、音声の部品も変わった版・sha256 違い・電源断・新しい serve.py が動かない・空き容量・ほかのオリジン・枠への埋め込み・窓口の無い配信）。版の上書きは vite の `define` で足りたので、`vite.config.ts` は変えていない。
+- 設計のときの案: `e2e/updater.spec.ts`（chromium だけ）と `e2e/helpers/fake-github.ts`（Node の `http`。127.0.0.1 の 4800〜4999 の空いたポート）。8765・4299 は使わない。
 - 版の違う2つのビルドが要る: `vite.config.ts` に試験用の上書き（例 `MNW_APP_VERSION` があれば `VITE_APP_VERSION` に使う）を後の段で足す。見本パック入り（`VITE_MNW_SAMPLE_PACKS=1`）で作る（見本パックの音声は `audio-g1-g2` の部品に入る）。
 - zip と版の情報は U2 の `scripts/release-lib.ts` の関数で作る（小さな偽のリリース）。置き場は Git Bash があれば `install.sh --yes`（一時の HOME）、無ければ zip を一時フォルダに展開して作る。
 - 本物の serve.py を `--port <4900 台>`・`MANABI_UPDATE_TEST_ORIGIN=http://127.0.0.1:<偽の GitHub のポート>`・`XDG_CONFIG_HOME=<一時>` で起動する。
@@ -834,8 +876,9 @@ Zorin OS の実機が無いため、Windows 11（Git Bash・`.venv` の Python 3
 | 実機の空き容量・遅い回線での大きな zip（1.3GB）の取得 | 偽の GitHub で、続きから・中止・空き不足（差し替え）を試験する |
 
 残るリスク:
-- GitHub のアカウントが乗っ取られると偽の版を配られうる（署名なし。3.5 節）。
-- フォールバックの入れ替えのあいだの停電（Linux では起きない）。
+- GitHub のアカウントが乗っ取られると偽の版を配られうる（署名なし。3.5 節）。名前の取り直し（repojacking）は道の確かめで止まる（3.4 節）。
+- フォールバックの入れ替えのあいだの停電（Linux では起きない）。名前の変更そのものが通らないときは `switch-broken`（5.9 節）。
+- 配信の起動し直しの隙間（1 秒ほど）にポート 8765 が空く（16 章 A2）。systemd で動いているとき、この隙間にアイコンから開くと manabi.sh の配信が先にポートを取り、systemd の単位は終了コード 3 で failed のまま残る（アプリは manabi.sh の配信で動く。次のログインで元に戻る。16 章 F3）。
 - 自己検査に通っても実際には動かない版（まれ）。そのときは README の手順で入れ直す（記録は消えない）。
 - 音声の部品は zip ごとに取得するので、音声が1本変わっただけでもその学年の zip（最大 1.3GB）を取り直す。
 
@@ -887,3 +930,74 @@ U1〜U4 を実装し、レビューで窓口の形（5.3 節）・版の情報�
 - 1 ファイル概ね 400 行の目安を、`service.py`（523 行）・`install.py`（431 行）・`serve.py`（497 行）が超えている。分けるなら `service.py` の更新の作業（`_run_apply` など）を別のモジュールに出す（自己検査は `mnwupdate` の下を全部読み込むので、足しても検査に入る）。
 - アプリ側（U3）で決めたこと: 確認中は保護者画面で 1 秒ごとに読む。配信がすでにその版なら POST せずアプリの準備から始める（`sw-failed` の「もう一度ためす」用）。押したのに配信が 30 秒 idle のままなら `interrupted`。Service Worker が使えない（`unsupported`・`error`）なら待たずに `sw-failed`。
 - 画面に足した字（展・布・待・送）のため、`npm run chars` で scripts/fonts/used-chars.txt を作り直し、コアのフォント（zen-maru-gothic-400/700）を作り直した。
+
+---
+
+## 16. 攻撃の目の点検と直し（2026-11-07）
+
+点検は 3 つの目で行った: 外との通信と取得（S1・N・S7・S8）、ローカルの窓口（S2・A）、ファイルの扱い（S3・F）。high は無かった。**medium の 3 件はすべて直した**。low は妥当なものを直し、直さなかったものは理由を書いた。直したものにはすべて試験を足した。
+
+| # | 重さ | 見つかったこと | どうしたか | 試験 |
+|---|---|---|---|---|
+| S1 | medium | リポジトリの固定が名前だけで、転送先の道を見ていない。アカウント・リポジトリの名前を変えた・消した・移したあとに他人が同じ名前で作ると、偽の版の情報と zip を配られ、自己検査の段で新しい serve.py が実行される（repojacking） | 直した。`github.com` はこのリポジトリのリリースの道だけ、配布用ホストはこのリポジトリの番号 `1431752170` の道だけ（3.4 節）。運用の決まり（名前を変えない）を 3.6 節に | test_fetch.py（AllowListTest） |
+| S2 | medium | 枠への埋め込みを断る見出しが無く、見えない枠を重ねて「更新する」・中止・自動の確認のオフを押させうる（クリックジャッキング） | 直した。すべての応答に `X-Frame-Options`・`frame-ancestors 'none'`・COOP。アプリ側でも枠の中では保護者ゲートを開かず POST しない（5.4 節） | test_serve.py（FrameHeadersTest）・e2e「枠（iframe）には入らない」・ParentGate.test.tsx・framed.test.ts・updater.test.ts |
+| S3 | medium | 名前の変更 2 回の入れ替えで、2 つ目も元に戻すのも失敗すると新しい版を消して `app` が無くなり、画面は「元の版のまま」と出す。もう一度押すと残っていた前の版まで消える | 直した。`switch-broken`。両方の版を残し、次は前の版を戻してから入れる。画面の文も変えた（5.9 節・6.2 節） | test_install.py・test_service.py（HardeningTest）・UpdateSection.test.tsx |
+| N1 | low | 取得中の空き不足（ENOSPC）が `offline` と表示され、3 回取り直す | 直した。すぐ `disk-full`（`needBytes` は全体の見積もり）。手元のファイルの失敗は `offline` と取り違えない（5.6 節） | test_fetch.py・test_service.py |
+| N2 | low | 転送の応答の本文を上限なしでメモリに読む | 直した。読まずに閉じる（3.4 節） | test_fetch.py（RedirectHandlingTest） |
+| N3 | low | 時間切れが受信ごとだけで全体の期限が無い。1 MiB たまるまで戻らず、遅い回線では中止が効かない | 直した。受信ごと（`read1`）に中止を確かめる。遅すぎれば続きから取り直す。版の情報は全体で 60 秒（5.6 節） | test_fetch.py（DiskAndSpeedTest） |
+| N4 | low | おかしな応答（続きの位置が 2 回とも合わない・`Content-Length` が ASCII でない数字・桁の多すぎる `Content-Range`）で `internal`・FileNotFoundError になる | 直した（5.6 節） | test_fetch.py（OddResponseTest） |
+| N5 | low | Python 3.10（Zorin OS 17）の urllib は 308 をたどらない | 直した。308 も自分で扱う（3.4 節） | test_fetch.py（3.12 では直す前から通る試験。3.10 での確かめは 17 章） |
+| S7 | low | 試験用の取得先の環境変数が本番の環境に残ると、同じパソコンのほかの利用者が偽の更新を配れる。効いていることが見えない | 直した。本番の 8765 では受け付けない。効いているときは標準エラーと状態（`testOrigin`）に出す。保護者画面には出さない（8765 では効かないので、家の画面に出る場面が無い） | test_serve.py |
+| S8 | low | 版の番号の誤り（大きすぎる版・同じ番号の出し直し）を取り返せない。古い版の情報を新しいリリースに上げても気づかない | 直した。`npm run package` で版の番号を確かめる（3.6 節）。転送先のタグと版の情報の `tag` を比べる（3.4 節） | release-lib.test.ts・test_fetch.py |
+| A1 | low | 同じ置き場から `--port` で 2 つ目の配信を起動すると、起動時の片付けが動いている更新を壊す | 直した。配信のプロセスの鍵（5.11 節） | test_service.py・test_serve.py（偽の fcntl） |
+| A2 | low | 起動し直すあいだ（1 秒ほど）ポート 8765 が空く。ほかの利用者が待ち受けると、このオリジンで偽のアプリを配れる | **直さない**。待ち受けのソケットを exec に受け渡す作り（`--listen-fd`）は、Windows では exec の道を通せず確かめられない。いちばん大事な起動し直しの道を、確かめられない変更で壊す危うさのほうが大きいと判断した。悪用には同じパソコンのほかの利用者が待ち受けを試し続けることが要り、配信が動いていないあいだ（起動の前）に同じことができる弱さは前からある。実機で確かめられる段で入れるのがよい | — |
+| A3 | low | 同じパソコンのほかの OS の利用者も窓口を使える | **直さない（文書に書いた）**。相手の利用者を `/proc/net/tcp` で見る作りは Linux だけで、Windows で確かめられない。できることは公式の最新版への更新・中止・設定・確認に限られる。README・5.4 節・9 章に書いた | — |
+| A4 | low | 失敗の説明（画面の小さな字・状態）にフォルダのフルパス（利用者の名前を含む）が出る | 直した。OSError は「errno の名前: 説明」だけにする。`server.pid` は残す（同じオリジンだけが読め、アプリの状態の読み取りが必須の欄としているため） | test_service.py・test_install.py・test_fetch.py |
+| A5 | low | `extracting` の終わり際に受け付けた中止を見ずに、`testing` 以降へ進んで入ってしまう | 直した（5.5 節） | test_service.py |
+| A6 | low | 保護者ゲートの計算問題は小学 2 年くらいから通れる | 仕組みは変えない（設計の範囲。人に聞く作業を作らない約束）。README で暗証番号を勧め、5.4 節・9 章に残るものとして書いた。保護者画面に文を足すのはやめた（フォントの字を増やさないため。README だけ） | — |
+| F1 | low | 展開したファイルを fsync せず、入れ替えの直後の停電で長さ 0 のファイルが残りうる | 直した。入れ替えの前に `os.sync()`、入れ替えのあと基のフォルダを fsync（5.5 節） | （Windows に `os.sync` が無い。実機の項目） |
+| F2 | low | state.json に書けなくても入れ替えに進み、済んだ更新が失敗に見える | 直した。`switching` は書けなければ入れ替えない。起動時、途中の段でも自分の版が `targetVersion` なら `done`（5.11 節） | test_service.py |
+| F3 | low | (a) 新しい serve.py が起動してすぐ `app.prev` を消すので、自己検査に通ったのに動かない版から戻せない (b) 自己検査を再起動の引数で試していない (c) systemd の単位が、起動し直しの隙間に manabi.sh の配信に先を越されて終了コード 3 で failed のまま残りうる | (b) は直した（5.8 節）。(a) は**直さない**: README の手順での入れ直しで戻せる（記録は消えない）。いちばん控えが要る「停電で新しい版のファイルが壊れる」は F1 で防いだ。控えを残すと前の版の本体がいつも残り、空きを使う。(c) は**直さない**: manabi.sh を変えても Windows では確かめられない（8765 を試験で使わない）。アプリは manabi.sh の配信で動き続け、次のログインで戻る。13 章に残るリスクとして書いた | test_install.py・test_service.py |
+| F4 | low | `REQUIRED_FILES` に `.desktop` のアイコンと `uninstall.sh` が無い | 直した（5.8 節。install.sh の確かめにも足した）。実行権限（X_OK）の確かめは足さない（展開のときに必ず 0o755 にし、失敗すれば例外になるため） | test_install.py・test_install_sh.py |
+| F5 | low | uninstall.sh が配信が止まるのを待たずに消す。`HOME`・`XDG_*` に `//` や末尾の `/` があると、起動し直した配信（`os.path.abspath` で表記がそろう）を pkill で止められない | 直した。install.sh・uninstall.sh とも、パスの表記（`//`・`/./`・末尾の `/`）をそろえてから使う。uninstall.sh も pgrep で約 5 秒待つ | test_install_sh.py |
+| F6 | low | 失敗・中止のあと、取得済みの zip（最大 約 2.4GB）が残り続ける | 直した。確認が成功したら、最新の版の部品に無いものを消す（5.6 節） | test_service.py |
+
+---
+
+## 17. 確かめたこと・確かめていないこと（仕上げ。2026-11-07）
+
+### 17.1 確かめたこと（Windows 11・Git Bash・Python 3.12・Playwright の chromium）
+
+| 確かめたこと | どうやって |
+|---|---|
+| 2.1.0 → 2.2.0 を「更新する」1 回で通す: 起動 15 秒後の自動の確認で見つかる → 取得 → 確かめ → 切り替え → 配信の起動し直し → Service Worker の新しい版 → 読み込み直し → 取得済みの見本パックの取り直し。記録（IndexedDB）が残る。変わらない音声の zip は取りに行かない。書いたのは決めた場所だけ。送ったのは User-Agent だけ（Cookie・問い合わせの文字列なし）。ブラウザは配信以外へ通信しない | `npm run e2e:update`（本物のビルド 2 つ・本物の serve.py の別プロセス・偽の GitHub） |
+| 音声の部品も変わった版・途中で切れたら続きから（配った量は zip の大きさとぴったり同じ）・sha256 違いは入れない（置き場は 1 バイトも変わらない）・電源断のあと押さずに続きから・新しい serve.py が動かなければ入れ替えない・空き容量不足・ほかのオリジンのページ・枠への埋め込み・許可外のホストへの転送・自動の確認のオフ・窓口の無い配信 | 同上（全部で 12 件） |
+| 点検で直したこと（16 章） | Python の unittest（214 件）・vitest・e2e。新しい試験が空振りでないことを、直す前の fetch.py に戻すと落ちること、見出しを外した serve.py で枠の e2e が落ちること（見出しの確かめと、枠の中にアプリが出ないことの確かめの両方）で確かめた |
+| 本物の GitHub の転送の形（`latest/download` → `releases/download/v2.0.2/…` → `release-assets.githubusercontent.com/github-production-release-asset/1431752170/<uuid>`）とリポジトリの番号 | GitHub の API と、小さな `.sha256` の asset の応答の見出しだけを見た（2026-11-07） |
+| 型・書式・ビルド | `npx tsc -b`・`npx eslint .`・`npx prettier --check`（変えたファイル）・`npx vitest run`・`npm run check:design`・`npm run build` |
+
+### 17.2 確かめていないこと（Zorin OS の実機・本物の GitHub など）
+
+docs/device-checklist.md の「自動更新」の項目に、実機で確かめることを書いた。
+
+| 確かめていないこと | 理由・代わりにしたこと |
+|---|---|
+| Zorin OS の実機での通し（2.0.x から 2.1.0 を手で入れる → その次の版を「更新する」1 回で入れる） | 実機が無い |
+| `os.execv` での再起動（PID が変わらない）・systemd の自動起動のときの動き | Windows は `subprocess.Popen` の道（PID が変わる）で通した |
+| `renameat2(RENAME_EXCHANGE)` での一度の入れ替え | Windows は名前の変更 2 回の道で通した |
+| `fcntl.flock`（作業の鍵・配信のプロセスの鍵） | Windows に無い。偽の `fcntl` で動きを確かめた |
+| `os.sync()`・fsync の効き目（停電） | Windows に `os.sync` が無い。停電の試験はしない |
+| Python 3.10（Zorin OS 17 の python3）での実行と 308 の転送 | 3.10 が手元に無い。構文は 3.10 の範囲だけを使う約束（2 章） |
+| 本物の GitHub からの zip の取得（TLS・配布用ホストへの転送・道と番号の確かめ） | 版の情報を置いたリリース（2.1.0）がまだ無い。転送の形と番号は 17.1 のとおり見出しで確かめた。2.1.0 のリリースのあと `--check-update` で確かめる |
+| 大きな zip（1.3GB）・遅い回線・実機の空き容量 | 偽の GitHub の小さな zip・少しずつ送る相手・`shutil.disk_usage` の差し替えで確かめた |
+| Firefox（Zorin の既定）での更新の流れと、枠への埋め込みの止まり方 | e2e は chromium だけ |
+| ブラウザのローカルネットワークへの接続の制限（LNA）の影響 | 範囲外（Chrome の新しい版の動き。Firefox では当てにしない） |
+| install.sh・uninstall.sh の本物の `systemctl`・`pkill`・`pgrep`・`xdg-user-dir`・GNU でない `sed` | Git Bash に無いものは偽物で確かめた |
+| systemd で動いているときの、起動し直しの隙間と manabi.sh（16 章 F3 の (c)） | 8765 は試験で使わない |
+| `npm run test:py:sh`（Linux の python3。鍵・renameat2 の試験は Linux だけで動く） | Linux が無い |
+
+### 17.3 まだしていないこと（リリースのとき）
+
+- `package.json` の版を 2.1.0 に上げる（`npm run package` は 2.1.0 より古い版では止まる）。
+- `docs/expansion/release-2.1.0.md` に `## 保護者画面に出す短い説明` を書く。
+- README の手順 1・3 の版の番号（`2.0.2`）を 2.1.0 に書きかえる。

@@ -22,9 +22,14 @@ for arg in "$@"; do
   esac
 done
 
-DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+# パスの表記をそろえる（// を / に、/./ を / に）。更新で起動し直した配信のコマンドラインは
+# Python の os.path.abspath で表記がそろうので、配信を止めるときの pkill の型と食い違わないように
+normalize_path() {
+  printf '%s' "$1" | sed -e 's#//*#/#g' -e ':a' -e 's#/\./#/#' -e 'ta' -e 's#/\.$##' -e 's#\(.\)/$#\1#'
+}
+DATA_HOME="$(normalize_path "${XDG_DATA_HOME:-$HOME/.local/share}")"
+STATE_HOME="$(normalize_path "${XDG_STATE_HOME:-$HOME/.local/state}")"
+CONFIG_HOME="$(normalize_path "${XDG_CONFIG_HOME:-$HOME/.config}")"
 BASE_DIR="$DATA_HOME/manabi-no-niwa"
 APP_DIR="$BASE_DIR/app"
 APP_NEXT="$BASE_DIR/app.next"
@@ -84,6 +89,13 @@ fi
 if command -v pkill >/dev/null 2>&1; then
   SERVE_PATTERN="$(printf '%s' "$APP_DIR/deploy/zorin/serve.py" | sed 's/[][\.*^$+?(){}|]/\\&/g')"
   pkill -u "$(id -u)" -f "$SERVE_PATTERN" 2>/dev/null || true
+  # 止まるまで少し待つ（更新の作業の途中なら、止まりきる前に作業用のフォルダを作り直すことがあるため）
+  if command -v pgrep >/dev/null 2>&1; then
+    for _ in $(seq 1 25); do
+      pgrep -u "$(id -u)" -f "$SERVE_PATTERN" >/dev/null 2>&1 || break
+      sleep 0.2
+    done
+  fi
 fi
 echo "[2/4] 動いている配信を止めました（動いていなければ何もしていません）"
 

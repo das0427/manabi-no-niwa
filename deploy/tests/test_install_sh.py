@@ -149,7 +149,7 @@ class InstallShTestBase(unittest.TestCase):
             "exit 0\n",
         )
         self.write_stub("pkill", 'echo "pkill $*" >> "$MNW_TEST_LOG"\nexit 1\n')
-        self.write_stub("pgrep", "exit 1\n")
+        self.write_stub("pgrep", 'echo "pgrep $*" >> "$MNW_TEST_LOG"\nexit 1\n')
         self.write_stub("xdg-user-dir", "exit 0\n")
 
     def calls(self):
@@ -500,6 +500,23 @@ class InstallTest(InstallShTestBase):
         self.assertIn("始め直しました", r.stdout)
         self.assert_installed("2.1.0", rel)
 
+    def test_paths_are_normalized_like_the_restarted_server(self):
+        # XDG_DATA_HOME に // や末尾の / があっても、pkill の型・アイコンのパスは、更新で起動し直した配信の
+        # コマンドライン（os.path.abspath で表記がそろう）と同じ形にする
+        rel = self.make_release("a", "2.1.0")
+        odd = to_posix(self.data).replace("/data", "//./data") + "/"
+        r = self.install(rel, env_extra={"XDG_DATA_HOME": odd})
+        self.assertEqual(r.returncode, 0, r.out)
+        pkill = [c for c in self.calls() if c.startswith("pkill ")]
+        self.assertEqual(1, len(pkill), self.calls())
+        pattern = re.match(r"^pkill -u \d+ -f (.+)$", pkill[0]).group(1)
+        self.assertNotIn("//", pattern)
+        self.assertNotIn("/./", pattern)
+        self.assertTrue(re.search(pattern, to_posix(self.app) + "/deploy/zorin/serve.py"), pattern)
+        text = self.desktop_file.read_text(encoding="utf-8")
+        self.assertIn(f'Exec="{to_posix(self.app)}/deploy/zorin/manabi.sh"', text)
+        self.assert_installed("2.1.0", rel)
+
     def test_no_running_unit_means_no_stop_and_no_start(self):
         rel = self.make_release("a", "2.1.0")
         r = self.install(rel)
@@ -588,7 +605,12 @@ class UninstallTest(InstallShTestBase):
             self.assertFalse(p.exists(), str(p) + " が残っています")
         calls = self.calls()
         self.assertIn("systemctl --user disable --now manabi-no-niwa.service", calls)
-        self.assertEqual(1, len([c for c in calls if c.startswith("pkill ")]))
+        pkill = [i for i, c in enumerate(calls) if c.startswith("pkill ")]
+        self.assertEqual(1, len(pkill))
+        # 止まったかを確かめてから消す（更新の作業の途中なら、止まりきる前にフォルダを作り直すことがあるため）
+        pgrep = [i for i, c in enumerate(calls) if c.startswith("pgrep ")]
+        self.assertTrue(pgrep and pgrep[0] > pkill[0], calls)
+        self.assertEqual(calls[pgrep[0]].split(" -f ", 1)[1], calls[pkill[0]].split(" -f ", 1)[1])
         self.assertIn("学習データ", r.stdout)
 
     def test_keeps_a_base_folder_that_is_not_empty(self):

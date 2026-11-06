@@ -16,6 +16,7 @@
  * 状態を読む間隔: 作業中 1 秒、作業が無く保護者画面を開いているあいだ 30 秒、それ以外は起動時の 1 回だけ。
  */
 import { useSyncExternalStore } from 'react';
+import { isFramed } from '../framed';
 import { applyUpdate, checkForUpdateNow, getOfflineState, subscribeOffline } from './index';
 import { computePackStatuses, downloadPackList, getPackIndex } from './packs';
 
@@ -615,8 +616,10 @@ type PostPath = 'check' | 'apply' | 'cancel' | 'settings';
 /**
  * 窓口へ POST する。見出しは Content-Type: application/json と X-Manabi-Token。
  * 403（合言葉が古い。配信が起動し直した）なら、状態を読み直して 1 回だけ送り直す。
+ * ほかのページの枠（iframe）の中では送らない（code: 'framed'。クリックジャッキングで押させない）。
  */
 async function post(path: PostPath, body: unknown): Promise<UpdaterActionResult> {
+  if (isFramed()) return { ok: false, code: 'framed', detail: 'embedded in another page' };
   let token = view.status?.token ?? null;
   if (token === null) token = (await refreshUpdaterStatus())?.token ?? null;
   if (token === null) return { ok: false, code: 'unreachable', detail: 'status unavailable' };

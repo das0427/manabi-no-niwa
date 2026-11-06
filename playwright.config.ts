@@ -19,8 +19,9 @@ export default defineConfig({
         // 環境変数 MNW_FIREFOX_PATH があれば、その firefox を使う（Windows で既定の場所から起動できない場合の回避用）
         launchOptions: { executablePath: process.env.MNW_FIREFOX_PATH || undefined },
       },
-      // serve.py の検査はブラウザに依存しないため、chromium の project でだけ実行する
-      testIgnore: /serve\.spec\.ts/,
+      // serve.py の検査・自動更新の通し試験（update.spec.ts。npm run e2e:update でも実行できる）は
+      // ブラウザに依存しないため、chromium の project でだけ実行する
+      testIgnore: /(serve|update)\.spec\.ts/,
     },
   ],
   webServer: {

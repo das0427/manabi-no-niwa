@@ -41,8 +41,13 @@ ROOT_REAL="$(cd "$ROOT" && pwd -P)"
 DIST_SRC="$ROOT/dist"
 PARTS_SRC="$ROOT/parts"
 
-DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+# パスの表記をそろえる（// を / に、/./ を / に）。更新で起動し直した配信のコマンドラインは
+# Python の os.path.abspath で表記がそろうので、配信を止めるときの pkill の型と食い違わないように
+normalize_path() {
+  printf '%s' "$1" | sed -e 's#//*#/#g' -e ':a' -e 's#/\./#/#' -e 'ta' -e 's#/\.$##' -e 's#\(.\)/$#\1#'
+}
+DATA_HOME="$(normalize_path "${XDG_DATA_HOME:-$HOME/.local/share}")"
+CONFIG_HOME="$(normalize_path "${XDG_CONFIG_HOME:-$HOME/.config}")"
 BASE_DIR="$DATA_HOME/manabi-no-niwa"
 APP_DIR="$BASE_DIR/app"
 APP_NEXT="$BASE_DIR/app.next"
@@ -240,7 +245,7 @@ if [ -f "$ROOT/docs/device-checklist.md" ]; then
   cp "$ROOT/docs/device-checklist.md" "$APP_NEXT/docs/device-checklist.md"
 fi
 chmod +x "$APP_NEXT/deploy/zorin/"*.sh "$APP_NEXT/deploy/zorin/serve.py"
-for f in dist/index.html deploy/zorin/serve.py deploy/zorin/manabi.sh deploy/zorin/mnwupdate/__init__.py; do
+for f in dist/index.html dist/icons/icon-192.png deploy/zorin/serve.py deploy/zorin/manabi.sh deploy/zorin/uninstall.sh deploy/zorin/mnwupdate/__init__.py; do
   if [ ! -f "$APP_NEXT/$f" ]; then
     echo "エラー: 新しい版の組み立てに失敗しました（$APP_NEXT/$f がありません）。" >&2
     exit 1

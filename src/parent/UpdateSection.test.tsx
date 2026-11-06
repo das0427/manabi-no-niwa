@@ -511,6 +511,7 @@ describe('失敗', () => {
     ],
     ['self-test', '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。'],
     ['switch-failed', '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。'],
+    ['switch-broken', 'アプリのファイルの切り替えで問題が起き、元に戻せませんでした。'],
     ['interrupted', '前回の更新が途中で止まりました。もう一度押すと続きから始めます。'],
     [
       'version-changed',
@@ -537,6 +538,24 @@ describe('失敗', () => {
         ? '更新できませんでした: 更新できませんでした。'
         : `更新できませんでした: ${sentence}`,
     );
+  });
+
+  it('元に戻せなかった（switch-broken）ときは「いまの版はそのまま使えます」と言わず、次にすることを出す', () => {
+    m.view = failedView('switch-broken');
+    render(<UpdateSection />);
+    const err = screen.getByTestId('update-error');
+    expect(err.textContent).not.toContain('いまの版はそのまま使えます');
+    expect(text('update-error-next')).toBe(
+      '「もう一度ためす」を押すと、前の版に戻してから入れ直します。直らないときは、README の「新しい版に更新するとき」の手順で入れ直してください（学習の記録は消えません）。',
+    );
+    fireEvent.click(screen.getByTestId('update-retry'));
+    expect(m.requestApply).toHaveBeenCalledWith('2.2.0');
+    // ほかの失敗では今までどおり
+    cleanup();
+    m.view = failedView('switch-failed');
+    render(<UpdateSection />);
+    expect(screen.getByTestId('update-error').textContent).toContain('いまの版はそのまま使えます');
+    expect(screen.queryByTestId('update-error-next')).toBeNull();
   });
 
   it('空き容量不足は、足りない大きさ（必要な大きさ − 今の空き）を GB で出す', () => {

@@ -390,7 +390,18 @@ src/modes/<mode>/
 | `manabi-no-niwa.service` | systemd --user 用の単位ファイル |
 
 - Zorin OS は Python 3 を標準で含む（実機で `python3 --version` を確認する手順を README に記載）。
-- 更新: 新しい zip を展開して `install.sh` を再実行 → 次回起動時に Service Worker が新版を検出。
+- 更新: 2.1.0 からは保護者画面「このアプリについて」の「更新する」（IN-07）。手でも同じ手順（新しい zip を展開して `install.sh` を再実行 → 次回起動時に Service Worker が新版を検出）で入れ直せる。2.0.x から 2.1.0 へは手で 1 回。
+
+**更新の仕組み（2.1.0 から。設計: docs/expansion/updater-design.md）**
+
+| ファイル・場所 | 役割 |
+|---|---|
+| `deploy/zorin/mnwupdate/`（`common`・`manifest`・`fetch`・`install`・`service`・`api`） | serve.py の中で動く更新の仕組み。外へ通信するのは `fetch.py` だけ（GitHub のこのリポジトリのリリースと配布用ホストだけ） |
+| `/__manabi/update/status`・`check`・`apply`・`cancel`・`settings` | 窓口（同じオリジンのアプリだけが使う。設計 5.3・5.4 節） |
+| `~/.local/share/manabi-no-niwa/{app, app.next, app.prev, update}` | いまの版・組み立て中・入れ替えた直後の前の版・状態と取得の途中のファイルと鍵 |
+| `~/.config/manabi-no-niwa/updater.json` | 自動の確認のオン・オフ |
+| `src/core/offline/updater.ts`・`src/parent/UpdateSection.tsx` | アプリ側: 状態の読み取り・押したあとの流れ（Service Worker の新しい版の準備・読み込み直し・教材パックの取り直し）・保護者画面の表示 |
+| リリースの `manabi-no-niwa-update.json`（`scripts/package-release.ts`） | 版の情報（版・公開日・変わった点・部品ごとの大きさ・sha256・中身の ID） |
 
 ## 9. 状態の扱いと不具合対策
 
@@ -408,6 +419,9 @@ src/modes/<mode>/
 
 ## 11. セキュリティとプライバシー
 
-- 外部への通信コードを持たない。Content-Security-Policy（`default-src 'self'`; 画像は `self data: blob:`）を `index.html` の meta で設定。
+- アプリ（ブラウザ）は外部への通信コードを持たない。Content-Security-Policy（`default-src 'self'`; 画像は `self data: blob:`）を `index.html` の meta で設定。
+- 外への通信は配信（serve.py）の更新の仕組みだけで、更新の確認と取得のときだけ（IN-08）。転送のたびにホストと道（github.com はこのリポジトリのリリース、配布用ホストはリポジトリの番号）を確かめ、TLS の確認は切らない。送るのは User-Agent（アプリの名前）だけ。
+- 更新の窓口は Host・Sec-Fetch-Site・Origin・JSON の Content-Type・起動ごとの合言葉を確かめ、CORS を許可しない（IN-11）。配信はすべての応答に `X-Frame-Options: DENY`・`Content-Security-Policy: frame-ancestors 'none'` を付け、ほかのサイトの枠に入れさせない（meta の CSP では frame-ancestors が効かないため）。アプリも枠の中では保護者画面の入口を開かず、窓口へ POST しない。
+- 入れる前に大きさ・sha256・zip の中のパス・中身・新しい配信の自己検査を確かめる（IN-09）。脅威と残るものは設計 9 章・16 章。
 - 読み込むファイルは JSON として解析し、文字列は React でエスケープして表示（HTML として解釈しない）。
 - 保護者の暗証番号は SHA-256 のハッシュで保存（強固な保護ではない旨を明記）。

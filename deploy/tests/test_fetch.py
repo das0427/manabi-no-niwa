@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 """取得先の確かめ・転送先の許可リスト・偽の GitHub での取得（設計 3.3・3.4・5.6 節）"""
+import errno
 import hashlib
 import os
 import socket
 import threading
+import time
 import unittest
 from unittest import mock
 
@@ -81,13 +83,39 @@ class AllowListTest(unittest.TestCase):
         endpoint = fetch.endpoint_from_env({})
         for url in (
             "https://github.com/das0427/manabi-no-niwa/releases/download/v1.0.0/a.zip",
-            "https://objects.githubusercontent.com/github-production-release-asset/1?X=1",
-            "https://release-assets.githubusercontent.com/x/y",
-            "https://GITHUB.COM/x",
-            "https://github.com:443/x",
+            "https://github.com/das0427/manabi-no-niwa/releases/latest/download/manabi-no-niwa-update.json",
+            # 本物の転送の形（2026-11-07 に GitHub で確かめた。1431752170 はこのリポジトリの番号）
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1431752170/"
+            "75d6a830-0344-4f88-ad97-f2ddb925435c?sp=r&sv=2018-11-09&sig=x",
+            "https://objects.githubusercontent.com/github-production-release-asset-2e65be/1431752170/abc-def?X=1",
+            "https://GITHUB.COM/das0427/manabi-no-niwa/releases/download/v2.2.0/a.zip",
+            "https://github.com:443/das0427/manabi-no-niwa/releases/download/v2.2.0/a.zip",
+            endpoint.manifest_url(),
+            endpoint.part_url("v2.2.0", "manabi-no-niwa-2.2.0-audio-g5-g6.zip"),
         ):
             with self.subTest(url):
                 endpoint.check_url(url)
+        for url in (
+            # ホストは合っているが、このリポジトリのリリースの道でない（リポジトリの名前を取り直された場合など）
+            "https://github.com/x",
+            "https://github.com/login",
+            "https://github.com/someone-else/evil/releases/download/v2.2.0/manabi-no-niwa-2.2.0.zip",
+            "https://github.com/das0427/manabi-no-niwa-evil/releases/download/v2.2.0/a.zip",
+            "https://github.com/das0427/manabi-no-niwa/releases/download/v2.2.0/../../../evil/a.zip",
+            "https://github.com/das0427/manabi-no-niwa/releases/download/v2.2.0/%2e%2e/a.zip",
+            "https://github.com/das0427/manabi-no-niwa/releases/download/2.2.0/a.zip",
+            "https://github.com/das0427/manabi-no-niwa/releases/tag/v2.2.0",
+            "https://github.com/das0427/manabi-no-niwa/archive/refs/heads/main.zip",
+            "https://release-assets.githubusercontent.com/x/y",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/999/uuid",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/14317521700/uuid",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1431752170",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1431752170/../x",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1431752170/%2e/x",
+            "https://objects.githubusercontent.com/github-production-release-asset/1?X=1",
+        ):
+            with self.subTest(url):
+                self.assertEqual(code_of(endpoint.check_url, url), "redirect-host")
         for url in (
             "https://github.com.evil.example/x",
             "https://evilgithub.com/x",
@@ -336,6 +364,162 @@ class DownloadTest(FakeCase):
         total = sum(p.bytes for p in parts)
         self.assertEqual(seen[-1], (total, total, "audio-g1-g2", 2, 2))
         self.assertTrue(all(a[1] == total for a in seen))
+
+
+class RedirectHandlingTest(FakeCase):
+    """転送の扱い（点検で見つかったことの直し）"""
+
+    def test_redirect_body_is_not_read(self):
+        # 転送の応答に 50 MB の本文があると言われても、読まずに転送先へ行く（読むと止まったまま待たされる）
+        self.fake.redirect_body_stall = True
+        started = time.monotonic()
+        with mock.patch.object(fetch, "MANIFEST_TIMEOUT", 4):
+            data = self.fetcher.fetch_manifest()
+        self.assertEqual(data, self.release.manifest_bytes)
+        self.assertLess(time.monotonic() - started, 3)
+
+    def test_308_is_followed_like_302_and_keeps_range(self):
+        # Python 3.10 の urllib は 308 をたどらない。どの版でも同じに 308 をたどる
+        self.fake.redirect_status = 308
+        self.assertEqual(self.fetcher.fetch_manifest(), self.release.manifest_bytes)
+        part = DownloadTest.start_partial(self, "main", 300)
+        _, path = self.download("main")
+        with open(path, "rb") as f:
+            self.assertEqual(f.read(), self.release.zips[part.name])
+        self.assertEqual([r["range"] for r in self.fake.requests_for(part.name)], ["bytes=300-"] * 4)
+
+    def test_manifest_from_another_release_is_refused(self):
+        # 本物と同じく latest/download → releases/download/<tag>/ と転送させる
+        self.fake.tag_redirect = True
+        self.assertEqual(self.fetcher.fetch_manifest(), self.release.manifest_bytes)
+        self.assertEqual(
+            self.fake.log[1]["path"], "/das0427/manabi-no-niwa/releases/download/v2.2.0/manabi-no-niwa-update.json"
+        )
+        # 古い版の情報（v2.1.0）を、新しいリリース（v2.2.0）に上げてしまった
+        self.fake.manifest = Release("2.1.0").manifest_bytes
+        self.assertEqual(code_of(self.fetcher.fetch_manifest), "bad-manifest")
+        # 転送が無い形（タグが分からない）ときは確かめない
+        self.fake.tag_redirect = False
+        self.assertEqual(self.fetcher.fetch_manifest(), self.fake.manifest)
+
+    def test_release_tag_of(self):
+        endpoint = fetch.endpoint_from_env({})
+        base = "https://github.com/das0427/manabi-no-niwa/releases/download/"
+        self.assertEqual(endpoint.release_tag_of(base + "v2.2.0/manabi-no-niwa-update.json"), "v2.2.0")
+        for url in (
+            base + "v2.2.0/manabi-no-niwa-2.2.0.zip",
+            "https://evil.example/das0427/manabi-no-niwa/releases/download/v9.0.0/manabi-no-niwa-update.json",
+            "https://release-assets.githubusercontent.com/github-production-release-asset/1431752170/x",
+        ):
+            self.assertIsNone(endpoint.release_tag_of(url), url)
+
+
+class OddResponseTest(FakeCase):
+    """取得先がおかしな応答を返しても、決まった失敗のコードになる（internal・FileNotFoundError にしない）"""
+
+    def test_wrong_content_range_twice_is_http(self):
+        part = DownloadTest.start_partial(self, "main", 300)
+        self.fake.bad_range[part.name] = "bytes 7-9/%d" % part.bytes
+        self.assertEqual(code_of(self.download, "main"), "http")
+
+    def test_huge_content_range_numbers_are_not_trusted(self):
+        part = DownloadTest.start_partial(self, "main", 300)
+        self.fake.bad_range[part.name] = "bytes 300-%s/%d" % ("9" * 5000, part.bytes)
+        self.assertEqual(code_of(self.download, "main"), "http")
+
+    def test_non_ascii_digit_content_length_is_ignored(self):
+        # '²' は isdigit() が真なのに int() にできない
+        name = self.release.part("main").name
+        self.fake.content_length[name] = "\u00b2"
+        self.fake.content_length["manifest"] = "\u00b2"
+        self.assertEqual(self.fetcher.fetch_manifest(), self.release.manifest_bytes)
+        _, path = self.download("main")
+        with open(path, "rb") as f:
+            self.assertEqual(f.read(), self.release.zips[name])
+
+
+class _FullDisk:
+    """書いた量が limit を超えると ENOSPC を投げるファイル"""
+
+    def __init__(self, real, limit):
+        self.real, self.limit = real, limit
+
+    def write(self, data):
+        if self.real.tell() + len(data) > self.limit:
+            raise OSError(errno.ENOSPC, "No space left on device", "C:\\Users\\someone\\secret.part")
+        return self.real.write(data)
+
+    def __getattr__(self, name):
+        return getattr(self.real, name)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.real.close()
+
+
+class DiskAndSpeedTest(FakeCase):
+    def test_disk_full_while_writing_is_disk_full_and_not_retried(self):
+        name = self.release.part("main").name
+        real_open = open
+
+        def fake_open(path, mode="r", *args, **kwargs):
+            f = real_open(path, mode, *args, **kwargs)
+            return _FullDisk(f, 200) if str(path).endswith(".part") and "b" in mode else f
+
+        with mock.patch("builtins.open", fake_open):
+            with self.assertRaises(UpdateError) as caught:
+                self.download("main")
+        self.assertEqual(caught.exception.code, "disk-full")
+        self.assertIsNotNone(caught.exception.need_bytes)
+        self.assertNotIn("secret", caught.exception.detail)  # パスは出さない
+        self.assertIn("ENOSPC", caught.exception.detail)
+        blobs = [r for r in self.fake.requests_for(name) if r["path"].startswith("/blob/")]
+        self.assertEqual(len(blobs), 1)  # 取り直さない（ネットの失敗ではない）
+
+    def test_too_slow_download_gives_up_and_keeps_what_it_got(self):
+        name = self.release.part("main").name
+        self.fake.trickle[name] = (50, 0.05)
+        with mock.patch.object(fetch, "STALL_WINDOW", 0.3), mock.patch.object(fetch, "STALL_MIN_BYTES", 10**6):
+            with self.assertRaises(UpdateError) as caught:
+                self.download("main")
+        self.assertEqual(caught.exception.code, "offline")
+        self.assertIn("too slow", caught.exception.detail)
+        blobs = [r for r in self.fake.requests_for(name) if r["path"].startswith("/blob/")]
+        self.assertEqual(len(blobs), 4)  # 最初 + 3 回（続きから）
+        self.assertTrue(all(r["range"] for r in blobs[1:]))
+        self.assertGreater(os.path.getsize(os.path.join(self.downloads, name + ".part")), 0)
+
+    def test_cancel_works_while_data_trickles_in(self):
+        name = self.release.part("main").name
+        self.fake.blobs[name] = b"z" * 20000
+        part = self.release.part("main")
+        patched = manifest.Part(part.kind, part.name, 20000, hashlib.sha256(b"z" * 20000).hexdigest(), part.content_id, 1, 1)
+        self.fake.trickle[name] = (100, 0.05)  # 全部で 10 秒かかる
+        result = {}
+
+        def run():
+            try:
+                self.fetcher.download_part(patched, "v2.2.0", self.downloads, self.cancel)
+            except Cancelled:
+                result["cancelled"] = time.monotonic()
+
+        worker = threading.Thread(target=run)
+        worker.start()
+        time.sleep(0.5)
+        pressed = time.monotonic()
+        self.cancel.set()
+        worker.join(5)
+        self.assertIn("cancelled", result)
+        self.assertLess(result["cancelled"] - pressed, 1.5)
+
+    def test_manifest_has_an_overall_deadline(self):
+        self.fake.trickle["manifest"] = (10, 0.05)
+        started = time.monotonic()
+        with mock.patch.object(fetch, "MANIFEST_DEADLINE", 0.5):
+            self.assertEqual(code_of(self.fetcher.fetch_manifest), "offline")
+        self.assertLess(time.monotonic() - started, 3)
 
 
 if __name__ == "__main__":

@@ -1659,3 +1659,375 @@ W1〜W11・C20〜C26 を担当ごとにファイルを分けて実装した。�
 - 12 字を超える選択肢（data-long）のラベルは、問題文と同じ大きさで --fit で縮まない（T3 の決め）。g2.ja.listen-notes は縮めても足りないので、今回は content に任せた。
 - match の 1 段では札が縮むので、ラベルが語の切れ目で 2 行に折れる（「近く／の安全を見守る」。検査の違反ではない）。
 - C25 の線は同じ `.eng-match` の札だけ、C21 の「隣の札」は同じ親の兄弟の札だけを見る（担当の残し事項のとおり）。
+
+## アプリの画面（2026-11-07・分析と設計）
+
+単元の画面は `check:text-layout` が全問題を見ているが、アプリの画面（起動・プロフィール選択・ホーム・ほかの がくねん・選ぶ画面・単元の地図・ノート・おえかき・作品・保護者画面）は見ていなかった。前回の点検で「ほかの がくねん」（`#/explore`）の幼児の区分で 10 枚目の「えいご」の札が舞台の下で切れて押せないこと、保護者画面と設定は開発用の hash で開くと起動画面に戻されて目で見られないことが分かった。この節は、アプリの全画面を同じ考え（重なり・切れ・舞台の外・押せない・小さすぎる字・変な改行）で検査する仕組み（AC）と、いまの崩れの直し方（A0〜A10）を決める。
+
+### 0. 調べ方と、いまの崩れ
+
+調べ方:
+
+- 自分の開発サーバー（127.0.0.1:4547、`MNW_DEV_NO_HMR=1`。4299 は使っていない。終わってから止めた）で、一時の Playwright の巡回（`e2e/app-scan*.tmp.spec.ts` と一時の設定。終わってから消した）を流した。
+- プロフィールは 11 通り: 2〜3さい（2さいの段階・3さいの段階）、4さい、4さい（えいごの札を隠す `showPreschoolEnglish: false`）、5さい、小1〜小6。画面サイズは 4 通り（1280×720・1920×1080・1280×620・1536×864）。
+- 画面ごとに `textLayoutProbe`（`e2e/helpers/text-layout.ts`）と `inspectLayout`（`e2e/helpers/layout.ts`）を当てた。
+- 中身の多い状態も作った: 小学生のおすすめに「ふくしゅう」2 件（学年でいちばん長い題の単元）、小3 は文字 1.3 倍・ふりがな すべて、ノート 14 日分、作品 18 枚＋なぞり 5 枚、プロフィール 4 人（20 字の名前・空白のある名前）。
+- 起動画面の「きょうざいの じゅんび」は、開発サーバーではオフラインの準備が整わず出ない。そのため部品の DOM を差し込んで近似した（直したあとは A5 の開発用の指定で本物を出す）。
+- のべ 1,398 画面を調べた。
+
+いまの崩れ（件数は検査の種類の件数。「画面」は プロフィール × 画面サイズ の数）:
+
+| 画面 | 違反のある画面 / 調べた画面 | 主な種類と件数 | 原因 |
+|---|---|---|---|
+| ほかの がくねん（幼児の区分 2〜3さい・4さい・5さい のタブ） | どのプロフィールでも全サイズ | out-of-stage 286 | **10 枚目の「えいご」の札が舞台の下に出て押せない**。札は 3 列 × 14u・間 1.6u で、10 枚だと 4 段になる。上 8u ＋ 4 段で 68.8u、舞台は 56.25u なので、札の上端 54.8u・下に 12.5u はみ出す。`.screen.explore` の scrollHeight / clientHeight は 1280×620 で 758 / 620、1280×720 で 881 / 720、1536×864 で 1057 / 864、1920×1080 で 1321 / 1080。舞台は overflow: hidden なので、スクロールでも見えない |
+| 単元の地図（小学生の教科 × 学年） | 134 / 134 | scroll-hidden 1626・button-split 946・text-outside-box 800・overlap-text 180・covered 163・orphan 21・small-text 16 | (1) `.smap-unit` の `min-height: 8u` が flex の自動の最小（中身の高さ）を置きかえるため、列（`overflow-y: auto` の flex の縦並び）が札を 8u まで縮める。2〜5 行の題が札の外にあふれ、下の札に重なる。(2) 題の幅が約 9.75u（札 22.8u − 線 0.9u・0.35u − 余白 1u − 絵 5.4u − 間 1u − 印の分の余白 4.4u）で、2.2u の字が 1 行に 4 字ほどしか入らない。(3) 分かち書き・文節の折り方の指定が無く、語の途中で折れる（「たしざん／の ひっ／さん」「長さの た／んい」「小数の わ／り算」「よむ（1ね／ん）」）。(4) 列ごとのスクロールに印が無い（算数の小1・小3 は 1 列 11 枚で、見えるのは 4 枚ほど）。(5) 小2 の題の分数が 1.8u（最小 2.0u。アプリの画面に `--text-min` が無い） |
+| 小学生ホームの「きょうの おすすめ」 | ふつうの状態はホーム 45 画面のうち 21（すべて小学生）、中身の多い状態 24 / 24 | text-outside-box 236・button-split 68（ふつうの状態は 40）・overlap-text 101・covered 69・orphan 28・small-text 8 | 札 30u × 8.6u に、題（`--text-label` 2.6u、絵 6.4u の右の約 19u）が 3 行以上になって入らない（小4〜小6 の「表現の工夫（比喩・反復など）」「雨水の ゆくえと 地面の ようす」など）。文字 1.3 倍・ふりがな すべてでは見出しと次の札に重なる。語の途中で折れる（「ていねいな こ／とば」「話し言葉と書き／言葉」）。「ふくしゅう」の札の字が 1.8u（小1・小2 の最小 2.0u 未満） |
+| 選ぶ画面（幼児の札に単元が 2 つ以上のとき） | 44 / 172 | button-split 48 | 札の名前に分かち書きの折り方（`data-wakachi`）が無い（「おかいも／の ごっこ」「かずと い／ろと もの」「ながい えい／ごの えほん」「せん・かた／ち・めいろ」）。6 枚（2 段 × 22u）だと下の余白が約 1u（2u 未満） |
+| 起動画面の教材の準備（近似） | 8 / 8 | overlap-text 11・covered 12 | 保護者向けの表示（`.start-notes`、下に絶対配置）が 2 行になると、真ん中の列の「さきに あそんで いいよ」「おうちの ひとに みてもらってね」「もういちど」に重なる。small-text 16 は保護者向けの字を子供の最小（u）で測った誤検出 |
+| プロフィール選択（20 字の名前） | 4 / 4 | button-split 3 | 名前に分かち書きの折り方が無い（「さくら は／るか みな／み」）。札の高さが名前の行数でそろわない（重なりは無い） |
+| がんばりノート（14 日分） | 4 / 4 | scroll-hidden 80・word-split 4 | 一覧はスクロールするが印が無い（1280×620 で scrollHeight 1655 / clientHeight 532）。日付の列 16u に「10がつ30にち」（2.6u）が入らず「10がつ 30／にち」 |
+| さくひん（18 枚＋なぞり 5 枚） | 4 / 4 | scroll-hidden 28 | 一覧のスクロールに印が無い（1247 / 532）。3 段目が半分で切れて見える |
+| 保護者画面の各タブ | 全タブ | ボタン・選ぶ欄の高さ不足 416（ボタン 34px・選ぶ欄 24px・ファイル 23px）、word-split（「えいごの えほん（4／歳）」） | DESINGN.md 2章の「保護者画面のボタンの高さ 44px 以上」を、ボタン（padding 5px 12px）・選ぶ欄・入力欄が満たさない。「このアプリについて」の幼児の英語の表で、年齢の括弧が数と単位の間で折れる。wakachi-split は大人の文を子供の規則で見た誤検出 |
+| 保護者の入り口（ゲート） | 全サイズ | covered 1096・overlap-button 516・small-text 613 | どれも誤検出。後ろのホーム（ゲートの板で隠すのが設計）と、大人の字（px）を u で測ったもの。板の中は、数字キー 52px・もどる 44px・注意書き 12px で問題なし |
+| おえかきの板（かみを えらぶ） | 4 / 4 | covered 100・overlap-button 16 | 誤検出。後ろの道具欄（板で隠すのが設計） |
+| 幼児ホーム・小学生ホームの右の列 | 全サイズ | （検査の種類なし） | 右の列の下端が 54.8u で、下の余白が約 1.4u（2章の 2u 未満）。幼児は おすすめ 2＋おえかき・ノート 11u＋えいご、小学生は おすすめ 3＋おえかき・ノート 11u |
+| 意図して小さい札 | — | small-button | 鍵 4.5u（2章）、おえかきの くわしく の色の札 4.5u（19章）。違反ではない |
+
+違反が無かった画面: ほかの がくねん の小学生のタブ（246 画面）、遊び方を選ぶ画面（24）、おえかき（かんたん・くわしく。41）、ふつうの起動画面（41）、プロフィール選択（短い名前）。幼児ホームは右の列の余白だけ。
+
+そのほかに分かったこと:
+
+- 開発用の hash で開いても起動画面に戻る。理由は二つ。`App.tsx` の `needsStart`（「はじめる」を押すまで子供画面を出さない。VO-05）と `parentLocked`（ゲートを通るまで保護者画面を出さない）。
+- 保護者ゲートの長押し（`openParent`）は、小4 のプロフィールで 4 サイズ中 3 サイズが 6 秒以内に開かなかった。おえかき → ホームの直後で、`onPointerLeave` で取り消された可能性がある。検査では保護者画面を開発用の指定（AC-2）で開き、ゲートの画面だけを長押しで開く。
+- 単元の地図・おすすめの札の絵が、パックの絵の読み込み前で点線の枠（DEV）になる単元がある（g1.ja.folktales の `book` ほか）。絵の登録の担当に回す（4.）。
+
+直し方を試したもの（ほかの がくねん）: 4 列（15.4u）の CSS を差し込むと、4 サイズとも「えいご」の札は左 81u・上 39.2u・15.4u × 14u に入った。格子の右端 96.4u・下端 53.2u、`.screen.explore` は scrollHeight = clientHeight、`textLayoutProbe` の違反は 0。
+
+### 1. 検査の仕組み（AC。`npm run check:app-layout`）
+
+#### AC-1 ファイルと実行
+
+- 設定は `playwright.app-layout.config.ts`。
+  - `testDir: 'e2e'`、`testMatch: /app-layout.*\.al\.ts$/`。project は `screens`（`e2e/app-layout.al.ts`）と `probe`（`e2e/app-layout-probe.al.ts`）。
+  - `reducedMotion: 'reduce'`、`--mute-audio`、`retries: 0`、reporter は line。
+  - 開発サーバーは `npx vite --host 127.0.0.1 --port ${MNW_PORT ?? 4298} --strictPort` を `MNW_DEV_NO_HMR=1` で起動する。4298 にするのは、全体の文字の検査（4299）と担当の開発サーバー（4300〜4999）にぶつけないため。`MNW_REUSE_SERVER=1` で起動済みのサーバーを使う。
+- 本体と補助:
+  - `e2e/app-layout.al.ts`: 1 プロフィール = 1 テスト。
+  - `e2e/helpers/app-layout.ts`: 画面の一覧・巡り方・ページの中の検査 `appLayoutProbe`。
+  - `e2e/helpers/app-layout-fixtures.ts`: プロフィールと中身の作り方。
+  - `e2e/helpers/app-layout-report.ts`: 要約。
+- 結果:
+  - 要約は `docs/screenshots/app-layout-report/summary.md`・`report.json`・`shots/<種類>/`（text-layout と同じ形）。
+  - 途中の結果は `.cache/app-layout/<プロフィール>.json`。同じ条件（プロフィール・画面・サイズ・`src/app`・`src/parent`・`src/drawing`・`src/ui` の更新時刻の最大）の結果があれば飛ばす。
+  - 報告書と .cache は commit しない。
+- 環境変数:
+  - `MNW_APP_PROFILES=p4,g*`: プロフィールを絞る。`*` が使え、カンマで区切る。
+  - `MNW_APP_SCREENS=explore*,parent-*`: 画面を絞る。
+  - `MNW_FRESH=1`・`MNW_WORKERS`（既定 3）・`MNW_REUSE_SERVER=1`・`MNW_PORT`。
+- `package.json` の scripts:
+  - `"check:app-layout": "playwright test -c playwright.app-layout.config.ts --project=screens"`
+  - `"check:app-layout:probe": "playwright test -c playwright.app-layout.config.ts --project=probe"`
+  - `"check:app-layout:summary": "tsx e2e/helpers/app-layout-report.ts"`
+- 違反は失敗にしない（text-layout と同じ）。テストが失敗するのは、画面に行けないとき（目印が出ない・例外）だけ。
+- 目安の時間: 3 並列で 15 分前後（今回の一時の巡回は 44 テスト 9 分）。
+
+#### AC-2 画面への行き方（開発用の指定。本番では消える）
+
+- `src/app/devOpen.ts`（新規）に次を置く。
+
+  ```ts
+  export const DEV_OPEN = import.meta.env.DEV && typeof location !== 'undefined' && new URLSearchParams(location.search).has('dev-open');
+  ```
+
+- `AppState.tsx` は、`started` の初期値を `DEV_OPEN` にする。`parentUnlocked` の初期値は `DEV_OPEN && location.hash.startsWith('#/parent')` にする。
+  - `http://127.0.0.1:<port>/?dev-open#/parent/settings` や `/?dev-open#/explore/p4` で、起動画面とゲートを通らずに開く。目で見るのにも使う。
+  - 音は鳴らない（`audio.unlock` を通らない）。保護者画面から子供画面へ移るとゲートは閉じる（今までどおり）。
+- `import.meta.env.DEV` が false の本番ビルドでは式ごと消える。`devOpen.test.ts` で、指定の無いときに false であることを確かめる。
+- 起動画面の状態は、開発用の `?dev-setup=preparing|renewing|failed|offline` と `?dev-notes=2` で出す（A6）。
+- 子供の設定と中身は、`e2e/helpers/app.ts` の `idbPutMany`（テスト専用）で書いてから読み込み直す。
+- 作品は、1 枚を描く画面で描き（線 1 本）、残りを開発サーバーの `await import('/src/drawing/persist.ts')` の `duplicateArtwork` で増やす。画像の形を検査の側で作り直さない。
+
+#### AC-3 プロフィール（子供の設定）
+
+| キー | 区分 | 設定 | 見るもの |
+|---|---|---|---|
+| p23-2 | toddler・toddlerStage 2 | 既定 | 札 4 枚のホーム・おすすめなし・えいごなし |
+| p23-3 | toddler・toddlerStage 3 | 既定 | |
+| p4 | p4 | 既定 | えいごの札あり |
+| p4-noen | p4 | `showPreschoolEnglish: false` | えいごの札なし |
+| p5 | p5 | `unitsOpened: ['p5.en.abc']` | えいごの選ぶ画面が 6 枚 |
+| g1〜g6 | gN・enrolledGrade N | 既定（表現・ふりがな・おえかきの道具は区分の既定） | |
+| g3-big | g3 | `textScale: 1.3`・`furigana: 'all'` | 字がいちばん大きく、ふりがなが多い |
+| g4-left | g4 | `drawingHand: 'left'` | おえかきだけ（道具欄が右） |
+
+中身の状態は二つ。`fresh`（作ったばかり）と `full`（AC-0 の中身の多い状態）。
+
+- `full` の中身: 14 日分の遊んだ記録、すき 3 つ、作品 18 枚＋なぞり・みちの作品 5 枚、メモ 10 件、記録（attempts）。
+- 小学生の `full` には次も入れる。学年でいちばん長い題の 2 単元を「ふくしゅう まち」、6 単元を「とりくみちゅう」、2 単元を「できた」「しっかり」。
+- プロフィールは 4 人にする（20 字＝`NAME_MAX` の名前、空白のある名前、英字の名前、ふつうの名前）。
+
+#### AC-4 画面の一覧
+
+検査の段階（stage）は、その画面の中身の段階にする。分かち書きと最小の字はこれで決まる。ほかの がくねん のタブ・単元の地図の学年のタブでは、子供の区分ではなく表示している区分を使う。
+
+| 画面の ID | 行き方 | 範囲・規則 | プロフィール・状態 |
+|---|---|---|---|
+| `start` | `/`（プロフィール 1 人） | 子供。`.start-notes` は大人の島 | 全部・fresh |
+| `start-setup-<preparing・renewing・failed・offline>` | `/?dev-setup=…&dev-notes=2` | 同上 | p4・g3 |
+| `profile-picker` | `/`（4 人）→ はじめる | 子供 | p4・full |
+| `home` | `/?dev-open#/home` | 子供 | 全部・fresh と full |
+| `explore-own`・`explore-<p23〜g6>` | `#/explore`・`#/explore/<st>` | 子供（段階は st） | 全部・fresh |
+| `card-<札>` | `#/card/<区分>/<札>`（札に単元が 2 つ以上のもの。えいごを含む） | 子供 | 幼児・fresh |
+| `variant-<単元>` | `#/legacy/<単元>`（遊び方を選ぶ画面が出るもの） | 子供 | p23-3・p4 |
+| `resume-<単元>` | 下書き（drafts）を入れて `#/legacy/<単元>/<遊び方>`（「つづきから？」） | 子供 | p4 |
+| `subject-<教科>-<学年>` | `#/subject/<教科>/g<学年>` | 子供（段階は学年） | 小学生は自分の学年の全教科（fresh・full）。p4 と g3 はすべての教科 × 学年（のぞく側が幼児と小学生） |
+| `notebook` | `#/notebook` | 子供 | 幼児・小学生・fresh と full |
+| `gallery`・`gallery-old-view`・`gallery-confirm` | `#/gallery`、なぞりの作品を開く、すてる → ほんとうに？ | 子供。板は板の中だけ（AC-5） | p23-3・p4・g4・full |
+| `draw`・`draw-stamp`・`draw-shape`・`draw-paper`・`draw-select` | `#/draw/new/plain`、各板を開く、はんこを置いて選ぶ | 子供。板は板の中だけ | p23-3・p4・g4・g4-left |
+| `parent-gate` | ホームで鍵を長押し | 板 `[aria-modal="true"]` の中だけ・大人 | p4・g3 |
+| `parent-<records・settings・works・memos・profiles・data・packs・about>` | `/?dev-open#/parent/<tab>` | `.parent-root`・大人・ページのスクロール | p23-2・p4・g3・g6・full |
+| `parent-profiles-confirm` | プロフィール削除 → 確認 | 確認の板の中だけ・大人 | p4・full |
+
+#### AC-5 検査（`textLayoutProbe` の再利用と、アプリの画面の検査）
+
+`e2e/helpers/text-layout.ts` の `TextProbeOptions` に次の項目を足す。**どれも省略時は今と同じ動きにする**（単元の検査の結果を変えない。`check:text-layout:probe` 29 本を流して確かめる）。
+
+- `root?: string`: 調べる範囲の CSS セレクタ（既定は `.stage`、無ければ body）。
+  - 板（`[aria-modal="true"]`・`.draw-panel`・`.draw-confirm`）が出ているときは、その中だけを見る。後ろの画面は板で隠すのが設計なので、covered・overlap-button に数えない。
+  - 舞台の外の判定の範囲は、root が舞台の中なら舞台、外なら画面。
+- `adultSel?: string`・`minAdultPx?: number`（既定 12）: 大人の文字の範囲。
+  - 対象は保護者画面、ゲートの板（`.gate-panel`）、起動画面の保護者向けの表示（`.start-notes`）、各画面の「（保護者の方へ）」の文。
+  - この中の字は、最小の大きさを px（12px）で見る。分かち書き（wakachi-split）とボタンの中の語の折れ（button-split）は見ない。行頭・行末の禁則、数と単位の折れ（word-split）、重なり、切れは見る。
+- `pageScroll?: string`: 画面全体のスクロールの枠（保護者画面の `.parent-root`）。
+  - この枠で切れる字を scroll-hidden にしない。
+  - 巡回の側が `scrollTop` を 0 から `clientHeight × 0.8` ずつずらして、そのたびに検査し、同じ違反（種類・文字・場所）をまとめる。画面の外の字の隠れ（`elementsFromPoint` は画面の中しか見ない）も見られる。
+
+`e2e/helpers/app-layout.ts` の `appLayoutProbe`（ページの中で動く。外の名前を使わない）で、アプリの画面に特有のものを見る。種類は次のとおり。
+
+| 種類 | 見るもの | 規則の出どころ |
+|---|---|---|
+| `screen-overflow` | 画面の中身（ボタン・字・図）が舞台の外へ出る。1 画面 1 件で、超えた u と、押せない札の名前を書く | DESINGN.md 2章（舞台の中に収める） |
+| `unreachable` | 押せない札。見えている部分が札の半分未満、または中心と四隅の内側の点が別の要素に当たる、または舞台の外 | 同上 |
+| `tap-size` | 子供は補助 5.5u・主操作 6u 未満（主操作は `.home-card`・`.home-rec`・`.school-subject`・`.smap-unit`・`.choice`・`.gallery-thumb`・道具の札。学年のタブ `.explore-tab`・`.smap-tab` は補助の 5.5u で見る）。大人は高さ 44px 未満（button・select・テキスト・数・ファイルの input・summary。checkbox・radio・range は除く） | 2章の表、2章の保護者画面 |
+| `tap-gap` | 同じ並びの主操作どうしの間が 1.6u 未満（今の `home-gap` を全部の主操作に広げる） | 2章 |
+| `scroll-no-cue` | 子供画面で縦にスクロールする枠（overflow-y が auto・scroll で、`scrollHeight > clientHeight + 2`）に `data-scroll-region` と見える印（`data-scroll-cue`）が無い。1 枠 1 件 | 5.1・A0 |
+| `scroll-no-button` | 幼児が見る画面（プロフィールの区分が p23・p4・p5）のスクロールの枠に、▲▼ の札（`[data-scroll-btn]`）が無い | ux-by-age 1章（2〜3歳はドラッグを使わない）・A0 |
+| `fit-overflow` | A0 の AppLabel が下限の字まで縮めても入らない（`data-fit-overflow`）。教材の題を短くする手がかり | A0 |
+| `edge-margin`（参考） | 主操作の札の下端・左右が舞台の端から 2u 未満 | 2章 |
+| `missing-illust`（参考） | 絵が無くて DEV の点線の枠になっている（`svg[data-illust]` の中が仮の枠） | 6章 |
+
+除くもの（理由をコードと docs/test-plan.md に書く）:
+
+- 鍵（`.gate-key` 4.5u。2章で意図して小さい）。
+- くわしく の色の札（`.draw-screen--detailed [data-testid^="color-"]` 4.5u。19章）。
+- 板の後ろ（root で除く）。
+- `data-scroll-region="list"` の枠の中で、印のある状態のスクロール。text-layout と同じく、1 字ずつ数えない。印が無いときだけ出す。
+- text-on-figure（参考のまま）。
+
+落ち着くのを待つ（settle）。text-layout の `settle` と同じ考えで、次の印が 4 フレーム続けて同じになるまで（最大 1 秒）待つ。
+
+- 印にするのは `document.fonts.ready`、全部の img の `complete`、ボタンの数と外接、`[data-fit]` の値、スクロールの枠の scrollHeight。
+- 待っても変わり続ける画面は、detail の先頭に `unstable:` を付けて残す。
+
+画面サイズは、画面を開いたまま 4 サイズに変えて測る（text-layout と同じ順）。サイズを変えたら settle をやり直す。
+
+#### AC-6 検査の確かめ（probe）
+
+`e2e/app-layout-probe.al.ts` で、`page.setContent` に壊した見本と普通の見本を作り、出ること・出ないことを確かめる。
+
+- 舞台の下に 4 段目の札がある格子（explore と同じ形）: `screen-overflow`・`unreachable` が出る。3 段なら出ない。
+- 印の無いスクロールの一覧: `scroll-no-cue` が出る。`data-scroll-region="list"`＋印なら出ない。幼児の段階で ▲▼ が無いときは `scroll-no-button` が出る。
+- 大人の範囲の 11px の字: 出る。13px: 出ない。34px のボタン: `tap-size` が出る。44px: 出ない。
+- `aria-modal` の板の後ろのボタン: covered にならない。板の中で重なった字: 出る。
+- `.gate-key` 4.5u: 出ない。`data-fit-overflow`: `fit-overflow` が出る。
+- `pageScroll` の枠の画面の外で重なった字: 出る。
+
+#### AC-7 文書
+
+- docs/test-plan.md に「3.3 アプリの画面の配置の検査」を足す。中身は、範囲・プロフィール・画面・種類・除くものとその理由・環境変数・開発用の `?dev-open`・`?dev-setup`。
+- E-14（`e2e/layout.spec.ts`）は今のまま残す。モードの遊ぶ画面と完了画面を見るのは E-14 で、アプリの画面はこの検査が受け持つ。
+
+### 2. 直し方（画面ごと。ファイルを分ける）
+
+#### A0 アプリの画面の共通部品（ラベルの折り方と縮め方・スクロールの一覧）
+
+ファイル: `src/ui/AppLabel.tsx`・`src/ui/app-label.css`・`src/ui/ScrollList.tsx`・`src/ui/scroll-list.css`（すべて新規）と、それぞれの単体テスト。`src/ui/ui.css` は変えない。
+
+1. **`AppLabel`**: `<AppLabel text stage ctx className fit? />`。札の名前・題を、中身の段階に合わせて折る。
+   - `stage` が p23・p4・p5・g1・g2 なら `data-wakachi` を付ける。base.css の `.stage [data-wakachi]`（keep-all・anywhere）が効く。
+   - g3 以上は、`spacedLabel(text)`（rich.ts）が真なら `data-spaced`、偽なら `data-phrase` を付ける。
+   - app-label.css に、単元の画面と同じ組み合わせを置く。
+     - `[data-spaced]`: keep-all・anywhere・`text-wrap: pretty`。
+     - `[data-phrase]`: `word-break: auto-phrase`・`overflow-wrap: break-word`・`min-width: 0`・`max-width: 100%`・`text-wrap: wrap`。
+     - 理由は base.css の注のとおり（Chrome で auto-phrase と balance・pretty を同じ要素に付けると、語の途中で折る）。
+   - 中身は `Rt`（ふりがな・分数）。
+2. **縮めて入れる（`fit`）**: `fit: { fromU: number }` を渡すと、札の内側（線と padding の内側）に字（ふりがなを含めた外接）が入るまで、字を 0.1u ずつ下げる。
+   - 範囲は `fromU`（× 文字の大きさの設定）から `--text-min` まで。値は `--fit-fs` に書き、`data-fit` に今の値を書く。
+   - 下限でも入らなければ、`data-fit-overflow` を付ける（検査の `fit-overflow`。教材の題を短くする手がかり）。
+   - 測り直すのは、`useLayoutEffect`・ResizeObserver（札）・`document.fonts.ready` のとき。同じ大きさで 2 回測ったら止める（揺れない）。
+3. **アプリの画面の `--text-min`**: app-label.css に `.stage .screen[data-stage]:not(.unit)` の段階ごとの値を置く。p23〜p5 は 2.2u、g1・g2 は 2.0u、g3・g4 は 1.8u、g5・g6 は 1.7u（17章の表）。単元の画面（`.unit`）は unit.css のまま。分数（`.rt-frac`）とふりがなの下限が、アプリの画面でも効く。
+4. **`ScrollList`**: `<ScrollList viewer className label testId>{…}</ScrollList>`。縦にスクロールする一覧の枠。
+   - 枠に `data-scroll-region="list"` を付ける。下まで見ていないあいだは `data-scroll-cue` を付け、右の余白（3.6u）の下に ▼ を出す（単元の画面の ▼ と同じ形。`--text-min` の大きさ、paper の地に ink）。下まで行くと消す。
+   - `viewer`（見ている子供の区分）が p23・p4・p5 のときは、右の余白を 7u にし、上と下に ▲・▼ の札を置く（補助 5.5u、`data-scroll-btn`、aria-label「うえへ」「したへ」）。押すと `clientHeight × 0.8` 動かす。動きを減らす設定では `behavior: 'auto'`。端では札を `visibility: hidden` にする。
+   - 2〜3歳はドラッグを使わない（ux-by-age 1章）。4・5歳も指でのスクロールに頼らない。
+   - スクロールの位置は、ResizeObserver と scroll で見る。
+
+#### A1 ほかの がくねん（explore）
+
+ファイル: `src/app/Explore.tsx`・`src/app/explore.css`・`e2e/explore.spec.ts`
+
+- **幼児の区分（p23・p4・p5）の札を 4 列の格子にし、3×3 ＋ 4 列目の 3 段目を「えいご」にする**。
+  - `.explore-cards--pre { grid-template-columns: repeat(4, calc(var(--u) * 15.4)); }`
+  - 札の大きさは 15.4u × 14u、間は 1.6u（行も列も）。
+  - ふつうの札 9 枚は、`def.cards` の順番の位置 i に置く（`grid-column: i % 3 + 1`・`grid-row: ⌊i / 3⌋ + 1`）。出せる単元の無い札は、その位置を空ける（ホームと同じ。並べ直さない）。
+  - 「えいご」は `grid-column: 4; grid-row: 3`。ホームの右の列の一番下と同じ、右下の位置にする。
+  - 寸法: 格子は左 30u・上 8u から右 96.4u・下 53.2u。舞台の右と下に 2u 以上あく（試した値は 0. のとおり）。
+  - 札の字（2.2u・最大 5 字 × 2 行 ≒ 11u）は札の内側 13.5u に入る。17章の「選択肢の絵カード 14〜18u」の範囲、主操作の最小 6u と間 1.6u を守る。
+- 小学生の区分（教科の札。最大 6 枚）は、今の 3 列 × 19u のまま。
+- スクロールにはしない。幼児が 1 回のタップで全部の札を押せることを優先する。
+- 画面の根に `data-stage={stage}` を付ける（今もある）。幼児と小1・小2 のタブでは、札の名前の箱に `data-wakachi` を付ける。
+- e2e: `explore.spec.ts` に、1280×620 と 1920×1080 で p23・p4・p5 のタブの全部の札（10 枚）が舞台の中にあり、`explore-card-eigo` を押すと選ぶ画面が出ることを足す。
+
+#### A2 単元の地図（subject map）
+
+ファイル: `src/app/SubjectMap.tsx`・`src/app/subject-map.css`（A0 を使う）
+
+1. **札を縮めない**: `.smap-unit { flex: none; }`。`min-height: 8u` は残す。題が 2 行以上なら札が伸びる。
+2. **題の幅を広げる**:
+   - 絵を 4.4u にし、状態の印（`MarkIcon`）を右の余白から絵の右下の角へ移す。札（`.smap-unit__icon` の中、absolute）、2.8u、右 −0.9u・下 −0.7u。印は surface の地の輪なので、絵の上でも読める。
+   - 札の右の余白は 0.8u にする。題の幅は、4 列・▼ の余白 3.6u で約 13.8u（2.2u の字で 6 字）、幼児がのぞくとき（▲▼ の余白 7u）で約 13u になる。
+   - 状態は形で示す（ux-by-age 2.3）のまま。印の aria-label は今のまま。
+3. **題の折り方と大きさ**:
+   - `AppLabel`（stage は表示している学年）で折る。
+   - 字は、小1・小2 が `max(var(--text-min), 2.2u)`、小3 以上が `max(var(--text-min), 2u)`、行間 1.3。
+   - 画面の根に `data-stage="g<学年>"` を付ける（A0 の `--text-min` が効き、分数が 2.0u 以上になる）。
+4. **一つのスクロールにする**:
+   - 列の並び（`.smap-columns`）を `ScrollList` にする（viewer は子供の区分。幼児が「ほかの がくねん」からのぞくときは ▲▼ の札が出る）。
+   - 列（`.smap-col`）は自分でスクロールしない（`overflow: visible`・`flex: 1 1 0`・`min-width: 0`。1〜2 列の教科は今の最大 30u のまま）。
+   - 列の名前（`.smap-col__name`）は `position: sticky; top: 0`、paper の地、`z-index: 1`。スクロールしても領域の名前が見える。
+5. 確かめ:
+   - 小1〜小6 の算数・国語の地図（全 4 サイズ）で、text-outside-box・overlap-text・covered・button-split が 0。scroll-hidden は枠ごとの印のある状態だけ。
+   - 小1 算数（1 列 11 枚）で、一番下の札まで ▼ で行ける。
+
+#### A3 小学生ホーム（と、幼児ホームの右の列の余白）
+
+ファイル: `src/app/SchoolHome.tsx`・`src/app/school-home.css`（A0 を使う）
+
+1. **おすすめの札**（30u × 8.6u は変えない）:
+   - 絵を 5u、左右の余白を 1u、間を 1u にし、題の幅を約 21u にする。
+   - 題は `AppLabel`（stage は単元の段階）で、`fit: { fromU: 2.6 }`（`--text-label` と同じ。文字の大きさの設定をかける）にし、`--text-min` まで縮めて入れる。
+2. **「ふくしゅう」**:
+   - 題の中の字の札（`.school-rec__tag`、1.8u）をやめる。絵の右下の角に、単元の地図と同じ時計の印（`MarkIcon mark="review-due"`、2.8u）を置く。
+   - aria-label の「ふくしゅう」は残す。ux-by-age 2.3 の「ふくしゅう まち＝時計の印」とそろえ、題の行を 1 行分あける。
+3. **教科の札の名前**も `AppLabel`（stage は学年）にする（今は短いので見た目は変わらない。今後の名前のため）。画面の根に `data-stage`。
+4. **右の列の下の余白**:
+   - `.school-side__half`（おえかき・ノートの半分の札）の高さを 11u から 10.4u にする。幼児ホーム（p4・p5 のおすすめ 2＋えいご）と小学生ホーム（おすすめ 3）の右の列の下端が、54.84u から 54.24u（下の余白 2u）になる。
+   - school-home.css は幼児ホーム・ほかの がくねん も読むので、PreschoolHome.tsx は変えずに効く。
+5. 確かめ: `full`（ふくしゅう 2＋長い題）と g3-big で、text-outside-box・overlap-text・covered が 0。残る `fit-overflow` は 4. の content に回す。
+
+#### A4 選ぶ画面（幼児の札の単元）
+
+ファイル: `src/app/UnitEntry.tsx`（A0 を使う）
+
+- 札の名前を `AppLabel`（stage は札の区分 p23・p4・p5。分かち書き）にし、`fit: { fromU: 2.6 }` にする。
+- 札は 24u × 22u から 24u × 21u に、行の間を 1.6u（列の間は 2.4u のまま）にする。
+- 並びの箱は `top: 8u; bottom: 2u` にし、6 枚（2 段）のときも下の余白を 2u にする。
+
+#### A5 起動画面とプロフィール選択（教材の準備の表示を含む）
+
+ファイル: `src/app/StartScreen.tsx`・`src/app/start.css`（新規。A0 を使う）
+
+1. **保護者向けの表示の帯**:
+   - 画面を縦の 2 段の格子にする（上の段 `1fr` に今の真ん中の列、下の段 `auto` に `.start-notes`）。保護者向けの表示が真ん中の列に重ならない。
+   - start.css の `.start-screen .start-notes` で、ui.css の absolute を流れの中に戻す。右寄せ、最大幅 60u、下の余白 2u、字は今の `max(12px, 1.4u)`。
+2. **教材の準備が出ているとき**（`data-setup` を根に付ける）は、真ん中の列の絵を 18u から 14u に、間を 3u から 2u にする。最も高い状態（失敗の 2 行＋「もういちど」、保護者向け 2 行）でも、上の段に約 7u の余白が残る（0. の近似の測りから）。
+3. **開発用の指定**（`import.meta.env.DEV` のときだけ。本番では消える）:
+   - `?dev-setup=preparing|renewing|failed|offline` で `PackSetupStatus` の view を、`?dev-notes=2` で保護者向けの表示を最も長い 2 行（保存の問題 version と、教材の準備の失敗 quota）にする。
+   - 検査（AC-4 の `start-setup-*`）と目視に使う。
+4. **プロフィール選択の札**:
+   - 18u × 22u の決まった高さにし、並びを `align-items: stretch` にする。
+   - 名前は `AppLabel`（stage p4 の扱い。保護者の入力なので分かち書きの折り方）で、`fit: { fromU: 2.6 }`、下限 2.2u。20 字の名前は 3 行・2.2u で入る（入らなければ `fit-overflow`）。
+
+#### A6 がんばりノート
+
+ファイル: `src/app/Notebook.tsx`・`src/app/notebook.css`（A0 を使う）
+
+- 日の一覧（`.notebook`）を `ScrollList`（viewer は子供の区分）にする。幼児は ▲▼ の札、小学生は ▼ の印が出る。
+- 日付（`.notebook-day__date`）は `white-space: nowrap`、幅は `max-content`（最小 16u）。「10がつ30にち」を 1 行にする。
+
+#### A7 さくひん（作品の一覧）
+
+ファイル: `src/drawing/GalleryScreen.tsx`・`src/drawing/drawing.css`（A0 を使う）
+
+- `.gallery-grid` を `ScrollList` にする。おえかきの作品・見出し「なぞりと みちの さくひん」・なぞりの作品を、同じ一つのスクロールにする。
+- 右の余白（幼児 7u・小学生 3.6u）の分、4 列の札の幅を詰める。100u − 端 4u − 7u − 間 3 × 1.6u で 21u、19章の 16u 以上を保つ。下の余白は 2u にする。
+
+#### A8 保護者画面
+
+ファイル: `src/parent/parent.css`・`src/parent/AboutTab.tsx`
+
+- `.parent-root` の button・select・テキスト・数・ファイルの input・summary に `min-height: 44px` を付ける（2章）。
+  - ボタンの padding は上下 8px、`display: inline-flex; align-items: center` にする。
+  - 表の中の「この段階から始める」「大きく見る」「削除」も 44px にする。表が縦に伸びるのは受け入れる。
+  - checkbox・radio は、ラベルの押せる所を 44px にする（`label:has(> input[type=checkbox])` の高さ）。
+- 「このアプリについて」の幼児の英語の表: 題を `<span className="p-keep">`（`word-break: keep-all`）、年齢を `<span className="p-nowrap">（4歳）</span>` にし、「（4／歳）」「え／ほん」で折らない。th に `min-width: 11em` を付ける。
+- 確かめ: 8 タブ × 4 サイズで、大人の `tap-size`・word-split が 0。横のスクロール（`.parent-root` の scrollWidth > clientWidth）が無い。
+
+#### A9 遊び方を選ぶ画面・保護者の入り口・おえかき
+
+変えない（0. のとおり違反なし。板の後ろは検査の範囲で除く）。
+
+#### A10 DESINGN.md
+
+ファイル: `DESINGN.md`
+
+- 5.2 ワイヤーフレーム:
+  - 「ほかの がくねん」の図と寸法を足す。左にタブ 2 列 × 5 段（12.5u × 5.5u）。幼児の区分は 4 列 × 15.4u × 14u で、3×3 ＋ 右下に「えいご」。小学生の区分は 3 列 × 19u × 14u。スクロールしない。
+  - 単元の地図の図と寸法を足す。札は縮めない、絵 4.4u ＋ 印は絵の右下の角、題の折り方、列の並びは一つのスクロール、列の名前は上に残る。
+  - ホーム: 「ふくしゅう」は絵の右下の時計の印。おすすめの題は札に入るまで縮める。右の列の半分の札は 10.4u、下の余白 2u。
+- 17章に「アプリの画面の文字」を足す。中身の段階で折る（AppLabel）、`--text-min` の段階ごとの値、縮めて入れる規則と下限、入らないときは教材の題を短くする。
+- 5.1 または新しい項に「アプリの画面の一覧のスクロール」を足す。幼児の見る画面は ▲▼ の札（5.5u）＋▼、小学生は ▼。`data-scroll-region="list"`。使う画面は 単元の地図・ノート・さくひん。
+- 24章: 保護者向けの表示は下の帯に置き、真ん中の列に重ねない。準備の表示が出ているときの絵 14u・間 2u。開発用の `?dev-setup`。
+- 2章の保護者画面の 44px が、ボタン・選ぶ欄・入力欄・summary にかかることを書く。
+- 23章（自動検査）に `check:app-layout` を足す。
+
+### 3. 受け入れるもの・検査で除くもの
+
+- 鍵 4.5u、くわしく の色の札 4.5u（DESINGN.md 2章・19章。意図して小さい）。
+- 板（ゲート・おえかきの板・確認）の後ろが隠れること。
+- 単元の地図・ノート・さくひんの一覧が、印（と幼児は ▲▼ の札）のあるスクロールになること。一覧の長さが中身で決まるので、全部を舞台に入れる設計にしない。違反として数えるのは、印・札が無いときだけ。
+- 保護者画面のページの縦のスクロール。
+
+### 4. ほかの担当へ回すもの
+
+- 単元の題（unit-index の title。パックの担当）: A2・A3 のあとに `fit-overflow` が残る題は、意味を保って短くする。候補は、小1 算数「2けたの たしざん・ひきざん（かんたんな けいさん）」、小6 国語「同じ読みの言葉と、漢字とかなの使い分け」、小5 理科「流れる 水の はたらきと 土地の 変化」など。検査の要約に一覧が出る。
+- 単元の絵（絵の登録の担当）: 単元の地図・おすすめの札の絵がパックの絵の読み込み前で無い単元（`book`＝g1.ja.folktales・g6.ja.language-change、`music-note`＝g1.ja.word-play ほか）。地図で出すために、絵をコアに入れるか、地図が開くときにパックの絵を読む。
+- 保護者ゲートの長押しが途中で取り消されることがある件（`onPointerLeave`）。再現の条件を確かめてから直す。
+
+### 5. 確かめ方（全体）
+
+- AC の実装のあと:
+  - `npm run check:app-layout:probe` が全部通ること。
+  - `npm run check:text-layout:probe`（29 本）が今までどおり通ること（`TextProbeOptions` の追加が単元の検査を変えていない）。
+- A0〜A8 のあと:
+  - `MNW_FRESH=1 MNW_WORKERS=3 npm run check:app-layout` を流す。失敗したテストが 0 であることを確かめる。
+  - 次の種類が 0 であること: `screen-overflow`・`unreachable`・`scroll-no-cue`・`scroll-no-button`、text-layout の out-of-stage・overlap-text・covered・text-outside-box・button-split・wakachi-split（大人の範囲を除く）。
+  - 残る `fit-overflow` は 4. の content。
+- `npx tsc -b`・`npx eslint .`・`npx prettier --check`（変えたファイル）・`npx vitest run`・`npm run check:design`、既存の e2e の explore・parent・preschool-english・layout。
+- 開発サーバー（4300〜4999）の `?dev-open` で、ほかの がくねん（p23・p4・p5 のタブ、1280×620）、単元の地図（小1 算数・小5 算数）、小学生ホーム（g3-big）、起動画面（`?dev-setup=failed&dev-notes=2`）、保護者画面の せってい を目で見る。
+
+### 6. 担当の分け方（ファイルが重ならない）
+
+| 担当 | ファイル | 先に要るもの |
+|---|---|---|
+| AC 検査の仕組み | `playwright.app-layout.config.ts`・`e2e/app-layout.al.ts`・`e2e/app-layout-probe.al.ts`・`e2e/helpers/app-layout.ts`・`e2e/helpers/app-layout-fixtures.ts`・`e2e/helpers/app-layout-report.ts`・`e2e/helpers/text-layout.ts`（省略時は今と同じ）・`src/app/devOpen.ts`・`src/app/devOpen.test.ts`・`src/app/AppState.tsx`・`package.json`（scripts）・`docs/test-plan.md` | なし（`start-setup-*` は A5 のあとに出る。それまでは「未対応」と要約に書く） |
+| A0 共通部品 | `src/ui/AppLabel.tsx`・`src/ui/app-label.css`・`src/ui/AppLabel.test.tsx`・`src/ui/ScrollList.tsx`・`src/ui/scroll-list.css`・`src/ui/ScrollList.test.tsx` | なし |
+| A1 ほかの がくねん | `src/app/Explore.tsx`・`src/app/explore.css`・`e2e/explore.spec.ts` | なし |
+| A2 単元の地図 | `src/app/SubjectMap.tsx`・`src/app/subject-map.css` | A0 |
+| A3 小学生ホーム | `src/app/SchoolHome.tsx`・`src/app/school-home.css` | A0 |
+| A4 選ぶ画面 | `src/app/UnitEntry.tsx` | A0 |
+| A5 起動画面 | `src/app/StartScreen.tsx`・`src/app/start.css` | A0 |
+| A6 ノート | `src/app/Notebook.tsx`・`src/app/notebook.css` | A0 |
+| A7 さくひん | `src/drawing/GalleryScreen.tsx`・`src/drawing/drawing.css` | A0 |
+| A8 保護者画面 | `src/parent/parent.css`・`src/parent/AboutTab.tsx` | なし |
+| A10 DESINGN.md | `DESINGN.md` | A1〜A8 の寸法（この節のとおり。実装で変えたら合わせる） |

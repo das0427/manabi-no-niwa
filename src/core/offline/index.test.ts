@@ -1,10 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+// 自動更新（updater.ts）の起動は startOffline からだけ。ここでは呼ばれ方だけを見る
+const updater = vi.hoisted(() => ({ startUpdater: vi.fn() }));
+vi.mock('./updater', () => updater);
+
 import {
   __testing,
   applyUpdate,
+  checkForUpdateNow,
   getOfflineState,
   isPageControlled,
   onChunkLoadError,
+  startOffline,
   subscribeOffline,
 } from './index';
 
@@ -78,6 +85,8 @@ beforeEach(() => {
 afterEach(() => {
   Reflect.deleteProperty(navigator, 'serviceWorker');
   __testing.reset();
+  vi.unstubAllEnvs();
+  updater.startUpdater.mockClear();
 });
 
 describe('OfflineState', () => {
@@ -201,6 +210,68 @@ describe('OfflineState', () => {
     await __testing.start();
     await applyUpdate();
     expect(reload).not.toHaveBeenCalled();
+  });
+});
+
+describe('checkForUpdateNow（自動更新が使う、間隔の制限なしの確認）', () => {
+  it('registration.update() を毎回すぐ呼ぶ（visibilitychange の確認は 5 分に 1 回まで）', async () => {
+    const v1 = new FakeWorker('activated', 'v1');
+    container.reg.active = v1;
+    container.controller = v1;
+    await __testing.start();
+    expect(container.reg.update).not.toHaveBeenCalled();
+    checkForUpdateNow();
+    checkForUpdateNow();
+    expect(container.reg.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('前回の「新しい版の準備に失敗」の表示を消してから確かめる（今回の失敗だけを見分けるため）', async () => {
+    const v1 = new FakeWorker('activated', 'v1');
+    container.reg.active = v1;
+    container.controller = v1;
+    await __testing.start();
+    const v2 = new FakeWorker('installing', 'v2');
+    container.reg.installing = v2;
+    container.reg.fire('updatefound');
+    container.reg.installing = null;
+    v2.setState('redundant');
+    expect(getOfflineState().error).not.toBeNull();
+    checkForUpdateNow();
+    expect(getOfflineState().error).toBeNull();
+    expect(getOfflineState().status).toBe('ready');
+    expect(container.reg.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('更新の確認が失敗しても例外にしない', async () => {
+    const v1 = new FakeWorker('activated', 'v1');
+    container.reg.active = v1;
+    await __testing.start();
+    container.reg.update.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    expect(() => checkForUpdateNow()).not.toThrow();
+    await flush();
+  });
+
+  it('登録がまだなら何もしない', () => {
+    expect(() => checkForUpdateNow()).not.toThrow();
+    expect(container.reg.update).not.toHaveBeenCalled();
+  });
+});
+
+describe('startOffline と自動更新', () => {
+  it('開発サーバー（本番でない）では登録も自動更新も始めない', () => {
+    startOffline();
+    expect(container.register).not.toHaveBeenCalled();
+    expect(updater.startUpdater).not.toHaveBeenCalled();
+  });
+
+  it('本番のビルドでは、Service Worker の登録と一緒に startUpdater を 1 回呼ぶ', async () => {
+    vi.stubEnv('PROD', true);
+    startOffline();
+    await flush();
+    expect(container.register).toHaveBeenCalledTimes(1);
+    expect(updater.startUpdater).toHaveBeenCalledTimes(1);
+    // 教材パックの整理が終わったら解決する Promise を渡す（取り直しはそのあと）
+    expect(updater.startUpdater.mock.calls[0]?.[0]).toBeInstanceOf(Promise);
   });
 });
 

@@ -19,6 +19,9 @@
  *    他の版のパックも探すのは、更新前の画面（旧タブ）が自分の版のパックを読めるようにするため。
  *    版の違うパックを開かない判断はページ側（src/packs/loader.ts）で行う。
  *  - 要求ヘッダー X-Mnw-Pack-Download: 1 の要求（パックの取得）は、キャッシュを通さずネットワークへ。
+ *
+ * 配信の更新の窓口（docs/expansion/updater-design.md 6.6）:
+ *  - fetch: scope からの相対パスが `__manabi/` で始まる要求は respondWith しない（キャッシュを通さず配信へ）。
  */
 import type { ClientToSwMessage, PrecacheProgressMessage, VersionReplyMessage } from './protocol';
 
@@ -69,6 +72,8 @@ const CACHE_NAME = CACHE_PREFIX + VERSION;
 const PACK_CACHE_PREFIX = 'mnw-pack/';
 const PACKS_INDEX_PATH = 'packs.json';
 const PACK_DOWNLOAD_HEADER = 'x-mnw-pack-download';
+/** 配信の窓口（serve.py の /__manabi/…）の、scope からの相対パスの先頭 */
+const MANABI_API_PREFIX = '__manabi/';
 
 /** コアの版のキャッシュか（パックのキャッシュ `mnw-pack/…` を除く） */
 function isCoreCacheName(name: string): boolean {
@@ -383,6 +388,8 @@ sw.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== sw.location.origin) return;
   if (!url.href.startsWith(sw.registration.scope)) return;
+  // 更新の窓口（/__manabi/…）の応答はキャッシュから返さない（状態は毎回、配信から読む）
+  if (url.href.slice(sw.registration.scope.length).startsWith(MANABI_API_PREFIX)) return;
   // 教材パックの取得（ページの Cache API へ入れる）は、キャッシュを通さず配信元から取る
   if (request.headers.get(PACK_DOWNLOAD_HEADER) === '1') return;
   event.respondWith(respond(request, url));

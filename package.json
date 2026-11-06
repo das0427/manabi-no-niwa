@@ -33,7 +33,9 @@
     "chars": "tsx scripts/collect-chars.ts",
     "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
     "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
-    "package": "tsx scripts/package-release.ts"
+    "package": "tsx scripts/package-release.ts",
+    "test:py": "py -3 -B -m unittest discover -s deploy/tests -v",
+    "test:py:sh": "python3 -B -m unittest discover -s deploy/tests -v"
   },
   "dependencies": {
     "react": "19.3.1",

@@ -10,6 +10,7 @@ import { PacksTab } from './PacksTab';
 import { ProfilesTab } from './ProfilesTab';
 import { RecordsTab } from './RecordsTab';
 import { SettingsTab } from './SettingsTab';
+import { UpdateNotice } from './UpdateSection';
 import { WorksTab } from './WorksTab';
 import './parent.css';
 
@@ -81,6 +82,7 @@ export default function ParentApp({ tab }: { tab: string }) {
           </button>
         </div>
       </header>
+      <UpdateNotice />
       <nav className="p-tabs" role="tablist" aria-label="保護者画面のタブ">
         {TABS.map((t) => (
           <button

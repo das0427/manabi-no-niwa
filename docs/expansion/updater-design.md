@@ -849,3 +849,41 @@ Zorin OS の実機が無いため、Windows 11（Git Bash・`.venv` の Python 3
 - 部品より細かい（ファイルごとの）差分の取得。
 - 更新の仕組みが `.desktop`・systemd の単位ファイルを書き換えること（変えるときは `minVersion` を上げて手で入れ直してもらう）。
 - アプリ（ブラウザ）からの GitHub への直接の通信。
+
+---
+
+## 15. 実装とレビューの記録（2026-11-07）
+
+U1〜U4 を実装し、レビューで窓口の形（5.3 節）・版の情報と部品の印（3.1〜3.2 節）・置き場（4 章）が単位どうしで合っていることを確かめた。
+
+### 15.1 Windows で確かめたこと
+
+| 確かめたこと | どうやって |
+|---|---|
+| 状態の窓口が動く（`supported:true`・`current.version`・`token`・`server.pid`・応答の見出し・CORS なし）。`/__manabi/health` と静的配信は今までどおり | `npm run build` の dist で一時フォルダに置き場を作り、本物の serve.py を 127.0.0.1 の空きポートで起動して確かめた |
+| ネットが無いとき静かにやめる（`check.state=offline`・`latest=null`・記録は状態が変わったときだけ1行） | `https_proxy` を「受けてすぐ切る」127.0.0.1 の聞き役に向けて確かめた（GitHub にはつながない）。外へつなごうとしたのは `CONNECT github.com:443` の1回だけ |
+| 自動の確認をオフにできる（`updater.json` に保存・起動し直しても残る・オフのときは起動して 22 秒たっても外へつながない・「今すぐ確かめる」を押したときだけつなぐ・オンに戻すと 5 秒後に確認） | 同上（聞き役が受けた接続の数で数えた） |
+| 窓口の守り（合言葉・Origin・Sec-Fetch-Site・Content-Type・Host・OPTIONS） | 同上と test_api.py |
+| 本物のブラウザから同じオリジンの GET・POST が通り、CSP（`connect-src 'self'`）で外への通信が止まる | 作業用のブラウザで、本物の serve.py が配るページから fetch して確かめた |
+| 本物の GitHub の版の情報の取得（TLS と github.com の中の転送） | `py -3 deploy/zorin/serve.py --check-update`。最新のリリース（2.0.x）に版の情報が無いので `{"latest": null, "error": null}`・終了コード 0 |
+| 2.1.0 → 2.2.0 の通し（変わらない音声の zip は取得しない・書いたのは決めた場所だけ・sha256 違いで今の版のまま） | test_integration.py（偽の GitHub と本物の serve.py の別プロセス。Windows の Popen の道） |
+| zip・部品の印・版の情報（4 つの zip の中身・contentId・`.sha256`） | release-lib.test.ts と、本体の dist の写しでの `npm run package` の通し（Python の zipfile で検算） |
+| install.sh・uninstall.sh（置き場の形・入れ替え・2.0.x の配置の丸ごと入れ替え・後始末） | test_install_sh.py（Git Bash。python3・systemctl・pkill・pgrep・xdg-user-dir は試験が作る偽物） |
+| Python 3.10 の構文 | `ast.parse(..., feature_version=(3, 10))` を deploy/ の全 .py に通した |
+
+### 15.2 確かめられないこと（実機・後の段で確かめる）
+
+13 章の表のほかに、次は確かめられていない。
+
+- **Service Worker を通した流れ**（新しい版の準備 → 読み込み直し → 教材の取り直し）: 作業用のブラウザでは Service Worker の登録そのものが失敗する（2.0.x の dist でも同じ）。単体試験だけで確かめた。後の段の e2e（11.3 節）で通す。
+- **Zorin の実機**: `renameat2` での入れ替え・`os.execv` での再起動と systemd での PID・`fcntl.flock`・Python 3.10 での実行・`systemctl --user` の stop と start・`pkill`/`pgrep`・mawk の awk・実行権限の付き方。docs/device-checklist.md に足す（後の段）。
+- **本物の GitHub からの zip の取得**（配布用ホストへの転送・大きな zip の続きから）: 版の情報を置いた 2.1.0 のリリースのあとに `--check-update` と実機で確かめる。
+- `npm run test:py:sh`（Linux の python3）は流していない。
+
+### 15.3 設計との違い・決めたこと
+
+- 失敗の理由 `disk-full` の「あと約 X GB 必要です」の X は、配信の `needBytes`（必要な空きの合計）から今の `disk.freeBytes` を引いた足りない分にした（6.2 節の空き不足の見込みと同じ考え）。今の空きのほうが大きいときは数を出さない。
+- `--check-update` は `MANABI_UPDATE_TEST_ORIGIN` が不正な形のとき `error.code = "bad-test-origin"`（終了コード 1）を出す（保守用の道具だけのコード）。
+- 1 ファイル概ね 400 行の目安を、`service.py`（523 行）・`install.py`（431 行）・`serve.py`（497 行）が超えている。分けるなら `service.py` の更新の作業（`_run_apply` など）を別のモジュールに出す（自己検査は `mnwupdate` の下を全部読み込むので、足しても検査に入る）。
+- アプリ側（U3）で決めたこと: 確認中は保護者画面で 1 秒ごとに読む。配信がすでにその版なら POST せずアプリの準備から始める（`sw-failed` の「もう一度ためす」用）。押したのに配信が 30 秒 idle のままなら `interrupted`。Service Worker が使えない（`unsupported`・`error`）なら待たずに `sw-failed`。
+- 画面に足した字（展・布・待・送）のため、`npm run chars` で scripts/fonts/used-chars.txt を作り直し、コアのフォント（zen-maru-gothic-400/700）を作り直した。

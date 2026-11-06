@@ -1,23 +1,55 @@
 /**
- * 配布用 zip を作る（`npm run build` の後に `npm run package`）。
- * 中身: manabi-no-niwa/dist/、manabi-no-niwa/deploy/zorin/（install.sh が前提とする配置）、README.md、LICENSE、licenses/、DESINGN.md、docs/device-checklist.md
+ * 配布用 zip と版の情報を作る（`npm run build` の後に `npm run package`）。
+ * 出力（release/）: zip（本体 + 音声の部品 3 つまで）・各 .sha256・manabi-no-niwa-update.json（版の情報）。
+ * zip の中身: manabi-no-niwa/dist/、manabi-no-niwa/deploy/zorin/（install.sh が前提とする配置。mnwupdate/ も）、
+ * README.md、LICENSE、licenses/、DESINGN.md、docs/device-checklist.md、部品の印 parts/<kind>.json。
+ * zip・部品の印・版の情報の作り方は scripts/release-lib.ts（設計: docs/expansion/updater-design.md 3 章）。
  * 依存なし（zlib の deflate と自前の ZIP 書き出し）。.sh には実行権限を付ける。
  */
-import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deflateRawSync } from 'node:zlib';
+import {
+  MAIN_KIND,
+  MANIFEST_NAME,
+  MIN_AUTO_UPDATE_FROM,
+  TOP,
+  audioGroupOf,
+  assertNotes,
+  audioPackIdOf,
+  buildManifest,
+  compareVersions,
+  isVersion,
+  packPart,
+  parseReleaseNotes,
+  sha256FileText,
+  todayInJapan,
+  toJsonText,
+  type PackedPart,
+  type ZipEntry,
+} from './release-lib.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
   version: string;
 };
-const top = 'manabi-no-niwa';
+const dist = path.join(root, 'dist');
+const releaseDir = path.join(root, 'release');
+
+function die(message: string): never {
+  console.error(message);
+  process.exit(1);
+}
+
+/** zip に入れない: Python のキャッシュ・OS の作業ファイル */
+function isJunk(name: string): boolean {
+  return name === '__pycache__' || name === '.DS_Store' || name.endsWith('.pyc');
+}
 
 function walk(dir: string, base: string): [string, string][] {
   const out: [string, string][] = [];
   for (const name of readdirSync(dir)) {
+    if (isJunk(name)) continue;
     const p = path.join(dir, name);
     const rel = `${base}/${name}`;
     if (statSync(p).isDirectory()) out.push(...walk(p, rel));
@@ -26,42 +58,69 @@ function walk(dir: string, base: string): [string, string][] {
   return out;
 }
 
-const dist = path.join(root, 'dist');
+// --- 入れる前の確かめ（時間のかかる zip 作りの前に止める）
+
 if (!existsSync(path.join(dist, 'index.html')) || !existsSync(path.join(dist, 'sw.js'))) {
-  console.error('dist がありません。先に npm run build を実行してください。');
-  process.exit(1);
+  die('dist がありません。先に npm run build を実行してください。');
+}
+if (!isVersion(pkg.version))
+  die(`package.json の version が X.Y.Z の形ではありません: ${pkg.version}`);
+if (compareVersions(MIN_AUTO_UPDATE_FROM, pkg.version) > 0) {
+  die(
+    `package.json の version（${pkg.version}）が、更新できる最も古い版 MIN_AUTO_UPDATE_FROM（${MIN_AUTO_UPDATE_FROM}、scripts/release-lib.ts）より古いです。版を上げてから npm run build をやり直してください。`,
+  );
+}
+const distVersion = (() => {
+  try {
+    return (
+      JSON.parse(readFileSync(path.join(dist, 'version.json'), 'utf8')) as { appVersion?: unknown }
+    ).appVersion;
+  } catch {
+    return undefined;
+  }
+})();
+if (distVersion !== pkg.version) {
+  die(
+    `dist/version.json の appVersion（${String(distVersion ?? 'なし')}）が package.json の version（${pkg.version}）と違います。npm run build をやり直してください。`,
+  );
 }
 
+// 保護者画面に出す短い説明（無くても止めない）
+const notesFile = path.join(root, 'docs', 'expansion', `release-${pkg.version}.md`);
+const notesRel = path.relative(root, notesFile).replaceAll('\\', '/');
+let notes: string[] = [];
+if (existsSync(notesFile)) {
+  notes = parseReleaseNotes(readFileSync(notesFile, 'utf8'));
+  if (notes.length === 0) {
+    console.warn(
+      `警告: ${notesRel} に「## 保護者画面に出す短い説明」の見出しか、その下の「- 」の箇条書きがありません。notes は空にします。`,
+    );
+  }
+} else {
+  console.warn(`警告: ${notesRel} がありません。notes は空にします。`);
+}
+try {
+  assertNotes(notes); // 1 行 120 字まで（超えていれば zip を作る前に止める）
+} catch (e) {
+  die(`${notesRel}: ${(e as Error).message}`);
+}
+
+// --- 入れるファイルを集めて、部品（zip）ごとに分ける
+
 const files: [string, string][] = [
-  ...walk(dist, `${top}/dist`),
-  ...walk(path.join(root, 'deploy/zorin'), `${top}/deploy/zorin`),
-  ...walk(path.join(root, 'licenses'), `${top}/licenses`),
-  [path.join(root, 'README.md'), `${top}/README.md`],
-  [path.join(root, 'LICENSE'), `${top}/LICENSE`],
-  [path.join(root, 'DESINGN.md'), `${top}/DESINGN.md`],
-  [path.join(root, 'docs/device-checklist.md'), `${top}/docs/device-checklist.md`],
+  ...walk(dist, `${TOP}/dist`),
+  ...walk(path.join(root, 'deploy/zorin'), `${TOP}/deploy/zorin`),
+  ...walk(path.join(root, 'licenses'), `${TOP}/licenses`),
+  [path.join(root, 'README.md'), `${TOP}/README.md`],
+  [path.join(root, 'LICENSE'), `${TOP}/LICENSE`],
+  [path.join(root, 'DESINGN.md'), `${TOP}/DESINGN.md`],
+  [path.join(root, 'docs/device-checklist.md'), `${TOP}/docs/device-checklist.md`],
 ];
 
-// --- 最小の ZIP 書き出し（deflate、UTF-8 ファイル名）
-const crcTable = Array.from({ length: 256 }, (_, n) => {
-  let c = n;
-  for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
-  return c >>> 0;
-});
-const crc32 = (buf: Buffer) => {
-  let c = 0xffffffff;
-  for (const b of buf) c = crcTable[(c ^ b) & 0xff]! ^ (c >>> 8);
-  return (c ^ 0xffffffff) >>> 0;
-};
-
-const now = new Date();
-const dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | Math.floor(now.getSeconds() / 2);
-const dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
-
 /**
- * 小学生の教材パックの音声（dist/audio/<packId>/）は数万本あるので、学年ごとの別の zip に分ける。
- * ZIP（ZIP64 でない形）はファイル数 65535・4GB まで、GitHub の添付は 1 ファイル 2GB までのため。
- * どの zip も同じ最上位フォルダ manabi-no-niwa/ を持つので、全部を同じ場所に展開すれば1つにそろう。
+ * 小学生の教材パックの音声（dist/audio/<packId>/）は数万本あるので、学年ごとの別の zip に分ける
+ * （分け方は release-lib の audioGroupOf）。どの zip も同じ最上位フォルダ manabi-no-niwa/ を持つので、
+ * 全部を同じ場所に展開すれば1つにそろう。
  */
 const packIds: string[] = (() => {
   try {
@@ -70,91 +129,70 @@ const packIds: string[] = (() => {
     };
     return Object.keys(pj.packs ?? pj);
   } catch {
+    console.warn(
+      '警告: dist/packs.json を読めません。音声を学年ごとに分けず、すべて本体に入れます。',
+    );
     return [];
   }
 })();
-function audioGroupOf(name: string): string | null {
-  const m = new RegExp(`^${top}/dist/audio/([^/]+)/`).exec(name);
-  if (!m || !packIds.includes(m[1]!)) return null;
-  const id = m[1]!;
-  // 学年: g<n>-… は n、<教科>-g<ab> は a（例 kanji-g34 → 3、prog-g16 → 5・6 にまとめる）
-  const g = /^g(\d)-/.exec(id)?.[1] ?? (id === 'prog-g16' ? '5' : /-g(\d)/.exec(id)?.[1]);
-  const n = Number(g ?? 0);
-  return n <= 2 ? 'audio-g1-g2' : n <= 4 ? 'audio-g3-g4' : 'audio-g5-g6';
-}
-const groups = new Map<string, [string, string][]>([['', []]]);
+const groups = new Map<string, [string, string][]>([[MAIN_KIND, []]]);
 for (const f of files) {
-  const g = audioGroupOf(f[1]) ?? '';
+  const g = audioGroupOf(f[1], packIds) ?? MAIN_KIND;
   if (!groups.has(g)) groups.set(g, []);
   groups.get(g)!.push(f);
 }
-mkdirSync(path.join(root, 'release'), { recursive: true });
-for (const [g, list] of groups)
-  writeZip(g ? `${top}-${pkg.version}-${g}.zip` : `${top}-${pkg.version}.zip`, list);
 
-function writeZip(fileName: string, list: [string, string][]): void {
-  if (list.length > 65535) throw new Error(`${fileName}: ファイルが多すぎる（${list.length}）`);
-  const locals: Buffer[] = [];
-  const centrals: Buffer[] = [];
-  let offset = 0;
-  for (const [src, name] of list) {
-    const data = readFileSync(src);
-    // mp3 は圧縮が効かないので格納だけ（作成を速くする）
-    const store = name.endsWith('.mp3');
-    const comp = store ? data : deflateRawSync(data, { level: 9 });
-    const method = store ? 0 : 8;
-    const nameBuf = Buffer.from(name, 'utf8');
-    const crc = crc32(data);
-    const mode = name.endsWith('.sh') ? 0o100755 : 0o100644;
+// --- zip・.sha256 を書く
 
-    const local = Buffer.alloc(30);
-    local.writeUInt32LE(0x04034b50, 0);
-    local.writeUInt16LE(20, 4);
-    local.writeUInt16LE(0x0800, 6); // UTF-8
-    local.writeUInt16LE(method, 8); // 8: deflate, 0: 格納
-    local.writeUInt16LE(dosTime, 10);
-    local.writeUInt16LE(dosDate, 12);
-    local.writeUInt32LE(crc, 14);
-    local.writeUInt32LE(comp.length, 18);
-    local.writeUInt32LE(data.length, 22);
-    local.writeUInt16LE(nameBuf.length, 26);
-    local.writeUInt16LE(0, 28);
-    locals.push(local, nameBuf, comp);
-
-    const central = Buffer.alloc(46);
-    central.writeUInt32LE(0x02014b50, 0);
-    central.writeUInt16LE((3 << 8) | 20, 4); // made by Unix（実行権限を伝えるため）
-    central.writeUInt16LE(20, 6);
-    central.writeUInt16LE(0x0800, 8);
-    central.writeUInt16LE(method, 10);
-    central.writeUInt16LE(dosTime, 12);
-    central.writeUInt16LE(dosDate, 14);
-    central.writeUInt32LE(crc, 16);
-    central.writeUInt32LE(comp.length, 20);
-    central.writeUInt32LE(data.length, 24);
-    central.writeUInt16LE(nameBuf.length, 28);
-    central.writeUInt32LE((mode << 16) >>> 0, 38);
-    central.writeUInt32LE(offset, 42);
-    centrals.push(central, nameBuf);
-    offset += local.length + nameBuf.length + comp.length;
-  }
-
-  const centralBuf = Buffer.concat(centrals);
-  const end = Buffer.alloc(22);
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(list.length, 8);
-  end.writeUInt16LE(list.length, 10);
-  end.writeUInt32LE(centralBuf.length, 12);
-  end.writeUInt32LE(offset, 16);
-  if (offset > 0xffffffff) throw new Error(`${fileName}: 4GB を超える`);
-
-  const zip = Buffer.concat([...locals, centralBuf, end]);
-  const out = path.join(root, 'release', fileName);
-  writeFileSync(out, zip);
-  const sha = createHash('sha256').update(zip).digest('hex');
-  writeFileSync(`${out}.sha256`, `${sha}  ${path.basename(out)}\n`);
+mkdirSync(releaseDir, { recursive: true });
+const parts: PackedPart[] = [];
+for (const [kind, list] of groups) {
+  const entries: ZipEntry[] = list.map(([src, name]) => ({ name, data: readFileSync(src) }));
+  // 変わらない部品を今の版から写すときに、この下を全部写す（main は毎回取得するので []）
+  const roots = [
+    ...new Set(
+      list.flatMap(([, name]) => {
+        const id = audioPackIdOf(name, packIds);
+        return id === null ? [] : [`dist/audio/${id}`];
+      }),
+    ),
+  ].sort();
+  const part = packPart({ version: pkg.version, kind, entries, roots });
+  const out = path.join(releaseDir, part.name);
+  writeFileSync(out, part.zip);
+  writeFileSync(`${out}.sha256`, sha256FileText(part.sha256, part.name));
   console.log(
-    `${path.relative(root, out)}  ${(zip.length / 1024 / 1024).toFixed(2)} MB  ${list.length} files`,
+    `${path.relative(root, out)}  ${(part.bytes / 1024 / 1024).toFixed(2)} MB  ${part.files + 1} files`,
   );
-  console.log(`sha256 ${sha}`);
+  console.log(`sha256 ${part.sha256}`);
+  console.log(`contentId ${part.contentId}`);
+  parts.push(part);
 }
+
+// --- 版の情報（これを最後に GitHub に上げる）
+
+const manifest = buildManifest({
+  version: pkg.version,
+  date: todayInJapan(),
+  minVersion: MIN_AUTO_UPDATE_FROM,
+  notes,
+  parts,
+});
+const manifestOut = path.join(releaseDir, MANIFEST_NAME);
+writeFileSync(manifestOut, toJsonText(manifest));
+console.log(
+  `${path.relative(root, manifestOut)}  ${manifest.parts.length} parts  notes ${notes.length}`,
+);
+
+const tag = manifest.tag;
+console.log('');
+console.log(`GitHub Releases（${tag}）に上げる順:`);
+console.log('  1. タグ ' + tag + ' の下書きのリリースを作る');
+let step = 2;
+for (const p of manifest.parts) {
+  console.log(`  ${step++}. ${p.name} と ${p.name}.sha256 を上げる`);
+}
+console.log(
+  `  ${step++}. 最後に ${MANIFEST_NAME} を上げる（これが先に出ると、まだ無い zip を取りに行かれる）`,
+);
+console.log(`  ${step}. 先行版（pre-release）にしない。「Set as latest」にして公開する`);

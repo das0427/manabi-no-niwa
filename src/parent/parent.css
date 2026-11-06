@@ -436,3 +436,28 @@
 .parent-root textarea {
   accent-color: var(--leaf);
 }
+
+/* アプリの更新（このアプリについて）。進み具合は <progress> の棒と割合の文 */
+.p-update-work {
+  margin: 12px 0;
+}
+
+.p-update-work progress {
+  display: block;
+  width: min(360px, 100%);
+  height: 14px;
+  margin: 6px 0;
+  accent-color: var(--leaf);
+}
+
+/* 保護者画面の上の知らせ（1行の小さな p-alert） */
+.p-update-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 6px 20px;
+  border-width: 0 0 1px;
+  font-size: 14px;
+}

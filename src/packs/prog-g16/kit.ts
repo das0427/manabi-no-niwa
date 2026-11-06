@@ -472,6 +472,8 @@ export interface PuzzleSpec {
   hints?: [string, string, string];
   /** 解説の「どうして」の部分 */
   why?: string;
+  /** 解説の全文（省略すると「たとえば 手順。why」。手順が長くて解説が板に入らないときだけ、短く言い直す） */
+  explain?: string;
   alt?: boolean;
   mis: ProgMis;
   /** キャラクターの組の番号（省略すると id から決める） */
@@ -508,7 +510,7 @@ export function puzzle(s: PuzzleSpec): ProgramItem {
     goalIllust: cast.g,
     wallIllust,
     hints: s.hints ?? (autoHints(l, sol) as [string, string, string]),
-    explain: `たとえば ${say(sol)}。${s.why ?? ''}`.trim(),
+    explain: s.explain ?? `たとえば ${say(sol)}。${s.why ?? ''}`.trim(),
     identity: s.id,
     ...(s.alt ? { alt: true } : {}),
   };

@@ -20,11 +20,16 @@ interface Theme {
   unit: string;
 }
 const OTHER = 'その他《た》';
+/**
+ * 札の名前は 4字まで（ふりがな付きの語は 4字ぶんの幅まで）。ぼうグラフを かく問題の横軸の札は
+ * 枠のあるボタンで、5字では 1つおきに下げた 2段でも枠に入らない（text-layout-fixes 第6回）。
+ * 選択肢の小さい図（make の alt）は 3字までの題材だけを使う（下の CHOICE_FIG_THEMES）。
+ */
 const THEMES: Theme[] = [
   {
     id: 'sports',
     title: 'すきな スポーツ',
-    labels: ['サッカー', 'ドッジボール', '野球《やきゅう》', 'なわとび'],
+    labels: ['サッカー', 'バレー', '野球《やきゅう》', 'なわとび'],
     unit: '人《にん》',
   },
   {
@@ -36,19 +41,19 @@ const THEMES: Theme[] = [
   {
     id: 'pets',
     title: 'かって みたい 動物《どうぶつ》',
-    labels: ['犬《いぬ》', 'ねこ', 'うさぎ', 'ハムスター'],
+    labels: ['犬《いぬ》', 'ねこ', 'うさぎ', 'ことり'],
     unit: '人《にん》',
   },
   {
     id: 'play',
     title: 'すきな 遊《あそ》び',
-    labels: ['おにごっこ', 'かくれんぼ', 'ブランコ', 'すな場《ば》'],
+    labels: ['ままごと', 'しりとり', 'ブランコ', 'すな場《ば》'],
     unit: '人《にん》',
   },
   {
     id: 'cars',
     title: '学校《がっこう》の 前《まえ》を 通《とお》った 車《くるま》',
-    labels: ['乗用車《じょうようしゃ》', 'トラック', 'バス', 'オートバイ'],
+    labels: ['乗用車《じょうようしゃ》', 'トラック', 'バス', 'バイク'],
     unit: '台《だい》',
   },
   {
@@ -58,6 +63,16 @@ const THEMES: Theme[] = [
     unit: 'さつ',
   },
 ];
+/** 札の字数（ふりがなを除く。ふりがなは親字の半分の大きさで、どの札も ほぼ親字の幅に入る） */
+const labelLength = (l: string) => [...l.replace(/《[^》]*》/g, '')].length;
+/**
+ * ならべ方の正しい グラフを えらぶ問題（make の alt）の題材。札が すべて 3字までのものだけ。
+ * 選択肢の小さい図は 1つの札に 2本ぶんの幅しか無く（1つおきに下げた 2段）、同じ段の となりの
+ * 札と 字が つく・重なる。4字と 4字は 重なり（すきな 遊びの しりとり｜ままごと・しりとり｜ブランコで
+ * 5〜9px。4つの画面サイズ すべて）、4字と 3字も すきまが 0px（サッカー｜その他・なわとび｜バレー）に
+ * なる（text-layout-fixes 第6回のレビュー）。ぼうグラフを かく問題の札（枠のあるボタン）は 4字まで入る。
+ */
+const CHOICE_FIG_THEMES = THEMES.filter((t) => t.labels.every((l) => labelLength(l) <= 3));
 const STEPS = [2, 5, 10, 20, 50, 100] as const;
 
 interface Data {
@@ -69,8 +84,8 @@ interface Data {
 }
 
 /** 題材と目盛りを えらび、ちがう高さの 棒（その他つき）を作る。sorted: 多い順に ならべる */
-function makeData(rng: Rng, sorted: boolean): Data {
-  const theme = pickOne(rng, THEMES);
+function makeData(rng: Rng, sorted: boolean, themes: readonly Theme[] = THEMES): Data {
+  const theme = pickOne(rng, themes);
   const step = pickOne(rng, STEPS);
   const ks = rng.sample(
     Array.from({ length: 16 }, (_, i) => i + 2),
@@ -105,30 +120,35 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem | NumberItem {
   const i = rng.int(0, d.labels.length - 1);
   const v = d.values[i]!;
   if (alt) {
-    // 表で 読む（グラフと 同じ データ）
+    // 表で 読む。横に ならべた 表（教科書と同じ）に、3つの ものと その他の 4列と 合計を 出す。
+    // たてに 7行ならべても、5列＋合計を 横に ならべても、数の入力の図の段（高さ 約 13u・幅 約 65u）に入らない
+    const shown = [0, 1, 2, 4];
+    const labels = shown.map((c) => d.labels[c]!);
+    const values = shown.map((c) => d.values[c]!);
+    const j = rng.int(0, shown.length - 1);
+    const answer = values[j]!;
+    const total = values.reduce((s, x) => s + x, 0);
     return {
       engine: 'number',
-      id: `read-alt:${d.key}:${i}`,
+      id: `read-alt:${d.key}:${shown[j]}`,
       objective: 'read',
       level,
-      prompt: `表《ひょう》を 見《み》て 答《こた》えよう。${d.labels[i]}は 何《なん》${d.theme.unit}ですか。`,
+      prompt: `${d.theme.title}の 表《ひょう》を 見《み》て 答《こた》えよう。${labels[j]}は 何《なん》${d.theme.unit}ですか。`,
       figure: {
         kind: 'table',
-        header: [d.theme.title, `数《かず》（${d.theme.unit}）`],
-        rows: d.labels
-          .map((l, j) => [l, j === i ? '？' : String(d.values[j])])
-          .concat([['合計《ごうけい》', String(d.values.reduce((s, x) => s + x, 0))]]),
+        header: [...labels, '合計《ごうけい》'],
+        rows: [[...values.map((x, k) => (k === j ? '？' : String(x))), String(total)]],
       },
       hints: [
         '合計《ごうけい》から ほかの 数《かず》を ひいて もとめよう。',
         '合計《ごうけい》 − ほかの 数《かず》 ぜんぶ。',
-        `ほかの 数《かず》の 合計《ごうけい》は ${d.values.reduce((s, x, j) => (j === i ? s : s + x), 0)}。`,
+        `ほかの 数《かず》の 合計《ごうけい》は ${total - answer}。`,
       ],
-      explain: `合計《ごうけい》 ${d.values.reduce((s, x) => s + x, 0)}から ほかの 数《かず》の 合計《ごうけい》を ひいて ${v}です。`,
-      identity: `table1:${d.key}:${i}`,
+      explain: `合計《ごうけい》 ${total}から ほかの 数《かず》の 合計《ごうけい》を ひいて ${answer}です。`,
+      identity: `table1:${d.key}:${shown[j]}`,
       alt: true,
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: v } }],
-      wrongAnswers: wrongList(String(v), 1, [[d.values.reduce((s, x) => s + x, 0), 'table-total']]),
+      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: answer } }],
+      wrongAnswers: wrongList(String(answer), 1, [[total, 'table-total']]),
     };
   }
   return {
@@ -285,8 +305,8 @@ const barFig = (labels: string[], values: number[], step: number, unit: string):
 
 function make(level: number, rng: Rng, alt: boolean): GraphItem | ChoiceItem {
   if (alt) {
-    // 正しい ならべ方の グラフを えらぶ
-    const d = makeData(rng, true);
+    // 正しい ならべ方の グラフを えらぶ（選択肢の小さい図に 入る 3字までの 札の 題材だけ）
+    const d = makeData(rng, true, CHOICE_FIG_THEMES);
     const badOther = [...d.labels.slice(0, 4), OTHER];
     const badVals = [...d.values];
     // その他を 多い順の 中に 入れた（その他が いちばん少ないので 最後と同じになる → 2番目に置く）
@@ -562,12 +582,7 @@ export const barGraph: UnitSpec = {
   intro: [
     {
       text: '数《かず》の 大《おお》きさを ぼうの 長《なが》さで あらわした グラフを ぼうグラフと いいます。ふつう 多《おお》い じゅんに ならべ、「その他《た》」は さいごに かきます。（れいの データ）',
-      figure: barFig(
-        ['サッカー', 'ドッジボール', 'なわとび', OTHER],
-        [12, 8, 6, 3],
-        1,
-        '人《にん》',
-      ),
+      figure: barFig(['サッカー', 'バレー', 'なわとび', OTHER], [12, 8, 6, 3], 1, '人《にん》'),
     },
     {
       text: 'まず 1めもりの 大《おお》きさを しらべます。0と 10の あいだが 5めもりなら、1めもりは 2です。',

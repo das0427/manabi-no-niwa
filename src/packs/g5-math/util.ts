@@ -154,12 +154,28 @@ export const svgText = (x: number, y: number, s: string, size = 16, anchor = 'mi
   `<text x="${x}" y="${y}" font-size="${size}" text-anchor="${anchor}" dominant-baseline="middle" fill="var(--ink)">${s}</text>`;
 
 /**
+ * 線や色の上に重なる SVG の字。うしろに白いふち（paint-order: stroke）を付けて、辺が字を横切っても読めるようにする
+ * （角の大きさ・辺の長さの字。細い三角形では 引き上げられた字より 辺の間が せまい）
+ */
+export const svgHaloText = (x: number, y: number, s: string, size = 16, anchor = 'middle') =>
+  svgText(x, y, s, size, anchor).replace(
+    'fill="var(--ink)">',
+    'fill="var(--ink)" paint-order="stroke" stroke="var(--white)" stroke-width="5" stroke-linejoin="round">',
+  );
+
+/**
  * SVG の図。widthU（u 単位）を書くと、その幅で描く。
  * 書かないと、図の幅は「いちばん小さい字が最小になる幅」か 23u の大きいほうになるので、
  * 字が少ない・縦長の図は 23u の幅で縦に伸びて、図の段（約 14u）に入らない（text-layout-fixes.md 第4回）。
  * 字は viewBox の単位で、画面では 字 × widthU ÷ w（u）。最小（1.73u）以上になるよう w と字を決める。
  */
-export const svg = (w: number, h: number, body: string, label: string, widthU?: number): Figure => ({
+export const svg = (
+  w: number,
+  h: number,
+  body: string,
+  label: string,
+  widthU?: number,
+): Figure => ({
   kind: 'svg',
   label,
   markup: `<svg viewBox="0 0 ${w} ${h}"${widthU ? ` style="width:calc(var(--u) * ${widthU})"` : ''} xmlns="http://www.w3.org/2000/svg">${body}</svg>`,

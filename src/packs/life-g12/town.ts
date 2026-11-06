@@ -41,13 +41,16 @@ const MATCHES: Pm[] = [
   { id: 'm5', level: 1, keys: ['station', 'flower', 'fire'], extra: ['hospital'] },
   { id: 'm6', level: 1, keys: ['vege', 'hospital', 'station', 'bakery'], extra: [] },
 ];
+// 解説は「ばしょは「ひと」」を 1 組ずつ書く（答え）。4 組のときに結びの注意（ちがう ばしょの…）まで
+// 書くと 5 行になり、解説の板が組の列（4 段）を押して 1280×720 で 4.5u 足りない（文字の配置の検査
+// 第6回）。3 組より多いときは注意の文を省いて 4 行にする（同じ注意は誤概念 place-mix の文にもある）
+const MATCH_NOTE_MAX = 3;
 const matchItems: MatchItem[] = MATCHES.map((m) =>
   matchItem({
     id: `place-${m.id}`,
     obj: 'place-people',
     level: m.level,
-    prompt:
-      'まちの ばしょと、そこで はたらく ひとを、せんで むすぼう。（いっぱんてきな えの れいだよ）',
+    prompt: 'まちの ばしょと、はたらく ひとを せんで むすぼう。（えは れいだよ）',
     pairs: m.keys.map(
       (k) =>
         [illust(PLACES[k][0]), PLACES[k][1], PLACES[k][2]] as [
@@ -63,7 +66,7 @@ const matchItems: MatchItem[] = MATCHES.map((m) =>
       'かんばんの えを みよう。パン、ほん、とけい など、ヒントが あるよ。',
       'のこった えを むすぶ ときは、まだ つかって いない ことばを さがそう。',
     ],
-    explain: `${m.keys.map((k) => `${PLACES[k][1]}は「${PLACES[k][2]}」`).join('、')}が はたらく ばしょだよ。ちがう ばしょの ひとと むすばないように ね。`,
+    explain: `${m.keys.map((k) => `${PLACES[k][1]}は「${PLACES[k][2]}」`).join('、')}が はたらく ばしょだよ。${m.keys.length > MATCH_NOTE_MAX ? '' : 'ちがう ばしょの ひとと むすばないように ね。'}`,
   }),
 );
 

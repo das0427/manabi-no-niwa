@@ -712,19 +712,12 @@ const BODY_SORTS: { id: string; boxes: string[]; items: string[] }[] = [
   {
     id: 'me-mimi-kuchi',
     boxes: ['目《め》', '耳《みみ》', '口《くち》'],
-    items: [
-      'me-nai',
-      'me-maru',
-      'mimi-utagau',
-      'mimi-itai',
-      'kuchi-katai',
-      'kuchi-suberu',
-    ],
+    items: ['me-nai', 'me-maru', 'mimi-utagau', 'mimi-itai', 'kuchi-katai', 'kuchi-suberu'],
   },
   {
     id: 'te-ashi-atama',
     boxes: ['手《て》', '足《あし》', '頭《あたま》'],
-    items: ['te-kasu', 'te-hanase', 'te-ase', 'ashi-hippa', 'ashi-bou', 'atama-kakaeru'],
+    items: ['te-kasu', 'te-hanase', 'ashi-hippa', 'atama-kakaeru'],
   },
   {
     id: 'hana-kao-kubi-ha',
@@ -759,7 +752,13 @@ function bodySortItem(s: (typeof BODY_SORTS)[number]): SortItem {
     ],
     // 札の意味をくり返さず、箱ごとにかんようくの名前だけを並べる（解説の板に入れる）
     explain: s.boxes
-      .map((b) => `${b}は${xs.filter((x) => x.body![0] === b).map((x) => `「${x.text}」`).join('、')}。`)
+      .map(
+        (b) =>
+          `${b}は${xs
+            .filter((x) => x.body![0] === b)
+            .map((x) => `「${x.text}」`)
+            .join('')}。`,
+      )
       .join(''),
     identity: `idiom:body-sort:${s.id}`,
     alt: true,

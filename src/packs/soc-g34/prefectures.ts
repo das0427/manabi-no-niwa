@@ -461,7 +461,7 @@ const capitalSame: Item[] = SAME_SETS.map(([right, wrongs], i) =>
 // ---- bearing ----
 const PAIRS: [number, number][] = [
   [20, 22],
-  [20, 19],
+  [21, 22],
   [20, 17],
   [13, 11],
   [13, 8],

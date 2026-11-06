@@ -713,7 +713,8 @@ export const orderOps: UnitSpec = finishUnit({
     },
     {
       text: '計算の きまりを 使うと くふうできます。25 × 7 × 4 ＝ 7 × （25 × 4）＝ 700。',
-      figure: expr('（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □'),
+      // 'xl' では 1 行に 入らず「＋ △ × □」が 次の 行に 落ちるので 'l' に する
+      figure: { kind: 'text', text: '（○ ＋ △）× □ ＝ ○ × □ ＋ △ × □', size: 'l' },
     },
   ],
   source: {

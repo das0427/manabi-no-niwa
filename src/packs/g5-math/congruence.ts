@@ -10,6 +10,7 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { GeometryItem } from '../../engines/geometry/geometry';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
+import { placeAngleLabels } from './angle-labels';
 import {
   dec,
   decAns,
@@ -20,6 +21,7 @@ import {
   REVISED,
   STROKE,
   svg,
+  svgHaloText,
   svgText,
   wrongList,
 } from './util';
@@ -134,12 +136,18 @@ function pairFig(pr: Pair, sideLab: string[] = [], angLab: string[] = [], other?
     for (let g = 0; g <= gh; g++)
       s += `<line x1="${ox}" y1="${24 + g * K}" x2="${ox + gw * K}" y2="${24 + g * K}" stroke="var(--ink)" stroke-opacity="0.2" stroke-width="1"/>`;
     s += `<polygon points="${sp.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
-    sp.forEach(([x, y], i) => {
+    // 頂点の 名前は 重心の 反対側（外）へ 14。角の 字は 引き上げられた 大きさで ぶつからない 場所に 置く（angle-labels.ts）
+    const nameAt = sp.map(([x, y]) => {
       const dx = x - cx;
       const dy = y - cy;
       const d = Math.hypot(dx, dy) || 1;
-      s += svgText(r1(x + (dx / d) * 14), r1(y + (dy / d) * 14), names[i]!, 15);
-      if (al[i]) s += svgText(r1(x - (dx / d) * 24), r1(y - (dy / d) * 24), al[i]!, 12);
+      return [r1(x + (dx / d) * 14), r1(y + (dy / d) * 14)] as P;
+    });
+    const angleAt = placeAngleLabels(sp, nameAt, names, al);
+    sp.forEach((_, i) => {
+      s += svgText(nameAt[i]![0], nameAt[i]![1], names[i]!, 15);
+      const at = angleAt[i];
+      if (at && al[i]) s += svgHaloText(r1(at[0]), r1(at[1]), al[i]!, 12);
     });
     for (let i = 0; i < 3; i++) {
       if (!sl[i]) continue;
@@ -150,7 +158,7 @@ function pairFig(pr: Pair, sideLab: string[] = [], angLab: string[] = [], other?
       const dx = mx2 - cx;
       const dy = my2 - cy;
       const d = Math.hypot(dx, dy) || 1;
-      s += svgText(r1(mx2 + (dx / d) * 16), r1(my2 + (dy / d) * 16), sl[i]!, 12);
+      s += svgHaloText(r1(mx2 + (dx / d) * 16), r1(my2 + (dy / d) * 16), sl[i]!, 12);
     }
     return s;
   };

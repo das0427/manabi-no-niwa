@@ -162,6 +162,29 @@ describe('g3-math 内容レビューの再発防止', () => {
       }
   });
 
+  it('bar-graph: 横軸の札は 4字まで、ならべ方を えらぶ問題の 図の札は 3字まで（text-layout-fixes 第6回）', () => {
+    // ふりがなを除いた字数。4字の札は ぼうグラフを かく問題の ボタンに ぎりぎり入り、
+    // 選択肢の小さい図では となりの札と 字が つく・重なる（bar-graph.ts の CHOICE_FIG_THEMES）
+    const len = (l: string) => [...l.replace(/《[^》]*》/g, '')].length;
+    let graphs = 0;
+    let choices = 0;
+    for (const it of many(unitOf('g3.math.bar-graph'))) {
+      const labels = (it as { data?: { labels?: string[] } }).data?.labels;
+      if (it.engine === 'graph' && labels) {
+        graphs++;
+        for (const l of labels) expect(len(l), `${it.id} ${l}`).toBeLessThanOrEqual(4);
+      }
+      if (it.engine === 'choice' && it.id.startsWith('make-alt:')) {
+        choices++;
+        for (const o of it.options)
+          for (const l of (o.figure as { labels?: string[] } | undefined)?.labels ?? [])
+            expect(len(l), `${it.id} ${l}`).toBeLessThanOrEqual(3);
+      }
+    }
+    expect(graphs).toBeGreaterThan(20);
+    expect(choices).toBeGreaterThan(5);
+  });
+
   it('mult-rules ten: 10 × a の ヒント・解説は 交換した形（a × 9）を 使わない', () => {
     for (const it of many(unitOf('g3.math.mult-rules'))) {
       if (!/^ten(-alt)?:/.test(it.id)) continue;

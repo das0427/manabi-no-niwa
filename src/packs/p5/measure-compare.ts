@@ -171,7 +171,9 @@ function rulerItem(n: number): MeasureItem {
     explain: `めもり ${n}つぶん だね。`,
     identity: `ruler:${n}`,
     instrument: 'ruler',
-    scale: { unit: 'こ', min: 0, max: 10, minor: 1, major: 1 },
+    // ものさしの右はしに「こ」を書かない（labelUnit: ''）。いちばん右の「10」の真下に「こ」が来て、
+    // 数と単位が重なり、ものさしの枠の下の線も横切るため。「こ」は答えの欄（fields）に出る。
+    scale: { unit: 'こ', labelUnit: '', min: 0, max: 10, minor: 1, major: 1 },
     task: 'read',
     value: n,
     object: 'tape',

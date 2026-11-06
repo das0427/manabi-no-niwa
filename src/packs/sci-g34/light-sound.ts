@@ -592,7 +592,6 @@ const warm: Item[] = [
     level: 0,
     alt: true,
     prompt: 'ことばで まとめよう。正《ただ》しい のは どれ？',
-    figure: text('日光《にっこう》を 当《あ》てると'),
     right: '日光《にっこう》を 当《あ》てると、明《あか》るく あたたかく なる',
     wrongs: [
       ['日光《にっこう》を 当《あ》てても、あたたかさは かわらない', 'ls-bright-not-warm'],

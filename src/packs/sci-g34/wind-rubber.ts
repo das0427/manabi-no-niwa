@@ -14,7 +14,7 @@
  */
 import type { Item, UnitSpec, GraphItem, RichText } from '../../curriculum/types';
 import type { Figure } from '../../engines/figure/types';
-import { baseSci, choice, considerOpts, exp, LEVELS3, order, sort, table, text } from './util';
+import { baseSci, choice, considerOpts, exp, LEVELS3, order, sort, table } from './util';
 
 const WIND = {
   kind: 'table' as const,
@@ -295,8 +295,7 @@ const wind: Item[] = [
     obj: 'wind',
     level: 0,
     alt: true,
-    prompt: 'ことばで まとめよう。正《ただ》しい のは どれ？',
-    figure: text('風《かぜ》の 力《ちから》'),
+    prompt: '風《かぜ》の 力《ちから》を ことばで まとめよう。正《ただ》しい のは どれ？',
     right: '風《かぜ》が 強《つよ》い ほど、ものを 動《うご》かす はたらきが 大《おお》きい',
     wrongs: [
       [
@@ -553,8 +552,7 @@ const rubber: Item[] = [
     obj: 'rubber',
     level: 0,
     alt: true,
-    prompt: 'ことばで まとめよう。正《ただ》しい のは どれ？',
-    figure: text('ゴムの 力《ちから》'),
+    prompt: 'ゴムの 力《ちから》を ことばで まとめよう。正《ただ》しい のは どれ？',
     right: 'ゴムを 長《なが》く のばす ほど、ものを 動《うご》かす はたらきが 大《おお》きい',
     wrongs: [
       ['ゴムを 短《みじか》く のばす ほど、はたらきが 大《おお》きい', 'wr-short-far'],

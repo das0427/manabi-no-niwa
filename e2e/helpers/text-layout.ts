@@ -91,6 +91,8 @@ export interface TextIssue {
 export interface TextProbeOptions {
   /** 単元の段階（p23 / p4 / p5 / g1〜g6）。分かち書きと文字の最小の大きさを決める */
   stage: string;
+  /** 教材（pack。unit-index の pack）。分かち書きの教材（C22）の判定に使う。画面の data-wakachi は見ない */
+  pack?: string;
   /** 1画面で1種類あたり返す件数の上限 */
   maxPerKind?: number;
 }
@@ -179,7 +181,9 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     'のように',
   ]);
   const preschool = /^p/.test(opt.stage);
-  const wakachi = /^(p23|p4|p5|g1|g2)$/.test(opt.stage);
+  // 分かち書きで書く段階（p23〜g2）と、小3以上でも分かち書きで書く教材（英語 en-g34・en-g56。C22）。
+  // 画面の data-wakachi には頼らない（画面が分かち書きにしていない不具合を隠さないため）
+  const wakachi = /^(p23|p4|p5|g1|g2)$/.test(opt.stage) || /^en-g(34|56)$/.test(opt.pack ?? '');
   /** 補助の文字の最小（DESINGN.md 17章）。ふりがなは 1.1u */
   const MIN_TEXT_U = preschool
     ? 2.2
@@ -732,11 +736,11 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           let o: SVGSVGElement = owner;
           while (o.ownerSVGElement) o = o.ownerSVGElement;
           const or = o.getBoundingClientRect();
+          // C20: いちばん外の svg の計算された overflow が visible なら、svg の表示範囲では切れない
+          // （祖先の枠で切れるかは上の clipBy で見た）
           if (
-            bx.l < or.left - 1 ||
-            bx.r > or.right + 1 ||
-            bx.t < or.top - 1 ||
-            bx.b > or.bottom + 1
+            cs(o).overflowX !== 'visible' &&
+            (bx.l < or.left - 1 || bx.r > or.right + 1 || bx.t < or.top - 1 || bx.b > or.bottom + 1)
           )
             add('clipped', bx.text, `${describe(bx.el)} ⊂ svg`, rr, '図の表示範囲の外');
         }
@@ -1165,7 +1169,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
     {
       const done = new Set<Element>();
       for (const node of textNodes) {
-        const m = /《|》|\{\{|\}\}/.exec(node.data);
+        const m = /《|》|\{\{|\}\}|\[\[|\]\]/.exec(node.data);
         if (!m) continue;
         const p = node.parentElement!;
         if (done.has(p)) continue;
@@ -1318,12 +1322,17 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             right: Math.max(a.r, b.r),
             bottom: Math.max(a.b, b.b),
           });
-          /** 改行の直前が「・」で、前後の部分（空白か「・」で区切った語）がどちらも2字以上か。1字の並び（き・つ・つ・き）は数える */
+          /**
+           * 改行の直前が「・」で、前後の部分（空白か「・」で区切った語）がどちらも2字以上か。1字の並び（き・つ・つ・き）は数える。
+           * 文の終わり（。．.!?！？）のすぐ後ろの「・」は、文と文の区切り（聞く問題の書き起こし。listen.tsx）なので、後ろの部分が
+           * 1字（英語の「I」）でも改行してよい（第6回のレビュー。「・」を字にしたあと「summer.・／I swam」が出た）
+           */
           const nakaguroBreak = (ps: Pos[], a: Pos, b: Pos): boolean => {
             if (a.ch !== '・') return false;
             const ai = ps.indexOf(a);
             const bi = ps.indexOf(b);
             if (ai < 0 || bi !== ai + 1) return false;
+            if (ai > 0 && /^[。．.!?！？]$/.test(ps[ai - 1]!.ch)) return true;
             let before = 0;
             for (let k = ai - 1; k >= 0; k--) {
               if (ps[k]!.ch === '・') break;
@@ -1412,7 +1421,14 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
               else add('wakachi-split', text, where, rect, full);
             }
             // (f) ボタン・選択肢の中で語が途中で折れる（分かち書きでない語は Intl.Segmenter の単語で見る）
-            else if (inBtn && !b.spaceBefore && !START_NG.has(b.ch) && !BREAK_OK_AFTER.has(a.ch)) {
+            // 始め括弧の前の改行は組版として正しい（C23。JIS X 4051。(d) と同じ扱い）
+            else if (
+              inBtn &&
+              !b.spaceBefore &&
+              !START_NG.has(b.ch) &&
+              !BREAK_OK_AFTER.has(a.ch) &&
+              !END_NG.has(b.ch)
+            ) {
               // 空白でない所の改行を見るのは、分かち書きの段階か、空白が多い（空白の数 ≧ 字数 ÷ 12）ラベルだけ。
               // 名前の空白（森川 はるか）が1つあるだけの普通の文は、文節の切れ目の改行まで違反にしない
               if (hasSpaces && (wakachi || spaceCount * 12 >= para.length))
@@ -1438,46 +1454,175 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       }
     }
 
-    // ---- (8b) 字を横切る正解の輪（C16）: 見えている .mark--correct の輪の線の帯（外の円 − 内の円）に、同じ札の字の
-    // 中心が 2 つ以上入るもの。輪の中は透明で当たり判定（elementsFromPoint）が通り抜けるので、(8) では数えられない。
-    // 字の後ろか前かは問わない（線は字の後ろでも字を横切って読みにくい）。1 行・6 字以下の札（絵の札・短い語）は、
-    // 輪が字の上下を通るだけなので数えない。輪は円の式で判定する（paints と同じ式）
+    // ---- (8b) 正解の印 .mark--correct（C16・C21）。輪の中は透明で当たり判定（elementsFromPoint）が通り抜けるので、
+    // (8) では数えられない。字の後ろか前かは問わない（線は字の後ろでも字を横切って読みにくい）。
+    //   - 大きな輪（札の中央に置く真円）: 字の中心が輪の線の帯（外の円 − 内の円）に入る字が 1 つでもあれば covered。
+    //     札の字数では外さない（C21。幼児の英語の短い札で「輪は字の上下を通るだけ」が成り立たなかった）。
+    //     輪が札の枠からはみ出して、隣の札の矩形に入るものも covered
+    //   - 角の小さな ○（transform なし。白地）: 字（ふりがなを含む）の矩形と ○ の円が重なれば covered
+    // 輪・円は円の式で判定する（paints と同じ式）
+    /** 円（中心 cx,cy・半径 r）と矩形が重なるか（矩形の外へ 0、辺に触れるだけは重なりとしない） */
+    const circleHitsRect = (
+      cx: number,
+      cy: number,
+      rx: number,
+      ry: number,
+      q: { l: number; t: number; r: number; b: number },
+    ): boolean => {
+      // 楕円は半径で割って真円にして比べる
+      const nx = Math.max(q.l, Math.min(cx, q.r));
+      const ny = Math.max(q.t, Math.min(cy, q.b));
+      return Math.hypot((nx - cx) / rx, (ny - cy) / ry) < 1;
+    };
+    const cardSelector = `${BTN_SEL}, .tk-card, .choice`;
     for (const mk of Array.from(root.querySelectorAll('.mark--correct'))) {
       if (!shown(mk)) continue;
-      const card = mk.parentElement;
-      if (!card) continue;
+      const parent = mk.parentElement;
+      if (!parent) continue;
+      // 印の札。絵とラベルのある札（listen の .eng-opts__pic の中の輪。第6回 W1）は、包みでなく札（.choice）の字と隣の札を見る
+      // （包みの中だけを見ると、輪がラベルの字や隣の札にかかっても出なかった。レビュー）
+      const card = parent.matches(cardSelector) ? parent : (parent.closest(cardSelector) ?? parent);
       const mr = mk.getBoundingClientRect();
       if (mr.width < 2 || mr.height < 2) continue;
-      const bw = parseFloat(cs(mk).borderTopWidth) || 0;
-      if (bw <= 0) continue; // 線の無い印（背景だけ）は帯が無い
       const rx = mr.width / 2;
       const ry = mr.height / 2;
       const cx = mr.left + rx;
       const cy = mr.top + ry;
-      const inner = 1 - bw / Math.min(rx, ry);
-      const chars: Ch[] = [];
+      // 角の小さな ○ は 3.2u 前後。札と同じ大きさの背景だけの印・大きな輪とは大きさで分ける
+      const corner = mr.width <= 4.5 * u && mr.height <= 4.5 * u;
+      const where = `${describe(card)} の上に ${describe(mk)}`;
+      const cardChars: Ch[] = [];
       for (const node of textNodes) {
         if (!card.contains(node)) continue;
-        for (const c of charsOf(node)) if (c && !c.rt) chars.push(c);
+        for (const c of charsOf(node)) if (c) cardChars.push(c);
       }
-      const rows: number[] = [];
-      for (const c of chars) {
-        const y = (c.t + c.b) / 2;
-        if (!rows.some((q) => Math.abs(q - y) < (c.b - c.t) / 2)) rows.push(y);
-      }
-      if (rows.length <= 1 && chars.length <= 6) continue;
-      const hit = chars.filter((c) => {
-        const d = Math.hypot(((c.l + c.r) / 2 - cx) / rx, ((c.t + c.b) / 2 - cy) / ry);
-        return d <= 1 && d >= inner;
-      });
-      if (hit.length >= 2)
-        add(
-          'covered',
-          hit.map((c) => c.ch).join(''),
-          `${describe(card)} の上に ${describe(mk)}`,
-          card.getBoundingClientRect(),
-          '正解の ○ が字を横切る',
+      if (corner) {
+        // 角の ○ と字（rt を含む）の矩形。1px 内側で比べる（接するだけは数えない）
+        const hit = cardChars.filter((c) =>
+          circleHitsRect(cx, cy, rx, ry, { l: c.l + 1, t: c.t + 1, r: c.r - 1, b: c.b - 1 }),
         );
+        if (hit.length >= 1)
+          add(
+            'covered',
+            hit.map((c) => c.ch).join(''),
+            where,
+            card.getBoundingClientRect(),
+            '角の ○ が字・ふりがなに重なる',
+          );
+        continue;
+      }
+      const bw = parseFloat(cs(mk).borderTopWidth) || 0;
+      if (bw > 0) {
+        // 線の無い印（背景だけ）は帯が無い
+        const inner = 1 - bw / Math.min(rx, ry);
+        const hit = cardChars.filter((c) => {
+          if (c.rt) return false;
+          const d = Math.hypot(((c.l + c.r) / 2 - cx) / rx, ((c.t + c.b) / 2 - cy) / ry);
+          return d <= 1 && d >= inner;
+        });
+        if (hit.length >= 1)
+          add(
+            'covered',
+            hit.map((c) => c.ch).join(''),
+            where,
+            card.getBoundingClientRect(),
+            '正解の ○ が字を横切る',
+          );
+        // 輪が隣の札の矩形（2px 内側）に入る
+        const neighbors: Element[] = [];
+        for (const o of Array.from(root.querySelectorAll(cardSelector))) {
+          if (o.contains(card) || card.contains(o) || !shown(o)) continue;
+          const or = o.getBoundingClientRect();
+          if (or.width < 4 || or.height < 4) continue;
+          if (
+            circleHitsRect(cx, cy, rx, ry, {
+              l: or.left + 2,
+              t: or.top + 2,
+              r: or.right - 2,
+              b: or.bottom - 2,
+            })
+          )
+            neighbors.push(o);
+        }
+        // 輪の中に入りきった小さな要素（札の中の絵・印など）は隣の札ではない。同じ親の中の兄弟の札だけ見る
+        const sibs = neighbors.filter(
+          (o) =>
+            o.parentElement === card.parentElement ||
+            o.parentElement?.parentElement === card.parentElement?.parentElement,
+        );
+        for (const o of sibs.slice(0, 1))
+          add(
+            'covered',
+            textOf(o).slice(0, 20),
+            `${describe(o)} の上に ${describe(mk)}（${describe(card)} の正解の ○）`,
+            o.getBoundingClientRect(),
+            '正解の ○ が隣の札にかかる',
+          );
+      }
+    }
+
+    // ---- (8c) 線でむすぶ問題（match）の線が、両端の札以外の札の後ろを通る（C25）: 線分が、両端以外の札の矩形
+    // （2px 内側）と交わるもの。正解の線（is-correct）も子供が引いた線も見る。札は左右の列の TapCard
+    for (const line of Array.from(root.querySelectorAll('line.eng-match__line'))) {
+      const ln = line as SVGLineElement;
+      const m = ln.getScreenCTM();
+      if (!m) continue;
+      const pt = (x: string, y: string) => {
+        const p = new DOMPoint(
+          parseFloat(ln.getAttribute(x) ?? '0'),
+          parseFloat(ln.getAttribute(y) ?? '0'),
+        ).matrixTransform(m);
+        return [p.x, p.y] as const;
+      };
+      const [x1, y1] = pt('x1', 'y1');
+      const [x2, y2] = pt('x2', 'y2');
+      const wrap = ln.closest('.eng-match');
+      if (!wrap) continue;
+      const cards = Array.from(wrap.querySelectorAll('.tk-card')).filter(
+        (c) => shown(c) && !c.parentElement?.closest('.tk-card'),
+      );
+      /** 線分と矩形が交わるか（Liang-Barsky） */
+      const segHits = (q: { l: number; t: number; r: number; b: number }): boolean => {
+        let t0 = 0;
+        let t1 = 1;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const clip = (p: number, qv: number): boolean => {
+          if (p === 0) return qv >= 0;
+          const t = qv / p;
+          if (p < 0) {
+            if (t > t1) return false;
+            if (t > t0) t0 = t;
+          } else {
+            if (t < t0) return false;
+            if (t < t1) t1 = t;
+          }
+          return true;
+        };
+        return (
+          clip(-dx, x1 - q.l) &&
+          clip(dx, q.r - x1) &&
+          clip(-dy, y1 - q.t) &&
+          clip(dy, q.b - y1) &&
+          t0 <= t1
+        );
+      };
+      const rects = cards.map((c) => c.getBoundingClientRect());
+      const near = (p: readonly [number, number], r: DOMRect) =>
+        p[0] >= r.left - 4 && p[0] <= r.right + 4 && p[1] >= r.top - 4 && p[1] <= r.bottom + 4;
+      cards.forEach((c, i) => {
+        const r = rects[i]!;
+        if (near([x1, y1], r) || near([x2, y2], r)) return; // 両端の札
+        if (r.width < 6 || r.height < 6) return;
+        if (segHits({ l: r.left + 2, t: r.top + 2, r: r.right - 2, b: r.bottom - 2 }))
+          add(
+            'covered',
+            textOf(c).slice(0, 20),
+            `${describe(c)} の上に ${describe(ln)}`,
+            r,
+            '線が別の札の後ろを通る',
+          );
+      });
     }
 
     return { u: r1(u), viewport: [W, H], chars: charCount, issues };

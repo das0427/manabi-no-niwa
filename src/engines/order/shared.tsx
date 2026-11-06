@@ -15,7 +15,7 @@ import { createRng, hashSeed } from '../../core/util/rng';
 import { registerRich } from '../../voice/dynamic';
 import { Illust } from '../../illust/Illust';
 import { Rt } from '../../text/Rt';
-import { findBareKanji, plainText } from '../../text/rich';
+import { findBareKanji, plainText, spacedLabel } from '../../text/rich';
 import { Figure } from '../figure/Figure';
 import type { Figure as FigureData } from '../figure/types';
 import type { EngineProps, Judgement, RenderCtx } from '../types';
@@ -183,7 +183,7 @@ export function CardFace({ card, ctx }: { card: Card; ctx: RenderCtx }) {
         </span>
       ) : null}
       {card.label !== undefined ? (
-        <span className="tk-card__label">
+        <span className="tk-card__label" data-spaced={spacedLabel(card.label) ? '' : undefined}>
           <Rt text={card.label} ctx={ctx} />
         </span>
       ) : null}

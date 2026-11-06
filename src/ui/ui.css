@@ -100,14 +100,16 @@
   pointer-events: none;
   z-index: 2;
 }
-/* 正解の○: 札の短い辺に合わせた真円を中央に（横長の札でも楕円にしない） */
+/* 正解の○: 札の短い辺に合わせた真円（短い辺＋1.6u・上限 20u）を中央に（横長の札でも楕円にしない）。
+   四方を 0.8u 外へ広げた枠（inset）の中に、幅・高さ auto・縦横比 1 で置き、高さの上限（札の高さ＋1.6u）が縦横比で幅にも効く。
+   高さだけで決めると、縦長の札（色の札・幼児の文字の札）で輪が札より広がって隣の札にかかった（g3.en.numbers-colors の解説。第6回のレビュー） */
 .mark--correct {
-  top: 50%;
-  left: 50%;
-  height: calc(100% + var(--u) * 1.6);
-  max-height: calc(var(--u) * 20);
+  inset: calc(var(--u) * -0.8);
+  margin: auto;
+  width: auto;
+  height: auto;
+  max-height: min(calc(100% + var(--u) * 1.6), calc(var(--u) * 20));
   aspect-ratio: 1;
-  transform: translate(-50%, -50%);
   border: calc(var(--u) * 0.9) solid var(--correct);
   border-radius: 50%;
   /* 木の札の上でも見えるよう、内外に surface の縁取り（DESINGN.md 3.1） */
@@ -126,18 +128,30 @@
   position: relative;
   z-index: 1;
 }
-/* 文の札・長い文の選択肢の正解の ○: 大きな輪を文の上に重ねない（輪が文を横切って読めなかった。g6.ja.write-opinion/6・g5.ja.read-relations/7 の解説）。
-   match（第3回 T4）と同じく、札の輪郭を太い緑にし、右上の角に小さな ○（白地）を置く（色だけにしない）。絵・短い語の札は上の大きな ○ のまま。
+/* 図・絵の無い札（文の札・字だけ/語だけの選択肢。.eng-opts__opt--text・.eng-choice__opt--text を含む）の正解の印: 大きな輪を字の上に重ねない
+   （輪が両端の字を横切る・縦長の札で輪が札より広がり隣の札に重なる。text-layout-fixes 第6回 W1）。
+   札の輪郭を太い緑（0.6u）にし、右下の角に小さな ○（3.2u・白地）を置く（色だけにしない）。右下なのは、右上だと札の上のふりがなを隠すため。
+   札の padding は変えない。絵・図だけの札（:has で判定）は大きな輪のまま（listen の絵と語の両方がある札は絵の段の輪。下の .eng-opts__pic）。
+   choice・experiment の絵と語の両方がある札（ラベルの子がある札）も、字の札と同じにする: 札を囲む輪はラベルの字を横切り（g5.en.read-words の
+   「はな（しょくぶつ）」）、縦長の幼児の札では札より広がって隣の札にかかった（p23.math.shape-match）。絵の段だけを囲むと、横長の絵・字を含む図を
+   輪が横切り、輪の中心が絵からずれた（レビューで確かめた）。字を含む図（svg の text・表・文の図。グラフ・時計・数直線）の札も同じにする:
+   大きな輪は上限 20u（作業領域の --fit で縮む）なので、大きな札では輪が札の中に入り、グラフの目もりの数・単位を横切った（g5.ja.text-figure の解説）。
    .tk-card は絵の札・語の札も含む（幼児の絵の札は .choice や .tk-card__illust で別系統。ここは単元の作業領域の札に限る） */
 .unit__work .tk-card:has(> .mark--correct),
-.unit__work :is(.eng-opts__list, .eng-choice__options)[data-long] > .choice:has(> .mark--correct) {
+.unit__work .choice:not(:has(.fig-illust, .fig-svgbox, svg, img)):has(> .mark--correct),
+.unit__work .choice:has(> :is(.eng-choice__label, .exp-opt__label)):has(> .mark--correct),
+.unit__work .choice:has(svg text, .fig-table, .fig-text):has(> .mark--correct) {
   border-color: var(--correct);
   border-width: calc(var(--u) * 0.6);
 }
 .unit__work .tk-card > .mark--correct,
-.unit__work :is(.eng-opts__list, .eng-choice__options)[data-long] > .choice > .mark--correct {
-  top: calc(var(--u) * -1.4);
-  right: calc(var(--u) * -1.4);
+.unit__work .choice:not(:has(.fig-illust, .fig-svgbox, svg, img)) > .mark--correct,
+.unit__work .choice:has(> :is(.eng-choice__label, .exp-opt__label)) > .mark--correct,
+.unit__work .choice:has(svg text, .fig-table, .fig-text) > .mark--correct {
+  display: block;
+  top: auto;
+  bottom: calc(var(--u) * -1.8);
+  right: calc(var(--u) * -1.8);
   left: auto;
   width: calc(var(--u) * 3.2);
   height: calc(var(--u) * 3.2);
@@ -146,6 +160,39 @@
   border-width: calc(var(--u) * 0.6);
   background: var(--white);
   z-index: 2;
+}
+/* 絵とラベルの両方がある listen の札（options.tsx。choice・experiment は上の「輪郭＋右下の ○」）: 正解の輪は絵の段（.eng-opts__pic）だけを囲む
+   （ラベルの字にかけない。text-layout-fixes 第6回 W1）。中心は絵の段の中心、直径は「絵の段の高さ＋1.6u」。
+   札自身の輪（Choice の StateMark）は隠す。輪は絵の後ろ（z-index: -1。.eng-opts__pic が重なりの文脈） */
+.eng-opts__pic {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  min-width: 0;
+}
+/* 図の箱（.fig-svg）が svg より広いとき、svg を箱の中央に置く（輪の中心と絵の中心をそろえる） */
+.eng-opts__pic > .fig-svg > svg {
+  margin-inline: auto;
+}
+.choice:has(> .eng-opts__pic) > .mark--correct {
+  display: none;
+}
+.unit__work .eng-opts__pic > .mark--correct {
+  z-index: -1;
+}
+/* 字を含む図（札の列・グラフ・時計など。svg の text・表・文の図）は、輪が図の字を横切るので、絵の段の輪も出さず、
+   札に字だけの札と同じ「輪郭＋右下の ○」を出す（上の .choice:has(svg text, …)。g6.prog.efficient の解説。レビューで追加） */
+.eng-opts__pic:has(svg text, .fig-table, .fig-text) > .mark--correct {
+  display: none;
+}
+/* 作業領域の高さを測る間（UnitRunner・listen が data-measure を付け、同じ処理の中で外す。描かれない）は、印を外す。
+   右下の角の ○ は札の下へ 1.8u 出るが、作業領域の下の余白（板・帯との間 2.4u）に描かれるだけなので、中身の高さに数えない
+   （数えると --fit が縮み、下の札が正解のときは作業領域がスクロールの枠になった。第6回のレビュー） */
+.unit__work[data-measure] .mark {
+  display: none !important;
 }
 /* 誤答の？: 小さな吹き出しの形（しっぽ付き）。札の中身と違って薄くならない */
 .mark--wrong {

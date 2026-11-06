@@ -5,6 +5,7 @@ import {
   numberReading,
   parseRich,
   plainText,
+  spacedLabel,
   spokenReading,
 } from './rich';
 
@@ -34,6 +35,14 @@ describe('parseRich', () => {
       { t: 'text', s: 'に' },
       { t: 'blank' },
     ]);
+  });
+  it('分数の分子・分母に □○△ を置ける', () => {
+    expect(parseRich('[[□/10]]')).toEqual([{ t: 'frac', num: '□', den: 10, whole: undefined }]);
+    expect(parseRich('[[3/□]]')).toEqual([{ t: 'frac', num: 3, den: '□', whole: undefined }]);
+    expect(parseRich('[[□/○]]')).toEqual([{ t: 'frac', num: '□', den: '○', whole: undefined }]);
+    expect(spokenReading('[[□/10]]')).toBe('10ぶんの しかく'.replace('10', numberReading(10)));
+    expect(spokenReading('[[□/○]]')).toBe('まるぶんの しかく');
+    expect(plainText('[[3/□]]')).toBe('3/□');
   });
   it('《!よみ》は表示しないよみ（学習対象の字）', () => {
     expect(parseRich('山《!やま》')).toEqual([
@@ -83,5 +92,17 @@ describe('読み上げ', () => {
     expect(numberReading(1234)).toBe('せんにひゃくさんじゅうよん');
     expect(numberReading(10)).toBe('じゅう');
     expect(numberReading(0)).toBe('ぜろ');
+  });
+});
+
+describe('spacedLabel（空白で区切って書いたラベルは空白でだけ折る。第6回 W2 のレビュー）', () => {
+  it('空白の数 × 12 ≧ 字数なら空白で区切ったラベル', () => {
+    expect(spacedLabel('南東《なんとう》より 南《みなみ》に よった 所《ところ》')).toBe(true);
+    expect(spacedLabel('東の 方から 南を 通って 西の 方へ')).toBe(true);
+  });
+  it('名前の空白が 1 つあるだけの文・空白の無い文・ラベルの無い札は違う', () => {
+    expect(spacedLabel('森川 はるかさんは図書館で本を三さつかりました')).toBe(false);
+    expect(spacedLabel('きれいな花')).toBe(false);
+    expect(spacedLabel(undefined)).toBe(false);
   });
 });

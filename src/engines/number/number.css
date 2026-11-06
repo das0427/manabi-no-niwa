@@ -224,9 +224,13 @@
    それより低い図の段では、図の段のスクロール（▼。検査は1件）にして、第4回で図の viewBox・字を直す
    （g6.math.scale/0 の 1280×620 で、高さいっぱいに縮めると辺の長さの字が 0.72u になり重なった）。
    設計（T2）の「縮めて引き上げる」のうち、引き上げで補えない分だけをスクロールに回す。
-   --fig-k・--fig-ar は liftSvgText の fitWidth が書く（無ければ下限なし） */
+   --fig-k・--fig-ar は liftSvgText の fitWidth が書く（無ければ下限なし）。
+   図の段に入らないときは、この下限も --num-k（number.tsx。0.6〜1）で縮める（第6回 W9。数の入力の図 geometry の頂点の字が、
+   下限の高さのまま図の段の外で切れた: g4.math.quadrilaterals/1・g5.math.congruence） */
 .unit__work--number > .unit__figure > .fig-svg > svg:not([width]) {
-  min-height: calc(var(--text-min, 0px) * var(--fig-k, 0) * var(--fig-ar, 0) / 1.5);
+  min-height: calc(
+    var(--text-min, 0px) * var(--fig-k, 0) * var(--fig-ar, 0) / 1.5 * var(--num-k, 1)
+  );
 }
 /* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らず、文字は --text-min 以上
    （fig-table の 2.4u は fit 0.8 で 1.9u になり、最小の 2.2u（幼児）を割る） */

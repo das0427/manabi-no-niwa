@@ -210,6 +210,13 @@ function renderGlue(tk: Token, k: string): ReactNode {
   return null;
 }
 
+const SYMBOL_LABEL: Record<string, string> = { '□': 'しかく', '○': 'まる', '△': 'さんかく' };
+const fracPartLabel = (x: number | string) =>
+  typeof x === 'number' ? String(x) : (SYMBOL_LABEL[x] ?? x);
+/** 分子・分母。記号（□○△）は空欄の □ と同じ大きさ（1em 角）の枠に入れる */
+const fracPart = (x: number | string) =>
+  typeof x === 'number' ? x : <span className="rt-frac__sym">{x}</span>;
+
 function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
   return ts.map((tk, i) => {
     const k = `${key}${i}`;
@@ -266,10 +273,10 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
             <span
               className="rt-frac"
               role="math"
-              aria-label={`${tk.whole !== undefined ? `${tk.whole}と` : ''}${tk.den}ぶんの${tk.num}`}
+              aria-label={`${tk.whole !== undefined ? `${tk.whole}と` : ''}${fracPartLabel(tk.den)}ぶんの${fracPartLabel(tk.num)}`}
             >
-              <span className="rt-frac__num">{tk.num}</span>
-              <span className="rt-frac__den">{tk.den}</span>
+              <span className="rt-frac__num">{fracPart(tk.num)}</span>
+              <span className="rt-frac__den">{fracPart(tk.den)}</span>
             </span>
           </span>
         );

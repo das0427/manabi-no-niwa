@@ -143,3 +143,28 @@
   max-width: 100%;
   min-width: 0;
 }
+
+/* 解説の状態（sort.tsx の data-explain）: 作業領域が低いので箱の中の札を詰める（g1.life.school-safety/9 の解説で札が箱の下に出た）。
+   札の字は --text-min・札の上下の余白とすき間は 0.6u・箱の見出しは 1 行。片方の箱に 3 枚以上あれば、札を横に並べて 2 列（入れば 3 枚）にする。
+   2 列は同じ幅の格子にしない（札が箱の半分に縮み、小3以上の札が語の途中で折れた: 「ぐっすりねむ／る」「トライアング／ル」。
+   g3.ja.modifiers/26・g4.ja.info-compare/14 の解説。レビュー）。札は字の幅（max-content）より縮めずに折り返し、行の残りに伸びる。
+   1 枚で箱の幅を超える札だけが、今までどおり箱の幅（max-width: 100%）で折れる */
+.eng-sort__boxes[data-explain] .eng-sort__inside {
+  gap: calc(var(--u) * 0.6);
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside[data-cols2] > .tk-card {
+  flex: 1 0 auto;
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside .tk-card {
+  min-height: 0;
+  padding-top: calc(var(--u) * 0.6);
+  padding-bottom: calc(var(--u) * 0.6);
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside .tk-card__label,
+.eng-sort__boxes[data-explain][data-long] .eng-sort__inside .tk-card__label {
+  font-size: var(--text-min);
+  line-height: 1.3;
+}
+.eng-sort__boxes[data-explain] .eng-sort__name {
+  white-space: nowrap;
+}

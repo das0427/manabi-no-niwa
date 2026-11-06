@@ -26,6 +26,7 @@ export default defineConfig({
   timeout: 3 * 60 * 60 * 1000,
   retries: 0,
   reporter: [['line']],
+  globalSetup: './e2e/helpers/text-layout-setup.ts',
   globalTeardown: './e2e/helpers/text-layout-teardown.ts',
   use: {
     baseURL: 'http://127.0.0.1:4299',

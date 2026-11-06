@@ -281,6 +281,13 @@ test('分かち書きの「・」: 2字以上の語のあとは出さない・1�
   );
   const ng = await inspectText(page, { stage: 'g2' });
   expect(ng.issues.some((i) => i.kind === 'wakachi-split' && i.text.includes('・／'))).toBe(true);
+  // 文の終わりのあとの「・」（聞く問題の書き起こしの文と文の区切り）は、後ろが 1 字の語（I）でも出さない（第6回のレビュー）
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:5em;word-break:keep-all">I went to the sea.・<wbr>I swam.</p>`,
+  );
+  const sentence = await inspectText(page, { stage: 'g5', pack: 'en-g56' });
+  expect(sentence.issues.filter((i) => i.kind === 'wakachi-split')).toEqual([]);
 });
 
 test('文字の大きさ: 最小の 1% までの差は出さない・それ以上は出す（小数2桁）', async ({ page }) => {
@@ -528,7 +535,7 @@ test('0×0 の図: 子があるのに大きさが 0 の svg・img・.fig-svg・.
   expect(await zeroFig()).toEqual([]);
 });
 
-test('字を横切る正解の輪: 輪の線の帯に字の中心が2つ以上入れば出す・1行6字以下の札と輪の中に収まる文は出さない（C16）', async ({
+test('字を横切る正解の輪: 輪の線の帯に字の中心が1つでも入れば出す（札の字数では外さない）・輪の中に収まる文は出さない（C16・C21）', async ({
   page,
 }) => {
   const crossing = async () =>
@@ -542,8 +549,11 @@ test('字を横切る正解の輪: 輪の線の帯に字の中心が2つ以上�
   // 10字の1行の文の真ん中に直径 14u の輪（線 3u）: 左右の字が帯に入る（字の後ろ・z-index 0 でも出す）
   await show(page, card('あいうえおかきくけこ', ring(14)));
   expect(await crossing()).toHaveLength(1);
-  // 1行・6字以下の札（絵の札・短い語）は数えない
+  // 1行・5字の短い札でも、字の中心が帯に入れば出す（C21。幼児の英語の札の「な」「こ」が輪に切られていた）
   await show(page, card('あいうえお', ring(14)));
+  expect(await crossing()).toHaveLength(1);
+  // 短い語が輪の中に収まり、帯に字の中心が入らなければ出さない
+  await show(page, card('あい', ring(14)));
   expect(await crossing()).toEqual([]);
   // 輪が文より外（直径 36u）にあって字の帯に入らない
   await show(page, card('あいうえおかきくけこ', ring(36)));
@@ -579,4 +589,136 @@ test('複合辞の切れ目: 頭の助詞の直後の「と／いう」「に／
   // ほかの語の途中（「方／向」）は今までどおり出す
   const other = await splits('1em', '方向');
   expect(other.map((i) => i.detail)).toEqual(['語「方向」の途中']);
+});
+
+test('絵とラベルのある札（C21・第6回 W1）: 絵の段の輪がラベルの字を横切れば出す・絵の段に収まれば出さない', async ({
+  page,
+}) => {
+  // 札（.choice）の中に絵の段（.eng-opts__pic）とラベル。輪は絵の段の中に描くが、字は札の字として見る（包みの中だけを見ない）
+  const opt = (ringU: number) =>
+    `<button class="choice abs box" style="top:calc(var(--u)*8);left:calc(var(--u)*10);width:calc(var(--u)*20);display:flex;flex-direction:column;align-items:center;gap:calc(var(--u)*0.4);padding:calc(var(--u)*0.8)"><span class="eng-opts__pic" style="position:relative;display:flex;align-items:center;justify-content:center;align-self:stretch;height:calc(var(--u)*10)"><span class="mark mark--correct" aria-hidden="true" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--u)*${ringU});height:calc(var(--u)*${ringU});border:calc(var(--u)*0.9) solid #0a0;border-radius:50%;box-sizing:border-box;z-index:-1"></span><span style="display:block;width:calc(var(--u)*8);height:calc(var(--u)*8);background:#fc9"></span></span><span class="eng-opts__label" style="font-size:calc(var(--u)*2.6)">なかの ねこ</span></button>`;
+  const crossing = async () =>
+    (await inspectText(page, { stage: 'p4' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '正解の ○ が字を横切る',
+    );
+  // 絵の段（10u）＋1.6u の輪: ラベルの字にかからない
+  await show(page, opt(11.6));
+  expect(await crossing()).toEqual([]);
+  // 札を囲む大きさの輪（17u）: 輪の下の線がラベルの字を横切る
+  await show(page, opt(17));
+  expect(await crossing()).toHaveLength(1);
+});
+
+test('角の ○（C21）: 字・ふりがなの矩形に円が重なれば出す・離れていれば出さない', async ({
+  page,
+}) => {
+  const corner = (pos: string) =>
+    `<span class="mark mark--correct" aria-hidden="true" style="position:absolute;${pos};width:calc(var(--u)*3.2);height:calc(var(--u)*3.2);box-sizing:border-box;border:calc(var(--u)*0.6) solid #0a0;border-radius:50%;background:#fff;pointer-events:none;z-index:2"></span>`;
+  const card = (text: string, inner: string) =>
+    `<div class="abs box" style="top:calc(var(--u)*10);left:calc(var(--u)*10);width:calc(var(--u)*30);height:calc(var(--u)*12);position:absolute"><span style="position:absolute;${text};white-space:nowrap">みず<ruby>湖<rt>うみ</rt></ruby></span>${inner}</div>`;
+  const hits = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '角の ○ が字・ふりがなに重なる',
+    );
+  // 右上の ○ が右上のふりがなにかかる
+  await show(
+    page,
+    card(
+      'top:calc(var(--u)*0.5);right:calc(var(--u)*1)',
+      corner('top:calc(var(--u)*-1.4);right:calc(var(--u)*-1.4)'),
+    ),
+  );
+  expect(await hits()).toHaveLength(1);
+  // 字が左にあり、○ が右下の角にあれば重ならない
+  await show(
+    page,
+    card(
+      'top:calc(var(--u)*3);left:calc(var(--u)*1)',
+      corner('bottom:calc(var(--u)*-1.4);right:calc(var(--u)*-1.4)'),
+    ),
+  );
+  expect(await hits()).toEqual([]);
+});
+
+test('正解の輪が隣の札にかかる（C21）', async ({ page }) => {
+  const ring = `<span class="mark mark--correct" aria-hidden="true" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:calc(var(--u)*16);height:calc(var(--u)*16);border:calc(var(--u)*0.9) solid #0a0;border-radius:50%;box-sizing:border-box;pointer-events:none;z-index:0"></span>`;
+  const cards = (gap: number) =>
+    `<div class="abs box tk-card" style="top:calc(var(--u)*10);left:calc(var(--u)*10);width:calc(var(--u)*10);height:calc(var(--u)*10);display:grid;place-items:center"><span>あ</span>${ring}</div>
+     <div class="abs box tk-card" style="top:calc(var(--u)*10);left:calc(var(--u)*(20 + ${gap}));width:calc(var(--u)*10);height:calc(var(--u)*10);display:grid;place-items:center"><span>い</span></div>`;
+  const hits = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '正解の ○ が隣の札にかかる',
+    );
+  await show(page, cards(1));
+  expect(await hits()).toHaveLength(1);
+  await show(page, cards(8));
+  expect(await hits()).toEqual([]);
+});
+
+test('線でむすぶ問題（C25）: 線が両端以外の札の後ろを通れば出す・通らなければ出さない', async ({
+  page,
+}) => {
+  const html = (midLeft: number) =>
+    `<div class="eng-match abs" style="inset:0">
+       <svg class="abs" style="inset:0;width:100%;height:100%" viewBox="0 0 100 56.25"><line class="eng-match__line is-correct" x1="15" y1="15" x2="15" y2="40" stroke="#0a0" stroke-width="0.7"/></svg>
+       <div class="abs box tk-card" style="top:calc(var(--u)*5);left:calc(var(--u)*10);width:calc(var(--u)*10);height:calc(var(--u)*10)">あ</div>
+       <div class="abs box tk-card" style="top:calc(var(--u)*22);left:calc(var(--u)*${midLeft});width:calc(var(--u)*10);height:calc(var(--u)*8)">い</div>
+       <div class="abs box tk-card" style="top:calc(var(--u)*40);left:calc(var(--u)*10);width:calc(var(--u)*10);height:calc(var(--u)*10)">う</div>
+     </div>`;
+  const hits = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '線が別の札の後ろを通る',
+    );
+  await show(page, html(10));
+  expect(await hits()).toHaveLength(1);
+  await show(page, html(40));
+  expect(await hits()).toEqual([]);
+});
+
+test('記法の漏れ（C24）: [[ ]] が画面に出ていたら出す', async ({ page }) => {
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5)">[[3/x]]の しき</p>`,
+  );
+  const r = await inspectText(page, { stage: 'g3' });
+  expect(r.issues.filter((i) => i.kind === 'markup-leak')).toHaveLength(1);
+});
+
+test('図の overflow: visible（C20）: svg の枠の外の字は、svg が visible なら出さず hidden なら出す', async ({
+  page,
+}) => {
+  const fig = (ov: string) =>
+    `<svg class="abs" style="top:calc(var(--u)*10);left:calc(var(--u)*10);width:calc(var(--u)*20);height:calc(var(--u)*10);overflow:${ov}" viewBox="0 0 100 50"><rect width="100" height="50" fill="#cde"/><text x="20" y="75" font-size="14">いち</text></svg>`;
+  const clipped = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter((i) => i.kind === 'clipped');
+  await show(page, fig('visible'));
+  expect(await clipped()).toEqual([]);
+  await show(page, fig('hidden'));
+  expect((await clipped()).length).toBeGreaterThan(0);
+});
+
+test('始め括弧の前の改行（C23）: ボタンの「種子の 中／（子葉）」は出さない', async ({ page }) => {
+  await show(
+    page,
+    `<button class="abs" style="top:calc(var(--u)*3);left:calc(var(--u)*3);width:calc(var(--u)*13.5);height:calc(var(--u)*30);line-height:1.4">種子の 中（子葉）</button>`,
+  );
+  const r = await inspectText(page, { stage: 'g5' });
+  expect(r.issues.filter((i) => i.kind === 'button-split')).toEqual([]);
+});
+
+test('分かち書きの教材（C22）: 小3以上でも pack が en-g34・en-g56 なら語の途中の改行を出す', async ({
+  page,
+}) => {
+  await show(
+    page,
+    `<p class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*19.5);line-height:1.7;font-size:calc(var(--u)*3)">もういちど 聞こう。</p>`,
+  );
+  const split = async (pack?: string) =>
+    (await inspectText(page, { stage: 'g5', pack })).issues.filter(
+      (i) => i.kind === 'wakachi-split',
+    );
+  expect((await split('en-g56')).length).toBeGreaterThan(0);
+  expect((await split('en-g34')).length).toBeGreaterThan(0);
+  expect(await split('g5-ja')).toEqual([]);
+  expect(await split()).toEqual([]);
 });

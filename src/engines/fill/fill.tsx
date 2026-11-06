@@ -150,6 +150,14 @@ function FillView({
     let tail = '';
     if (i > 0) [head, body] = splitRichEdge(body, 'head');
     if (i < nb) [body, tail] = splitRichEdge(body, 'tail');
+    // 「→ □」「＋ □」のように、記号・矢印＋空白＋空欄は 1 つのまとまりにする（記号のあとで折らない。空白は 1 つの空白にそろえる）
+    if (i < nb && !tail) {
+      const m = /([\p{S}…・])\s+$/u.exec(body);
+      if (m) {
+        body = body.slice(0, body.length - m[0].length);
+        tail = `${m[1]} `;
+      }
+    }
     return [head, body, tail];
   });
   const valueAt = (i: number) =>
@@ -201,6 +209,7 @@ function FillView({
                       i === active && !locked ? 'is-active' : '',
                       valueAt(i) === null ? 'is-empty' : '',
                       revealed ? 'is-revealed' : '',
+                      revealed && (edges[i]![2] || edges[i + 1]?.[0]) ? 'is-glued' : '',
                       marks.has(i) ? 'is-wrong' : '',
                     ].join(' ')}
                     onClick={() => pressBlank(i)}

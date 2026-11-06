@@ -69,14 +69,10 @@
   justify-content: center;
   gap: calc(var(--u) * 2);
 }
-/* 本文が4行を超えるとき（data-long）は、段の高さの下限を 4行＋印の高さ にする */
+/* 解説の枠は 3 行までに抑える（4 行以上だと作業領域の大半を取り、2 列の選択肢の札が板の下に入った。
+   g2.ja.listen-notes/26）。続きは枠の中でスクロールし、下に ▼ つづき の段を出す（text-layout-fixes 第6回 W5） */
 .eng-listen__head:has(.eng-listen__transcript-wrap[data-long]) {
-  flex: 0 1 auto;
-  min-height: calc(var(--tr-fs) * 1.8 * 4 + var(--u) * 1.6 + var(--u) * 3);
-}
-/* 左の列（explain-side）では「きく」の札（5.5u＋影）と間隔（1.6u）も同じ列に入るので、その分を足す（本文が4行見えるように） */
-.eng-listen--explain-side .eng-listen__head:has(.eng-listen__transcript-wrap[data-long]) {
-  min-height: calc(var(--tr-fs) * 1.8 * 4 + var(--u) * 1.6 + var(--u) * 3 + var(--u) * 8);
+  flex: none;
 }
 /* 解説で絵・図の選択肢が3つ以下のとき（時計）: 札と書き起こしを左の列（28u）に、選択肢を右に置く */
 .eng-listen--explain.eng-listen--explain-side {
@@ -158,12 +154,11 @@
   line-height: 1.8;
   font-weight: 700;
   text-align: center;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
+  /* 3 行（入らないときは 2 行。--tr-lines）＋上下の余白（0.8u×2）と枠線（0.3u×2） */
+  max-height: calc(var(--tr-fs, calc(var(--u) * 2.6)) * 1.8 * var(--tr-lines, 3) + var(--u) * 2.2);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--ink-soft) transparent;
-}
-.eng-listen__said + .eng-listen__said::before {
-  content: '・';
 }

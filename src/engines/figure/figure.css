@@ -197,11 +197,22 @@
   position: relative;
   height: calc(var(--u) * 4);
 }
-.fig-nl__labels span {
+/* 直下の span だけ（子孫の span まで absolute にすると、分数の分子・分母が 0×0 で重なっていた。
+   g4.math.fraction-kinds/4 の解説）。分数のラベルは、箱の高さを字の 2.2 倍にして縦に並べる */
+.fig-nl__labels > span {
   position: absolute;
   transform: translateX(-50%);
   font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   font-weight: 700;
+}
+.fig-nl__labels:has(.rt-frac) {
+  height: calc(max(calc(var(--u) * 2.4), var(--text-min, 0px)) * 2.2);
+}
+.fig-nl__labels > span:has(.rt-frac) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 2.2em;
 }
 
 /* 時計 */
@@ -363,4 +374,34 @@ button .fig-chart {
    一番小さい字が最小になる幅（最小 × --fig-k。liftSvgText の fitWidth が書く）まで広げる。上限は親の幅（max-width） */
 .fig-svg :where(svg:not([width])) {
   width: max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)));
+}
+
+/* 縦横比が 4:1 を超え字を含む図（札の列。gridFloor.ts の wide）が入った選択肢は 1 列に並べる（W8）。横に並べると札の幅に縮められ、
+   札の中の番号の字が 0.54u になった（g6.prog.efficient/11）。1 列なら札の幅いっぱいに描ける */
+/* 単元の画面（.unit。v1 モード・幼児ホームの data-stage は D1 などで別）だけ。幼児の段階（p23・p4・p5）は除く: 3〜4 枚を 1 列に積むと作業領域に 2.3u 入らずスクロールした（p5.math.numbers-10。レビュー） */
+:where(.unit[data-stage]:not([data-stage^='p']))
+  :is(.eng-choice__options, .eng-opts__list):has(.fig-svg--wide) {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: min(100%, calc(var(--u) * 70));
+}
+/* 1 列にした札は、図の横に記号（A・B・C）を並べて低くする（縦に積むと作業領域に入らずスクロールした）。
+   札の列の図は高さを 4.6u に抑える（パックの指定は 6.5u。3 枚積むと作業領域の高さを超える）。
+   幅は 4.6u × 縦横比（約 27u）。字は横幅いっぱいの 1 列なので、横に並べたときより大きく描ける */
+.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *) {
+  gap: calc(var(--u) * 0.8);
+}
+.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)
+  > .eng-choice__opt {
+  flex-direction: row;
+  min-height: 0;
+  padding-block: calc(var(--u) * 0.4);
+  gap: calc(var(--u) * 2);
+}
+.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)
+  .fig-svg
+  svg {
+  height: calc(var(--u) * 4.6) !important;
 }

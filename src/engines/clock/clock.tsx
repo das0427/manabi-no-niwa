@@ -352,6 +352,8 @@ export function clockAnswerText(item: ClockItem): RichText {
 
 // ---- 画面 ----
 const R = 100;
+/** 外側の分の数（5〜55）の半径の倍率 */
+const MNUM_R_K = 1.05;
 type Hand = 'minute' | 'hour';
 
 function polar(deg: number, len: number) {
@@ -391,7 +393,9 @@ export function ClockFace({
   const floor = useSvgTextFloor(svgRef, half * 2);
   const numSize = Math.max(21, floor);
   const mnumSize = Math.max(15, floor);
-  const wantHalf = minuteNumbers ? Math.max(136, Math.ceil(R + 8 + mnumSize * 1.6)) : 136;
+  // 外の分の数の半径は 1.05 倍（35 と 40 が 0.1u 重なっていた。字の大きさは変えない。text-layout-fixes.md 第6回 W9）
+  const mnumR = (R + 8 + mnumSize * 0.5) * MNUM_R_K;
+  const wantHalf = minuteNumbers ? Math.max(136, Math.ceil(mnumR + mnumSize * 0.8)) : 136;
   useLayoutEffect(() => {
     if (wantHalf !== half) setHalf(wantHalf);
   }, [wantHalf, half]);
@@ -399,7 +403,6 @@ export function ClockFace({
   // 数字が大きくなって12個が混み合うときは、12・3・6・9 だけ（ほかを小さくはしない）
   const crowded = numSize > 28;
   const numR = R - 14 - numSize * 0.55 - 5;
-  const mnumR = R + 8 + mnumSize * 0.5;
   const hands = (tot: number, cls: string, sel?: Hand | null) => {
     const hr = polar((tot / DIAL) * 360, 52);
     const mn = polar((tot % 60) * 6, 82);

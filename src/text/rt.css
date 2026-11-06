@@ -37,6 +37,12 @@
 .rt-frac__den {
   padding: 0 0.15em;
 }
+.rt-frac__sym {
+  display: inline-block;
+  min-width: 1em;
+  text-align: center;
+  line-height: 1;
+}
 .rt-blank {
   display: inline-block;
   width: 1.6em;

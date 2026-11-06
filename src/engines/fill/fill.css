@@ -66,7 +66,10 @@
 .eng-fill__opt:disabled {
   opacity: 0.4;
 }
-/* 空欄と前後の字を離さない包み（rt-nobr の nowrap）は、埋まったら外す。長い引用の文が舞台の外に出る（g4.ja.write-report/30・32 の解説） */
-.eng-fill__text .rt-nobr:has(> .eng-fill__blank.is-revealed) {
-  white-space: normal;
+/* 埋まった空欄は、前後の記号・句読点（「→ □」「□。」）と同じ nowrap の包み（.rt-nobr）に入れたまま折り返さない。
+   button は display: inline にしても inline-block になり、外側の包みを normal にすると「。」が行頭に来る（g2.ja.polite/23・g4.soc.water-waste/9）。
+   空欄の中の文は、空欄自身の white-space: normal と max-width で折り返す。前後の字の分（約 3 字）だけ狭くして、包みが行から出ないようにする
+   （長い引用の解説 g4.ja.write-report/30・32） */
+.eng-fill__blank.is-revealed.is-glued {
+  max-width: calc(100% - 3em);
 }

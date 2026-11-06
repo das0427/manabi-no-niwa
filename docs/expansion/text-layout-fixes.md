@@ -1595,3 +1595,67 @@ systemic のファイル（エンジン・`src/units`・`src/ui`・`src/text`・
 - systemic と content のあとで、`MNW_FRESH=1 MNW_WORKERS=2 npm run check:text-layout` を流し直す。第5回は 6 にしてリソース不足で落ちたので、2〜3 にする。
 - 失敗した単元が 0、errors が 0 であることを確かめてから、件数を見る。
 - covered（輪・○・線）・markup-leak・wakachi-split が 0 になっていること。clipped は、祖先の枠で本当に切れるものだけが残っていること。
+
+### 7. 第6回の実施とレビュー（2026-11-07）
+
+W1〜W11・C20〜C26 を担当ごとにファイルを分けて実装した。レビューでは git の差分と追加したファイルを全部読み、自分の開発サーバー（127.0.0.1:4433、`MNW_DEV_NO_HMR=1`。4299 は使っていない。終わってから止めた）で代表の画面を開いて DOM の寸法を測り、検査を単元に絞って流した（下の「確かめたこと」）。
+
+担当の判断で設計から変えたところ:
+
+- W1: 右下の角の ○ は `bottom`・`right` とも -1.8u（設計は -1.4u。-1.4u だと g3.ja.kanji-parts の 1 字の札で ○ が字に触れた）。match の角の ○ も -1.8u にそろえた。字を含む横長の図（`fig-svg--wide`。W8 の 1 列の札）の札も「輪郭＋右下の ○」にした（輪が図の字を横切る。g6.prog.efficient）。
+- W1: 「3.1 を書き直す」は、正解の印の記述が 17 章にあるので 17 章を直した。18 章の「重なりの順」も、大きな輪は絵・図の札だけに直した。W2〜W11 の規約は 17 章の「第6回の規約」にまとめた。
+- W5: 3 行で作業領域に入らないときだけ、聞いた文の枠を 2 行にする（3 行だけでは listen の work の不足が 63 画面残った）。
+- W6: 埋まった空欄は button なので `display: inline` でも inline-block になり、包み（`.rt-nobr`）の nowrap を外すと「。」が行頭に来た。包みの nowrap は残し、空欄の中の文は空欄自身の `white-space: normal` と `max-width`（前後に字がある空欄は `100% − 3em`）で折る。「→ □」は記号と空白を空欄の包みに入れた。
+- W8: 盤の 1 ますの下限は、パックの SVG（同じ大きさの正方形が 4 つ以上・高さを `calc(var(--u) * hU)` で書いた図）を `gridFloor.ts` の `sizePackSvg` で広げる（program の部品ではなく PackSvg で直した）。当たるのは prog の 9 単元だけ（全単元の見本で数えた）。1 列の札は記号を図の横に置き、図の高さを 4.6u にした。幼児の段階（p23〜p5）は 1 列にしない。字の無い横長の図（分数の帯・幼児の比べる絵）は印を付けない（1 列だと横に並べたときより小さくなる）。
+- W9: 時計の外の数の半径を 1.05 倍にしても、図の範囲が広がって字の下限が上がり、px の間隔が変わらなかった。図の範囲の余白を 1.1×字 から 0.8×字 にした（字の大きさは変えていない）。
+- W10: 記号の分子・分母は `.rt-frac__sym`（1em 角・中央）で描く（`rt.css`）。
+
+レビューで直したもの:
+
+1. **右下の ○ が作業領域の高さに数えられていた（W1 の副作用）**: ○ は札の下へ 1.8u 出る。`.unit__work` は overflow: visible なので、この分が `scrollHeight` に入り、`--fit` が縮んだうえ、下の札が正解のときは作業領域がスクロールの枠になった（g6.en.past/19 の解説 1536×864 で 2.3u、g3.soc.safety の解説で 1.6〜1.8u。○ が枠で半分切れていた）。○ は作業領域の下の余白（板・帯との間 2.4u）に描かれるだけなので、UnitRunner の fit・枠の判定と解説の板の上限、listen の 2 行の判定では、測る間だけ印を外す（`data-measure`。ui.css）。
+2. **match の 1 段の判定（W3）**: `scrollWidth` で札のあふれを見ていたので、正解の ○ のはみ出しで解説では必ず「入らない」になり、1 段に入る札も左右 2 列になっていた（g3.soc.safety/21 の解説 1536×864）。札の中身（○・番号の丸を除く）とラベルの行の矩形で見る。最後の行の 1 字の判定は、行の高さの 1.5 倍では 2 字の行（「とる」）まで落としていたので、字の大きさの 1.5 倍にした。札が縮んで語の途中で折れるとき（「「すっぱ／い」」「それなら／ば」。g6.ja.language-change/10 の解説）も入らないとみなす（空白・句読点のあと・始め括弧の前・Intl.Segmenter の語の切れ目だけを許す。分かち書きと data-spaced は空白だけ）。並べ方は広げる向きにしか進まないので、作業領域の幅が変わったら 1 段から測り直す。
+3. **sort の解説の 2 列で、札が語の途中で折れた（W7 の副作用）**: 2 列を同じ幅の格子にしたので、札が箱の半分に縮み、小3以上の札が「ぐっすりねむ／る」「トライアング／ル」「パトロールす／る」と折れた（g3.ja.modifiers・g3.ja.proverbs・g3.soc.safety・g4.ja.idioms・g4.ja.info-compare・g4.ja.plain-polite-style・g5.soc.environment・g6.sci.strata の解説。担当の報告では「ほかのエンジン」としていたが、どれも sort だった）。格子をやめ、札を字の幅より縮めずに横に並べる（`flex: 1 0 auto`。入れば 3 枚）。
+4. **聞く問題の解説の描き直しが止まらなかった（W5 の副作用）**: 聞いた文の枠の高さが字の大きさで決まるようになり、「▼ つづき」の段の有無で枠の高さが変わる。UnitRunner の `--fit` が「段が無い → 0.99 → 枠からあふれて段が出る → 0.89 → あふれず段が消える」を毎フレームくり返した（g6.en.future/32 の解説 1536×864。検査では unstable・板の下の札の covered として出ていた）。段の場所は一度出したら、画面の大きさ・聞く文が変わるまで残す（あふれていないときは見えない場所だけ）。2 行に縮めたあと 3 行に戻す合図も、作業領域の大きさ（枠の行数で解説の板の上限が変わると一緒に変わる）でなく画面の大きさで決める。`sounds` は `useMemo` にした（音の再生のたびに測り直しが走っていた）。
+5. **聞く問題の書き起こしの「・」が検査から見えなかった（C22 で新しく出た誤検出）**: 文と文の間の「・」が `::before` だったので、検査には「Thank you.／Good morning.」が語の途中の改行に見えた（en-g34・en-g56 の wakachi-split。g3.en.greetings 32 件・g6.en.past 22 件ほか）。「・」を字（`aria-hidden` の span）として書いた。検査の側も、文の終わり（。．.!?！？）のすぐ後ろの「・」のあとの改行は、後ろが 1 字の語（「I」）でも数えないようにした（docs/test-plan.md 3.2 の C22。probe に見本。直す前の判定では見本が失敗することを確かめた）。
+6. **大きな輪が縦長の札より広がっていた（W1 の残り）**: 大きな輪は「札の短い辺に合わせた真円」の設計だが、実装は札の高さ＋1.6u だったので、縦長の札（g3.en.numbers-colors の色の札、40 件）で輪が札より広がって隣の札にかかった。四方を 0.8u 外へ広げた枠の中に幅・高さ auto・縦横比 1 で置き、高さの上限（札の高さ＋1.6u・20u）が縦横比で幅にも効くようにした（短い辺＋1.6u になる）。横長・正方形の札・なぞりの輪の大きさは変わらない。
+7. **choice・experiment の絵と語のある札（W1 の残り）**: 札を囲む輪がラベルの字を横切り（g5.en.read-words の「はな（しょくぶつ）」）、幼児の縦長の札では輪（20u）が札（14u）より広がって隣の札にかかった（p23.math.shape-match、56 件）。listen と同じ「絵の段だけを囲む輪」も開発用の画面で試したが、横長の絵（`.fig-illust` が札の幅いっぱい）では輪の中心が絵からずれ、輪の下がラベルに触れた。ラベルの子（`.eng-choice__label`・`.exp-opt__label`）がある札は、字の札と同じ「輪郭＋右下の ○」にした。字を含む図（svg の text・表・文の図。グラフ・時計・数直線・札の列）の札も同じにした（大きな輪は上限 20u で --fit と一緒に縮むので、大きな札では輪が札の中に入り、g5.ja.text-figure の解説でグラフの目もりの数・単位を横切っていた。12 件）。W8 の `fig-svg--wide` の札の規則は、これに含めた。listen の絵の段の輪（幼児の英語）は設計どおり残す。
+8. **空白で区切って書いた長い選択肢の最後の 1 語（W2 の残り）**: 12 字を超える選択肢（data-long）は語のラベルにならず、W2 が効かない。小3以上は auto-phrase で折るので「南東より 南に よった／所」「西の 方／へ」と落ちた（g4.sci.moon-stars/0・1。W2 の確かめ方の単元）。空白の数 × 12 ≧ 字数のラベル（検査の (f) と同じ境。`rich.ts` の `spacedLabel`）に `data-spaced` を付け、空白のところでだけ折って最後の行を 1 語にしない（`keep-all`・`text-wrap: pretty`。base.css）。choice・listen・experiment の選択肢と札のラベルに付けた。
+9. **検査の見落とし（C21）**: listen の絵の段の輪は、包み（`.eng-opts__pic`）の中の字と兄弟しか見ていなかったので、輪がラベルの字や隣の札にかかっても出なかった。札（`.choice`）の字と隣の札で見るようにし、probe に見本を足した（直す前のコードでは失敗する）。probe の C16 の見本の説明の誤り（「直径 36u」）も直した。
+10. 横長の図の 1 列の規則（figure.css）を、単元の画面（`.unit[data-stage]`）に絞った（v1 モード・幼児ホームの `data-stage` は D1 などで別）。
+11. DESINGN.md: 17 章の W1（短い辺の輪・右下の ○ を作業領域の高さに数えない・choice の絵と語の札）、W2（data-spaced）、W3（1 段の条件と測り直し）、W5（2 行・段の場所・「・」は字・正解の札を見せる）、W7（同じ幅の格子にしない）を直し、21 章に W11（教材名・幼児の教材の分け方）を書いた。docs/test-plan.md 3.2 の C21・C22 に 5.・9. を書いた。
+12. 作業ツリーの一時ファイル（chk2.tmp.ts・lib.tmp.cjs・playwright.tl5290.tmp.config.ts・scripts/_g4ja-dump.ts・scripts/_soc56dump.tmp.ts）は、中身がパックの文・図の書き出しと一時の設定だけだったので消した。担当が CRLF にしていたファイルは LF に戻した（`prettier --check` が通らなかった）。
+
+確かめたこと:
+
+- 検査（`MNW_FRESH=1`・`MNW_WORKERS=3`。ポートを 4433 にした一時の設定。終わってから消した）を、設計の確かめ方の単元と、レビューで直した所に当たる単元に絞って 5 回流した（のべ 177 単元。どの回も失敗した単元 0・errors 0）。直したあとの最後の実行で違反が 0 だった単元:
+  - W1: p4.en.where・p4.en.hello・p5.en.picture-book・p5.en.abc・p23.en.move・p4.en.move・p5.en.first-sound・g3.en.alphabet-upper・g3.ja.kanji-parts・g5.en.read-words（398 問）・g3.en.numbers-colors・p23.math.shape-match・p5.think.why・p5.env.predict・p4.env.daily-order・g2.ja.orthography・g3.soc.shop-work・g1.ja.word-play・g3.sci.magnets・g6.soc.world。g5.ja.text-figure の covered も 0（残りは下の content）。
+  - W2: g3.sci.sun-ground・g5.sci.birth・g4.sci.temperature・g4.math.change-relations・g4.sci.moon-stars。
+  - W3: g3.soc.safety・g5.soc.environment・g1.ja.katakana・g2.ja.vocab-meaning・g6.ja.info-relations・g6.ja.language-change・p5.ja.katakana-read。
+  - W4: g2.math.fraction-simple・g5.math.decimal-shift・p5.math.compose。
+  - W5: g3.en.greetings・g4.en.directions・g6.en.future・g6.en.past・p4.ja.story-listen・g1.ja.listen・g1.ja.particles・g2.ja.culture。
+  - W6: g2.ja.polite・g4.ja.plain-polite-style・g6.ja.kanji-usage。W7: g1.life.school-safety・g3.ja.modifiers・g3.ja.proverbs・g5.sci.germination。
+  - W8: g4.math.rounding・g6.prog.efficient・g5.prog.debug-plan。W9: g4.math.quadrilaterals・g2.math.time・g1.math.clock・g3.math.time。W10: g5.math.fraction-decimal。
+- 開発用の画面（4433）で目で確かめたもの: p4.en.where/0・p5.en.abc/0（1280×620）、g3.en.numbers-colors/30（1280×720）、g3.soc.safety/21（1536×864。1 段）、g6.ja.language-change/10（1280×720。縮めた 1 段）、g3.ja.modifiers/26（1280×720）、g4.sci.moon-stars/1（1536×864）、g5.en.read-words/237・p23.math.shape-match/2・g6.en.past/19・g6.prog.efficient/11・g5.ja.text-figure/33（1536×864）、g2.ja.listen-notes/26（1280×620・1280×720。正解の札は見える）、g5.math.decimal-shift/0（1280×620。位の表が板に入り、つぎへ が押せる）、g3.ja.listen-memo/19（1920×1080）。保護者画面の「きょうざい」（1280×620。教材名が日本語・幼児の英語の見出し）と幼児ホーム（1280×620）。
+  - Browser の枠がほかの担当と同じだったので、途中から Playwright の画像（同じサーバー）で見た。
+- 聞く問題の解説の揺れ: Playwright で 30 フレームの `--fit` を見て、どの画面サイズでも 1〜3 回の変化で止まることを確かめた（直す前の g6.en.future/32 は 30 フレーム中 39 回）。
+- `npm run check:text-layout:probe` 29 本・`npx tsc -b`・`npx eslint .`・`npx prettier --check`（変えたファイル）・`npx vitest run`（170 ファイル 3,855 件）・`npm run check:design`。
+
+残したもの（第6回の 5. の content。共通の直しのあとに残ったもの）:
+
+- g1-ja: g1.ja.folktales/4・16 のヒント③（kinsoku-start 5。設計どおり）。
+- g2-ja: g2.ja.listen-notes/24・26・27・29・31 の解説（work の scroll-hidden 14。2×2 の選択肢の文が長く、12 字を超えるラベルは問題文と同じ大きさで --fit で縮まない。26 は 12u 足りない。正解の札は見える）。
+- g3-ja: g3.ja.listen-memo/19・26 の解説（1920×1080 で 1.3u。「▼ つづき」の段の場所を残すため。画面サイズを回す順で出たり出なかったりする）。
+- g4-ja: g4.ja.write-report（sort の解説の「知りたくなりまし／た。」ほか button-split 20、fill の問題 30〜32・order の解説 16 の scroll-hidden 49）、g4.ja.info-compare（choice/10・sort/26 の問題の状態 28）、g4.ja.idioms（sort の解説 110・111 の 7）。
+- sci-g34: g4.sci.current/16 の sort の解説（5.6u）。sci-g56: g6.sci.strata/17 の sort の札「下から れき・砂・どろと ならぶ 層」（orphan 4・scroll-hidden 4。data-spaced でも Chrome の `text-wrap: pretty` が最後の「層」を戻さない。札を短くする）、g6.sci.electricity-use/16 の問題（3.5u）。
+- soc-g34: g4.soc.water-waste/5（button-split 20。設計どおり）。life-g12: g2.life.town の match（問題・解説 25。左右 2 列で 2.2〜7u）。
+- g4-math: g4.math.fraction-kinds/4 の解説（数直線 2 本の列 `fig-column` が板に 5 行分入らない。W4・W8 の両方の担当が相手の範囲としたもの。図は切らない設計なので、パックで数直線を 1 本にする）。
+- g5-math: g5.math.congruence（45°｜108° 16）、g5.math.decimal-div/3・4 の解説（1.8〜1.9 行）。g5-ja: g5.ja.text-figure/8（10｜15）、g5.ja.sentence-relations/37〜39 の問題（choice 2.5〜2.7u。第6回の元の結果にもある）。
+- prog-g16: g3.prog.decompose/28 の解説（0.7 行）。g6.prog.efficient の問題の手順の図（字の無い札の列）が 4.4u（1 こ 1.9u）と小さい（検査は字の無い図の大きさを見ないので出ない）。
+- p5: p5.math.measure-compare（10｜こ 15）、p5.math.numbers-10/4・5 の問題（1280×720 で 2.3u。第3回のころから 3.8u で出ていたもので、第6回の差分には効く所が無い）。
+
+次の回に回すもの:
+
+- 全単元の検査は流していない（統括が `MNW_FRESH=1 MNW_WORKERS=2` で流す）。絞った実行で `.cache/text-layout/units/` と報告書は一部の単元だけが新しい。
+- 12 字を超える選択肢（data-long）のラベルは、問題文と同じ大きさで --fit で縮まない（T3 の決め）。g2.ja.listen-notes は縮めても足りないので、今回は content に任せた。
+- match の 1 段では札が縮むので、ラベルが語の切れ目で 2 行に折れる（「近く／の安全を見守る」。検査の違反ではない）。
+- C25 の線は同じ `.eng-match` の札だけ、C21 の「隣の札」は同じ親の兄弟の札だけを見る（担当の残し事項のとおり）。

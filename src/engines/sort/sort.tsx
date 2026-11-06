@@ -185,7 +185,11 @@ function SortView({
   return (
     <div className={['tk-frame', 'tk-frame--band', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
       <div className="tk-frame__main">
-        <div className="eng-sort__boxes" data-long={sentences ? '' : undefined}>
+        <div
+          className="eng-sort__boxes"
+          data-long={sentences ? '' : undefined}
+          data-explain={revealed ? '' : undefined}
+        >
           {shownBoxes.map((b) => (
             <div
               key={b}
@@ -203,7 +207,12 @@ function SortView({
               <div className="eng-sort__name" aria-hidden>
                 <CardFace card={item.boxes[b]!} ctx={ctx} />
               </div>
-              <div className="eng-sort__inside">
+              <div
+                className="eng-sort__inside"
+                data-cols2={
+                  revealed && order.filter((i) => boxOf(i) === b).length >= 3 ? '' : undefined
+                }
+              >
                 {order
                   .filter((i) => boxOf(i) === b)
                   .map((i) => (

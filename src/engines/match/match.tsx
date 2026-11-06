@@ -5,7 +5,7 @@
  * むすんだカードをタップすると組が外れて、そのカードをえらんだ状態になる。
  * 正答は組の集合（順不同）。1つの左に1つの右。右には組にならない「まぎらわしいもの」を足してよい。
  */
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import { plainText } from '../../text/rich';
 import type { Judgement } from '../types';
@@ -138,6 +138,125 @@ export function rightOrder(item: MatchItem, lefts: number[], rights: number[]): 
 /** 左右を縦に並べる（eng-match--rows）文の長さの境（字） */
 const LONG_LABEL = 10;
 
+/** ふりがな（rt）を除いた字の行（行の中心の高さごとに、幅の合計と左右の端を足す）。上から順 */
+function labelLines(label: Element): { mid: number; w: number; h: number; l: number; r: number }[] {
+  const lines: { mid: number; w: number; h: number; l: number; r: number }[] = [];
+  const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent?.trim() || n.parentElement?.closest('rt')) continue;
+    const range = document.createRange();
+    range.selectNodeContents(n);
+    // jsdom には getClientRects が無い（測れないときは行を数えない）
+    for (const r of Array.from(range.getClientRects?.() ?? [])) {
+      if (r.width < 1) continue;
+      const mid = r.top + r.height / 2;
+      const line = lines.find((t) => Math.abs(t.mid - mid) < r.height * 0.5);
+      if (line) {
+        line.w += r.width;
+        line.l = Math.min(line.l, r.left);
+        line.r = Math.max(line.r, r.right);
+      } else lines.push({ mid, w: r.width, h: r.height, l: r.left, r: r.right });
+    }
+  }
+  return lines.sort((a, b) => a.mid - b.mid);
+}
+
+/** 改行してよい字の後ろ・前（文字の配置の検査の BREAK_OK_AFTER・END_NG と同じ） */
+const BREAK_AFTER = new Set(Array.from('、。，．！？!?」』）)…:：'));
+const OPEN_BEFORE = new Set(Array.from('「『（(【［〔〈《“‘'));
+let wordSeg: Intl.Segmenter | null | undefined;
+
+/**
+ * ラベルの改行が語の途中に無いか（文字の配置の検査の (d)(f) と同じ考え）。改行は、空白のところ・句読点と閉じ括弧の後ろ・
+ * 始め括弧の前ならよい。分かち書き（data-wakachi）か空白で区切って書いたラベル（data-spaced）はそれだけ。ほかは
+ * Intl.Segmenter の語の切れ目でもよい。1 段で札が縮むと「「すっぱ／い」」「それなら／ば」と折れた（g6.ja.language-change/10 の解説。レビュー）
+ */
+function labelBreaksOk(label: Element): boolean {
+  const chars: { ch: string; top: number; h: number; space: boolean; i: number }[] = [];
+  let text = '';
+  let space = false;
+  const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (n.parentElement?.closest('rt')) continue;
+    const t = n.textContent ?? '';
+    for (let i = 0; i < t.length; i++) {
+      const ch = t[i]!;
+      if (/\s/u.test(ch)) {
+        space = true;
+        text += ' ';
+        continue;
+      }
+      const range = document.createRange();
+      range.setStart(n, i);
+      range.setEnd(n, i + 1);
+      // jsdom には getClientRects が無い（測れないときは改行を見ない）
+      const b = range.getClientRects?.()[0];
+      text += ch;
+      if (!b || b.width < 0.5) continue;
+      chars.push({ ch, top: b.top, h: b.height, space, i: text.length - 1 });
+      space = false;
+    }
+  }
+  const spacedOnly = !!label.closest('[data-wakachi]') || label.hasAttribute('data-spaced');
+  for (let k = 1; k < chars.length; k++) {
+    const a = chars[k - 1]!;
+    const b = chars[k]!;
+    if (b.top < a.top + a.h * 0.5) continue; // 同じ行
+    if (b.space || BREAK_AFTER.has(a.ch) || OPEN_BEFORE.has(b.ch)) continue;
+    if (spacedOnly) return false;
+    if (wordSeg === undefined)
+      wordSeg =
+        typeof Intl !== 'undefined' && 'Segmenter' in Intl
+          ? new Intl.Segmenter('ja', { granularity: 'word' })
+          : null;
+    if (!wordSeg) continue;
+    for (const sg of wordSeg.segment(text)) {
+      const end = sg.index + sg.segment.length;
+      if (b.i > sg.index && b.i < end && sg.isWordLike) return false;
+      if (end > b.i) break;
+    }
+  }
+  return true;
+}
+
+/**
+ * 1段の並びに入るか: 札の列が段からあふれない・札の中身が札からはみ出さない・どの札のラベルも 2 行以内・最後の行が 1 字だけにならない・
+ * 語の途中で折れない（labelBreaksOk）。
+ * 正解の角の ○（.mark）と番号の丸（.tk-badge）は札の角の外に出る印なので、はみ出しに数えない（scrollWidth で見ると、
+ * 解説では ○ の分だけ必ずあふれて見え、1 段に入る札も左右 2 列になった。g3.soc.safety/21 の解説。レビュー）
+ */
+function rowFits(main: HTMLElement): boolean {
+  for (const row of Array.from(main.querySelectorAll<HTMLElement>('.eng-match__row'))) {
+    const rr = row.getBoundingClientRect();
+    for (const cell of Array.from(row.children)) {
+      const b = cell.getBoundingClientRect();
+      if (b.left < rr.left - 1 || b.right > rr.right + 1) return false;
+    }
+    for (const card of Array.from(row.querySelectorAll<HTMLElement>('.tk-card'))) {
+      const cr = card.getBoundingClientRect();
+      for (const kid of Array.from(card.children)) {
+        if (kid.matches('.mark, .tk-badge')) continue;
+        const b = kid.getBoundingClientRect();
+        if (b.left < cr.left - 1 || b.right > cr.right + 1) return false;
+      }
+      const label = card.querySelector('.tk-card__label');
+      if (!label) continue;
+      const lines = labelLines(label);
+      if (lines.some((t) => t.l < cr.left - 1 || t.r > cr.right + 1)) return false;
+      if (lines.length > 2) return false;
+      // 最後の行が 1 字だけ（字の大きさの 1.5 倍に届かない幅）。行の高さで比べると 2 字の行（「とる」）まで落ちた
+      const fs = parseFloat(getComputedStyle(label).fontSize) || 0;
+      const last = lines[lines.length - 1];
+      if (lines.length === 2 && last && last.w < fs * 1.5) return false;
+      if (lines.length === 2 && !labelBreaksOk(label)) return false;
+    }
+  }
+  return true;
+}
+
+/** 並べ方: 0=1段（ふつうの大きさ）、1=1段（字を --text-min・余白 0.8u まで縮める）、2=左右2列（線は2列の間だけを通る） */
+type Layout = 0 | 1 | 2;
+
 interface Geo {
   w: number;
   h: number;
@@ -178,9 +297,14 @@ function MatchView({
   };
   const complete = lefts.every((l) => links[l] !== null);
   // どちらかの札に 10字を超える文があるときは、左右を縦に並べる2列の表の形にする（細長い札を作らない）
-  const rows = [...item.left, ...item.right].some(
+  const longLabel = [...item.left, ...item.right].some(
     (c) => c.label !== undefined && plainText(c.label).length > LONG_LABEL,
   );
+  // 上か下の列が折り返して 2 段になると、線が途中の札の後ろを通る。まず 1 段に入れ（字と余白を縮める）、
+  // それでも入らないときは左右 2 列にする（text-layout-fixes 第6回 W3）
+  const firstLayout: Layout = longLabel ? 2 : 0;
+  const [layout, setLayout] = useState<Layout>(firstLayout);
+  const rows = layout === 2;
 
   const join = (l: number, r: number) => {
     // その右に別の左がむすんであれば外す（1つの右に1つの左）
@@ -225,6 +349,38 @@ function MatchView({
   const [geo, setGeo] = useState<Geo | null>(null);
   useLayoutEffect(() => {
     const el = wrap.current;
+    if (!el || layout === 2) return;
+    const check = () => {
+      if (!rowFits(el)) setLayout((v) => (v === 2 ? 2 : ((v + 1) as Layout)));
+    };
+    check();
+    // 字体の読み込みで札の幅が変わる（読み込みは最初の描画のあと）。札の大きさが変わるたびに測り直す
+    const fonts = document.fonts;
+    fonts?.addEventListener?.('loadingdone', check);
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    for (const card of Array.from(el.querySelectorAll('.tk-card'))) ro?.observe(card);
+    return () => {
+      fonts?.removeEventListener?.('loadingdone', check);
+      ro?.disconnect();
+    };
+  }, [layout]);
+  // 並べ方は広げる向き（1段→縮めた1段→左右2列）にしか進まないので、作業領域の幅が変わったら（画面の大きさ・向き）
+  // はじめの並べ方から測り直す。幅は並べ方では変わらない（.unit__engine の幅）
+  useEffect(() => {
+    const host = wrap.current?.closest('.tk-frame')?.parentElement;
+    if (!host || typeof ResizeObserver === 'undefined') return undefined;
+    let w = host.clientWidth;
+    const ro = new ResizeObserver(() => {
+      const nw = host.clientWidth;
+      if (Math.abs(nw - w) <= 2) return;
+      w = nw;
+      setLayout(firstLayout);
+    });
+    ro.observe(host);
+    return () => ro.disconnect();
+  }, [firstLayout]);
+  useLayoutEffect(() => {
+    const el = wrap.current;
     if (!el) return;
     const measure = () => {
       const base = el.getBoundingClientRect();
@@ -266,7 +422,7 @@ function MatchView({
         'tk-frame',
         'tk-frame--band',
         'eng-match',
-        rows ? 'eng-match--rows' : '',
+        rows ? 'eng-match--rows' : layout === 1 ? 'eng-match--tight' : 'eng-match--one',
         toddler ? 'tk--big' : '',
       ].join(' ')}
     >

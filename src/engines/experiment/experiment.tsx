@@ -11,7 +11,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import type { ChoiceOption, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
-import { plainText } from '../../text/rich';
+import { plainText, spacedLabel } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { checkChoice } from '../choice/choice';
@@ -644,7 +644,10 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
               >
                 {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
                 {o.label !== undefined ? (
-                  <span className="exp-opt__label">
+                  <span
+                    className="exp-opt__label"
+                    data-spaced={spacedLabel(o.label) ? '' : undefined}
+                  >
                     <Rt text={o.label} ctx={ctx} />
                   </span>
                 ) : null}

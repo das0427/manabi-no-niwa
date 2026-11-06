@@ -88,6 +88,14 @@ button {
   max-width: 100%;
   text-wrap: wrap;
 }
+/* 小3以上でも空白で区切って書いた選択肢・札のラベル（rich.ts の spacedLabel。choice・listen・experiment・札が data-spaced を付ける。空白の数 × 12 ≧ 字数）は、
+   分かち書きと同じく空白のところでだけ折り、最後の行を 1 語だけにしない（pretty。keep-all なら Chrome でも語の途中で折らない）。
+   auto-phrase のままだと「南東より 南に よった／所」（g4.sci.moon-stars/1）・「西の 方／へ」・「どろと ならぶ／層」（g6.sci.strata/17）と折れた（text-layout-fixes 第6回のレビュー） */
+.stage .unit[data-stage]:not([data-wakachi]) [data-spaced] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
 /* 小3以上の図の文は文節で折る（空白の無い文を keep-all のまま anywhere で折ると、好きな所で折れる） */
 .stage .unit[data-stage]:not([data-wakachi]) .fig-text {
   word-break: auto-phrase;

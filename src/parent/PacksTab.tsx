@@ -26,10 +26,26 @@ const SUBJECT_LABEL: Record<string, string> = {
   seikatsu: '生活',
   life: '生活',
   english: '英語',
+  en: '英語',
+  ja: '国語',
   eigo: '英語',
+  sci: '理科',
+  soc: '社会',
   prog: 'プログラミング',
   programming: 'プログラミング',
 };
+
+/** 段階の範囲（g34 → 小3・小4、g16 → 小1〜小6）。2桁で数字が続かない（1,2 の連続）ときは「・」でつなぐ */
+function gradeRange(digits: string): string {
+  const g = [...digits];
+  if (g.length === 2 && Number(g[1]) - Number(g[0]) === 1) return `小${g[0]}・小${g[1]}`;
+  if (g.length === 2) return `小${g[0]}〜小${g[1]}`;
+  return g.map((x) => `小${x}`).join('・');
+}
+
+/** 幼児のパック（アプリ本体に含まれる）。dev で一覧を読めないときも、ID の頭で分ける */
+const isToddlerPack = (packId: string): boolean => /^(p23|p4|p5|en-pre)$/.test(packId);
+const isToddlerEnglish = (packId: string): boolean => packId === 'en-pre';
 
 /** packId から保護者向けの名前を作る（g3-math → 小3 算数、kanji-g12 → 漢字（小1・小2）） */
 export function packLabel(packId: string): string {
@@ -38,7 +54,11 @@ export function packLabel(packId: string): string {
   const grade = /^g([1-6])-(.+)$/.exec(packId);
   if (grade) return `小${grade[1]} ${SUBJECT_LABEL[grade[2]!] ?? grade[2]}`;
   const kanji = /^kanji-g(\d+)$/.exec(packId);
-  if (kanji) return `漢字（${[...kanji[1]!].map((g) => `小${g}`).join('・')}）`;
+  if (kanji) return `漢字（${gradeRange(kanji[1]!)}）`;
+  const ranged = /^([a-z]+)-g(\d{2})$/.exec(packId);
+  if (ranged && SUBJECT_LABEL[ranged[1]!]) {
+    return `${SUBJECT_LABEL[ranged[1]!]}（${gradeRange(ranged[2]!)}）`;
+  }
   const toddler = { p23: '2〜3歳', p4: '4歳', p5: '5歳', 'en-pre': '幼児の英語' }[packId];
   if (toddler) return toddler;
   return packId;
@@ -129,8 +149,10 @@ export function PacksTab() {
     );
   }
 
-  const separate = statuses.filter((s) => s.state !== 'core');
-  const core = statuses.filter((s) => s.state === 'core');
+  const isCore = (s: PackStatus): boolean => s.state === 'core' || isToddlerPack(s.packId);
+  const separate = statuses.filter((s) => !isCore(s));
+  const core = statuses.filter((s) => isCore(s) && !isToddlerEnglish(s.packId));
+  const toddlerEnglish = statuses.filter((s) => isToddlerEnglish(s.packId));
   const outdated = separate.filter((s) => s.state === 'outdated');
   const unavailable = separate.length > 0 && separate.every((s) => s.state === 'unavailable');
   const anyRunning = separate.some((s) => getPackProgress(s.packId) !== null);
@@ -216,6 +238,16 @@ export function PacksTab() {
           <ul data-testid="packs-core">
             {core.map((s) => (
               <li key={s.packId}>{packLabel(s.packId)}</li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+
+      {toddlerEnglish.length > 0 ? (
+        <Section title="幼児の英語">
+          <ul data-testid="packs-core-en">
+            {toddlerEnglish.map((s) => (
+              <li key={s.packId}>{packLabel(s.packId)}（アプリ本体に含まれています）</li>
             ))}
           </ul>
         </Section>

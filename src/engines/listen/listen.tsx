@@ -13,6 +13,7 @@
  *     revealAudio … 正答を見せるとき（解説）に1回だけ鳴らす音声
  */
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -166,7 +167,7 @@ function whenQuiet(cb: () => void): () => void {
 }
 
 /**
- * 解説の書き起こし。作業領域の幅（60u まで）の段で、選択肢の上に置く。高さは本文の4行以上・空きまで
+ * 解説の書き起こし。作業領域の幅（60u まで）の段で、選択肢の上に置く。高さは本文の3行まで
  * （listen.css）。入らない分は枠の中でスクロールし、下に ▼ の印を出す（text-layout-fixes R3）
  */
 function Transcript({
@@ -179,17 +180,29 @@ function Transcript({
   const boxRef = useRef<HTMLParagraphElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [cue, setCue] = useState<'down' | 'up' | null>(null);
+  /** 枠の行数。既定は 3 行。作業領域に入らないときだけ 2 行に縮める（画面の大きさが変わったら 3 行から測り直す） */
+  const [lines, setLines] = useState(3);
+  const [viewKey, setViewKey] = useState('');
+  /**
+   * 「▼ つづき」の段の場所を、一度出したら残す（画面の大きさ・聞く文が変わるまで）。段の有無で枠の高さが変わると、
+   * UnitRunner の --fit が「段が無い → 大きく（0.99）→ 枠からあふれて段が出る → 小さく（0.89）→ あふれず段が消える」を
+   * 毎フレームくり返し、描き直しが止まらなかった（g6.en.future/32 の解説 1536×864。レビュー）。あふれていないときは見えない場所だけ
+   */
+  const [reserveCue, setReserveCue] = useState(false);
   const measure = useCallback(() => {
     const b = boxRef.current;
     if (!b) return;
-    // 本文が4行を超えるときだけ、枠の高さの下限を4行にする（短い書き起こしに空きを足さない）
+    // 本文が3行を超えるとき（枠は3行まで。続きはスクロール）だけ印を付ける
     const st = getComputedStyle(b);
     const lh = parseFloat(st.lineHeight);
     const pad = parseFloat(st.paddingTop) + parseFloat(st.paddingBottom);
-    if (lh > 0) wrapRef.current?.toggleAttribute('data-long', b.scrollHeight - pad > lh * 4.5);
+    if (lh > 0) wrapRef.current?.toggleAttribute('data-long', b.scrollHeight - pad > lh * 3.5);
     if (b.scrollHeight <= b.clientHeight + 2) setCue(null);
-    else if (b.scrollTop + b.clientHeight < b.scrollHeight - 2) setCue('down');
-    else setCue('up');
+    else {
+      setReserveCue(true);
+      if (b.scrollTop + b.clientHeight < b.scrollHeight - 2) setCue('down');
+      else setCue('up');
+    }
   }, []);
   useEffect(() => {
     const b = boxRef.current;
@@ -197,6 +210,34 @@ function Transcript({
     measure();
     return observeResize([b], measure);
   }, [measure, sounds]);
+  useEffect(() => {
+    // 作業領域の大きさでなく画面（窓）の大きさで見る。作業領域の高さは、枠の行数で解説の板の上限（UnitRunner の
+    // limitPanel）が変わると一緒に変わるので、それで 3 行に戻すと 3 行 → 2 行 → 3 行と測り直しが止まらない（レビュー）
+    const sync = () => setViewKey(`${window.innerWidth}x${window.innerHeight}`);
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
+  }, []);
+  useEffect(() => {
+    setLines(3);
+    setReserveCue(false);
+  }, [viewKey, sounds]);
+  // 作業領域に入らないとき（選択肢の高さが決まったあとも含む）だけ 2 行に縮める
+  useEffect(() => {
+    const work = wrapRef.current?.closest<HTMLElement>('.unit__work');
+    if (!work) return undefined;
+    const fit = () => {
+      // 正解の印（札の外へ出る角の ○）は数えない（UnitRunner の fitNow と同じ data-measure）
+      const measuring = work.hasAttribute('data-measure');
+      work.setAttribute('data-measure', '');
+      const over = work.scrollHeight > work.clientHeight + 2;
+      if (!measuring) work.removeAttribute('data-measure');
+      if (over) setLines((l) => (l > 2 ? 2 : l));
+    };
+    fit();
+    const eng = wrapRef.current?.closest<HTMLElement>('.unit__engine');
+    return observeResize(eng ? [work, eng] : [work], fit);
+  }, [lines, viewKey, sounds]);
   const scrollCue = () => {
     const b = boxRef.current;
     if (!b) return;
@@ -204,7 +245,11 @@ function Transcript({
     else b.scrollBy?.({ top: b.clientHeight * 0.85, behavior: 'smooth' });
   };
   return (
-    <div ref={wrapRef} className="eng-listen__transcript-wrap">
+    <div
+      ref={wrapRef}
+      className="eng-listen__transcript-wrap"
+      style={{ '--tr-lines': lines } as CSSProperties}
+    >
       <p
         ref={boxRef}
         onScroll={measure}
@@ -212,10 +257,19 @@ function Transcript({
         data-testid="listen-transcript"
         data-scroll-region="transcript"
       >
+        {/* 文と文の間の「・」は字として書く（::before の字は検査から見えず、「・」のあとの改行が語の途中に見えた。
+            g3.en.greetings の解説。text-layout-fixes 第6回のレビュー）。読み上げ・支援技術には区切りの記号を渡さない */}
         {sounds.map((s, i) => (
-          <span key={i} className="eng-listen__said">
-            <Rt text={s.text} ctx={ctx} />
-          </span>
+          <Fragment key={i}>
+            {i > 0 ? (
+              <span className="eng-listen__sep" aria-hidden>
+                ・
+              </span>
+            ) : null}
+            <span className="eng-listen__said">
+              <Rt text={s.text} ctx={ctx} />
+            </span>
+          </Fragment>
         ))}
       </p>
       {cue ? (
@@ -229,6 +283,10 @@ function Transcript({
         >
           {cue === 'down' ? '▼ つづき' : '▲ はじめから'}
         </button>
+      ) : reserveCue ? (
+        <span className="eng-listen__cue" aria-hidden style={{ visibility: 'hidden' }}>
+          ▼ つづき
+        </span>
       ) : null}
     </div>
   );
@@ -252,6 +310,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   /** nameBack: 名前を鳴らしている選択肢（その間は他を押せない） */
   const [pressed, setPressed] = useState<number | null>(null);
   const alive = useRef(true);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const seq = useMemo(() => listenSeq(item, ctx.packId), [item, ctx.packId]);
 
   const play = useCallback(() => {
@@ -303,6 +362,20 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
     };
   }, [revealed, item.revealAudio, item.gapMs, ctx.packId]);
 
+  // 解説で正解の札が作業領域の外に出るときは、先に見せる（外側の作業領域のスクロールだけが動く）
+  useEffect(() => {
+    if (!revealed) return undefined;
+    const t = window.setTimeout(() => {
+      const root = rootRef.current;
+      if (!root) return;
+      item.options.forEach((o, i) => {
+        if (o.correct)
+          root.querySelector(`[data-testid="opt-${i}"]`)?.scrollIntoView?.({ block: 'nearest' });
+      });
+    }, 60);
+    return () => window.clearTimeout(t);
+  }, [revealed, item.options]);
+
   // 名前を返す: 触った選択肢の名前を鳴らし、鳴り終わってから答える
   const onPress = useCallback(
     (i: number, send: (r: ChoiceResponse) => void) => {
@@ -330,7 +403,8 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
     [item.options, ctx.packId],
   );
 
-  const sounds = soundsOf(item);
+  // 描くたびに作り直すと、書き起こしの行数（--tr-lines）の測り直しが音の再生のたびに走る（3 行に戻ってから 2 行に縮む）
+  const sounds = useMemo(() => soundsOf(item), [item]);
   const showTranscript = revealed && !item.hideTranscript;
   // 選択肢に絵・図があるときは、「きく」の札を上の段（補助の寸法）に置く（左の列に置くと選択肢の幅が足りない）
   const hasPics = earOnTop(item.options);
@@ -355,6 +429,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   );
   return (
     <div
+      ref={rootRef}
       className={[
         'eng-listen',
         showTranscript ? 'eng-listen--explain' : '',

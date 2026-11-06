@@ -146,7 +146,12 @@ describe('wordTrait（語のラベルは語の途中で折らない。V2 1）', 
   it('空白で区切った短い句は、各語8字以下・全体14字以下', () => {
     expect(wordTrait('つくえの 中')).toEqual({ kind: 'phrase', len: 6 });
     expect(wordTrait('アイスクリームを たべた')).toEqual({ kind: 'phrase', len: 8 });
-    expect(wordTrait('ベッドの 上の ボール')).toEqual({ kind: 'phrase', len: 4 });
+    expect(wordTrait('ベッドの 上の ボール')).toEqual({ kind: 'phrase', len: 6 });
+    // 8字を超える句は、2行に入る最小の幅（最後の語の1字が次の行に落ちない。W2）
+    expect(wordTrait('東の 空の ひくい 所')).toEqual({ kind: 'phrase', len: 5 });
+    expect(wordTrait('母親の 子宮の 中')).toEqual({ kind: 'phrase', len: 5 });
+    // 7字以内の句は1行（空白を含めた全体）
+    expect(wordTrait('いつも 自分の')).toEqual({ kind: 'phrase', len: 7 });
     expect(wordTrait('したの いぬ')?.kind).toBe('phrase');
     expect(wordTrait('あいうえおかきくけ こ')).toBeNull();
     expect(wordTrait('あいうえお かきくけこ さしすせそ')).toBeNull();

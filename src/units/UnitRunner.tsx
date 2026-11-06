@@ -78,6 +78,9 @@ const NO_FIG_FIT: ReadonlySet<string> = new Set(['number']);
 
 // 分かち書きの段階（DESINGN.md 17章。改行の規則・S2 が data-wakachi を使う）
 const WAKACHI_STAGES: ReadonlySet<string> = new Set(['p23', 'p4', 'p5', 'g1', 'g2']);
+// 段階は分かち書きでなくても、日本語を分かち書きで書く教材（pack-brief: 英語の単元の日本語）。
+// 段階だけで決めると、小3以上の英語が auto-phrase で「聞／こう」と語の途中で折れる
+const WAKACHI_PACKS: ReadonlySet<string> = new Set(['en-g34', 'en-g56']);
 
 /** 単元の中断データ（drafts ストア: modeId 'unit'・variantId 単元ID。review-1 #31） */
 interface UnitDraft {
@@ -626,14 +629,120 @@ export function UnitRound({
         inner.matches('.fig-svg') ? (inner.querySelector('svg') ?? inner) : inner
       ).getBoundingClientRect().width;
       if (figW <= 0 || figW > panel.clientWidth * 0.4) return;
-      // 下の段のままでは板に入らない（スクロールになる）ときは、4行まで許す（右に置くほうが必ず低くなる）
-      const overflow = panel.scrollHeight > panel.clientHeight + 1;
+      // 下の段のままでは板に入らない（スクロールになる）ときは、行数に関わらず、右に置いて板の高さが減るなら右に置く
+      const before = panel.scrollHeight;
+      const overflow = before > panel.clientHeight + 1;
       panel.setAttribute('data-fig-side', '');
-      const lines = countLines(text);
-      if (lines > (overflow ? 4 : 3)) panel.removeAttribute('data-fig-side');
+      if (overflow) {
+        if (panel.scrollHeight >= before - 1) panel.removeAttribute('data-fig-side');
+      } else if (countLines(text) > 3) {
+        panel.removeAttribute('data-fig-side');
+      }
       if (keep > 0) panel.scrollTop = keep;
     };
+    const unitPx = () => {
+      const probe = document.createElement('div');
+      probe.style.cssText =
+        'position:absolute;visibility:hidden;pointer-events:none;width:var(--u)';
+      root.appendChild(probe);
+      const u = probe.getBoundingClientRect().width;
+      probe.remove();
+      return u;
+    };
+    // 板の高さの上限: 下の帯の上端 −（問題文の下端 ＋ 作業領域の最小の高さ）。作業領域の最小の高さは、
+    // 解説の状態で残すもの（数の入力は式と回答欄、選択肢は札）を fit の下限（0.6）で縮めた高さ。
+    // 板が 22u の決まった値だと、作業領域に空きが多いのに板の図・表が切れた（g5.math.decimal-shift/0）
+    const limitPanel = () => {
+      const work = root.querySelector<HTMLElement>('.unit__work');
+      const prompt = root.querySelector<HTMLElement>('.unit__prompt');
+      if (!work || !prompt) return;
+      const u = unitPx();
+      if (!(u > 0)) return;
+      // 作業領域の子を fit の下限で縮めたときの高さ（子の高さ ＋ 子の間のすき間）。測りは板を今までの上限（22u）に戻して
+      // から: 板が広がると作業領域が狭まり、伸びる子の高さが縮んで、測り直すたびに板が広がるのを防ぐ。
+      // display: contents の箱（数の入力の .unit__engine）は中の子を数える。図の段が 0 に縮められていても、
+      // 中身の高さ（scrollHeight）で測る
+      panel.style.removeProperty('max-height');
+      const prevFit = work.style.getPropertyValue('--fit');
+      work.style.setProperty('--fit', '0.6');
+      // 正解の印（右下の角の ○・大きな輪）は札の外へ出るが、作業領域の高さには数えない（fitNow と同じ）
+      work.setAttribute('data-measure', '');
+      const heightOf = (el: HTMLElement): number => {
+        if (getComputedStyle(el).display === 'contents') {
+          return Array.from(el.children).reduce((sum, c) => sum + heightOf(c as HTMLElement), 0);
+        }
+        const cs = getComputedStyle(el);
+        // 見えない箱（数字キーの区画: visibility: hidden・max-height: 0）は数えない。overflow が visible の箱は、
+        // 高さが 0 に縮められていても中身の高さで測る
+        if (cs.visibility === 'hidden') return 0;
+        // 格子の段（図の段は 1fr）で引き伸ばされた高さではなく、中身の高さで測る
+        const prevSelf = el.style.alignSelf;
+        el.style.alignSelf = 'start';
+        const h =
+          cs.overflowY === 'visible' ? Math.max(el.offsetHeight, el.scrollHeight) : el.offsetHeight;
+        el.style.alignSelf = prevSelf;
+        return h;
+      };
+      const kids = Array.from(work.children) as HTMLElement[];
+      const hs = kids.map(heightOf).filter((h) => h > 0);
+      const minWork = hs.reduce((a, b) => a + b, 0) + Math.max(0, hs.length - 1) * 2 * u;
+      work.removeAttribute('data-measure');
+      if (prevFit) work.style.setProperty('--fit', prevFit);
+      else work.style.removeProperty('--fit');
+      const workTop = Math.max(15 * u, prompt.offsetTop + prompt.offsetHeight + u);
+      // 作業領域の下の余白（板との間 0.8u）のうち 0.5u までは、作業領域の中身が入ってよい（fit の許容と同じ）
+      const max = root.clientHeight - 2.4 * u - workTop - minWork + 0.5 * u;
+      // 22u（今までの上限）より狭くはしない。広げるだけ
+      panel.style.maxHeight = `${Math.max(max, 22 * u).toFixed(1)}px`;
+    };
+    // 絵を並べた図（.fig-illust）は 1 行に並べる（flex-wrap: nowrap。unit.css）。入らないときは絵の大きさを
+    // （図の幅 − すき間）÷ 絵の数 に縮める（下限 4u）。下の段の図の高さは、折り返しをなくした分だけ変わる
+    // （p5.math.compose/1: いちご 5 このうち 3 こが overflow: hidden で消えていた）
+    const fitIllust = (u: number) => {
+      const figBox = panel.querySelector<HTMLElement>('.unit__explain-figure');
+      figBox?.style.removeProperty('--illust-w');
+      figBox?.removeAttribute('data-illust-fit');
+      const row = figBox?.querySelector<HTMLElement>('.fig-row, .fig-illust')?.closest('.fig-row');
+      const illusts = Array.from(figBox?.querySelectorAll<HTMLElement>('.fig-illust') ?? []);
+      if (!figBox || illusts.length === 0) return;
+      const box = row instanceof HTMLElement ? row : figBox;
+      const gapOf = (el: Element) => parseFloat(getComputedStyle(el).columnGap) || 0;
+      let n = 0;
+      let natural = 0;
+      let gaps = illusts.length > 1 ? gapOf(box) * (illusts.length - 1) : 0;
+      for (const il of illusts) {
+        const groups = Array.from(il.querySelectorAll<HTMLElement>('.fig-illust__group'));
+        gaps += Math.max(0, groups.length - 1) * gapOf(il);
+        for (const g of groups) {
+          const icons = Array.from(g.children) as HTMLElement[];
+          n += icons.length;
+          gaps += Math.max(0, icons.length - 1) * gapOf(g);
+          for (const ic of icons) natural += ic.getBoundingClientRect().width;
+        }
+      }
+      const room = figBox.clientWidth;
+      if (n === 0 || natural + gaps <= room + 0.5) return;
+      const w = Math.max(4 * u, (room - gaps) / n);
+      figBox.style.setProperty('--illust-w', `${w.toFixed(1)}px`);
+      figBox.setAttribute('data-illust-fit', '');
+    };
+    // 図が板に入らないとき（右に置いても足りないとき）は、図の高さを残りまで縮める（下限 6u）。図は切らない。
+    // 表・文の図（縮めると字が最小を割る）と、縦に並べた図（数直線の列。高さは中身が決める）は縮めない
+    const shrinkFig = (u: number) => {
+      const figBox = panel.querySelector<HTMLElement>('.unit__explain-figure');
+      figBox?.style.removeProperty('--fig-h');
+      if (!figBox || figBox.querySelector('.fig-table, .fig-text, .fig-column')) return;
+      for (let i = 0; i < 2; i++) {
+        const over = panel.scrollHeight - panel.clientHeight;
+        if (over <= 1) return;
+        const figH = figBox.getBoundingClientRect().height;
+        const target = Math.max(6 * u, figH - over);
+        if (target >= figH - 0.5) return;
+        figBox.style.setProperty('--fig-h', `${target.toFixed(1)}px`);
+      }
+    };
     const measure = () => {
+      limitPanel();
       // width の無いパックの SVG の縦横比（高さ ÷ 幅）を、箱（.fig-svg）の --fig-ar に書く。unit.css が
       // 「高さ 12u まで・比で幅」を決めるのに使う。svg 自身の --fig-ar は svgText が字から測って書くが、
       // 字の無い図には無く、描き直しで消えることもあるので、箱に書いて継ぐ
@@ -645,7 +754,11 @@ export function UnitRound({
           svg.parentElement?.style.setProperty('--fig-ar', (vb.height / vb.width).toFixed(4));
         }
       }
+      const u = unitPx();
+      panel.querySelector<HTMLElement>('.unit__explain-figure')?.style.removeProperty('--fig-h');
+      fitIllust(u);
       decideSide();
+      shrinkFig(u);
       measureH();
     };
     const measureH = () => {
@@ -745,6 +858,10 @@ export function UnitRound({
       else work.setAttribute('data-scroll-cue', '');
     };
     const fitNow = () => {
+      // 測る間は正解・誤答の印（.mark）を外す（ui.css の data-measure）。右下の角の ○（第6回 W1）は札の下へ 1.8u 出て、
+      // 作業領域の下の余白（板・帯との間 2.4u）に描かれるだけなのに、scrollHeight に入って --fit を縮め、
+      // 下の札が正解のときは作業領域をスクロールの枠にしていた（g3.soc.safety・g6.en.past/19 の解説。レビュー）
+      work.setAttribute('data-measure', '');
       // 作業領域の高さ（fit=1。px）を子に渡す（絵の札の高さの上限: V2 が var(--work-h, 9999px) で読む）
       work.style.setProperty('--work-h', `${work.clientHeight}px`);
       // 測り直しでスクロールの枠を外すと位置が 0 に戻るので、覚えておいて戻す（中身の大きさが変わったときの測り直し）
@@ -793,7 +910,16 @@ export function UnitRound({
       let fit = 1;
       for (let i = 0; i < 6; i++) {
         const avail = work.clientHeight;
-        const need = work.scrollHeight;
+        // 数の入力の解説: 図の段は格子の minmax(0, 1fr) なので、図が段からはみ出しても work.scrollHeight に入らない。
+        // はみ出す分も足して、--fit で図（式）を縮める（板を広げるとき、式と回答欄は fit の下限（0.6）で測っている）
+        let extra = 0;
+        if (s.phase === 'explain' && engineId === 'number') {
+          const nf = work.querySelector<HTMLElement>(':scope > .unit__figure');
+          if (nf && !nf.hasAttribute('data-scroll-region')) {
+            extra = Math.max(0, nf.scrollHeight - nf.clientHeight);
+          }
+        }
+        const need = work.scrollHeight + extra;
         if (avail <= 0 || need <= avail + 1) break;
         let next = Math.max(minFit, fit * (avail / need));
         // 比で縮めても数 px 足りないまま止まる（縮まない段・折り返しの変化）ときは、少しずつ下げて下限まで試す
@@ -816,6 +942,7 @@ export function UnitRound({
         work.setAttribute('data-scroll-region', 'work');
         if (keepTop > 0) work.scrollTop = keepTop;
       }
+      work.removeAttribute('data-measure');
       cue();
     };
     work.scrollTop = 0;
@@ -864,7 +991,7 @@ export function UnitRound({
       data-testid={`unit-${unit.id}`}
       data-phase={s.phase}
       data-stage={unit.stage}
-      data-wakachi={WAKACHI_STAGES.has(unit.stage) ? '' : undefined}
+      data-wakachi={WAKACHI_STAGES.has(unit.stage) || WAKACHI_PACKS.has(packId) ? '' : undefined}
       data-index={s.index}
       style={{ ['--ts' as string]: String(ctx.textScale) }}
     >

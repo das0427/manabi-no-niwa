@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import type { ChoiceItem, RichText } from '../../curriculum/types';
 import { displayOrder as sharedOrder, displayPosition } from '../shared/order';
 import { Rt } from '../../text/Rt';
-import { plainText } from '../../text/rich';
+import { plainText, spacedLabel } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
@@ -100,7 +100,7 @@ export function optionTraits(
 /** 語のラベルの種類（V2 1）。word: 空白なし8字以下／phrase: 空白で区切った短い句／paren: 「はな（くさばな）」 */
 export interface WordTrait {
   kind: 'word' | 'phrase' | 'paren';
-  /** 札の幅を決める字数（word は全体、paren は前＋括弧の全体（入らなければ括弧の前で折る）、phrase は 7字までなら空白を含めた全体、それより長ければ最長の語。入らなければ空白で折る） */
+  /** 札の幅を決める字数（word は全体、paren は前＋括弧の全体（入らなければ括弧の前で折る）、phrase は 7字までなら空白を含めた全体、それより長ければ2行に入る最小の幅（最長の語以上）。入らなければ空白で折る） */
   len: number;
 }
 
@@ -130,8 +130,22 @@ export function wordTrait(label: string | undefined, wordMax = WORD_MAX): WordTr
     return n <= wordMax ? { kind: 'word', len: n } : null;
   }
   if (!lens.every((l) => l <= wordMax)) return null;
-  // 短い句（7字まで）は1行に入る幅にする。それより長い句は、いちばん長い語が入る幅にして空白で折る
-  return { kind: 'phrase', len: n <= PHRASE_ONE_LINE ? n : Math.max(...lens) };
+  // 短い句（7字まで）は1行に入る幅にする。それより長い句は2行に入る最小の幅にする（phraseTwoLineLen）
+  return { kind: 'phrase', len: n <= PHRASE_ONE_LINE ? n : phraseTwoLineLen(lens) };
+}
+
+/**
+ * 語の字数の並び（間は空白1字）を2行に分けるとき、長いほうの行の字数が最小になる切れ目の、その字数。
+ * 最長の語より小さくならない。3行以上にはしない（「東の 空の ひくい 所」→ 5。W2）
+ */
+function phraseTwoLineLen(lens: number[]): number {
+  let best = Infinity;
+  for (let i = 1; i < lens.length; i++) {
+    const a = lens.slice(0, i).reduce((x, y) => x + y, 0) + (i - 1);
+    const b = lens.slice(i).reduce((x, y) => x + y, 0) + (lens.length - i - 1);
+    best = Math.min(best, Math.max(a, b));
+  }
+  return Math.max(best, ...lens);
 }
 
 /** 括弧で読みを足したラベルを、括弧の前までと括弧からに分ける（書き方の記号は切らない側で分ける） */
@@ -154,7 +168,7 @@ export function OptionLabel({
 }) {
   if (!word) {
     return (
-      <span className={className}>
+      <span className={className} data-spaced={spacedLabel(label) ? '' : undefined}>
         <Rt text={label} ctx={ctx} />
       </span>
     );

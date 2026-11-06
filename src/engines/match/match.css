@@ -14,6 +14,32 @@
 .eng-match__cell {
   display: inline-flex;
 }
+/* 1段の並び（上の段・下の段とも折り返さない）。札は幅に合わせて縮み、ラベルは 2 行まで（分かち書きは空白のところで折れる）。
+   入らないときは match.tsx が --tight（字 --text-min・左右の余白 0.8u）→ --rows（左右2列）へ進める */
+.eng-match--one .eng-match__row,
+.eng-match--tight .eng-match__row {
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.2);
+}
+.eng-match--one .eng-match__cell,
+.eng-match--tight .eng-match__cell {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.eng-match--one .tk-card,
+.eng-match--tight .tk-card {
+  max-width: 100%;
+}
+.eng-match--tight .tk-card {
+  padding-inline: calc(var(--u) * 0.8);
+}
+.eng-match--tight .tk-card:has(> .tk-badge) {
+  padding-left: calc(var(--u) * 0.6 + var(--badge) + var(--u) * 0.8);
+}
+.eng-match--tight .tk-card__label {
+  font-size: var(--text-min);
+}
 /* 長い文の札があるとき: 左の札（上の段）と右の札（下の段）を左右の2列に縦に並べ、線は横に引く */
 .eng-match--rows .eng-match__main {
   display: grid;
@@ -35,7 +61,8 @@
 .eng-match--rows .eng-match__cell > .tk-card {
   flex: 1;
   max-width: none;
-  min-height: calc(var(--u) * 6);
+  /* 右下の ○（札の中へ 1.4u）が 1 行の字（2.2u）にかからない高さ: (6.4 - 2.75) / 2 = 1.8u ≧ 1.4u */
+  min-height: calc(var(--u) * 6.4);
   padding-block: calc(var(--u) * 0.4);
 }
 .eng-match--rows .tk-card__label {
@@ -64,14 +91,16 @@
   stroke-width: calc(var(--u) * 0.7);
 }
 /* 正解の ○: 大きな輪を札の字の上に重ねない（横長の札で輪が字を横切って読めなかった。g3.ja.proverbs/35 の解説）。
-   札の輪郭を太い緑にし、形でも分かるよう右上の角に小さな ○ を足す（色だけにしない） */
+   札の輪郭を太い緑にし、形でも分かるよう右下の角（右上はふりがなに重なる）に小さな ○ を足す（色だけにしない）。
+   位置は ui.css の字だけの札と同じ -1.8u（-1.4u だと小さい札で ○ が字に触れた。第6回 W1） */
 .eng-match .tk-card.is-correct {
   border-color: var(--correct);
   border-width: calc(var(--u) * 0.6);
 }
 .eng-match .tk-card > .mark--correct {
-  top: calc(var(--u) * -1.4);
-  right: calc(var(--u) * -1.4);
+  top: auto;
+  bottom: calc(var(--u) * -1.8);
+  right: calc(var(--u) * -1.8);
   left: auto;
   width: calc(var(--u) * 3.2);
   height: calc(var(--u) * 3.2);

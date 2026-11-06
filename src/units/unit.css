@@ -318,20 +318,33 @@
 .unit__explain-figure {
   grid-column: 2;
   width: 100%;
-  max-height: calc(var(--u) * 12);
+  /* 12u まで。板に入らないときは UnitRunner が --fig-h に残りの高さ（下限 6u）を書いて縮める。図は切らない */
+  max-height: var(--fig-h, calc(var(--u) * 12));
   display: flex;
   justify-content: flex-start;
   overflow: hidden;
 }
 .unit__explain-figure > * {
   max-width: 100%;
-  max-height: calc(var(--u) * 12);
+  max-height: var(--fig-h, calc(var(--u) * 12));
 }
 .unit__explain-figure svg,
 .unit__explain .fig-svgbox {
   max-width: 100%;
-  max-height: calc(var(--u) * 12);
+  max-height: var(--fig-h, calc(var(--u) * 12));
   width: auto;
+}
+/* 絵を並べた図（.fig-illust）は解説の図の中で折り返さない（flex-wrap: nowrap）。入らないときは UnitRunner が
+   絵の大きさ --illust-w（（図の幅 − すき間）÷ 絵の数。下限 4u）を書く。絵の幅・高さは Figure.tsx のインライン指定なので !important。
+   折り返すと下の段が overflow: hidden で消えた（p5.math.compose/1 のいちご 3 こ） */
+.unit__explain-figure .fig-row:has(.fig-illust),
+.unit__explain-figure .fig-illust {
+  flex-wrap: nowrap;
+}
+.unit__explain-figure[data-illust-fit] .fig-illust__group > * {
+  flex: none;
+  width: var(--illust-w) !important;
+  height: var(--illust-w) !important;
 }
 /* width の無いパックの SVG（.fig-svg）は、上の width: auto を当てない。flex の中で width: auto は内容の幅 0 に縮み、
    T2（figure.css）の幅も消えて 0×0 になる。下の段は高さ 12u まで・縦横比（--fig-ar = 高さ ÷ 幅。UnitRunner が書く）で幅を決め、
@@ -341,12 +354,12 @@
 }
 .unit__explain-figure .fig-svg svg:not([width]) {
   width: min(
-    calc(var(--u) * 12 / max(var(--fig-ar, 0.5), 0.05)),
+    calc(var(--fig-h, calc(var(--u) * 12)) / max(var(--fig-ar, 0.5), 0.05)),
     max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)))
   );
   max-width: 100%;
   /* 字の引き上げで viewBox が広がって比が少し変わっても、箱（12u）からはみ出さない */
-  max-height: calc(var(--u) * 12);
+  max-height: var(--fig-h, calc(var(--u) * 12));
   height: auto;
 }
 /* 表・文の図・縦に並べた図（数直線2本など）は切らない（SVG だけ 12u まで。長いときは板が 22u でスクロール） */
@@ -356,6 +369,11 @@
 }
 .unit__explain-figure:has(.fig-table, .fig-text, .fig-column) > * {
   max-height: none;
+}
+/* 作業領域の図の題（棒グラフ・表の見出し）。--fit で縮めても --text-min を割らない（g3.soc.shop-work/14 の解説: 1.73u）。
+   エンジンの CSS（graph.css）は fit の下限を持たない */
+.unit__work .gr-title {
+  font-size: max(calc(var(--u) * 2.4), var(--text-min));
 }
 /* 図を文の右に置く（data-fig-side。UnitRunner が板の測りで付ける）: 見出し｜文｜図の3列。
    図は幅 min(30%, 24u)・高さ 12u まで。表・文の図と、板の幅の 40% を超える図は付けない（下の段のまま） */

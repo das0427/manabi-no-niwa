@@ -12,7 +12,7 @@
 export type Token =
   | { t: 'text'; s: string }
   | { t: 'ruby'; base: string; reading: string; hide?: true }
-  | { t: 'frac'; whole?: number; num: number; den: number }
+  | { t: 'frac'; whole?: number; num: number | string; den: number | string }
   | { t: 'strong'; children: Token[] }
   | { t: 'blank' };
 
@@ -83,13 +83,15 @@ export function parseRich(src: string): Token[] {
 }
 
 function parseFrac(s: string): Token | null {
-  const m = /^\s*(?:(\d+)\s+)?(\d+)\s*\/\s*(\d+)\s*$/.exec(s);
+  // 分子・分母は数字か、□○△の1字（「[[□/10]]」「[[□/○]]」。答えを隠した分数）
+  const m = /^\s*(?:(\d+)\s+)?(\d+|[□○△])\s*\/\s*(\d+|[□○△])\s*$/u.exec(s);
   if (!m) return null;
+  const part = (x: string): number | string => (/^\d+$/.test(x) ? Number(x) : x);
   return {
     t: 'frac',
     whole: m[1] !== undefined ? Number(m[1]) : undefined,
-    num: Number(m[2]),
-    den: Number(m[3]),
+    num: part(m[2]!),
+    den: part(m[3]!),
   };
 }
 
@@ -145,7 +147,26 @@ export function plainText(src: string): string {
   return walk(parseRich(src));
 }
 
+/**
+ * 空白で区切って書いたラベル（空白の数 × 12 ≧ 字数。文字の配置の検査の (f) と同じ境）。小3以上の段階でも、
+ * 空白のところでだけ折り、最後の行を 1 語だけにしない（base.css の data-spaced。choice・listen・experiment の選択肢と札のラベルに付ける）。auto-phrase のままだと、
+ * 長い選択肢（data-long。語のラベルにならない）で「南東より 南に よった／所」と最後の 1 字が落ちた（g4.sci.moon-stars/1。
+ * text-layout-fixes 第6回 W2 のレビュー）
+ */
+export function spacedLabel(label: string | undefined): boolean {
+  if (label === undefined) return false;
+  const t = plainText(label).trim();
+  const spaces = (t.match(/\s+/gu) ?? []).length;
+  return spaces > 0 && spaces * 12 >= [...t].length;
+}
+
 const KANSUJI = ['', 'いち', 'に', 'さん', 'よん', 'ご', 'ろく', 'なな', 'はち', 'きゅう'];
+
+const SYMBOL_READING: Record<string, string> = { '□': 'しかく', '○': 'まる', '△': 'さんかく' };
+/** 分数の分子・分母の読み（数字か、□○△の記号） */
+function fracPartReading(x: number | string): string {
+  return typeof x === 'number' ? numberReading(x) : (SYMBOL_READING[x] ?? x);
+}
 
 /** 1〜9999 の数をひらがなで（読み上げ用。大きな数は数字のまま Open JTalk に任せる） */
 export function numberReading(n: number): string {
@@ -195,7 +216,7 @@ export function spokenReading(src: string): string {
           case 'ruby':
             return tk.reading;
           case 'frac': {
-            const f = `${numberReading(tk.den)}ぶんの ${numberReading(tk.num)}`;
+            const f = `${fracPartReading(tk.den)}ぶんの ${fracPartReading(tk.num)}`;
             return tk.whole !== undefined ? `${numberReading(tk.whole)}と ${f}` : f;
           }
           case 'strong':

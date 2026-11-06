@@ -269,7 +269,7 @@ for (const meta of UNITS) {
               if (!vp || vp.width !== w || vp.height !== h)
                 await page.setViewportSize({ width: w, height: h });
               const stable = await settle(page);
-              const r = await inspectText(page, { stage: meta.stage });
+              const r = await inspectText(page, { stage: meta.stage, pack: meta.pack });
               result.screens++;
               if (r.issues.length === 0) continue;
               if (!stable)

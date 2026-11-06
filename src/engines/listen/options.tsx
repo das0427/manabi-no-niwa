@@ -168,7 +168,16 @@ export function ChoiceOptions({
                 className={`eng-opts__opt${o.figure ? '' : ' eng-opts__opt--text'}${wc.cls}`}
                 style={wc.style}
               >
-                {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
+                {o.figure && o.label !== undefined ? (
+                  <span className="eng-opts__pic">
+                    {stateOf(i) === 'correct' ? (
+                      <span className="mark mark--correct" aria-hidden />
+                    ) : null}
+                    <Figure fig={o.figure} ctx={ctx} />
+                  </span>
+                ) : o.figure ? (
+                  <Figure fig={o.figure} ctx={ctx} />
+                ) : null}
                 {o.label !== undefined ? (
                   <OptionLabel label={o.label} ctx={ctx} className="eng-opts__label" word={word} />
                 ) : null}

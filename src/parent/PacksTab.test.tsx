@@ -67,6 +67,14 @@ describe('PacksTab（きょうざい）', () => {
     expect(mocks.downloadPack).toHaveBeenCalledWith('kanji-g12');
   });
 
+  it('幼児の英語は見出しを分け、一覧を読めないときも小学生の表に入らない', async () => {
+    await renderTab([st('en-pre', 'unavailable'), st('p4', 'unavailable'), st('en-g34', 'ready')]);
+    expect(screen.getByTestId('packs-core-en').textContent).toContain('幼児の英語');
+    expect(screen.queryByTestId('pack-row-en-pre')).toBeNull();
+    expect(screen.queryByTestId('pack-row-p4')).toBeNull();
+    expect(screen.getByTestId('pack-row-en-g34').textContent).toContain('英語（小3・小4）');
+  });
+
   it('削除は確認のあとで、記録は消えないと説明する', async () => {
     await renderTab([st('g1-math', 'ready')]);
     expect(screen.queryByTestId('packs-outdated')).toBeNull();
@@ -83,6 +91,15 @@ describe('PacksTab（きょうざい）', () => {
     expect(packLabel('g3-sansu')).toBe('小3 算数');
     expect(packLabel('kanji-g12')).toBe('漢字（小1・小2）');
     expect(packLabel('_sample-a')).toBe('見本 A（テスト用）');
+    expect(packLabel('g1-ja')).toBe('小1 国語');
+    expect(packLabel('g6-math')).toBe('小6 算数');
+    expect(packLabel('en-g34')).toBe('英語（小3・小4）');
+    expect(packLabel('en-g56')).toBe('英語（小5・小6）');
+    expect(packLabel('life-g12')).toBe('生活（小1・小2）');
+    expect(packLabel('prog-g16')).toBe('プログラミング（小1〜小6）');
+    expect(packLabel('sci-g34')).toBe('理科（小3・小4）');
+    expect(packLabel('soc-g56')).toBe('社会（小5・小6）');
+    expect(packLabel('en-pre')).toBe('幼児の英語');
     expect(packLabel('zz')).toBe('zz');
   });
 });

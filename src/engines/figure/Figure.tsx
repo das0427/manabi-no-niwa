@@ -2,7 +2,7 @@
  * 図の描画（データ → SVG/DOM）。色は DESINGN.md のトークン（CSS 変数）だけ。
  * 色だけで区別しない: tone の違いは線の太さ・模様（斜線）・形でも示す。
  */
-import { Fragment, useRef, type ReactNode } from 'react';
+import { Fragment, useMemo, useRef, type ReactNode } from 'react';
 import { Illust } from '../../illust/Illust';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
@@ -16,6 +16,8 @@ import {
   useSvgTextFloor,
   useWidenToText,
 } from './svgText';
+import { sizePackSvg } from './gridFloor';
+import { thinNumberLabels } from './numberLabels';
 import './figure.css';
 
 type Ctx = Pick<RenderCtx, 'furigana' | 'learnerGrade'>;
@@ -105,15 +107,17 @@ function FigTable({ fig, ctx }: { fig: Extract<FigureData, { kind: 'table' }>; c
 /** パックが用意した SVG。中の文字は最小まで引き上げる（S6） */
 function PackSvg({ markup, label }: { markup: string; label: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  useLiftedSvgText(ref, markup, { fitWidth: true });
+  // 盤の 1 ますの下限・横長の図の印（gridFloor.ts）
+  const sized = useMemo(() => sizePackSvg(markup), [markup]);
+  useLiftedSvgText(ref, sized.markup, { fitWidth: true });
   return (
     <div
       ref={ref}
-      className="fig-svg"
+      className={sized.wide ? 'fig-svg fig-svg--wide' : 'fig-svg'}
       role="img"
       aria-label={plainText(label)}
       // パックが用意した図（スクリプトを含まない SVG。check で検査）
-      dangerouslySetInnerHTML={{ __html: markup }}
+      dangerouslySetInnerHTML={{ __html: sized.markup }}
     />
   );
 }
@@ -286,13 +290,16 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
       ticks.push(<line key={`m${v}`} x1={X(v)} y1={52} x2={X(v)} y2={68} className="nl-minor" />);
   }
   const every = fig.labelEvery ?? fig.step;
-  for (let v = fig.min; v <= fig.max + eps; v += fig.step) {
-    const r = Math.round(v * 1e6) / 1e6;
-    const labeled = Math.abs(Math.round((r - fig.min) / every) * every - (r - fig.min)) < 1e-6;
+  const isLabeled = (r: number) =>
+    Math.abs(Math.round((r - fig.min) / every) * every - (r - fig.min)) < 1e-6;
+  const vals: number[] = [];
+  for (let v = fig.min; v <= fig.max + eps; v += fig.step) vals.push(Math.round(v * 1e6) / 1e6);
+  const shown = new Set(thinNumberLabels(vals.filter(isLabeled), vals, fig.marks ?? [], floor));
+  for (const r of vals) {
     ticks.push(
       <g key={`s${r}`}>
         <line x1={X(r)} y1={44} x2={X(r)} y2={76} className="nl-major" />
-        {labeled ? (
+        {shown.has(r) ? (
           <text x={X(r)} y={108} className="nl-label">
             {r}
           </text>

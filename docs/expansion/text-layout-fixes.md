@@ -2135,3 +2135,271 @@ AC・A0〜A8・A10 を担当ごとにファイルを分けて実装した。レ�
 - **Rt（共通の文字の部品。統括）**: 隣の字を包み（`.rt-nobr`）に取り込めなかった ruby は nowrap にならず、Chrome が ruby の親字の途中で折る（幼児がのぞく小5 社会「わたしたちの生活と食／料生産」「工業／生産」。word-split）。分数（`.rt-frac`）の前の「（」の後ろで折れる（小2 算数「ぶんすう（／□・□・□）」。kinsoku-end）。単元の画面にも同じ形があれば出る。
 - **絵（絵の登録の担当。参考の missing-illust）**: `book`（g1.ja.folktales・g6.ja.language-change）・`music-note`（g1.ja.word-play）ほか 6 件。単元の地図・ホーム・ノートで点線の枠になる。
 - 保護者ゲートの長押しが途中で取り消されることがある件（4. のまま）。
+
+## 第7回（2026-11-07・分析と設計）
+
+第6回の直し（共通 0ddf24f・パックごと 1b128c8）とアプリの画面の直し（0ceda44）のあとに全単元を流した結果と、独立の点検の指摘 24 点を合わせて分析する。
+
+### 0. 元の結果と、追加で測ったもの
+
+- 元の結果: `docs/screenshots/text-layout-report/`（作成 2026-11-06T20:26Z。313 単元・10,056 問・191,860 画面。`MNW_FRESH=1 MNW_WORKERS=4`。失敗した単元 0・errors 0。全件は `.cache/text-layout/units/`）。件は **18**（第6回の前は 333）。違反のない単元は 301 / 313。
+  - 件の内訳: scroll-hidden 15（10 単元）・overlap-text 1・covered 1・orphan 1。clipped・kinsoku-start・button-split・narrow-wrap・small-text・text-on-figure・text-outside-box・markup-leak・wakachi-split・word-split・out-of-stage・overlap-button は 0。
+  - 残りの単元: g5.ja.sentence-relations 3・p4.env.seasons 2・p5.math.numbers-10 2・p5.think.pattern 2・g6.sci.strata 2（scroll-hidden・orphan）・g1.math.shapes 1（covered）・g3.ja.listen-memo 1・g4.ja.read-summary 1・g4.math.fraction-kinds 1・g5.ja.text-figure 1（overlap-text）・g6.math.proportion 1・g6.sci.solutions 1。
+- アプリの画面の検査（`docs/screenshots/app-layout-report/`。作成 2026-11-06T21:10Z）: 残りは単元の地図・ホームの**単元の題**（button-split 28・kinsoku-end 3・kinsoku-start 2・orphan 2・word-split 2・text-outside-box 3・fit-overflow 1）と、参考の missing-illust 6。アプリの画面の節の 4. で「パックの担当」「Rt（統括）」に回したまま、まだ直していない。この回で扱う（X7 と 5. の題）。
+- 開発サーバー（127.0.0.1:4377、`MNW_DEV_NO_HMR=1`。4299 は使っていない。終わってから止めた）で、残りの 18 件の代表と点検の 24 点を開いた。Playwright（同じサーバー）で約 60 画面を撮り、札・絵・図の矩形と計算された CSS を測った。分かったことは次のとおり（u は舞台の単位）。
+  - **絵が札の外に出る・札で切れる**（点検 1〜5。検査は字しか見ないので 1 件も出ていない）:
+    - p5.en.picture-book/42（1280×620）: 札 4 枚はどれも 14u。いぬ 5 ひきの絵の列は 36.3u で、札の左右に 11.1u ずつ出る。/46 は ねこ 2.9u・いぬ 5.5u、/50 は いぬ 9.3u（札のすき間は 2.4u なので、5 ひき目が隣の札に入る）、/55 は とり 6.9u 出る。解説（1920×1080）も同じ。
+      - 原因 1: 語のラベルのある札（`has-word`）は `container-type: inline-size` で中身の幅を持たないので、札は `--word-min-w`（14u）で止まる。
+      - 原因 2: 絵の包み（`.eng-opts__pic`。第6回 W1）の中の `.fig-illust` は flex の子で `min-width: auto`、`.fig-illust__group` は nowrap なので縮まない。
+      - 原因 3: 絵の大きさの式（`--pic-w`）は「88u − すき間 − 札の余白」を絵の総数（9）で割るだけで、札ごとの幅を決めない。
+    - g3.en.numbers-colors/26（1280×720）: 7 こ・6 こ・11 この札。7 この札は 25.1u なのに絵の列は 27.5u（左右に 1.2u）、6 この札は 0.8u 出る。11 この札は群（5・5・1）を横に並べた幅（約 45u）を基にして縮み、2 段に折り返して 19.5u しか使わないのに 40.2u を取る。1 枚目と 2 枚目の いちごが続いて並び、数えられない。
+    - p5.math.measure-compare/8（tower、1280×720）: 塔の SVG（viewBox 40×170、width・height なし）は、`.fig-svg svg:not([width])` の幅の規則と札の図の枠（`.tk-card__fig`。16u×9u・overflow: hidden）の幅で 16u×68u に描かれ、上下 28.6u ずつ切れる。1 枚目は空の札に見え、2・3 枚目は中ほどの 2 段だけが見える。
+    - p5.math.numbers-10/2（match の点の列）: 4 この点の svg は 12.4u（`Blocks` がインラインで `height` を書く）で、9u の枠の上下で 0.8u ずつ切れ、「半分・2 こ・半分」に見える。
+    - p23.math.shop/12（choice）: 札の中は 26.9u、くだもの 3 こ（10u×3＋すき間）は 31.2u で、左右に 1.1u 出る。
+  - **作業領域・解説の板に入らない**（残りの scroll-hidden。どれも開いて確かめた）:
+    - p4.env.seasons/22: 8 枚の札（5 字の語 4 枚）は `--fit` 0.8 で幅の合計が約 100u になり、1 段（88u）に入らない。2 段では 30.8u 要り、作業領域（26.3u）に入らない（てぶくろ・ゆきだるまの札が切れる）。4 さいの画面にスクロールの ▲▼ は無く、▼ だけ。解説は、空の札置き場（`eng-sort__pool`）が高さを取り、何も無いのに ▼ が出る（4.4〜4.9u）。
+    - p5.math.numbers-10/4・5（ord）: 動物の列（`fig-row`）9.6u＋選択肢 15.3u で 28.5u 要る。図を縮めるのは「min(図の高さ, 12u)」までなので、9.6u の列は縮まない（UnitRunner）。
+    - p5.think.pattern/2・3 の解説（1536×864）: 解説が並びを 8 つ全部言うので 4 行になり、板が 17.2u を取る。選択肢の名前と正解の ○ が半分隠れる。
+    - g4.math.fraction-kinds/4 の解説: 数直線 2 本の列（`fig-column`）が板に 5.1 行分入らない。2 本目（0.1 きざみ。8/10 を示す）は全部隠れる。1 本目の 4/5 のラベルは、svg の下の余白（viewBox の y=120〜150、約 2.5u）のさらに下の段（`.fig-nl__labels`）に置かれ、線から約 8u 離れる。2 本目の印のラベルは解説でも「？」のまま。目もりの数は 0.2・0.4…の小数で書かれる（分母 3・6 の問題では 0.333333 になる）。
+    - g6.sci.solutions/22: 表（4 行）17.7u の下に、長い選択肢 3 つが縦一列（`layout: 'column'`）。2 つ目からが隠れる（8.7u 足りない）。
+    - g6.math.proportion/2: グラフの選択肢 4 つを 2×2（`layout: 'grid'`）に並べ、下の段の横軸が隠れる（4.8u）。
+    - g5.ja.sentence-relations/37〜39: 選択肢 3 つ（各 18 字前後）を縦一列（`layout: 'column'`）。3 つ目が半分隠れる（2.5〜2.7u）。2 列なら 1 つ約 34u で入る（作業領域の幅 88u）。
+    - g4.ja.read-summary/41 の解説: 並べた札の列の右に、空の枠（`eng-order__ghost`）4 つが 2 列の格子の半分を取り、札が 2 行に折れて 4 枚目が切れる。
+    - g3.ja.listen-memo/19・26 の解説（1920×1080・1536×864）: 解説が 3 行で板が 12.9u を取り、3 つ目の選択肢の下が切れる（26 は 1920×1080 で 0.5u。画面サイズを回す順で出たり出なかったりするのは第6回のとおり）。
+    - g6.sci.strata/17 の解説: 隠れているのは空の札置き場だけ。札「下から れき・砂・どろと ならぶ 層」は最後の行が「層」1 字（`data-spaced` でも Chrome の `text-wrap: pretty` が戻さない。第6回 7. のとおり）。
+  - **正解の輪**（点検 17・18）:
+    - g1.math.shapes/1・2 の解説（4 サイズ）: geometry の札（`.eng-geo__opt`。絵＋`.eng-geo__optlabel`）は、第6回 W1 の「輪郭＋右下の ○」の対象の一覧に無く、大きな輪のまま。輪が「すいか」「つみきの つつ」「かん」の字を横切り、札の外へも出る。検査（C21）は字の中心が輪の帯に入るかだけを見るので、「つつ」の 1 件しか出ない。
+    - listen の絵の段の輪: 輪の箱は絵の段の上下に 0.8u 出て、外の白い縁取り（0.35u）も足すと 1.15u 出る。ラベルのふりがなは絵の段の下端から始まる（g6.en.future/7 の解説 1280×720 で、段の下端 31.17u・rt の上端 31.18u・輪の下端 31.97u）。検査は rt の字を輪の判定から外している（`if (c.rt) return false`）ので出ない。
+  - **横軸の札がつながる**（点検 19・20）: g4.sci.weather/9（4 サイズ）の「9時 10時11時12時13時14時15時」は、札の間のすき間が字の 0〜0.05 倍。g5.ja.text-figure/17（1536×864）の「運動場体育館ろうか階だん 教室」は 0.01 倍。`useStaggerLabels` は「中身の幅 ≦ 枠の幅 × 1.01」なら縮めないので、すき間を見ていない。
+    - あわせて、折れ線グラフの縦軸の単位「（℃）」は、横軸の札のさらに下の左はしに置かれ、横軸の単位に読める（`.fig-chart__unit`。g4.sci.weather/9）。
+  - **小さすぎる絵・札**（点検 21・22）:
+    - p5.en.phrases/92（1280×720）: 札 4 枚に くるま 5・ほし 9・くるま 6・いぬ 5。絵は 1 つ 2.06u（約 26px）。/49（1280×620）は 3.55u、/120（1920×1080）は 6.78u。数える札は 1 行に並べるので、絵の総数で幅を割ることになる。
+    - g6.prog.efficient/11: 問題の札の列（パックの SVG。viewBox 330×34、`height: calc(var(--u) * 5)`）は、width の無い svg の既定（23u）で 23u×5u の箱になり、縦横比 9.7 の図が箱の中に高さ約 2.4u で描かれる（札 1 枚 1.49u）。作業領域の幅は 92u あり、高さ 5u のまま幅を縦横比で決めれば約 48u（札 1 枚 約 4u）になる。
+  - **意味**（点検 23・24。どちらも画面で確かめた）:
+    - p23.think.sort: 2〜3 歳は sort の札を `toddlerLimit`（2 歳の段階 2 枚・3 歳の段階 3 枚）に減らすが、解説はパックの決まった文で 4 枚ぶんを言う（/25 の解説で、画面に無い「ふね」、/10 で「レモン」）。
+    - p5.math.shapes/8: 何も描かずに つぎへ で解説に進むと、空の格子に「こたえ ましかくが かけたね。」と出る。geometry の見本（`ans`）は exact・reflect・rotate180 の目標だけで、shape・congruent・similar・直線の目標は出ない。
+  - **新しく見つけたもの（意味）**: g1.math.shapes の「ボールの かたち」の物に すいか が入っているが、絵（`watermelon`）は切った一切れ（半月の形）で、球に見えない（/1 の解説 1280×720 で確かめた）。
+- 検査の側で分かったこと:
+  - g5.ja.text-figure/8 のヒント①（1920×1080）の overlap-text「10｜15」は、第6回 8. で誤検出と判断し、検査の直しを次の回に回したもの（C31）。
+  - 点検 1〜5・21・22 は、検査が絵の矩形と大きさを見ないので出ない（C28・C29）。点検 17・18 は C21 の判定の漏れ（C27）。点検 19・20 は重なりしか見ないため（C30）。
+
+### 1. 原因の分類（第7回）
+
+| 分類 | 内容 | 主なもの（点検の番号） |
+|---|---|---|
+| (1) 共通の画面の作り | 正解の印の対象の漏れ・絵の段の輪（X1）／絵の札の幅と数える絵（X2）／札の図の枠・解説の空の枠と置き場（X3）／横軸の札のすき間・数直線の印のラベル・手順の札の列・縦軸の単位（X4）／12u 以下の図が縮まない（X5）／描く問題の見本（X6）／ruby と分数の前の括弧（X7） | 1〜4・6（解説）・7・9（ラベル）・13・15（置き場）・17〜22・24 と、残りの covered 1・scroll-hidden 6 |
+| (2) パックの文・選択肢・配置 | 札・選択肢の数と長さ・並べ方（p4・g5-ja・g6-math・sci-g56）／解説の長さ（p5・g3-ja）／解説の図（g4-math）／解説が画面と食い違う（p23・p5）／絵の意味（g1-math）／単元の題（アプリの画面） | 6（問題）・8〜12・14・15（札）・23・24（文）と、残りの scroll-hidden 9・orphan 1 |
+| (3) 検査の誤検出 | SVG の text の外接の箱と、枠で切れた箱の閾値（C31） | overlap-text 1（点検 16） |
+| (3') 検査の見落とし | 輪の判定を字の中心と rt 抜きで見ていた（C27）／絵の矩形を見ない（C28）／絵と札の大きさを見ない（C29）／札のすき間を見ない（C30） | 1〜5・17〜22 |
+| (4) 設計上受け入れる | 第6回までのもの（下の 4.）と、問題の状態の作業領域の下の空き | 点検 12 の一部 |
+
+### 2. 共通の直し（systemic。項目ごとにファイルを分ける）
+
+DESINGN.md は X1 が持つ。X2〜X7 の規約（各項目の「DESINGN.md に書くこと」）も、X1 がまとめて 17 章に書く（ファイルを重ねないため）。
+
+#### X1 正解の印の残り（ui.css・DESINGN.md）
+
+ファイル: `src/ui/ui.css`、`DESINGN.md`
+
+1. **絵と字の両方がある札は、すべて「輪郭＋右下の ○」にする**（点検 17）:
+   - 今の規則は、ラベルの子が `.eng-choice__label`・`.exp-opt__label` の札だけ。geometry の札（`.eng-geo__opt` の `.eng-geo__optlabel`）が漏れていた。
+   - エンジンを grep し、`Choice` の札で絵・図と字の子の両方を持つものを全部一覧に入れる（少なくとも `.eng-geo__optlabel`）。listen の絵の段の輪（`.eng-opts__pic`）は 2. のとおり別。
+2. **listen の絵の段の輪を、絵の段の上下に出さない**（点検 18）:
+   - 輪の箱を絵の段の中に収め、直径を「絵の段の高さ − 0.7u」にする（外の白い縁取り 0.35u も段の中）。左右は今のまま段の中央。
+   - ラベルのふりがなは段の下端から始まるので、輪と縁取りがふりがなに触れなくなる。
+3. **DESINGN.md**: 17 章の正解の印（第6回 W1 の項）に 1.・2. を書き、X2〜X7 の規約（各項目の「DESINGN.md に書くこと」）を「第7回の規約」としてまとめる。
+- 確かめ方: `#/dev/unit/g1.math.shapes/1?seeds=2&state=explain`・`/2`（4 サイズ）、`g6.en.future/7`（4 サイズ）・`/5`・`/9`、`g6.en.places/14`・`/19`、`p4.en.words/89`、`p5.en.phrases/29`（1280×620）。C27 で covered が 0 になること。幼児の英語の札が 14u×18u 以上のままであること。
+
+#### X2 絵の札の幅と数える絵（choice・listen）
+
+ファイル: `src/engines/choice/choice.tsx`、`src/engines/choice/choice.css`、`src/engines/choice/` のテスト（新しい `pics.test.ts` など）、`src/engines/listen/options.tsx`、`src/engines/listen/options.css`、`src/engines/listen/listen.tsx`、`src/engines/listen/listen.css`
+
+1. **絵の大きさ s と札の幅を、札ごとの絵の数から JS で決める**（`usePicsGeometry`）:
+   - 札 i について、1 行に並ぶ絵の数 r_i と行の数 k_i、札の余白・枠・ラベルの高さを測る。
+   - 次の 2 つを満たす最大の s を求める（上限 15u。2 分探索でよい）:
+     - 幅: Σ max(札の最小の幅, r_i × s ＋ (r_i − 1) × 絵のすき間 ＋ 札の余白) ＋ (札の数 − 1) × 札のすき間 ≦ 列の幅
+     - 高さ: max(k_i × s ＋ (k_i − 1) × 絵のすき間) ＋ ラベル ＋ 札の余白 ≦ 高さの上限（今の `--pics-above`・`--pics-below`・`--work-h` から）
+   - s を `--pic-max` に、札の幅を札ごとに `--card-w` に書く。語のラベルの札（`has-word`。inline-size の container）は `min-width: max(var(--word-min-w), var(--card-w))` にする。
+   - CSS の式（`--pic-w`）は、JS が測る前の初めの値にだけ使う。
+2. **数える札は 5 こずつの行にする**: 選択肢のどれかに絵が 6 こ以上ある問題では、札の中の絵を 5 こずつの行に並べる（6〜10 こは「5＋残り」の 2 行。11 こ以上は今の 5 のまとまりのまま）。図の部品（`Figure.tsx`）は変えず、札の中の CSS（`flex-wrap` と 5 こぶんの `max-width`）で折る。
+3. **並べ方を比べて選ぶ**（4 つ以下の選択肢）: 「1 段・きいてね が上」「1 段・きいてね が左」「2×2・きいてね が上」「2×2・きいてね が左」で 1. の s を求め、s が最大のものにする（聞く問題の `earOnTop`・`picsSide` もこの結果で決める。choice は「きいてね」が無いので 1 段と 2×2 の 2 つ）。
+   - 見積り（1280×720）: p5.en.phrases/92 は、1 段・上で 3.3u、2×2・左で 4.5u。g3.en.numbers-colors/26 は 1 段・上で 4.4u。
+4. **下限**: 絵が 1 つの札は今の `--pic-floor`（幼児 10u・ほかの段階 6u）。数える札（1 つの札に絵が 2 つ以上）の絵は 4u。下限に届かないときも、s が最大の並べ方のままにする（C29 で検査に出る）。
+5. **安全網: 札の中の絵は札の内側に入れる**: `.choice` の中の `.fig-illust`・`.fig-illust__group` は `min-width: 0; max-width: 100%`、絵は `flex: 0 1 auto`（縦横比 1）。1.〜4. で幅を決めたあとに残るはみ出し（p23.math.shop/12 の くだもの 3 こ。札の中 26.9u に 31.2u）を、札の中で縮める。
+- DESINGN.md に書くこと（X1 が書く）: 17 章の「語のラベルと絵の札の高さ」（第4回 V2）に、1.〜5.（札の幅は絵の数から・数える札は 5 こずつの行・並べ方の選び方・数える絵の下限 4u・絵は札の外に出さない）。
+- 確かめ方: 次の画面で、絵が札の外に出ないこと（C28 で 0）、絵の大きさが下限以上であること（C29 で 0）。
+  - `p5.en.picture-book/42`・`/46`・`/50`・`/55`（問題と解説、4 サイズ。/50 の 1280×620 で 5 ひき目のいぬが隣の札に入らない）
+  - `g3.en.numbers-colors/26`（4 サイズ）
+  - `p5.en.phrases/49`・`/92`・`/120`（数の問題 67 問の代表、1280×620・1280×720）
+  - `p23.math.shop/12`〜`/14`（1280×720）。絵の選択肢の多い `p4.en.where`・`p4.en.hello`・`g4.en.time-days/14` が崩れないこと。
+
+#### X3 札の図・解説の空の枠と置き場（order・sort。`.tk-card`）
+
+ファイル: `src/engines/order/**`（`shared.css`・`order.tsx`・`order.css`）、`src/engines/sort/**`
+
+1. **札の図の枠に、図を縮めて入れる**（点検 3・4）:
+   - `.tk-card__fig`（16u×9u・overflow: hidden）の中の svg・img に `max-width: 100%; max-height: 100%` を当てる（`Blocks` などがインラインで書く `height` にも効くように）。
+   - 縦長の SVG は高さで決まり、viewBox の縦横比は既定の `preserveAspectRatio`（meet）で保つ。塔 3 本は同じ viewBox（40×170）なので、高さの違いはそのまま残る。
+   - match の札も `.tk-card`（`shared.css`）なので、p5.math.numbers-10/2・3 の点の列も同じ直しで入る。
+2. **order の解説で、空の枠の列を出さない**（点検 13）: 解説（`revealed`）で、おくもの の列が空の枠（`eng-order__ghost`）だけのときは列を出さず、並べた所の列を作業領域の幅いっぱいにする（縦の 2 列の格子をやめる）。
+3. **sort の解説で、空の札置き場を出さない**（点検 6 の解説・15）: 解説で `eng-sort__pool` が空なら描かない（高さを取らない）。
+- DESINGN.md に書くこと: 7〜8 章の札（図は札の図の枠に縮めて入れる）、order・sort の解説（空の枠・置き場を出さない）。
+- 確かめ方:
+  - `p5.math.measure-compare/8`〜`/10`（問題と解説、4 サイズ）で、塔が 3 本とも上から下まで見え、高さを比べられること。
+  - `p5.math.numbers-10/2`・`/3` で、点を 4 こ・3 こ・6 こと数えられること。
+  - `g4.ja.read-summary/41`（1536×864・1280×720）・`g6.sci.strata/17`・`p4.env.seasons/22` の解説で、作業領域の scroll-hidden が 0 になること。
+
+#### X4 図: 横軸の札・数直線の印・手順の札の列・縦軸の単位（figure・graph）
+
+ファイル: `src/engines/figure/**`（`Figure.tsx`・`figure.css`・`svgText.ts`・`gridFloor.ts` とテスト）、`src/engines/graph/**`
+
+1. **横軸の札のすき間**（点検 19・20）:
+   - `useStaggerLabels` の入る条件を「札の中身の幅 ＋ 字の 0.4 倍 ≦ 枠の幅」にする（今は中身の幅 ≦ 枠の幅 × 1.01）。入らなければ今の順（字を `--text-min` まで縮める → 1 つおきに下の段）。
+   - graph の横軸（`useXLabelFit`）も同じ条件にする。
+2. **数直線の印のラベル**（点検 9 の後半）:
+   - 印（▼）のラベルを ▼ の真上に置く（今は svg の下の余白のさらに下の段）。分数のラベル（2.2em）も同じ。
+   - svg の viewBox の下の空き（目もりの数の下、y=120〜150）を詰め、図の高さを減らす。
+3. **手順の札の列**（点検 22）:
+   - `gridFloor.ts` で、同じ大きさの正方形（rect）が 3 つ以上、すき間が辺の半分以下で横に並ぶパックの SVG を「札の列」とみなす。
+   - 札の列の svg には viewBox の縦横比（`aspect-ratio`）を書き、幅を「高さ × 縦横比」にする（作業領域の幅まで）。今は width の無い svg の既定 23u の箱に描かれ、g6.prog.efficient/11 の問題の札が 1 枚 1.49u になる。
+   - 選択肢の中の札の列は、札 1 枚が 2.4u（盤の 1 ますと同じ下限。第6回 W8）を下回るなら、1 列の札（`fig-svg--wide`。W8）にする（g6.prog.efficient/9・g5.prog.debug-plan/8 の 1.67u）。
+4. **縦軸の単位**: 折れ線・棒グラフの単位の札（`.fig-chart__unit`）を、横軸の札の下でなく縦軸の上（図の左上）に置く。横軸の下の左はしの「（℃）」は、横軸の単位に読める（g4.sci.weather/9）。
+- DESINGN.md に書くこと: 17 章の図（横軸の札のすき間は字の 0.4 倍以上・印のラベルは ▼ の上・手順の札は 1 枚 2.4u 以上・縦軸の単位は縦軸の上）。
+- 確かめ方:
+  - `g4.sci.weather/9`・`/13`（問題と解説、4 サイズ）、`g5.ja.text-figure/16`・`/17`・`/19`（4 サイズ）で、札のすき間が字の 0.4 倍以上（C30 で 0）。
+  - `g4.math.fraction-kinds/4` の解説で、印のラベルが ▼ のすぐ上にあり、図の高さが減ること。
+  - `g6.prog.efficient/11`・`/9`、`g5.prog.debug-plan/8`（問題と解説、1280×720・1536×864）で、札 1 枚が 2.4u 以上（C29 で 0）。盤（第6回 W8 の 9 単元）が崩れないこと。
+
+#### X5 単元の枠: 12u 以下の図を縮める（UnitRunner・unit.css）
+
+ファイル: `src/units/UnitRunner.tsx`、`src/units/unit.css`
+
+- 今の図の縮め方は「`--fig-max` = max(min(図の高さ, 12u), 図の高さ − 不足)」で、12u 以下の図は縮めない。p5.math.numbers-10/4・5 の動物の列（9.6u）は縮まず、`--fit` が下限（0.8）でも 2.3u 足りずにスクロールになり、選択肢の名前（きつね・かえる・うさぎ）が切れる（点検 7）。
+- `--fit` が下限でも入らないときだけ、図の下限を 6u（絵の並びは `--fig-k`。下限 0.35 のまま）に下げて、もう一度図を縮めてから測り直す。作業領域をスクロールの枠にするのは、そのあとでも入らないときだけ。
+- 文字の図（`.fig-text`・`.fig-table`）と数の入力（`NO_FIG_FIT`）は、今までどおり縮めない。
+- DESINGN.md に書くこと: 17 章の「図を先に縮める」に、下限の fit でも入らないときの 6u。
+- 確かめ方: `p5.math.numbers-10/4`・`/5`（問題・ヒント①②、4 サイズ）で work の scroll-hidden が 0、動物の列が 6u 以上、選択肢の名前が見えること。ほかの単元の図の大きさが変わらないこと（今入っている画面では、この直しは働かない）。
+
+#### X6 描く問題の見本（geometry）
+
+ファイル: `src/engines/geometry/**`
+
+- 解説（`revealed`）で、子供の図が目標を満たしていないとき（何も描いていないときを含む）、見本の形を格子に描く（今の `ans` と同じ点線）。
+- 今は exact・reflect・rotate180 の目標だけで、congruent・similar・shape・perpendicular・parallel は見本が出ない（`targetPolygon` が null）。
+  - congruent: `given` の形を、格子の空いている所（`given` と重ならない所）へずらしたもの。
+  - similar: `given` の形を ratio 倍したもの。
+  - shape: 種類と辺（`sides`）から作った形（ましかく 2×2・ながしかく 3×2・さんかく など）を格子の中ほどに置く。
+  - perpendicular・parallel: `through`（無ければ格子の中ほど）を通る直線。
+- DESINGN.md に書くこと: 18 章の解説（描く問題は、正しく描けていなければ見本の形を出す）。
+- 確かめ方: `p5.math.shapes/8` の解説（何も描かずに つぎへ）で、見本のましかくが出ること。`g1.math.shapes`（congruent）・`g2.math.triangles-quads`・`g3.math.triangles`（shape）・`g5.math.congruence`・`g6.math.scale`（similar）の描く問題の解説。
+
+#### X7 Rt の折れ（アプリの画面の検査の残り）
+
+ファイル: `src/text/Rt.tsx`、`src/text/rt.css`、`src/text/rt-wrap.test.ts`
+
+- ruby は、隣の字を包み（`.rt-nobr`）に取り込めなかったときも、親字の途中で折らない（`.rt ruby { white-space: nowrap }`）。対象: 単元の地図の「わたしたちの生活と食／料生産」「工業／生産」（g5.soc.food・g5.soc.industry の題。word-split）。
+- 分数（`.rt-frac`）の直前の始め括弧を、ruby・空欄と同じく分数の包みに入れる。対象: 「ぶんすう（／1/2・1/4・1/3）」（g2.math.fraction-simple の題。kinsoku-end）。
+- DESINGN.md に書くこと: 17 章の改行の規則（S2）の nowrap のまとまりに、ruby の中と分数の前の始め括弧。
+- 確かめ方: `npm run check:app-layout` で word-split と「（」の kinsoku-end が 0。text-layout で、単元の画面の同じ形（分数の前の括弧）が増えないこと。
+
+### 3. 検査の直し（checkerChanges）
+
+ファイル: `e2e/helpers/text-layout.ts`、`e2e/helpers/text-layout-report.ts`（新しい種類の名前と順）、`e2e/text-layout-probe.tl.ts`（見本）、`docs/test-plan.md`（3.2 に理由を書く）
+
+- **C27 正解の輪と字（見落とし）**:
+  - 字の中心でなく、字の矩形（上下左右を 15% ずつ内側に縮めたもの）が輪の線の帯（外の円 − 内の円）と交わるかで見る。外の円の外、内の円の内に入りきった字は数えない。
+  - ふりがな（rt）の字も数える（今は除いている）。
+  - 理由: g1.math.shapes/1・2 の「すいか」「かん」は、輪が字を横切るのに字の中心が帯の外で、検査を通り抜けた（点検 17）。listen の絵の段の輪がふりがなにかかるもの（点検 18）は、rt を除いていたので出なかった。
+- **C28 絵が札の外に出る・札で切れる（見落とし。新しい種類 `figure-outside-box`「絵が札の外に出る・札で切れる」）**:
+  - 札（`BTN_SEL`・`.tk-card`・`.choice`）の中の絵（いちばん外の svg・img・`.fig-illust__group` の子）の矩形が、(a) 札の矩形（枠線の内側）から 0.3u を超えて出る、または (b) 札の中の祖先で overflow が visible でない枠から 0.3u を超えて出る（その枠で切れる）とき、札ごとに 1 件出す。
+  - detail は「絵が札の外に 11.1u 出る」「絵が札の枠で 28.6u 切れる」の形。`.mark`・`.tk-badge` は絵に数えない。
+  - 理由: 点検 1〜5 は、字の検査（clipped・text-outside-box）が字しか見ないので 1 件も出ていなかった。
+- **C29 絵・札が小さすぎる（見落とし。新しい種類 `small-figure`「絵・札が小さすぎる」）**:
+  - (a) 1 つの札に絵が 2 つ以上ある札（数える札）の絵（`.fig-illust__group` の子）の短い辺が 4u 未満（段階を問わない。g3.en.numbers-colors も数える札）。
+  - (b) パックの SVG（`.fig-svg` の svg）の中の、同じ大きさの正方形（rect）が 3 つ以上・すき間が辺の半分以下で並ぶもの（手順の札・盤のます）の 1 つが、画面で 2.4u 未満。間をあけて置いた図形（p5.think.pattern の「ちいさい しかく」）は数えない。
+  - 理由: 点検 21・22。下限は DESINGN.md（X2 の 4u、第6回 W8 と X4 の 2.4u）に合わせる。
+- **C30 並んだ札がつながって見える（見落とし。新しい種類 `label-gap`「札がつながって見える」）**:
+  - 横軸の札の列（`.fig-chart__labels` と graph の `.gr-xlabels` の子）と数直線の印のラベル（`.fig-nl__labels` の子）で、同じ行の隣どうしの字の矩形のすき間が、字の大きさの 0.25 倍未満のもの。
+  - 理由: 点検 19・20。overlap-text は重なり（すき間が負）しか見ない。対象を札の列に絞るのは、文の中の span どうし（Rt の ruby・nobr の包み）は、すき間 0 で並ぶのが正しいため。
+- **C31 SVG の text の重なり（誤検出）**:
+  - overlap-text で SVG の text どうしを比べるときは、外接の箱（ascent＋descent。約 1.47em）でなく、上下を字の大きさ（font-size）の高さに詰めた箱で比べる。
+  - 閾値（低いほうの 0.3 倍）は、スクロールの枠で切る前の箱で決める。HTML の字は今までどおり。
+  - 理由: g5.ja.text-figure/8 のヒント①（1920×1080）の「10｜15」。Chart の縦軸の数は字の 1.1 倍以上の間をあけて間引いていて、字の本体は重ならない（第6回 8. で目で確かめた）。外接の箱どうしがかかったうえ、本文の枠で切れた「15」の箱が低くなって閾値が 4px まで下がった。
+- probe に、C27〜C31 の見本（直す前のコードでは失敗するもの・数えないもの）を足す。`docs/test-plan.md` 3.2 に C27〜C31 の理由を書く。新しい種類は app-layout の要約（`KIND_LABEL`）にも入るので、アプリの画面の検査（`check:app-layout:probe`）も通ることを確かめる。
+
+### 4. 受け入れるもの（accepted）
+
+- 第6回までのもの（そのまま）:
+  - 小3以上の地の文（読解の本文・解説の文）で、字の間に改行が入るもの（JIS X 4051 で許される）。選択肢・札・ボタンの中は、今までどおり違反として見る。
+  - 読解の本文の枠のスクロールと、表の解説の板のスクロール（どちらも印あり）。ただし、答えの行や正解の図が隠れる板は受け入れない（点検 9 の g4.math.fraction-kinds/4 はこれに当たるので、X4 と 5. の g4-math で直す）。
+  - text-on-figure（参考）で、ふりがなが線に少しかかるだけのもの。
+  - 検査から外れた 11 単元（legacy。`layout.spec` が受け持つ）。
+- **幼児の英語の受け入れを改める**: 第6回の「絵 10u 以上」は、絵が 1 つの札のこと（DESINGN.md 17 章の `--pic-floor`）。1 つの札に絵が 2 つ以上ある札（数える札）は、この回で下限 4u・5 こずつの行を決める（X2）。点検 21 は受け入れない。
+- **問題の状態の作業領域の下の空き**（点検 12 の「約 6u の空き」）: 作業領域を下へ伸ばさない。ヒントを出すと吹き出しがそこに入るので、伸ばすと状態によって作業領域の大きさが変わり、札が動く。5.1 の配置（作業領域の高さは状態で変えない）を保ち、g5.ja.sentence-relations は並べ方（5. の g5-ja）で直す。
+- 第6回 8. で受け入れた g5.ja.text-figure/8 の「10｜15」は、この回は受け入れでなく検査の直し（C31）にする。
+
+受け入れないもの（この回で直す）: 絵が札の外に出る・札で切れるもの、数える絵が 4u に足りないもの、作業領域・解説の板で選択肢・札・図が隠れるもの（幼児の画面では ▼ だけでもスクロールさせない）、正解の輪が字・ふりがなを横切るもの、横軸の札がつながって読めるもの、解説が画面と食い違うもの。
+
+### 5. このラウンドで直すもの（content。パックごと）
+
+systemic のファイル（エンジン・`src/units`・`src/ui`・`src/text`）は触らない。教材の文を変えたら `npm run voice:packs` を流す（改行だけ変わった JSON は戻す）。学年の漢字・《よみ》・分かち書き・ヒントと解説の対応は保つ。題を変えたら `npm run build:unit-index` と `npm run chars` も流す（used-chars が変われば、フォントを作り直す）。
+
+- **p4**（`src/packs/p4/**`）: p4.env.seasons/22（sort:l3）の札を 8 枚から 6 枚にする（どの季節にも 1 枚以上。5 字の語を減らす）。作業領域の 1 段（88u）に入ることを 4 サイズで確かめる。解説も 6 枚に合わせる。
+- **p5**（`src/packs/p5/**`）:
+  - p5.think.pattern の解説を、並びを全部言わずに「くりかえしの まとまり」と答えで言う形にする。例: 「おおきい まる、おおきい さんかく、ちいさい しかくの くりかえし。？は おおきい さんかく。」。形と大きさが別々に回る問題は「かたちは ほし・さんかく・しかくの じゅん、おおきさは おおきい・ちいさいの じゅん。？は ちいさい さんかく。」。1536×864 で板が 3 行までになること（/2・/3）。
+  - p5.math.shapes の copy・draw の解説を、描けたことを前提にしない文にする（今は「…が かけたね。」）。例: 「ましかくは かどが 4つ、へんの ながさが みんな おなじ。」。見本の形は X6 が出す。
+- **p23**（`src/packs/p23/**`）: p23.think.sort の解説（色・種類の両方）を、2〜3 歳で減らした札（`sortVisible`。2 歳の段階 2 枚・3 歳の段階 3 枚）と食い違わない文にする。名前を言うのは、どの段階でも画面に出る札（各箱の 1 枚目）だけにするか、名前を言わずに分け方を言う（例: 「どうぶつは どうぶつの はこ、のりものは のりものの はこ。」）。4 さい以上が見る 4 枚の画面でも、うそにならないこと。
+- **g1-math**（`src/packs/g1-math/**`）:
+  - g1.math.shapes の「ボールの かたち」の物から すいか を外す（絵が切った一切れで、球に見えない）。ボール・みかん・トマトが残る。すいか を正解にしていた問題（/1）が、ほかの物で同じ問いになること。
+  - 単元の題（アプリの画面の検査の残り）: g1.math.numbers-120「100までの かず・120くらいまでの かず」（button-split）、g1.math.add-sub-2digit「2けたの たしざん・ひきざん（かんたんな けいさん）」（ホームのおすすめで fit-overflow・text-outside-box）。
+- **単元の題**（アプリの画面の検査の残り。g1-ja・g2-ja・g3-ja・g4-ja・g5-ja・g6-ja・g4-math・g5-math・sci-g34・soc-g34・soc-g56。`docs/screenshots/app-layout-report/summary.md` の該当の行）:
+  - 空白で区切って書く題は、空白で区切った 1 まとまりが札の 1 行（小1・小2 で約 6 字、小3〜小6 で 6〜7 字）に入るよう、空白を足すか短くする。空白で区切らない題（国語・社会の小3以上）は、短くするか、文節の切れ目に空白を入れる（`spacedLabel` の条件: 空白の数 × 12 ≧ 字数）。意味・学年の漢字・《よみ》を保つ。
+  - 題: g1-ja（folktales「むかしばなしを きこう」・write-order「じゅんじょよく かこう」）、g2-ja（culture「むかしばなしと ことばあそび」）、g3-ja（haiku・romaji・kanji-parts・read-paragraphs）、g4-ja（info-compare「くらべる・分ける・引用」）、g5-ja（figurative・sentence-relations・spoken-written・word-structure）、g6-ja（kanji-usage・language-change）、g4-math（change-relations・fraction-kinds・quadrilaterals）、g5-math（decimal-shift・per-unit）、sci-g34（g4.sci.temperature）、soc-g34（g3.soc.safety）、soc-g56（g6.soc.history-2・history-3）。g5.soc.food・industry と g2.math.fraction-simple は X7 で直るので変えない。
+  - 確かめ方: `npm run check:app-layout`（自分のポートの一時の設定）で、その題の違反が 0。
+- **g3-ja**（`src/packs/g3-ja/**`）: g3.ja.listen-memo の amibou の解説（shitsumon/19・chuushin/26）を、1920×1080・1536×864 で 2 行に入る長さにする。答えのわけ（話に出てこなかったこと・はじめとおわりの言葉）は残す。
+- **g4-math**（`src/packs/g4-math/**`）: fraction-kinds の等しい分数（equiv）:
+  - 数の入力の問題の解説の図を、数直線 1 本にする: `step: 1/d`（もとの分母の目もり）・`minorStep: 1/D`（細かい目もり）・`labelEvery: 1`（数は 0 と 1 だけ）・印 1 つ（`at: n/d`、ラベル `[[n/d]] ＝ [[N/D]]`）。解説の図に「？」を出さない。ヒント①（「数直線を ならべると…」）と図の対応を確かめ、合わなければ①を直す。
+  - 選ぶ問題（alt）の問題の図（2 本のまま）にも `labelEvery: 1` を付ける（目もりの数が 0.2・0.333333 の小数で出ないように）。
+  - 解説の板に図が入ること（4 サイズ。▼ なし）。
+- **g5-ja**（`src/packs/g5-ja/**`）: g5.ja.sentence-relations の setsuzoku-alt（/37〜39）の `layout: 'column'` を `'grid'`（2 列）にする。4 サイズ・問題とヒントで作業領域に入ること。同じ単元の `layout: 'column'` のほかの問題も、2 列で入るなら合わせる。
+- **g6-math**（`src/packs/g6-math/**`）: g6.math.proportion の graph-alt（/2）を 1 段の 4 つ（`layout: 'row'`）にするか、グラフを低くして、下の段の横軸が見えるようにする。横軸の数（0〜5）が読める大きさであること（C29・C30 で出ないこと）。
+- **sci-g56**（`src/packs/sci-g56/**`）:
+  - g6.sci.solutions/22（mt-solid-diff）: 選択肢を表の下の 1 段（`layout: 'row'`）に入る長さにする（例: 「アルミニウムとは ちがう 物に なった」→「ちがう 物に なった」、「アルミニウムは 消えて、塩酸だけが のこった」→「塩酸だけが のこった」）。誤概念（sol-metal-same・sol-metal-vanish）と食い違わないこと。4 サイズで作業領域に入ること（今は 8.7u 足りない）。
+  - g6.sci.strata/17（fm-alt-sort）: 札「下から れき・砂・どろと ならぶ 層」を、箱の幅で 1 行に入る長さにする（例: 「れき・砂・どろが 重なる 層」）。解説の「大きい つぶから 重なる 層」と対応させる。
+
+パックを変えないもの（共通の直しで直る）: en-pre（p5.en.picture-book・p5.en.phrases・p4.en.words → X1・X2）、en-g34（g3.en.numbers-colors → X2）、en-g56（g6.en.future・g6.en.places → X1）、p5 の measure-compare・numbers-10（X3・X5）、sci-g34 の g4.sci.weather（X4）、g5-ja の text-figure（X4・C31）、prog-g16（X4）、g4-ja の read-summary（X3）、g2-math（X6・X7）、g3-math・g5-math・g6-math の描く問題（X6）。
+
+### 6. 点検の指摘の扱い（1〜24）
+
+| 点検 | 内容 | 扱い |
+|---|---|---|
+| 1 | p5.en.picture-book の絵が札の外へ最大 11u | X2・C28 |
+| 2 | g3.en.numbers-colors/26 の いちごが札の外へ | X2・C28 |
+| 3 | p5.math.measure-compare の塔が札で切れる | X3・C28 |
+| 4 | p5.math.numbers-10/2・3 の点の列が切れる | X3・C28 |
+| 5 | p23.math.shop の くだものが枠にかかる | X2（安全網）・C28 |
+| 6 | p4.env.seasons/22 の札が切れる・空の置き場 | 問題は p4（6 枚）、解説は X3 |
+| 7 | p5.math.numbers-10/4・5 の名前が切れる | X5 |
+| 8 | p5.think.pattern/2・3 の解説の板が 4 行 | p5（解説を短く） |
+| 9 | g4.math.fraction-kinds/4 の 2 本目が隠れる・ラベルが離れる | g4-math（1 本の数直線）・X4（印のラベル） |
+| 10 | g6.sci.solutions/22 の選択肢が隠れる | sci-g56（短く・1 段） |
+| 11 | g6.math.proportion/2 の横軸が隠れる | g6-math（並べ方） |
+| 12 | g5.ja.sentence-relations/37〜39 | g5-ja（2 列）。下の空きは 4. で受け入れる |
+| 13 | g4.ja.read-summary/41 の空の枠 | X3 |
+| 14 | g3.ja.listen-memo/19・26 | g3-ja（解説を 2 行に） |
+| 15 | g6.sci.strata/17 の空の置き場と「層」1 字 | X3・sci-g56（札を短く） |
+| 16 | g5.ja.text-figure/8 の「10｜15」 | C31（誤検出） |
+| 17 | g1.math.shapes の大きな輪 | X1・C27 |
+| 18 | listen の絵の段の輪とふりがな | X1・C27 |
+| 19 | g4.sci.weather の横軸の札 | X4・C30（縦軸の単位も X4） |
+| 20 | g5.ja.text-figure/16・17・19 の横軸の札 | X4・C30 |
+| 21 | p5.en.phrases の数の絵 1.24〜2.1u | X2・C29（下限 4u） |
+| 22 | g6.prog.efficient・g5.prog.debug-plan の札 | X4・C29 |
+| 23 | p23.think.sort の解説が画面と食い違う | p23 |
+| 24 | p5.math.shapes の描く問題の解説 | X6・p5 |
+
+### 7. 確かめ方（全体）
+
+- systemic・検査・content のあとで、`MNW_FRESH=1 npm run check:text-layout` を全単元で流す（`MNW_WORKERS` は 2〜4。第6回のあとは 4 で 1.6 時間・失敗 0）。失敗した単元 0・errors 0 を確かめてから件数を見る。
+- 新しい種類（figure-outside-box・small-figure・label-gap）は、この回で初めて全単元を見るので、上の点検の単元のほかにも出てよい。出たものは次の回で同じように原因を分ける。
+- `npm run check:app-layout` も流し、単元の題（5.）と Rt（X7）の違反が 0、新しい種類で増えたものが無いことを確かめる。

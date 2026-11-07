@@ -95,7 +95,8 @@ if ! command -v python3 >/dev/null 2>&1; then
 fi
 
 # 教材パックのファイル（学年ごとの音声 zip を含む）がそろっているか。足りないと、その学年の教材を準備できない
-MISSING=$(python3 - "$DIST_SRC" <<'PY'
+# python3 -I: 今いるフォルダ（README の手順ではホーム）の json.py などを読み込まない（manabi.sh・mnwwindow.py と同じ）
+MISSING=$(python3 -I - "$DIST_SRC" <<'PY'
 import json, os, sys
 d = sys.argv[1]
 try:

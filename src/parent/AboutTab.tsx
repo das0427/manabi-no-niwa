@@ -10,8 +10,10 @@ import { APP_VERSION } from './util';
 
 const CREDITS: [string, string][] = [
   ['音声', 'Open JTalk / Mei（CC BY 3.0、名古屋工業大学）'],
+  ['英語の音声', 'Kokoro-82M（Apache 2.0）を kokoro-onnx（MIT）で動かして作成'],
   ['フォント', 'Zen Maru Gothic・Klee One（SIL OFL 1.1）'],
   ['書き順データ', 'KanjiVG（CC BY-SA 3.0）'],
+  ['プログラム', 'React・react-dom・scheduler（MIT、Meta Platforms, Inc. and affiliates）'],
   ['イラスト', 'オリジナル（このアプリのために描いたもの）'],
 ];
 

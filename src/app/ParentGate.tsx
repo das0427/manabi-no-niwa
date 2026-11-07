@@ -1,11 +1,12 @@
 /**
  * 保護者画面の入口（PA-01）。鍵ボタンを2秒長押し → 大人向けの計算問題（または暗証番号）。
  * これは誤操作の防止であり、認証ではない（README・保護者画面に明記）。
+ * 計算問題は、まちがえるたびに新しい問題に替わる（同じ問題のまま、答えの範囲を続けて試せない）。
  * 板の中はキーボードでも操作できる（FX11）: 数字（0〜9。テンキーも）・Backspace（1字消す）・Enter（OK。「もどる」に
  * フォーカスがあるときは もどる）・Esc（もどる）。
  * 板が開いている間、Tab の移動は板の中のボタンだけを回る（後ろのホームに出ない）。
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isFramed } from '../core/framed';
 import * as db from '../core/storage/index';
 import { Illust } from '../illust/Illust';
@@ -17,6 +18,30 @@ import './parent-gate.css';
 const HOLD_MS = 2000;
 /** 答え・暗証番号の入力の最大の桁数 */
 const MAX_DIGITS = 6;
+/** 計算問題「a ＋ b は？」の範囲（a は 12〜71、b は 11〜40。答えは 23〜111） */
+const A_MIN = 12;
+const A_COUNT = 60;
+const B_MIN = 11;
+const B_COUNT = 30;
+
+interface Question {
+  a: number;
+  b: number;
+  answer: string;
+}
+
+/**
+ * 新しい計算問題を作る。prev があるときは、答えが prev と同じにならない問題にする
+ * （まちがえたあと、同じ数を打ち直して通る、を防ぐ。b を 1 つずらすだけで範囲の中に収まる）。
+ */
+function makeQuestion(prev?: Question): Question {
+  const a = A_MIN + Math.floor(Math.random() * A_COUNT);
+  let b = B_MIN + Math.floor(Math.random() * B_COUNT);
+  if (prev !== undefined && String(a + b) === prev.answer) {
+    b = b === B_MIN + B_COUNT - 1 ? B_MIN : b + 1;
+  }
+  return { a, b, answer: String(a + b) };
+}
 
 /** 押されたキーが数字なら、その数字（テンキーも。IME が先に取った場合は物理キー code から） */
 function digitOf(e: KeyboardEvent): string | null {
@@ -78,11 +103,7 @@ function GateDialog({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState(false);
   const panel = useRef<HTMLDivElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
-  const question = useMemo(() => {
-    const a = 12 + Math.floor(Math.random() * 60);
-    const b = 11 + Math.floor(Math.random() * 30);
-    return { a, b, answer: String(a + b) };
-  }, []);
+  const [question, setQuestion] = useState<Question>(() => makeQuestion());
 
   useEffect(() => {
     void db.getAppRecord().then((r) => setPinHash(r.parentPinHash));
@@ -101,6 +122,9 @@ function GateDialog({ onClose }: { onClose: () => void }) {
     } else {
       setError(true);
       setInput('');
+      // まちがえるたびに問題を作り直す（同じ問題のまま、答えの範囲 23〜111 を続けて試せないように）。
+      // 暗証番号のときは問題を使わないので、そのまま
+      if (!usePin) setQuestion(makeQuestion(question));
     }
   };
 
@@ -185,10 +209,12 @@ function GateDialog({ onClose }: { onClose: () => void }) {
     >
       <div className="gate-panel" ref={panel} tabIndex={-1}>
         <p className="gate-title">保護者の方へ</p>
+        {/* aria-live: まちがえて問題が替わったことを、読み上げソフトにも伝える（見た目は変わらない） */}
         <p
           className="gate-q"
           data-testid="gate-question"
           data-answer-length={question.answer.length}
+          aria-live="polite"
         >
           {usePin ? '暗証番号を入力してください' : `${question.a} ＋ ${question.b} は？`}
         </p>

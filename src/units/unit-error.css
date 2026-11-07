@@ -1,0 +1,19 @@
+/*
+ * 教材を開けない画面（UnitRunner の unit-error）の、保護者向けの小さな説明（FX12。DESINGN.md 10章）。
+ * 起動画面の保護者向けの小さな表示（.start-notes）・二重起動の案内（.retired__note）と同じ形:
+ * 保護者の書体・12px 以上・色は --ink-soft。子供向けの1文（label-text）の下に置く。
+ */
+.unit__parent-note {
+  margin: 0;
+  max-width: calc(var(--u) * 60);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: max(12px, calc(var(--u) * 1.4));
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-align: center;
+  /* 文節で折る（語の途中で折らない）。起動画面の保護者向けの文と同じ */
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+  text-wrap: wrap;
+}

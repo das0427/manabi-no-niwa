@@ -91,6 +91,8 @@ manabi-no-niwa/
 | `#/notebook` | がんばりノート |
 | `#/parent/<tab>` | 保護者画面（ゲート通過済みのセッションのみ。再読み込み時は再確認） |
 
+画面の移動（`navigate()`）は、これまでどおりブラウザの履歴に積む。起動の最初（`src/main.tsx`）に、画面を1つにまとめる手順がある（二重起動の防止。9 章）。
+
 ### 子供のユーザーフロー（例）
 1. デスクトップのアイコンをタップ → 起動画面「はじめる」（大きな緑の札）をタップ。音声が有効になり「まなびのにわへ ようこそ」。
 2. ホーム: 上段に「きょうの おすすめ」2〜3枚、下段に9モード。絵をタップ → 名前を読み上げてモードへ。
@@ -384,13 +386,44 @@ src/modes/<mode>/
 | ファイル | 役割 |
 |---|---|
 | `serve.py` | Python 3 標準ライブラリだけで動く静的配信。`127.0.0.1:8765` に限定。MIME を正しく返し、`index.html`・`sw.js` は `no-cache`、ハッシュ付き資産は長期キャッシュ |
-| `manabi.sh` | 起動用。配信が動いていなければ裏で起動し、ブラウザ（Chromium があれば `--app` 窓、なければ Firefox）で開く |
-| `install.sh` | 配布 zip の中身を `~/.local/share/manabi-no-niwa/` に配置し、`.desktop`（アプリ一覧とデスクトップ）を作る。`--autostart` を付けたときだけ systemd ユーザー単位のサービスを登録。実行前に何をするか表示して確認 |
+| `manabi.sh` | 起動用。起動を `flock` で1本ずつにし、配信が動いていなければ裏で起動する。使うブラウザを先に決め（`command -v` で探すだけ。種類は chromium・firefox・other）、開いている窓があれば前に出して全画面にして終わり（`mnwwindow.py`。種類を `--browser` で渡す）、無ければそのブラウザ（Chromium 系があれば `--app` 窓、なければ Firefox）で開く |
+| `mnwwindow.py` | 窓の補助（1ファイル。標準ライブラリと ctypes（libX11）だけ）。X11 で「まなびのにわ」の窓を探して前面化と全画面（`focus`）、窓が現れるまで待つ（`wait`）、`--ozone-platform=x11` を付けるかの答え（`ozone-flag`）。`focus`・`wait` は `--browser chromium\|firefox\|other` を受け取り、`chromium` のときは Firefox の窓を候補にしない。結果を `~/.local/state/manabi-no-niwa/launch.log` に書く |
+| `install.sh` | 配布 zip の中身を `~/.local/share/manabi-no-niwa/` に配置し、`.desktop`（アプリ一覧とデスクトップ）を作る。`--autostart` を付けたときだけ systemd ユーザー単位のサービスを登録。実行前に何をするか表示して確認。入れ替えの前後に `sync` する。`app` が無く `app.prev` だけがあるとき（更新の途中で止まった）は、先に前の版を戻す |
 | `uninstall.sh` | 上記の取り消し（学習データはブラウザ内にあるため消えないことを表示） |
 | `manabi-no-niwa.service` | systemd --user 用の単位ファイル |
 
 - Zorin OS は Python 3 を標準で含む（実機で `python3 --version` を確認する手順を README に記載）。
-- 更新: 新しい zip を展開して `install.sh` を再実行 → 次回起動時に Service Worker が新版を検出。
+- 更新: 2.1.0 からは保護者画面「このアプリについて」の「更新する」（IN-07）。手でも同じ手順（新しい zip を展開して `install.sh` を再実行 → 次回起動時に Service Worker が新版を検出）で入れ直せる。2.0.x から 2.1.0 へは手で 1 回。
+
+**更新の仕組み（2.1.0 から。設計: docs/expansion/updater-design.md）**
+
+| ファイル・場所 | 役割 |
+|---|---|
+| `deploy/zorin/mnwupdate/`（`common`・`manifest`・`fetch`・`install`・`service`・`api`） | serve.py の中で動く更新の仕組み。外へ通信するのは `fetch.py` だけ（GitHub のこのリポジトリのリリースと配布用ホストだけ） |
+| `/__manabi/update/status`・`check`・`apply`・`cancel`・`settings` | 窓口（同じオリジンのアプリだけが使う。設計 5.3・5.4 節） |
+| `~/.local/share/manabi-no-niwa/{app, app.next, app.prev, update}` | いまの版・組み立て中・入れ替えた直後の前の版・状態と取得の途中のファイルと鍵 |
+| `~/.config/manabi-no-niwa/updater.json` | 自動の確認のオン・オフ |
+| `src/core/offline/updater.ts`・`src/parent/UpdateSection.tsx` | アプリ側: 状態の読み取り・押したあとの流れ（Service Worker の新しい版の準備・読み込み直し・教材パックの取り直し）・保護者画面の表示 |
+| リリースの `manabi-no-niwa-update.json`（`scripts/package-release.ts`） | 版の情報（版・公開日・変わった点・部品ごとの大きさ・sha256・中身の ID） |
+
+**起動の流れ（二重起動の防止。設計: docs/expansion/single-instance-design.md）**
+
+1. `flock` で1本ずつにする（鍵は `$XDG_RUNTIME_DIR` か `~/.local/state/manabi-no-niwa/` の中の自分のファイル）。20 秒待っても取れなければ、何もせずに終わる。鍵は fd 9 で持ち、配信・ブラウザ・補助には渡さない。
+2. 配信を確かめる（`python3 -I`。全体で6秒まで）。動いていなければ起動する。使うブラウザも、ここで決める（何も起動しない）。
+3. `mnwwindow.py focus --browser <種類>`（期限 2.5 秒）。0（前に出た）なら、新しい窓を開かずに終わる。
+4. 0 以外なら新しい窓を開く。Chromium 系は、`mnwwindow.py ozone-flag` が答えたときだけ、`--app` の前に `--ozone-platform=x11` を付ける。
+5. 3 の結果が「窓が無い」（3）だったときだけ、開いたあとに `mnwwindow.py wait --browser <種類>`（最大 5 秒）で窓が現れるまで鍵を持つ。
+
+| `mnwwindow.py` の終了コード | 意味 | `manabi.sh` の動き |
+|---|---|---|
+| 0 | `focus`: 前に出た。`wait`: 窓が現れた | `focus` のときだけ、ここで終わる |
+| 1 | 予想外の失敗 | 新しい窓を開く |
+| 2 | 使い方の誤り | 同上 |
+| 3 | 窓が無い（`wait` は時間切れ） | 新しい窓を開き、`wait` で待つ |
+| 4 | 窓はあるが、期限内に前に出なかった | 新しい窓を開く |
+| 5 | X11 が使えない（`DISPLAY` が空・libX11 が読めない・接続できない） | 新しい窓を開く |
+
+`ozone-flag` は、決まった結果ならいつも 0 で終わる。どのコマンドも 10 秒ほどで必ず終わる（SIGALRM の handler と、別のスレッドの見張り。時間切れは終了コード 1・出力なし）。
 
 ## 9. 状態の扱いと不具合対策
 
@@ -400,14 +433,30 @@ src/modes/<mode>/
 - 中断: モードは `draft.save()` を各問題の確定時に呼ぶ。`おうち` で離れた場合、次回そのモードを開くと「つづきから／はじめから」（絵の札2枚）。
 - 再読み込み: 問題の途中の状態は draft から復元（問題の seed と番号から再生成できるため、問題内容は同じ）。
 - 利用時間: `rounds` の当日の合計から算出。到達は「区切り」でのみ表示（CX-04, CX-07）。
+- 画面は1つ（二重起動の防止。`src/core/instance/instance.ts`・`src/core/pendingWrites.ts`・`src/main.tsx`。設計 2.3 節）:
+  - `main.tsx` は、Service Worker の登録・IndexedDB・描画より前に `claimInstance()` を待つ。Web Locks の鍵 `manabi-no-niwa:main` を持つ画面だけが書く（primary）。
+  - 鍵が空いていれば取る。読み込み直しの直後は、前の文書の鍵が外れるのが遅れるので、100ms おきに3回やり直す。
+  - 持たれていれば、BroadcastChannel `manabi-no-niwa:instance` に ping を送り、pong（送り主つき）を待つ。読み込み直しは 0.4 秒、それ以外は 1 秒。
+  - 返事があれば、鍵を奪い（steal）、その画面の retired（送り主つき）を最大 5 秒待ってから始める（takeover）。返事が無ければ（凍結した画面・離れる最中の画面）、鍵を奪って待たずに始める。ほかのサイトのページが同じブラウザで `127.0.0.1:8765` を開いた場合も、ふつうの読み込みなので、この道になり、使っている窓が引き下がる（残るリスク。記録は残る。設計 2.3.7・8.5）。
+  - 「戻る」「進む」での読み込み（`back_forward`）で返事があったときは、鍵を奪わない。この窓が引き下がる。
+  - 鍵を奪われた画面は、題名を「とじた がめん（まなびのにわ）」に変え、音を止め、React の根を外す（unmount。おえかきの保存などの後片付けが走る）。続けて、`trackPending` に登録された保存（おえかきの自動保存）が全部終わるまで待つ（上限 4 秒）。0.3 秒置いて retired を送り、`window.close()` を呼ぶ。0.3 秒たっても閉じていなければ、`./?retired=1` に置き換える。
+  - `?retired=1` と `back_forward` で引き下がった画面（`RetiredScreen`）は、音・記録・Service Worker・教材の取得に触れない。2 秒おきに `navigator.locks.query()` で鍵を見て、空きが続けて2回出たら、`./` に置き換えて自分で始め直す。
+  - 試験の旗（sessionStorage `mnw:test:multiWindow` が `1`）・`navigator.locks` が無い・枠（iframe）の中・`request` の例外のときは、守りなしで今までどおり動く（unsupported）。
+  - 画面の移動（`navigate()`）は、ブラウザの履歴に積む。`router.ts` は変えていない。
 
 ## 10. テスト用の仕組み
 
+- `sessionStorage['mnw:test:multiWindow'] = '1'` のとき、「画面は1つ」の守りが働かず、何枚開いても引き下がらない（同じブラウザで2つ以上のページを同時に使う E2E のため。`e2e/helpers/app.ts` の `allowMultiWindow`）。localStorage ではなく sessionStorage から読むので、立てたまま忘れても、その窓を閉じれば消える。
+- `localStorage['mnw:test'] = '1'` のときだけ、`window.__mnwInstance`（`{ role, takeover }`）を置く。
 - `localStorage['mnw:test'] = '1'` のときだけ、`session.expose()` が `window.__mnw` に現在の問題データを置く（E2E が正解を計算するため）。通常利用時は何も置かない。
 - `?seed=<n>` で最初の回の seed を固定（テストの再現用）。
 
 ## 11. セキュリティとプライバシー
 
-- 外部への通信コードを持たない。Content-Security-Policy（`default-src 'self'`; 画像は `self data: blob:`）を `index.html` の meta で設定。
+- アプリ（ブラウザ）は外部への通信コードを持たない。Content-Security-Policy（`default-src 'self'`; 画像は `self data: blob:`）を `index.html` の meta で設定。
+- 外への通信は配信（serve.py）の更新の仕組みだけで、更新の確認と取得のときだけ（IN-08）。転送のたびにホストと道（github.com はこのリポジトリのリリース、配布用ホストはリポジトリの番号）を確かめ、TLS の確認は切らない。送るのは User-Agent（アプリの名前）だけ。
+- 更新の窓口は Host・Sec-Fetch-Site・Origin・JSON の Content-Type・起動ごとの合言葉を確かめ、CORS を許可しない（IN-11）。配信はすべての応答に `X-Frame-Options: DENY`・`Content-Security-Policy: frame-ancestors 'none'` を付け、ほかのサイトの枠に入れさせない（meta の CSP では frame-ancestors が効かないため）。あわせて `Cross-Origin-Resource-Policy: same-origin` も付け、ほかのサイトのページが画像・script・音声として読み込めないようにする。NUL などを含むパスは 404 を返し、予期しない例外は型の名前 1 行だけを `serve.log` に出す（traceback を出さない）。アプリも枠の中では保護者画面の入口を開かず、窓口へ POST しない。
+- 入れる前に大きさ・sha256・zip の中のパス・中身・新しい配信の自己検査を確かめる（IN-09）。脅威と残るものは設計 9 章・16 章。
 - 読み込むファイルは JSON として解析し、文字列は React でエスケープして表示（HTML として解釈しない）。
 - 保護者の暗証番号は SHA-256 のハッシュで保存（強固な保護ではない旨を明記）。
+- 二重起動の防止は、新しい通信の口を作らない。X11 のメッセージ（`_NET_ACTIVE_WINDOW`・`_NET_WM_STATE`）は、アプリの窓と決めた窓にだけ送る。ほかの窓の題名は、アプリらしい class の窓だけ判定に読み、記録にも出力にも出さない（`launch.log` は決まった項目だけ。一時のファイルに書いて置き換えるので、リンクをたどらず、0600 になる）。鍵のファイルは、自分のフォルダの中の自分のファイルだけ使う。画面同士の知らせ（BroadcastChannel）は同じオリジンの中だけで、個人の情報を載せない。

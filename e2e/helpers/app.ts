@@ -3,7 +3,7 @@
  * IndexedDB の直接操作はテスト専用（architecture.md 10章の仕組みとあわせて使う）。
  */
 import { expect } from '@playwright/test';
-import type { Locator, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { defaultSettings } from '../../src/core/types';
 import type { ChildSettings, SkillId } from '../../src/core/types';
 
@@ -20,6 +20,22 @@ export async function gotoApp(page: Page, opts: { seed?: number } = {}): Promise
   });
   await page.goto(`/?seed=${opts.seed ?? 1}`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('start-button')).toBeEnabled();
+}
+
+/**
+ * 同じブラウザで2つ以上のページを同時に開く試験のための旗（mnw:test:multiWindow）。
+ * 立てたページ（context に立てると、その中のすべてのページ）では「画面は1つ」の守り（src/core/instance）が働かず、
+ * 何枚開いても引き下がらない。ページを開く（goto する）前に呼ぶ。製品では使わない。
+ * 二重起動の守りそのものを調べる試験（single-instance.spec.ts）では呼ばない。
+ */
+export async function allowMultiWindow(target: Page | BrowserContext): Promise<void> {
+  await target.addInitScript(() => {
+    try {
+      sessionStorage.setItem('mnw:test:multiWindow', '1');
+    } catch {
+      /* 無視 */
+    }
+  });
 }
 
 /** 「はじめる」→ ホーム */

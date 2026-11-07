@@ -5,6 +5,7 @@ import { getStorageProblem, type StorageProblem } from '../core/storage/index';
 import { setupPackIds } from '../curriculum/defaultPacks';
 import { Illust } from '../illust/Illust';
 import { AppLabel } from '../ui/AppLabel';
+import { requestStartFullscreen } from '../ui/fullscreen';
 import { Tap } from '../ui/Tap';
 import { useApp } from './AppState';
 import { PackSetupStatus, setupParentNote } from './PackSetupStatus';
@@ -31,6 +32,8 @@ export function StartScreen() {
   const view = setupView(setup);
 
   const begin = async () => {
+    // 引き継ぎで始まった画面だけ、ここで全画面にする。タップの操作の中（最初の await より前）で呼ぶ
+    requestStartFullscreen();
     await audio.unlock();
     app.setStarted(true);
     if (app.profiles.length > 1) {

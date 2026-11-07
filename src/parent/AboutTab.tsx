@@ -1,8 +1,10 @@
 import { applyUpdate, isPageControlled, useOfflineState } from '../core/offline/index';
+import { useUpdater } from '../core/offline/updater';
 import { UNIT_INDEX } from '../curriculum/unitIndex';
 import { MODES } from '../modes/registry';
 import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
+import { UpdateSection } from './UpdateSection';
 import { APP_VERSION } from './util';
 
 const CREDITS: [string, string][] = [
@@ -14,8 +16,15 @@ const CREDITS: [string, string][] = [
 
 const STAGE_LABEL: Record<string, string> = { p23: '2〜3歳', p4: '4歳', p5: '5歳' };
 
+const PRIVACY_TEXT =
+  '広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。';
+/** 更新の窓口があるとき: 外へ通信するのは、配信（serve.py）が更新を確かめるとき・取得するときだけ */
+const PRIVACY_TEXT_WITH_UPDATER =
+  '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときと取得するときだけです（下の「アプリの更新」で自動の確認を止められます）。';
+
 export function AboutTab() {
   const off = useOfflineState();
+  const upd = useUpdater();
   let status: string;
   if (!off.supported) {
     status = 'このブラウザ・この開き方では、オフライン機能が使えません。';
@@ -39,15 +48,17 @@ export function AboutTab() {
       <Section title="このアプリについて">
         <p>まなびのにわ（4歳ごろ向けの、日本語・オフラインの学習アプリ）</p>
         <p data-testid="app-version">版: {APP_VERSION}</p>
-        <p className="p-small">
-          広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。
+        <p className="p-small" data-testid="about-privacy">
+          {upd.available ? PRIVACY_TEXT_WITH_UPDATER : PRIVACY_TEXT}
         </p>
       </Section>
+
+      {upd.available ? <UpdateSection /> : null}
 
       <Section title="オフラインの準備">
         <p data-testid="offline-status">{status}</p>
         {off.version ? <p className="p-small">キャッシュの版: {off.version}</p> : null}
-        {off.updateReady ? (
+        {off.updateReady && !(upd.available && upd.flow !== 'none') ? (
           <div data-testid="update-ready">
             <p>あたらしい ばーじょんが あります。</p>
             <button type="button" data-testid="apply-update" onClick={() => void applyUpdate()}>

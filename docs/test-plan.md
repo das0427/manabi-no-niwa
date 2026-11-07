@@ -80,6 +80,22 @@
 | E-18 | 保護者画面: 未実施／むずかしそう／そうさに とまどった の表示が分かれる | PA-04, PA-09 |
 | E-19 | 更新時に旧タブが開いたまま: 旧タブで未読込のモードを開ける（直前の版のキャッシュ） | OF-05 |
 | E-20 | 配信スクリプト `deploy/zorin/serve.py`: 127.0.0.1 のみで待ち受け、MIME（.webmanifest .woff2 .mp3 .js）と Cache-Control、識別用の `/__manabi/health` | IN-03 |
+| E-21 | 自動更新（`e2e/update.spec.ts`。chromium だけ。`npm run e2e:update`。本物のビルド 2 つ・本物の serve.py・偽の GitHub。12 件）: 2.1.0 → 自動の確認 →「更新する」1 回 → 2.2.0（記録・教材パックが残る、変わらない音声の zip は取らない、書いたのは決めた場所だけ、ブラウザは配信以外へ通信しない）。音声の部品も変わる版・途中で切れたら続きから・sha256 違い・電源断のあと続きから・新しい serve.py が動かない・空き容量不足・ほかのオリジンのページ・ほかのページの枠（iframe）・許可外のホストへの転送・自動の確認のオフ・窓口の無い配信 | IN-06〜13, BC-03 |
+| E-22 | 二重起動の防止（`e2e/single-instance.spec.ts`。chromium・firefox。15 件ずつ）: 2つ目を開くと1つ目が閉じ、2つ目は起動画面から始まる／画面を移した窓は「べつの まどで ひらいています」になり、記録を書かない／［この まどで ひらく］で引き継ぎ直せる／おえかきの保存を待ってから引き継ぐ（PNG づくりが遅くても）／3つ続けて開いても残るのは1つ／引き下がった窓は、使っている窓が閉じられたら起動画面に戻る／「戻る」で使っている窓を追い出さない／引き継いだ画面だけ、「はじめる」で全画面にする（1回）／Web Locks が無い・試験の旗があるときは守りなし／`page.reload()` を5回続けても毎回ふつうに始まる／`?retired=1` は音・記録・Service Worker・教材に触れない／新しい2つの画面の見た目（4つの大きさ）／外部通信なし | OP-07, IN-14, IN-15, BC-03 |
+
+**更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:
+- Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストと道・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。
+- vitest: `scripts/release-lib.test.ts`（版の情報・zip・版の番号の確かめ）・`src/core/offline/updater.test.ts`・`src/parent/UpdateSection.test.tsx`・`src/app/ParentGate.test.tsx`・`src/core/framed.test.ts`。
+
+**二重起動の防止の単体・Python・シェルの試験**（docs/expansion/single-instance-design.md 5 章）:
+- vitest: `src/core/instance/instance.test.ts`（役割の決め方・引き下がり・3つ続けて開いた場合・戻る進むの読み込み・送り主・鍵が空いたら戻る見張り）・`src/core/pendingWrites.test.ts`・`src/drawing/autosave.test.ts`（保存の待ち）・`src/app/RetiredScreen.test.tsx`・`src/ui/fullscreen.test.ts`・`src/parent/FullscreenSection.test.tsx`。
+- Python の unittest（`npm run test:py`）: `deploy/tests/test_mnwwindow.py`（窓の判定・前に出すやり直し・`wait`・`ozone-flag`・記録・ctypes の構造体）、`deploy/tests/test_manabi_sh.py`（bash があるときだけ。偽のコマンドで、focus の結果ごとの動き・`--ozone-platform` の付け方・`flock` の呼び方・鍵の fd を子に渡さないこと・配信の確かめの Python）、`deploy/tests/test_install_sh.py`（`mnwwindow.py` が必要なファイルの一覧にあること）。本物の `flock` の試験は Linux だけで動く。
+- 旗（`allowMultiWindow`）を立てる既存の E2E: `e2e/drawing.spec.ts` の2つのタブの試験、`e2e/offline.spec.ts` の2つのページを同時に開く試験。
+
+**2.1.0 の公開前の点検（3回目。updater-design.md 16.2・single-instance-design.md 8.6）で足した試験**。どれも、直しを1つずつ外すと落ちることを確かめてから戻した。
+- Python（`deploy/tests/`）: `test_serve.py`（NUL などを含むパスは 404 で記録が出ない・予期しない例外は型名 1 行・全応答に `Cross-Origin-Resource-Policy`・自己検査の失敗の説明にパスが出ない・`--check-update` が Traceback で落ちない）、`test_fetch.py`（満杯のあと取得物が残らない・深い入れ子の版の情報・形の壊れた `Location`）、`test_service.py`（組み立ての途中の満杯でも取得物が空・満杯で捨てたあとの `needBytes` が全部を取り直す見積もりと同じ・深い入れ子の状態は `idle`）、`test_install.py`（壊れた deflate は `unsafe-zip`・失敗の説明のパスの置き換え・リンクの先に `chmod` しない）、`test_manifest.py`（深い入れ子は `bad-manifest`）、`test_mnwwindow.py`（`--browser`・時間切れの終了コード 1）。
+- シェル（bash が無ければ skip）: `test_manabi_sh.py`（使うブラウザの種類が `focus`・`wait` に渡る・`MANABI_BROWSER` を評価しない）、`test_install_sh.py`（偽の `sync`・`mv`・`rm` で入れ替えの前後の `sync` の順・`switch-broken` を先に戻す・戻せないとき止まる）。
+- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比べ・タグの読み取り。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 9 件）。
 
 ### 3.1 自動のレイアウト検査（E-14）
 - 画面サイズは 1920×1080, 1536×864, 1280×720 に加え、ブラウザの UI 分だけ高さが減った 1920×950・1280×620 でも検査する
@@ -241,6 +257,7 @@
 - Firefox のタッチ（Zorin で `MOZ_USE_XINPUT2=1` が必要な場合がある）
 - 実寸（定規）、音量、表示倍率、起動時間
 - 保護者が子供と試す観察（README の観察チェックリスト）
+- 二重起動（アイコンを2回押したとき）の窓の前面化・全画面・F11 で戻ること（IN-14〜16。device-checklist の「二重起動」）
 
 ## 6. 実行コマンド
 
@@ -248,6 +265,8 @@
 npm run check        # 型・lint・format
 npm test             # 単体テスト
 npm run e2e          # E2E（Chromium・Firefox）
+npm run e2e:update   # 自動更新の通し（E-21。chromium だけ。約 5 分）
+npm run test:py      # 更新の仕組み・配信・導入スクリプトの Python の試験（Linux は test:py:sh）
 npm run check:audio  # 台本と音声ファイルの突き合わせ
 ```
 

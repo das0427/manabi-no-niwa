@@ -206,6 +206,17 @@
   color: var(--ink-soft);
 }
 
+/* 「画面」の節（全画面）の文。最後の行が1〜2字だけ（「す。」など）になるのを避ける。
+   Chromium・Firefox とも balance に対応している（長くて行が多いときは、ブラウザが通常の折り返しに戻す） */
+.p-fullscreen-text,
+.p-fullscreen .p-note {
+  text-wrap: balance;
+}
+/* キーの名前・カタカナの語・「」の名前は、行の途中で切らない（SettingsTab.tsx の keepTogether） */
+.p-keep {
+  white-space: nowrap;
+}
+
 .p-small {
   font-size: 13px;
 }
@@ -509,4 +520,29 @@
 .parent-root select,
 .parent-root textarea {
   accent-color: var(--leaf);
+}
+
+/* アプリの更新（このアプリについて）。進み具合は <progress> の棒と割合の文 */
+.p-update-work {
+  margin: 12px 0;
+}
+
+.p-update-work progress {
+  display: block;
+  width: min(360px, 100%);
+  height: 14px;
+  margin: 6px 0;
+  accent-color: var(--leaf);
+}
+
+/* 保護者画面の上の知らせ（1行の小さな p-alert） */
+.p-update-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 6px 20px;
+  border-width: 0 0 1px;
+  font-size: 14px;
 }

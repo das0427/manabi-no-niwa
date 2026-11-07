@@ -1,0 +1,34 @@
+/* 「べつの まどで ひらいています」の画面（RetiredScreen。DESINGN.md 25章） */
+.retired__illust {
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+}
+/* 保護者向けの小さな案内。子供の画面では保護者の書体を小さく使う（10章） */
+.retired__note {
+  margin: 0;
+  max-width: calc(var(--u) * 60);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: max(12px, calc(var(--u) * 1.4));
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-align: center;
+}
+/* 保護者向けの小さなボタン。押す所の高さは 44px 以上 */
+.retired__reopen {
+  min-height: 44px;
+  padding: 0.4em 1.2em;
+  border: 1px solid var(--ink-soft);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: max(14px, calc(var(--u) * 1.6));
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.retired__reopen:focus-visible {
+  outline: 3px dashed var(--ink);
+  outline-offset: 2px;
+}

@@ -13,7 +13,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
  * 「コア」と「小学生の教材パック」に分け、
  *  - dist/packs.json: { [packId]: { files, bytes, hash } }（パックごとの取得単位。コアに含める）
  *  - dist/sw.js: src/sw/sw.ts を変換し、先頭にコアの版IDとコアのファイル一覧を埋め込んだもの
- *  - dist/version.json
+ *  - dist/version.json: { version（SW の版ID）, fileCount, totalBytes, appVersion（package.json の版。ビルドのときだけ） }
  * を出力する。版ID はコアのファイル（packs.json を含む）だけから作り、パックのファイルの内容は含めない。
  * あわせて本番ビルドの index.html に CSP を入れる。
  *
@@ -246,9 +246,16 @@ export interface PrecacheEntry {
 }
 
 export interface VersionInfo {
+  /** Service Worker の版ID（プリキャッシュの内容のハッシュ）。アプリの版の番号ではない */
   version: string;
   fileCount: number;
   totalBytes: number;
+  /**
+   * アプリの版の番号（package.json の version。例 "2.1.0"）。finalizeDist の options.appVersion を渡したときだけ出る。
+   * リリースの作成（scripts/package-release.ts）と配信（serve.py）の自己検査が、dist と版の番号の食い違いを見つけるために使う。
+   * 版IDの計算には入れない（version.json はプリキャッシュに入らない）。
+   */
+  appVersion?: string;
 }
 
 export const SW_FILE = 'sw.js';
@@ -330,6 +337,18 @@ export async function transpileServiceWorker(sourcePath: string = SW_SOURCE): Pr
 export interface FinalizeOptions {
   /** SW のソース（テスト用に差し替え可能） */
   swSourcePath?: string;
+  /** アプリの版の番号。あれば version.json の appVersion に書く（無ければ欄を出さない） */
+  appVersion?: string;
+}
+
+/** package.json の version（文字列）を読む。ビルドのとき dist/version.json の appVersion に入れる */
+export async function readAppVersion(root: string): Promise<string> {
+  const file = path.join(root, 'package.json');
+  const pkg = JSON.parse(await readFile(file, 'utf8')) as { version?: unknown };
+  if (typeof pkg.version !== 'string' || pkg.version === '') {
+    throw new Error(`${file} に version（文字列）がありません`);
+  }
+  return pkg.version;
 }
 
 /** dist の manifest を読む（無ければ null。Vite 以外で作った dist やテスト用の dist） */
@@ -396,6 +415,7 @@ export async function finalizeDist(
     'utf8',
   );
   const info: VersionInfo = { version, fileCount: entries.length, totalBytes };
+  if (options.appVersion !== undefined) info.appVersion = options.appVersion;
   await writeFile(path.join(distDir, VERSION_FILE), `${JSON.stringify(info, null, 2)}\n`, 'utf8');
   return info;
 }
@@ -446,9 +466,9 @@ function swPlugin(): Plugin {
       async handler() {
         if (!config || !written) return;
         const distDir = path.resolve(config.root, config.build.outDir);
-        const info = await finalizeDist(distDir);
+        const info = await finalizeDist(distDir, { appVersion: await readAppVersion(config.root) });
         config.logger.info(
-          `[mnw-precache] version ${info.version}: ${info.fileCount} files, ${(info.totalBytes / 1024).toFixed(1)} KiB`,
+          `[mnw-precache] version ${info.version} (app ${info.appVersion}): ${info.fileCount} files, ${(info.totalBytes / 1024).toFixed(1)} KiB`,
         );
         const manifest = await readManifest(distDir);
         if (manifest) {

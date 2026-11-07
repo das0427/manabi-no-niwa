@@ -13,7 +13,7 @@
 # 置き場: ${XDG_DATA_HOME:-~/.local/share}/manabi-no-niwa/
 #   app/        いまの版（dist・deploy/zorin・parts など）
 #   app.next/   この入れ替えの途中だけある（組み立て中の新しい版）
-#   app.prev/   更新の仕組みが前の版を控えるところ（このスクリプトは片付ける）
+#   app.prev/   更新の仕組みが前の版を控えるところ（このスクリプトは片付ける。app が無いときだけは、先に app に戻す）
 #   update/     更新の作業用（このスクリプトは片付ける）
 set -euo pipefail
 
@@ -185,8 +185,15 @@ on_exit() {
   if [ "$rc" -ne 0 ]; then
     if [ "$SWAPPED" -eq 1 ]; then
       echo "エラー: 途中で止まりました（終了コード $rc）。アプリ本体は新しい版に入れ替わっています。" >&2
-    else
+    elif [ -d "$APP_DIR" ]; then
       echo "エラー: 途中で止まりました（終了コード $rc）。今までの版は、そのまま残してあります。" >&2
+    else
+      # app が無い（初めての導入の途中、または前の版を元に戻せなかった）。「残してあります」とは言わない
+      echo "エラー: 途中で止まりました（終了コード $rc）。アプリ本体（$APP_DIR）は、まだ入っていません。" >&2
+      if [ -d "$APP_PREV" ]; then
+        echo "前の版は $APP_PREV に残っています。消さないでください。" >&2
+      fi
+      echo "展開した配布物のフォルダで、もういちど bash deploy/zorin/install.sh を実行して、入れ直してください（学習データは消えません）。" >&2
     fi
   fi
   if [ "$STOPPED_UNIT" -eq 1 ]; then
@@ -228,6 +235,17 @@ if [ "$TRIED_STOP" -eq 1 ]; then
 fi
 
 # ---- 1. アプリ本体 ----
+# 更新の仕組みが途中で止まって、app が無く app.prev だけがあるとき（switch-broken）は、先に前の版を app に戻す。
+# 戻さずに進むと、あとの入れ替えで app.prev を消してしまい、入れ替えに失敗したときに動く版が 1 つも残らない。戻せなければ止める
+if [ ! -d "$APP_DIR" ] && [ -d "$APP_PREV" ]; then
+  if mv "$APP_PREV" "$APP_DIR"; then
+    echo "[準備] 更新の途中で止まっていた前の版を、元の場所に戻しました: $APP_DIR"
+  else
+    echo "エラー: 更新の途中で止まっていた前の版（$APP_PREV）を、元の場所（$APP_DIR）に戻せませんでした。" >&2
+    exit 1
+  fi
+fi
+
 # app.next に新しい版を組み立ててから、app と入れ替える（途中で失敗しても、今の版は残る）
 NEXT_ACTIVE=1
 rm -rf "$APP_NEXT"
@@ -253,6 +271,9 @@ for f in dist/index.html dist/icons/icon-192.png deploy/zorin/serve.py deploy/zo
 done
 
 # 入れ替え。2.0.x の配置（app/dist と app/deploy/zorin だけ）も、丸ごと新しい形になる
+# 入れ替えの前に、組み立てた中身をディスクに書き切る（ext4 は書き込みを遅らせるので、このまま入れ替えて停電になると、
+# 長さ 0 のファイルが残って起動できなくなりうる。sync が無い・失敗しても進む）
+sync || true
 SWAP_ACTIVE=1
 rm -rf "$APP_PREV"
 if [ -d "$APP_DIR" ]; then mv "$APP_DIR" "$APP_PREV"; fi
@@ -260,6 +281,8 @@ mv "$APP_NEXT" "$APP_DIR"
 SWAP_ACTIVE=0
 NEXT_ACTIVE=0
 SWAPPED=1
+# 前の版を消す前に、名前の変更も書き切る（消した版が戻せなくなる前に、新しい版を確定させる）
+sync || true
 rm -rf "$APP_PREV" "$UPDATE_DIR" || echo "前の版の控え・更新の作業用のフォルダを片付けられませんでした（$APP_PREV $UPDATE_DIR）。あとで手で消してかまいません。" >&2
 echo "[1/4] アプリ本体を配置しました: $APP_DIR"
 

@@ -7,10 +7,11 @@
   focus [--deadline 2.5]     アプリの窓を探して前面化＋全画面にし、前に出たことを確かめる
   wait [--timeout 5]         アプリの窓が現れるまで待つ（何も送らない）
   ozone-flag <ブラウザ>      --ozone-platform=x11 を付けるべきなら、それだけを1行出す
+focus と wait には --browser chromium|firefox|other も付けられる（manabi.sh が使うブラウザの種類。chromium では Firefox の窓を探さない。省略は other）。
 
 終了コード: 0 = 成功（focus は前に出た）／1 = 予想外の失敗／2 = 使い方の誤り／3 = 窓が無い（wait は時間切れ）／
            4 = 窓はあるが期限内に前に出なかった／5 = X11 が使えない（DISPLAY が空・libX11.so.6 が読めない・接続できない）
-ozone-flag は決まった結果ならいつも 0（引数が無いときだけ 2）。10 秒で必ず終わる（SIGALRM）。
+ozone-flag は決まった結果ならいつも 0（引数が無いときだけ 2）。10 秒で必ず終わる（時間切れは終了コード 1・出力なし）。
 
 守ること: 標準ライブラリと ctypes（libX11）だけ。外へ通信しない。X11 のメッセージは、判定でアプリの窓と決めた窓にだけ送る。
 ほかの窓の題名は判定に（アプリらしい class の窓だけ）読み、記録にも出力にも出さない。
@@ -18,6 +19,7 @@ Python 3.10 で動く書き方（match 文・datetime.UTC を使わない）。�
 """
 import argparse
 import ctypes as C
+import faulthandler
 import json
 import os
 import posixpath
@@ -33,9 +35,8 @@ from datetime import datetime
 
 APP_TITLE = "まなびのにわ"
 STRONG_RES_NAME = "127.0.0.1"  # Chromium 系 --app=http://127.0.0.1:8765/ の窓の WM_CLASS res_name
-# 弱い一致に使う res_class。Firefox はタブの窓（題名の末尾にブラウザ名が付く）。
-# Chromium 系は manabi.sh が必ず --app で開くので、窓の題名に末尾が付かない（アプリ窓の）ものだけを弱い一致にする。
-# ふつうのタブ（末尾が付く）は選ばない。res_name の付き方が実機で違っていたときの保険として、アプリ窓だけを残している
+# 弱い一致に使う res_class。Firefox はタブの窓（題名の末尾にブラウザ名が付く）。Chromium 系は manabi.sh が必ず --app で開くので、
+# 末尾が付かない（アプリ窓の）題名だけを弱い一致にする（res_name の付き方が実機で違っていたときの保険）。--browser chromium では Firefox を外す
 FIREFOX_CLASSES = frozenset(("firefox", "firefox-esr"))
 CHROMIUM_CLASSES = frozenset(("brave-browser", "chromium", "chromium-browser", "google-chrome"))
 WEAK_CLASSES = FIREFOX_CLASSES | CHROMIUM_CLASSES
@@ -49,6 +50,7 @@ LOG_READ_MAX = 1 << 20  # 記録を読む量の上限（末尾の 1 MiB）
 LOG_KEYS = ("t", "cmd", "session", "result", "window", "class", "match", "fullscreen",
             "attempts", "ms", "browser", "flag", "reason", "error")
 OZONE_X11 = "--ozone-platform=x11"
+BROWSER_KINDS = ("chromium", "firefox", "other")  # --browser の値。manabi.sh が使うブラウザの種類
 EXIT_OK, EXIT_ERROR, EXIT_USAGE, EXIT_NO_WINDOW, EXIT_NOT_FRONT, EXIT_NO_X11 = 0, 1, 2, 3, 4, 5
 
 Found = namedtuple("Found", "window res_class match")
@@ -60,10 +62,11 @@ def base_title(title):
     return _SUFFIX.sub("", title, count=1)
 
 
-def class_kind(res_name, res_class):
+def class_kind(res_name, res_class, browser="other"):
     if res_name == STRONG_RES_NAME:
         return "strong"
-    return "weak" if res_class.lower() in WEAK_CLASSES else None
+    weak = CHROMIUM_CLASSES if browser == "chromium" else WEAK_CLASSES  # chromium のときは Firefox の窓を候補にしない
+    return "weak" if res_class.lower() in weak else None
 
 
 def title_matches(kind, res_class, title):
@@ -73,18 +76,18 @@ def title_matches(kind, res_class, title):
     return title == APP_TITLE
 
 
-def classify(res_name, res_class, title):
+def classify(res_name, res_class, title, browser="other"):
     """-> 'strong' / 'weak' / None（アプリの窓ではない）"""
-    kind = class_kind(res_name, res_class)
+    kind = class_kind(res_name, res_class, browser)
     return kind if kind and title_matches(kind, res_class, title) else None
 
 
-def find_app_window(be):
+def find_app_window(be, browser="other"):
     """重なり順でいちばん上の強い一致、無ければ弱い一致。-> Found か None（class がアプリらしくない窓の題名は読まない）"""
     weak = None
     for w in reversed(be.windows()):  # windows() は下から上の順
         res_name, res_class = be.wm_class(w)
-        kind = class_kind(res_name, res_class)
+        kind = class_kind(res_name, res_class, browser)
         if kind is None or not title_matches(kind, res_class, be.title(w)):
             continue
         if kind == "strong":
@@ -116,7 +119,7 @@ def _settle_fullscreen(be, clock, w):
     return False
 
 
-def run_focus(be, clock, deadline=2.5, schedule=SCHEDULE):
+def run_focus(be, clock, deadline=2.5, schedule=SCHEDULE, browser="other"):
     """前面化＋全画面を送り、前に出たことを確かめる（途中で窓が消えたら選び直す）。-> (終了コード, 記録の項目)"""
     t0 = clock.now()
     info = {"attempts": 0}
@@ -124,7 +127,7 @@ def run_focus(be, clock, deadline=2.5, schedule=SCHEDULE):
     while True:
         el = clock.now() - t0
         info["ms"] = int(el * 1000)
-        found = find_app_window(be)
+        found = find_app_window(be, browser)
         if found is None:
             return EXIT_NO_WINDOW, info
         if found.window != target:  # 最初、または選び直したとき。やり直しの予定も最初から
@@ -145,11 +148,11 @@ def run_focus(be, clock, deadline=2.5, schedule=SCHEDULE):
         clock.sleep(POLL)
 
 
-def run_wait(be, clock, timeout=5.0):
+def run_wait(be, clock, timeout=5.0, browser="other"):
     """アプリの窓が現れるまで 0.1 秒ごとに探す（何も送らない）"""
     t0 = clock.now()
     while True:
-        found = find_app_window(be)
+        found = find_app_window(be, browser)
         ms = int((clock.now() - t0) * 1000)
         if found:
             return EXIT_OK, dict(_found_info(found), ms=ms)
@@ -437,6 +440,8 @@ def _parser():
     sub.add_parser("focus").add_argument("--deadline", type=_seconds, default=2.5)
     sub.add_parser("wait").add_argument("--timeout", type=_seconds, default=5.0)
     sub.add_parser("ozone-flag").add_argument("browser")
+    for name in ("focus", "wait"):
+        sub.choices[name].add_argument("--browser", choices=BROWSER_KINDS, default="other")
     return p
 
 
@@ -448,20 +453,22 @@ def main(argv=None, env=None, backend_factory=None, clock=None, out=None):
         args = _parser().parse_args(argv)
     except SystemExit as e:
         return e.code if isinstance(e.code, int) else EXIT_USAGE
-    rec = {"t": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), "cmd": args.cmd, "session": session_name(env)}
+    # browser: ozone-flag では渡されたコマンドの名前、focus・wait では --browser の種類
+    rec = {"t": datetime.now().strftime("%Y-%m-%dT%H:%M:%S"), "cmd": args.cmd, "session": session_name(env),
+           "browser": posixpath.basename(args.browser)}
     try:
         if args.cmd == "ozone-flag":
             flag, reason = decide_ozone(args.browser, env)
-            code, info = EXIT_OK, {"browser": posixpath.basename(args.browser), "flag": flag, "reason": reason}
+            code, info = EXIT_OK, {"flag": flag, "reason": reason}
             if flag:
                 out.write(flag + "\n")
         else:
             be = (backend_factory or X11Backend.open)(env)
             try:
                 if args.cmd == "focus":
-                    code, info = run_focus(be, clock or RealClock, args.deadline)
+                    code, info = run_focus(be, clock or RealClock, args.deadline, browser=args.browser)
                 else:
-                    code, info = run_wait(be, clock or RealClock, args.timeout)
+                    code, info = run_wait(be, clock or RealClock, args.timeout, browser=args.browser)
             finally:
                 be.close()
     except X11Unavailable as e:
@@ -474,7 +481,20 @@ def main(argv=None, env=None, backend_factory=None, clock=None, out=None):
     return code
 
 
-if __name__ == "__main__":
+def _on_alarm(signum=None, frame=None):
+    """時間切れ。その場で終わる（終了コード 1。バッファは流さないので、ozone-flag の出力は空のまま）"""
+    os._exit(EXIT_ERROR)
+
+
+def arm_timeout(seconds=ALARM_SECONDS):
+    """seconds 秒で必ず終わる。SIGALRM の扱いを明示する（親が無視にして起動していても効く）。
+    libX11 の中で固まると Python の handler は走れないので、別のスレッドの見張り（faulthandler）を 1 秒遅れで置く"""
+    faulthandler.dump_traceback_later(seconds + 1, exit=True, file=open(os.devnull, "w"))
     if hasattr(signal, "alarm"):
-        signal.alarm(ALARM_SECONDS)  # X が固まっても 10 秒で必ず終わる（既定の動作＝プロセスの終了。終了コードは 0 以外）
+        signal.signal(signal.SIGALRM, _on_alarm)
+        signal.alarm(seconds)
+
+
+if __name__ == "__main__":
+    arm_timeout()
     sys.exit(main())

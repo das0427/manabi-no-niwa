@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 """serve.py: --self-test・--check-update・更新の仕組みが動かない置き場・読み込み失敗でも配信する（設計 5.1・5.8 節）"""
+import errno
+import functools
 import io
 import json
 import os
+import socket
 import subprocess
 import sys
 import tempfile
+import threading
 import types
 import unittest
+from http.server import SimpleHTTPRequestHandler
 from unittest import mock
 
 from helpers import (
@@ -134,11 +139,58 @@ class SelfTestTest(ServeCase):
         self.assertEqual(code, 1)
         self.assertIn("GET /", err)
 
+    def test_failure_text_never_has_the_place_path(self):
+        # 読み込めない原因の文（ImportError は置き場のフルパスを含む）に、パス・ログイン名が出ない（api-1）。
+        # この出力が、更新の自己検査の失敗の説明（状態の窓口・保護者画面）になる
+        api_py = os.path.join(self.app, "deploy", "zorin", "mnwupdate", "api.py")
+        with open(api_py, "a", encoding="utf-8") as f:
+            f.write("\nfrom .common import NO_SUCH_NAME_XYZ\n")
+        code, _, err = self.run_script(self.script, "--self-test")
+        self.assertEqual(code, 1, err)
+        self.assertIn("NO_SUCH_NAME_XYZ", err)  # 原因は分かる
+        self.assertNotIn(os.path.basename(self.tmp), err)
+        self.assertNotIn(self.home, err)
+
+    def test_failure_text_of_a_module_serve_does_not_import_has_no_path(self):
+        # serve.py が最初に読み込まないモジュール（新しい版で増えたもの）の読み込み失敗も、パスを出さない（api-1）
+        extra = os.path.join(self.app, "deploy", "zorin", "mnwupdate", "zz_extra.py")
+        with open(extra, "w", encoding="utf-8") as f:
+            f.write("from .common import NO_SUCH_NAME_XYZ\n")
+        code, _, err = self.run_script(self.script, "--self-test")
+        self.assertEqual(code, 1, err)
+        self.assertIn("mnwupdate のモジュールを読み込めません", err)
+        self.assertIn("NO_SUCH_NAME_XYZ", err)
+        self.assertNotIn(os.path.basename(self.tmp), err)
+        self.assertNotIn(self.home, err)
+
     def test_works_wherever_the_app_folder_is_called(self):
         moved = os.path.join(self.base, "app.next")
         os.rename(self.app, moved)
         code, _, err = self.run_script(os.path.join(moved, "deploy", "zorin", "serve.py"), "--self-test")
         self.assertEqual((code, err), (0, ""))
+
+
+class BriefErrorTest(unittest.TestCase):
+    """serve._brief_error: 例外の短い説明にパスを入れない（api-1）"""
+
+    secret = "/home/taro-yamada/.local/share/manabi-no-niwa/app/dist/index.html"
+
+    def test_os_error_is_the_errno_name_and_reason_only(self):
+        text = serve._brief_error(FileNotFoundError(errno.ENOENT, "No such file or directory", self.secret))
+        self.assertEqual(text, "FileNotFoundError: ENOENT: No such file or directory")
+        self.assertEqual(serve._brief_error(OSError("odd")), "OSError: OSError: OSError")
+        self.assertNotIn("taro", serve._brief_error(PermissionError(errno.EACCES, "Permission denied", self.secret)))
+
+    def test_import_error_loses_the_module_path(self):
+        for where in ("/home/taro-yamada/app/deploy/zorin/mnwupdate/common.py", "C:\\Users\\taro-yamada\\app\\common.py"):
+            with self.subTest(where):
+                text = serve._brief_error(ImportError("cannot import name 'x' from 'mnwupdate.common' (%s)" % where))
+                self.assertEqual(text, "ImportError: cannot import name 'x' from 'mnwupdate.common'")
+        self.assertEqual(serve._brief_error(ModuleNotFoundError("No module named 'tomllib'")), "ModuleNotFoundError: No module named 'tomllib'")
+
+    def test_other_errors_keep_their_text(self):
+        self.assertEqual(serve._brief_error(ValueError("bad value")), "ValueError: bad value")
+        self.assertEqual(serve._brief_error(SyntaxError("invalid syntax")), "SyntaxError: invalid syntax")
 
 
 class ReasonsTest(ServeCase):
@@ -278,17 +330,22 @@ class ReasonsTest(ServeCase):
 class FrameHeadersTest(ServeCase):
     """ほかのサイトの枠（iframe）に入れさせない見出しを、どの応答にも付ける（クリックジャッキング）"""
 
-    @not_root
-    def test_every_response_refuses_to_be_framed(self):
-        port, _proc, _err = self.start(self.script)
+    def every_kind_of_response(self, port):
         host = "127.0.0.1:%d" % port
         token = self.update_status(port)[1]["token"]
-        requests = [
+        return host, [
             ("GET", "/", None, {}),
             ("GET", "/sw.js", None, {}),
+            ("GET", "/version.json", None, {}),
+            ("GET", "/icons/icon-192.png", None, {}),
+            ("GET", "/audio/num/n1.mp3", None, {}),
+            ("GET", "/assets/packs/g1-kokugo/g1-kokugo.js", None, {}),
+            ("HEAD", "/", None, {}),
             ("GET", "/__manabi/health", None, {}),
             ("GET", "/__manabi/update/status", None, {}),
             ("GET", "/nothing-here", None, {}),
+            ("GET", "/%00", None, {}),
+            ("POST", "/", "{}", {}),
             ("POST", "/__manabi/update/check", "{}", {"Origin": "http://evil.example", "Content-Type": "application/json"}),
             (
                 "POST",
@@ -297,7 +354,13 @@ class FrameHeadersTest(ServeCase):
                 {"Origin": "http://" + host, "Content-Type": "application/json", "X-Manabi-Token": token},
             ),
             ("OPTIONS", "/__manabi/update/status", None, {}),
+            ("PUT", "/", "{}", {}),
         ]
+
+    @not_root
+    def test_every_response_refuses_to_be_framed(self):
+        port, _proc, _err = self.start(self.script)
+        host, requests = self.every_kind_of_response(port)
         for method, path, body, headers in requests:
             with self.subTest(method + " " + path):
                 status, got, _ = http_call(port, method, path, headers, body, host=host)
@@ -306,6 +369,116 @@ class FrameHeadersTest(ServeCase):
                 self.assertEqual(names.get("content-security-policy"), "frame-ancestors 'none'", status)
                 self.assertEqual(names.get("cross-origin-opener-policy"), "same-origin", status)
                 self.assertNotIn("access-control-allow-origin", names)
+
+    @not_root
+    def test_every_response_is_same_origin_only_for_resources(self):
+        # ほかのサイトのページが img・script・audio で読み込めないようにする（api-5）。ちょうど 1 つだけ付く
+        port, _proc, _err = self.start(self.script)
+        host, requests = self.every_kind_of_response(port)
+        for method, path, body, headers in requests:
+            with self.subTest(method + " " + path):
+                status, got, _ = http_call(port, method, path, headers, body, host=host)
+                values = [v for k, v in got if k.lower() == "cross-origin-resource-policy"]
+                self.assertEqual(values, ["same-origin"], status)
+
+    @not_root
+    def test_the_app_itself_still_gets_everything_it_loads(self):
+        # 同じ出どころの読み込み（ページ・資産・音声・アイコン・サービスワーカー）は、これまでどおり 200 で中身が届く
+        port, _proc, _err = self.start(self.script)
+        host = "127.0.0.1:%d" % port
+        same = {"Sec-Fetch-Site": "same-origin", "Sec-Fetch-Mode": "no-cors"}
+        for path, content in (
+            ("/", b"2.1.0"),
+            ("/sw.js", b"// sw 2.1.0"),
+            ("/audio/num/n1.mp3", b"num-1"),
+            ("/icons/icon-192.png", b"png"),
+            ("/assets/packs/g1-kokugo/g1-kokugo.js", b"pack g1"),
+        ):
+            with self.subTest(path):
+                status, got, data = http_call(port, "GET", path, same, host=host)
+                self.assertEqual(status, 200)
+                self.assertIn(content, data)
+                self.assertIn(("Cross-Origin-Resource-Policy", "same-origin"), got)
+
+
+class BadPathTest(ServeCase):
+    """NUL などを含むパスは 404。例外の記録（traceback）を出さない（api-2。ほかのサイトの img から繰り返せるため）"""
+
+    PATHS = ("/%00", "/index.html%00", "/%00?i=1", "/assets/%00.js", "/index.html%00.png", "/a%00b/c", "/%ed%a0%80", "/%ff")
+
+    @not_root
+    def test_nul_paths_are_404_and_leave_no_traceback(self):
+        port, proc, err_path = self.start(self.script)
+        host = "127.0.0.1:%d" % port
+        for path in self.PATHS:
+            for method in ("GET", "HEAD"):
+                with self.subTest(method + " " + path):
+                    status, got, _ = http_call(port, method, path, {"Sec-Fetch-Site": "cross-site"}, host=host)
+                    self.assertEqual(status, 404)
+                    names = {k.lower(): v for k, v in got}
+                    self.assertEqual(names.get("cross-origin-resource-policy"), "same-origin")
+                    self.assertEqual(names.get("x-frame-options"), "DENY")
+        self.assertEqual(http_call(port, "GET", "/", host=host)[0], 200)  # 配信は続く
+        self.assertIsNone(proc.poll())
+        text = self.stderr_of(err_path)
+        self.assertNotIn("Traceback", text)
+        self.assertNotIn("ValueError", text)
+        self.assertEqual(text, "")  # 記録は 1 行も増えない
+
+    def start_in_process(self):
+        dist = os.path.join(self.tmp, "plain-dist")
+        os.makedirs(dist)
+        with open(os.path.join(dist, "index.html"), "w") as f:
+            f.write("<html></html>")
+        port = free_port()
+        server = serve.QuietServer(("127.0.0.1", port), functools.partial(serve.Handler, directory=dist))
+        thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.05}, daemon=True)
+        thread.start()
+
+        def stop():
+            server.shutdown()
+            server.server_close()
+            thread.join(10)
+
+        self.addCleanup(stop)
+        return port
+
+    def test_unicode_encode_error_is_404_too(self):
+        # Linux では、符号にできない文字（lone surrogate）のパスで open が UnicodeEncodeError（ValueError の仲間）になる
+        port = self.start_in_process()
+        error = UnicodeEncodeError("utf-8", "\ud800", 0, 1, "surrogates not allowed")
+        err = io.StringIO()
+        with mock.patch.object(SimpleHTTPRequestHandler, "send_head", side_effect=error), mock.patch.object(sys, "stderr", err):
+            status, _, _ = http_call(port, "GET", "/anything", host="127.0.0.1:%d" % port)
+        self.assertEqual(status, 404)
+        self.assertEqual(err.getvalue(), "")
+
+    def test_unexpected_error_is_one_line_with_the_type_name_only(self):
+        port = self.start_in_process()
+        err = io.StringIO()
+        secret = os.path.join(self.tmp, "taro-yamada", "secret.txt")
+        boom = RuntimeError("failed at " + secret)
+        with mock.patch.object(serve.Handler, "_send_head", side_effect=boom), mock.patch.object(sys, "stderr", err):
+            with self.assertRaises(OSError):  # 返事なしで切れる
+                http_call(port, "GET", "/", host="127.0.0.1:%d" % port)
+            wait_until(lambda: err.getvalue(), 10, message="記録が出ません")
+        lines = err.getvalue().splitlines()
+        self.assertEqual(len(lines), 1, err.getvalue())
+        self.assertIn("RuntimeError", lines[0])
+        self.assertNotIn("Traceback", err.getvalue())
+        self.assertNotIn("taro-yamada", err.getvalue())
+        self.assertNotIn(self.tmp, err.getvalue())
+
+    def test_a_dropped_connection_is_not_logged(self):
+        server = serve.QuietServer.__new__(serve.QuietServer)  # 待ち受けは開かない
+        err = io.StringIO()
+        for exc in (ConnectionResetError(), BrokenPipeError(), TimeoutError(), socket.timeout()):
+            try:
+                raise exc
+            except OSError:
+                with mock.patch.object(sys, "stderr", err):
+                    server.handle_error(None, ("127.0.0.1", 1))
+        self.assertEqual(err.getvalue(), "")
 
 
 class RestartTest(unittest.TestCase):
@@ -377,6 +550,28 @@ class CheckUpdateTest(ServeCase):
         code, out, _ = self.check("http://localhost:4801")
         self.assertEqual((code, out["error"]["code"]), (1, "bad-test-origin"))
         self.assertEqual(self.fake.log, [])
+
+    def test_deeply_nested_manifest_is_bad_manifest_not_a_traceback(self):
+        # 深く入れ子の版の情報（64KiB 以内）でも Traceback で落ちず、決まったコードの JSON になる（fetch-3）
+        self.fake.tag_redirect = True  # 転送先のタグと比べる道でも読む
+        self.fake.manifest = b'{"tag":"v2.2.0","x":' + b"[" * 30000 + b"]" * 30000 + b"}"
+        code, out, err = self.check()
+        self.assertEqual((code, out["latest"], out["error"]["code"]), (1, None, "bad-manifest"))
+        self.assertNotIn("Traceback", err)
+
+    def run_check_with(self, error):
+        fetcher = mock.Mock()
+        fetcher.fetch_manifest.side_effect = error
+        stdout = io.TextIOWrapper(io.BytesIO(), encoding="utf-8")
+        with mock.patch.object(serve.fetch, "Fetcher", return_value=fetcher), mock.patch.object(sys, "stdout", stdout):
+            code = serve.check_update()
+        return code, json.loads(stdout.buffer.getvalue().decode("utf-8"))
+
+    def test_unexpected_exception_is_internal_json(self):
+        code, out = self.run_check_with(RuntimeError("/home/taro-yamada/secret"))
+        self.assertEqual((code, out["latest"], out["error"]), (1, None, {"code": "internal", "detail": "RuntimeError"}))
+        code, out = self.run_check_with(OSError(errno.EACCES, "Permission denied", "/home/taro-yamada/secret"))
+        self.assertEqual((code, out["error"]), (1, {"code": "internal", "detail": "EACCES: Permission denied"}))
 
 
 if __name__ == "__main__":

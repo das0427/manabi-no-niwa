@@ -474,6 +474,7 @@ class UpdateService:
         lay = self.layout
         lock_fd = None
         owner = False  # 鍵を取れた（ほかの更新の app.next を消さないため）
+        plans = link_ok = None  # 満杯のあとの needBytes の見積もりに使う。決まる前に失敗したら None のまま
         try:
             self.wait_background()
             lock_fd = self._take_lock()
@@ -490,21 +491,15 @@ class UpdateService:
                 lay.base,
                 estimate_need(plans, link_ok, lambda part: fetch_mod.remaining_bytes(lay.downloads, part)),
             )
-            try:
-                fetch_mod.download_all(
-                    self.fetcher,
-                    manifest.tag,
-                    [p.part for p in fetch],
-                    lay.downloads,
-                    self._cancel,
-                    self._progress,
-                )
-            except UpdateError as e:
-                if e.code != "disk-full":
-                    raise
-                # 取得の途中で空きが無くなった: 足りない量は、組み立てまでの全体の見積もりで出す
-                need = estimate_need(plans, link_ok, lambda part: fetch_mod.remaining_bytes(lay.downloads, part))
-                raise UpdateError("disk-full", e.detail, need_bytes=need) from None
+            # 取得の途中で空きが無くなったときの足りない量は、下の except（disk-full）で出す
+            fetch_mod.download_all(
+                self.fetcher,
+                manifest.tag,
+                [p.part for p in fetch],
+                lay.downloads,
+                self._cancel,
+                self._progress,
+            )
             install.check_space(lay.base, estimate_need(plans, link_ok, lambda part: 0))
             self._set_phase("extracting")
             install.assemble(lay, plans, fetch, link_ok, self._cancel, self._progress)
@@ -528,10 +523,19 @@ class UpdateService:
                 self._save_state()
             log("更新を中止しました")
         except BaseException as e:  # noqa: BLE001
+            error = self._to_error(e)
             # app が無い（入れ替えも元に戻すこともできなかった）ときは、app.next・app.prev を消さない
             if owner and os.path.isdir(lay.app):
                 remove_tree(lay.app_next)
-            self._mark_failed(self._to_error(e))
+            if owner and error.code == "disk-full":
+                # 空きが尽きたまま残さない: この更新の取得物（途中の .part も、確かめ済みの zip も）を捨てて空きを返す。
+                # 取得の途中だけでなく、組み立て・コピーの途中の満杯にも効く（次に押したときは最初から取り直す）
+                install.prune_downloads(lay.downloads, [])
+                if plans is not None and link_ok is not None:
+                    # 捨てたので、次に押したときは全部を取り直す。足りない量（needBytes。保護者画面の「あと約 N GB」）は、
+                    # 捨てる前の見積もり（確かめ済みの zip を 0 と数える）ではなく、捨てたあとの見積もり（残りを全部として数える）にする
+                    error = UpdateError("disk-full", error.detail, need_bytes=estimate_need(plans, link_ok))
+            self._mark_failed(error)
             with self._lock:
                 self._save_state()
         finally:

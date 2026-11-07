@@ -7,12 +7,14 @@
 #      - 何も動いていない               → serve.py を裏で起動して、起動を待つ
 #      - 別のものがポートを使っている   → エラーを出して終わる（別のポートへは逃げない）
 # 2. すでに開いている窓を前に出す（二重起動の防止）
+#      使うブラウザを 3 と同じ決め方で先に決め（command -v で探すだけ。何も起動しない）、種類（chromium / firefox / other）を
+#      --browser として mnwwindow.py に渡す（Chromium 系で開く端末では、Firefox の窓を前に出さないため）。
 #      mnwwindow.py が、X11・XWayland で見える「まなびのにわ」の窓を探す。あれば前に出して全画面にして、
 #      ここで終わる（新しい窓は開かない）。窓が見つからない・前に出せないときは 3 へ進む
 #      （そのときはアプリの中で、画面が 1 つにまとまる）。
 # 3. ブラウザで開く
 #      MANABI_BROWSER があればそれを優先。なければ chromium / chromium-browser / google-chrome /
-#      google-chrome-stable / brave-browser を「アプリ窓（--app）」で、無ければ firefox（通常のタブ）。
+#      google-chrome-stable / brave-browser を「アプリ窓（--app）」で、無ければ firefox（通常のタブ）、無ければ xdg-open。
 #      Wayland のセッションで Chromium 系を起動するときは、mnwwindow.py の答えしだいで
 #      --ozone-platform=x11 を --app の前に付ける（窓を XWayland にして、2 で探せるようにするため）。
 #      2 で窓が見つからなかったときだけ、開いたあと、窓が見えるまで最大 5 秒待つ（そのあいだ、0 の鍵を持ち続ける）。
@@ -172,6 +174,49 @@ $(tail -n 5 "$LOG" 2>/dev/null)
   fi
 fi
 
+# ---- 使うブラウザを決める（3 で開くブラウザ。2 の前に決めて、2 と 3 で同じ結果を使う）----
+# command -v で探すだけで、何も起動しない。見つからない・MANABI_BROWSER のコマンドが無い、といったエラーは 3 で出す
+#   BROWSER_CMD  : 起動するコマンド（MANABI_BROWSER のときは引数も入る）。見つからなければ空
+#   BROWSER_KIND : chromium = Chromium 系 / firefox / other = xdg-open・見つからない・MANABI_BROWSER で種類が分からない
+#                  mnwwindow.py の focus と wait に --browser で渡す（窓の探し方を、使うブラウザに合わせるため）
+# MANABI_BROWSER の種類は、先頭の語の basename だけで見る（中身は実行も展開もしない）
+is_chromium_family() {
+  case "$(basename -- "$1")" in
+    *chrom*|*brave*|*edge*|*vivaldi*|*opera*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+browser_kind() {
+  if is_chromium_family "$1"; then
+    echo chromium
+  else
+    case "$(basename -- "$1")" in
+      *firefox*) echo firefox ;;
+      *) echo other ;;
+    esac
+  fi
+}
+
+BROWSER_CMD=()
+BROWSER_KIND="other"
+pick_browser() {
+  local b
+  if [ -n "${MANABI_BROWSER:-}" ]; then
+    read -r -a BROWSER_CMD <<<"$MANABI_BROWSER"
+    BROWSER_KIND="$(browser_kind "${BROWSER_CMD[0]:-}")"
+    return 0
+  fi
+  for b in chromium chromium-browser google-chrome google-chrome-stable brave-browser firefox xdg-open; do
+    if command -v "$b" >/dev/null 2>&1; then
+      BROWSER_CMD=("$b")
+      BROWSER_KIND="$(browser_kind "$b")"
+      return 0
+    fi
+  done
+}
+pick_browser
+
 # ---- 2. すでに開いている窓があれば、前に出して全画面にして終わる ----
 # 終わってよいのは focus が 0（前に出た）のときだけ。それ以外（窓が無い・前に出せない・X11 が使えない・補助の不具合）は、
 # どれも今までどおり新しい窓を開く
@@ -180,20 +225,13 @@ fi
 focus_rc=99
 if use_win; then
   focus_rc=0
-  win focus >/dev/null || focus_rc=$?
+  win focus --browser "$BROWSER_KIND" >/dev/null || focus_rc=$?
   if [ "$focus_rc" -eq 0 ]; then
     exit 0
   fi
 fi
 
 # ---- 3. ブラウザで開く ----
-is_chromium_family() {
-  case "$(basename -- "$1")" in
-    *chrom*|*brave*|*edge*|*vivaldi*|*opera*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
 launch() {
   # 9>&- : 鍵の fd をブラウザに渡さない
   if command -v setsid >/dev/null 2>&1; then
@@ -218,17 +256,16 @@ set_ozone_flag() {
 # ブラウザを起動したあと、窓が X11 に現れるまで（最大 5 秒）鍵を持ち続けて終わる（2 で窓が見つからなかったときだけ）。
 # そのあいだに押された次の起動は、窓が出たあとで 2 の前面化に回る
 finish_launch() {
-  if use_win && [ "$focus_rc" -eq 3 ]; then win wait --timeout 5 >/dev/null || true; fi
+  if use_win && [ "$focus_rc" -eq 3 ]; then win wait --timeout 5 --browser "$BROWSER_KIND" >/dev/null || true; fi
   exit 0
 }
 
 if [ -n "${MANABI_BROWSER:-}" ]; then
-  read -r -a BROWSER_CMD <<<"$MANABI_BROWSER"
   if ! command -v "${BROWSER_CMD[0]}" >/dev/null 2>&1; then
     show_error "MANABI_BROWSER に指定されたブラウザ（${MANABI_BROWSER}）が見つかりません。"
     exit 1
   fi
-  if is_chromium_family "${BROWSER_CMD[0]}"; then
+  if [ "$BROWSER_KIND" = "chromium" ]; then
     set_ozone_flag "${BROWSER_CMD[0]}"
     # 保護者が自分で --ozone-platform（または --ozone-platform-hint）を書いていたら、それを優先する（後ろの指定が勝つため、足さない）
     for a in "${BROWSER_CMD[@]:1}"; do
@@ -241,23 +278,16 @@ if [ -n "${MANABI_BROWSER:-}" ]; then
   finish_launch
 fi
 
-for b in chromium chromium-browser google-chrome google-chrome-stable brave-browser; do
-  if command -v "$b" >/dev/null 2>&1; then
-    set_ozone_flag "$b"
-    launch "$b" ${OZONE_FLAG:+"$OZONE_FLAG"} "--app=${URL}"
-    finish_launch
-  fi
-done
-
-if command -v firefox >/dev/null 2>&1; then
-  launch firefox "$URL"
-  finish_launch
+if [ "${#BROWSER_CMD[@]}" -eq 0 ]; then
+  show_error "ブラウザが見つかりません。Chromium か Firefox を入れて、${URL} を開いてください。"
+  exit 1
 fi
 
-if command -v xdg-open >/dev/null 2>&1; then
-  launch xdg-open "$URL"
-  finish_launch
+# 見つかったブラウザ。Chromium 系は「アプリ窓（--app）」、Firefox・xdg-open は通常のタブ
+if [ "$BROWSER_KIND" = "chromium" ]; then
+  set_ozone_flag "${BROWSER_CMD[0]}"
+  launch "${BROWSER_CMD[0]}" ${OZONE_FLAG:+"$OZONE_FLAG"} "--app=${URL}"
+else
+  launch "${BROWSER_CMD[0]}" "$URL"
 fi
-
-show_error "ブラウザが見つかりません。Chromium か Firefox を入れて、${URL} を開いてください。"
-exit 1
+finish_launch

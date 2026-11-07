@@ -153,6 +153,18 @@ class ParseManifestTest(unittest.TestCase):
         data["pad"] = "y" * 1000
         parse(data)  # 知らない欄は無視する
 
+    def test_deeply_nested_json_is_bad_manifest_not_recursion_error(self):
+        # 64KiB 以内の深い入れ子は json.loads が RecursionError を投げる。決まったコード（bad-manifest）にする（fetch-3）
+        deep = b'{"x":' + b"[" * 30000 + b"]" * 30000 + b"}"
+        self.assertLessEqual(len(deep), manifest.MAX_MANIFEST_BYTES)
+        with self.assertRaises(UpdateError) as caught:
+            manifest.parse_manifest(deep)
+        self.assertEqual(caught.exception.code, "bad-manifest")
+        # 状態・設定・印の読み取りも「読めない」として扱える（ValueError）
+        with self.assertRaises(ValueError):
+            common.strict_loads(deep.decode("utf-8"))
+        self.assertEqual(common.strict_loads('{"a": [1]}'), {"a": [1]})
+
     def test_notes_are_cleaned(self):
         data = good()
         data["notes"] = ["a\x00b\x1b[31m\nc‮d e", "z" * 300, "   ", "<b>x</b>"]

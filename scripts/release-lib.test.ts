@@ -1,36 +1,71 @@
 // @vitest-environment node
+import { spawnSync } from 'node:child_process';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   AUDIO_KINDS,
   MANIFEST_NAME,
   MAX_NOTES,
   MAX_NOTE_CHARS,
   MIN_AUTO_UPDATE_FROM,
+  RELEASE_SOURCES,
+  RELEASE_TOP_FILES,
+  RELEASE_TRACKED_DIRS,
   TOP,
   assertNotes,
   audioGroupOf,
   audioPackIdOf,
   buildManifest,
+  checkReleaseSources,
   checkReleaseVersion,
   compareVersions,
   computeContentId,
+  contentListText,
   crc32,
   createZip,
+  describeStatusEntries,
+  findDirtySources,
+  findLinks,
+  findUnpackagedPrecache,
+  isDistJunk,
+  isExpectedStatus,
   isVersion,
+  listTrackedReleaseFiles,
   makeMarker,
   markerEntryName,
   packPart,
+  parsePrecacheLists,
   parseReleaseNotes,
+  parseStatusZ,
+  readReleaseTags,
+  runGit,
   sha256FileText,
   sha256Hex,
+  sourceProblems,
   toJsonText,
   todayInJapan,
+  walkDist,
   zipNameFor,
   type ContentFile,
+  type GitRunner,
   type ManifestPart,
+  type StatusEntry,
   type ZipEntry,
 } from './release-lib.ts';
+import { finalizeDist, renderServiceWorker, type PackIndex } from './vite-plugin-precache.ts';
 
 // ---------------------------------------------------------------- 試験用の道具
 
@@ -196,6 +231,50 @@ describe('checkReleaseVersion（版の番号の誤りを、出す前に止める
   it('形が X.Y.Z でなければ止める', () => {
     expect(checkReleaseVersion('2.1', tags)).toContain('X.Y.Z');
   });
+
+  it('先頭に 0 のある版（2.01.0 など）は止める（2.1.0 と数は同じで、取り違えのもと）', () => {
+    for (const v of ['2.01.0', '2.1.00', '02.1.0', '2.0.03']) {
+      expect(checkReleaseVersion(v, tags), v).toContain('X.Y.Z');
+      expect(checkReleaseVersion(v, [], { allowJump: true, allowExistingTag: true }), v).toContain(
+        'X.Y.Z',
+      );
+    }
+  });
+
+  it('公開済みかは文字ではなく数で比べる（タグが v2.01.0 でも 2.1.0 は公開済み）', () => {
+    const t = [...tags, 'v2.01.0'];
+    expect(checkReleaseVersion('2.1.0', t)).toContain('タグ v2.01.0 はもうあります');
+    expect(checkReleaseVersion('2.1.0', t, { allowExistingTag: true })).toBeNull();
+    // 先頭の 0 のあるタグが最新のときも、数で「古い」を判定し、説明の版は数の形で出す
+    const old = checkReleaseVersion('2.0.3', [...tags, 'v2.01.0']);
+    expect(old).toContain('より古い');
+    expect(old).toContain('2.1.0');
+    expect(checkReleaseVersion('2.1.1', ['v2.01.0'])).toBeNull();
+    expect(checkReleaseVersion('2.1.0', ['v2.0.2'])).toBeNull();
+  });
+});
+
+describe('readReleaseTags（タグを読めない・1 つも無いときは止める）', () => {
+  it('git が失敗したら例外にする（黙って空の一覧にしない）', () => {
+    const failing: GitRunner = () => {
+      throw new Error('Command failed: git tag\nfatal: not a git repository');
+    };
+    expect(() => readReleaseTags('/x', failing)).toThrow(/git のタグを読めません.*not a git/);
+  });
+
+  it('vX.Y.Z の形のタグが 1 つも無ければ例外にする（先行版の印つき・別の名前は数えない）', () => {
+    expect(() => readReleaseTags('/x', () => '')).toThrow(/1 つもありません/);
+    expect(() => readReleaseTags('/x', () => 'v2.0.0-beta.1\nvfoo\nrelease-1\n')).toThrow(
+      /1 つもありません/,
+    );
+  });
+
+  it('vX.Y.Z の形のタグだけを返す', () => {
+    expect(readReleaseTags('/x', () => 'v1.0.0\r\nv2.0.0-beta.1\nv2.0.2\n\n')).toEqual([
+      'v1.0.0',
+      'v2.0.2',
+    ]);
+  });
 });
 
 describe('定数と名前', () => {
@@ -218,6 +297,12 @@ describe('定数と名前', () => {
     expect(isVersion('2.1.0')).toBe(true);
     for (const bad of ['2.1', '2.1.0-beta', 'v2.1.0', '2.1.0.1', '', '12345.0.0', '1.2.x']) {
       expect(isVersion(bad), bad).toBe(false);
+    }
+    for (const bad of ['2.01.0', '02.1.0', '2.1.00', '00.0.0', '0.00.0', '2.1.01']) {
+      expect(isVersion(bad), bad).toBe(false);
+    }
+    for (const ok of ['0.0.0', '2.0.0', '10.20.300', '9999.9999.999999']) {
+      expect(isVersion(ok), ok).toBe(true);
     }
     expect(compareVersions('2.10.0', '2.9.9')).toBeGreaterThan(0);
     expect(compareVersions('2.0.2', '2.1.0')).toBeLessThan(0);
@@ -942,5 +1027,807 @@ describe('packPart', () => {
     expect(() =>
       packPart({ version: '2.2.0', kind: 'main', entries: [...content, content[0]!] }),
     ).toThrow(/重なって/);
+  });
+});
+
+// ---------------------------------------------------------------- 配布に入れるファイルの選び方
+//
+// git の操作は、os の一時フォルダに作った使い捨てのリポジトリで試す（作業ツリーの git には触らない）。
+
+const tempDirs: string[] = [];
+
+/** 一時のフォルダ（afterAll で消す） */
+function tempDir(prefix: string): string {
+  const d = mkdtempSync(path.join(os.tmpdir(), `mnw-release-test-${prefix}-`));
+  tempDirs.push(d);
+  return d;
+}
+
+afterAll(() => {
+  for (const d of tempDirs) rmSync(d, { recursive: true, force: true });
+});
+
+function writeFiles(root: string, files: Record<string, string>): void {
+  for (const [rel, data] of Object.entries(files)) {
+    const abs = path.join(root, rel);
+    mkdirSync(path.dirname(abs), { recursive: true });
+    writeFileSync(abs, data);
+  }
+}
+
+/** 本物のリポジトリと同じ決まりの .gitignore（教材パックの音声は public/audio/ 直下のフォルダ単位で無視） */
+const GITIGNORE = [
+  'dist/',
+  'release/',
+  '.venv/',
+  '.env',
+  '__pycache__/',
+  '*.pyc',
+  'Thumbs.db',
+  '.DS_Store',
+  'public/audio/*/',
+  '!public/audio/num/',
+  '!public/audio/_sample-*/',
+  '',
+].join('\n');
+
+/** 追跡済みの配布物（これが「きれいな」状態） */
+const BASE_FILES: Record<string, string> = {
+  '.gitignore': GITIGNORE,
+  'README.md': 'readme\n',
+  LICENSE: 'license\n',
+  'DESINGN.md': 'design\n',
+  'docs/device-checklist.md': 'checklist\n',
+  'licenses/a.txt': 'a\n',
+  'deploy/zorin/serve.py': 'print(1)\n',
+  'deploy/zorin/install.sh': '#!/bin/sh\n',
+  'deploy/zorin/mnwupdate/__init__.py': '',
+  'public/manifest.webmanifest': '{}\n',
+  'public/audio/num/manifest.json': '{}\n',
+  'public/audio/num/a.mp3': 'mp3',
+};
+
+let templateRepo = '';
+
+beforeAll(() => {
+  templateRepo = tempDir('template');
+  runGit(templateRepo, ['init', '-q']);
+  const config: [string, string][] = [
+    ['user.name', 'release test'],
+    ['user.email', 'test@example.invalid'],
+    ['commit.gpgsign', 'false'],
+    ['core.autocrlf', 'false'],
+    ['core.hooksPath', path.join(templateRepo, '.git', 'no-hooks')],
+  ];
+  for (const [k, v] of config) runGit(templateRepo, ['config', k, v]);
+  writeFiles(templateRepo, BASE_FILES);
+  runGit(templateRepo, ['add', '-A']);
+  runGit(templateRepo, ['commit', '-q', '-m', 'base']);
+  runGit(templateRepo, ['tag', 'v2.0.2']);
+});
+
+/** きれいな使い捨てのリポジトリ（タグ v2.0.2 つき）を、雛形の写しで作る */
+function newRepo(): string {
+  const d = tempDir('repo');
+  cpSync(templateRepo, d, { recursive: true });
+  return d;
+}
+
+function codes(entries: readonly StatusEntry[]): string[] {
+  return entries.map((e) => `${e.code} ${e.path}`).sort();
+}
+
+describe('parseStatusZ・isExpectedStatus・describeStatusEntries', () => {
+  it('git status -z の出力を読む（空白を含む名前・名前の変更の元の名前）', () => {
+    expect(parseStatusZ('?? a b.txt\0 M c\0R  new.txt\0old.txt\0!! d/\0')).toEqual([
+      { code: '??', path: 'a b.txt' },
+      { code: ' M', path: 'c' },
+      { code: 'R ', path: 'new.txt' },
+      { code: '!!', path: 'd/' },
+    ]);
+    expect(parseStatusZ('')).toEqual([]);
+  });
+
+  it('止めなくてよいのは、無視された教材パックの音声のフォルダと Python・OS の作業ファイルだけ', () => {
+    const ok = (code: string, p: string) => isExpectedStatus({ code, path: p });
+    expect(ok('!!', 'public/audio/g1-ja/')).toBe(true);
+    expect(ok('!!', 'public/audio/en/')).toBe(true);
+    expect(ok('!!', 'deploy/zorin/__pycache__/')).toBe(true);
+    expect(ok('!!', 'deploy/zorin/mnwupdate/x.pyc')).toBe(true);
+    expect(ok('!!', 'public/Thumbs.db')).toBe(true);
+    expect(ok('!!', 'public/.DS_Store')).toBe(true);
+    // 音声のフォルダでも、git の外（??）・変更は止める。深い所や直下のファイルは音声のフォルダではない
+    expect(ok('??', 'public/audio/g1-ja/')).toBe(false);
+    expect(ok('!!', 'public/audio/g1-ja/q1.mp3')).toBe(false);
+    expect(ok('!!', 'public/audio/num/.env')).toBe(false);
+    expect(ok('!!', 'public/audio/a/b/')).toBe(false);
+    expect(ok('!!', 'public/audio/')).toBe(false);
+    expect(ok('!!', 'deploy/zorin/.env')).toBe(false);
+    expect(ok('!!', 'deploy/zorin/.venv/')).toBe(false);
+    expect(ok('!!', 'public/other/')).toBe(false);
+    expect(ok(' M', 'public/audio/g1-ja/')).toBe(false);
+  });
+
+  it('一覧は 1 行 1 件で、多いときは件数でまとめる', () => {
+    const list: StatusEntry[] = [
+      { code: '??', path: 'a' },
+      { code: ' M', path: 'b' },
+      { code: '!!', path: 'c' },
+    ];
+    expect(describeStatusEntries(list)).toBe(
+      '  [git の外] a\n  [変更あり] b\n  [無視されている] c',
+    );
+    expect(describeStatusEntries(list, 2)).toBe('  [git の外] a\n  [変更あり] b\n  ほか 1 件');
+  });
+});
+
+describe('runGit', () => {
+  it('GIT_DIR などの環境変数に引きずられず、root のリポジトリを見る', () => {
+    const repo = newRepo();
+    const saved = process.env.GIT_DIR;
+    process.env.GIT_DIR = path.join(os.tmpdir(), 'mnw-release-test-no-such-git-dir');
+    try {
+      expect(runGit(repo, ['tag', '--list'])).toContain('v2.0.2');
+    } finally {
+      if (saved === undefined) delete process.env.GIT_DIR;
+      else process.env.GIT_DIR = saved;
+    }
+  });
+
+  it('タグを読める（readReleaseTags）', () => {
+    expect(readReleaseTags(newRepo())).toEqual(['v2.0.2']);
+  });
+});
+
+describe('findDirtySources（配布に入る元に、git の外・変更・無視されたものが無いか）', () => {
+  it('きれいなら何も出さない。想定内（教材パックの音声・Python のキャッシュ）と、元の外の物は見ない', () => {
+    const repo = newRepo();
+    writeFiles(repo, {
+      'public/audio/g1-ja/q1.mp3': 'x',
+      'public/audio/en/a.mp3': 'x',
+      'deploy/zorin/__pycache__/serve.cpython-312.pyc': 'x',
+      'deploy/zorin/mnwupdate/__pycache__/a.pyc': 'x',
+      'public/Thumbs.db': 'x',
+      'dist/index.html': 'x',
+      'release/a.zip': 'x',
+      'notes.txt': 'x',
+      'scripts/tmp.ts': 'x',
+    });
+    expect(findDirtySources(repo)).toEqual([]);
+    expect(checkReleaseSources(repo)).toEqual({ dirty: [], links: [] });
+  });
+
+  it('git の外のファイルを出す（public・deploy/zorin・licenses の下）', () => {
+    const repo = newRepo();
+    writeFiles(repo, {
+      'deploy/zorin/notes.txt': 'x',
+      'licenses/extra.txt': 'x',
+      'public/audio/num/unfinished.mp3': 'x',
+      'public/draft.txt': 'x',
+      'notes.txt': 'x',
+    });
+    expect(codes(findDirtySources(repo))).toEqual([
+      '?? deploy/zorin/notes.txt',
+      '?? licenses/extra.txt',
+      '?? public/audio/num/unfinished.mp3',
+      '?? public/draft.txt',
+    ]);
+  });
+
+  it('git の外のフォルダ・最上位の配布ファイルの隣のものは、元の範囲の外なので見ない', () => {
+    const repo = newRepo();
+    writeFiles(repo, { 'deploy/other/x.txt': 'x', 'docs/other.md': 'x', 'src/a.ts': 'x' });
+    expect(findDirtySources(repo)).toEqual([]);
+  });
+
+  it('変更（作業ツリーの変更・ステージ済み・削除）を出す', () => {
+    const repo = newRepo();
+    writeFiles(repo, {
+      'deploy/zorin/serve.py': 'print(2)\n',
+      'public/audio/num/manifest.json': '{"x":1}\n',
+      'licenses/a.txt': 'changed\n',
+    });
+    runGit(repo, ['add', 'licenses/a.txt']);
+    rmSync(path.join(repo, 'README.md'));
+    expect(codes(findDirtySources(repo))).toEqual([
+      ' D README.md',
+      ' M deploy/zorin/serve.py',
+      ' M public/audio/num/manifest.json',
+      'M  licenses/a.txt',
+    ]);
+  });
+
+  it('無視されたファイルを出す（.env・.venv など。num の下の無視されたものも）', () => {
+    const repo = newRepo();
+    writeFiles(repo, {
+      'deploy/zorin/.env': 'TOKEN=x',
+      'deploy/zorin/.venv/pyvenv.cfg': 'x',
+      'public/audio/num/.env': 'x',
+      'public/audio/g1-ja/q1.mp3': 'x',
+    });
+    expect(codes(findDirtySources(repo))).toEqual([
+      '!! deploy/zorin/.env',
+      '!! deploy/zorin/.venv/',
+      '!! public/audio/num/.env',
+    ]);
+  });
+
+  it('git が使えない所では例外にする（黙って「きれい」にしない）', () => {
+    const notRepo = tempDir('norepo');
+    const failing: GitRunner = () => {
+      throw new Error('fatal: not a git repository');
+    };
+    expect(() => findDirtySources(notRepo, failing)).toThrow(/not a git repository/);
+  });
+});
+
+describe('sourceProblems（止める説明と警告）', () => {
+  const dirty: StatusEntry[] = [
+    { code: '??', path: 'public/audio/num/new.mp3' },
+    { code: ' M', path: 'public/audio/num/manifest.json' },
+  ];
+
+  it('問題が無ければ何も出さない', () => {
+    expect(sourceProblems({ dirty: [], links: [] }, false)).toEqual({ errors: [], warnings: [] });
+    expect(sourceProblems({ dirty: [], links: [] }, true)).toEqual({ errors: [], warnings: [] });
+  });
+
+  it('git の外・変更があれば、一覧と --allow-dirty の案内を付けて止める', () => {
+    const { errors, warnings } = sourceProblems({ dirty, links: [] }, false);
+    expect(warnings).toEqual([]);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('[git の外] public/audio/num/new.mp3');
+    expect(errors[0]).toContain('[変更あり] public/audio/num/manifest.json');
+    expect(errors[0]).toContain('（2 件）');
+    expect(errors[0]).toContain('--allow-dirty');
+    for (const s of RELEASE_SOURCES) expect(errors[0]).toContain(s);
+  });
+
+  it('--allow-dirty のときは、同じ一覧を警告にして続ける', () => {
+    const { errors, warnings } = sourceProblems({ dirty, links: [] }, true);
+    expect(errors).toEqual([]);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain('警告');
+    expect(warnings[0]).toContain('[git の外] public/audio/num/new.mp3');
+    expect(warnings[0]).toContain('public の下は dist にそのまま写されている');
+  });
+
+  it('リンクは --allow-dirty でも止める', () => {
+    const links = ['deploy/zorin/linked'];
+    for (const allow of [false, true]) {
+      const { errors } = sourceProblems({ dirty: [], links }, allow);
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain('リンク');
+      expect(errors[0]).toContain('  deploy/zorin/linked');
+    }
+    const both = sourceProblems({ dirty, links }, true);
+    expect(both.errors).toHaveLength(1);
+    expect(both.warnings).toHaveLength(1);
+  });
+});
+
+/** ディレクトリのリンクを作る（Windows は権限の要らないジャンクション、ほかはシンボリックリンク） */
+function linkDir(target: string, linkPath: string): void {
+  mkdirSync(path.dirname(linkPath), { recursive: true });
+  symlinkSync(target, linkPath, 'junction');
+}
+
+describe('findLinks（deploy/zorin・licenses・最上位の配布ファイルの下のリンク）', () => {
+  it('ディレクトリのリンク（Windows ではジャンクション）を見つける。public と dist には掛けない', () => {
+    const repo = newRepo();
+    const target = tempDir('target');
+    writeFiles(target, { 'secret.txt': 's' });
+    linkDir(target, path.join(repo, 'deploy/zorin/linked'));
+    linkDir(target, path.join(repo, 'licenses/sub/l2'));
+    linkDir(target, path.join(repo, 'public/audio-link'));
+    linkDir(target, path.join(repo, 'dist/audio'));
+    const rels = [...RELEASE_TRACKED_DIRS, ...RELEASE_TOP_FILES];
+    expect(findLinks(repo, rels)).toEqual(['deploy/zorin/linked', 'licenses/sub/l2']);
+    expect(checkReleaseSources(repo).links).toEqual(['deploy/zorin/linked', 'licenses/sub/l2']);
+  });
+
+  it('リンクの先へは入らない（先にあるリンクを二重に数えない）', () => {
+    const repo = newRepo();
+    const target = tempDir('target');
+    linkDir(target, path.join(target, 'inner'));
+    linkDir(target, path.join(repo, 'licenses/l'));
+    expect(findLinks(repo, ['licenses'])).toEqual(['licenses/l']);
+  });
+
+  it('ファイルのリンクも見つける（作れない環境では飛ばす）', (ctx) => {
+    const repo = newRepo();
+    try {
+      symlinkSync(path.join(repo, 'LICENSE'), path.join(repo, 'deploy/zorin/lnk.txt'), 'file');
+      rmSync(path.join(repo, 'README.md'));
+      symlinkSync(path.join(repo, 'LICENSE'), path.join(repo, 'README.md'), 'file');
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === 'EPERM') return ctx.skip();
+      throw e;
+    }
+    expect(findLinks(repo, [...RELEASE_TRACKED_DIRS, ...RELEASE_TOP_FILES])).toEqual([
+      'deploy/zorin/lnk.txt',
+      'README.md',
+    ]);
+    expect(() => listTrackedReleaseFiles(repo)).toThrow(/通常のファイルではありません.*README\.md/);
+  });
+
+  it('無いフォルダは見ない。ふつうのファイルだけなら空', () => {
+    const repo = newRepo();
+    expect(findLinks(repo, ['no/such/dir', 'README.md'])).toEqual([]);
+  });
+});
+
+describe('listTrackedReleaseFiles（git で追跡済みのものだけ）', () => {
+  it('追跡済みだけを返す。git の外・無視された・エディタの作業ファイルは入らない', () => {
+    const repo = newRepo();
+    writeFiles(repo, {
+      'deploy/zorin/.env': 'TOKEN=x',
+      'deploy/zorin/serve.py~': 'x',
+      'deploy/zorin/.serve.py.swp': 'x',
+      'deploy/zorin/.venv/pyvenv.cfg': 'x',
+      'deploy/zorin/notes.txt': 'x',
+      'deploy/zorin/__pycache__/a.pyc': 'x',
+      'licenses/b.txt': 'x',
+      'notes.txt': 'x',
+    });
+    expect(listTrackedReleaseFiles(repo)).toEqual([
+      'DESINGN.md',
+      'LICENSE',
+      'README.md',
+      'deploy/zorin/install.sh',
+      'deploy/zorin/mnwupdate/__init__.py',
+      'deploy/zorin/serve.py',
+      'docs/device-checklist.md',
+      'licenses/a.txt',
+    ]);
+  });
+
+  it('最上位の配布ファイルが追跡されていなければ例外', () => {
+    const repo = newRepo();
+    runGit(repo, ['rm', '-q', '--cached', 'README.md']);
+    expect(() => listTrackedReleaseFiles(repo)).toThrow(/README\.md が git で追跡されていません/);
+  });
+
+  it('フォルダに追跡済みのファイルが 1 つも無ければ例外', () => {
+    const repo = newRepo();
+    runGit(repo, ['rm', '-rq', '--cached', 'licenses']);
+    expect(() => listTrackedReleaseFiles(repo)).toThrow(/licenses\/ に git で追跡された/);
+  });
+
+  it('追跡済みの名前でも、作業ツリーでリンク・フォルダになっていれば例外（git を使わず確かめる）', () => {
+    const root = tempDir('notfile');
+    const target = tempDir('target');
+    writeFiles(root, Object.fromEntries(Object.keys(BASE_FILES).map((f) => [f, 'x'])));
+    const names = [...RELEASE_TOP_FILES, 'licenses/a.txt', 'deploy/zorin/serve.py'];
+    const fake: GitRunner = () => `${names.join('\0')}\0`;
+    expect(listTrackedReleaseFiles(root, fake)).toHaveLength(names.length);
+    rmSync(path.join(root, 'deploy/zorin/serve.py'));
+    linkDir(target, path.join(root, 'deploy/zorin/serve.py'));
+    expect(() => listTrackedReleaseFiles(root, fake)).toThrow(
+      /通常のファイルではありません.*deploy\/zorin\/serve\.py/,
+    );
+    rmSync(path.join(root, 'deploy/zorin/serve.py'), { recursive: true });
+    mkdirSync(path.join(root, 'deploy/zorin/serve.py'));
+    expect(() => listTrackedReleaseFiles(root, fake)).toThrow(/通常のファイルではありません/);
+  });
+
+  it('追跡されているのに作業ツリーに無ければ例外', () => {
+    const repo = newRepo();
+    rmSync(path.join(repo, 'deploy/zorin/serve.py'));
+    expect(() => listTrackedReleaseFiles(repo)).toThrow(
+      /作業ツリーにありません: deploy\/zorin\/serve\.py/,
+    );
+  });
+});
+
+describe('walkDist・isDistJunk（dist から入れないもの）', () => {
+  it('名前の決まり: 隠し・Thumbs.db・desktop.ini・~・.swp・Python のキャッシュ', () => {
+    for (const bad of [
+      '.vite',
+      '.hidden',
+      '.DS_Store',
+      '.htaccess',
+      'Thumbs.db',
+      'thumbs.db',
+      'THUMBS.DB',
+      'desktop.ini',
+      'Desktop.ini',
+      'a.js~',
+      '~',
+      'x.swp',
+      'X.SWP',
+      '__pycache__',
+      'c.pyc',
+    ]) {
+      expect(isDistJunk(bad), bad).toBe(true);
+    }
+    for (const ok of [
+      'index.html',
+      'sw.js',
+      'a.mp3',
+      'thumbs.png',
+      'desktop.ini.txt',
+      'swp',
+      'a~b',
+    ]) {
+      expect(isDistJunk(ok), ok).toBe(false);
+    }
+  });
+
+  it('ふつうのファイルは残し、隠しフォルダ（.vite/）は中身ごと除く', () => {
+    const dist = tempDir('dist');
+    writeFiles(dist, {
+      'index.html': 'x',
+      'sw.js': 'x',
+      'assets/app-1.js': 'x',
+      'audio/num/a.mp3': 'x',
+      'icons/icon.png': 'x',
+      '.vite/manifest.json': '{}',
+      '.hidden': 'x',
+      'assets/.keep': 'x',
+      'Thumbs.db': 'x',
+      'icons/THUMBS.DB': 'x',
+      'desktop.ini': 'x',
+      'sub/Desktop.ini': 'x',
+      'a.js~': 'x',
+      'b.swp': 'x',
+      '__pycache__/x.pyc': 'x',
+      'c.pyc': 'x',
+      '.DS_Store': 'x',
+    });
+    const { files, skipped } = walkDist(dist);
+    expect(files.map(([, rel]) => rel).sort()).toEqual([
+      'assets/app-1.js',
+      'audio/num/a.mp3',
+      'icons/icon.png',
+      'index.html',
+      'sw.js',
+    ]);
+    for (const [abs, rel] of files) expect(abs).toBe(path.join(dist, ...rel.split('/')));
+    expect([...skipped].sort()).toEqual([
+      '.DS_Store',
+      '.hidden',
+      '.vite/',
+      'Thumbs.db',
+      '__pycache__/',
+      'a.js~',
+      'assets/.keep',
+      'b.swp',
+      'c.pyc',
+      'desktop.ini',
+      'icons/THUMBS.DB',
+      'sub/Desktop.ini',
+    ]);
+  });
+
+  it('dist の中のリンク（public/audio をジャンクションにした作業場所）は止めず、先のファイルを入れる', () => {
+    const dist = tempDir('dist');
+    const target = tempDir('target');
+    writeFiles(target, { 'q1.mp3': 'x' });
+    writeFiles(dist, { 'index.html': 'x' });
+    linkDir(target, path.join(dist, 'audio'));
+    expect(
+      walkDist(dist)
+        .files.map(([, rel]) => rel)
+        .sort(),
+    ).toEqual(['audio/q1.mp3', 'index.html']);
+  });
+});
+
+/** sw.js（本物の書き出し renderServiceWorker の形）。list は事前保存の一覧 */
+function fakeSw(list: readonly string[]): string {
+  return renderServiceWorker('self.addEventListener("fetch", () => {});\n', 'abc123', list);
+}
+
+/** packs.json（本物の形 PackIndex）。パック g1-math の files だけを持つ */
+function fakePacks(files: readonly string[]): string {
+  const index: PackIndex = { 'g1-math': { files: [...files], bytes: 1, hash: '0123456789abcdef' } };
+  return `${JSON.stringify(index, null, 2)}\n`;
+}
+
+describe('parsePrecacheLists・findUnpackagedPrecache（sw.js・packs.json が読みに行くファイルが zip に入るか）', () => {
+  it('sw.js の一覧と packs.json の各パックの files を合わせて読む（空白・日本語の名前も）', () => {
+    const packs: PackIndex = {
+      'g1-math': {
+        files: ['assets/packs/g1-math/index.js', 'audio/g1-math/q 1.mp3'],
+        bytes: 1,
+        hash: 'a'.repeat(16),
+      },
+      'g3-math': { files: ['audio/g3-math/さん.mp3'], bytes: 1, hash: 'b'.repeat(16) },
+    };
+    expect(
+      parsePrecacheLists(
+        fakeSw(['icons/日本 語.png', 'index.html']),
+        `${JSON.stringify(packs, null, 2)}\n`,
+      ),
+    ).toEqual([
+      'icons/日本 語.png',
+      'index.html',
+      'assets/packs/g1-math/index.js',
+      'audio/g1-math/q 1.mp3',
+      'audio/g3-math/さん.mp3',
+    ]);
+  });
+
+  it('packs.json が無い dist（null）は sw.js の一覧だけ。CRLF の sw.js・空の一覧・古い形 {packs: …} も読む', () => {
+    expect(parsePrecacheLists(fakeSw(['index.html']), null)).toEqual(['index.html']);
+    expect(parsePrecacheLists(fakeSw(['index.html']).replaceAll('\n', '\r\n'), '{}')).toEqual([
+      'index.html',
+    ]);
+    expect(parsePrecacheLists(fakeSw([]), '{}')).toEqual([]);
+    const legacy = JSON.stringify({ packs: { a: { files: ['audio/a/x.mp3'] } } });
+    expect(parsePrecacheLists(fakeSw(['index.html']), legacy)).toEqual([
+      'index.html',
+      'audio/a/x.mp3',
+    ]);
+  });
+
+  it('形が違えば例外（一覧が無い・JSON でない・文字列の配列でない・files が無い）', () => {
+    expect(() => parsePrecacheLists('//', null)).toThrow(/__MNW_FILES__）がありません/);
+    expect(() => parsePrecacheLists('const __MNW_FILES__ = [oops];\n', null)).toThrow(/読めません/);
+    expect(() => parsePrecacheLists('const __MNW_FILES__ = [1];\n', null)).toThrow(/文字列の配列/);
+    expect(() => parsePrecacheLists(fakeSw([]), '{oops')).toThrow(/packs\.json を読めません/);
+    expect(() => parsePrecacheLists(fakeSw([]), '[]')).toThrow(/オブジェクトではありません/);
+    expect(() => parsePrecacheLists(fakeSw([]), '{"a": 1}')).toThrow(
+      /a がオブジェクトではありません/,
+    );
+    expect(() => parsePrecacheLists(fakeSw([]), '{"a": {}}')).toThrow(/a の files が文字列の配列/);
+    expect(() => parsePrecacheLists(fakeSw([]), '{"a": {"files": [1]}}')).toThrow(/a の files/);
+  });
+
+  it('zip に入れるファイルに無いものだけを、パス順・重複なしで返す', () => {
+    expect(
+      findUnpackagedPrecache(
+        ['icons/Thumbs.db', 'index.html', 'a/~', 'index.html', 'icons/Thumbs.db'],
+        ['index.html', 'icons/icon.png'],
+      ),
+    ).toEqual(['a/~', 'icons/Thumbs.db']);
+    expect(findUnpackagedPrecache(['index.html'], ['index.html'])).toEqual([]);
+    expect(findUnpackagedPrecache([], [])).toEqual([]);
+  });
+});
+
+describe('入れたファイルの一覧（.files.txt）', () => {
+  it('contentListText の sha256 が contentId で、PackedPart.content は path の順', () => {
+    const part = packPart({
+      version: '2.2.0',
+      kind: 'main',
+      entries: [entry(`${TOP}/b.txt`, 'b'), entry(`${TOP}/a/x.txt`, 'x')],
+    });
+    expect(part.content.map((f) => f.path)).toEqual(['a/x.txt', 'b.txt']);
+    expect(contentListText(part.content)).toBe(
+      `a/x.txt\t1\t${sha256Hex('x')}\nb.txt\t1\t${sha256Hex('b')}\n`,
+    );
+    expect(sha256Hex(contentListText(part.content))).toBe(part.contentId);
+  });
+});
+
+// ---- package-release.ts を、使い捨てのリポジトリの中で本当に動かす（フラグのつなぎ込みを見る）
+
+const TSX_CLI = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../node_modules/tsx/dist/cli.mjs',
+);
+
+/** package-release.ts を動かせる使い捨てのリポジトリ（版 2.1.0・dist つき・タグ v2.0.2 つき・追跡済みの配布物はきれい） */
+function newPackageProject(): string {
+  const repo = newRepo();
+  writeFiles(repo, {
+    'package.json': '{"name":"x","type":"module","version":"2.1.0"}\n',
+    'dist/index.html': '<html></html>',
+    // sw.js・packs.json は本物の書き出しの形。一覧は dist の中身と合っている（packs.json の files は sw.js の一覧に入れない）
+    'dist/sw.js': fakeSw(['icons/icon.png', 'index.html', 'packs.json']),
+    'dist/packs.json': fakePacks(['assets/packs/g1-math/index.js']),
+    'dist/assets/packs/g1-math/index.js': 'export default 1;',
+    'dist/version.json': '{"version":"abc","appVersion":"2.1.0"}',
+    'dist/icons/icon.png': 'png',
+    'dist/.vite/manifest.json': '{}',
+    'dist/desktop.ini': 'x',
+    'dist/icons/Thumbs.db': 'x',
+    'dist/.hidden': 'x',
+  });
+  for (const f of ['package-release.ts', 'release-lib.ts']) {
+    cpSync(
+      path.resolve(path.dirname(fileURLToPath(import.meta.url)), f),
+      path.join(repo, 'scripts', f),
+    );
+  }
+  return repo;
+}
+
+function runPackage(repo: string, args: string[] = []) {
+  const r = spawnSync(process.execPath, [TSX_CLI, 'scripts/package-release.ts', ...args], {
+    cwd: repo,
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  return { code: r.status, out: r.stdout, err: r.stderr };
+}
+
+function zipNames(repo: string): string[] {
+  const zip = readFileSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'));
+  return readZip(zip).entries.map((e) => e.name);
+}
+
+describe('package-release.ts（使い捨てのリポジトリで動かす）', { timeout: 90_000 }, () => {
+  it('きれいなら通り、zip に入るのは追跡済みの配布物と、隠しファイルなどを除いた dist だけ。一覧も書く', () => {
+    const repo = newPackageProject();
+    const r = runPackage(repo);
+    expect(r.err).not.toContain('警告: --allow-dirty');
+    expect(r.code, r.err).toBe(0);
+    const names = zipNames(repo);
+    expect(names).toEqual(
+      [
+        `${TOP}/DESINGN.md`,
+        `${TOP}/LICENSE`,
+        `${TOP}/README.md`,
+        `${TOP}/deploy/zorin/install.sh`,
+        `${TOP}/deploy/zorin/mnwupdate/__init__.py`,
+        `${TOP}/deploy/zorin/serve.py`,
+        `${TOP}/dist/assets/packs/g1-math/index.js`,
+        `${TOP}/dist/icons/icon.png`,
+        `${TOP}/dist/index.html`,
+        `${TOP}/dist/packs.json`,
+        `${TOP}/dist/sw.js`,
+        `${TOP}/dist/version.json`,
+        `${TOP}/docs/device-checklist.md`,
+        `${TOP}/licenses/a.txt`,
+        `${TOP}/parts/main.json`,
+      ].sort(),
+    );
+    // 入れたファイルの一覧: 部品の印を除く各ファイルの パス・大きさ・sha256。その sha256 が部品の印の contentId
+    const list = readFileSync(
+      path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip.files.txt'),
+      'utf8',
+    );
+    const lines = list.trimEnd().split('\n');
+    expect(lines).toHaveLength(names.length - 1);
+    for (const line of lines) expect(line).toMatch(/^[^\t]+\t\d+\t[0-9a-f]{64}$/);
+    expect(lines).toContain(`dist/index.html\t13\t${sha256Hex('<html></html>')}`);
+    const marker = JSON.parse(
+      readZip(readFileSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip')))
+        .entries.find((e) => e.name === `${TOP}/parts/main.json`)!
+        .data.toString('utf8'),
+    ) as { contentId: string };
+    expect(sha256Hex(list)).toBe(marker.contentId);
+  });
+
+  it('git の外・無視されたファイルがあれば、一覧を出して止める（zip は作らない）', () => {
+    const repo = newPackageProject();
+    writeFiles(repo, {
+      'public/audio/num/unfinished.mp3': 'x',
+      'deploy/zorin/.env': 'TOKEN=x',
+      'deploy/zorin/serve.py': 'print(2)\n',
+    });
+    const r = runPackage(repo);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('[git の外] public/audio/num/unfinished.mp3');
+    expect(r.err).toContain('[無視されている] deploy/zorin/.env');
+    expect(r.err).toContain('[変更あり] deploy/zorin/serve.py');
+    expect(r.err).toContain('--allow-dirty');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+  });
+
+  it('--allow-dirty のときだけ警告を出して続け、それでも zip には追跡済みのファイルだけが入る', () => {
+    const repo = newPackageProject();
+    writeFiles(repo, {
+      'deploy/zorin/.env': 'TOKEN=x',
+      'deploy/zorin/notes.txt': 'x',
+      'deploy/zorin/serve.py~': 'x',
+      'licenses/b.txt': 'x',
+    });
+    const r = runPackage(repo, ['--allow-dirty']);
+    expect(r.code, r.err).toBe(0);
+    expect(r.err).toContain('警告: --allow-dirty');
+    expect(r.err).toContain('[無視されている] deploy/zorin/.env');
+    const names = zipNames(repo);
+    expect(names).toContain(`${TOP}/deploy/zorin/serve.py`);
+    expect(names.filter((n) => /\.env|notes|~|licenses\/b/.test(n))).toEqual([]);
+    expect(names.filter((n) => /\.vite|desktop\.ini|Thumbs|\.hidden/.test(n))).toEqual([]);
+  });
+
+  it('リンクは --allow-dirty でも止める', () => {
+    const repo = newPackageProject();
+    const target = tempDir('target');
+    writeFiles(target, { 'secret.txt': 's' });
+    linkDir(target, path.join(repo, 'deploy/zorin/linked'));
+    for (const args of [[], ['--allow-dirty']]) {
+      const r = runPackage(repo, args);
+      expect(r.code, args.join(' ')).toBe(1);
+      expect(r.err).toContain('リンク');
+      expect(r.err).toContain('deploy/zorin/linked');
+    }
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+  });
+
+  it('zip に入れないファイル（Thumbs.db など）を sw.js の一覧か packs.json が参照していたら、zip を作る前に止める（--allow-dirty でも）', () => {
+    // dist/icons/Thumbs.db・dist/desktop.ini は zip から除くのに、vite は隠しファイルしか事前保存から除かない。
+    // 以前は exit 0 で通り、zip に無いファイルを sw.js が取りに行って、家のサービスワーカーの install が 404 で失敗した
+    const viaSw = newPackageProject();
+    writeFiles(viaSw, {
+      'dist/sw.js': fakeSw([
+        'desktop.ini',
+        'icons/Thumbs.db',
+        'icons/icon.png',
+        'index.html',
+        'packs.json',
+      ]),
+    });
+    const viaPacks = newPackageProject();
+    writeFiles(viaPacks, {
+      'dist/assets/packs/g1-math/Thumbs.db': 'x',
+      'dist/packs.json': fakePacks([
+        'assets/packs/g1-math/Thumbs.db',
+        'assets/packs/g1-math/index.js',
+      ]),
+    });
+    for (const [repo, listed] of [
+      [viaSw, ['dist/desktop.ini', 'dist/icons/Thumbs.db']],
+      [viaPacks, ['dist/assets/packs/g1-math/Thumbs.db']],
+    ] as const) {
+      for (const args of [[], ['--allow-dirty']]) {
+        const r = runPackage(repo, args);
+        expect(r.code, `${args.join(' ')}\n${r.err}`).toBe(1);
+        expect(r.err).toContain('zip に入らないファイルがあります');
+        for (const p of listed) expect(r.err).toContain(`  ${p}\n`);
+        expect(r.err).toContain('npm run build をやり直してください');
+        expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+      }
+    }
+  });
+
+  it('sw.js に事前保存の一覧が無い・packs.json が壊れている dist も、zip を作る前に止める', () => {
+    const noList = newPackageProject();
+    writeFiles(noList, { 'dist/sw.js': '//' });
+    const brokenPacks = newPackageProject();
+    writeFiles(brokenPacks, { 'dist/packs.json': '{broken' });
+    for (const repo of [noList, brokenPacks]) {
+      const r = runPackage(repo);
+      expect(r.code).toBe(1);
+      expect(r.err).toContain('事前保存の一覧（sw.js・packs.json）を確かめられません');
+      expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+    }
+  });
+
+  it('vite の本物の書き出し（finalizeDist）の dist: 作業ファイルが無ければ通り、Thumbs.db があれば（sw.js が一覧に入れるので）止まる', async () => {
+    const repo = newPackageProject();
+    const dist = path.join(repo, 'dist');
+    // 作業ファイルが dist に残っている状態（public に Thumbs.db を置いて vite build した、のと同じ）
+    await finalizeDist(dist, { appVersion: '2.1.0' });
+    const sw = readFileSync(path.join(dist, 'sw.js'), 'utf8');
+    // 前提: vite の事前保存は、隠しファイル以外の作業ファイルを除かない（この前提が変わったら、この試験を見直す）
+    expect(sw).toContain('"icons/Thumbs.db"');
+    const stopped = runPackage(repo);
+    expect(stopped.code, stopped.err).toBe(1);
+    expect(stopped.err).toContain('dist/icons/Thumbs.db');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+    // public から消して build し直した状態
+    rmSync(path.join(dist, 'icons', 'Thumbs.db'));
+    rmSync(path.join(dist, 'desktop.ini'));
+    await finalizeDist(dist, { appVersion: '2.1.0' });
+    const ok = runPackage(repo);
+    expect(ok.code, ok.err).toBe(0);
+    expect(zipNames(repo)).toContain(`${TOP}/dist/icons/icon.png`);
+  });
+
+  it('git のタグを読めない・1 つも無いときは止め、--no-tag-check のときだけ続ける', () => {
+    const repo = newPackageProject();
+    runGit(repo, ['tag', '-d', 'v2.0.2']);
+    const stopped = runPackage(repo);
+    expect(stopped.code).toBe(1);
+    expect(stopped.err).toContain('--no-tag-check');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+    const forced = runPackage(repo, ['--no-tag-check']);
+    expect(forced.code, forced.err).toBe(0);
+    expect(forced.err).toContain('--no-tag-check');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(true);
+  });
+
+  it('公開済みの版と同じ番号は、これまでどおり止める（先頭が 0 のタグでも）', () => {
+    const repo = newPackageProject();
+    runGit(repo, ['tag', 'v2.01.0']);
+    const r = runPackage(repo);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('タグ v2.01.0 はもうあります');
   });
 });

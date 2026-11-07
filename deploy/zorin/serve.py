@@ -24,10 +24,12 @@ import sys
 sys.dont_write_bytecode = True  # 置き場に __pycache__ を作らない
 
 import argparse  # noqa: E402
+import errno  # noqa: E402
 import functools  # noqa: E402
 import http.client  # noqa: E402
 import json  # noqa: E402
 import os  # noqa: E402
+import re  # noqa: E402
 import signal  # noqa: E402
 import subprocess  # noqa: E402
 import threading  # noqa: E402
@@ -35,13 +37,30 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer  # noqa: E
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+
+
+def _brief_error(exc):
+    """例外の短い説明。置き場のパス・利用者の名前を出さない（状態の窓口と保護者画面に出るため）。
+    OSError は errno の名前と説明だけ（common.os_error_text と同じ中身。mnwupdate を読めないときにも使う）、
+    ImportError は末尾の「(…/モジュールのパス)」を除く"""
+    name = type(exc).__name__
+    if isinstance(exc, OSError):
+        code = getattr(exc, "errno", None)
+        label = errno.errorcode.get(code, name) if isinstance(code, int) else name
+        return "%s: %s: %s" % (name, label, getattr(exc, "strerror", None) or name)
+    text = str(exc)
+    if isinstance(exc, ImportError):
+        text = re.sub(r"\s*\([^()]*[/\\][^()]*\)\s*$", "", text)
+    return "%s: %s" % (name, text)
+
+
 try:  # 読み込みに失敗しても配信は続ける（更新の仕組みだけ止める）
     from mnwupdate import api, common, fetch, install, manifest, service as service_mod
 
     IMPORT_ERROR = None
 except Exception as _e:  # noqa: BLE001
     api = common = fetch = install = manifest = service_mod = None
-    IMPORT_ERROR = "%s: %s" % (type(_e).__name__, _e)
+    IMPORT_ERROR = _brief_error(_e)
 
 HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
@@ -122,6 +141,7 @@ class Handler(SimpleHTTPRequestHandler):
         self._status = int(code)
         self._cache_sent = False
         self._nosniff_sent = False
+        self._corp_sent = False
         super().send_response(code, message)
 
     def send_header(self, keyword, value):
@@ -130,6 +150,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._cache_sent = True
         elif name == "x-content-type-options":
             self._nosniff_sent = True
+        elif name == "cross-origin-resource-policy":
+            self._corp_sent = True
         super().send_header(keyword, value)
 
     def end_headers(self):
@@ -145,9 +167,22 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Content-Security-Policy", "frame-ancestors 'none'")
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        if not getattr(self, "_corp_sent", False):
+            # ほかのサイトのページが img・script・audio で読み込めないようにする（入っているか・版を調べさせない）。
+            # 同じ出どころ（このアプリ自身の読み込み・サービスワーカー）には効かない
+            self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         super().end_headers()
 
     def send_head(self):
+        try:
+            return self._send_head()
+        except ValueError:
+            # NUL（%00）や符号にできない文字を含むパスで open が ValueError（UnicodeEncodeError を含む）を投げる。
+            # 見つからないものとして 404 を返す（例外の記録を出さない）
+            self.send_error(404, "Not Found")
+            return None
+
+    def _send_head(self):
         if self.is_update_request():
             return self.handle_update()
         # DNS リバインディング対策: 127.0.0.1 / localhost 以外の Host 名には答えない
@@ -258,7 +293,13 @@ class QuietServer(ThreadingHTTPServer):
         exc = sys.exc_info()[1]
         if isinstance(exc, (ConnectionError, BrokenPipeError, TimeoutError)):
             return
-        super().handle_error(request, client_address)
+        # 予期しない例外も、traceback（置き場のフルパスを含む約 26 行）は出さず、型の名前を 1 行だけ記録する
+        # （ほかのサイトのページから繰り返し起こされても、serve.log をふくらませない）
+        try:
+            sys.stderr.write("[配信] 要求の処理でエラー: %s\n" % type(exc).__name__)
+            sys.stderr.flush()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def default_directory():
@@ -289,13 +330,13 @@ def self_test(dir_arg):
             for info in pkgutil.iter_modules(sys.modules["mnwupdate"].__path__):
                 importlib.import_module("mnwupdate." + info.name)
         except Exception as e:  # noqa: BLE001
-            problems.append("mnwupdate のモジュールを読み込めません: %s: %s" % (type(e).__name__, e))
+            problems.append("mnwupdate のモジュールを読み込めません: %s" % _brief_error(e))
         try:
             install.verify_tree(os.path.dirname(os.path.dirname(HERE)))
         except common.UpdateError as e:
             problems.append("置き場の中身が正しくありません: %s" % e.detail)
         except Exception as e:  # noqa: BLE001
-            problems.append("置き場の中身を確かめられません: %s: %s" % (type(e).__name__, e))
+            problems.append("置き場の中身を確かめられません: %s" % _brief_error(e))
     directory = os.path.abspath(dir_arg) if dir_arg else default_directory()
     server = None
     started = False
@@ -317,7 +358,7 @@ def self_test(dir_arg):
             finally:
                 conn.close()
     except Exception as e:  # noqa: BLE001
-        problems.append("配信を試せません: %s: %s" % (type(e).__name__, e))
+        problems.append("配信を試せません: %s" % _brief_error(e))
     finally:
         if server is not None:
             if started:
@@ -351,6 +392,10 @@ def check_update():
         m = manifest.parse_manifest(raw)
     except common.UpdateError as e:
         emit(None, e.to_dict())
+        return 1
+    except Exception as e:  # noqa: BLE001 - 決まったコードにならない失敗も、Traceback で落ちずに JSON で出す
+        detail = common.os_error_text(e) if isinstance(e, OSError) else type(e).__name__
+        emit(None, common.UpdateError("internal", detail).to_dict())
         return 1
     emit(
         {

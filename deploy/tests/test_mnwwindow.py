@@ -16,9 +16,11 @@ import io
 import json
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -351,6 +353,128 @@ class WaitTest(unittest.TestCase):
         code, _ = mw.run_wait(FakeX(short), short, timeout=1.0)
         self.assertEqual(code, 3)
         self.assertLessEqual(short.now(), 1.2)
+
+
+class BrowserKindTest(unittest.TestCase):
+    """--browser（manabi.sh が使うブラウザの種類）。chromium のときは Firefox の窓を弱い一致の候補にしない。
+    firefox・other・省略は今までどおり（launcher-1: Chromium 系で開く端末で、題名を「まなびのにわ」にした別サイトの
+    Firefox の窓を全画面で前に出さない）"""
+
+    FF_TITLE = APP + " — Mozilla Firefox"
+
+    def firefox_only(self, title=FF_TITLE):
+        clock = FakeClock()
+        x = FakeX(clock)
+        x.add(0x1, "Navigator", "firefox", title)
+        return clock, x
+
+    def test_chromium_drops_the_firefox_classes_and_keeps_the_chromium_ones(self):
+        for cls in ("firefox", "firefox-esr", "Firefox"):
+            self.assertIsNone(mw.classify("Navigator", cls, self.FF_TITLE, "chromium"), cls)
+            self.assertIsNone(mw.classify("Navigator", cls, APP, "chromium"), cls)
+            for browser in ("firefox", "other"):
+                self.assertEqual(mw.classify("Navigator", cls, self.FF_TITLE, browser), "weak", (cls, browser))
+            self.assertEqual(mw.classify("Navigator", cls, self.FF_TITLE), "weak", cls)  # 省略は other
+        for cls in ("brave-browser", "Chromium", "chromium-browser", "Google-chrome"):
+            for browser in mw.BROWSER_KINDS:
+                self.assertEqual(mw.classify("x", cls, APP, browser), "weak", (cls, browser))
+                self.assertIsNone(mw.classify("x", cls, APP + " - Brave", browser), (cls, browser))  # ふつうのタブは選ばない
+
+    def test_a_strong_match_does_not_depend_on_the_browser(self):
+        for browser in mw.BROWSER_KINDS:
+            for cls in ("Brave-browser", "firefox", "SomethingElse"):
+                self.assertEqual(mw.classify("127.0.0.1", cls, APP, browser), "strong", (browser, cls))
+
+    def test_find_app_window(self):
+        _, x = self.firefox_only()
+        self.assertIsNone(mw.find_app_window(x, "chromium"))
+        for browser in ("firefox", "other"):
+            self.assertEqual(mw.find_app_window(x, browser), mw.Found(0x1, "firefox", "weak"), browser)
+        self.assertEqual(mw.find_app_window(x), mw.Found(0x1, "firefox", "weak"))  # 省略は other
+
+    def test_chromium_skips_a_firefox_window_on_top_of_a_chromium_app_window(self):
+        x = FakeX(FakeClock())
+        x.add(0x1, "brave-browser", "Brave-browser", APP)  # Chromium 系のアプリ窓（弱い一致）
+        x.add(0x2, "Navigator", "firefox", self.FF_TITLE)  # その上の Firefox の窓
+        self.assertEqual(mw.find_app_window(x, "chromium").window, 0x1)
+        self.assertEqual(mw.find_app_window(x, "firefox").window, 0x2)
+        self.assertEqual(mw.find_app_window(x, "other").window, 0x2)
+
+    def test_focus_with_chromium_and_only_a_firefox_window_is_3_and_sends_nothing(self):
+        clock, x = self.firefox_only()
+        code, info = mw.run_focus(x, clock, browser="chromium")
+        self.assertEqual(code, 3)
+        self.assertEqual(x.sent, [])
+        self.assertEqual(info["attempts"], 0)
+        # 題名がちょうど「まなびのにわ」の Firefox の窓（ほかのサイトのページが付けられる題名）も同じ
+        clock, x = self.firefox_only(APP)
+        self.assertEqual(mw.run_focus(x, clock, browser="chromium")[0], 3)
+        self.assertEqual(x.sent, [])
+
+    def test_focus_with_firefox_other_or_no_value_is_as_before(self):
+        for kw in ({"browser": "firefox"}, {"browser": "other"}, {}):
+            clock, x = self.firefox_only()
+            x.active_id = 0x1
+            code, info = mw.run_focus(x, clock, **kw)
+            self.assertEqual(code, 0, kw)
+            self.assertEqual((info["window"], info["match"]), ("0x1", "weak"), kw)
+            self.assertEqual({s[1] for s in x.sent}, {0x1}, kw)
+
+    def test_wait_with_chromium_does_not_see_a_firefox_window(self):
+        clock, x = self.firefox_only()
+        code, _ = mw.run_wait(x, clock, timeout=1.0, browser="chromium")
+        self.assertEqual(code, 3)
+        for kw in ({"browser": "firefox"}, {"browser": "other"}, {}):
+            clock, x = self.firefox_only()
+            self.assertEqual(mw.run_wait(x, clock, timeout=1.0, **kw)[0], 0, kw)
+
+    def test_chromium_still_finds_its_own_app_window(self):
+        clock = FakeClock()
+        x = app_x(clock)  # Firefox の窓（Mozilla Firefox）と、Brave のアプリ窓（強い一致）
+        x.active_id = 0x300
+        self.assertEqual(mw.run_focus(x, clock, browser="chromium")[0], 0)
+        clock = FakeClock()
+        x = FakeX(clock)
+        x.add(0x1, "brave-browser", "Brave-browser", APP)  # res_name が違う Chromium 系のアプリ窓（弱い一致）
+        x.active_id = 0x1
+        code, info = mw.run_focus(x, clock, browser="chromium")
+        self.assertEqual((code, info["match"]), (0, "weak"))
+
+    def test_main_passes_the_kind_down_and_logs_it(self):
+        def run(argv, x=None):
+            clock = FakeClock()
+            x = x or self.firefox_only()[1]
+            return mw.main(argv, env={}, backend_factory=lambda env: x, clock=clock, out=io.StringIO())
+
+        _, x = self.firefox_only()
+        x.active_id = 0x1
+        self.assertEqual(run(["focus", "--browser", "chromium"]), 3)
+        self.assertEqual(run(["focus", "--browser", "firefox"], x), 0)
+        self.assertEqual(run(["focus", "--browser", "other"], x), 0)
+        self.assertEqual(run(["focus"], x), 0)
+        self.assertEqual(run(["wait", "--timeout", "1", "--browser", "chromium"]), 3)
+        self.assertEqual(run(["wait", "--timeout", "1", "--browser", "firefox"]), 0)
+        self.assertEqual(run(["wait", "--browser", "firefox", "--timeout", "1"]), 0)
+
+    def test_the_kind_is_written_to_the_log(self):
+        tmp = tempfile.mkdtemp(prefix="mnwwin-")
+        self.addCleanup(shutil.rmtree, tmp, True)
+        log = os.path.join(tmp, "launch.log")
+        for argv in (["focus", "--browser", "chromium"], ["wait", "--timeout", "1", "--browser", "firefox"], ["focus"]):
+            clock, x = self.firefox_only()
+            mw.main(["--log", log] + argv, env={}, backend_factory=lambda env, x=x: x, clock=clock, out=io.StringIO())
+        with open(log, encoding="utf-8") as f:
+            rows = [json.loads(s) for s in f.read().splitlines()]
+        self.assertEqual([(r["cmd"], r["browser"]) for r in rows],
+                         [("focus", "chromium"), ("wait", "firefox"), ("focus", "other")])
+        self.assertNotIn(APP, json.dumps(rows, ensure_ascii=False))
+
+    def test_a_wrong_value_is_a_usage_error(self):
+        err = io.StringIO()
+        with mock.patch.object(sys, "stderr", err):
+            for argv in (["focus", "--browser", "netscape"], ["focus", "--browser"], ["wait", "--browser", "Chromium"],
+                         ["wait", "--browser", ""], ["ozone-flag", "brave-browser", "--browser", "chromium"]):
+                self.assertEqual(mw.main(argv, env={}, out=io.StringIO()), 2, argv)
 
 
 class OzoneFlagTest(unittest.TestCase):
@@ -707,9 +831,132 @@ class CliTest(unittest.TestCase):
         code, out, _ = self.run_cli("ozone-flag", "brave-browser", XDG_SESSION_TYPE="x11")
         self.assertEqual((code, out), (0, ""))
 
+    def test_browser_option_is_accepted_by_focus_and_wait_through_the_real_cli(self):
+        # manabi.sh が渡す形。使い方の誤り（2）になると、manabi.sh は黙って「今までどおり開く」側に倒れてしまうので、
+        # 本物の mnwwindow.py が受け付けること（DISPLAY が無いので 5）を確かめる
+        for kind in ("chromium", "firefox", "other"):
+            code, out, _ = self.run_cli("focus", "--browser", kind)
+            self.assertEqual((code, out), (5, ""), kind)
+            code, out, _ = self.run_cli("wait", "--timeout", "5", "--browser", kind)
+            self.assertEqual((code, out), (5, ""), kind)
+        code, out, err = self.run_cli("focus", "--browser", "netscape")
+        self.assertEqual((code, out), (2, ""))
+        self.assertTrue(err.strip())
+
     def test_no_pycache_left_next_to_the_script(self):
         self.run_cli("ozone-flag", "firefox")
         self.assertEqual(glob.glob(os.path.join(os.path.dirname(MODULE_PATH), "__pycache__", "mnwwindow*")), [])
+
+
+class TimeoutTest(unittest.TestCase):
+    """時間切れ（launcher-6）。既定の動作に頼らず、SIGALRM の handler を明示して、終了コード 1・出力なしで終わる。
+    ctypes（libX11）の呼び出しの中で固まると Python の handler は走れないので、別のスレッドの見張りも置く"""
+
+    PRELUDE = (
+        "import io, signal, sys, time\n"
+        "import importlib.util\n"
+        "spec = importlib.util.spec_from_file_location('mnwwindow_child', %r)\n"
+        "m = importlib.util.module_from_spec(spec)\n"
+        "spec.loader.exec_module(m)\n"
+    ) % MODULE_PATH
+
+    def run_child(self, body, timeout=30, **kw):
+        """mnwwindow.py を読み込んだ子プロセスで body を動かす。-> (終了コード, 標準出力, 秒)"""
+        base = {k: v for k, v in os.environ.items()
+                if k not in ("DISPLAY", "PYTHONUNBUFFERED") and not k.startswith("MANABI_")}
+        t0 = time.monotonic()
+        done = subprocess.run([sys.executable, "-I", "-B", "-c", self.PRELUDE + body], env=base,
+                              stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                              timeout=timeout, **kw)
+        return done.returncode, done.stdout, time.monotonic() - t0
+
+    def test_on_alarm_exits_with_error_without_cleanup(self):
+        class Exited(Exception):
+            pass
+
+        def fake_exit(code):
+            raise Exited(code)
+
+        with mock.patch.object(mw.os, "_exit", side_effect=fake_exit):
+            with self.assertRaises(Exited) as cm:
+                mw._on_alarm(14, None)
+            self.assertEqual(cm.exception.args, (mw.EXIT_ERROR,))
+            self.assertEqual(mw.EXIT_ERROR, 1)
+            with self.assertRaises(Exited):
+                mw._on_alarm()  # 引数なしでも呼べる（直接呼ぶ形）
+
+    def test_arm_timeout_sets_the_handler_before_the_alarm_and_places_the_watchdog(self):
+        fake_signal = mock.Mock(SIGALRM=14)
+        with mock.patch.object(mw, "signal", fake_signal), \
+                mock.patch.object(mw.faulthandler, "dump_traceback_later") as watchdog:
+            mw.arm_timeout()
+        self.assertEqual(fake_signal.mock_calls, [mock.call.signal(14, mw._on_alarm), mock.call.alarm(mw.ALARM_SECONDS)])
+        args, kwargs = watchdog.call_args
+        self.assertEqual(args, (mw.ALARM_SECONDS + 1,))  # SIGALRM のほうが先
+        self.assertIs(kwargs["exit"], True)  # 見張りも終了コード 1 で終わる
+        self.assertIn("file", kwargs)  # 経過の書き出しは標準エラーに出さない
+        kwargs["file"].close()
+        self.assertEqual(mw.ALARM_SECONDS, 10)
+
+    def test_arm_timeout_without_alarm_still_places_the_watchdog(self):
+        # Windows など SIGALRM が無い環境。signal を触らず、見張りだけを置く
+        fake_signal = mock.Mock(spec=["SIGALRM_missing"])
+        with mock.patch.object(mw, "signal", fake_signal), \
+                mock.patch.object(mw.faulthandler, "dump_traceback_later") as watchdog:
+            mw.arm_timeout(3)
+        self.assertEqual(fake_signal.mock_calls, [])
+        self.assertEqual(watchdog.call_args[0], (4,))
+        watchdog.call_args[1]["file"].close()
+
+    def test_a_timeout_in_ozone_flag_leaves_the_output_empty(self):
+        # gsettings の読み取りの途中で時間切れ -> 何も出さずに終わる
+        code, out, _ = self.run_child("m.read_gsettings = lambda: m._on_alarm()\n"
+                                      "sys.exit(m.main(['ozone-flag', 'brave-browser'], "
+                                      "env={'XDG_SESSION_TYPE': 'wayland', 'DISPLAY': ':0'}))\n")
+        self.assertEqual((code, out), (1, b""))
+        # フラグを書いた直後（まだバッファの中）に時間切れ -> 流さずに終わるので、出力は空のまま
+        body = (
+            "class Out(io.StringIO):\n"
+            "    def write(self, s):\n"
+            "        sys.stdout.write(s)\n"
+            "        m._on_alarm()\n"
+            "m.read_gsettings = lambda: None\n"
+            "sys.exit(m.main(['ozone-flag', 'brave-browser'], env={'XDG_SESSION_TYPE': 'wayland', 'DISPLAY': ':0'}, "
+            "out=Out()))\n"
+        )
+        code, out, _ = self.run_child(body)
+        self.assertEqual((code, out), (1, b""))
+        # 対照: 時間切れにならなければ、フラグが出る
+        code, out, _ = self.run_child("m.read_gsettings = lambda: None\n"
+                                      "sys.exit(m.main(['ozone-flag', 'brave-browser'], "
+                                      "env={'XDG_SESSION_TYPE': 'wayland', 'DISPLAY': ':0'}))\n")
+        self.assertEqual((code, out.replace(b"\r\n", b"\n")), (0, b"--ozone-platform=x11\n"))
+
+    def test_the_watchdog_ends_a_process_that_python_handlers_cannot_interrupt(self):
+        # SIGALRM を止めて（Windows では元から無い）、Python の handler が走れない状態にする。見張りだけが終わらせる
+        body = (
+            "m.arm_timeout(1)\n"
+            "if hasattr(signal, 'pthread_sigmask'):\n"
+            "    signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGALRM})\n"
+            "time.sleep(15)\n"
+        )
+        code, out, elapsed = self.run_child(body, timeout=30)
+        self.assertEqual((code, out), (1, b""))
+        self.assertLess(elapsed, 10)  # 見張りは 2 秒後。止まらなければ sleep が終わる 15 秒まで
+
+    @unittest.skipUnless(hasattr(signal, "SIGALRM") and os.name == "posix", "SIGALRM は POSIX だけ")
+    def test_sigalrm_ends_the_process_with_code_1_even_when_the_parent_ignored_it(self):
+        # 親が SIGALRM を無視にして起動していても（無視の指定は exec のあとも残る）、handler を置き直すので 1 で終わる。
+        # 見張りは外して、SIGALRM の handler だけで終わることを確かめる（既定の動作のままなら、シグナルによる強制終了で
+        # 終了コードが 1 にならない。無視のままなら固まって、時間切れで落ちる）
+        def ignore_alarm():
+            signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+        body = ("m.faulthandler.dump_traceback_later = lambda *a, **k: None\n"
+                "m.arm_timeout(1)\n"
+                "time.sleep(30)\n")
+        code, out, _ = self.run_child(body, timeout=20, preexec_fn=ignore_alarm)
+        self.assertEqual((code, out), (1, b""))
 
 
 class FakeLib:
@@ -962,8 +1209,8 @@ class SourceRulesTest(unittest.TestCase):
         self.assertFalse([n for n in ast.walk(tree) if isinstance(n, ast.Attribute) and n.attr == "UTC"])
 
     def test_only_standard_library_and_no_network_modules(self):
-        allowed = {"argparse", "ctypes", "json", "os", "posixpath", "re", "signal", "stat", "subprocess", "sys",
-                   "tempfile", "time", "collections", "datetime"}
+        allowed = {"argparse", "ctypes", "faulthandler", "json", "os", "posixpath", "re", "signal", "stat",
+                   "subprocess", "sys", "tempfile", "time", "collections", "datetime"}
         found = set()
         for n in ast.walk(ast.parse(self.source)):
             if isinstance(n, ast.Import):

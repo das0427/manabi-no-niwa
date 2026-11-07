@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import stat
+import struct
 import sys
 import threading
 import unittest
@@ -225,6 +226,35 @@ class ExtractTest(SandboxCase):
         with self.assertRaises(Cancelled):
             install.extract_zip(zf, found, os.path.join(self.tmp, "next"), cancel)
 
+    @staticmethod
+    def corrupt_deflate(zf, name):
+        """zf の name の項目の deflate の中身の先頭を、使えない種類の印（BTYPE=3）に壊した ZipFile"""
+        data = bytearray(zf.fp.getvalue())
+        info = zf.getinfo(name)
+        name_length, extra_length = struct.unpack("<HH", data[info.header_offset + 26 : info.header_offset + 30])
+        data[info.header_offset + 30 + name_length + extra_length] = 0xFF
+        return zipfile.ZipFile(io.BytesIO(bytes(data)))
+
+    def test_corrupt_deflate_stream_is_unsafe_zip(self):
+        # 壊れた deflate の中身は zlib.error になる。ほかの壊れ方と同じく unsafe-zip（internal にしない）（install-4）
+        entries = [(PREFIX + "dist/index.html", b"<html>" * 100, {}), (PREFIX + "deploy/zorin/serve.py", b"print(1)", {})]
+        zf, part = make(entries)
+        zf = self.corrupt_deflate(zf, PREFIX + "dist/index.html")
+        found, _ = install.inspect_zip(zf, part)  # 印は壊れていないので、検査は通る
+        with self.assertRaises(UpdateError) as caught:
+            install.extract_zip(zf, found, os.path.join(self.tmp, "next"), threading.Event())
+        self.assertEqual(caught.exception.code, "unsafe-zip")
+        self.assertIn("zlib.error", caught.exception.detail)
+
+    def test_corrupt_deflate_stream_of_the_mark_is_unsafe_zip(self):
+        entries = [(PREFIX + "dist/index.html", b"<html>" * 100, {})]
+        zf, part = make(entries)
+        zf = self.corrupt_deflate(zf, PREFIX + "parts/main.json")
+        with self.assertRaises(UpdateError) as caught:
+            install.inspect_zip(zf, part)
+        self.assertEqual(caught.exception.code, "unsafe-zip")
+        self.assertIn("mark", caught.exception.detail)
+
 
 class CopyAndVerifyTest(SandboxCase):
     def setUp(self):
@@ -384,6 +414,39 @@ class CopyAndVerifyTest(SandboxCase):
                 install.run_self_test(self.next)
         self.assertIn("timeout", caught.exception.detail)
 
+    def test_self_test_failure_does_not_show_the_place_or_home_paths(self):
+        # 失敗の説明（状態の窓口・保護者画面に出る）に、置き場・ホームのフルパス（ログイン名を含む）を入れない（api-1）
+        script = os.path.join(self.next, "deploy", "zorin", "serve.py")
+        os.makedirs(os.path.dirname(script))
+        with open(script, "w") as f:
+            f.write(
+                "import os, sys\n"
+                "here = os.path.abspath(__file__)\n"
+                "sys.stderr.write('File %r / %s / home %s\\n' % (here, here, os.path.expanduser('~')))\n"
+                "sys.exit(1)\n"
+            )
+        with self.assertRaises(UpdateError) as caught:
+            install.run_self_test(self.next)
+        detail = caught.exception.detail
+        self.assertEqual(caught.exception.code, "self-test")
+        self.assertNotIn(os.path.basename(self.tmp), detail)
+        self.assertNotIn(self.data, detail)
+        self.assertNotIn(self.home, detail)
+        self.assertIn("<DATA>", detail)
+        self.assertIn("home ~", detail)
+        self.assertIn("serve.py", detail)  # どのファイルかは分かる
+
+    def test_hide_paths_forms(self):
+        app_next = os.path.join(self.base, "app.next")
+        sample = os.path.join(app_next, "deploy", "zorin", "serve.py")
+        text = "%s | %r | %s | %s" % (sample, sample, sample.replace(os.sep, "/"), os.path.realpath(sample))
+        shown = install.hide_paths(text, app_next)
+        self.assertNotIn(os.path.basename(self.tmp), shown)
+        self.assertEqual(shown.count("<DATA>"), 4)
+        self.assertEqual(install.hide_paths("File %s" % os.path.join(self.home, ".cache", "x"), app_next), "File ~%s" % os.path.join(os.sep, ".cache", "x"))
+        # 最上位だけが親のとき、何でも置き換えてしまわない
+        self.assertEqual(install.hide_paths("/etc/x /app.next", "/app.next"), "/etc/x /app.next")
+
     def test_self_test_gets_the_restart_arguments_without_dir(self):
         # 再起動で渡す引数をそのまま付ける（新しい版が知らない引数なら、入れ替えの前に止まる）。--dir は除く
         script = os.path.join(self.next, "deploy", "zorin", "serve.py")
@@ -528,6 +591,15 @@ class SpaceAndSwapTest(SandboxCase):
         self.assertEqual(caught.exception.code, "switch-broken")
         self.assertEqual(self.read("app.next"), "new")
 
+    def test_prune_downloads_with_nothing_to_keep_empties_it(self):
+        folder = os.path.join(self.base, "update", "downloads")
+        os.makedirs(folder)
+        for name in ("a.zip", "a.zip.part", "a.zip.part.json", "junk"):
+            with open(os.path.join(folder, name), "w") as f:
+                f.write("x")
+        install.prune_downloads(folder, [])
+        self.assertEqual(os.listdir(folder), [])
+
     def test_prune_downloads(self):
         folder = os.path.join(self.base, "update", "downloads")
         os.makedirs(folder)
@@ -536,6 +608,89 @@ class SpaceAndSwapTest(SandboxCase):
                 f.write("x")
         install.prune_downloads(folder, ["a.zip"])
         self.assertEqual(sorted(os.listdir(folder)), ["a.zip", "a.zip.part", "a.zip.part.json"])
+
+
+class RemoveTreeLinkTest(SandboxCase):
+    """remove_tree はリンクをたどらない: 消せないリンクに chmod をかけて、リンクの先の権限を変えない（install-5）"""
+
+    def make_tree_with_link(self):
+        target = os.path.join(self.tmp, "target.txt")
+        with open(target, "w") as f:
+            f.write("keep")
+        os.chmod(target, 0o600)
+        folder = os.path.join(self.tmp, "tree")
+        os.makedirs(folder)
+        link = os.path.join(folder, "link")
+        try:
+            os.symlink(target, link)
+        except (OSError, NotImplementedError, AttributeError):
+            self.skipTest("シンボリックリンクを作れない環境")
+        return target, folder, link
+
+    def test_a_link_that_cannot_be_unlinked_is_not_chmodded(self):
+        target, folder, link = self.make_tree_with_link()
+        real_unlink, real_chmod = os.unlink, os.chmod
+        chmods = []
+
+        def failing_unlink(path, *args, **kwargs):
+            if os.fspath(path) == link:
+                raise PermissionError(errno.EACCES, "Permission denied")
+            return real_unlink(path, *args, **kwargs)
+
+        def recording_chmod(path, mode, *args, **kwargs):
+            chmods.append(os.fspath(path))
+            return real_chmod(path, mode, *args, **kwargs)
+
+        with mock.patch("os.unlink", failing_unlink), mock.patch("os.chmod", recording_chmod):
+            common.remove_tree(folder)
+        self.assertNotIn(link, chmods)
+        self.assertTrue(os.path.exists(target))
+        if os.name != "nt":
+            self.assertEqual(stat.S_IMODE(os.stat(target).st_mode), 0o600)
+
+    def test_a_link_entry_is_never_chmodded_even_without_real_links(self):
+        # Windows など、リンクを作れない環境でも確かめる: islink が真の項目は、unlink に失敗しても chmod しない
+        folder = os.path.join(self.tmp, "tree")
+        os.makedirs(folder)
+        path = os.path.join(folder, "link")
+        with open(path, "w") as f:
+            f.write("x")
+        chmods = []
+        with mock.patch("os.unlink", side_effect=PermissionError(errno.EACCES, "Permission denied")), mock.patch(
+            "os.path.islink", side_effect=lambda p: os.fspath(p) == path
+        ), mock.patch("os.chmod", side_effect=lambda *args, **kwargs: chmods.append(args)):
+            common.remove_tree(folder)
+        self.assertNotIn(path, [os.fspath(c[0]) for c in chmods])  # 残った空でないフォルダ自身への chmod は別
+        # 普通のファイルなら、これまでどおり chmod して消そうとする
+        with mock.patch("os.unlink", side_effect=PermissionError(errno.EACCES, "Permission denied")), mock.patch(
+            "os.chmod", side_effect=lambda *args, **kwargs: chmods.append(args)
+        ):
+            common.remove_tree(folder)
+        self.assertIn(path, [os.fspath(c[0]) for c in chmods])
+
+    def test_a_directory_swapped_for_a_link_is_unlinked_not_followed(self):
+        # 調べたあと rmdir するまでの間にリンクに差し替えられたとき: chmod せず、リンクだけ消す
+        folder = os.path.join(self.tmp, "tree")
+        os.makedirs(folder)
+        unlinked, chmods = [], []
+        with mock.patch("os.rmdir", side_effect=PermissionError(errno.EACCES, "Permission denied")), mock.patch(
+            "os.path.islink", side_effect=lambda path: os.fspath(path) == folder
+        ), mock.patch("os.unlink", side_effect=lambda path: unlinked.append(os.fspath(path))), mock.patch(
+            "os.chmod", side_effect=lambda *args, **kwargs: chmods.append(args)
+        ):
+            common.remove_tree(folder)
+        self.assertEqual(unlinked, [folder])
+        self.assertEqual(chmods, [])
+
+    def test_read_only_files_and_folders_are_still_removed(self):
+        folder = os.path.join(self.tmp, "tree")
+        os.makedirs(os.path.join(folder, "sub"))
+        path = os.path.join(folder, "sub", "locked.txt")
+        with open(path, "w") as f:
+            f.write("x")
+        os.chmod(path, 0o444)
+        common.remove_tree(folder)
+        self.assertFalse(os.path.exists(folder))
 
 
 if __name__ == "__main__":

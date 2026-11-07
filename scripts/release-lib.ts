@@ -3,9 +3,13 @@
  *
  * 副作用のない関数が中心。scripts/package-release.ts が使うほか、後の段の e2e が小さな偽のリリースを
  * 作るときにも使う（packPart で zip を作り、buildManifest で版の情報を作る）。
- * 依存なし（node の crypto と zlib だけ）。
+ * 例外は「配布に入れるファイルの選び方」の節だけで、git とファイルを読む（書き換えない）。
+ * 依存なし（node の標準の部品だけ）。
  */
+import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { lstatSync, readdirSync, statSync } from 'node:fs';
+import path from 'node:path';
 import { deflateRawSync } from 'node:zlib';
 
 // ---------------------------------------------------------------- 定数
@@ -42,7 +46,10 @@ const MAX_PART_BYTES = 2147483648;
 /** 部品の印の分（1 ファイル）を引いた、中身のファイルの数の上限 */
 const MAX_PART_FILES = MAX_ZIP_ENTRIES - 1;
 
-const VERSION_RE = /^(\d{1,4})\.(\d{1,4})\.(\d{1,6})$/;
+/** 版の形。先頭の 0 は付けない（2.01.0 は別の版に見えるのに数では 2.1.0 と同じになり、取り違えのもと） */
+const VERSION_RE = /^(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,3})\.(0|[1-9]\d{0,5})$/;
+/** git のタグ（vX.Y.Z）。先頭の 0 も受ける: 過去に v2.01.0 と付けられていても、数では 2.1.0 の公開済みとして扱うため */
+const TAG_VERSION_RE = /^v(\d{1,4})\.(\d{1,4})\.(\d{1,6})$/;
 const KIND_RE = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const HEX64_RE = /^[0-9a-f]{64}$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -73,38 +80,58 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
+/** 版の 3 つの数（先頭の 0 を許す。タグの比べ用） */
+type VersionTuple = readonly [number, number, number];
+
+function compareTuples(a: VersionTuple, b: VersionTuple): number {
+  return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+}
+
 /**
  * 出す版の番号を、これまでのタグ（`git tag` の `vX.Y.Z`。先行版の印つきは見ない）と比べる。
  * 自動の更新は「今より新しい版」しか入れないので、版の番号を誤って出すと、あとから正しい番号の版を出しても
  * 家に届かない。それを npm run package の段で止める。問題があればその説明、無ければ null。
+ * 公開済みかどうかは文字ではなく数で比べる（タグが v2.01.0 でも、2.1.0 は公開済みとして止める）。
  * - 同じ版のタグがある → すでにその版を入れた家には、直した版が届かない（opts.allowExistingTag で許す。まだ公開していないタグのとき）
  * - これまでのいちばん新しい版より新しくない → 届かない
  * - メジャーが 2 以上、またはマイナーが 2 以上飛ぶ（2.0.2 → 2.2.0・4.0.0・21.0.0 など。メジャーを上げるときは X.0.Z）
  *   → 打ち間違いの疑い（opts.allowJump で許す）
+ * tags が空のときは何とも比べない。タグを読めたかどうか（読めないとき・1 つも無いとき）の扱いは呼ぶ側で決める
+ * （scripts/package-release.ts は、読めなければ --no-tag-check が無い限り止める）。
  */
 export function checkReleaseVersion(
   version: string,
   tags: readonly string[],
   opts: { allowJump?: boolean; allowExistingTag?: boolean } = {},
 ): string | null {
-  if (!isVersion(version)) return `版の形が X.Y.Z ではありません: ${version}`;
-  const released = tags
-    .map((t) => /^v(\d{1,4}\.\d{1,4}\.\d{1,6})$/.exec(t.trim())?.[1])
-    .filter((v): v is string => v !== undefined);
-  if (released.includes(version) && !opts.allowExistingTag) {
-    return `タグ v${version} はもうあります。公開した版と同じ番号では、その版を入れた家に届きません。版の番号を上げてください（まだ公開していないタグなら --allow-existing-tag）。`;
+  if (!isVersion(version))
+    return `版の形が X.Y.Z ではありません（先頭に 0 は付けません）: ${version}`;
+  const [c0, c1, c2] = version.split('.').map(Number) as [number, number, number];
+  const cur: VersionTuple = [c0, c1, c2];
+  const released: { tag: string; n: VersionTuple }[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim();
+    const m = TAG_VERSION_RE.exec(tag);
+    if (m) released.push({ tag, n: [Number(m[1]), Number(m[2]), Number(m[3])] });
   }
-  const others = released.filter((v) => v !== version).sort(compareVersions);
-  const latest = others.at(-1);
+  const same = released.find((r) => compareTuples(r.n, cur) === 0);
+  if (same !== undefined && !opts.allowExistingTag) {
+    return `タグ ${same.tag} はもうあります。公開した版と同じ番号では、その版を入れた家に届きません。版の番号を上げてください（まだ公開していないタグなら --allow-existing-tag）。`;
+  }
+  const others = released
+    .filter((r) => compareTuples(r.n, cur) !== 0)
+    .sort((a, b) => compareTuples(a.n, b.n));
+  const latest = others.at(-1)?.n;
   if (latest === undefined) return null;
-  if (compareVersions(version, latest) < 0) {
-    return `版 ${version} は、これまでのいちばん新しい版 ${latest} より古いです。自動の更新では届きません（前の中身に戻したいときは、その中身で版の番号を上げて出してください）。`;
+  const latestText = latest.join('.');
+  if (compareTuples(cur, latest) < 0) {
+    return `版 ${version} は、これまでのいちばん新しい版 ${latestText} より古いです。自動の更新では届きません（前の中身に戻したいときは、その中身で版の番号を上げて出してください）。`;
   }
-  const [M, m] = latest.split('.').map(Number) as [number, number];
-  const [M2, m2] = version.split('.').map(Number) as [number, number];
+  const [M, m] = latest;
+  const [M2, m2] = cur;
   const jump = M2 > M + 1 || (M2 === M + 1 && m2 !== 0) || (M2 === M && m2 > m + 1);
   if (jump && !opts.allowJump) {
-    return `版 ${version} は、これまでのいちばん新しい版 ${latest} から大きく飛んでいます。打ち間違いなら直してください。一度出すと、それより小さい番号の版は自動の更新で届かなくなります（わざとなら --allow-jump）。`;
+    return `版 ${version} は、これまでのいちばん新しい版 ${latestText} から大きく飛んでいます。打ち間違いなら直してください。一度出すと、それより小さい番号の版は自動の更新で届かなくなります（わざとなら --allow-jump）。`;
   }
   return null;
 }
@@ -199,11 +226,18 @@ export function computeContentId(files: readonly ContentFile[]): string {
     if (seen.has(f.path)) fail(`contentId: パスが重なっています: ${f.path}`);
     seen.add(f.path);
   }
-  const text = [...files]
+  return sha256Hex(Buffer.from(contentListText(files), 'utf8'));
+}
+
+/**
+ * 中身のファイルの一覧の文字: 各ファイルの `<path>\t<size>\t<sha256>\n` を path の順につないだもの。
+ * この文字の sha256 が contentId になる（computeContentId）。release/<zip の名前>.files.txt にも同じ形で書く。
+ */
+export function contentListText(files: readonly ContentFile[]): string {
+  return [...files]
     .sort((a, b) => comparePath(a.path, b.path))
     .map((f) => `${f.path}\t${f.size}\t${f.sha256}\n`)
     .join('');
-  return sha256Hex(Buffer.from(text, 'utf8'));
 }
 
 // ---------------------------------------------------------------- 部品の印
@@ -383,6 +417,8 @@ export interface PackedPart {
   files: number;
   /** 中身の合計の大きさ（印を除く） */
   unpackedBytes: number;
+  /** 中身のファイルの一覧（印を除く。path の順。contentListText で .files.txt の文字になる） */
+  content: ContentFile[];
   marker: PartMarker;
 }
 
@@ -434,6 +470,7 @@ export function packPart(input: {
     contentId,
     files: content.length,
     unpackedBytes,
+    content: [...content].sort((a, b) => comparePath(a.path, b.path)),
     marker,
   };
 }
@@ -587,4 +624,376 @@ export function parseReleaseNotes(markdown: string): string[] {
     if (notes.length >= MAX_NOTES) break;
   }
   return notes;
+}
+
+// ---------------------------------------------------------------- 配布に入れるファイルの選び方（git で追跡済みのものだけ）
+
+/**
+ * zip に入れるファイルは「除くもの」ではなく「入れてよいもの」で選ぶ（2.1.0 の点検 app-2）。
+ * - deploy/zorin・licenses・最上位の配布ファイル: git ls-files の追跡済みのものだけ
+ * - dist: vite が作ったものから、隠しファイル・隠しフォルダ・OS やエディタの作業ファイルを除く
+ * 入れる前に、元（public・deploy/zorin・licenses・最上位の配布ファイル）に git の外のファイル・変更・
+ * 無視されたファイルが無いか、deploy/zorin・licenses の下にリンクが無いかを確かめる。
+ * dist から除いたファイルを sw.js の事前保存の一覧・packs.json が参照していないかも確かめ、あれば止める
+ * （vite 側の事前保存の除き方（隠しファイルだけ）は、ここの除き方より狭いため。--allow-dirty でも通さない）。
+ */
+
+/** 配布の最上位のファイル（zip では manabi-no-niwa/ の直下か、docs/ の下） */
+export const RELEASE_TOP_FILES = [
+  'README.md',
+  'LICENSE',
+  'DESINGN.md',
+  'docs/device-checklist.md',
+] as const;
+/** git で追跡済みのファイルだけを入れるフォルダ */
+export const RELEASE_TRACKED_DIRS = ['deploy/zorin', 'licenses'] as const;
+/** vite が dist にそのまま写すフォルダ。ここの作りかけは dist 経由で zip に入る */
+export const RELEASE_PUBLIC_DIR = 'public';
+/** 配布に入る元（git status で確かめる範囲） */
+export const RELEASE_SOURCES = [
+  RELEASE_PUBLIC_DIR,
+  ...RELEASE_TRACKED_DIRS,
+  ...RELEASE_TOP_FILES,
+] as const;
+
+/** git を root で動かして標準出力を返す。失敗すれば例外（メッセージに git の標準エラーが入る） */
+export type GitRunner = (root: string, args: readonly string[]) => string;
+
+/** git の置き場を変える環境変数。フックなどから動かされても、root のリポジトリを見るために外す */
+const GIT_LOCATION_ENV = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_OBJECT_DIRECTORY',
+  'GIT_ALTERNATE_OBJECT_DIRECTORIES',
+  'GIT_COMMON_DIR',
+  'GIT_PREFIX',
+  'GIT_NAMESPACE',
+];
+
+/** 既定の GitRunner。--no-optional-locks で index を書き換えない */
+export const runGit: GitRunner = (root, args) => {
+  const env = { ...process.env };
+  for (const k of GIT_LOCATION_ENV) delete env[k];
+  return execFileSync('git', ['--no-optional-locks', ...args], {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+};
+
+function errorText(e: unknown): string {
+  const text = e instanceof Error ? e.message : String(e);
+  return text
+    .split(/\r?\n/)
+    .filter((l) => l.trim() !== '')
+    .slice(0, 2)
+    .join(' ');
+}
+
+/**
+ * 版の番号の確かめに使うタグ（`vX.Y.Z` の形だけ）。git が読めない・そういうタグが 1 つも無いときは例外にする。
+ * 「読めなかったので比べない」で黙って続けると、版の番号の誤りを見のがすため、続けるかは呼ぶ側が決める
+ * （package-release.ts は --no-tag-check のときだけ続ける）。
+ */
+export function readReleaseTags(root: string, git: GitRunner = runGit): string[] {
+  let out: string;
+  try {
+    out = git(root, ['tag', '--list', 'v*']);
+  } catch (e) {
+    return fail(`git のタグを読めません: ${errorText(e)}`);
+  }
+  const tags = out
+    .split(/\r?\n/)
+    .map((t) => t.trim())
+    .filter((t) => TAG_VERSION_RE.test(t));
+  if (tags.length === 0) {
+    fail(
+      'git に vX.Y.Z の形のタグが 1 つもありません（タグを取り込んでいない clone かもしれません）',
+    );
+  }
+  return tags;
+}
+
+// ---- 元の確かめ（git status）
+
+export interface StatusEntry {
+  /** git status --porcelain=v1 の 2 文字（?? は git の外、!! は無視されている、ほかは変更） */
+  code: string;
+  path: string;
+}
+
+/** `git status --porcelain=v1 -z` の出力を読む（名前の変更は「新しい名前 NUL 元の名前」なので、元の名前は読み飛ばす） */
+export function parseStatusZ(out: string): StatusEntry[] {
+  const tokens = out.split('\0');
+  const entries: StatusEntry[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i]!;
+    if (t === '') continue;
+    const code = t.slice(0, 2);
+    entries.push({ code, path: t.slice(3) });
+    if (/[RC]/.test(code)) i++;
+  }
+  return entries;
+}
+
+/**
+ * 止めなくてよい「無視されたもの」か。
+ * - public/audio/<名前>/: 教材パックの音声は git に入れず（.gitignore の public/audio/ 直下のフォルダ）、配布の zip にだけ入れる決まり
+ * - Python・OS の作業ファイル（__pycache__・*.pyc・.DS_Store・Thumbs.db）: deploy/zorin・licenses・最上位のファイルでは
+ *   zip に入らない（追跡済みだけを入れる）。public の下のものは dist に写り、dist からは除くが、
+ *   vite が sw.js の一覧に入れていれば、あとの突き合わせ（findUnpackagedPrecache）で止める
+ * 無視されたものでも、これ以外（.env・.venv など）は止める。git の外・変更はいつも止める。
+ */
+export function isExpectedStatus(e: StatusEntry): boolean {
+  if (e.code !== '!!') return false;
+  if (/^public\/audio\/[^/]+\/$/.test(e.path)) return true;
+  const base = e.path.replace(/\/$/, '').split('/').at(-1) ?? '';
+  return (
+    base === '__pycache__' || base === '.DS_Store' || base === 'Thumbs.db' || base.endsWith('.pyc')
+  );
+}
+
+/** 配布に入る元にある、git の外・変更・無視されたもの（上の想定内を除く）。無ければ [] */
+export function findDirtySources(root: string, git: GitRunner = runGit): StatusEntry[] {
+  const out = git(root, [
+    'status',
+    '--porcelain=v1',
+    '--ignored',
+    '--untracked-files=normal',
+    '-z',
+    '--',
+    ...RELEASE_SOURCES,
+  ]);
+  return parseStatusZ(out).filter((e) => !isExpectedStatus(e));
+}
+
+function statusLabel(code: string): string {
+  if (code === '??') return 'git の外';
+  if (code === '!!') return '無視されている';
+  return '変更あり';
+}
+
+/** 一覧の文字（1 行 1 件。limit 件まで） */
+export function describeStatusEntries(entries: readonly StatusEntry[], limit = 30): string {
+  const lines = entries.slice(0, limit).map((e) => `  [${statusLabel(e.code)}] ${e.path}`);
+  if (entries.length > limit) lines.push(`  ほか ${entries.length - limit} 件`);
+  return lines.join('\n');
+}
+
+// ---- リンクの確かめ
+
+/**
+ * rels（root からの相対）の下にある、リンクの相対パスを返す（lstat の isSymbolicLink。
+ * Windows のジャンクションも Node ではリンクとして見える）。リンクの先へは入らない。無いものは見ない。
+ */
+export function findLinks(root: string, rels: readonly string[]): string[] {
+  const found: string[] = [];
+  const visit = (rel: string): void => {
+    const abs = path.join(root, rel);
+    let st;
+    try {
+      st = lstatSync(abs);
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code === 'ENOENT') return;
+      throw e;
+    }
+    if (st.isSymbolicLink()) {
+      found.push(rel);
+      return;
+    }
+    if (!st.isDirectory()) return;
+    for (const name of readdirSync(abs).sort()) visit(`${rel}/${name}`);
+  };
+  for (const rel of rels) visit(rel);
+  return found;
+}
+
+// ---- まとめ
+
+export interface SourceCheck {
+  dirty: StatusEntry[];
+  links: string[];
+}
+
+/** 配布に入る元の確かめ。リンクを見るのは deploy/zorin・licenses・最上位の配布ファイル（dist と public には掛けない） */
+export function checkReleaseSources(root: string, git: GitRunner = runGit): SourceCheck {
+  return {
+    dirty: findDirtySources(root, git),
+    links: findLinks(root, [...RELEASE_TRACKED_DIRS, ...RELEASE_TOP_FILES]),
+  };
+}
+
+/**
+ * 確かめた結果を、止める説明（errors）と警告（warnings）にする。
+ * git の外・変更・無視されたものは allowDirty のとき警告にして続ける。リンクは allowDirty でも止める。
+ */
+export function sourceProblems(
+  check: SourceCheck,
+  allowDirty: boolean,
+): { errors: string[]; warnings: string[] } {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  if (check.dirty.length > 0) {
+    const list = describeStatusEntries(check.dirty);
+    const n = check.dirty.length;
+    if (allowDirty) {
+      warnings.push(
+        `警告: --allow-dirty なので、配布に入る元の ${n} 件（下）を見のがして続けます。` +
+          '変更したままの中身は、そのまま zip に入ります。' +
+          'deploy/zorin・licenses・最上位のファイルは追跡済みのものだけが入りますが、' +
+          'public の下は dist にそのまま写されているので、追跡の有無によらず入ります。\n' +
+          list,
+      );
+    } else {
+      errors.push(
+        `配布に入る元（${RELEASE_SOURCES.join('・')}）に、git の外のファイル・変更・無視されたファイルがあります（${n} 件）:\n` +
+          `${list}\n` +
+          'コミットするか、消すか、.gitignore に入れてからやり直してください。' +
+          'わざと入れるなら npm run package -- --allow-dirty。',
+      );
+    }
+  }
+  if (check.links.length > 0) {
+    errors.push(
+      `${RELEASE_TRACKED_DIRS.join('・')} の下にリンク（シンボリックリンク・ジャンクション）があります。` +
+        'リンクの先の中身が、気づかないまま zip に入ったり、入らなかったりします。消してからやり直してください' +
+        '（--allow-dirty では通しません）:\n' +
+        check.links.map((l) => `  ${l}`).join('\n'),
+    );
+  }
+  return { errors, warnings };
+}
+
+// ---- 入れるファイル
+
+/**
+ * deploy/zorin・licenses・最上位の配布ファイルのうち、git で追跡済みのもの（root からの相対パス・"/" 区切り・
+ * 名前の順）。最上位のファイルが追跡されていない・フォルダに追跡済みのファイルが 1 つも無い・
+ * 追跡されているのに作業ツリーに無い（または通常のファイルでない）なら例外。
+ * zip の中の名前は `manabi-no-niwa/` + この相対パス。
+ */
+export function listTrackedReleaseFiles(root: string, git: GitRunner = runGit): string[] {
+  const out = git(root, ['ls-files', '-z', '--', ...RELEASE_TRACKED_DIRS, ...RELEASE_TOP_FILES]);
+  const files = [...new Set(out.split('\0').filter((f) => f !== ''))].sort(comparePath);
+  for (const f of RELEASE_TOP_FILES) {
+    if (!files.includes(f)) fail(`配布に入れる ${f} が git で追跡されていません`);
+  }
+  for (const d of RELEASE_TRACKED_DIRS) {
+    if (!files.some((f) => f.startsWith(`${d}/`))) {
+      fail(`${d}/ に git で追跡されたファイルがありません`);
+    }
+  }
+  for (const f of files) {
+    let st;
+    try {
+      st = lstatSync(path.join(root, f));
+    } catch {
+      return fail(`git で追跡されているのに、作業ツリーにありません: ${f}`);
+    }
+    if (!st.isFile()) fail(`通常のファイルではありません（リンクなど）: ${f}`);
+  }
+  return files;
+}
+
+/**
+ * dist から zip に入れない名前: 隠しファイル・隠しフォルダ（. で始まる。vite の .vite/ を含む）、
+ * Thumbs.db・desktop.ini（大文字小文字は問わない）、~ で終わるもの、.swp、Python のキャッシュ。
+ */
+export function isDistJunk(name: string): boolean {
+  const lower = name.toLowerCase();
+  return (
+    name.startsWith('.') ||
+    lower === 'thumbs.db' ||
+    lower === 'desktop.ini' ||
+    name.endsWith('~') ||
+    lower.endsWith('.swp') ||
+    name === '__pycache__' ||
+    lower.endsWith('.pyc')
+  );
+}
+
+/**
+ * dist の下のファイル。files は [絶対パス, dist からの相対パス（"/" 区切り）]、
+ * skipped は isDistJunk で除いたもの（フォルダは末尾に "/"）。
+ */
+export function walkDist(dist: string): { files: [string, string][]; skipped: string[] } {
+  const files: [string, string][] = [];
+  const skipped: string[] = [];
+  const visit = (dir: string, base: string): void => {
+    for (const name of readdirSync(dir).sort()) {
+      const abs = path.join(dir, name);
+      const rel = base === '' ? name : `${base}/${name}`;
+      const isDir = statSync(abs).isDirectory();
+      if (isDistJunk(name)) {
+        skipped.push(isDir ? `${rel}/` : rel);
+      } else if (isDir) {
+        visit(abs, rel);
+      } else {
+        files.push([abs, rel]);
+      }
+    }
+  };
+  visit(dist, '');
+  return { files, skipped };
+}
+
+// ---- sw.js・packs.json の一覧との突き合わせ
+
+/**
+ * dist/sw.js の事前保存の一覧（`const __MNW_FILES__ = [...]`）と、dist/packs.json の各パックの files を合わせた、
+ * dist からの相対パス（"/" 区切り）。どちらも scripts/vite-plugin-precache.ts が書く形。
+ * packsText が null のときは packs.json が無い dist（Vite 以外で作ったもの）として、sw.js の一覧だけを返す。
+ * 形が違えば例外（dist が壊れている・途中で書き換えられた）。
+ */
+export function parsePrecacheLists(swText: string, packsText: string | null): string[] {
+  const m = /^const __MNW_FILES__ = (\[[^\n]*\]);\r?$/m.exec(swText);
+  if (m === null) fail('dist/sw.js に事前保存の一覧（__MNW_FILES__）がありません');
+  const out: string[] = [];
+  const pushAll = (list: unknown, where: string): void => {
+    if (!Array.isArray(list) || !list.every((p): p is string => typeof p === 'string')) {
+      fail(`${where} が文字列の配列ではありません`);
+    }
+    out.push(...list);
+  };
+  try {
+    pushAll(JSON.parse(m[1]!), 'dist/sw.js の __MNW_FILES__');
+  } catch (e) {
+    if (e instanceof SyntaxError) fail('dist/sw.js の __MNW_FILES__ を読めません');
+    throw e;
+  }
+  if (packsText === null) return out;
+  let index: unknown;
+  try {
+    index = JSON.parse(packsText);
+  } catch {
+    return fail('dist/packs.json を読めません');
+  }
+  const isRecord = (v: unknown): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null && !Array.isArray(v);
+  if (!isRecord(index)) fail('dist/packs.json がオブジェクトではありません');
+  // 古い形 {packs: {…}} も読む（package-release.ts と同じ）
+  const packs = isRecord(index.packs) && !('files' in index.packs) ? index.packs : index;
+  for (const [id, pack] of Object.entries(packs)) {
+    if (!isRecord(pack)) fail(`dist/packs.json の ${id} がオブジェクトではありません`);
+    pushAll(pack.files, `dist/packs.json の ${id} の files`);
+  }
+  return out;
+}
+
+/**
+ * sw.js の事前保存の一覧・packs.json のファイル（precached）のうち、zip に入れるファイル（distRels。dist からの相対パス）に
+ * 無いもの。パス順・重複なし。
+ * isDistJunk で除いた Thumbs.db などを vite が一覧に入れていると、zip には無いのに sw.js が取りに行き、
+ * 家ではサービスワーカーの install が 404 で失敗する（パックの確かめも content-check で止まる）。
+ * 無ければ []。あれば zip を作る前に止める。
+ */
+export function findUnpackagedPrecache(
+  precached: readonly string[],
+  distRels: readonly string[],
+): string[] {
+  const have = new Set(distRels);
+  return [...new Set(precached.filter((p) => !have.has(p)))].sort(comparePath);
 }

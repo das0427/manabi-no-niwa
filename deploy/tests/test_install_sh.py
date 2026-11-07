@@ -574,6 +574,186 @@ class InstallTest(InstallShTestBase):
         self.assertEqual("systemctl --user start manabi-no-niwa.service", self.calls()[-1])
 
 
+class SwapTest(InstallShTestBase):
+    """入れ替えの前後の sync（install-1）と、更新の仕組みの switch-broken（app が無く app.prev だけがある）からの入れ直し
+    （install-2）。偽の sync・mv・rm は、呼ばれた順に記録（MNW_TEST_LOG）して、本物を呼ぶ。"""
+
+    def stub_logging(self, *, sync_rc: int = 0, fail_mv=()) -> None:
+        """sync・mv・rm を記録つきの偽物にする。fail_mv = 失敗させる mv の (移す元の名前, 移す先の名前) の組"""
+        self.write_stub("sync", f'echo "sync" >> "$MNW_TEST_LOG"\nexit {sync_rc}\n')
+        self.write_stub("rm", 'echo "rm $*" >> "$MNW_TEST_LOG"\nPATH="${PATH#*:}"\nexec rm "$@"\n')
+        cases = "\n".join(
+            r'  */%s\|*/%s) echo "mv: 試験のための失敗" >&2; exit 1 ;;' % pair for pair in fail_mv
+        )
+        self.write_stub(
+            "mv",
+            'echo "mv $*" >> "$MNW_TEST_LOG"\n'
+            'prev=""; last=""\n'
+            'for a in "$@"; do prev="$last"; last="$a"; done\n'
+            'case "$prev|$last" in\n' + cases + "\nesac\n"
+            'PATH="${PATH#*:}"\nexec mv "$@"\n',
+        )
+
+    def describe(self):
+        out = {}
+        for name in ("app", "app.prev", "app.next", "update"):
+            d = self.base / name
+            if d.is_dir():
+                mark = d / "MARK"
+                out[name] = mark.read_text(encoding="utf-8") if mark.exists() else "(dir)"
+            else:
+                out[name] = None
+        return out
+
+    def make_switch_broken(self) -> None:
+        """更新の仕組みが入れ替えの途中で止まった状態: app が無く、app.prev が前の版、app.next が新しい版"""
+        write_text(self.base / "app.prev" / "MARK", "old-2.1.0 (the only working copy)")
+        write_text(self.base / "app.prev" / "dist" / "index.html", "old")
+        write_text(self.base / "app.next" / "MARK", "updater-new")
+
+    # ---- install-1: sync ----
+    def test_sync_runs_before_the_swap_and_before_the_old_version_is_removed(self):
+        a = self.make_release("a", "2.1.0")
+        self.assertEqual(self.install(a).returncode, 0)
+        write_text(self.base / "update" / "state.json", "{}")
+        self.log.unlink()
+        self.stub_logging()
+        b = self.make_release("b", "2.2.0")
+        r = self.install(b)
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assert_installed("2.2.0", b)
+        calls = self.calls()
+        base = to_posix(self.base)
+        syncs = [i for i, c in enumerate(calls) if c == "sync"]
+        self.assertEqual(2, len(syncs), calls)
+        stash = calls.index(f"mv {base}/app {base}/app.prev")  # 今の版を控えに回す
+        swap = calls.index(f"mv {base}/app.next {base}/app")  # 組み立てた版を app にする
+        remove = calls.index(f"rm -rf {base}/app.prev {base}/update")  # 前の版と更新の作業用を消す
+        # 1 回目: 入れ替えの前（app が無い時間を延ばさないよう、今の版を動かす前）。2 回目: 名前の変更のあと、前の版を消す前
+        self.assertLess(syncs[0], stash, calls)
+        self.assertLess(stash, swap, calls)
+        self.assertLess(swap, syncs[1], calls)
+        self.assertLess(syncs[1], remove, calls)
+
+    def test_sync_also_runs_on_a_fresh_install(self):
+        self.stub_logging()
+        rel = self.make_release("a", "2.1.0")
+        r = self.install(rel)
+        self.assertEqual(r.returncode, 0, r.out)
+        calls = self.calls()
+        base = to_posix(self.base)
+        syncs = [i for i, c in enumerate(calls) if c == "sync"]
+        self.assertEqual(2, len(syncs), calls)
+        self.assertLess(syncs[0], calls.index(f"mv {base}/app.next {base}/app"), calls)
+        self.assertLess(calls.index(f"mv {base}/app.next {base}/app"), syncs[1], calls)
+        self.assertLess(syncs[1], calls.index(f"rm -rf {base}/app.prev {base}/update"), calls)
+
+    def test_a_failing_or_missing_sync_does_not_stop_the_install(self):
+        for rc in (1, 127):
+            with self.subTest(sync_rc=rc):
+                if self.base.exists():
+                    shutil.rmtree(self.base)
+                self.stub_logging(sync_rc=rc)
+                rel = self.make_release("a%d" % rc, "2.1.0")
+                r = self.install(rel)
+                self.assertEqual(r.returncode, 0, r.out)
+                self.assert_installed("2.1.0", rel)
+
+    def test_a_failure_before_the_swap_has_not_synced_yet(self):
+        # 組み立てに失敗したときは、入れ替えに進まないので sync も呼ばない（今の版には何もしていない）
+        a = self.make_release("a", "2.1.0")
+        self.assertEqual(self.install(a).returncode, 0)
+        self.log.unlink()
+        self.stub_logging()
+        self.write_stub(
+            "cp",
+            'echo "cp $*" >> "$MNW_TEST_LOG"\necho "cp: 試験のための失敗" >&2\nexit 1\n',
+        )
+        b = self.make_release("b", "2.2.0")
+        r = self.install(b)
+        self.assertNotEqual(r.returncode, 0, r.out)
+        self.assertEqual([], [c for c in self.calls() if c == "sync"])
+
+    # ---- install-2: switch-broken ----
+    def test_switch_broken_state_is_restored_first_and_then_replaced(self):
+        self.make_switch_broken()
+        self.stub_logging()
+        rel = self.make_release("new", "2.2.0")
+        r = self.install(rel)
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assert_installed("2.2.0", rel)
+        self.assertIn("元の場所に戻しました", r.stdout)
+        calls = self.calls()
+        base = to_posix(self.base)
+        restore = calls.index(f"mv {base}/app.prev {base}/app")
+        # 戻すのは、新しい版を組み立てる前（あとの入れ替えで app.prev を消す前）
+        self.assertLess(restore, calls.index(f"mv {base}/app.next {base}/app"), calls)
+        self.assertLess(restore, calls.index(f"rm -rf {base}/app.prev"), calls)
+
+    def test_switch_broken_state_then_the_final_rename_fails_keeps_the_old_version(self):
+        # 以前は、app.prev を先に消していたので、最後の名前の変更に失敗すると動く版が 1 つも残らなかった
+        self.make_switch_broken()
+        self.stub_logging(fail_mv=[("app.next", "app")])
+        rel = self.make_release("new", "2.2.0")
+        r = self.install(rel)
+        self.assertNotEqual(r.returncode, 0, r.out)
+        state = self.describe()
+        self.assertEqual("old-2.1.0 (the only working copy)", state["app"], state)
+        self.assertIsNone(state["app.next"], state)
+        self.assertIn("今までの版は、そのまま残してあります", r.stderr)
+        self.assertNotIn("まだ入っていません", r.stderr)
+
+    def test_switch_broken_state_that_cannot_be_restored_stops_and_deletes_nothing(self):
+        self.make_switch_broken()
+        self.stub_logging(fail_mv=[("app.prev", "app")])
+        rel = self.make_release("new", "2.2.0")
+        r = self.install(rel)
+        self.assertEqual(r.returncode, 1, r.out)
+        state = self.describe()
+        self.assertIsNone(state["app"], state)
+        self.assertEqual("old-2.1.0 (the only working copy)", state["app.prev"], state)
+        self.assertEqual("updater-new", state["app.next"], state)  # まだ何も組み立てていない
+        self.assertIn("戻せませんでした", r.stderr)
+        # 「残してあります」とは言わず、入れ直しの手順を出す
+        self.assertNotIn("そのまま残してあります", r.stderr)
+        self.assertIn("まだ入っていません", r.stderr)
+        self.assertIn("前の版は", r.stderr)
+        self.assertIn(to_posix(self.base) + "/app.prev", r.stderr)
+        self.assertIn("もういちど bash deploy/zorin/install.sh", r.stderr)
+        self.assertFalse(self.desktop_file.exists())
+
+    def test_a_normal_state_with_a_leftover_app_prev_is_not_restored(self):
+        # app があるときの app.prev は、前の版の控えの残り。戻さずに片付ける（今までどおり）
+        a = self.make_release("a", "2.1.0")
+        self.assertEqual(self.install(a).returncode, 0)
+        write_text(self.app / "MARK", "current")
+        write_text(self.base / "app.prev" / "MARK", "leftover")
+        self.log.unlink()
+        self.stub_logging()
+        b = self.make_release("b", "2.2.0")
+        r = self.install(b)
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assert_installed("2.2.0", b)
+        base = to_posix(self.base)
+        self.assertNotIn(f"mv {base}/app.prev {base}/app", self.calls())
+        self.assertNotIn("元の場所に戻しました", r.stdout)
+
+    def test_a_failure_in_a_fresh_install_does_not_say_a_previous_version_remains(self):
+        self.write_stub(
+            "cp",
+            'if [ -n "${MNW_TEST_FAIL_CP:-}" ]; then echo "cp: 試験のための失敗" >&2; exit 1; fi\n'
+            'PATH="${PATH#*:}"\nexec cp "$@"\n',
+        )
+        rel = self.make_release("a", "2.1.0")
+        r = self.install(rel, env_extra={"MNW_TEST_FAIL_CP": "1"})
+        self.assertNotEqual(r.returncode, 0, r.out)
+        self.assertNotIn("そのまま残してあります", r.stderr)
+        self.assertIn("まだ入っていません", r.stderr)
+        self.assertIn("もういちど bash deploy/zorin/install.sh", r.stderr)
+        self.assertNotIn("前の版は", r.stderr)  # 前の版は無い
+        self.assertFalse((self.base / "app.next").exists())
+
+
 class UninstallTest(InstallShTestBase):
     def installed(self, *args: str) -> Path:
         rel = self.make_release("a", "2.1.0")

@@ -26,7 +26,10 @@
 | 項目 | 状態 | 詳細・対処の案 |
 |---|---|---|
 | Zorin OS の実機での更新（`os.execv`・systemd・`renameat2`・`flock`・Python 3.10・本物の GitHub からの取得・Firefox） | 要確認 | Windows では Popen の道・名前の変更 2 回の道・偽の fcntl・偽の GitHub で確かめた（設計 17 章）。実機の項目は docs/device-checklist.md「2.1.0（自動更新）で増えた確認」 |
-| 2.1.0 のリリース | 未対応 | package.json の版を 2.1.0 に上げる・docs/expansion/release-2.1.0.md に保護者画面に出す短い説明・README の手順の版の番号。`npm run package` が版の番号を git のタグと比べて止めることがある（設計 3.6 節） |
+| 2.1.0 のリリース | 未対応 | package.json の版を 2.1.0 に上げる・docs/expansion/release-2.1.0.md に保護者画面に出す短い説明・README の手順の版の番号。`npm run package` が版の番号を git のタグと比べて止めることがある（設計 3.6 節）。止まる場合は、元に git の外・変更・無視されたものがある（`-- --allow-dirty`。公開する版では使わない。リンクは通さない）／タグを読めない・`vX.Y.Z` のタグが無い（`git fetch --tags`。わざとなら `-- --no-tag-check`）／版が古い・公開済み・大きく飛ぶ（`-- --allow-existing-tag`・`-- --allow-jump`）／版に先頭の 0 がある |
+| 公開の前の、教材パックの音声の作りかけの確認 | 運用 | 教材パックの音声（`public/audio/<名前>/`）は git に入れないので、`npm run package` は想定内として止めず、作りかけを見つけられない。公開の前に `git status --ignored public/audio` で見て、`npm run check:audio`・`npm run check:packs` を流す（設計 3.6 節・17.3）。`npm run package` は zip ごとに入れたファイルの一覧 `release/<zip の名前>.files.txt` を書く（GitHub には上げない） |
+| 取得の中止と期限が、応答の見出しの段・1xx の繰り返し・chunked の trailer・CONNECT の応答で効かない | 制約 | 起こせるのは偽の版も配れる相手だけで、止まるのは更新の仕組みだけ（配信の起動し直しで戻る）。2.1.0 では直していない（設計 5.6 節・16.2 fetch-1）。**次の版の案**: 要求ごとに見張り役を付け、中止が立ったとき、または全体の期限（版の情報は 60 秒。zip は遅すぎる取得の考えに合わせて決める）を過ぎたときに、下のソケットを `shutdown(SHUT_RDWR)` して閉じる。`HTTPConnection`・`HTTPSConnection` を継いで `connect()` で `self.sock` を登録すれば、見出し・trailer・転送の各段・CONNECT のどこで止まっていても抜けられる（Linux では別のスレッドからの `shutdown` で、待っている `recv` が戻る）。試験は、見出し・1xx・trailer・CONNECT の 4 つの形を test_fetch.py に足す |
+| 版の形の先頭の 0（`2.01.0`） | 注意 | 作る側（`scripts/release-lib.ts`）は拒む。受ける側（`deploy/zorin/mnwupdate/common.py` の `VERSION_PATTERN`・`src/core/offline/updater.ts` の `SEMVER`）は、まだ受ける（数では 2.1.0 になる）。配られる版に先頭の 0 は入らないので、揃えるかは次の版で決める（揃えるなら、先頭の 0 のタグの扱いと衝突しないよう、数での比べは残す）。`git ls-remote --tags origin`（手元にタグが無いとき）と前の版との差の自動表示は、通信の禁止と範囲のため入れていない |
 | アカウント・リポジトリの名前 | 運用 | **das0427/manabi-no-niwa の名前を変えない・消さない・移さない**。更新の仕組みはこの名前と番号 1431752170 に固定している（名前を取り直した他人のリリースから入れないため）。変えるなら先に新しい場所を入れた版を出す（設計 3.6 節） |
 | 配信の起動し直しの隙間（1秒ほどポート 8765 が空く） | 制約 | 直していない（設計 16 章 A2）。ソケットを exec に受け渡す作りは実機で確かめられる段で |
 | ほかの OS の利用者も窓口を使える・保護者ゲートは認証でない | 制約 | できるのは公式の最新版への更新・中止・自動の確認のオン・オフだけ（設計 16 章 A3・A6）。README で暗証番号を勧めた |
@@ -45,7 +48,9 @@
 | 画面の移動でブラウザの履歴を積むままにした | 判断 | ブラウザの「戻る」と、おえかきの「もどると前の作品」を残すため。前の窓が自分を閉じられないとき（画面を移したあと）は「べつの まどで ひらいています」の窓が残るが、使っている窓を閉じれば、数秒後に自分で戻る |
 | 2種類のブラウザ（Firefox と Brave など）で同時に開いたとき | 制約 | 止めない。鍵がブラウザごとのため、お互いが見えない。記録も別々 |
 | bfcache から戻った画面 | 制約 | `pageshow`（persisted）で `location.reload()` する。この読み込みは `reload` として扱われるので、使っている窓があれば、この窓が鍵を奪う（`back_forward` の守りは効かない） |
-| `deploy/zorin/mnwwindow.py` の行数 | 注意 | 約 480 行（目安は400行）。X11 の下まわり・判定・前に出すやり直し・記録をまとめた1ファイル。分けるなら、記録（`write_log`）と ctypes の下まわり（`X11Backend`）を別のファイルへ |
+| `deploy/zorin/mnwwindow.py` の行数 | 注意 | 500 行ちょうど（目安は400行。行数の試験の上限も 500 行で、余裕が 0 行）。X11 の下まわり・判定・前に出すやり直し・記録をまとめた1ファイル。次に足すときは、まとめ方を詰めるか、記録（`write_log`）と ctypes の下まわり（`X11Backend`）を別のファイルへ分ける |
+| ほかのサイトのページが、同じブラウザで `127.0.0.1:8765` を開くと、使っている窓（子供の窓）が「べつの まどで ひらいています」に替わる | 制約（2.1.0 では直さない） | 記録は残り、［この まどで ひらく］かアイコンの押し直しで戻る。ほかのサイトが得るものは無い（single-instance-design.md 2.3.7・8.5・8.6、README）。**次の版の候補（起動の印）**: `serve.py` が 0600 のファイルに一度きりの印を置く → `manabi.sh` が読んで `#launch=<印>` を付ける → アプリが同じ出どころの窓口で印を確かめる。印が無い・違うのに生きている画面がいるときは、`back_forward` のときと同じく自分が `retired` になり、［この まどで ひらく］で明示的に引き継ぐ（アドレス欄に手で打って開いた窓も同じ扱いになる）。`referrer`・`history.length` は、すり抜けられるので使えない。窓口を足すので、single-instance-design.md 2.2.2 と同じ守りが要る |
+| Firefox で開く端末での弱い一致 | 判断 | Chromium 系で開く端末（`--browser chromium`）では、Firefox の窓を前に出さない。Firefox で開く端末（`--browser firefox`）や省略のときは今までどおりで、Chromium 系の弱い一致（末尾の付かない題名のアプリ窓）も候補に残る。対称にして、`firefox` のときに Chromium 系を外すかは、次の版の判断 |
 | 試験の旗 | 注意 | `allowMultiWindow`（e2e/helpers/app.ts）は sessionStorage に旗を置く。2つのページを同時に使う E2E を足すときは、これを呼ぶ |
 
 ## C. 未実装の機能（設計にあるもの）

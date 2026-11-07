@@ -92,6 +92,11 @@
 - Python の unittest（`npm run test:py`）: `deploy/tests/test_mnwwindow.py`（窓の判定・前に出すやり直し・`wait`・`ozone-flag`・記録・ctypes の構造体）、`deploy/tests/test_manabi_sh.py`（bash があるときだけ。偽のコマンドで、focus の結果ごとの動き・`--ozone-platform` の付け方・`flock` の呼び方・鍵の fd を子に渡さないこと・配信の確かめの Python）、`deploy/tests/test_install_sh.py`（`mnwwindow.py` が必要なファイルの一覧にあること）。本物の `flock` の試験は Linux だけで動く。
 - 旗（`allowMultiWindow`）を立てる既存の E2E: `e2e/drawing.spec.ts` の2つのタブの試験、`e2e/offline.spec.ts` の2つのページを同時に開く試験。
 
+**2.1.0 の公開前の点検（3回目。updater-design.md 16.2・single-instance-design.md 8.6）で足した試験**。どれも、直しを1つずつ外すと落ちることを確かめてから戻した。
+- Python（`deploy/tests/`）: `test_serve.py`（NUL などを含むパスは 404 で記録が出ない・予期しない例外は型名 1 行・全応答に `Cross-Origin-Resource-Policy`・自己検査の失敗の説明にパスが出ない・`--check-update` が Traceback で落ちない）、`test_fetch.py`（満杯のあと取得物が残らない・深い入れ子の版の情報・形の壊れた `Location`）、`test_service.py`（組み立ての途中の満杯でも取得物が空・満杯で捨てたあとの `needBytes` が全部を取り直す見積もりと同じ・深い入れ子の状態は `idle`）、`test_install.py`（壊れた deflate は `unsafe-zip`・失敗の説明のパスの置き換え・リンクの先に `chmod` しない）、`test_manifest.py`（深い入れ子は `bad-manifest`）、`test_mnwwindow.py`（`--browser`・時間切れの終了コード 1）。
+- シェル（bash が無ければ skip）: `test_manabi_sh.py`（使うブラウザの種類が `focus`・`wait` に渡る・`MANABI_BROWSER` を評価しない）、`test_install_sh.py`（偽の `sync`・`mv`・`rm` で入れ替えの前後の `sync` の順・`switch-broken` を先に戻す・戻せないとき止まる）。
+- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比べ・タグの読み取り。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 9 件）。
+
 ### 3.1 自動のレイアウト検査（E-14）
 - 画面サイズは 1920×1080, 1536×864, 1280×720 に加え、ブラウザの UI 分だけ高さが減った 1920×950・1280×620 でも検査する
 - ホームの9枚の札: 文字のはみ出しなし、札どうしの間隔 ≥ 1.6u

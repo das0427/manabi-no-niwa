@@ -19,7 +19,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from .common import Cancelled, UpdateError, os_error_text, override_origin_from_env
+from .common import Cancelled, UpdateError, os_error_text, override_origin_from_env, strict_loads
 from .manifest import MAX_MANIFEST_BYTES
 
 GITHUB_ORIGIN = "https://github.com"
@@ -159,7 +159,16 @@ class _CheckedRedirect(urllib.request.HTTPRedirectHandler):
             new.redirect_log = log
         return new
 
-    http_error_308 = urllib.request.HTTPRedirectHandler.http_error_302
+    def http_error_302(self, req, fp, code, msg, headers):
+        try:
+            return urllib.request.HTTPRedirectHandler.http_error_302(self, req, fp, code, msg, headers)
+        except ValueError:
+            # 形の壊れた Location（例: http://[127.0.0.1/x）は urllib の中で ValueError になる。転送先が使えない
+            # ものとして、internal ではなく redirect-host にする
+            raise UpdateError("redirect-host", "bad redirect URL") from None
+
+    # 基底クラスは 301・303・307 を基底の http_error_302 に結んでいるので、こちらの関数に結び直す
+    http_error_301 = http_error_303 = http_error_307 = http_error_308 = http_error_302
 
 
 def build_opener(endpoint):
@@ -232,8 +241,12 @@ def _unlink(path):
 
 
 def _write_meta(meta, want):
-    with _local_io("write .part.json", want["bytes"]), open(meta, "w", encoding="utf-8") as f:
-        json.dump(want, f)
+    try:
+        with _local_io("write .part.json", want["bytes"]), open(meta, "w", encoding="utf-8") as f:
+            json.dump(want, f)
+    except UpdateError:
+        _unlink(meta)  # 書きかけ（空き不足で途中まで）を残さない
+        raise
 
 
 def part_files(downloads, part):
@@ -321,7 +334,7 @@ class Fetcher:
         tags = [t for t in (self.endpoint.release_tag_of(u) for u in hops) if t]
         if tags:
             try:
-                declared = json.loads(data.decode("utf-8")).get("tag")
+                declared = strict_loads(data.decode("utf-8")).get("tag")
             except (ValueError, UnicodeDecodeError, AttributeError):
                 declared = None  # 形の誤りは parse_manifest が見つける
             if isinstance(declared, str) and declared != tags[0]:
@@ -360,7 +373,9 @@ class Fetcher:
                 raise
             except Exception as e:  # noqa: BLE001
                 error = classify(e)
-                if error.code == "size-mismatch":
+                if error.code in ("size-mismatch", "disk-full"):
+                    # 大きさが合わない部分も、空きが尽きた部分も、続きから取り直さない。捨てて空きを返す
+                    # （残すと、確認でも起動し直しでも消えず、ディスクが満杯のまま残る）
                     self._discard(partial, meta)
                 if error.code != "offline" or retries >= len(RETRY_DELAYS):
                     raise error from None

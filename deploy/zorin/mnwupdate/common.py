@@ -102,8 +102,12 @@ def _reject_constant(name):
 
 
 def strict_loads(text):
-    """NaN・Infinity を受け付けない json.loads"""
-    return json.loads(text, parse_constant=_reject_constant)
+    """NaN・Infinity を受け付けない json.loads。深すぎる入れ子（RecursionError）も ValueError にする
+    （版の情報・部品の印・状態の読み取りが、決まった失敗のコードか「読めない」として扱えるように）"""
+    try:
+        return json.loads(text, parse_constant=_reject_constant)
+    except RecursionError:
+        raise ValueError("JSON is nested too deeply") from None
 
 
 def read_json_file(path, limit=1 << 20):
@@ -281,6 +285,9 @@ def remove_tree(path):
     try:
         os.rmdir(path)
     except OSError:
+        if os.path.islink(path):
+            _unlink(path)  # 調べたあとにリンクに差し替えられた: リンクの先はたどらず、リンクだけ消す
+            return
         try:
             os.chmod(path, 0o755)
             os.rmdir(path)
@@ -292,6 +299,8 @@ def _unlink(path):
     try:
         os.unlink(path)
     except OSError:
+        if os.path.islink(path):
+            return  # リンクはたどらない: chmod はリンクの先の権限を変えてしまう
         try:
             os.chmod(path, 0o644)
             os.unlink(path)

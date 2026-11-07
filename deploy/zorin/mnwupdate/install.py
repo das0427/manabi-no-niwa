@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 import zipfile
+import zlib
 
 from .common import Cancelled, UpdateError, os_error_text, read_json_file, remove_tree, strict_loads
 from .manifest import is_safe_rel_path, parse_part_mark
@@ -167,7 +168,7 @@ def inspect_zip(zf, part):
 def _load_mark(zf, info):
     try:
         return strict_loads(zf.read(info).decode("utf-8"))
-    except (ValueError, UnicodeDecodeError, zipfile.BadZipFile, RuntimeError, OSError):
+    except (ValueError, UnicodeDecodeError, zipfile.BadZipFile, RuntimeError, OSError, zlib.error):
         raise UpdateError("bad-manifest", "mark is not JSON") from None
 
 
@@ -202,8 +203,9 @@ def extract_zip(zf, entries, app_next, cancel, progress=None):
                     if progress:
                         progress(written_total)
             os.chmod(dest, 0o755 if executable else 0o644)
-    except (zipfile.BadZipFile, NotImplementedError, RuntimeError, EOFError) as e:
-        raise _unsafe("%s: %s" % (type(e).__name__, e)) from e
+    except (zipfile.BadZipFile, NotImplementedError, RuntimeError, EOFError, zlib.error) as e:
+        # 壊れた deflate の中身は zlib.error（ほかの壊れ方と同じく unsafe-zip。sha256 は合っていても起こりうる）
+        raise _unsafe("%s: %s" % ("zlib.error" if isinstance(e, zlib.error) else type(e).__name__, e)) from e
     except (FileExistsError, NotADirectoryError, IsADirectoryError) as e:
         raise UpdateError("content-check", "overlap or path conflict: %s: %s" % (rel, _brief(e))) from e
     return written_total
@@ -367,6 +369,31 @@ def self_test_args(argv):
     return out
 
 
+def hide_paths(text, app_next):
+    """自己検査の出力の中の、置き場の親（app_next の親）を <DATA> に、ホームを ~ に置き換える。
+    利用者のログイン名を含むフルパス（traceback・ImportError の文）が、状態の窓口と保護者画面に出ないように。
+    同じパスの書き方の違い（そのまま・絶対パス・実体のパス・区切りの違い・repr の中の二重の区切り）も置き換える"""
+
+    def forms(path):
+        found = set()
+        for base in (path, os.path.abspath(path), os.path.realpath(path)):
+            for variant in (base, base.replace("\\", "/"), base.replace("/", "\\")):
+                found.add(variant)
+                found.add(variant.replace("\\", "\\\\"))
+        return found
+
+    pairs = []
+    data = os.path.dirname(app_next.rstrip("/\\"))
+    if data and os.path.dirname(data) != data:  # 最上位（/ など）は置き換えない
+        pairs.extend((form, "<DATA>") for form in forms(data))
+    home = os.path.expanduser("~")
+    if home not in ("", "~") and os.path.dirname(home) != home:
+        pairs.extend((form, "~") for form in forms(home))
+    for form, token in sorted(pairs, key=lambda pair: len(pair[0]), reverse=True):
+        text = text.replace(form, token)
+    return text
+
+
 def run_self_test(app_next, argv=()):
     """新しい serve.py を別のプロセスで --self-test する（0 が成功）。
     再起動で渡すのと同じ引数も付ける（新しい版で引数の名前が変わって起動できない、を入れ替えの前に見つける）"""
@@ -384,7 +411,8 @@ def run_self_test(app_next, argv=()):
     except OSError as e:
         raise UpdateError("self-test", "cannot run: %s" % _brief(e)) from None
     if done.returncode != 0:
-        tail = done.stdout.decode("utf-8", "replace").strip().splitlines()[-3:]
+        text = hide_paths(done.stdout.decode("utf-8", "replace"), app_next)
+        tail = text.strip().splitlines()[-3:]
         raise UpdateError("self-test", "exit %d: %s" % (done.returncode, " / ".join(tail)))
 
 

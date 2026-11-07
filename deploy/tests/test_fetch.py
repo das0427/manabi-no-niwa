@@ -218,6 +218,16 @@ class FetchManifestTest(FakeCase):
         self.fake.manifest = b"{" + b" " * 70000 + b"}"
         self.assertEqual(code_of(self.fetcher.fetch_manifest), "bad-manifest")
 
+    def test_deeply_nested_manifest_is_bad_manifest_not_recursion_error(self):
+        # 64KiB 以内の深い入れ子は json.loads が RecursionError を投げる。転送先のタグと比べる道でも、
+        # 版の情報を確かめる道でも、決まったコード（bad-manifest）にする（fetch-3）
+        deep = b'{"tag":"v2.2.0","x":' + b"[" * 30000 + b"]" * 30000 + b"}"
+        self.assertLessEqual(len(deep), manifest.MAX_MANIFEST_BYTES)
+        self.fake.tag_redirect = True
+        self.fake.manifest = deep
+        self.assertEqual(self.fetcher.fetch_manifest(), deep)  # 形の誤りは parse_manifest が見つける
+        self.assertEqual(code_of(manifest.parse_manifest, deep), "bad-manifest")
+
 
 class DownloadTest(FakeCase):
     def test_download_and_verify(self):
@@ -402,6 +412,17 @@ class RedirectHandlingTest(FakeCase):
         self.fake.tag_redirect = False
         self.assertEqual(self.fetcher.fetch_manifest(), self.fake.manifest)
 
+    def test_malformed_location_is_redirect_host_whatever_the_redirect_status(self):
+        # 形の壊れた Location は urllib の中で ValueError になる。internal ではなく redirect-host（fetch-3）。
+        # 301・303・307 も 302・308 と同じ関数に結ぶ（基底クラスの結びのままだと素通りする）
+        for status in (301, 302, 303, 307, 308):
+            for location in ("http://[127.0.0.1/x", "http://[::1/x"):
+                with self.subTest("%d %s" % (status, location)):
+                    self.fake.redirect_status = status
+                    self.fake.redirect_to = location
+                    self.assertEqual(code_of(self.fetcher.fetch_manifest), "redirect-host")
+                    self.assertEqual(code_of(self.download, "main"), "redirect-host")
+
     def test_release_tag_of(self):
         endpoint = fetch.endpoint_from_env({})
         base = "https://github.com/das0427/manabi-no-niwa/releases/download/"
@@ -477,6 +498,41 @@ class DiskAndSpeedTest(FakeCase):
         self.assertIn("ENOSPC", caught.exception.detail)
         blobs = [r for r in self.fake.requests_for(name) if r["path"].startswith("/blob/")]
         self.assertEqual(len(blobs), 1)  # 取り直さない（ネットの失敗ではない）
+
+    def full_disk_open(self, limit, ending=".part", mode="b"):
+        real_open = open
+
+        def fake_open(path, mode_="r", *args, **kwargs):
+            f = real_open(path, mode_, *args, **kwargs)
+            return _FullDisk(f, limit) if str(path).endswith(ending) and mode in mode_ else f
+
+        return mock.patch("builtins.open", fake_open)
+
+    def test_disk_full_discards_the_part_files_to_give_the_space_back(self):
+        # 空きが尽きたら、書きかけの .part と .part.json を捨てる（残すと満杯のまま、確認でも起動し直しでも消えない）
+        with self.full_disk_open(200):
+            self.assertEqual(code_of(self.download, "main"), "disk-full")
+        self.assertEqual(os.listdir(self.downloads), [])
+
+    def test_disk_full_while_resuming_discards_the_old_part_too(self):
+        part = DownloadTest.start_partial(self, "main", 300)
+        self.assertTrue(os.path.exists(os.path.join(self.downloads, part.name + ".part")))
+        with self.full_disk_open(400):
+            self.assertEqual(code_of(self.download, "main"), "disk-full")
+        self.assertEqual(os.listdir(self.downloads), [])
+
+    def test_disk_full_while_writing_the_meta_leaves_nothing(self):
+        with self.full_disk_open(0, ending=".part.json", mode="w"):
+            self.assertEqual(code_of(self.download, "main"), "disk-full")
+        self.assertEqual(os.listdir(self.downloads), [])
+
+    def test_other_failures_keep_the_part_to_resume(self):
+        # 切れた（offline）ときは、続きから取り直すために .part を残す
+        name = self.release.part("main").name
+        self.fake.trickle[name] = (50, 0.05)
+        with mock.patch.object(fetch, "STALL_WINDOW", 0.3), mock.patch.object(fetch, "STALL_MIN_BYTES", 10**6):
+            self.assertEqual(code_of(self.download, "main"), "offline")
+        self.assertEqual(sorted(os.listdir(self.downloads)), [name + ".part", name + ".part.json"])
 
     def test_too_slow_download_gives_up_and_keeps_what_it_got(self):
         name = self.release.part("main").name

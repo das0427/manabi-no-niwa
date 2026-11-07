@@ -7,7 +7,7 @@ import threading
 import unittest
 from unittest import mock
 
-from helpers import ISO, Release, ServiceCase, install_app, tree
+from helpers import ISO, FakeGitHub, Release, ServiceCase, install_app, tree
 from mnwupdate import common, fetch, install, service
 from mnwupdate.common import Cancelled, UpdateError
 
@@ -372,6 +372,61 @@ class ApplyTest(ServiceCase):
         self.fetcher.hook = mock.Mock(side_effect=UpdateError("sha256-mismatch", "x"))
         self.assert_failed("sha256-mismatch", svc)
 
+    def test_disk_full_while_downloading_gives_the_space_back(self):
+        # 取得の途中で空きが尽きたら、この更新の取得物（確かめ済みの zip も、途中の .part も）を捨てて空きを返す（fetch-2）
+        svc = self.checked()
+
+        def hook(part, folder, cancel):
+            if part.kind == "audio-g3-g4":  # 1 つめは取得し終え、2 つめの途中で空きが尽きた
+                for suffix in (".part", ".part.json"):
+                    with open(os.path.join(folder, part.name + suffix), "wb") as f:
+                        f.write(b"x" * 100)
+                raise UpdateError("disk-full", "write .part: ENOSPC", need_bytes=1)
+
+        self.fetcher.hook = hook
+        status = self.assert_failed("disk-full", svc)
+        self.assertGreater(status["update"]["error"]["needBytes"], 256 * 1024 * 1024)
+        self.assertEqual(self.fetcher.downloaded, ["main", "audio-g3-g4"])
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+
+    def test_disk_full_while_assembling_gives_the_space_back_too(self):
+        # 組み立ての途中の満杯にも効く: 取得した zip を残さず、app.next も消す
+        svc = self.checked()
+        self.patched("assemble", side_effect=OSError(errno.ENOSPC, "No space left on device"))
+        self.assert_failed("disk-full", svc)
+        self.assertEqual(self.fetcher.downloaded, ["main", "audio-g3-g4"])
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+
+    def test_need_bytes_after_giving_the_space_back_counts_the_discarded_zips(self):
+        # 満杯で捨てた zip（取り終えた main）は、次に押したときは取り直す。needBytes は、捨てる前の見積もり
+        # （確かめ済みの zip を 0 と数える）ではなく、捨てたあとの見積もり（全部を取り直す）にする。
+        # そうしないと、保護者画面の「あと約 N GB 必要です」が、捨てた zip の大きさの分だけ少なく出る
+        svc = self.checked()
+        self.patched("check_link_support", return_value=True)
+        full = svc.status()["latest"]["needBytes"]  # 確認のときの全体の見積もり（取得する部品を全部数える）
+
+        def hook(part, folder, cancel):
+            if part.kind == "audio-g3-g4":  # main は取得し終え、2 つめの途中で空きが尽きた
+                raise UpdateError("disk-full", "write .part: ENOSPC", need_bytes=1)
+
+        self.fetcher.hook = hook
+        status = self.assert_failed("disk-full", svc)
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+        need = status["update"]["error"]["needBytes"]
+        self.assertEqual(need, full)
+        self.assertGreater(self.new.part("main").bytes, 0)  # 捨てる前の見積もりは、これだけ少ない
+
+    def test_need_bytes_when_full_before_extracting_counts_the_zips_to_fetch_again(self):
+        # 取り終えたあと・組み立ての前に満杯と分かったときも同じ: 取得した zip を捨てるので、全部を取り直す見積もり
+        svc = self.checked()
+        self.patched("check_link_support", return_value=True)
+        full = svc.status()["latest"]["needBytes"]
+        self.patched("free_bytes", side_effect=[10**12, 5, 5, 5])
+        status = self.assert_failed("disk-full", svc)
+        self.assertEqual(self.fetcher.downloaded, ["main", "audio-g3-g4"])
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+        self.assertEqual(status["update"]["error"]["needBytes"], full)
+
     def test_self_test_failure_keeps_the_verified_zips(self):
         svc = self.checked()
         self.patched("run_self_test", side_effect=UpdateError("self-test", "x"))
@@ -457,6 +512,39 @@ class ApplyTest(ServiceCase):
             svc.request_cancel()
 
 
+class DiskFullWithRealFetcherTest(ServiceCase):
+    """本物の取得役と偽の GitHub で、書き込みが ENOSPC になったあとに .part が残らない（fetch-2）"""
+
+    def test_nothing_is_left_after_the_disk_fills_up(self):
+        from test_fetch import _FullDisk
+
+        fake = FakeGitHub()
+        self.addCleanup(fake.stop)
+        fake.set_release(self.new)
+        self.fetcher = fetch.Fetcher(fetch.Endpoint(fake.origin, True))
+        svc = self.checked()
+        self.assertEqual(svc.status()["check"]["state"], "ok")
+        real_open = open
+
+        def fake_open(path, mode="r", *args, **kwargs):
+            f = real_open(path, mode, *args, **kwargs)
+            return _FullDisk(f, 200) if str(path).endswith(".part") and "b" in mode else f
+
+        with mock.patch("builtins.open", fake_open):
+            status = self.apply(svc)
+        self.assertEqual((status["update"]["phase"], status["update"]["error"]["code"]), ("failed", "disk-full"))
+        self.assertGreater(status["update"]["error"]["needBytes"], 0)
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+        self.assertFalse(os.path.exists(self.layout().app_next))
+        # 次の確認でも、起動し直しでも、何も戻ってこない
+        svc._last_check_end = None
+        svc.request_check()
+        svc.join(10)
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+        self.make()
+        self.assertEqual(os.listdir(self.layout().downloads), [])
+
+
 class StartupCleanupTest(ServiceCase):
     def prepare(self, phase, installed="2.1.0", target="2.2.0", **extra):
         common.remove_tree(self.base)
@@ -528,10 +616,11 @@ class StartupCleanupTest(ServiceCase):
         common.remove_tree(self.base)
         install_app(self.data, self.old)
         os.makedirs(self.layout().update_dir)
-        for text in ("{broken", "[]", '{"schema": 2, "phase": "downloading"}', '{"schema": 1, "phase": "nope"}'):
+        deep = '{"schema": 1, "x": ' + "[" * 30000 + "]" * 30000 + "}"  # RecursionError になる深い入れ子（fetch-3）
+        for text in ("{broken", "[]", '{"schema": 2, "phase": "downloading"}', '{"schema": 1, "phase": "nope"}', deep):
             with open(self.layout().state_file, "w") as f:
                 f.write(text)
-            self.assertEqual(self.make().status()["update"]["phase"], "idle", text)
+            self.assertEqual(self.make().status()["update"]["phase"], "idle", text[:40])
 
 
 class ResumeTest(StartupCleanupTest):

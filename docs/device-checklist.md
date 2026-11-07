@@ -102,6 +102,13 @@ Windows では確かめられなかったこと（docs/expansion/updater-design.
 - [ ] systemd で動いているとき、更新の直後（1秒ほど）にアイコンから開いても、アプリが開く（単位が failed になったら、次のログインで戻ることを確かめる）
 - [ ] 遅い回線での大きな音声の zip（約 1.3GB）の取得: 進み具合・中止の効き方
 
+## 2.1.0 の公開前の点検（3回目）の直しで増えた確認
+Windows では確かめられなかったこと（docs/expansion/updater-design.md 16.2・17.2 節）。
+- [ ] install.sh の `sync`: `bash -x deploy/zorin/install.sh --yes` を動かし、`sync` → `mv` で `app` を `app.prev` に → `mv` で `app.next` を `app` に → `sync` の順に出るか。`sync` で長く待たされないか
+- [ ] install.sh が、更新の途中で止まった状態を戻すか: `app` を `app.prev` に名前を変える（`mv ~/.local/share/manabi-no-niwa/app ~/.local/share/manabi-no-niwa/app.prev`）→ 配布物のフォルダで `bash deploy/zorin/install.sh --yes` → 「更新の途中で止まっていた前の版を、元の場所に戻しました」と出て、導入が終わり、`app.prev` が残らないか
+- [ ] `curl -s -o /dev/null -w '%{http_code}\n' 'http://127.0.0.1:8765/%00'` が 404 を返し、`~/.local/state/manabi-no-niwa/serve.log` に Traceback が増えないか（Python 3.10 の `http.server` で）
+- [ ] `curl -sI http://127.0.0.1:8765/ | grep -i cross-origin-resource-policy` が `same-origin` か。Brave と Firefox の両方で、アプリの表示・オフラインでの再読み込み・音声が今までどおりか（Firefox はまだ確かめていない）
+
 ## 二重起動の防止（IN-14〜16）で増えた確認
 Windows では確かめられなかったこと（docs/expansion/single-instance-design.md 6 章）。人の判断を製品の動きに入れるものではない。結果を記録するための項目。
 
@@ -132,10 +139,13 @@ Windows では確かめられなかったこと（docs/expansion/single-instance
 引き下がった窓:
 - [ ] 画面を移したあとの窓（「べつの まどで ひらいています」になる）で、使っている窓を閉じると、数秒後に「はじめる」の画面に戻るか
 - [ ] 「べつの まどで ひらいています」の窓で、ブラウザの「戻る」を押しても、使っている窓が残るか
+- [ ] 残るリスクの確認（2.1.0 では直さない。single-instance-design.md 2.3.7・8.5）: 子供の窓を開いたまま、ほかのページ（`127.0.0.1:8765` へのリンクを置いた HTML など）から、同じブラウザで `127.0.0.1:8765` を開くと、子供の窓が「べつの まどで ひらいています」に替わるか。記録が残っているか。［この まどで ひらく］かアイコンの押し直しで戻るか
+- [ ] Chrome・Brave のアドレス欄に `http://127.0.0.1:8765/` と打つだけ（Enter は押さない）で、使っている窓が引き下がらないか（アドレス欄の先読みの確認）
 
 ブラウザごと:
 - [ ] Firefox: アプリのタブが前にあるとき、窓が前に出るか。タブが裏にあるときは、前のタブが閉じて新しいタブで始まるか
 - [ ] Firefox と Brave の2種類で開いたとき、お互いの窓が見えないこと（止めない仕様）を確かめる
+- [ ] Brave（Chromium 系）で開く端末に Firefox も入っているとき、Firefox で題名が「まなびのにわ」のページ（アプリのアドレスを Firefox で開く）を前にして、アイコンを押しても、Firefox の窓が前に出ないか。Brave のアプリ窓が開く（すでにあれば前に出る）か。`launch.log` の `browser` が `chromium` になっているか
 
 直列化と記録:
 - [ ] `flock` と `XDG_RUNTIME_DIR` がある環境で、アイコンを続けて押しても、窓が1つのままか

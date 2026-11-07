@@ -46,6 +46,16 @@ BROWSER_NAMES = (
 TOOLS = ("dirname", "basename", "seq", "sleep", "tail", "mkdir", "nohup")
 
 
+def focus_call(kind):
+    """manabi.sh が mnwwindow.py の focus に渡す引数（kind = chromium / firefox / other）。"""
+    return ["focus", "--browser", kind]
+
+
+def wait_call(kind):
+    """開いたあとの wait に渡す引数。"""
+    return ["wait", "--timeout", "5", "--browser", kind]
+
+
 def to_posix(p) -> str:
     """bash から見えるパスにする（Git Bash では C:\\a\\b → /c/a/b）。"""
     s = str(Path(p).resolve())
@@ -242,6 +252,12 @@ class ManabiShTestBase(unittest.TestCase):
     def remove_stub(self, name: str) -> None:
         (self.stubs / name).unlink()
 
+    def write_exec(self, path: Path, body: str) -> None:
+        """PATH の外の置き場に、偽のコマンドを置く。"""
+        write_text(path, "#!/bin/sh\n" + body)
+        if not IS_WINDOWS:
+            path.chmod(0o755)
+
     def add_browsers(self, *names: str) -> None:
         for n in names:
             self.write_stub(n, fake_browser(n))
@@ -372,7 +388,7 @@ class FocusTest(ManabiShTestBase):
         self.assertEqual(r.returncode, 0, r.out)
         self.assertEqual([], self.browser_starts())
         # focus だけ。ozone-flag も wait も呼ばない
-        self.assertEqual([["focus"]], self.win_calls())
+        self.assertEqual([focus_call("chromium")], self.win_calls())
 
     def test_any_other_focus_result_opens_the_app_window(self):
         self.add_browsers("brave-browser")
@@ -386,9 +402,9 @@ class FocusTest(ManabiShTestBase):
                 self.assertEqual(("brave-browser", [APP_ARG]), (starts[0].name, starts[0].args))
                 # 開いたあとの wait は、窓が無かった（3）ときだけ。窓はあるが前に出せなかった（4）・X11 が使えない（5）・
                 # 補助の不具合（1・2・その他）では、古い窓を見つけて 0 秒で終わる、または失敗して待つだけになるため呼ばない
-                expected = [["focus"], ["ozone-flag", "brave-browser"]]
+                expected = [focus_call("chromium"), ["ozone-flag", "brave-browser"]]
                 if rc == "3":
-                    expected.append(["wait", "--timeout", "5"])
+                    expected.append(wait_call("chromium"))
                 self.assertEqual(expected, self.win_calls())
 
     def test_focus_comes_after_the_server_is_confirmed(self):
@@ -431,7 +447,7 @@ class FocusTest(ManabiShTestBase):
                 self.clear_records()
                 r = self.run_manabi(expect_browser=False, MANABI_SINGLE_INSTANCE=value, FAKE_FOCUS="0")
                 self.assertEqual(r.returncode, 0, r.out)
-                self.assertEqual([["focus"]], self.win_calls())
+                self.assertEqual([focus_call("chromium")], self.win_calls())
                 self.assertEqual([], self.browser_starts())
 
 
@@ -487,7 +503,7 @@ class OzoneFlagTest(ManabiShTestBase):
         self.assertEqual(r.returncode, 0, r.out)
         starts = self.browser_starts()
         self.assertEqual(("firefox", [URL]), (starts[0].name, starts[0].args))
-        self.assertEqual([["focus"], ["wait", "--timeout", "5"]], self.win_calls())
+        self.assertEqual([focus_call("firefox"), wait_call("firefox")], self.win_calls())
 
     def test_xdg_open_gets_no_flag_and_is_not_asked(self):
         self.add_browsers("xdg-open")
@@ -495,7 +511,7 @@ class OzoneFlagTest(ManabiShTestBase):
         self.assertEqual(r.returncode, 0, r.out)
         starts = self.browser_starts()
         self.assertEqual(("xdg-open", [URL]), (starts[0].name, starts[0].args))
-        self.assertEqual([["focus"], ["wait", "--timeout", "5"]], self.win_calls())
+        self.assertEqual([focus_call("other"), wait_call("other")], self.win_calls())
 
     def test_the_chromium_family_is_preferred_over_firefox(self):
         self.add_browsers("firefox", "brave-browser")
@@ -539,7 +555,7 @@ class OzoneFlagTest(ManabiShTestBase):
         self.assertEqual(r.returncode, 0, r.out)
         starts = self.browser_starts()
         self.assertEqual([("firefox", ["-P", "kids", URL])], [(s.name, s.args) for s in starts])
-        self.assertEqual([["focus"], ["wait", "--timeout", "5"]], self.win_calls())
+        self.assertEqual([focus_call("firefox"), wait_call("firefox")], self.win_calls())
 
     def test_manabi_browser_that_does_not_exist_is_an_error(self):
         self.add_browsers("brave-browser")
@@ -567,16 +583,160 @@ class OzoneFlagTest(ManabiShTestBase):
             self.assertFalse((self.cwd / name).exists(), name)
 
 
+class BrowserKindTest(ManabiShTestBase):
+    """使うブラウザを focus の前に決めて、種類（chromium / firefox / other）を --browser として focus と wait に渡す
+    （launcher-1: Chromium 系で開く端末で、Firefox の窓を弱い一致で前に出さないため）。"""
+
+    def remove_browsers(self):
+        for stub in BROWSER_NAMES:
+            p = self.stubs / stub
+            if p.exists():
+                p.unlink()
+
+    def window_calls(self):
+        """窓の補助に渡した focus と wait（ozone-flag は種類ではなくコマンドを渡すので除く）。"""
+        return [c for c in self.win_calls() if c[0] != "ozone-flag"]
+
+    def test_the_kind_goes_to_focus_and_to_wait_for_every_way_of_choosing_the_browser(self):
+        cases = [
+            # (入れておくブラウザ, 環境変数, 期待する種類)
+            (("chromium",), {}, "chromium"),
+            (("chromium-browser",), {}, "chromium"),
+            (("google-chrome",), {}, "chromium"),
+            (("google-chrome-stable",), {}, "chromium"),
+            (("brave-browser",), {}, "chromium"),
+            (("firefox",), {}, "firefox"),
+            (("xdg-open",), {}, "other"),
+            (("firefox", "xdg-open"), {}, "firefox"),  # xdg-open より Firefox
+            (("xdg-open", "firefox", "brave-browser"), {}, "chromium"),  # Chromium 系がいちばん先
+            (("brave-browser", "firefox"), {"MANABI_BROWSER": "firefox"}, "firefox"),  # MANABI_BROWSER が先
+            (("brave-browser", "firefox"), {"MANABI_BROWSER": "brave-browser --foo"}, "chromium"),
+            (("firefox",), {"MANABI_BROWSER": "firefox -P kids"}, "firefox"),
+            (("xdg-open",), {"MANABI_BROWSER": "xdg-open"}, "other"),
+        ]
+        for browsers, env, kind in cases:
+            with self.subTest(browsers=browsers, env=env):
+                self.remove_browsers()
+                self.clear_records()
+                self.add_browsers(*browsers)
+                r = self.run_manabi(expect_browser=True, **env)
+                self.assertEqual(r.returncode, 0, r.out)
+                self.assertEqual([focus_call(kind), wait_call(kind)], self.window_calls())
+
+    def test_nothing_found_is_other(self):
+        r = self.run_manabi(expect_browser=False)
+        self.assertEqual(r.returncode, 1, r.out)
+        self.assertIn("ブラウザが見つかりません", r.stderr)
+        self.assertEqual([focus_call("other")], self.win_calls())
+
+    def test_the_kind_of_manabi_browser_comes_from_the_name_of_the_first_word_only(self):
+        # 先頭の語の basename だけで見る。置き場のフォルダの名前や、あとの引数の語では決めない。分からなければ other
+        for name in ("my-wrapper", "my-chrome-wrapper", "firefox-esr", "xdg-open"):
+            self.write_stub(name, fake_browser(name))
+        for sub in ("firefox", "chromium"):
+            self.write_exec(self.tmp / sub / "mybrowser", fake_browser("mybrowser"))
+        cases = [
+            ("firefox-esr", "firefox"),
+            ("my-chrome-wrapper", "chromium"),  # *chrom* にあたる名前
+            ("my-wrapper", "other"),
+            ("my-wrapper --profile firefox", "other"),  # あとの引数の語は見ない
+            ("my-wrapper chromium", "other"),
+            ("xdg-open", "other"),
+            (to_posix(self.tmp / "firefox" / "mybrowser"), "other"),  # フォルダの名前は見ない
+            (to_posix(self.tmp / "chromium" / "mybrowser"), "other"),
+        ]
+        for value, kind in cases:
+            with self.subTest(value=value):
+                self.clear_records()
+                r = self.run_manabi(expect_browser=False, MANABI_BROWSER=value)
+                self.assertEqual(r.returncode, 0, r.out)
+                self.assertEqual([focus_call(kind), wait_call(kind)], self.window_calls())
+                started = [x for x in self.records() if x.name not in ("flock", "python3-win", "python3-health")]
+                self.assertEqual(1, len(started), self.records())  # 起動したのは MANABI_BROWSER の 1 つだけ
+
+    def test_a_firefox_in_a_folder_named_chromium_is_firefox(self):
+        self.write_exec(self.tmp / "chromium" / "firefox", fake_browser("firefox"))
+        r = self.run_manabi(expect_browser=True, MANABI_BROWSER=to_posix(self.tmp / "chromium" / "firefox"))
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assertEqual([focus_call("firefox"), wait_call("firefox")], self.window_calls())
+        self.assertEqual([URL], self.browser_starts()[0].args)  # Firefox は通常のタブ（--app を付けない）
+
+    def test_the_value_of_manabi_browser_is_never_evaluated_while_choosing(self):
+        (self.cwd / "a.txt").write_text("a", encoding="utf-8")
+        values = ("$(touch PWNED1) firefox", "`touch PWNED2` firefox", "firefox; touch PWNED3", "* firefox", "? chromium")
+        for value in values:
+            with self.subTest(value=value):
+                self.clear_records()
+                # コマンドが見つからない（エラー）ので、起動はしない。決めるときに評価されていないことだけ確かめる
+                r = self.run_manabi(expect_browser=False, MANABI_BROWSER=value)
+                self.assertEqual(r.returncode, 1, r.out)
+                self.assertEqual([], self.browser_starts())
+                for name in ("PWNED1", "PWNED2", "PWNED3"):
+                    self.assertFalse((self.cwd / name).exists(), name)
+                    self.assertFalse((self.tmp / name).exists(), name)
+                self.assertEqual(1, len([c for c in self.win_calls() if c[0] == "focus"]))
+
+    def test_a_missing_manabi_browser_does_not_stop_a_successful_focus(self):
+        # 窓がすでにあれば前に出して終わる。MANABI_BROWSER のエラーは、新しい窓を開くときだけ（今までどおり）
+        for value, kind in (("no-such-browser", "other"), ("no-such-firefox", "firefox"), ("no-such-chromium", "chromium")):
+            with self.subTest(value=value):
+                self.clear_records()
+                r = self.run_manabi(expect_browser=False, MANABI_BROWSER=value, FAKE_FOCUS="0")
+                self.assertEqual(r.returncode, 0, r.out)
+                self.assertNotIn("MANABI_BROWSER", r.stderr)
+                self.assertEqual([focus_call(kind)], self.win_calls())
+
+    def test_a_blank_manabi_browser_does_not_break_the_focus(self):
+        # 空白だけの指定でも、種類を決めるところで落ちて前面化まで届かない、ということにはしない
+        self.add_browsers("brave-browser")
+        r = self.run_manabi(expect_browser=False, MANABI_BROWSER="   ", FAKE_FOCUS="0")
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assertEqual([focus_call("other")], self.win_calls())
+
+    def test_the_browser_is_decided_before_focus_and_nothing_is_started_by_deciding(self):
+        self.add_browsers("brave-browser", "firefox", "xdg-open")
+        r = self.run_manabi(expect_browser=False, FAKE_FOCUS="0")
+        self.assertEqual(r.returncode, 0, r.out)
+        self.assertEqual([], self.browser_starts())
+        self.assertEqual([focus_call("chromium")], self.win_calls())
+        # 開くとき（focus が 3）も、focus が先で、同じ種類を wait に渡す
+        self.clear_records()
+        r = self.run_manabi(expect_browser=True, FAKE_FOCUS="3")
+        order = self.order()
+        self.assertLess(order.index("python3-win"), order.index("brave-browser"), order)
+        self.assertEqual([focus_call("chromium"), ["ozone-flag", "brave-browser"], wait_call("chromium")],
+                         self.win_calls())
+
+    def test_the_arguments_are_accepted_by_the_real_mnwwindow(self):
+        # 使い方の誤り（2）になると、manabi.sh は黙って「今までどおり開く」側に倒れる。本物の mnwwindow.py が
+        # 受け付けること（DISPLAY が無いので focus と wait は 5）を、manabi.sh が実際に渡した引数で確かめる
+        env = {k: v for k, v in os.environ.items()
+               if k not in ("DISPLAY", "WAYLAND_DISPLAY") and not k.startswith("MANABI_")}
+        for browsers, kind in ((("brave-browser",), "chromium"), (("firefox",), "firefox"), (("xdg-open",), "other")):
+            with self.subTest(kind=kind):
+                self.remove_browsers()
+                self.clear_records()
+                self.add_browsers(*browsers)
+                r = self.run_manabi(expect_browser=True)
+                self.assertEqual(r.returncode, 0, r.out)
+                calls = self.window_calls()
+                self.assertEqual([focus_call(kind), wait_call(kind)], calls)
+                for call in calls:
+                    cp = subprocess.run([sys.executable, "-I", "-B", str(ZORIN / "mnwwindow.py"), *call], env=env,
+                                        stdin=subprocess.DEVNULL, capture_output=True, timeout=60)
+                    self.assertEqual(5, cp.returncode, (call, cp.stderr))
+
+
 class WaitTest(ManabiShTestBase):
     def test_wait_is_called_with_timeout_5_after_every_kind_of_start(self):
         cases = {
-            "chromium family": (("brave-browser",), {}),
-            "firefox": (("firefox",), {}),
-            "xdg-open": (("xdg-open",), {}),
-            "MANABI_BROWSER": (("firefox",), {"MANABI_BROWSER": "firefox"}),
-            "MANABI_BROWSER chromium": (("brave-browser",), {"MANABI_BROWSER": "brave-browser"}),
+            "chromium family": (("brave-browser",), {}, "chromium"),
+            "firefox": (("firefox",), {}, "firefox"),
+            "xdg-open": (("xdg-open",), {}, "other"),
+            "MANABI_BROWSER": (("firefox",), {"MANABI_BROWSER": "firefox"}, "firefox"),
+            "MANABI_BROWSER chromium": (("brave-browser",), {"MANABI_BROWSER": "brave-browser"}, "chromium"),
         }
-        for label, (browsers, env) in cases.items():
+        for label, (browsers, env, kind) in cases.items():
             with self.subTest(case=label):
                 for stub in BROWSER_NAMES:
                     p = self.stubs / stub
@@ -587,7 +747,7 @@ class WaitTest(ManabiShTestBase):
                 r = self.run_manabi(expect_browser=True, **env)
                 self.assertEqual(r.returncode, 0, r.out)
                 waits = [c for c in self.win_calls() if c[0] == "wait"]
-                self.assertEqual([["wait", "--timeout", "5"]], waits)
+                self.assertEqual([wait_call(kind)], waits)
 
     def test_a_failing_wait_does_not_matter(self):
         self.add_browsers("brave-browser")
@@ -599,7 +759,7 @@ class WaitTest(ManabiShTestBase):
         r = self.run_manabi(expect_browser=False)
         self.assertEqual(r.returncode, 1, r.out)
         self.assertIn("ブラウザが見つかりません", r.stderr)
-        self.assertEqual([["focus"]], self.win_calls())
+        self.assertEqual([focus_call("other")], self.win_calls())
 
 
 class ServeTest(ManabiShTestBase):

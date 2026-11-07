@@ -18,6 +18,7 @@ import {
   picsFitOf,
   picsProps,
   usePicsGeometry,
+  type PicsFit,
   wordCardProps,
   wordTrait,
   visibleOptionIndices,
@@ -74,10 +75,11 @@ interface Props {
   /** 選択肢の横に並ぶものの幅（u）。絵の縮み（picsProps）の見積りに使う */
   picsSide?: number;
   /**
-   * 聞く問題で、「きく」の札の場所を絵の大きさから選ばせる（第7回 X2。usePicsGeometry）。at: 今の場所／side: 左に置くとき
-   * 取る幅（u）／onChange: 選んだ場所を伝える（呼び出し側が札の場所を替える）。解説（revealed）では場所を替えない
+   * 聞く問題で、「きく」の札の場所を絵の大きさから選ばせる（第7回 X2。usePicsGeometry）。at: 今の場所／initial: 初めの場所／
+   * side: 左に置くとき取る幅の見積り（u）／key: 並べ方を選び直す区切り（問題・解説）／onChange: 選んだ場所を伝える
+   * （呼び出し側が札の場所を替える）／head: 解説の段（書き起こし付き）の実寸。場所は解説（revealed）でも選び直す（第8回 Y1）
    */
-  ear?: { at: 'top' | 'left'; side: number; onChange(at: 'top' | 'left'): void };
+  ear?: NonNullable<PicsFit['ear']>;
 }
 
 export function ChoiceOptions({
@@ -147,7 +149,7 @@ export function ChoiceOptions({
   const fit = picsFitOf(
     shown.map((i) => ({ figure: part.options[i]!.figure })),
     pics.className !== '',
-    ear ? { ...ear, free: !revealed } : undefined,
+    ear,
   );
   const shape = usePicsGeometry(listRef, pics.className !== '' || traits.caption, fit);
   const hasLabel = shown.some((i) => part.options[i]!.label !== undefined);

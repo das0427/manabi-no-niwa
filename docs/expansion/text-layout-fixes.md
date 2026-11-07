@@ -2828,3 +2828,99 @@ systemic のファイル（エンジン・`src/units`・`src/dev`・`src/curricu
 - Y2 で、数の入力の問題文が 2 行の問題とヒントの状態の --fit が 1 に戻るので、図と回答欄が今より大きくなる。overlap-button・covered・out-of-stage が増えないことを見る。
 - `npm run check:app-layout` も流し、missing-illust が 0、新しく増えた種類が無いことを確かめる。
 - `npx vitest run`（Y4 の検査が全パックで通る）・`npm run check:packs`・`npm run check:design`。
+
+### 8. 第8回の共通の直しの実施とレビュー（2026-11-07）
+
+Y1〜Y4・C32・C33 を、担当ごとにファイルを分けて実装した（Sonnet）。レビュー（Opus）では、git の差分と追加したファイル（`src/units/unit-fit.test.ts`）を全部読み、設計の 2.・3. と照らした。担当どうしのファイルは重なっていない（Y1 は listen・choice、Y2 は UnitRunner・unit.css、Y3 は figure.css、Y4 は number・graph・unitIndex のテスト・DESINGN.md、C32・C33 は検査と開発用の画面と test-plan）。自分の開発サーバー（127.0.0.1:4618。`node_modules/.vite` の取り合いを避けて cacheDir を分けた一時の設定。4299 は使っていない。終わってから止めた）で代表の画面を撮って目で見て、DOM の寸法を測り、検査を単元に絞って流した（下の「確かめたこと」）。
+
+担当の判断で設計から変えたところ:
+
+- Y1:
+  - 左の列に置く大きな「きく」の札（問題の状態・書き起こしの無い解説）は、設計の「長いほうの幅（26.6u）」でなく幅 16u のままにした。「もういちど きく」は空白のところで 2 行に折り、「きいてね」と同じ幅・高さ（14.5u）にした。26.6u を取ると、再生のあとに g2.ja.listen-notes/26 の文字だけの選択肢が折れてあふれた（scroll-hidden・orphan・kinsoku-start が各 16 件）。上の段と解説の札（1 行）は、設計どおり長いほうの幅をはじめから取る。
+  - ふりがなの無い書き起こしの行間を 1.8 から 1.5 に詰めた（`--tr-lh`。ふりがな付きは 1.8 のまま）。g1.ja.listen/21 の解説の絵が 5.9u → 7.4u。
+  - 解説で並べ方を選び直す処理は、`ear.free` をやめ、`PicsFit.ear` に `initial`（初めの場所）・`key`（問題と解説の区切り）・`head`（段の実寸）を足した。環境（画面の大きさ・作業領域の高さ・列の幅）が変わったら、初めの並べ方から比べ直す（`pics.ts` の `arrangeCandidates`・`arrangeBase`）。
+- Y2: 数字キーの区画のはみ出しを数えなくすると、2 つの問題が出た。そこで次の 2 つを足した。
+  - 10の棒の図（`.blk--t`）の問題は、今までどおり区画のはみ出しも数える（`data-measure-pad`）。外すと g2.math.mult-beyond/2 の図の段が 2u 足りず、枠になった。
+  - 問題・ヒントでも、図の段のはみ出し（0.5u を超えるとき。表・10の棒・文の図は除く）を `need` に足す。足さないと、g3.math.circle-sphere/3 の 6 この円の 2 行目が切れた。
+- Y3: `--u0` に `var(--u)` を代わりに使う指定を付けた（choice.css の `--pic-floor` と同じ書き方）。
+- Y4: 単位だけの `label` で落ちる単元は、seed 2（設計の見本）では設計の 61 単元と同じだった。パックのテスト（seed 1000 × 全段階）では 81 単元が落ちる（下の「残したもの」の 4.）。
+- C33: 待つ上限を、設計の 5 秒でなく 20 秒（`HEARD_WAIT_MS`）にした。開発サーバーで最初の再生が終わるまでを測ると 3〜12 秒かかった。検査（`text-layout.tl.ts`）の流れは変えていない（heard を待つ 1 行を足すと g4.en.want/17 の結果が変わったため）。
+
+レビューで直したもの:
+
+1. **g4.ja.tanka/47 に orphan が新しく出た**（解説の 1280×720・1920×1080・1536×864）:
+   - 原因は Y1 の副作用。書き起こしの枠が 3 行 → 2 行になり、解説の `--fit` が 0.8 → 0.859 に上がった。そのため問題の図の短歌（`.fig-text--m`）の字が大きくなり、「しずかなる／夜」と句の途中で折れて、最後の行が「夜」1 字になった。小3以上の図の文は `auto-phrase`（文節）で折るので、句の中でも折れる。
+   - 全角の空白で句・札を区切った図の文は、小3以上でも空白のところでだけ折ることにした（`Figure.tsx` が `data-spaced` を付け、base.css の data-spaced の規則〔選択肢・札のラベルと同じ keep-all〕を当てる。図の文の `auto-phrase` の規則は `:not([data-spaced])` にした）。直したあとの g4.ja.tanka/47 は「…月のひかりの／しずかなる夜」と折れ、違反は 0。
+   - 当たるのは、全角の空白を含む図の文だけ（短歌の句、手順の札の並び〔g6.prog.efficient〕、2 つの式〔g3.math.large-numbers・g3.math.length-km・g5.prog.polygon〕など）。全角の空白を含む教材がある 22 単元を検査で流し直した（下の「確かめたこと」）。テストは `Figure.render.test.tsx` に足した。DESINGN.md 17 章の図の文の折り返しにも書いた。
+2. **DESINGN.md の「第8回の規約」を実装に合わせた**（Y4 は 19:22 ごろの実装を読んで書いたので、そのあとの直しが入っていなかった）:
+   - Y2 の規則の文を、実際のセレクタ（`:not([data-measure-pad])`）にした。10の棒の図の例外（5.1・18 章も）を足した。図の段のはみ出しの数え方も、実装（0.5u を超えるとき。表・10の棒・文の図は除く）に合わせた（「2px を超える分」「枠の表・10の棒・文の図」は誤り）。
+   - Y1 の、ふりがなの無い書き起こしの行間 1.5 を足した。
+   - 17 章 R3 の古い文を直した。「本文が4行を超えるときだけ高さを4行以上・空きまで」を、「枠の行の上限（3 行。絵・図の選択肢と並べるときは 2 行）を超えるときは枠の中でスクロール」にした。
+3. **`unit-fit.test.ts` の改行への依存**: fitNow の範囲を `'work.scrollTop = 0;\n    fitNow();'` で探していたので、作業ツリーが CRLF だと見つからず、範囲がファイルの終わりまで広がっていた（テストは通るが、見る範囲が意図と違う）。正規表現で CRLF・LF の両方に合わせ、見つからなければ落ちるようにした。
+
+確かめたこと:
+
+- 静的な検査:
+  - `npx tsc -b`・`npx eslint .`・`npx prettier --check`（変えたファイル。作業ツリーが CRLF と LF の混在なので `--end-of-line auto`。LF で比べると、CRLF の 8 ファイルが改行だけで警告になる。commit では `.gitattributes` の `text=auto` で LF に直る）: 通った。
+  - `npm run check:design`: OK。
+  - `npm run check:text-layout:probe`: 36 本が通った（4299 が空いているのを確かめてから流した。途中でも、ポートを取らない一時の設定で同じ 36 本を流した）。
+- `npx vitest run`: 落ちたのは 83 件で、どれも設計（Y4 の 1.・2.）で予定していたものだった。
+  - パックのテストの単位だけの `label`: 81 単元（算数 6 パック・prog-g16）と、g1-math の add-basic の 35 通りの 1 件。
+  - unitIndex の単元の絵: g1.ja.folktales・g1.ja.word-play・g6.ja.language-change の 3 単元。
+  - これらは 5. の content で通る。ほかの 173 ファイルは通った。
+- アプリの画面（`check:app-layout`。同じサーバー・13 プロフィール・422 画面・2,064 回。`MNW_FRESH=1`）: 違反は参考の missing-illust 6 件・68 画面だけで、第8回の 0. の結果と同じ。幼児ホーム・ほかの がくねん・おえかき・保護者画面・設定も含む。新しい種類・増えたもの・開けない画面は無い。v1 モード（legacy）は UnitRunner を通らないので、今回の直しは当たらない。
+- 開発用の画面で測ったもの（`state=` で開いた）:
+  - Y1:
+    - g4.en.want/17 の解説の数える絵は 4 サイズで 4.46〜4.48u（「きく」の札は 1 行・書き起こしは 1 行）。
+    - 絵が 1 つの札の絵は次のとおり。g1.ja.listen/21 は 7.41〜7.69u、p4.ja.story-listen/28 は 7.78〜8.09u、p5.en.first-sound/53 は 6.40〜6.79u。
+    - g3.ja.listen-memo/28 は 5.46〜5.68u で、C32 が 4 サイズとも 4 枚ずつ出す（残したもの 1.）。
+    - p4.ja.story-listen/17・/28 の書き起こしに「。・」が無い。
+    - p5.think.pattern/2（1280×620・1536×864）と p5.math.shapes/17 では、札の中の図の中心と札の中心の差が 0。
+    - g4.en.time-days/14 の時計（解説は段が左）・p5.en.picture-book/42・p4.en.where/0 は崩れない。
+    - 左の列の札（16u。再生のあとは「もういちど／きく」の 2 行）を、g2.ja.listen-notes/26（1280×620 の問題・ヒント・解説）・g1.ja.listen/0・g4.en.time-days/14 のヒントで見た。札の幅は再生の前後で同じで、右の選択肢は折れても札に収まる。
+  - Y2:
+    - g2.prog.repeat/28 の問題・ヒント③（1280×720・1280×620）で `--fit` が 1。
+    - 数字キーの下端は 41.2〜42.3u で、吹き出しの上端（43.4u）・つぎへ の上端（48.2u）より上。
+    - g3.math.weight/4・g4.math.area/0・g6.math.representative/0 のヒント③（1280×620）も、キーの下端 42.05u・吹き出しの上端 46.8〜50.2u で重ならない。
+    - g3.math.circle-sphere/3・g2.math.mult-beyond/2 は `--fit` 0.8 で、図は切れない。
+  - Y3:
+    - g2.prog.repeat/3 の解説（1280×720・1280×620）は違反なし。`--fit` は 0.68・0.72（残したもの 3.）。
+    - g6.prog.efficient/11 の解説・g5.prog.debug-plan/8 は、札の列が札の中央にあり、違反なし。
+  - C33: 最初の再生がほかの音で止まると（再生の結果が `stopped`）、`heard` にならないまま 20 秒待ってから進む。開発サーバーで、起動の直後に開いた g1.ja.listen/21 と p4.ja.story-listen/28 で起きた。2 回目に開くと 4〜7 秒で `heard` になった。Y1 で札の幅が再生の前後で同じになったので、寸法は `heard` によらない（上の値は、`data-heard` が 0 の画面でも、Y1 が検査の流れ〔再生のあと〕で測った値の範囲に入っていた）。
+- 検査（`text-layout.tl.ts`。ポートを 4618 にした一時の設定。`MNW_FRESH=1`・`MNW_WORKERS=3`）: 全角の空白を含む教材がある 22 単元を、図の文の直しのあとに流した（666 問・13,320 画面）。
+  - 単元: g3.ja.dictionary・haiku・listen-memo、g3.math.large-numbers・length-km・mult-2digit、g4.ja.tanka、g5.ja.classics・figurative・read-relations・sentence-relations・spoken-written、g5.math.fraction-equiv・multiples-divisors、g6.ja.classics-read・info-relations・language-change・read-literature、g6.math.combinations、g6.prog.efficient、g5.prog.polygon、g4.prog.prefecture-finder。
+  - 失敗した単元 0・errors 0。違反は g3.ja.listen-memo の small-figure 48 件（C32。Y1 のあとと同じ）だけ。g4.ja.tanka の orphan は 3 → 0。ほかの 20 単元は直す前も直したあとも 0。
+  - 担当は、それぞれ自分の範囲の単元を流してある（Y1: listen の 49 単元の全問と、choice・reading の 116 単元〔各 30 問まで〕。Y2: 34 単元。Y3: 3 単元。Y4: 4 単元）。全単元の検査はまだ流していない（統括が流す）。
+
+残したもの:
+
+1. **g3.ja.listen-memo/28〜30 の解説の絵が 5.5〜5.9u**（C32 が 48 件）:
+   - 書き起こしがふりがな付き（行間 1.8）で、2 行の段が 11.4u ある。段が上の 1 段も、段が左の 2×2 も 5.7〜5.9u にしかならない。
+   - Y1 が試した結果: ふりがな付きの行間を 1.7 にすると /28 は 6.0u になるが、/29・/30 は ▼ の段が出て届かない。1.6 ではふりがなが 2 行の枠からあふれる。
+   - 次の回で決める。案は 2 つ: 書き起こしの文を短くする（g3-ja のパック）か、札のラベルと余白（6.6〜8u）・2×2 の行間を詰める（choice・listen）。
+2. **C32 が聞く問題のほかで初めて出したもの**（Y1 の絞った検査で出た）:
+   - p5.math.numbers-10/4・/5 の問題は 4.6〜4.8u。名前の札の絵で、5. の p5 で直す。
+   - p5.env.predict/7 の解説は 5.7〜5.9u（`--fit` 0.96）。実験の選択肢（`.exp-opt`）の絵は、設計で 6u に決めてある（DESINGN.md T6。ラベルの字が答え）。そのため `--fit` が 1 より小さいと、必ず 6u を割る。次の回で決める。案は 2 つ: 実験の絵を `--u0` で 6u にするか、C32 の対象から外す。
+   - 全単元の検査で、graph・experiment・explain・geometry・map の選択肢の札にも出ることがある。出たものは次の回で原因を分ける（設計の 7.）。
+3. **g2.prog.repeat/3 の解説の `--fit` が 0.84 → 0.68〜0.72**（Y3 の副作用）:
+   - 札の列が縮まない分、主の図（問題の手順の札の列）の札が 2.95u → 2.41u（1280×720・1920×1080・1536×864）になった。下限 2.4u をわずかに上回るだけ。
+   - 5. の prog-g16 の直し（解説を 2 行にする）で `--fit` は戻る見込み。戻らなければ、主の図の高さに下限を付ける（パックの `hU`）。
+4. **content（5.）に足す 20 単元**（Y4 の検査で落ちるが、0. の 61 単元に入っていないもの）:
+   - seed を増やすと、別の段階・型で単位だけの `label` が出る。
+   - g1.math.picture-graph・sub-basic、g2.math.add-column・times-tables、g3.math.add-sub-column・large-numbers・mult-1digit・mult-2digit、g4.math.change-relations・decimal-add-sub・parallel-perp、g5.math.decimal-mult・decimal-shift・fraction-add-diff・fraction-decimal・prism-cylinder、g6.math.fraction-div・fraction-mult・letters・ratio。
+   - 算数のパックの担当は、この 20 単元も直す。パックのテスト（seed 1000 × 全段階）が通ることで確かめる（g1-math の「add-basic の 35 通り」も同じ原因で落ちている）。
+5. **ほかの担当の残し事項**（5. の content で直すもの）:
+   - g3.en.numbers-colors/26 の数える絵 2.56u（en-g34）。
+   - g2.prog.repeat/28・/30 の解説（1280×720）の盤のます 2.37u（prog-g16 の `hU`）。
+   - g4.math.area の方眼のます 1.9u・32 画面（g4-math）。
+6. **10の棒の図の 3 問**（g2.math.mult-beyond/2、g4.math.div-2digit/1・/3）:
+   - 区画のはみ出しを今までどおり数えるので、`--fit` は 0.8〜0.86 のまま。
+   - 根本の直しは number.tsx にある。棒の下限（1 本 1.2u）が `--fit` で動かないようにする。図のはみ出しを `--fit` に入れる方法では、`--fit` と `--num-k` が行き来して揺れた。
+7. **graph の数の欄の数字キー（`.mnp-pad`）**:
+   - `--u` で寸法を決めるので、`--fit` を下げるとキーも縮む（g3.math.bar-graph/1 は `--fit` 0.869 で、キーが約 5.2u。最小 6u）。
+   - Y2 は number の `.eng-number__pad` だけを直した。graph のキーは別に決める。
+8. **聞く問題の画面の小さな点**（違反ではない）:
+   - 「きく」の札が上の段にあり、再生の前（「きいてね」）のときは、札が「もういちど きく」の幅なので、絵と字の間が空く。設計（Y1 の 1.）で受け入れた形。
+   - 段が左の解説（時計・p4.ja.story-listen/17 など）も、書き起こしを 2 行までにした（設計の Y1 の 3.）。1920×1080 で 3 文の書き起こしは、2 行と「▼ つづき」になる。
+9. **開発用の画面の `state=`（C33）**: 最初の再生がほかの音で止まると、20 秒待ってから進む（上の「確かめたこと」）。Y1 のあとは寸法に影響しない。検査はこの待ちを使わない。
+10. **報告書と途中の結果**: 担当とレビューの絞った検査で、`docs/screenshots/text-layout-report/`（summary.md・report.json・shots）と `.cache/text-layout/units/` の一部が書き換わっている。どちらも commit しない。全単元の検査で作り直す。

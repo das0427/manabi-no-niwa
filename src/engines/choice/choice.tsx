@@ -13,6 +13,8 @@ import { Figure } from '../figure/Figure';
 import { observeResize } from '../figure/svgText';
 import type { EngineDef, EngineProps, Judgement, RenderCtx } from '../types';
 import {
+  arrangeBase,
+  arrangeCandidates,
   cardWidths,
   chooseArrange,
   isCounting,
@@ -221,24 +223,30 @@ function pxOf(host: HTMLElement, expr: string): number {
 
 /**
  * 絵だけの札の列で、絵の大きさと札の幅・並べ方を測って決める（text-layout-fixes 第7回 X2）。
- * specs は 並べる札（表示の順）の絵。ear は聞く問題の「きく」の札（今の場所 at・左に置くときに取る幅 side（u）・
- * 場所を選んでよいか free・決めた場所を伝える onChange）。
+ * specs は 並べる札（表示の順）の絵。ear は聞く問題の「きく」の札（今の場所 at・初めの場所 initial・左に置くときに取る幅の
+ * 見積り side（u）・並べ方を選び直す区切り key・決めた場所を伝える onChange・解説の段の実寸 head）。
+ * 並べ方は問題でも解説でも、「きく」の札が上／左 × 1 段／2×2 の s を比べて選ぶ（第8回 Y1 の 4.）。
+ * head は、解説で「きく」の札と書き起こしの枠の段を札の列の上か左に置くとき、その段の実寸（px。--fit を 1 に戻した値）を
+ * 返す（top: 札の列より上に積まれる高さ ＝ 上の余白・段・すき間／left: 札の列から引く幅 ＝ 段・すき間）。
+ * 無いとき（問題・書き起こしの無い解説）は、上は --ear-top-h（9u）・左は side の見積り。
  */
 export interface PicsFit {
   specs: readonly PicSpec[];
   ear?: {
     at: 'top' | 'left';
+    initial: 'top' | 'left';
     side: number;
-    free: boolean;
+    key: string;
     onChange(at: 'top' | 'left'): void;
+    head?: () => { top: number; left: number } | null;
   };
 }
 
-/** 絵の札の列が変わったか（問題・選択肢・きく札の取る幅が変わったら測り直す。選んだ並べ方は捨てる） */
+/** 絵の札の列が変わったか（問題・選択肢・解説への切り替わり・きく札の取る幅が変わったら測り直す。選んだ並べ方は捨てる） */
 const picsSig = (fit: PicsFit | null | undefined): string =>
   fit
     ? `${fit.specs.map((s) => `${s.groups.map((g) => g.n).join('+')}/${s.gap}`).join(',')}|${
-        fit.ear ? `${fit.ear.side}${fit.ear.free ? 'f' : 'x'}` : ''
+        fit.ear ? `${fit.ear.key}/${fit.ear.side}` : ''
       }`
     : '';
 
@@ -252,8 +260,10 @@ const picsSig = (fit: PicsFit | null | undefined): string =>
  * fit を渡すと（絵だけの札の列。第7回 X2）、さらに次を測って決め、戻り値と CSS に書く。
  * - 札ごとの 1 行の絵の数 r・行の数 k・札の余白・ラベルの高さから、幅の合計が列に、並べた高さが作業領域に収まる最大の
  *   絵の大きさ s（上限 15u）を --pic-max に、札の幅を札ごとに --card-w に書く（pics.ts の solveS）。
- * - 4 つの選択肢は、1 段／2×2（聞く問題は「きく」の札が上／左も）の s を比べ、最大の並べ方にする（chooseArrange）。
- *   決めた 1 段／2×2 は戻り値（data-arr="grid"）、「きく」の札の場所は fit.ear.onChange で伝える。
+ * - 4 つの選択肢は、1 段／2×2（聞く問題は「きく」の札が上／左も。問題でも解説でも）の s を比べ、最大の並べ方にする
+ *   （chooseArrange）。決めた 1 段／2×2 は戻り値（data-arr="grid"）、「きく」の札の場所は fit.ear.onChange で伝える。
+ *   わずかな差で行き来しない基準（今の並べ方）は、同じ環境（画面の大きさ・作業領域の高さ・列の幅）の中だけ。環境が
+ *   変わったら、前の並べ方を持ち越さず、初めの並べ方から比べる（arrangeBase。第8回 Y1）。
  * 並べ方が変わるときは、書かずに状態だけ変えて、描き直したあとの測り直しで書く（描く前の寸法を残さない）。
  * 測る前（描いた直後）は choice.css の式（--pic-w）の初めの値のまま。
  */
@@ -266,6 +276,8 @@ export function usePicsGeometry(
   const [picked, setPicked] = useState<{ sig: string; shape: 'row' | 'grid' } | null>(null);
   const shape = picked && picked.sig === sig ? picked.shape : 'row';
   const earAt = fit?.ear?.at;
+  /** 並べ方を比べた環境の印（画面の大きさ・作業領域の高さ・列の幅）。変わったら、初めの並べ方から比べ直す */
+  const envRef = useRef('');
   useLayoutEffect(() => {
     const list = listRef.current;
     if (!list || !enabled) return undefined;
@@ -280,6 +292,9 @@ export function usePicsGeometry(
       let above = 0;
       // 作業領域がスクロールの枠のときの上の余白（UnitRunner が data-scroll-region と一緒に付ける）は、列より上のものではない
       let aboveFit = 0;
+      // aboveFit のうち、聞く問題の枠（.eng-listen）の中で列の上に積まれる分（上の余白・「きく」の札と書き起こしの段・すき間）。
+      // 解説の段の実寸（fit.ear.head）で置き換えるとき、段が上にあるときに測った分を引くのに使う
+      let earFit = 0;
       for (let el: HTMLElement = list; el !== work && el.parentElement; el = el.parentElement) {
         const parent = el.parentElement as HTMLElement;
         const st = getComputedStyle(parent);
@@ -291,17 +306,26 @@ export function usePicsGeometry(
         if (!stacked) continue;
         const gap = parseFloat(st.rowGap) || 0;
         const pad = parseFloat(st.paddingTop) || 0;
+        const inEar = parent.classList.contains('eng-listen');
         above += pad;
-        if (!(parent === work && work.hasAttribute('data-scroll-region'))) aboveFit += pad;
+        if (!(parent === work && work.hasAttribute('data-scroll-region'))) {
+          aboveFit += pad;
+          if (inEar) earFit += pad;
+        }
         for (let s = parent.firstElementChild; s && s !== el; s = s.nextElementSibling) {
           const pos = getComputedStyle(s).position;
           if (pos === 'absolute' || pos === 'fixed') continue;
           if (!watch.includes(s)) watch.push(s);
           above += (s as HTMLElement).offsetHeight + gap;
           aboveFit += (s as HTMLElement).offsetHeight + gap;
+          if (inEar) earFit += (s as HTMLElement).offsetHeight + gap;
         }
         if (parent === work) break;
       }
+      // 「きく」の札と書き起こしの段は、左に置いているとき（横に並べる親）は上に積まれないので、上の loop で数えられない。
+      // 段の大きさが変わったら（書き起こしの行の数・画面の大きさ）、置き方を測り直す
+      const headEl = list.closest('.eng-listen')?.querySelector(':scope > .eng-listen__head');
+      if (fit?.ear?.head && headEl && !watch.includes(headEl)) watch.push(headEl);
       putPx('--pics-above', above);
       let below = 0;
       for (const card of Array.from(list.children) as HTMLElement[]) {
@@ -318,10 +342,10 @@ export function usePicsGeometry(
         );
       }
       putPx('--pics-below', below);
-      if (fit) place(fit, aboveFit);
+      if (fit) place(fit, aboveFit, earFit);
     };
     /** 札の寸法を測り、並べ方と絵の大きさ・札の幅を決めて書く（描き直しが要るときは状態だけ変えて戻る） */
-    const place = (f: PicsFit, above: number) => {
+    const place = (f: PicsFit, above: number, earAbove: number) => {
       const cards = Array.from(list.children) as HTMLElement[];
       if (cards.length !== f.specs.length) return;
       // 寸法は、作業領域の縮み（--fit）を 1 に戻した値（--u0 の単位）で決める。--fit が 1 より小さいときの測った値（余白・ラベルの高さ）
@@ -372,30 +396,40 @@ export function usePicsGeometry(
       });
       const ear = f.ear;
       const earTopH = ear ? pxOf(list, 'var(--ear-top-h, 0px)') * g : 0;
-      // 「きく」の札が上の分（--ear-top-h）を除いた、列より上のもの
+      // 解説の段（書き起こし付き）の実寸。段が上にあるときも左にあるときも、同じように測れる値（fit.ear.head）
+      const head = ear?.head?.() ?? null;
+      // 「きく」の札が上の分（--ear-top-h）を除いた、列より上のもの。段の実寸があるときは、枠（.eng-listen）の中で
+      // 積まれる分を除いた、列より上のもの（段が上にあるときに測った分を引く）
       const aboveBase = Math.max(0, above * g - (ear?.at === 'top' ? earTopH : 0));
+      const aboveOut = Math.max(0, (above - earAbove) * g);
       const aboveNow = above * g;
       /** 並べ方 e（「きく」の札の場所）で札を並べられる寸法 */
       const envFor = (e: 'top' | 'left' | undefined): PicsEnv => ({
-        width: colW - (e === 'left' && ear ? ear.side * u : 0),
-        height: workH - (ear ? aboveBase + (e === 'top' ? earTopH : 0) : aboveNow) - SHADOW_U * u,
+        width: colW - (e === 'left' && ear ? (head ? head.left : ear.side * u) : 0),
+        height:
+          workH -
+          (ear
+            ? head
+              ? aboveOut + (e === 'top' ? head.top : 0)
+              : aboveBase + (e === 'top' ? earTopH : 0)
+            : aboveNow) -
+          SHADOW_U * u,
         gapX: (parseFloat(cs.columnGap) || 0) * g,
         gapY: (parseFloat(cs.rowGap) || 0) * g,
         picGap,
         u,
       });
-      const ears: ('top' | 'left' | undefined)[] = !ear
-        ? [undefined]
-        : ear.free
-          ? [ear.at, ear.at === 'top' ? 'left' : 'top']
-          : [ear.at];
-      const other = shape === 'row' ? 'grid' : 'row';
-      const shapes: ('row' | 'grid')[] = cards.length === 4 ? [shape, other] : ['row'];
-      const options: PicsOption[] = [];
-      for (const e of ears)
-        for (const sh of shapes)
-          options.push({ shape: sh, ear: e, ...solveFit(geo, sh, envFor(e)) });
-      const now: PicsArrange = { shape, ear: ear?.at };
+      // 並べ方の候補は、今の並べ方に関わらず初めの並べ方から（どの順で来ても、同じ環境なら同じ並べ方になる）
+      const initial: PicsArrange = { shape: 'row', ear: ear?.initial };
+      const options: PicsOption[] = arrangeCandidates(initial, cards.length === 4).map((a) => ({
+        ...a,
+        ...solveFit(geo, a.shape, envFor(a.ear)),
+      }));
+      // 環境（画面の大きさ・作業領域の高さ・列の幅）が前に測ったものから変わったら、初めの並べ方から比べ直す。
+      // 同じ環境の中だけ、今の並べ方を基準にしてわずかな差で行き来しない
+      const env = `${sig}|${window.innerWidth}x${window.innerHeight}|${Math.round(workH)}|${Math.round(colW)}`;
+      const now = arrangeBase(initial, { shape, ear: ear?.at }, envRef.current !== env);
+      envRef.current = env;
       const best = chooseArrange(options, now, Math.max(...geo.map((c) => c.cap)) * u);
       const earMoves = best.ear !== undefined && best.ear !== ear?.at;
       if (best.shape !== shape || earMoves) {

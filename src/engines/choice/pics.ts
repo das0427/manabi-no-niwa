@@ -274,6 +274,34 @@ export function cardWidths(cards: readonly PicsCard[], s: number, env: PicsEnv):
   return cards.map((c) => Math.ceil(cardWidth(c, counting, s, env) * 10) / 10);
 }
 
+/**
+ * 並べ方の候補（先頭が「初めの並べ方」）。initial.ear が無ければ「きく」の札の場所は選ばない（聞く問題でない）。
+ * four: 札が 4 つ（1 段／2×2 を選べる）。それ以外は 1 段だけ。候補の順は今の並べ方に関わらず初めの並べ方から
+ * （同じ大きさのとき、先頭＝初めの並べ方が残る。chooseArrange）
+ */
+export function arrangeCandidates(initial: PicsArrange, four: boolean): PicsArrange[] {
+  const ears: PicsArrange['ear'][] =
+    initial.ear === undefined ? [undefined] : [initial.ear, initial.ear === 'top' ? 'left' : 'top'];
+  const shapes: PicsArrange['shape'][] = four
+    ? [initial.shape, initial.shape === 'row' ? 'grid' : 'row']
+    : ['row'];
+  return ears.flatMap((ear) => shapes.map((shape) => ({ shape, ear })));
+}
+
+/**
+ * 並べ方を比べるときの「今の並べ方」（chooseArrange の current）。わずかな差で行き来しないための基準で、
+ * 測った環境（画面の大きさ・作業領域の高さ・列の幅など）が前に測ったものから変わったときは、前の並べ方を持ち越さず、
+ * 初めの並べ方から比べ直す（同じ環境なら、どの順で来ても同じ並べ方になる。g4.en.want/17 の 4u 未満は、画面サイズを
+ * 回す順で出たり出なかったりした。text-layout-fixes 第8回 Y1）。同じ環境の中では、今の並べ方を基準にして行き来を止める
+ */
+export function arrangeBase(
+  initial: PicsArrange,
+  shown: PicsArrange,
+  envChanged: boolean,
+): PicsArrange {
+  return envChanged ? initial : shown;
+}
+
 /** 並べ方の候補と、その s（px）。ok: 絵を下限にしても収まる（false は、札の最小の幅・高さが空きより大きい） */
 export interface PicsOption extends PicsArrange {
   s: number;

@@ -121,6 +121,29 @@ describe('check', () => {
       ).join(),
     ).toMatch('重複');
   });
+  it('数の欄の label が単位だけなら誤り（unit に書く。number と同じ検査）', () => {
+    const numTask = (label?: string): GraphItem['task'] => ({
+      kind: 'number',
+      fields: [{ ...(label !== undefined ? { label } : {}), answer: { kind: 'int', value: 8 } }],
+    });
+    expect(checkGraph(bar({ task: numTask('冊') })).join()).toMatch(
+      '単位「冊」は label でなく unit に書く',
+    );
+    expect(checkGraph(bar({ task: numTask('%') })).join()).toMatch('unit に書く');
+    expect(checkGraph(bar({ task: numTask('犬') }))).toEqual([]);
+    expect(checkGraph(bar({ task: numTask('ぜんぶで') }))).toEqual([]);
+    expect(checkGraph(bar({ task: numTask() }))).toEqual([]);
+    expect(
+      checkGraph(
+        bar({
+          task: {
+            kind: 'number',
+            fields: [{ unit: '冊', answer: { kind: 'int', value: 8 } }],
+          },
+        }),
+      ),
+    ).toEqual([]);
+  });
   it('2本の折れ線（series2）の検査', () => {
     const line2 = (over: Partial<GraphItem['data']>, task?: GraphItem['task']) =>
       checkGraph(

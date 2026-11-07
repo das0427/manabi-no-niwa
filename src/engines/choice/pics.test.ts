@@ -7,6 +7,8 @@ import {
   PER_ROW,
   PIC_MAX_U,
   PIC_MIN_U,
+  arrangeBase,
+  arrangeCandidates,
   cardHeight,
   cardWidth,
   cardWidths,
@@ -287,6 +289,56 @@ describe('並べ方の比べ方（1 段・2×2、聞く問題は「きく」の�
     const e = env({ width: u(40), height: u(40) });
     expect(solveS(three, 'row', e)).toBeGreaterThan(0);
     expect(fits(three, 'grid', solveS(three, 'grid', e), e)).toBe(true);
+  });
+});
+
+describe('並べ方の候補と基準（第8回 Y1）', () => {
+  it('候補は初めの並べ方から: 聞く問題の 4 つは「きく」の札 2 か所 × 1 段・2×2 の 4 通り、先頭が初めの並べ方', () => {
+    expect(arrangeCandidates({ shape: 'row', ear: 'top' }, true)).toEqual([
+      { shape: 'row', ear: 'top' },
+      { shape: 'grid', ear: 'top' },
+      { shape: 'row', ear: 'left' },
+      { shape: 'grid', ear: 'left' },
+    ]);
+    expect(arrangeCandidates({ shape: 'row', ear: 'left' }, true)[0]).toEqual({
+      shape: 'row',
+      ear: 'left',
+    });
+  });
+  it('札が 4 つでないときは 1 段だけ、聞く問題でなければ「きく」の札の場所を持たない', () => {
+    expect(arrangeCandidates({ shape: 'row', ear: 'left' }, false)).toEqual([
+      { shape: 'row', ear: 'left' },
+      { shape: 'row', ear: 'top' },
+    ]);
+    expect(arrangeCandidates({ shape: 'row' }, true)).toEqual([
+      { shape: 'row', ear: undefined },
+      { shape: 'grid', ear: undefined },
+    ]);
+    expect(arrangeCandidates({ shape: 'row' }, false)).toEqual([{ shape: 'row', ear: undefined }]);
+  });
+  it('環境が変わったら、前の並べ方を持ち越さず初めの並べ方から比べる。同じ環境では今の並べ方が基準', () => {
+    const initial = { shape: 'row', ear: 'top' } as const;
+    const shown = { shape: 'grid', ear: 'left' } as const;
+    expect(arrangeBase(initial, shown, true)).toBe(initial);
+    expect(arrangeBase(initial, shown, false)).toBe(shown);
+  });
+  it('どの順で来ても同じ並べ方: 初めの並べ方から比べると、前のサイズの 2×2・左を持ち越さない', () => {
+    // 初めの並べ方（1 段・上）が 3.9u、2×2・左が 4.1u（5 %）: はっきりとは大きくない（SWITCH_RATIO 倍未満）ので、
+    // 初めから比べれば 1 段・上のまま。前のサイズで 2×2・左になっていても、環境が変われば 1 段・上へ戻る
+    const initial = { shape: 'row', ear: 'top' } as const;
+    const options = [
+      { shape: 'row' as const, ear: 'top' as const, s: u(3.9) },
+      { shape: 'grid' as const, ear: 'top' as const, s: u(2) },
+      { shape: 'row' as const, ear: 'left' as const, s: u(3) },
+      { shape: 'grid' as const, ear: 'left' as const, s: u(4.1) },
+    ];
+    const cap = u(12);
+    const shown = { shape: 'grid', ear: 'left' } as const;
+    const fresh = chooseArrange(options, arrangeBase(initial, shown, true), cap);
+    expect(fresh).toMatchObject({ shape: 'row', ear: 'top' });
+    // 同じ環境の中では、今の並べ方（2×2・左）から行き来しない
+    const same = chooseArrange(options, arrangeBase(initial, shown, false), cap);
+    expect(same).toMatchObject({ shape: 'grid', ear: 'left' });
   });
 });
 

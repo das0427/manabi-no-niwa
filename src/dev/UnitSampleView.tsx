@@ -35,6 +35,8 @@ import { loadPack } from '../packs/loader';
 import { UnitRound } from '../units/UnitRunner';
 
 const DEV_PROFILE_ID = 'dev-text-layout';
+/** 聞く問題で、最初の再生が終わる（data-heard="1"）のを待つ上限（ms）。StateDriver */
+const HEARD_WAIT_MS = 20_000;
 
 /** 見本の1問の情報（検査が window.__mnwDevUnit から読む） */
 export interface DevUnitInfo {
@@ -187,16 +189,36 @@ export function UnitSampleView({
         onAgain={() => undefined}
         onHome={() => undefined}
       />
-      <StateDriver state={parseState(params.get('state'))} hints={item.hints.length} />
+      <StateDriver
+        state={parseState(params.get('state'))}
+        hints={item.hints.length}
+        listen={item.engine === 'listen'}
+      />
     </>
   );
 }
 
 /**
  * query の state のとおりに、ヒントの札（と つぎへ）を押して画面を進める。
+ * 聞く問題（.eng-listen）は、最初の再生が終わる（data-heard="1"）まで待ってから押す（HEARD_WAIT_MS まで）。本物の画面は
+ * 聞き終わるまで選択肢を押せず、解説はいつも「もういちど きく」の札になる。待たないと「きいてね」（幅が狭い札）のまま
+ * 解説になり、本物の画面と寸法が違う（検査の g4.en.want/17 の 3.6u を state=explain が再現しなかった。text-layout-fixes 第8回 C33）。
+ * 音が出せない環境でも heard になる。
+ * HEARD_WAIT_MS を 20 秒にした理由: 開発サーバーで最初の再生が終わるまでを測ると、g4.en.want/17 が 3.1 秒・g1.ja.listen/21 が
+ * 4.2 秒・g3.ja.listen-memo/28 が 6.3 秒（/29 が 8.7 秒）・p4.ja.story-listen/28 が 11.5 秒かかった。設計の 5 秒では、
+ * listen-memo と story-listen の解説（C32 の対象）が「きいてね」のままだった。待ちは聞く問題の state=h*・explain だけ。
  * 押し終わったら window.__mnwDevUnit.ready に state を書く（検査はこれを待つ）。
  */
-function StateDriver({ state, hints }: { state: State; hints: number }) {
+function StateDriver({
+  state,
+  hints,
+  listen,
+}: {
+  state: State;
+  hints: number;
+  /** 聞く問題（engine が listen）。画面（.eng-listen）が出るまでも待つ */
+  listen: boolean;
+}) {
   useEffect(() => {
     const want = state === 'q' ? 0 : state === 'explain' ? hints : Number(state.slice(1));
     let alive = true;
@@ -204,7 +226,16 @@ function StateDriver({ state, hints }: { state: State; hints: number }) {
       (document.querySelector(`[data-testid="${id}"]`) as HTMLButtonElement | null)?.click();
     void (async () => {
       const frame = () => new Promise((r) => requestAnimationFrame(() => r(null)));
+      const heard = async () => {
+        const until = performance.now() + HEARD_WAIT_MS;
+        while (alive && performance.now() < until) {
+          const el = document.querySelector('.eng-listen');
+          if (el ? el.getAttribute('data-heard') === '1' : !listen) return;
+          await new Promise((r) => window.setTimeout(r, 40));
+        }
+      };
       await frame();
+      if (state !== 'q') await heard();
       for (let i = 0; i < Math.min(want, hints) && alive; i++) {
         click('hint-button');
         await frame();
@@ -219,6 +250,6 @@ function StateDriver({ state, hints }: { state: State; hints: number }) {
     return () => {
       alive = false;
     };
-  }, [state, hints]);
+  }, [state, hints, listen]);
   return null;
 }

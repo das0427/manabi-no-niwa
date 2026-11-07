@@ -13,7 +13,7 @@ import {
   answerValue,
   type NumberAnswer,
 } from '../../core/answer/number';
-import type { NumberItem } from '../../curriculum/types';
+import type { NumberField, NumberItem } from '../../curriculum/types';
 import { plainText } from '../../text/rich';
 import { Rt } from '../../text/Rt';
 import type { EngineDef, EngineProps, Judgement } from '../types';
@@ -83,6 +83,83 @@ function answerLength(a: NumberAnswer): number {
   }
 }
 
+/**
+ * 単位の語の一覧（1 か所。第8回 Y4）。数の欄（NumberField）の label がこれだけなら、単位を label に書いている。
+ * label は回答欄の上（問題）・左（解説）の見出しで、単位は unit（回答欄の右）に書く。単位を label に書くと、
+ * 解説で「cm 7」と逆に読め、問題の状態でも回答欄の上に札の段（3u）が要る。
+ * 見出し（「じゅうの くらい」「あまり」「商」「約」「□が 4」など）は、ここに無いので通る。
+ */
+export const UNIT_WORDS: readonly string[] = [
+  'cm',
+  'm',
+  'km',
+  'mm',
+  'cm²',
+  'm²',
+  'km²',
+  'a',
+  'ha',
+  'cm³',
+  'm³',
+  'L',
+  'dL',
+  'mL',
+  'g',
+  'kg',
+  't',
+  '円',
+  '%',
+  '度',
+  'ど',
+  '人',
+  'にん',
+  'こ',
+  '個',
+  '本',
+  'ほん',
+  'ぽん',
+  'ぼん',
+  'まい',
+  '枚',
+  'かい',
+  '回',
+  'わ',
+  'ひき',
+  'びき',
+  'ぴき',
+  '冊',
+  '点',
+  '分',
+  'ふん',
+  '秒',
+  '時間',
+  '倍',
+  'つ',
+  'マス',
+  'そう',
+  'れつ',
+  'こずつ',
+  '角形',
+  '通り',
+  'ほ',
+  '台',
+];
+
+/** 比べる形: 《よみ》・強調・空白（全角も）を除き、全角の ％ や ㎠ の字形・上つきの ² ³ をそろえる（NFKC） */
+function unitKey(text: string): string {
+  return plainText(text).normalize('NFKC').replace(/\s+/g, '');
+}
+const UNIT_KEYS: ReadonlySet<string> = new Set(UNIT_WORDS.map(unitKey));
+
+/**
+ * 数の欄の label が単位だけなら誤りの文を返す（なければ null）。number の fields と graph の数の欄が同じ関数を使う。
+ */
+export function checkFieldLabel(f: Pick<NumberField, 'label'>): string | null {
+  if (f.label === undefined || !UNIT_KEYS.has(unitKey(f.label))) return null;
+  const shown = plainText(f.label).replace(/\s+/g, '');
+  return `単位「${shown}」は label でなく unit に書く（label は回答欄の上・左の見出し。解説で「${shown} 7」と逆に読める）`;
+}
+
 export function checkNumberItem(item: NumberItem): string[] {
   const errs: string[] = [];
   if (item.fields.length === 0) errs.push('入力欄が無い');
@@ -93,6 +170,8 @@ export function checkNumberItem(item: NumberItem): string[] {
   if (fnCount > 3) errs.push('記号のキーは3つまで（小数点・分数・マイナスを同時に使わない）');
   for (const f of item.fields) {
     const a = f.answer;
+    const labelErr = checkFieldLabel(f);
+    if (labelErr) errs.push(labelErr);
     if (a.kind === 'fraction' && a.den === 0) errs.push('分母が0');
     if (a.kind === 'fraction' && !item.keys?.includes('fraction'))
       errs.push('分数の答えなのに分数キーが無い');

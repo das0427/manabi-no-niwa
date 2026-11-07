@@ -19,8 +19,14 @@
   max-width: calc(var(--u) * 26);
 }
 .eng-listen__ear .tap {
+  /* 左の列に置く大きな札は 16u。長いほうの文「もういちど きく」は空白で 2 行に折り（下の .eng-listen__ear-text）、「きいてね」と
+     同じ幅・同じ高さにする。札の幅は再生の前後で変わらない（第8回 Y1 の 1.）。長いほうを 1 行で取ると札が 22.6u になり、
+     右の選択肢の列が 6.6u 狭まって、文字だけの長い選択肢が折れてあふれた（g2.ja.listen-notes/26。再生が終わってから） */
+  width: calc(var(--u) * 16);
   min-width: calc(var(--u) * 16);
   min-height: calc(var(--u) * 12);
+  /* 左右の余白は 3u（.tap--big）でなく 2u: 文の幅が 11.4u になり、「もういちど」（5 字・約 11u）が語の途中で折れない */
+  padding-inline: calc(var(--u) * 2);
   flex-direction: column;
   gap: calc(var(--u) * 0.6);
 }
@@ -48,24 +54,30 @@
 }
 .eng-listen--pics .eng-listen__ear .tap,
 .eng-listen--explain .eng-listen__ear .tap {
+  /* 上の段・解説の札は 1 行（icon と文を横に並べる）。幅は長いほうの文（「もういちど きく」）をはじめから取る */
+  width: auto;
   min-width: 0;
   min-height: calc(var(--u) * 5.5);
   flex-direction: row;
   padding-block: calc(var(--u) * 0.3);
+  padding-inline: calc(var(--u) * 3);
 }
 .eng-listen--pics .eng-listen__ear .tap__icon,
 .eng-listen--explain .eng-listen__ear .tap__icon {
   width: calc(var(--u) * 3.6);
   height: calc(var(--u) * 3.6);
 }
-/* 書き起こしは細い列でなく、作業領域の幅（60u まで）の段で選択肢の上に置く（「きく」の札はその段の左）。
-   高さは本文4行以上・空きまで、入らない分は枠の中でスクロール（▼ の印。data-scroll-region="transcript"） */
+/* 書き起こしは細い列でなく、作業領域の幅の段（「きく」の札 ＋ すき間 ＋ 枠。88u まで）で選択肢の上に置く
+   （「きく」の札はその段の左）。枠そのものは 60u まで（下の .eng-listen__transcript-wrap）。
+   高さは本文の 3 行（絵・図の選択肢と並べるときは 2 行。--tr-lines）まで、入らない分は枠の中でスクロール
+   （▼ の印。data-scroll-region="transcript"） */
 .eng-listen--explain {
   --tr-fs: max(calc(var(--u) * 2.6), var(--text-min, 0px));
 }
 .eng-listen__head {
-  /* 作業領域の縮み（--fit）で幅まで縮めない（舞台の寸法 --u0 で 60u） */
-  width: min(100%, calc(var(--u0, var(--u)) * 60));
+  /* 作業領域の縮み（--fit）で幅まで縮めない（舞台の寸法 --u0 で 88u。作業領域の幅）。段全体を 60u に抑えると、
+     「きく」の札（26.6u）の隣の枠が 31u になり、1 行に入る英語の文（約 33u）が 2 行になった（g4.en.want/17。第8回 Y1） */
+  width: min(100%, calc(var(--u0, var(--u)) * 88));
   /* 短い書き起こしは縮めない（選択肢の下に潜る・字が切れる）。4行を超えるときだけ縮めてスクロールさせる */
   flex: none;
   display: flex;
@@ -116,6 +128,8 @@
 .eng-listen__transcript-wrap {
   flex: 1 1 0;
   min-width: 0;
+  /* 枠そのものは舞台の寸法 --u0 で 60u まで（日本語の長い書き起こしの 1 行の字数） */
+  max-width: calc(var(--u0, var(--u)) * 60);
   /* 段の高さに合わせる（短い書き起こしは段の高さ＝本文の高さ。長いときは段が縮み、枠の中でスクロール） */
   align-self: stretch;
   min-height: 0;
@@ -146,6 +160,20 @@
   /* 作業領域の縮み（--fit）で補助の文字の最小を割らない */
   font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
+  /* 「きいてね」と「もういちど きく」を同じ場所に重ね、見えないほうは visibility: hidden。札の幅は長いほうで、
+     最初の再生が終わっても変わらない（書き起こしの枠・選択肢の列の幅が問題の途中で変わらない。第8回 Y1） */
+  display: inline-grid;
+  justify-items: center;
+  align-items: center;
+}
+.eng-listen__ear-line {
+  grid-area: 1 / 1;
+  /* 折るのは空白（「もういちど」と「きく」の間）だけ。語の途中では折らない */
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.eng-listen__ear-line:not([data-on]) {
+  visibility: hidden;
 }
 .eng-listen__transcript {
   margin: 0;
@@ -154,15 +182,28 @@
   border: calc(var(--u) * 0.3) dashed var(--ink);
   border-radius: calc(var(--u) * 1);
   font-size: var(--tr-fs, calc(var(--u) * 2.6));
-  /* ふりがなが枠の上で切れないように */
-  line-height: 1.8;
+  /* ふりがなが枠の上で切れないように（ふりがなの無い書き起こしは下で 1.5 に詰める） */
+  --tr-lh: 1.8;
+  line-height: var(--tr-lh);
   font-weight: 700;
   text-align: center;
   flex: 0 1 auto;
   min-height: 0;
-  /* 3 行（入らないときは 2 行。--tr-lines）＋上下の余白（0.8u×2）と枠線（0.3u×2） */
-  max-height: calc(var(--tr-fs, calc(var(--u) * 2.6)) * 1.8 * var(--tr-lines, 3) + var(--u) * 2.2);
+  /* 3 行（絵・図の選択肢と並べるときや入らないときは 2 行。--tr-lines）＋上下の余白（0.8u×2）と枠線（0.3u×2） */
+  max-height: calc(
+    var(--tr-fs, calc(var(--u) * 2.6)) * var(--tr-lh) * var(--tr-lines, 3) + var(--u) * 2.2
+  );
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--ink-soft) transparent;
+}
+/* ふりがなの無い書き起こし（かなだけ・ふりがなを出さない設定）は、ふりがなの分の行間を取らず 1.5 に詰める（Rt の 1.7 も
+   継ぐ）。2 行で 1.6u 低くなり、絵の札が 5.9u → 7.4u になる（g1.ja.listen/21 の解説。第8回 Y1 の 5.）。ふりがなのある書き起こし
+   （g3.ja.listen-memo ほか）は今までの 1.8（ふりがなが前の行の字に触れない）。ふりがなの無い注記を 1.25〜1.3 に詰める
+   DESINGN.md 17 章の規約と同じ考え */
+.eng-listen__transcript:not(:has(ruby)) {
+  --tr-lh: 1.5;
+}
+.eng-listen__transcript:not(:has(ruby)) .rt {
+  line-height: inherit;
 }

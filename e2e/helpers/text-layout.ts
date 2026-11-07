@@ -33,6 +33,8 @@
  *   - small-figure     … 絵・札が小さすぎる（C29）。(a) 数える札（1 つの札に .fig-illust__group の絵が 2 つ以上）の絵が 4u 未満
  *                         (b) パックの SVG の同じ大きさの正方形か角丸の札（縦横比 1.5 倍以内）が 3 つ以上並ぶ（手順の札・盤のます）
  *                         短い辺が 2.4u 未満
+ *                         (c) 選択肢の札（.choice）の中の絵が 1 つで登録の絵（svg[data-illust]）のとき、短い辺が 6u 未満
+ *                         （同じ列に数える札があれば、その列の 1 この札は 4u。C32）
  *   記法の漏れ
  *   - markup-leak      … 画面に《》・{{・}} の記法（ふりがな・差し込みの書き方）がそのまま出ている
  */
@@ -1785,7 +1787,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       });
     }
 
-    // ---- (12) 札の中の絵（C28・C29 a）・パックの SVG の札の列（C29 b）・並んだ札のすき間（C30）
+    // ---- (12) 札の中の絵（C28・C29 a・C32）・パックの SVG の札の列（C29 b）・並んだ札のすき間（C30）
     // 字の検査は字しか見ないので、絵が札の外に出ても、小さくても、札がつながっても何も出なかった（第7回の点検 1〜5・19〜22）
     {
       /** 札ごとの絵。絵は、いちばん外の svg・img・.fig-illust__group の子（入れ子は外側の 1 つ）。.mark・.tk-badge は絵に数えない */
@@ -1863,10 +1865,11 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       // C29 (a) 数える札: 1 つの札に .fig-illust__group の絵が 2 つ以上あるとき、絵の短い辺が 4u 未満（段階を問わない）。
       // 下限は DESINGN.md 17 章（第7回 X2）。丸めの 1% は数えない
       const COUNT_MIN_U = 4;
+      /** 札の絵のうち、数える絵（.fig-illust__group の子）。2 つ以上ある札が数える札 */
+      const countedIn = (list: Element[]): Element[] =>
+        list.filter((p) => p.parentElement?.classList.contains('fig-illust__group'));
       for (const [card, list] of picsOf) {
-        const counted = list.filter((p) =>
-          p.parentElement?.classList.contains('fig-illust__group'),
-        );
+        const counted = countedIn(list);
         if (counted.length < 2) continue;
         let small: Element = counted[0]!;
         let side = Infinity;
@@ -1885,6 +1888,34 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             `${describe(small)} ⊂ ${describe(card)}`,
             small.getBoundingClientRect(),
             `数える絵が ${r1(side / u)}u（最小 ${COUNT_MIN_U}u・${counted.length}こ）`,
+          );
+      }
+
+      // C32（small-figure の (c)）絵が 1 つの札: 選択肢の札（.choice）の中の絵が 1 つで、それが登録の絵（svg[data-illust]）のとき、
+      // 絵の短い辺が 6u 未満（段階を問わない）。6u は DESINGN.md 17 章の幼児以外の --pic-floor で、1280×620 でも約 66px
+      // （絵の形が分かる大きさ）。幼児の 10u は並べ方を選ぶときの目標で、ここでは見ない。同じ選択肢の列（札の親）に数える札
+      // （(a)）があるときは、その列の絵が 1 つの札も数える札として 4u で見る（第7回 X2 は列ごとに数える札として大きさを
+      // 決める。p5.en.phrases の「1 こ」の札）。対象にしないもの: パックの SVG の図（時計・図形・札の列。data-illust がない）、
+      // 札の飾りのアイコン（.tap__icon）、.choice でない札（単元の札 .tk-card・ボタン。.tk-card は札の設計の大きさ 5.6u・
+      // 箱の中 4.6u × --fit で決まり、絵だけの札の下限は次の回に決める）。丸めの 1% は数えない
+      const ONE_MIN_U = 6;
+      const countParents = new Set<Element | null>();
+      for (const [card, list] of picsOf)
+        if (countedIn(list).length >= 2) countParents.add(card.parentElement);
+      for (const [card, list] of picsOf) {
+        if (!card.classList.contains('choice') || list.length !== 1) continue;
+        const pic = list[0]!;
+        if (!pic.matches('svg[data-illust]') || pic.classList.contains('tap__icon')) continue;
+        const min = countParents.has(card.parentElement) ? COUNT_MIN_U : ONE_MIN_U;
+        const pr = pic.getBoundingClientRect();
+        const side = Math.min(pr.width, pr.height);
+        if (side < min * u * 0.99)
+          add(
+            'small-figure',
+            cardLabel(card),
+            `${describe(pic)} ⊂ ${describe(card)}`,
+            pr,
+            `絵が ${r1(side / u)}u（最小 ${min}u・${min === COUNT_MIN_U ? '数える札の列の ' : ''}1 つの札）`,
           );
       }
 

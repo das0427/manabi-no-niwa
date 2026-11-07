@@ -397,7 +397,12 @@ button .fig-chart {
    幅は 4.6u × 縦横比（約 27u）。字は横幅いっぱいの 1 列なので、横に並べたときより大きく描ける。
    札の上下の余白（0.2u）とすき間（0.4u）は、choice.css の絵の札（.is-pics。余白 0.8u・すき間 0.4u）より詳しい指定で当てる
    （クラスの重ね書きで詳しさを 1 つ上げる）。余白が 0.8u のままだと 3 枚で作業領域に入らず、--fit が 0.83 まで縮み、
-   札 1 枚が 4.6u × 24/42 × 0.83 ＝ 2.2u になった（g6.prog.efficient/11 の解説。第7回 X4。下限は 2.4u） */
+   札 1 枚が 4.6u × 24/42 × 0.83 ＝ 2.2u になった（g6.prog.efficient/11 の解説。第7回 X4。下限は 2.4u）。
+   列の高さは --fit では 4.4u0 より低くしない（第8回 Y3）。解説の板が 3 行だと --fit が 0.835 になり、4.6u が 3.84u に縮んで
+   札（viewBox 24×28）が 2.2u になった（g2.prog.repeat/3）。4.4 × --u0 なら札は 2.51u で、--fit がいくつでも 2.4u を割らない。
+   --u0 は舞台の寸法の u（--fit で縮まない。choice.css の --pic-floor と同じ書き方）。--fit が 0.956 以上のうちは 4.6u のまま（今までと同じ）。
+   列が縮まない分、--fit は下がり、同じ作業領域の主の図（問題の札の列）と列の幅が縮む（g2.prog.repeat/3 の解説: --fit 0.84 → 0.68）。
+   この規則は列の中の .fig-svg svg 全部に当たるので、縦横比が 4:1 以下の札の列（fig-svg--wide でない図。g2.prog.repeat/3 の A）も同じ高さになる */
 .eng-choice__options.eng-choice__options:has(.fig-svg--wide):where(
     .unit[data-stage]:not([data-stage^='p']) *
   ) {
@@ -415,5 +420,5 @@ button .fig-chart {
 .eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)
   .fig-svg
   svg {
-  height: calc(var(--u) * 4.6) !important;
+  height: max(calc(var(--u) * 4.6), calc(var(--u0, var(--u)) * 4.4)) !important;
 }

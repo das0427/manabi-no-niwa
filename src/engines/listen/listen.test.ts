@@ -9,6 +9,7 @@ import {
   judgeListen,
   listenEngine,
   listenSeq,
+  transcriptSep,
   type ListenItem,
 } from './listen';
 import { LISTEN_SAMPLES } from './listen.samples';
@@ -316,5 +317,122 @@ describe('listen: 画面', () => {
     const last = container.querySelectorAll<HTMLElement>('.eng-opts__opt')[3]!;
     expect(last.querySelector('[data-word]')?.getAttribute('data-word')).toBe('word');
     expect(last.style.getPropertyValue('--len')).toBe('9');
+  });
+
+  it('「きく」の札は「きいてね」と「もういちど きく」を重ねて置き、再生の前後で幅が変わらない（第8回 Y1 の 1.）', async () => {
+    render(
+      createElement(listenEngine.Component, {
+        item: base(),
+        ctx,
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: () => undefined,
+      }),
+    );
+    const lines = () =>
+      Array.from(
+        screen.getByTestId('listen-button').querySelectorAll<HTMLElement>('.eng-listen__ear-line'),
+      );
+    // 2 つの文が同じ札の中にいつもある（長いほうの幅をはじめから取る）。見えるのは 1 つ、もう 1 つは支援技術にも渡さない
+    expect(lines().map((l) => l.textContent)).toEqual(['きいてね', 'もういちど きく']);
+    expect(lines().map((l) => l.hasAttribute('data-on'))).toEqual([true, false]);
+    expect(lines().map((l) => l.getAttribute('aria-hidden'))).toEqual([null, 'true']);
+    // 最初の再生が終わると、見える文が替わる（2 つとも残る）
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(5);
+    });
+    await act(async () => {
+      h.resolvers[0]?.('done');
+      await Promise.resolve();
+    });
+    expect(lines().map((l) => l.textContent)).toEqual(['きいてね', 'もういちど きく']);
+    expect(lines().map((l) => l.hasAttribute('data-on'))).toEqual([false, true]);
+    expect(lines().map((l) => l.getAttribute('aria-hidden'))).toEqual(['true', null]);
+  });
+
+  it('書き起こしの区切り: 文の終わりの記号の後は「・」を置かず、語の並びは「・」（第8回 Y1 の 6.）', () => {
+    // 日本語の文（。！？）の後は何も置かない／英語の文（.!?）の後は空白／閉じ括弧が付いても同じ／語どうしは「・」
+    expect(transcriptSep('ぶたが いました。')).toBe('');
+    expect(transcriptSep('すごい！')).toBe('');
+    expect(transcriptSep('なあに？ ')).toBe('');
+    expect(transcriptSep('「いました。」')).toBe('');
+    expect(transcriptSep('How are you?')).toBe(' ');
+    expect(transcriptSep('I am fine.')).toBe(' ');
+    expect(transcriptSep('Wow!')).toBe(' ');
+    expect(transcriptSep('"Hello."')).toBe(' ');
+    expect(transcriptSep('さる')).toBe('・');
+    expect(transcriptSep('apple')).toBe('・');
+    expect(transcriptSep('かんじ、')).toBe('・');
+    const transcriptOf = (sounds: { text: string; key?: string }[]) => {
+      render(
+        createElement(listenEngine.Component, {
+          item: base({ audio: sounds }),
+          ctx,
+          revealed: true,
+          wrongMark: null,
+          disabled: true,
+          submit: () => undefined,
+        }),
+      );
+      const t = screen.getByTestId('listen-transcript').textContent;
+      cleanup();
+      return t;
+    };
+    expect(transcriptOf([{ text: 'いぬが いました。' }, { text: 'まいにち あそびます。' }])).toBe(
+      'いぬが いました。まいにち あそびます。',
+    );
+    expect(transcriptOf([{ text: 'さる' }, { text: 'いぬ' }, { text: 'とり' }])).toBe(
+      'さる・いぬ・とり',
+    );
+    expect(
+      transcriptOf([
+        { text: 'How are you?', key: 'k/a' },
+        { text: "I'm fine.", key: 'k/b' },
+      ]),
+    ).toBe("How are you? I'm fine.");
+  });
+
+  it('絵・図の選択肢と並べる解説は書き起こしを 2 行まで、ほかは 3 行まで（第8回 Y1 の 3.）', () => {
+    const fig = { kind: 'illust' as const, id: 'cat' };
+    const linesOf = (item: ListenItem) => {
+      const { container } = render(
+        createElement(listenEngine.Component, {
+          item,
+          ctx,
+          revealed: true,
+          wrongMark: null,
+          disabled: true,
+          submit: () => undefined,
+        }),
+      );
+      const wrap = container.querySelector<HTMLElement>('.eng-listen__transcript-wrap')!;
+      const n = wrap.style.getPropertyValue('--tr-lines');
+      cleanup();
+      return n;
+    };
+    expect(linesOf(base())).toBe('3');
+    expect(
+      linesOf(
+        base({
+          options: [
+            { figure: fig, label: 'ねこ', correct: true },
+            { figure: { ...fig, id: 'dog' }, label: 'いぬ' },
+          ],
+        }),
+      ),
+    ).toBe('2');
+    // 「きく」の札を左に置く図の選択肢（絵が 3 つ以下で 1 つに 1 つずつ）も 2 行まで
+    expect(
+      linesOf(
+        base({
+          options: [
+            { figure: { kind: 'illust', id: 'cat' }, label: 'ねこ', correct: true },
+            { figure: { kind: 'illust', id: 'dog' }, label: 'いぬ' },
+            { figure: { kind: 'illust', id: 'bird' }, label: 'とり' },
+          ],
+        }),
+      ),
+    ).toBe('2');
   });
 });

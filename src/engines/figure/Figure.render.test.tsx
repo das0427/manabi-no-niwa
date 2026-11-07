@@ -77,3 +77,22 @@ describe('Figure（X4）', () => {
     expect(container.querySelector('.fig-chart__unit')).toBeNull();
   });
 });
+
+describe('図の文の折り方（第8回のレビュー）', () => {
+  it('全角の空白で句を区切った文は data-spaced（小3以上でも空白のところでだけ折る）', () => {
+    const { container } = render(
+      <Figure
+        fig={{ kind: 'text', text: '虫の声　草のしげみに　ひびきけり', size: 'm' }}
+        ctx={ctx}
+      />,
+    );
+    expect(container.querySelector('.fig-text')!.hasAttribute('data-spaced')).toBe(true);
+  });
+  it('全角の空白が無い文・式は付けない（今までどおり文節で折る）', () => {
+    for (const text of ['あしたは はれるでしょう。', '365 ＋ 278 ＝ 643', 'ひびきけり']) {
+      const { container } = render(<Figure fig={{ kind: 'text', text, size: 'm' }} ctx={ctx} />);
+      expect(container.querySelector('.fig-text')!.hasAttribute('data-spaced'), text).toBe(false);
+      cleanup();
+    }
+  });
+});

@@ -106,6 +106,18 @@
   grid-row: 1 / span 2;
   align-self: center;
 }
+/* --fit を測る間（UnitRunner の fitNow が data-measure を付け、同じ処理の中で外す。描かれない）は、数字キーの区画の高さを 0 にする
+   （幅は残す）。キーは --u0 で 1 つ 6u 以上・4 段で 25.8u あり（number.css）、問題文が 2 行の作業領域（23.75u）やヒントの状態
+   （22.66u）では区画の下へ 2〜3u はみ出す。それを scrollHeight に数えると、縮まないキーの代わりに左の列（図と回答欄）だけが
+   --fit の下限 0.8 まで縮んだ（g2.prog.repeat/28 の盤 10.6u → 8.48u。第8回 Y2）。はみ出しは今までどおり作業領域の下の余白
+   （板・帯との間 2.4u）に描かれ、位置・大きさは変わらない。左の列が入らないときは、今までどおり図を縮めて --fit を下げる。
+   number.css の `max-height: 100%` より詳しさを上げて上書きする。10の棒の図（UnitRunner が data-measure-pad を付ける）は除く:
+   棒には縮みの下限（1 本 1.2u。number.tsx）があり、図の段が足りない分は --fit でほかの中身（回答欄）を縮めて空けていた
+   （区画のはみ出しで --fit が下がるのがその手段だった。g2.math.mult-beyond/2 は、これを外すと図の段が 2u 足りずに枠になった） */
+.unit__work[data-measure]:not([data-measure-pad]) .eng-number__pad {
+  max-height: 0;
+  overflow: hidden;
+}
 .unit__figure {
   max-width: 100%;
   display: flex;

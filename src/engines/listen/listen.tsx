@@ -167,22 +167,43 @@ function whenQuiet(cb: () => void): () => void {
   };
 }
 
+/** 文の終わりの記号（日本語の「。！？」・英語の「.!?」。閉じ括弧・引用符が後ろに付くときも）で終わる音の文 */
+const SENTENCE_END = /([。！？]|[.!?])[」』）)”"’'】]*$/u;
+
 /**
- * 解説の書き起こし。作業領域の幅（60u まで）の段で、選択肢の上に置く。高さは本文の3行まで
- * （listen.css）。入らない分は枠の中でスクロールし、下に ▼ の印を出す（text-layout-fixes R3）
+ * 書き起こしで、前の音（文）と次の音の間に置くもの。語の並び（文の終わりの記号で終わらない音どうし）は「・」。
+ * 前の文が文の終わりの記号で終わるときは置かない: 日本語（。！？）は何も置かず、英語（.!?）は空白 1 つ
+ * （「いました。・まいにち」と区切りが重ならない。text-layout-fixes 第8回 Y1 の 6.）
+ */
+export function transcriptSep(prev: string): '・' | '' | ' ' {
+  const m = SENTENCE_END.exec(prev.trimEnd());
+  if (!m) return '・';
+  return /[。！？]/u.test(m[1]!) ? '' : ' ';
+}
+
+/**
+ * 解説の書き起こし。作業領域の幅の段（「きく」の札 ＋ すき間 ＋ 枠。88u まで）で、選択肢の上に置く。枠そのものは
+ * 60u まで。高さは本文の 3 行まで（絵・図の選択肢と並べるときは 2 行まで。maxLines。listen.css）。
+ * 入らない分は枠の中でスクロールし、下に ▼ の印を出す（text-layout-fixes R3・第8回 Y1）
  */
 function Transcript({
   sounds,
   ctx,
+  maxLines,
 }: {
   sounds: ListenSound[];
   ctx: EngineProps<Item, ListenResponse>['ctx'];
+  /** 枠の行数の上限（絵・図の選択肢と並べるときは 2、ほかは 3） */
+  maxLines: 2 | 3;
 }) {
   const boxRef = useRef<HTMLParagraphElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [cue, setCue] = useState<'down' | 'up' | null>(null);
-  /** 枠の行数。既定は 3 行。作業領域に入らないときだけ 2 行に縮める（画面の大きさが変わったら 3 行から測り直す） */
-  const [lines, setLines] = useState(3);
+  /**
+   * 枠の行数。既定は maxLines（3 行）。作業領域に入らないときだけ 2 行に縮める（画面の大きさが変わったら maxLines から
+   * 測り直す。減らした行の数を次の画面の大きさに持ち越さない）
+   */
+  const [lines, setLines] = useState<number>(maxLines);
   const [viewKey, setViewKey] = useState('');
   /**
    * 「▼ つづき」の段の場所を、一度出したら残す（画面の大きさ・聞く文が変わるまで）。段の有無で枠の高さが変わると、
@@ -220,9 +241,9 @@ function Transcript({
     return () => window.removeEventListener('resize', sync);
   }, []);
   useEffect(() => {
-    setLines(3);
+    setLines(maxLines);
     setReserveCue(false);
-  }, [viewKey, sounds]);
+  }, [viewKey, sounds, maxLines]);
   // 作業領域に入らないとき（選択肢の高さが決まったあとも含む）だけ 2 行に縮める
   useEffect(() => {
     const work = wrapRef.current?.closest<HTMLElement>('.unit__work');
@@ -260,18 +281,24 @@ function Transcript({
       >
         {/* 文と文の間の「・」は字として書く（::before の字は検査から見えず、「・」のあとの改行が語の途中に見えた。
             g3.en.greetings の解説。text-layout-fixes 第6回のレビュー）。読み上げ・支援技術には区切りの記号を渡さない */}
-        {sounds.map((s, i) => (
-          <Fragment key={i}>
-            {i > 0 ? (
-              <span className="eng-listen__sep" aria-hidden>
-                ・
+        {sounds.map((s, i) => {
+          // 前の文が「。」「.」などで終わるときは「・」を置かない（日本語は何も置かず、英語は空白）
+          const sep = i > 0 ? transcriptSep(plainText(sounds[i - 1]!.text)) : '';
+          return (
+            <Fragment key={i}>
+              {sep === '・' ? (
+                <span className="eng-listen__sep" aria-hidden>
+                  ・
+                </span>
+              ) : sep === ' ' ? (
+                ' '
+              ) : null}
+              <span className="eng-listen__said">
+                <Rt text={s.text} ctx={ctx} />
               </span>
-            ) : null}
-            <span className="eng-listen__said">
-              <Rt text={s.text} ctx={ctx} />
-            </span>
-          </Fragment>
-        ))}
+            </Fragment>
+          );
+        })}
       </p>
       {cue ? (
         <button
@@ -326,6 +353,55 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   const alive = useRef(true);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const seq = useMemo(() => listenSeq(item, ctx.packId), [item, ctx.packId]);
+
+  /**
+   * 解説の段（「きく」の札と書き起こしの枠。.eng-listen__head）の実寸。段を上に置くときと左に置くときの両方を、置き方を
+   * 一時的に替えて測る（段の高さは、書き起こしの行の数が段の幅で変わるので、見積りでなく実寸で並べ方を比べる。第8回 Y1 の 4.）。
+   * 寸法は --fit を 1 に戻した値（px。UnitRunner の fitNow と同じ測り方）。測り終えたら、置き方と --fit を同じ処理の中で元に
+   * 戻す（描く前に戻るので、画面には出ない）。
+   *   top  … 札の列より上に積まれる高さ（上の余白 ＋ 段の高さ ＋ すき間）
+   *   left … 札の列から引く幅（段の幅 ＋ すき間）
+   */
+  const headSize = useCallback((): { top: number; left: number } | null => {
+    const root = rootRef.current;
+    const head = root?.querySelector<HTMLElement>(':scope > .eng-listen__head');
+    const work = root?.closest<HTMLElement>('.unit__work');
+    if (!root || !head || !work) return null;
+    const cls = root.className;
+    const prevFit = work.style.getPropertyValue('--fit');
+    work.style.removeProperty('--fit');
+    const wrap = head.querySelector<HTMLElement>('.eng-listen__transcript-wrap');
+    const box = head.querySelector<HTMLElement>('.eng-listen__transcript');
+    // 「▼ つづき」の段（実物か、Transcript が一度出したら残す場所取り）は、置き方の履歴で有無が決まるので数えない。
+    // 置き方ごとに、本文が枠（2 行）からあふれるときだけ足す（画面サイズを回す順で段の高さが変わり、並べ方が変わっていた）
+    const cues = Array.from(head.querySelectorAll<HTMLElement>('.eng-listen__cue'));
+    const probe = document.createElement('span');
+    probe.className = 'eng-listen__cue';
+    wrap?.appendChild(probe);
+    const cueH = probe.offsetHeight;
+    probe.remove();
+    for (const c of cues) c.style.display = 'none';
+    const read = (side: boolean): number => {
+      root.classList.toggle('eng-listen--explain-side', side);
+      root.classList.toggle('eng-listen--pics', !side);
+      const cs = getComputedStyle(root);
+      const r = head.getBoundingClientRect();
+      if (side) return r.width + (parseFloat(cs.columnGap) || 0);
+      const over = box ? box.scrollHeight > box.clientHeight + 2 : false;
+      return (
+        (parseFloat(cs.paddingTop) || 0) +
+        r.height +
+        (over ? cueH : 0) +
+        (parseFloat(cs.rowGap) || 0)
+      );
+    };
+    const top = read(false);
+    const left = read(true);
+    for (const c of cues) c.style.display = '';
+    root.className = cls;
+    if (prevFit) work.style.setProperty('--fit', prevFit);
+    return { top, left };
+  }, []);
 
   const play = useCallback(() => {
     setPlaying(true);
@@ -421,11 +497,23 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   const sounds = useMemo(() => soundsOf(item), [item]);
   const showTranscript = revealed && !item.hideTranscript;
   // 選択肢に絵・図があるときは、「きく」の札を上の段（補助の寸法）に置く（左の列に置くと選択肢の幅が足りない）。
-  // 絵だけの選択肢（絵の大きさを測って決める列）は、測った結果の場所（earPick。options.tsx の usePicsGeometry）が先
-  const [earPick, setEarPick] = useState<'top' | 'left' | null>(null);
-  const hasPics = earPick === null ? earOnTop(item.options) : earPick === 'top';
-  // 解説のとき、絵・図が3つ以下で1つに1つずつ（時計）なら、札と書き起こしを左の列に置く（上の段にすると縦が足りず絵が縮む）
+  // 絵だけの選択肢（絵の大きさを測って決める列）は、測った結果の場所（earPick。options.tsx の usePicsGeometry）が先。
+  // 場所は問題でも解説でも選び直す（第8回 Y1）ので、問題の場所を解説に持ち越さない（revealed が変わったら選び直し）
+  const [earPickRaw, setEarPickRaw] = useState<{ revealed: boolean; at: 'top' | 'left' } | null>(
+    null,
+  );
+  const earPick = earPickRaw && earPickRaw.revealed === revealed ? earPickRaw.at : null;
+  const setEarPick = useCallback(
+    (at: 'top' | 'left') => setEarPickRaw({ revealed, at }),
+    [revealed],
+  );
+  const earInitial: 'top' | 'left' = earOnTop(item.options) ? 'top' : 'left';
+  const hasPics = (earPick ?? earInitial) === 'top';
+  // 解説のとき、「きく」の札と書き起こしを左の列に置く: 時計（絵・図が3つ以下で1つに1つずつ。上の段にすると縦が足りず
+  // 絵が縮む）と、絵の大きさを測って、左のほうが絵が大きくなる絵の選択肢（第8回 Y1）
   const sideHead = showTranscript && !hasPics && item.options.some((o) => o.figure !== undefined);
+  // 絵・図の選択肢と並べる解説（hasPics・sideHead）は、書き起こしを 2 行まで（続きは ▼ つづき）。ほかは 3 行まで
+  const maxLines = item.options.some((o) => o.figure !== undefined) ? 2 : 3;
   const ear = (
     <div className="eng-listen__ear">
       <Tap
@@ -434,7 +522,25 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         variant="sky"
         size="big"
         text={
-          <span className="eng-listen__ear-text">{heard ? 'もういちど きく' : 'きいてね'}</span>
+          // 「きいてね」と「もういちど きく」を同じ場所に重ね、見えないほうは visibility: hidden にして、札の幅は長いほうを
+          // はじめから取る（最初の再生が終わっても札の幅が変わらない。書き起こしの枠・選択肢の列の幅が途中で変わらない。
+          // 第8回 Y1 の 1.）。見えないほうは支援技術にも渡さない
+          <span className="eng-listen__ear-text">
+            <span
+              className="eng-listen__ear-line"
+              data-on={heard ? undefined : ''}
+              aria-hidden={heard ? true : undefined}
+            >
+              きいてね
+            </span>
+            <span
+              className="eng-listen__ear-line"
+              data-on={heard ? '' : undefined}
+              aria-hidden={heard ? undefined : true}
+            >
+              もういちど きく
+            </span>
+          </span>
         }
         state={playing ? 'selected' : null}
         disabled={disabled && !revealed}
@@ -456,7 +562,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         .join(' ')}
       data-heard={heard ? '1' : '0'}
       style={
-        sideHead
+        showTranscript
           ? ({
               '--side-n': item.options.length,
               '--side-w': sideWidth(item.options),
@@ -467,7 +573,7 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
       {showTranscript ? (
         <div className="eng-listen__head">
           {ear}
-          <Transcript sounds={sounds} ctx={ctx} />
+          <Transcript sounds={sounds} ctx={ctx} maxLines={maxLines} />
         </div>
       ) : (
         ear
@@ -480,8 +586,16 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         locked={disabled || !heard || pressed !== null}
         submit={submit}
         picsSide={hasPics ? 0 : sideHead ? 32 : showTranscript ? 0 : 22}
-        // 札を左に置くとき取る幅（u）: 問題は札（「もういちど きく」で 22.6u）＋ すき間 4u、解説は書き起こしの列（28u〜）＋ すき間 4u
-        ear={{ at: hasPics ? 'top' : 'left', side: showTranscript ? 32 : 27, onChange: setEarPick }}
+        // 札を左に置くとき取る幅（u）の見積り: 問題は札（左の列の大きな札は 16u）＋ すき間 4u に余裕を足した 27u（安全側）、
+        // 解説は書き起こしの列（28u〜）＋ すき間 4u。書き起こしのある解説は、段の実寸（headSize）で置き換える
+        ear={{
+          at: hasPics ? 'top' : 'left',
+          initial: earInitial,
+          side: showTranscript ? 32 : 27,
+          key: showTranscript ? 'explain' : revealed ? 'reveal' : 'ask',
+          onChange: setEarPick,
+          head: showTranscript ? headSize : undefined,
+        }}
         {...(item.nameBack ? { onPress, pressed } : {})}
       />
     </div>

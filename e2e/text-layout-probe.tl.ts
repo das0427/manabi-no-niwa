@@ -843,7 +843,7 @@ test('絵・札が小さすぎる（C29）: 数える札の絵が 4u 未満・�
   const a = await small();
   expect(a).toHaveLength(1);
   expect(a[0]!.detail).toBe('数える絵が 2u（最小 4u・5こ）');
-  // 絵が 1 つの札（下限は --pic-floor）と、.fig-illust__group でない小さな絵（アイコン）は数える札ではない
+  // 絵が 1 つの札（C29 は数える札だけを見る。登録の絵が 1 つの札は C32）と、.fig-illust__group でない小さな絵（アイコン）は数える札ではない
   await show(page, counting(10, 1, 2) + counting(40, 3, 2, false));
   expect(await small()).toEqual([]);
 
@@ -900,6 +900,77 @@ test('絵・札が小さすぎる（C29）: 数える札の絵が 4u 未満・�
   await show(page, fig([sq(10, 30, 20), sq(40, 30, 20)].join('')));
   expect(await small()).toEqual([]);
   await show(page, fig([sq(10, 30, 20), sq(40, 30, 14), sq(65, 30, 26)].join('')));
+  expect(await small()).toEqual([]);
+});
+
+test('絵が 1 つの札の下限（C32）: 選択肢の札の登録の絵が 6u 未満なら札ごとに 1 件・数える札の列の 1 この札は 4u で見る', async ({
+  page,
+}) => {
+  const small = async () =>
+    (await inspectText(page, { stage: 'p5' })).issues.filter((i) => i.kind === 'small-figure');
+  // 登録の絵（svg[data-illust]。Illust.tsx）を、本物の選択肢の札と同じ入れ物（.fig-illust__group の中）に 1 つ置く
+  const illust = (sizeU: number) =>
+    `<svg data-illust="apple" role="img" viewBox="0 0 100 100" style="flex:none;width:calc(var(--u)*${sizeU});height:calc(var(--u)*${sizeU})"><circle cx="50" cy="50" r="46" fill="#f66"/></svg>`;
+  const card = (sizeU: number, label: string, n = 1) =>
+    `<div class="choice box" aria-label="${label}" style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:calc(var(--u)*24);height:calc(var(--u)*18);font-size:calc(var(--u)*2.4)">
+       <div class="fig-illust"><div class="fig-illust__group" style="display:flex;gap:calc(var(--u)*0.4)">${illust(sizeU).repeat(n)}</div></div><span>${label}</span></div>`;
+  const list = (...cards: string[]) =>
+    `<div class="eng-opts__list abs" style="top:calc(var(--u)*8);left:calc(var(--u)*4);display:flex;gap:calc(var(--u)*2)">${cards.join('')}</div>`;
+
+  // 聞いて選ぶ問題の解説の絵と語の札（g1.ja.listen/21 の 3.4u）: 札ごとに 1 件。6u 以上の札は出さない
+  await show(page, list(card(3.4, 'りんご'), card(6.4, 'みかん'), card(5.5, 'ぶどう')));
+  const a = await small();
+  expect(a).toHaveLength(2);
+  expect(a.map((i) => i.text).sort()).toEqual(['ぶどう', 'りんご']);
+  expect(a.find((i) => i.text === 'りんご')!.detail).toBe('絵が 3.4u（最小 6u・1 つの札）');
+  expect(a.find((i) => i.text === 'ぶどう')!.detail).toBe('絵が 5.5u（最小 6u・1 つの札）');
+  // 幼児（p23・p4・p5）も 6u（10u は並べ方を選ぶときの目標で、検査の下限ではない）。ちょうど 6u と丸めの 1% 以内は出さない
+  await show(page, list(card(6, 'りんご'), card(5.95, 'みかん')));
+  expect(await small()).toEqual([]);
+
+  // 数える札の列（絵が 2 つ以上の札がある。p5.en.phrases の「1 こ」の札）の絵が 1 つの札は、数える札として 4u で見る
+  await show(page, list(card(3.5, '1 こ'), card(4.5, '2 こ', 2), card(4.5, '3 こ', 3)));
+  const c = await small();
+  expect(c).toHaveLength(1);
+  expect(c[0]!.text).toBe('1 こ');
+  expect(c[0]!.detail).toBe('絵が 3.5u（最小 4u・数える札の列の 1 つの札）');
+  // 4.5u の「1 こ」の札は出さない（数える札の 4u を満たす）
+  await show(page, list(card(4.5, '1 こ'), card(4.5, '2 こ', 2), card(4.5, '3 こ', 3)));
+  expect(await small()).toEqual([]);
+  // 数える札のない列（絵が 1 つの札だけ）の 4.5u は、6u に届かないので出す
+  await show(page, list(card(4.5, 'りんご'), card(4.5, 'みかん')));
+  const d = await small();
+  expect(d).toHaveLength(2);
+  expect(d[0]!.detail).toBe('絵が 4.5u（最小 6u・1 つの札）');
+});
+
+test('絵が 1 つの札の下限（C32）の対象外: パックの SVG（時計・図形）・アイコン・.choice でない札（tk-card・ボタン）は出さない', async ({
+  page,
+}) => {
+  const small = async () =>
+    (await inspectText(page, { stage: 'p5' })).issues.filter((i) => i.kind === 'small-figure');
+  const registered = (sizeU: number, cls = '') =>
+    `<svg data-illust="apple" class="${cls}" role="img" viewBox="0 0 100 100" style="flex:none;width:calc(var(--u)*${sizeU});height:calc(var(--u)*${sizeU})"><circle cx="50" cy="50" r="46" fill="#f66"/></svg>`;
+  const box = (cls: string, inner: string, left: number, tag = 'div') =>
+    `<${tag} class="${cls} abs box" style="top:calc(var(--u)*8);left:calc(var(--u)*${left});display:flex;align-items:center;justify-content:center;width:calc(var(--u)*16);height:calc(var(--u)*14)">${inner}</${tag}>`;
+  // パックの SVG の図（時計。.fig-svg の svg。data-illust がない）の 3u は絵の札ではない
+  await show(
+    page,
+    box(
+      'choice',
+      `<div class="fig-svg"><svg viewBox="0 0 100 100" style="display:block;width:calc(var(--u)*3);height:calc(var(--u)*3)"><circle cx="50" cy="50" r="46" fill="none" stroke="#333" stroke-width="6"/><path d="M50 50V20M50 50L72 60" stroke="#333" stroke-width="6"/></svg></div>`,
+      4,
+    ),
+  );
+  expect(await small()).toEqual([]);
+  // 札の中の飾りのアイコン（.tap__icon）は、登録の絵でも出さない。.choice でないボタンの中のアイコン・単元の札（.tk-card）の
+  // 小さな絵も出さない（この回は .choice だけ。.tk-card は札の設計の大きさで決まり、次の回に決める）
+  await show(
+    page,
+    box('choice', `${registered(3, 'tap__icon')}<span>きく</span>`, 4) +
+      box('tap', `${registered(3, 'tap__icon')}<span>きく</span>`, 24, 'button') +
+      box('tk-card', `${registered(3)}`, 44),
+  );
   expect(await small()).toEqual([]);
 });
 

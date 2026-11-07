@@ -357,6 +357,13 @@
   max-width: 100%;
   max-height: var(--pic-max, none);
 }
+/* 札の中のパックの図は、箱（.fig-svg）の中央に置く。図の高さが --pic-max で止まると、幅は縦横比で箱（図の既定の幅 23u）より
+   細くなるが、図は block で margin が無く、箱の左に寄った（p5.think.pattern/2 の 4.3u・p5.math.shapes/17 の 6.5u。
+   第8回 Y1 の 7.）。listen の絵の札（ui.css の .eng-opts__pic > .fig-svg > svg）と同じ */
+.eng-choice__options .choice .fig-svg > svg,
+.eng-opts__list .choice .fig-svg > svg {
+  margin-inline: auto;
+}
 /* 1 列にした札の列（figure.css の fig-svg--wide。小1以上）は、上の --pic-max（1 段に並べる絵の高さの式）で高さを止めない
    （図の高さは figure.css の 4.6u）。止めると札の列が細く描かれ、札 1 枚が 1.1u になった（g6.prog.efficient/11・g5.prog.debug-plan/8。
    第7回のレビュー。X2 の安全網と X4 の札の列の組み合わせ） */

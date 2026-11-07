@@ -861,8 +861,18 @@ export function UnitRound({
     const fitNow = () => {
       // 測る間は正解・誤答の印（.mark）を外す（ui.css の data-measure）。右下の角の ○（第6回 W1）は札の下へ 1.8u 出て、
       // 作業領域の下の余白（板・帯との間 2.4u）に描かれるだけなのに、scrollHeight に入って --fit を縮め、
-      // 下の札が正解のときは作業領域をスクロールの枠にしていた（g3.soc.safety・g6.en.past/19 の解説。レビュー）
+      // 下の札が正解のときは作業領域をスクロールの枠にしていた（g3.soc.safety・g6.en.past/19 の解説。レビュー）。
+      // 数の入力の数字キーの区画（.eng-number__pad。--u0 で 4 段 25.8u。縮まない）も、測る間は高さ 0（unit.css）。
+      // 区画の下へのはみ出し（問題文 2 行の 23.75u・ヒントの 22.66u で 2〜3u）を scrollHeight に数えると、縮まないキーの
+      // 代わりに左の列（図と回答欄）だけが --fit の下限 0.8 まで縮んだ（g2.prog.repeat/28。第8回 Y2）。
+      // 左の列が入らないときは、今までどおり図を縮めて --fit を下げる
       work.setAttribute('data-measure', '');
+      // 10の棒の図は、区画のはみ出しも今までどおり数える（unit.css の data-measure-pad）
+      if (engineId === 'number' && work.querySelector(':scope > .unit__figure .blk--t')) {
+        work.setAttribute('data-measure-pad', '');
+      } else {
+        work.removeAttribute('data-measure-pad');
+      }
       // 作業領域の高さ（fit=1。px）を子に渡す（絵の札の高さの上限: V2 が var(--work-h, 9999px) で読む）
       work.style.setProperty('--work-h', `${work.clientHeight}px`);
       // 測り直しでスクロールの枠を外すと位置が 0 に戻るので、覚えておいて戻す（中身の大きさが変わったときの測り直し）
@@ -917,13 +927,27 @@ export function UnitRound({
       let fit = 1;
       for (let i = 0; i < 6; i++) {
         const avail = work.clientHeight;
-        // 数の入力の解説: 図の段は格子の minmax(0, 1fr) なので、図が段からはみ出しても work.scrollHeight に入らない。
-        // はみ出す分も足して、--fit で図（式）を縮める（板を広げるとき、式と回答欄は fit の下限（0.6）で測っている）
+        // 数の入力: 図の段は格子の minmax(0, 1fr) なので、図が段からはみ出しても work.scrollHeight に入らない。
+        // はみ出す分も足して、--fit で図（式）を縮める（板を広げるとき、式と回答欄は fit の下限（0.6）で測っている）。
+        // 解説は図の段が枠（data-scroll-region）のときは数えない。
+        // 問題・ヒントは、数字キーの区画のはみ出しを数えなくした（unit.css の data-measure。第8回 Y2）ので、これまで区画の
+        // はみ出しが（たまたま）--fit を縮めて入れていた図（g3.math.circle-sphere/3 の 6 この円が 1 行に入らず 2 行目が切れる）が、
+        // 図そのもののはみ出しで縮むようにする。表・10の棒・文の図は number.tsx の useFigureScroll が先に自分で縮め（--num-k）、
+        // 入らなければ枠にする（--fit と行き来して揺れる）ので、今までどおり数えない。差が 0.5u 以下のときも数えない
+        // （枠にしない許容と同じ。数 px のために --fit が 6 回下がり続けるのを防ぐ）
         let extra = 0;
-        if (s.phase === 'explain' && engineId === 'number') {
+        if (engineId === 'number') {
           const nf = work.querySelector<HTMLElement>(':scope > .unit__figure');
-          if (nf && !nf.hasAttribute('data-scroll-region')) {
-            extra = Math.max(0, nf.scrollHeight - nf.clientHeight);
+          if (nf) {
+            const over = nf.scrollHeight - nf.clientHeight;
+            if (s.phase === 'explain') {
+              if (!nf.hasAttribute('data-scroll-region')) extra = Math.max(0, over);
+            } else if (
+              over > Math.max(1, (work.clientWidth / 92) * 0.5) &&
+              !nf.querySelector('.fig-table, .blk--t, .fig-text')
+            ) {
+              extra = over;
+            }
           }
         }
         const need = work.scrollHeight + extra;
@@ -966,6 +990,7 @@ export function UnitRound({
         if (keepTop > 0) work.scrollTop = keepTop;
       }
       work.removeAttribute('data-measure');
+      work.removeAttribute('data-measure-pad');
       cue();
     };
     work.scrollTop = 0;

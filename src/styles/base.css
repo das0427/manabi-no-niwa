@@ -96,7 +96,9 @@ button {
   overflow-wrap: anywhere;
   text-wrap: pretty;
 }
-/* 小3以上の図の文は文節で折る（空白の無い文を keep-all のまま anywhere で折ると、好きな所で折れる） */
-.stage .unit[data-stage]:not([data-wakachi]) .fig-text {
+/* 小3以上の図の文は文節で折る（空白の無い文を keep-all のまま anywhere で折ると、好きな所で折れる）。
+   全角の空白で句・札を区切った図の文（Figure.tsx が data-spaced を付ける）は、上の data-spaced の規則で空白のところでだけ折る
+   （文節で折ると「しずかなる／夜」と句の途中で折れ、最後の行が 1 字になった。g4.ja.tanka/47。text-layout-fixes 第8回のレビュー） */
+.stage .unit[data-stage]:not([data-wakachi]) .fig-text:not([data-spaced]) {
   word-break: auto-phrase;
 }

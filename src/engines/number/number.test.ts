@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { NumberItem } from '../../curriculum/types';
 import { cellsToValue, columnLayout, columnSize, divisionSteps, valueToCells } from './column';
-import { answerTextOf, checkNumberItem, judgeNumberItem } from './number';
+import {
+  answerTextOf,
+  checkFieldLabel,
+  checkNumberItem,
+  judgeNumberItem,
+  UNIT_WORDS,
+} from './number';
 import { numberSamples } from './number.samples';
 
 const base = {
@@ -39,11 +45,77 @@ describe('単位（unit）・字数（maxLength）', () => {
     expect(judgeNumberItem(it1, ['300000000000']).result).toBe('wrong');
     expect(checkNumberItem(it1)).toEqual([]);
     expect(
-      checkNumberItem(item({ fields: [{ answer: { kind: 'int', value: 12345 }, maxLength: 4 }] })).join(),
+      checkNumberItem(
+        item({ fields: [{ answer: { kind: 'int', value: 12345 }, maxLength: 4 }] }),
+      ).join(),
     ).toMatch('maxLength');
     expect(
-      checkNumberItem(item({ fields: [{ answer: { kind: 'int', value: 1 }, maxLength: 20 }] })).join(),
+      checkNumberItem(
+        item({ fields: [{ answer: { kind: 'int', value: 1 }, maxLength: 20 }] }),
+      ).join(),
     ).toMatch('1〜16');
+  });
+});
+
+describe('単位だけの label（第8回 Y4）', () => {
+  const withLabel = (label: string) =>
+    item({ fields: [{ label, answer: { kind: 'int', value: 7 } }] });
+  it('単位の例は誤り。message に単位と「unit に書く」を入れる', () => {
+    for (const u of [
+      'cm',
+      'cm²',
+      'km²',
+      'L',
+      'kg',
+      '円',
+      '%',
+      'ど',
+      'にん',
+      'こずつ',
+      '角形',
+      '通り',
+      '台',
+    ]) {
+      const errs = checkNumberItem(withLabel(u));
+      expect(errs.join(), u).toMatch(`単位「${u}」は label でなく unit に書く`);
+    }
+  });
+  it('《よみ》・空白・全角の字形を除いて単位だけでも誤り', () => {
+    expect(checkNumberItem(withLabel('円《えん》')).join()).toMatch('unit に書く');
+    expect(checkNumberItem(withLabel(' cm ')).join()).toMatch('unit に書く');
+    expect(checkNumberItem(withLabel('c m')).join()).toMatch('unit に書く');
+    expect(checkNumberItem(withLabel('％')).join()).toMatch('unit に書く');
+    expect(checkNumberItem(withLabel('時間《じかん》')).join()).toMatch('unit に書く');
+    expect(checkFieldLabel({ label: 'cm2' })).not.toBeNull();
+  });
+  it('見出しの例は通る（unit に単位を書いた欄も）', () => {
+    for (const h of [
+      'じゅうの くらい',
+      'あまり',
+      '商《しょう》',
+      '約《やく》',
+      '□が 4',
+      'あまり（まい）',
+      '犬',
+      'ア',
+      '長さ',
+      'ぜんぶで',
+      '1m 20cm',
+    ])
+      expect(checkNumberItem(withLabel(h)), h).toEqual([]);
+    expect(
+      checkNumberItem(
+        item({ fields: [{ label: 'あまり', unit: 'まい', answer: { kind: 'int', value: 3 } }] }),
+      ),
+    ).toEqual([]);
+    expect(
+      checkNumberItem(item({ fields: [{ unit: 'cm', answer: { kind: 'int', value: 3 } }] })),
+    ).toEqual([]);
+    expect(checkFieldLabel({})).toBeNull();
+  });
+  it('一覧に重複が無く、空の語が無い', () => {
+    expect(new Set(UNIT_WORDS).size).toBe(UNIT_WORDS.length);
+    expect(UNIT_WORDS.every((u) => u.trim() !== '')).toBe(true);
   });
 });
 
@@ -81,7 +153,9 @@ describe('筆算のレイアウト', () => {
     ]);
   });
   it('大きさ: 2けた×2けたの部分積は入る。商が2けたのわり算は入らない', () => {
-    expect(columnSize(columnLayout({ op: 'mul', operands: [23, 45] })!).h).toBeLessThanOrEqual(26.2);
+    expect(columnSize(columnLayout({ op: 'mul', operands: [23, 45] })!).h).toBeLessThanOrEqual(
+      26.2,
+    );
     expect(columnSize(columnLayout({ op: 'div', operands: [72, 3] })!).h).toBeGreaterThan(26.2);
   });
   it('ますの数字を欄の値に（空きは ?）', () => {
@@ -102,7 +176,10 @@ describe('筆算の判定と検査', () => {
   it('各欄の値で判定。誤答の例で誤概念。ますの空きは もう一度', () => {
     expect(judgeNumberItem(add, ['843']).result).toBe('correct');
     expect(judgeNumberItem(add, ['0843']).result).toBe('correct');
-    expect(judgeNumberItem(add, ['733'])).toMatchObject({ result: 'wrong', misconception: 'mis-no-carry' });
+    expect(judgeNumberItem(add, ['733'])).toMatchObject({
+      result: 'wrong',
+      misconception: 'mis-no-carry',
+    });
     expect(judgeNumberItem(add, ['8?3']).result).toBe('retry');
     expect(checkNumberItem(add)).toEqual([]);
   });
@@ -114,9 +191,9 @@ describe('筆算の判定と検査', () => {
     });
   });
   it('検査: 欄の数・値・記号キー・大きさ・問題文', () => {
-    expect(checkNumberItem({ ...add, fields: [{ answer: { kind: 'int', value: 842 } }] }).join()).toMatch(
-      '式と合わない',
-    );
+    expect(
+      checkNumberItem({ ...add, fields: [{ answer: { kind: 'int', value: 842 } }] }).join(),
+    ).toMatch('式と合わない');
     expect(
       checkNumberItem({
         ...add,
@@ -128,7 +205,10 @@ describe('筆算の判定と検査', () => {
     expect(
       checkNumberItem(
         item({
-          fields: [{ answer: { kind: 'int', value: 24 } }, ...[6, 12, 12, 0].map((v) => ({ answer: { kind: 'int' as const, value: v } }))],
+          fields: [
+            { answer: { kind: 'int', value: 24 } },
+            ...[6, 12, 12, 0].map((v) => ({ answer: { kind: 'int' as const, value: v } })),
+          ],
           column: { op: 'div', operands: [72, 3] },
         }),
       ).join(),
@@ -142,7 +222,10 @@ describe('筆算の判定と検査', () => {
       ).join(),
     ).toMatch('高さ');
     expect(
-      checkNumberItem({ ...add, prompt: 'ひっさんで けいさんしよう。くりあがりに きを つけて かこう' }).join(),
+      checkNumberItem({
+        ...add,
+        prompt: 'ひっさんで けいさんしよう。くりあがりに きを つけて かこう',
+      }).join(),
     ).toMatch('1行');
     expect(
       checkNumberItem(

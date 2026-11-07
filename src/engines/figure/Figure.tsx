@@ -68,7 +68,14 @@ function FigText({ fig, ctx }: { fig: Extract<FigureData, { kind: 'text' }>; ctx
   const size = fig.size ?? 'l';
   useFitWidth(ref, `${size}${fig.text}`);
   return (
-    <div ref={ref} className={`fig-text fig-text--${size}`}>
+    <div
+      ref={ref}
+      className={`fig-text fig-text--${size}`}
+      // 全角の空白で句・札を区切った文（短歌の句・手順の札の並び・2 つの式）は、小3以上でも空白のところでだけ折る
+      // （base.css の data-spaced。選択肢・札のラベルと同じ）。文節で折ると句の途中で折れ、最後の行が 1 字になった
+      // （g4.ja.tanka/47 の解説の「しずかなる／夜」。text-layout-fixes 第8回のレビュー）
+      data-spaced={fig.text.includes('　') ? '' : undefined}
+    >
       <Rt text={fig.text} ctx={ctx} />
     </div>
   );

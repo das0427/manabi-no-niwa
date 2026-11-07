@@ -23,6 +23,7 @@ import {
   useSvgTextFloor,
   useWidenToText,
 } from '../figure/svgText';
+import { checkFieldLabel } from '../number/number';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from '../numberline/NumPad';
 import type { Judgement, RenderCtx } from '../types';
@@ -229,6 +230,9 @@ export function checkGraph(item: GraphItem): string[] {
   if (t.kind === 'number') {
     if (t.fields.length === 0) errs.push('入力欄が無い');
     for (const f of t.fields) {
+      // 単位だけの label は誤り（unit に書く。number の欄と同じ検査）
+      const labelErr = checkFieldLabel(f);
+      if (labelErr) errs.push(labelErr);
       if (f.answer.kind === 'fraction' && !t.keys?.includes('fraction'))
         errs.push('分数の答えなのに分数キーが無い');
       if (

@@ -14,7 +14,7 @@ export interface SaveHelp {
 
 export function saveHelp(health: StorageHealth, unavailable: boolean): SaveHelp {
   const keep =
-    'この画面を閉じる前に「がぞうに する」（右上の絵の札、またはこの下の札）で絵を画像として保存すると、今の絵を残せます。';
+    'この画面を閉じる前に、右上またはこの下にある「がぞうに する」の絵の札で、絵を画像として保存すると、今の絵を残せます。';
   if (unavailable || health === 'unavailable') {
     return {
       title: 'この端末（ブラウザ）では作品を保存できない状態です。',
@@ -30,7 +30,7 @@ export function saveHelp(health: StorageHealth, unavailable: boolean): SaveHelp 
       steps: [
         keep,
         '保護者画面の「データ」で記録と作品を書き出して保管してから、「さくひん」で不要な作品を削除してください。',
-        '端末の空き容量を増やすと、次に描いたときに自動で保存し直します（「もう いちど」でも試せます）。',
+        '端末の空き容量を増やすと、次に描いたときに自動で保存し直します。「もう いちど」でも試せます。',
       ],
     };
   }

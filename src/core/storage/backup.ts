@@ -164,10 +164,10 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   }
   const ver = json.schemaVersion;
   if (typeof ver !== 'number' || !Number.isInteger(ver) || ver < 0) {
-    return bad('ファイルの版が正しくありません。');
+    return bad('ファイルのバージョンが正しくありません。');
   }
   if (ver > SCHEMA_VERSION) {
-    return bad('新しい版のデータです。アプリを更新してから読み込んでください。');
+    return bad('新しいバージョンのデータです。アプリを更新してから読み込んでください。');
   }
   if (
     (json.scope !== 'all' && json.scope !== 'profile') ||
@@ -197,7 +197,7 @@ export function parseBackup(text: string, sizeBytes: number): ParseResult {
   try {
     migrated = migrateBackup(base);
   } catch {
-    return bad('古い版のデータを変換できませんでした。');
+    return bad('古いバージョンのデータを変換できませんでした。');
   }
   const d = migrated.data as unknown as Record<string, unknown[]>;
   const profiles = mapAll(d.profiles ?? [], validateProfile);

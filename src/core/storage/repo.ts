@@ -4,7 +4,7 @@
  */
 import {
   defaultSettings,
-  profileAudience,
+  settingsForNewProfile,
   type AppRecord,
   type AttemptRecord,
   type ChildSettings,
@@ -95,7 +95,7 @@ export async function createProfile(
   await safeWrite(() =>
     runTx([STORE.profiles, STORE.settings], 'readwrite', (tx) => {
       tx.objectStore(STORE.profiles).put(p);
-      tx.objectStore(STORE.settings).put(defaultSettings(p.id, profileAudience(p)));
+      tx.objectStore(STORE.settings).put(settingsForNewProfile(p));
     }),
   );
   return p;

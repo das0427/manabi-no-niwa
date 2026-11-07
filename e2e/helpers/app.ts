@@ -3,7 +3,7 @@
  * IndexedDB の直接操作はテスト専用（architecture.md 10章の仕組みとあわせて使う）。
  */
 import { expect } from '@playwright/test';
-import type { Locator, Page } from '@playwright/test';
+import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { defaultSettings } from '../../src/core/types';
 import type { ChildSettings, SkillId } from '../../src/core/types';
 
@@ -20,6 +20,22 @@ export async function gotoApp(page: Page, opts: { seed?: number } = {}): Promise
   });
   await page.goto(`/?seed=${opts.seed ?? 1}`, { waitUntil: 'domcontentloaded' });
   await expect(page.getByTestId('start-button')).toBeEnabled();
+}
+
+/**
+ * 同じブラウザで2つ以上のページを同時に開く試験のための旗（mnw:test:multiWindow）。
+ * 立てたページ（context に立てると、その中のすべてのページ）では「画面は1つ」の守り（src/core/instance）が働かず、
+ * 何枚開いても引き下がらない。ページを開く（goto する）前に呼ぶ。製品では使わない。
+ * 二重起動の守りそのものを調べる試験（single-instance.spec.ts）では呼ばない。
+ */
+export async function allowMultiWindow(target: Page | BrowserContext): Promise<void> {
+  await target.addInitScript(() => {
+    try {
+      sessionStorage.setItem('mnw:test:multiWindow', '1');
+    } catch {
+      /* 無視 */
+    }
+  });
 }
 
 /** 「はじめる」→ ホーム */
@@ -290,17 +306,29 @@ export async function openParent(page: Page, tab?: string): Promise<void> {
   }
 }
 
-/** 計算問題の文（「a ＋ b は？」）から足し算して入力する */
-export async function answerGate(page: Page, opts: { wrongFirst?: boolean } = {}): Promise<void> {
+/** 計算問題の文（「a ＋ b は？」）の答え */
+async function readGateAnswer(page: Page): Promise<string> {
   const q = page.getByTestId('gate-question');
   await expect(q).toContainText('＋');
   const m = /(\d+)\s*＋\s*(\d+)/.exec((await q.textContent()) ?? '');
   expect(m).not.toBeNull();
-  const answer = String(Number(m![1]) + Number(m![2]));
+  return String(Number(m![1]) + Number(m![2]));
+}
+
+/**
+ * 計算問題の文（「a ＋ b は？」）から足し算して入力する。
+ * wrongFirst: 先にわざとまちがえる。まちがえると問題が替わる（答えは前と違う。公開の前の点検 R3）ので、
+ * 答えを読み直してから入れる
+ */
+export async function answerGate(page: Page, opts: { wrongFirst?: boolean } = {}): Promise<void> {
+  let answer = await readGateAnswer(page);
   if (opts.wrongFirst) {
     await page.getByTestId('gate-key-1').click();
     await page.getByTestId('gate-key-OK').click();
     await expect(page.locator('.gate-error')).toBeVisible();
+    const before = answer;
+    answer = await readGateAnswer(page);
+    expect(answer).not.toBe(before);
     await page.getByTestId('gate-key-けす').click();
   }
   for (const ch of answer) await page.getByTestId(`gate-key-${ch}`).click();

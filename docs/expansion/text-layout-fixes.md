@@ -3015,10 +3015,12 @@ Y1〜Y4・C32・C33 を、担当ごとにファイルを分けて実装した（
   - /26 の解説の数える絵は、4 サイズで 4.45〜4.47u（札は 3 枚とも 2 行）。英語の台本は変わらない。
 - **g1-ja**:
   - folktales の `icon` を `p5-book`（えほん）、word-play を `p5-note`（おんぷ）にした（Y4 の 2.）。どちらも `src/illust/content/p5.tsx` に final で登録されている。
+  - → 2.1.0 の取り込み（p3/fx）で、icon は `book`・`music-note` に戻した。p3/fx の FX15 が同じ点検 7 を、この 2 つの絵を `src/illust/content/ja-g16.tsx` に描いて登録する形で直していたので、FX15 の絵を正とした（絵の ID・登録を二重にしない）。選択肢の `p5-balloon` はそのまま。
   - → word-play/13（えで しりとり）の選択肢「ふうせん」の絵が `illust('balloon')` だった。はんこ用の絵（`src/illust/stamps/`）で素材の登録表に無いので、本番でも赤い破線の枠が出ていた。文字の配置の検査は絵の登録を見ないので、違反 0 になっていた。同じ絵を登録した `p5-balloon` にした。
   - → g1-ja.test.ts に、問題・選択肢・導入の図の絵の ID が登録済みで final かを全単元で見る検査を足した（`balloon` に戻すと落ちることを確かめた）。設計書 `docs/expansion/p2-design/g1-ja.md` の絵の ID の一覧と `icon` も合わせた。
   - → 全パック（324 単元）の図の絵（`kind: 'illust'`）270 種類を一時のテストで調べた。直したあと、登録の無い絵は 0。
 - **g6-ja**: language-change の `icon` を `p5-book` にした（g5.ja.figurative などと同じ、開いた本の絵）。レビューで直したものは無い。
+  - → 2.1.0 の取り込み（p3/fx）で、FX15 の `book`（`ja-g16.tsx`）に戻した（g1-ja と同じ理由）。
 
 受け入れたもの:
 

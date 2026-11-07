@@ -11,6 +11,7 @@ import { MODES, SKILLS } from '../modes/registry';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate } from './router';
+import { StorageHealthMark } from './StorageHealthMark';
 import './home.css';
 
 function todayInfo() {
@@ -44,8 +45,6 @@ export function Home() {
   const app = useApp();
   const profile = app.profile;
   const [recs, setRecs] = useState<Recommendation[]>([]);
-  const [health, setHealth] = useState(db.getStorageHealth());
-  useEffect(() => db.onStorageHealth(setHealth), []);
 
   useEffect(() => {
     if (!profile || !app.settings) return;
@@ -95,16 +94,7 @@ export function Home() {
           <span className="label-text">{profile.name}</span>
         </div>
         <div className="home-top__right">
-          {health !== 'ok' ? (
-            <span
-              className="home-health"
-              role="img"
-              aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください"
-              data-testid="home-health"
-            >
-              !
-            </span>
-          ) : null}
+          <StorageHealthMark />
           <ParentGateButton />
         </div>
       </div>

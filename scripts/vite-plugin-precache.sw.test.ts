@@ -231,3 +231,27 @@ describe('sw.js の fetch（教材パック）', () => {
     expect(await sw.request('index.html')).toMatchObject({ status: 200 });
   });
 });
+
+describe('sw.js の fetch（配信の更新の窓口 /__manabi/…）', () => {
+  it('__manabi/update/status の GET は respondWith しない（null）。キャッシュに同じ URL があっても返さない', async () => {
+    const fake = createFakeCaches();
+    const sw = await runSw('cur', ['index.html'], fake);
+    await sw.fire('install');
+    // キャッシュに同じ URL があっても、返さない
+    await (
+      await fake.api.open('mnw-cur')
+    ).put(`${SCOPE}__manabi/update/status`, new Response('cached'));
+    expect(await sw.request('__manabi/update/status')).toBeNull();
+    expect(await sw.request('__manabi/update/status?x=1')).toBeNull();
+    expect(await sw.request('__manabi/health')).toBeNull();
+  });
+
+  it('ほかの要求は今までどおり（index.html はキャッシュから、__manabi に似た名前は素通しにしない）', async () => {
+    const fake = createFakeCaches();
+    const sw = await runSw('cur', ['index.html'], fake);
+    await sw.fire('install');
+    expect(await sw.request('index.html')).toMatchObject({ status: 200 });
+    expect(await sw.request('x/__manabi/update/status')).toMatchObject({ status: 200 });
+    expect(await sw.request('__manabi-note.txt')).toMatchObject({ status: 200 });
+  });
+});

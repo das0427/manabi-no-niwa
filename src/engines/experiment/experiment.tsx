@@ -1,7 +1,7 @@
 /**
  * experiment エンジン: 実験のシミュレーション（理科。curriculum-matrix 2.6）。
  * 条件の値を札で選ぶ →「やってみる」で例示の結果（model.ts の単純な式・問題データの固定表）→ 結果の表に記録 → 設問。
- * 画面に「この アプリの せっていでは」と出し、実際の実験の代わりではないことを示す。
+ * 画面に「この アプリの せっていでは」（幼児の画面は「この あそびの せっていでは」）と出し、実際の実験の代わりではないことを示す。
  *
  * 設問（task）:
  *  consider … 考察の設問（choice と同じ判定）。minTrials 回やってみると「こたえる」が押せる
@@ -88,6 +88,9 @@ export type ExperimentResponse = { pick: number[] } | { cond: Cond } | { trials:
 export const MIN_TRIALS_DEFAULT = 2;
 export const NOTE: RichText =
   'この アプリの せっていでは こう なるよ（じっけんの かわりでは ないよ）';
+/** 幼児の画面の注記（5歳の p5.env.predict）。DESINGN.md 4章でカタカナを使わないので「アプリ」を「あそび」にする（2.1.0 の文言の点検 A8） */
+export const NOTE_PRESCHOOL: RichText =
+  'この あそびの せっていでは こう なるよ（じっけんの かわりでは ないよ）';
 
 // ---- 判定 ----
 
@@ -687,7 +690,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
 
       <div className="exp__record">
         <p className="exp-note" data-testid="exp-note">
-          <Rt text={NOTE} ctx={ctx} />
+          <Rt text={ctx.preschool ? NOTE_PRESCHOOL : NOTE} ctx={ctx} />
         </p>
         <div className={`exp-tablewrap${wrongShown && t.kind === 'control' ? ' mk-wrong' : ''}`}>
           <ResultTable

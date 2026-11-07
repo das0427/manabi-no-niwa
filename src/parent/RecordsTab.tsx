@@ -1,5 +1,7 @@
 /**
  * 保護者画面「きろく」。
+ * - 「スキルごとの様子」（v1 の13スキル）は、そのプロフィールのホームから遊べるあそびの分だけ出す（記録がある分も出す）。
+ *   「きょうの おすすめ」は子供のホームと同じ関数で作る（homeView.ts）。単元の問題の key は内部の ID なので出さない（FX14）。
  * - 2歳段階（recordMastery=false の区分）は「あそんだ内容」だけを見せ、正誤・ヒント数・「むずかしそう」を
  *   出さない（architecture.md 2章、review-1 #8）。
  * - 1.0 からある9つのあそび（旧モードID）の記録は「まえの きろく」で閲覧のみ（変換しない。acceptance A-06、
@@ -9,7 +11,6 @@ import { useCallback } from 'react';
 import { useApp } from '../app/AppState';
 import { audienceUx } from '../audience/audience';
 import { explainProgress, looksHard } from '../core/progress/rules';
-import { recommend } from '../core/progress/recommend';
 import * as db from '../core/storage/index';
 import {
   SKILL_IDS,
@@ -19,7 +20,8 @@ import {
   type RecordModeId,
   type SkillProgress,
 } from '../core/types';
-import { MODES, SKILLS } from '../modes/registry';
+import { SKILLS } from '../modes/registry';
+import { homeLegacyModes, homeRecommendations } from './homeView';
 import { Note, Section } from './ui';
 import {
   OUTCOME_LABEL,
@@ -37,6 +39,18 @@ function levelCode(a: AttemptRecord): string {
   if (!a.skillId) return '-';
   return SKILLS[a.skillId].levels[a.level]?.code ?? '-';
 }
+
+/**
+ * 「問題」の欄に出す文。単元（modeId が 'unit'）の問題の key は内部の ID（direct:3:5:2 など）で、
+ * 保護者には読めないので出さない（DESINGN.md 21章）。旧モードの key は読める文（りんご×3）なのでそのまま出す。
+ */
+export function problemText(a: Pick<AttemptRecord, 'modeId' | 'itemKey'>): string | null {
+  return a.modeId === 'unit' ? null : a.itemKey;
+}
+
+/** 表の「問題」（2歳段階は「内容」）の列を出すか。読める問題が1行もなければ、列ごと出さない */
+const hasProblem = (rows: readonly Pick<AttemptRecord, 'modeId' | 'itemKey'>[]): boolean =>
+  rows.some((a) => problemText(a) !== null);
 
 /** あそびごとのまとめ（単元は unitId ごと、旧モードはモードごと） */
 interface PlaySummary {
@@ -128,7 +142,7 @@ function LegacyRecords({
           {playOnly ? null : (
             <p className="p-small" data-testid="legacy-progress-count">
               段階の記録が残っているスキル: {keptProgress}
-              （段階と直近の結果は、上の「スキルごとの様子」に出ています）
+              。段階と直近の結果は、上の「スキルごとの様子」に出ています。
             </p>
           )}
           {old.length > 0 ? (
@@ -174,11 +188,13 @@ function LegacyRecords({
 /** 2歳段階: あそんだ内容だけ（正誤・ヒント数・「むずかしそう」・とまどいの記録を出さない） */
 function PlayOnlyRecords({ attempts }: { attempts: AttemptRecord[] }) {
   const played = attempts.filter((a) => !a.operationIssue);
+  const recent = played.slice(0, 50);
+  const showContent = hasProblem(recent);
   return (
     <>
       <Section title="あそんだ内容" id="play-summary">
         <Note>
-          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。2歳の段階と3歳の段階は「プロフィール」で切り替えます（3歳の段階にすると、正誤などの表に戻ります）。
+          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。2歳の段階と3歳の段階は「プロフィール」で切り替えます。3歳の段階にすると、正誤などの表に戻ります。
         </Note>
         {played.length === 0 ? (
           <p className="p-muted" data-testid="play-empty">
@@ -195,15 +211,15 @@ function PlayOnlyRecords({ attempts }: { attempts: AttemptRecord[] }) {
               <tr>
                 <th>日時</th>
                 <th>あそび</th>
-                <th>内容</th>
+                {showContent ? <th>内容</th> : null}
               </tr>
             </thead>
             <tbody>
-              {played.slice(0, 50).map((a, i) => (
+              {recent.map((a, i) => (
                 <tr key={a.id ?? i}>
                   <td>{formatDateTime(a.at)}</td>
                   <td>{modeTitle(a.modeId, a.unitId)}</td>
-                  <td>{a.itemKey}</td>
+                  {showContent ? <td>{problemText(a) ?? '-'}</td> : null}
                 </tr>
               ))}
             </tbody>
@@ -224,18 +240,19 @@ export function RecordsTab() {
     const todayStart = startOfToday();
     // 記録は1人あたり最大 MAX_ATTEMPTS_PER_PROFILE 件。まとめ（あそんだ内容・まえの きろく）は全件から作り、
     // 1問ごとの表と「むずかしそう」はこれまでどおり新しい 2000 件から作る
-    const [all, progress, rounds] = await Promise.all([
+    const [all, progress, rounds, unitProgress] = await Promise.all([
       db.listAttempts(pid),
       db.listProgress(pid),
       db.listRounds(pid, { since: todayStart - 30 * DAY }),
+      db.listUnitProgress(pid),
     ]);
-    return { all, attempts: all.slice(0, 2000), progress, rounds, todayStart };
+    return { all, attempts: all.slice(0, 2000), progress, rounds, unitProgress, todayStart };
   }, [pid]);
   const { data } = useLoad(load);
   if (!profile || !settings) return null;
   if (!data) return <p>読み込み中…</p>;
 
-  const { all, attempts, progress, rounds, todayStart } = data;
+  const { all, attempts, progress, rounds, unitProgress, todayStart } = data;
   // 2歳段階（進度の判定をしない区分）は「あそんだ内容」だけ
   const playOnly = !audienceUx(profileAudience(profile), profile.toddlerStage ?? 3).recordMastery;
   const byskill = new Map<string, SkillProgress>(progress.map((p) => [p.skillId, p]));
@@ -247,18 +264,24 @@ export function RecordsTab() {
   const todayMs = todayRounds.reduce((s, r) => s + Math.max(0, r.endedAt - r.startedAt), 0);
   const todayMin = Math.round(todayMs / 60_000);
 
-  // きょうの おすすめ（ホームと同じ規則）
-  const inProgress = progress
-    .filter((p) => p.window.length >= 5 && p.level < SKILLS[p.skillId].levels.length - 1)
-    .map((p) => SKILLS[p.skillId].modeId);
-  const recs = recommend({
-    today: todayString(),
-    todayStart,
+  // きょうの おすすめ（子供のホームに出ているものと同じ。同じ関数・同じ入力で作る）
+  const recs = homeRecommendations({
+    profile,
+    settings,
     favorites,
     rounds,
-    inProgress,
-    visible: settings.homeDisplay === 'all' ? MODES.map((m) => m.id) : settings.visibleModes,
+    unitProgress,
+    today: todayString(),
+    todayStart,
+    now: Date.now(),
   });
+
+  // スキルごとの様子: そのホームから遊べるあそびの行と、記録（取り組んだ印）がある行だけ。
+  // 遊べないあそびの「まだ取り組んでいません」の行は出さない（小3で13行すべてが「まだ」になっていた）
+  const playable = homeLegacyModes(profile, settings);
+  const skillIds = SKILL_IDS.filter(
+    (id) => playable.has(SKILLS[id].modeId) || byskill.get(id)?.attempted,
+  );
 
   // むずかしそうな問題（3回以上取り組んで自力0）
   const items = new Map<
@@ -279,7 +302,27 @@ export function RecordsTab() {
     if (a.outcome === 'independent') cur.ind += 1;
     items.set(k, cur);
   }
-  const hardItems = [...items.values()].filter((x) => x.n >= 3 && x.ind === 0);
+  // 単元の問題は ID を出さないので、単元ごとに「何問」「合わせて何回」にまとめる。旧モードは問題ごと
+  const hardRows: { modeId: ModeId | 'unit'; unitId?: string; problem: string; n: number }[] = [];
+  const hardUnits = new Map<string, { unitId?: string; problems: number; n: number }>();
+  for (const x of items.values()) {
+    if (x.n < 3 || x.ind !== 0) continue;
+    if (x.modeId === 'unit') {
+      const u = hardUnits.get(x.unitId ?? '') ?? { unitId: x.unitId, problems: 0, n: 0 };
+      u.problems += 1;
+      u.n += x.n;
+      hardUnits.set(x.unitId ?? '', u);
+    } else {
+      hardRows.push({ modeId: x.modeId, problem: x.itemKey, n: x.n });
+    }
+  }
+  for (const u of hardUnits.values())
+    hardRows.push({ modeId: 'unit', unitId: u.unitId, problem: `${u.problems}問`, n: u.n });
+
+  const recentRows = learning.slice(0, 50);
+  const showRecentProblem = hasProblem(recentRows);
+  const issueRows = issues.slice(0, 30);
+  const showIssueProblem = hasProblem(issueRows);
 
   return (
     <div data-testid="tab-records">
@@ -297,8 +340,8 @@ export function RecordsTab() {
             <h3>きょうの おすすめ（ホームに出ているもの）</h3>
             <ul data-testid="recommendations">
               {recs.map((r) => (
-                <li key={r.modeId}>
-                  {modeTitle(r.modeId)}&emsp;<span className="p-muted">理由: {r.reason}</span>
+                <li key={r.key}>
+                  {r.title}&emsp;<span className="p-muted">理由: {r.reason}</span>
                 </li>
               ))}
               {recs.length === 0 ? <li className="p-muted">おすすめはありません</li> : null}
@@ -314,99 +357,105 @@ export function RecordsTab() {
         </>
       ) : (
         <>
-          <Section title="スキルごとの様子">
-            <Note>
-              「直近」は、いまの段階での直近10問までの結果です。「もういちど」はヒント1の後に自分で選び直して正解、「ヒント後」は具体的なヒントの後に正解、「見直し後」は見直し機能を使って正解した数です。
-            </Note>
-            <table className="p-table p-table--skills" data-testid="skill-table">
-              <thead>
-                <tr>
-                  <th>スキル</th>
-                  <th>状態・段階</th>
-                  <th>自力</th>
-                  <th>もういちど</th>
-                  <th>ヒント後</th>
-                  <th>見直し後</th>
-                  <th>スキップ</th>
-                  <th>説明</th>
-                </tr>
-              </thead>
-              <tbody>
-                {SKILL_IDS.map((id) => {
-                  const def = SKILLS[id];
-                  const p = byskill.get(id);
-                  const lv = def.levels[p?.level ?? 0] ?? def.levels[0];
-                  if (!lv) return null;
-                  const label = `${lv.code} ${lv.label}`;
-                  if (!p || !p.attempted) {
+          {skillIds.length === 0 ? null : (
+            <Section title="スキルごとの様子">
+              <Note>
+                「直近」は、いまの段階での直近10問までの結果です。「もういちど」はヒント1の後に自分で選び直して正解した数です。「ヒント後」は具体的なヒントの後に正解した数です。「見直し後」は見直し機能を使って正解した数です。
+              </Note>
+              <table className="p-table p-table--skills" data-testid="skill-table">
+                <thead>
+                  <tr>
+                    <th>スキル</th>
+                    <th>状態・段階</th>
+                    <th>自力</th>
+                    <th>もういちど</th>
+                    <th>ヒント後</th>
+                    <th>見直し後</th>
+                    <th>スキップ</th>
+                    <th>説明</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {skillIds.map((id) => {
+                    const def = SKILLS[id];
+                    const p = byskill.get(id);
+                    const lv = def.levels[p?.level ?? 0] ?? def.levels[0];
+                    if (!lv) return null;
+                    const label = `${lv.code} ${lv.label}`;
+                    if (!p || !p.attempted) {
+                      return (
+                        <tr key={id} data-testid={`skill-${id}`} data-state="not-started">
+                          <td>{def.label}</td>
+                          <td>
+                            <span className="p-badge p-badge--idle">まだ取り組んでいません</span>
+                          </td>
+                          <td colSpan={5} className="p-muted">
+                            -
+                          </td>
+                          <td className="p-muted">
+                            {explainProgress(
+                              p ?? {
+                                profileId: pid,
+                                skillId: id,
+                                level: 0,
+                                window: [],
+                                mastered: false,
+                                attempted: false,
+                                changedAt: 0,
+                                lastChange: null,
+                              },
+                              def.levels.length,
+                              label,
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    }
+                    const w = p.window;
+                    const cnt = (...k: string[]) => w.filter((o) => k.includes(o)).length;
+                    const hard = looksHard(p);
                     return (
-                      <tr key={id} data-testid={`skill-${id}`} data-state="not-started">
+                      <tr
+                        key={id}
+                        data-testid={`skill-${id}`}
+                        data-state={hard ? 'hard' : 'active'}
+                      >
                         <td>{def.label}</td>
                         <td>
-                          <span className="p-badge p-badge--idle">まだ取り組んでいません</span>
+                          {lv.code}（{lv.label}）
+                          {hard ? (
+                            <span className="p-badge p-badge--hard" data-testid={`hard-${id}`}>
+                              むずかしそう
+                            </span>
+                          ) : null}
                         </td>
-                        <td colSpan={5} className="p-muted">
-                          -
-                        </td>
-                        <td className="p-muted">
+                        <td>{cnt('independent')}</td>
+                        <td>{cnt('self_corrected')}</td>
+                        <td>{cnt('after_hint')}</td>
+                        <td>{cnt('after_review')}</td>
+                        <td>{cnt('skipped')}</td>
+                        <td className="p-small">
                           {explainProgress(
-                            p ?? {
-                              profileId: pid,
-                              skillId: id,
-                              level: 0,
-                              window: [],
-                              mastered: false,
-                              attempted: false,
-                              changedAt: 0,
-                              lastChange: null,
-                            },
+                            p,
                             def.levels.length,
                             label,
+                            settings.levelLocks[id],
+                            lv.chance,
                           )}
                         </td>
                       </tr>
                     );
-                  }
-                  const w = p.window;
-                  const cnt = (...k: string[]) => w.filter((o) => k.includes(o)).length;
-                  const hard = looksHard(p);
-                  return (
-                    <tr key={id} data-testid={`skill-${id}`} data-state={hard ? 'hard' : 'active'}>
-                      <td>{def.label}</td>
-                      <td>
-                        {lv.code}（{lv.label}）
-                        {hard ? (
-                          <span className="p-badge p-badge--hard" data-testid={`hard-${id}`}>
-                            むずかしそう
-                          </span>
-                        ) : null}
-                      </td>
-                      <td>{cnt('independent')}</td>
-                      <td>{cnt('self_corrected')}</td>
-                      <td>{cnt('after_hint')}</td>
-                      <td>{cnt('after_review')}</td>
-                      <td>{cnt('skipped')}</td>
-                      <td className="p-small">
-                        {explainProgress(
-                          p,
-                          def.levels.length,
-                          label,
-                          settings.levelLocks[id],
-                          lv.chance,
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </Section>
+                  })}
+                </tbody>
+              </table>
+            </Section>
+          )}
 
           <Section title="むずかしそうな問題">
             <Note>
               同じ問題に3回以上取り組んで、自力でできたのが0回のものです（未実施の問題は含みません）。
             </Note>
-            {hardItems.length === 0 ? (
+            {hardRows.length === 0 ? (
               <p className="p-muted" data-testid="hard-items-empty">
                 いまのところありません。
               </p>
@@ -414,16 +463,16 @@ export function RecordsTab() {
               <table className="p-table" data-testid="hard-items">
                 <thead>
                   <tr>
-                    <th>モード</th>
+                    <th>あそび</th>
                     <th>問題</th>
                     <th>取り組んだ回数</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {hardItems.map((x) => (
-                    <tr key={`${x.modeId}-${x.itemKey}`}>
+                  {hardRows.map((x) => (
+                    <tr key={`${x.modeId}-${x.unitId ?? ''}-${x.problem}`}>
                       <td>{modeTitle(x.modeId, x.unitId)}</td>
-                      <td>{x.itemKey}</td>
+                      <td>{x.problem}</td>
                       <td>{x.n}</td>
                     </tr>
                   ))}
@@ -440,20 +489,20 @@ export function RecordsTab() {
                 <thead>
                   <tr>
                     <th>日時</th>
-                    <th>モード</th>
+                    <th>あそび</th>
                     <th>段階</th>
-                    <th>問題</th>
+                    {showRecentProblem ? <th>問題</th> : null}
                     <th>結果</th>
                     <th>ヒント</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {learning.slice(0, 50).map((a, i) => (
+                  {recentRows.map((a, i) => (
                     <tr key={a.id ?? i}>
                       <td>{formatDateTime(a.at)}</td>
                       <td>{modeTitle(a.modeId, a.unitId)}</td>
                       <td>{levelCode(a)}</td>
-                      <td>{a.itemKey}</td>
+                      {showRecentProblem ? <td>{problemText(a) ?? '-'}</td> : null}
                       <td>{OUTCOME_LABEL[a.outcome]}</td>
                       <td>{a.hintsUsed}</td>
                     </tr>
@@ -476,17 +525,17 @@ export function RecordsTab() {
                 <thead>
                   <tr>
                     <th>日時</th>
-                    <th>モード</th>
-                    <th>問題</th>
+                    <th>あそび</th>
+                    {showIssueProblem ? <th>問題</th> : null}
                     <th>入力</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {issues.slice(0, 30).map((a, i) => (
+                  {issueRows.map((a, i) => (
                     <tr key={a.id ?? i}>
                       <td>{formatDateTime(a.at)}</td>
                       <td>{modeTitle(a.modeId, a.unitId)}</td>
-                      <td>{a.itemKey}</td>
+                      {showIssueProblem ? <td>{problemText(a) ?? '-'}</td> : null}
                       <td>
                         {
                           { touch: '指', pen: 'ペン', mouse: 'マウス', unknown: '不明' }[

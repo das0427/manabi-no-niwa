@@ -4,7 +4,6 @@
  * 「ほかの がくねん」は上の帯（鍵の左）。右の列の一番下を「えいご」の札にするため（設計: preschool-english.md 8章）。
  */
 import { useEffect, useState, type CSSProperties } from 'react';
-import { audio } from '../core/audio/index';
 import * as db from '../core/storage/index';
 import { MODE_IDS } from '../core/types';
 import { PRESCHOOL_EN_CARDS, showsEnglishCard } from '../curriculum/preschoolEnglish';
@@ -16,17 +15,29 @@ import {
 } from '../curriculum/preschoolHome';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
+import type { VoiceSeq } from '../voice/catalog/index';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
-import { navigate } from './router';
+import { navigate, type Route } from './router';
+import { StorageHealthMark } from './StorageHealthMark';
 import './home.css';
 import './school-home.css';
 
-/** 単元を開く（v1 のモードを使う単元は ModeEntry、それ以外は UnitRunner） */
-export function openUnit(unitId: string): void {
+/**
+ * 単元を開く（v1 のモードを使う単元は ModeEntry、それ以外は UnitRunner）。
+ * say: 開いたあとに読み上げる声（札の名前）。navigate は遷移のはじめに前の声を止めるので、声は
+ * navigate の say で遷移のあとに鳴らす（先に audio.play すると鳴り始める前に止まる。FX02）
+ */
+export function openUnit(unitId: string, say?: VoiceSeq): void {
   const m = unitMeta(unitId);
   if (!m) return;
-  navigate(m.legacy ? { name: 'legacy', unitId } : { name: 'unit', unitId });
+  go(m.legacy ? { name: 'legacy', unitId } : { name: 'unit', unitId }, say);
+}
+
+/** 遷移する。say があれば遷移のあとに読み上げる（無いときは navigate の第2引数を渡さない） */
+function go(route: Route, say?: VoiceSeq): void {
+  if (say) navigate(route, { say });
+  else navigate(route);
 }
 
 /** 札の単元のうち、子供画面に出すもの（保護者が開いていない hiddenByDefault は出さない） */
@@ -104,11 +115,11 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
     showsEnglishCard({ stage2, showPreschoolEnglish: settings?.showPreschoolEnglish }) &&
     cardUnits(eigo, settings?.unitsOpened).length > 0;
 
+  // 札の名前の声は、遷移のあとに鳴らす（navigate の say。v1 の Home.tsx の open と同じ。FX02）
   const open = (c: HomeCard) => {
     const units = cardUnits(c, app.settings?.unitsOpened);
-    if (c.titleVoice) void audio.play(c.titleVoice);
-    if (units.length === 1) openUnit(units[0]!);
-    else if (units.length > 1) navigate({ name: 'card', stage: def.stage, cardId: c.id });
+    if (units.length === 1) openUnit(units[0]!, c.titleVoice);
+    else if (units.length > 1) go({ name: 'card', stage: def.stage, cardId: c.id }, c.titleVoice);
   };
 
   return (
@@ -130,6 +141,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
             <Illust id="explore" className="home-explore__illust" decorative />
             <span className="home-explore__name">ほかの がくねん</span>
           </button>
+          <StorageHealthMark />
           <ParentGateButton />
         </div>
       </div>

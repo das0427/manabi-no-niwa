@@ -698,7 +698,7 @@ export const folktales: UnitSpec = {
   kind: 'reading',
   priority: 'P2',
   status: 'ready',
-  icon: 'p5-book',
+  icon: 'book', // ja-g16.tsx（FX15）の本の絵
   prereq: [],
   objectives: [
     { id: 'hito', title: 'だれが でて きて、なにを したかを ききとる' },

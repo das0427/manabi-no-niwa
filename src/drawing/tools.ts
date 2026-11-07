@@ -41,7 +41,7 @@ export const COLORS_24: DrawColor[] = [
   C('pink', 'ももいろ', '#F28DA8'),
   C('lightpink', 'うすもも', '#F9C9D4'),
   C('orange', 'だいだい', '#EE8A2A'),
-  C('skin', 'はだいろ', '#F5CBA0'),
+  C('skin', 'うすだいだい', '#F5CBA0'),
   C('yellow', 'きいろ', '#F2C230'),
   C('lemon', 'れもんいろ', '#F7E569'),
   C('yellowgreen', 'きみどり', '#9CCB4A'),

@@ -44,7 +44,7 @@ describe('PackSetupStatus（起動画面の きょうざいの じゅんび）',
     expect(screen.queryByTestId('pack-setup-retry')).toBeNull();
   });
 
-  it('版が古いものの取り直しは「あたらしい きょうざい」', () => {
+  it('バージョンが古いものの取り直しは「あたらしい きょうざい」', () => {
     render(
       <PackSetupStatus
         view={{ kind: 'preparing', percent: 0, renewing: true }}
@@ -80,16 +80,16 @@ describe('setupParentNote（保護者向けの小さな表示）', () => {
     expect(setupParentNote({ ...packs({}), stage: 'error' })).toContain('失敗');
   });
 
-  it('既定パックがそろうまで「オフラインで つかえます」を出さない', () => {
+  it('既定パックがそろうまで「オフラインで使えます」を出さない', () => {
     expect(setupParentNote(packs({}))).toBe('教材パックの準備中 40%（2件）');
     expect(setupParentNote(packs({ checking: true }))).toBeNull();
     expect(setupParentNote({ ...packs({}), stage: 'ready', missing: [] })).toBe(
-      'オフラインで つかえます',
+      'オフラインで使えます',
     );
     expect(setupParentNote({ ...packs({}), stage: 'ready', unsupported: true })).toBeNull();
   });
 
-  it('版が古いものの取り直し・オフライン・その他の失敗', () => {
+  it('バージョンが古いものの取り直し・オフライン・その他の失敗', () => {
     expect(setupParentNote(packs({ outdated: ['g3-ja'] }))).toContain('取得し直しています 40%');
     expect(
       setupParentNote(

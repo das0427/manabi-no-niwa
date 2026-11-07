@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from '../app/AppState';
 import { hashPin } from '../app/pin';
+import { sessionMinuteChoices } from '../audience/audience';
 import { setLevelByParent } from '../core/progress/rules';
 import * as db from '../core/storage/index';
 import {
@@ -12,6 +13,7 @@ import {
   type TraceTolerance,
 } from '../core/types';
 import { MODES, SKILLS, roundSizeFor } from '../modes/registry';
+import { fullscreenMode, type FullscreenMode } from '../ui/fullscreen';
 import { UNIT_INDEX } from '../curriculum/unitIndex';
 import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
@@ -188,7 +190,7 @@ function PinSection() {
               const rec = await db.getAppRecord();
               await db.saveAppRecord({ ...rec, parentPinHash: null });
               setHasPin(false);
-              setMsg('暗証番号を解除しました。入口は計算問題になります。');
+              setMsg('暗証番号を解除しました。保護者画面を開くときは、計算問題を出します。');
             })();
           }}
         >
@@ -203,16 +205,49 @@ function PinSection() {
   );
 }
 
-function FullscreenSection() {
-  const [full, setFull] = useState(() => !!document.fullscreenElement);
+/** 窓が全画面のとき（起動中にアイコンをもう一度押したときなど）。ページからは戻せないので、キーを案内する */
+const FULLSCREEN_WINDOW_TEXT =
+  'いまは全画面で表示しています。やめるには F11 キーを押してください。ノートパソコンでは、Fn キーを押しながら F11 キーを押すことがあります。';
+const FULLSCREEN_NOTE =
+  'まなびのにわを開いているときにアイコンをもう一度押すと、その窓を前に出して全画面にします。前に出せないときは、新しい窓で開き直して、「はじめる」を押したときに全画面にします。F11 キーを押すと、いつでも元に戻ります。このボタンで全画面にしたときは、Esc キーでも戻ります。';
+
+/** 折り返しで途中で切りたくない語（キーの名前・カタカナの語・「」で囲んだ名前）。ブラウザは字の途中でも折るため、まとめて1つにする */
+const KEEP_TOGETHER = /(F11 キー|Fn キー|Esc キー|ノートパソコン|アイコン|「[^」]+」)/;
+function keepTogether(text: string): ReactNode[] {
+  // split の結果は、奇数番目が KEEP_TOGETHER に当たった所
+  return text.split(KEEP_TOGETHER).map((part, i) =>
+    i % 2 === 1 ? (
+      <span key={i} className="p-keep">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
+/** 試験のために export する */
+export function FullscreenSection() {
+  const [mode, setMode] = useState<FullscreenMode>(() => fullscreenMode());
   const [err, setErr] = useState('');
   useEffect(() => {
-    const on = () => setFull(!!document.fullscreenElement);
+    // ページの全画面の出入りと、窓の全画面（F11 など）の出入り（窓の大きさが変わる）を見る
+    const on = () => setMode(fullscreenMode());
     document.addEventListener('fullscreenchange', on);
-    return () => document.removeEventListener('fullscreenchange', on);
+    window.addEventListener('resize', on);
+    return () => {
+      document.removeEventListener('fullscreenchange', on);
+      window.removeEventListener('resize', on);
+    };
   }, []);
+  if (mode === 'window')
+    return (
+      <p className="p-fullscreen-text" data-testid="fullscreen-window">
+        {keepTogether(FULLSCREEN_WINDOW_TEXT)}
+      </p>
+    );
   return (
-    <div>
+    <div className="p-fullscreen">
       <button
         type="button"
         data-testid="fullscreen-toggle"
@@ -224,10 +259,10 @@ function FullscreenSection() {
           p.catch(() => setErr('このブラウザでは全画面にできませんでした。'));
         }}
       >
-        {full ? '全画面をやめる' : '全画面にする'}
+        {mode === 'page' ? '全画面をやめる' : '全画面にする'}
       </button>
       {err ? <p role="status">{err}</p> : null}
-      <Note>全画面表示は強制しません。ブラウザの操作（Esc キーなど）でいつでも戻れます。</Note>
+      <Note>{keepTogether(FULLSCREEN_NOTE)}</Note>
     </div>
   );
 }
@@ -425,7 +460,7 @@ export function SettingsTab() {
             data-testid="setting-sessionMinutes"
           >
             <option value={0}>なし</option>
-            {[5, 10, 15, 20, 30].map((m) => (
+            {sessionMinuteChoices(s.sessionMinutes).map((m) => (
               <option key={m} value={m}>
                 {m}分
               </option>
@@ -452,7 +487,7 @@ export function SettingsTab() {
             <tr>
               <th>設定</th>
               <th>ふつうの問題</th>
-              <th>盤面型（なかまわけ・みち）</th>
+              <th>盤面型（なかまわけ・みちづくり）</th>
               <th>なぞり</th>
             </tr>
           </thead>
@@ -535,7 +570,7 @@ export function SettingsTab() {
 
       <Section title="なぞりの判定幅">
         <Note>
-          「ひろい」ほどはみ出しても受け入れます。入力の種類（指・ペン・マウス）ごとに選べます。
+          「ひろい」ほど、お手本の線からはみ出しても受け入れます。入力の種類（指・ペン・マウス）ごとに選べます。
         </Note>
         {(['touch', 'pen', 'mouse'] as const).map((k) => (
           <label key={k} className="p-field p-field--inline">

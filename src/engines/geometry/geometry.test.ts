@@ -522,3 +522,22 @@ describe('check', () => {
     for (const s of geometrySamples) expect(checkGeometry(s), s.id).toEqual([]);
   });
 });
+
+describe('「もう一度」の文（2.1.0 の文言の点検 A8）', () => {
+  // 5歳の p5.math.shapes にも出るので、カタカナ（DESINGN.md 4章）を使わず、押す動作は「おして」
+  const KATAKANA = /[ァ-ヶ]/;
+  it('図形をとじていないとき: 「おして」で言う（タップと書かない）', () => {
+    const j = judgeGeometry(draw({ kind: 'shape', shape: 'triangle' }), {
+      path: [
+        [1, 1],
+        [4, 1],
+        [4, 3],
+      ],
+      closed: false,
+    });
+    expect(j).toMatchObject({ result: 'retry' });
+    const message = (j as { message: string }).message;
+    expect(message).toBe('さいしょの てんを もういちど おして かたちを とじてね');
+    expect(message).not.toMatch(KATAKANA);
+  });
+});

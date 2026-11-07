@@ -20,6 +20,7 @@
     "playwright.config.ts",
     "playwright.text-layout.config.ts",
     "playwright.app-layout.config.ts",
+    "playwright.update.config.ts",
     "scripts/**/*.ts",
     "e2e/**/*.ts"
   ]

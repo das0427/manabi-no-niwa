@@ -6,6 +6,7 @@ import {
   type AudioParamLike,
   type SpeechLike,
   type UtteranceLike,
+  type VoiceLike,
 } from './engine';
 import { watchPageHide } from './watch';
 
@@ -72,20 +73,50 @@ class FakeContext {
   }
 }
 
+type FakeUtterance = UtteranceLike & { text: string };
+
+const JA_LOCAL: VoiceLike = { lang: 'ja-JP', localService: true };
+const JA_NETWORK: VoiceLike = { lang: 'ja-JP', localService: false };
+const EN_LOCAL: VoiceLike = { lang: 'en-US', localService: true };
+
 class FakeSpeech {
   spoken: string[] = [];
+  utterances: FakeUtterance[] = [];
   cancel = vi.fn();
-  voices: { lang: string }[] = [{ lang: 'ja-JP' }];
-  synth = {
-    speak: (u: UtteranceLike & { text?: string }) => {
-      this.spoken.push(u.text ?? '');
+  voices: VoiceLike[] = [JA_LOCAL];
+  /** voiceschanged の聞き手（Chrome は声の一覧が遅れて届く） */
+  listeners = new Set<() => void>();
+  synth: SpeechLike['synth'] = {
+    speak: (u: UtteranceLike) => {
+      this.spoken.push((u as FakeUtterance).text);
       setTimeout(() => u.onend?.(), 100);
     },
     cancel: () => this.cancel(),
     getVoices: () => this.voices,
+    addEventListener: (_type, cb) => {
+      this.listeners.add(cb);
+    },
+    removeEventListener: (_type, cb) => {
+      this.listeners.delete(cb);
+    },
   };
   createUtterance(text: string): UtteranceLike {
-    return { text, lang: '', rate: 1, volume: 1, onend: null, onerror: null } as UtteranceLike;
+    const u: FakeUtterance = {
+      text,
+      lang: '',
+      rate: 1,
+      volume: 1,
+      voice: null,
+      onend: null,
+      onerror: null,
+    };
+    this.utterances.push(u);
+    return u;
+  }
+  /** 声の一覧が届いた（voiceschanged） */
+  deliver(voices: VoiceLike[]): void {
+    this.voices = voices;
+    for (const cb of [...this.listeners]) cb();
   }
 }
 
@@ -228,7 +259,7 @@ describe('audio engine: fallback', () => {
 
   it('goes silent without hanging when no Japanese voice exists', async () => {
     const speech = new FakeSpeech();
-    speech.voices = [{ lang: 'en-US' }];
+    speech.voices = [EN_LOCAL];
     const { engine } = setup({ missing: ['num.1'], speech });
     await engine.unlock();
     const p = engine.play(['num.1', 'num.2']);
@@ -236,6 +267,151 @@ describe('audio engine: fallback', () => {
     expect(await p).toBe('done');
     expect(speech.spoken).toEqual([]);
     expect(engine.getState().health).toBe('silent');
+  });
+
+  describe('only a voice that reads on the device (localService) is used', () => {
+    it('picks the local Japanese voice, not a network voice listed before it', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [EN_LOCAL, JA_NETWORK, JA_LOCAL];
+      const { engine } = setup({ missing: ['count.ko.1'], speech });
+      await engine.unlock();
+      const p = engine.play('count.ko.1');
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(await p).toBe('done');
+      expect(speech.spoken).toEqual(['いっこ']);
+      expect(speech.utterances[0]?.voice).toBe(JA_LOCAL);
+      expect(speech.utterances[0]?.lang).toBe('ja-JP');
+      expect(engine.getState().health).toBe('fallback');
+    });
+
+    it('does not speak with a network voice: silent, no utterance, no waiting', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [JA_NETWORK, EN_LOCAL];
+      const { engine } = setup({ missing: ['num.1', 'num.2'], speech });
+      await engine.unlock();
+      let result: string | null = null;
+      void engine.play(['num.1', 'num.2']).then((r) => (result = r));
+      await vi.advanceTimersByTimeAsync(10);
+      expect(result).toBe('done');
+      expect(speech.utterances).toEqual([]);
+      expect(speech.spoken).toEqual([]);
+      expect(engine.getState().health).toBe('silent');
+      // 声の一覧は空ではないので、届くのを待たない
+      expect(speech.listeners.size).toBe(0);
+    });
+
+    it('matches ja, ja-JP and ja_JP only (not other languages that start with "ja")', async () => {
+      const jam: VoiceLike = { lang: 'jam', localService: true };
+      const underscore: VoiceLike = { lang: 'ja_JP', localService: true };
+
+      const speech = new FakeSpeech();
+      speech.voices = [EN_LOCAL, jam, underscore];
+      const first = setup({ missing: ['num.1'], speech });
+      await first.engine.unlock();
+      const p = first.engine.play('num.1');
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(await p).toBe('done');
+      expect(speech.utterances[0]?.voice).toBe(underscore);
+
+      const speech2 = new FakeSpeech();
+      speech2.voices = [jam];
+      const second = setup({ missing: ['num.1'], speech: speech2 });
+      await second.engine.unlock();
+      const q = second.engine.play('num.1');
+      await vi.advanceTimersByTimeAsync(10);
+      expect(await q).toBe('done');
+      expect(speech2.utterances).toEqual([]);
+      expect(second.engine.getState().health).toBe('silent');
+    });
+
+    it('waits once for a voice list that has not arrived yet (voiceschanged), then speaks', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [];
+      const { engine } = setup({ missing: ['count.ko.1'], speech });
+      await engine.unlock();
+      let result: string | null = null;
+      void engine.play('count.ko.1').then((r) => (result = r));
+      await vi.advanceTimersByTimeAsync(300);
+      // 一覧待ち: まだ読まず、待っている（聞き手が付いている）
+      expect(speech.utterances).toEqual([]);
+      expect(speech.listeners.size).toBe(1);
+      expect(result).toBeNull();
+      expect(engine.getState().speaking).toBe(true);
+      speech.deliver([JA_NETWORK, JA_LOCAL]);
+      await vi.advanceTimersByTimeAsync(300);
+      expect(speech.spoken).toEqual(['いっこ']);
+      expect(speech.utterances[0]?.voice).toBe(JA_LOCAL);
+      expect(result).toBe('done');
+      expect(speech.listeners.size).toBe(0);
+      expect(engine.getState().health).toBe('fallback');
+    });
+
+    it('goes silent when the list arrives with network voices only', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [];
+      const { engine } = setup({ missing: ['num.1'], speech });
+      await engine.unlock();
+      const p = engine.play('num.1');
+      await vi.advanceTimersByTimeAsync(100);
+      speech.deliver([JA_NETWORK]);
+      await vi.advanceTimersByTimeAsync(100);
+      expect(await p).toBe('done');
+      expect(speech.utterances).toEqual([]);
+      expect(engine.getState().health).toBe('silent');
+      expect(speech.listeners.size).toBe(0);
+    });
+
+    it('gives up after one second when the list never arrives, and does not wait again', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [];
+      const { engine } = setup({ missing: ['num.1', 'num.2'], speech });
+      await engine.unlock();
+      let result: string | null = null;
+      void engine.play(['num.1', 'num.2']).then((r) => (result = r));
+      await vi.advanceTimersByTimeAsync(900);
+      expect(result).toBeNull();
+      // 1 秒で待ちをやめ、2 つ目は待たずに続ける（合わせて 1 秒ほどで終わる）
+      await vi.advanceTimersByTimeAsync(200);
+      expect(result).toBe('done');
+      expect(speech.utterances).toEqual([]);
+      expect(engine.getState().health).toBe('silent');
+      expect(speech.listeners.size).toBe(0);
+      // 次の再生でも待たない（待ちは 1 回だけ）
+      let again: string | null = null;
+      void engine.play('num.1').then((r) => (again = r));
+      await vi.advanceTimersByTimeAsync(10);
+      expect(again).toBe('done');
+    });
+
+    it('a stop() during the wait cancels it and nothing is spoken afterwards', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [];
+      const { engine } = setup({ missing: ['num.1'], speech });
+      await engine.unlock();
+      const p = engine.play('num.1');
+      await vi.advanceTimersByTimeAsync(100);
+      engine.stop();
+      expect(await p).toBe('stopped');
+      expect(speech.listeners.size).toBe(0);
+      speech.deliver([JA_LOCAL]);
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(speech.utterances).toEqual([]);
+      expect(engine.getState().speaking).toBe(false);
+    });
+
+    it('does not wait when the browser has no voiceschanged event', async () => {
+      const speech = new FakeSpeech();
+      speech.voices = [];
+      delete speech.synth.addEventListener;
+      delete speech.synth.removeEventListener;
+      const { engine } = setup({ missing: ['num.1'], speech });
+      await engine.unlock();
+      const p = engine.play('num.1');
+      await vi.advanceTimersByTimeAsync(10);
+      expect(await p).toBe('done');
+      expect(speech.utterances).toEqual([]);
+      expect(engine.getState().health).toBe('silent');
+    });
   });
 
   it('goes silent when speechSynthesis is unavailable', async () => {

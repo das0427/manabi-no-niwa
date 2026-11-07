@@ -14,7 +14,6 @@ import {
   cardKey,
   cardText,
   CheckButton,
-  RETRY_FILL_ALL,
   sameSet,
   shuffledIndices,
   spreadPick,
@@ -47,6 +46,9 @@ export type MatchResponse = [number, number][];
 
 const MAX_SIDE = 6;
 
+/** 「もう一度」の文。線でむすぶ問題なので「おいて」でなく「むすんで」（order・sort の RETRY_FILL_ALL は「おく」問題の文） */
+export const RETRY_MATCH_ALL: RichText = 'ぜんぶ むすんでから こたえあわせ しよう。';
+
 /** k 組に減らすとき（2〜3歳）に使う左の番号。昇順 */
 export function matchVisible(item: MatchItem, k: number): number[] {
   return spreadPick(item.left.length, k);
@@ -66,7 +68,7 @@ export function judgeMatch(item: MatchItem, res: MatchResponse): Judgement {
     new Set(rights).size !== rights.length ||
     !sameSet(lefts, matchVisible(item, lefts.length))
   )
-    return { result: 'retry', message: RETRY_FILL_ALL };
+    return { result: 'retry', message: RETRY_MATCH_ALL };
   const rk = (r: number) => (item.right[r] ? cardKey(item.right[r]) : `?${r}`);
   // 同じ見た目の右のカードは入れ替えても正解
   const wrong = res.filter(([l, r]) => {

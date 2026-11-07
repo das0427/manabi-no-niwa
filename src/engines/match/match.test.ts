@@ -222,3 +222,10 @@ describe('画面', () => {
     ]);
   });
 });
+
+describe('「もう一度」の文（2.1.0 の文言の点検 A8）', () => {
+  it('むすび終えていないとき: 線でむすぶ問題なので「むすんで」と言う（「おいて」は order・sort の文）', () => {
+    const j = judgeMatch(item(), [[0, 1]]);
+    expect(j).toEqual({ result: 'retry', message: 'ぜんぶ むすんでから こたえあわせ しよう。' });
+  });
+});

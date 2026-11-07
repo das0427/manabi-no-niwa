@@ -454,7 +454,7 @@ reading の h1 は classics-read と同じく `${CIRCLED[n-1]}の段落《だん
 
 ## 6. 使う絵・図
 
-- icon: `book`（既存）。新しい絵は無い。`src/illust/content/g6-ja.tsx` は作らない。
+- icon: `book`。新しい絵は無い。`src/illust/content/g6-ja.tsx` は作らない（`book` は、はじめ素材一覧に無く赤い破線の枠になっていた。2.1.0 の FX15 で `src/illust/content/ja-g16.tsx` に描いて登録した）。
 - 図は `figure: { kind: 'text' }`（会話・古文・1字）と intro の `table` だけ。色で区別する問題は無い。
 
 ## 7. 文字の画面での収まり

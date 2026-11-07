@@ -16,6 +16,7 @@ import {
 import { audienceUx, gradeOf } from '../audience/audience';
 import { audio } from '../core/audio/index';
 import { addOutcome, evaluate } from '../core/progress/rules';
+import { isSessionTimeUp } from '../core/session/sessionTime';
 import * as db from '../core/storage/index';
 import { profileAudience, type Profile, type UnitProgress } from '../core/types';
 import { freshSeed } from '../core/util/rng';
@@ -41,7 +42,12 @@ import { Figure } from '../engines/figure/Figure';
 import { engineOf } from '../engines/registry';
 import type { Judgement, RenderCtx } from '../engines/types';
 import { Illust } from '../illust/Illust';
-import { loadPack, PACK_UNAVAILABLE_CHILD_TEXT, PackUnavailableError } from '../packs/loader';
+import {
+  loadPack,
+  PACK_UNAVAILABLE_CHILD_TEXT,
+  PACK_UNAVAILABLE_PARENT_TEXT,
+  PackUnavailableError,
+} from '../packs/loader';
 import { Rt } from '../text/Rt';
 import { plainText } from '../text/rich';
 import { ModeHeader } from '../ui/ModeHeader';
@@ -53,15 +59,18 @@ import { Tap } from '../ui/Tap';
 import {
   canSkip,
   currentItem,
+  doneCaption,
   draftOf,
   flowReducer,
   initialFlow,
+  nextLocked,
   playsWrongSfx,
   restoreFlow,
   type FlowDraft,
   type FlowState,
 } from './unitFlow';
 import './unit.css';
+import './unit-error.css';
 
 /** 図を左・エンジンを右に並べない種類（数の入力・読解・なぞり・解説。もともと自前の配置） */
 const SIDE_EXCLUDED: ReadonlySet<string> = new Set(['number', 'reading', 'trace', 'explain']);
@@ -115,7 +124,8 @@ const SOFT_AGAIN = 'もういちど みてみよう。';
 
 type Loaded =
   | { kind: 'loading' }
-  | { kind: 'error'; text: string }
+  // parentText: 保護者向けの説明（教材を開けないとき。FX12）
+  | { kind: 'error'; text: string; parentText?: string }
   | {
       kind: 'ready';
       unit: UnitSpec;
@@ -204,6 +214,9 @@ export function UnitRunner({ unitId }: { unitId: string }) {
             e instanceof PackUnavailableError
               ? PACK_UNAVAILABLE_CHILD_TEXT[e.reason]
               : 'いまは ひらけないよ。おうちの ひとに みてもらってね',
+          ...(e instanceof PackUnavailableError
+            ? { parentText: PACK_UNAVAILABLE_PARENT_TEXT[e.reason] }
+            : {}),
         });
       }
     })();
@@ -220,6 +233,11 @@ export function UnitRunner({ unitId }: { unitId: string }) {
         <ModeHeader promptText="" onHome={home} onListen={() => undefined} canListen={false} />
         <div className="center-col">
           <p className="label-text">{loaded.text}</p>
+          {loaded.parentText ? (
+            <p className="unit__parent-note" data-testid="unit-error-parent">
+              {loaded.parentText}
+            </p>
+          ) : null}
         </div>
       </div>
     );
@@ -471,6 +489,8 @@ export function UnitRound({
 
   // 回の終わり: 進度と復習（AD-04: 段階の変更は回の終わりだけ）
   const finished = useRef(false);
+  // 利用時間の目安に達したか（FX10）。null は回の記録を書き終えて判定するまで（完了画面はそれまで出さない）
+  const [timeUp, setTimeUp] = useState<boolean | null>(null);
   useEffect(() => {
     if (s.phase !== 'done' || finished.current) return;
     finished.current = true;
@@ -511,8 +531,12 @@ export function UnitRound({
         const id = await ensureRound();
         await db.updateRound(roundRecord(s.results.length, true, id));
       }
+      // 利用時間の目安（区切りでだけ知らせる。CX-04）。v1 のモードと同じ判定（core/session/sessionTime.ts）
+      const over = await isSessionTimeUp(profile.id, settings.sessionMinutes);
+      setTimeUp(over);
       audio.sfx('complete');
-    })();
+      if (over && support.readAloud !== 'off') void audio.play('app.timeup');
+    })().catch(() => setTimeUp((t) => t ?? false));
   }, [
     s.phase,
     s.results,
@@ -523,11 +547,19 @@ export function UnitRound({
     ensureRound,
     roundRecord,
     profile.id,
+    settings.sessionMinutes,
+    support.readAloud,
   ]);
 
   useEffect(() => {
     exposeForTest({ unitId: unit.id, level, index: s.index, phase: s.phase, item });
   }, [unit.id, level, s.index, s.phase, item]);
+
+  // 解説の板が出てから NEXT_LOCK_MS は「つぎへ」を受け付けない（FX01: すばやい2回押しで解説を飛ばさない）
+  const explainAt = useRef(0);
+  useEffect(() => {
+    if (s.phase === 'explain') explainAt.current = Date.now();
+  }, [s.phase, s.index]);
 
   // 連打で同じ答えを2回判定しない（効果音・読み上げが重ならないように: コードレビュー #15）
   const lastSubmit = useRef(0);
@@ -1024,6 +1056,7 @@ export function UnitRound({
         unit={unit}
         state={s}
         soft={ux.softJudgement}
+        timeUp={timeUp}
         ctx={ctx}
         onAgain={onAgain}
         onHome={onHome}
@@ -1153,8 +1186,9 @@ export function UnitRound({
           type="button"
           className="tap tap--main unit__corner-right"
           onClick={() => {
-            if (s.phase === 'explain') dispatch({ type: 'next' });
-            else {
+            if (s.phase === 'explain') {
+              if (!nextLocked(explainAt.current, Date.now())) dispatch({ type: 'next' });
+            } else {
               dispatch({ type: 'skip' });
               if (item) say([item.explain]);
             }
@@ -1173,6 +1207,7 @@ function UnitDone({
   unit,
   state,
   soft,
+  timeUp,
   ctx,
   onAgain,
   onHome,
@@ -1180,17 +1215,28 @@ function UnitDone({
   unit: UnitSpec;
   state: FlowState;
   soft: boolean;
+  /** 利用時間の目安に達したか。null は判定の前 */
+  timeUp: boolean | null;
   ctx: RenderCtx;
   onAgain(): void;
   onHome(): void;
 }) {
-  const self = state.results.filter(
-    (r) => r.outcome === 'independent' || r.outcome === 'self_corrected',
-  ).length;
+  // 目安の判定が済むまでは中身を出さない（「もういっかい」が一瞬出て消えないように。判定は数十 ms で終わる）。
+  // 上の帯（おうち）は残す（空の画面にしない。保存が遅い端末でも戻れる）
+  if (timeUp === null)
+    return (
+      <div className="screen done" data-testid="unit-done-pending">
+        <ModeHeader promptText="" onHome={onHome} onListen={() => undefined} canListen={false} />
+      </div>
+    );
   return (
     <div className="screen done" data-testid="unit-done">
       <ModeHeader promptText="" onHome={onHome} onListen={() => undefined} canListen={false} />
-      <div className="center-col" style={{ gap: 'calc(var(--u) * 2.4)' }}>
+      <div
+        className="center-col"
+        // 目安の合図の1行が増えるぶん、上の帯（8u）にかからないよう v1 の完了画面と同じ 6u から並べる
+        style={{ gap: 'calc(var(--u) * 2.4)', ...(timeUp ? { top: 'calc(var(--u) * 6)' } : null) }}
+      >
         <Illust
           id={unit.icon}
           style={{ width: 'calc(var(--u) * 14)', height: 'calc(var(--u) * 14)' }}
@@ -1200,20 +1246,28 @@ function UnitDone({
           <Rt text={unit.title} ctx={ctx} />
         </p>
         <p className="label-text" data-testid="unit-done-caption">
-          {soft
-            ? 'いっぱい あそんだね'
-            : `${state.results.length}もん おわったね。じぶんで できたのは ${self}もん`}
+          {doneCaption(
+            state.results.map((r) => r.outcome),
+            soft,
+          )}
         </p>
+        {timeUp ? (
+          <p className="label-text" data-testid="unit-done-timeup">
+            きょうは ここまでに しよう
+          </p>
+        ) : null}
         <div className="row" style={{ gap: 'calc(var(--u) * 3)' }}>
-          <button
-            type="button"
-            className="tap tap--main"
-            onClick={onAgain}
-            data-testid="again-button"
-          >
-            <Illust id="again" className="tap__icon" decorative />
-            もういちど
-          </button>
+          {!timeUp ? (
+            <button
+              type="button"
+              className="tap tap--main"
+              onClick={onAgain}
+              data-testid="again-button"
+            >
+              <Illust id="again" className="tap__icon" decorative />
+              もういっかい
+            </button>
+          ) : null}
           <button
             type="button"
             className="tap tap--wood"

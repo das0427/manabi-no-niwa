@@ -1292,7 +1292,7 @@ export const languageChange: UnitSpec = {
   kind: 'knowledge',
   priority: 'P2',
   status: 'ready',
-  icon: 'p5-book',
+  icon: 'book', // ja-g16.tsx（FX15）の本の絵
   prereq: [],
   objectives: [
     {

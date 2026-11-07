@@ -836,7 +836,7 @@ export const wordPlay: UnitSpec = {
   kind: 'play',
   priority: 'P2',
   status: 'ready',
-  icon: 'p5-note',
+  icon: 'music-note', // ja-g16.tsx（FX15）の音符の絵
   prereq: ['p4.ja.word-play'],
   objectives: [
     { id: 'shiri', title: 'しりとりで ことばを つなぐ' },

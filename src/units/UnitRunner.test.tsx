@@ -218,7 +218,7 @@ describe('FX10: 目安を超えたあとの単元の完了で「きょうは こ
     await waitFor(() => expect(screen.getByTestId('unit-done')).toBeTruthy());
   }
 
-  it('きょうの回の合計が目安以上なら、合図を出して「もういちど」を出さない（おうち は残る）', async () => {
+  it('きょうの回の合計が目安以上なら、合図を出して「もういっかい」を出さない（おうち は残る）', async () => {
     await round(6);
     renderRound({ sessionMinutes: 5 });
     await finishRound();
@@ -229,7 +229,7 @@ describe('FX10: 目安を超えたあとの単元の完了で「きょうは こ
     expect(audio.play).toHaveBeenCalledWith('app.timeup');
   });
 
-  it('目安に届いていなければ出さない（「もういちど」が残る）', async () => {
+  it('目安に届いていなければ出さない（「もういっかい」が残る）', async () => {
     await round(2);
     renderRound({ sessionMinutes: 5 });
     await finishRound();
@@ -266,7 +266,7 @@ describe('FX10: 目安を超えたあとの単元の完了で「きょうは こ
     expect(audio.play).not.toHaveBeenCalledWith('app.timeup');
   });
 
-  it('判定が済むまでは完了画面を出さない（「もういちど」が一瞬出て消えない）', async () => {
+  it('判定が済むまでは完了画面を出さない（「もういっかい」が一瞬出て消えない）', async () => {
     await round(6);
     renderRound({ sessionMinutes: 5 });
     toExplainBySkip();
@@ -285,7 +285,7 @@ describe('FX10: 目安を超えたあとの単元の完了で「きょうは こ
     await waitFor(() => expect(screen.getByTestId('unit-done')).toBeTruthy());
   });
 
-  it('判定に失敗しても完了画面は出る（合図なし・もういちど と おうち あり。待ちの画面で止まらない）', async () => {
+  it('判定に失敗しても完了画面は出る（合図なし・もういっかい と おうち あり。待ちの画面で止まらない）', async () => {
     vi.mocked(isSessionTimeUp).mockRejectedValueOnce(new Error('読めなかった'));
     await round(6);
     renderRound({ sessionMinutes: 5 });

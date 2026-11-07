@@ -200,7 +200,7 @@ describe('parseBackup', () => {
     const newer = JSON.stringify({ ...j, schemaVersion: SCHEMA_VERSION + 1 });
     const res = parseBackup(newer, newer.length);
     expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.reason).toContain('新しい版');
+    if (!res.ok) expect(res.reason).toContain('新しいバージョン');
   });
 
   it('型不正（名前が長すぎ・outcome 不正・孤立レコード・メモ長すぎ）を拒否', async () => {

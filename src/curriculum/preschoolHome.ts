@@ -245,23 +245,23 @@ export function recommendCards(input: CardRecInput): CardRec[] {
   const fav = candidates
     .filter((c) => input.favorites.includes(c.id))
     .sort((a, b) => (today.get(a.id) ?? 0) - (today.get(b.id) ?? 0) || tie(a.id) - tie(b.id));
-  if (fav[0]) take(fav[0], 'すきな あそびです');
+  if (fav[0]) take(fav[0], 'すきな遊びです');
   const stale = candidates
     .filter((c) => input.todayStart - (last.get(c.id) ?? 0) >= 3 * DAY)
     .sort((a, b) => (last.get(a.id) ?? 0) - (last.get(b.id) ?? 0) || tie(a.id) - tie(b.id));
   for (const c of stale) {
     if (picked.length >= 2) break;
-    take(c, last.has(c.id) ? '3日以上 あそんでいません' : 'まだ あそんでいません');
+    take(c, last.has(c.id) ? '3日以上遊んでいません' : 'まだ遊んでいません');
   }
   for (const c of [...candidates].sort((a, b) => tie(a.id) - tie(b.id))) {
     if (picked.length >= 2) break;
-    take(c, 'いろいろな あそびを ためせるように えらびました');
+    take(c, 'いろいろな遊びを試せるように選びました');
   }
   // 領域が足りないとき（札が少ない区分）は領域の重なりを許して2件にする
   for (const c of [...candidates].sort((a, b) => tie(a.id) - tie(b.id))) {
     if (picked.length >= 2) break;
     if (!picked.some((p) => p.cardId === c.id))
-      picked.push({ cardId: c.id, reason: 'いろいろな あそびを ためせるように えらびました' });
+      picked.push({ cardId: c.id, reason: 'いろいろな遊びを試せるように選びました' });
   }
   return picked;
 }

@@ -271,6 +271,23 @@ export function flowReducer(s: FlowState, a: FlowAction): FlowState {
 }
 
 /**
+ * 完了画面の文（2.1.0 の文言の点検 A8。点数に見える「Nもん おわったね。じぶんで できたのは Mもん」をやめた）。
+ * 正解の数は出さない。観測できた行動（その回を最後までやった）だけを言う（learning-design.md 0.5、DESINGN.md 18章）。
+ * - soft（2歳段階）: 遊んだことだけ
+ * - 正解した問題が 1つもない（全部「つぎへ」で見た）回: できたとは言わず、いっしょに見たことを言う
+ *   （v1 の `praise.watched` と同じ文・同じ条件〔src/modes/math/types.ts の praiseOf〕。数も出さない）。
+ *   ヒントや見直しのあとで正解した問題（after_hint・after_review）は、答えた問題として数える
+ * - そのほか: 問題の数と、最後までやったこと
+ * @param outcomes その回の問題ごとの結果（数がその回の問題の数）
+ */
+export function doneCaption(outcomes: readonly Outcome[], soft: boolean): string {
+  if (soft) return 'いっぱい あそんだね';
+  if (outcomes.every((o) => o === 'skipped' || o === 'abandoned'))
+    return 'いっしょに さいごまで みたね';
+  return `${outcomes.length}もん さいごまで やったね`;
+}
+
+/**
  * 不正解の効果音を鳴らすか。2歳段階（softJudgement）と、穏やかな判定の単元（gentleJudgement。幼児の英語）では鳴らさない。
  * ○／？の印・誤概念の説明・記録は変えない。
  */

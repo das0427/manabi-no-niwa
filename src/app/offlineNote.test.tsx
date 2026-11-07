@@ -78,16 +78,17 @@ function aboutNote(): string {
 const claimsUsable = (t: string): boolean => /つかえます|使えます/.test(t) && !/開き直/.test(t);
 
 describe('setupParentNote（開き直す前かどうか）', () => {
-  it('準備ができても、開き直す前は「つかえます」と言い切らず、開き直しを案内する', () => {
+  it('準備ができても、開き直す前は「使えます」と言い切らず、開き直しを案内する', () => {
     expect(setupParentNote(ready, false)).toBe(OFFLINE_REOPEN_NOTE);
     expect(OFFLINE_REOPEN_NOTE).toContain('開き直す');
     expect(OFFLINE_REOPEN_NOTE).not.toContain('つかえます');
+    expect(claimsUsable(OFFLINE_REOPEN_NOTE)).toBe(false);
   });
 
-  it('開き直したあと（制御されている）は今までどおり「オフラインで つかえます」', () => {
-    expect(setupParentNote(ready, true)).toBe('オフラインで つかえます');
+  it('開き直したあと（制御されている）は「オフラインで使えます」', () => {
+    expect(setupParentNote(ready, true)).toBe('オフラインで使えます');
     // 引数を省いたときも同じ（開き直したあと）
-    expect(setupParentNote(ready)).toBe('オフラインで つかえます');
+    expect(setupParentNote(ready)).toBe('オフラインで使えます');
   });
 
   it('準備中・失敗・使えない環境の文は、開き直す前かどうかで変わらない', () => {
@@ -112,7 +113,7 @@ describe('起動画面と「このアプリについて」の食い違い', () =
   it('開き直したあと: どちらも使えると言う', async () => {
     m.controlled = true;
     const start = await startNote();
-    await waitFor(() => expect(start).toBe('オフラインで つかえます'));
+    await waitFor(() => expect(start).toBe('オフラインで使えます'));
     const about = aboutNote();
     expect(about).toBe('オフラインで使えます');
     expect(claimsUsable(start)).toBe(true);

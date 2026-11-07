@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { voiceText } from '../voice/types';
 import {
   STAMP_CATEGORIES,
   STAMP_LIST,
@@ -8,6 +9,7 @@ import {
 import { placeCards } from './layout';
 import { STAMPS } from './stamps';
 import { TILE, TileRecorder, applyTiles, tilesBytes, type PixelCtx } from './tiles';
+import { voice } from './voice';
 import {
   COLORS_24,
   COLORS_6,
@@ -81,6 +83,12 @@ describe('色数・太さ（ux-by-age 1章、review-1 #29）', () => {
         expect(c.name).toMatch(/^[ぁ-ん]+$/);
       }
     }
+  });
+  it('肌の色を一つに決めつけない名前（うすだいだい）で、声の台本も同じ名前を読む', () => {
+    const skin = COLORS_24.find((c) => c.id === 'skin');
+    expect(skin?.name).toBe('うすだいだい');
+    expect(COLORS_24.map((c) => c.name)).not.toContain('はだいろ');
+    expect(voiceText(voice['draw.color.skin']!)).toBe('うすだいだい');
   });
 });
 

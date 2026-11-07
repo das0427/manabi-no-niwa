@@ -174,15 +174,14 @@ function watchWorker(worker: ServiceWorker): void {
         const stillUseful = reg !== null && (reg.active !== null || reg.waiting !== null);
         if (stillUseful) {
           setState({
-            error:
-              'あたらしい ばーじょんの じゅんびに しっぱいしました（いまの ばーじょんは そのまま つかえます）',
+            error: '新しいバージョンの準備に失敗しました。いまのバージョンはそのまま使えます。',
           });
         } else if (reg?.installing === null) {
           setState({
             status: 'error',
             progress: null,
             error:
-              'オフラインの じゅんびに しっぱいしました。ネットワークに つないで もういちど ひらいてください。',
+              'オフラインの準備に失敗しました。ネットワークにつないで、もう一度開いてください。',
           });
         }
       }
@@ -264,8 +263,8 @@ async function start(): Promise<void> {
       progress: null,
       error:
         typeof name === 'string'
-          ? `オフラインの じゅんびを はじめられませんでした（${name}）`
-          : 'オフラインの じゅんびを はじめられませんでした',
+          ? `オフラインの準備を始められませんでした（${name}）`
+          : 'オフラインの準備を始められませんでした',
     });
   }
 }

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# まなびのにわ 取り消しスクリプト（install.sh が行ったことを元に戻します。sudo は使いません）
+# まなびのにわ 取り消しスクリプト。install.sh が行ったことを元に戻します。sudo は使いません。
 #
 #   bash uninstall.sh        内容を表示して y/N で確認してから実行
 #   bash uninstall.sh --yes  確認を省く
 #
 # 学習データ（記録・作品・設定）はブラウザの中にあり、このスクリプトでは消えません。
-# 消したいときは、保護者画面の「データ」から消すか、ブラウザの設定
-# （サイトのデータの削除。http://127.0.0.1:8765 のデータ）で消してください。
+# 消したいときは、保護者画面の「データ」から消すか、ブラウザの設定で
+# http://127.0.0.1:8765 のサイトのデータを削除してください。
 set -euo pipefail
 
 ASSUME_YES=0
@@ -54,8 +54,8 @@ echo "       $DESKTOP_FILE"
 echo "       $SHORTCUT_FILE"
 echo "  4. 配置したアプリ本体と、更新で使ったものを削除:"
 echo "       $APP_DIR"
-echo "       $APP_PREV（前の版の控え）"
-echo "       $APP_NEXT（組み立て中の新しい版）"
+echo "       $APP_PREV（前のバージョンの控え）"
+echo "       $APP_NEXT（組み立て中の新しいバージョン）"
 echo "       $UPDATE_DIR（更新の作業用）"
 echo "       $UPDATER_CONFIG_DIR（更新の設定 updater.json）"
 echo "       （配信の記録 $STATE_DIR も削除）"
@@ -133,7 +133,7 @@ case "$BASE_DIR" in
   *) echo "不正な配置先のため、フォルダの片付けは行いませんでした: $BASE_DIR" >&2 ;;
 esac
 rm -rf "$STATE_DIR"
-echo "[4/4] アプリ本体と、更新で使ったもの（前の版の控え・作業用のフォルダ・更新の設定）を削除しました"
+echo "[4/4] アプリ本体と、更新で使ったもの（前のバージョンの控え・作業用のフォルダ・更新の設定）を削除しました"
 
 echo
 echo "取り消しました。ブラウザの中の学習データは残っています（消すには保護者画面かブラウザの設定から）。"

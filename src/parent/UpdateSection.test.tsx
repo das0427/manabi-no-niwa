@@ -133,13 +133,13 @@ describe('窓口が無いとき', () => {
 });
 
 describe('いつもの表示', () => {
-  it('いまの版と、確認の状態', () => {
+  it('いまのバージョンと、確認の状態', () => {
     render(<UpdateSection />);
     expect(screen.getByTestId('update-section').textContent).toContain('アプリの更新');
-    expect(text('update-current')).toBe('いまの版: 2.1.0');
+    expect(text('update-current')).toBe('いまのバージョン: 2.1.0');
     const at = formatDateTime(new Date('2026-11-20T01:24:00Z').getTime());
     expect(text('update-check-status')).toContain(`${at} に確かめました`);
-    expect(text('update-check-status')).toContain('新しい版はありません');
+    expect(text('update-check-status')).toContain('新しいバージョンはありません');
     expect(screen.queryByTestId('update-available')).toBeNull();
     expect(screen.queryByTestId('update-error')).toBeNull();
     expect(screen.queryByTestId('update-done')).toBeNull();
@@ -147,11 +147,11 @@ describe('いつもの表示', () => {
 
   const checks: [string, Partial<UpdaterStatus['check']>, string][] = [
     ['never', { state: 'never', at: null }, 'まだ確かめていません'],
-    ['checking', { state: 'checking', at: null }, '新しい版があるか確かめています…'],
+    ['checking', { state: 'checking', at: null }, '新しいバージョンがあるか確かめています…'],
     [
       'offline',
       { state: 'offline' },
-      'インターネットにつながっていないため、確かめられませんでした（つながっているときに、また確かめます）',
+      'インターネットにつながっていないため、確かめられませんでした。つながっているときに、また確かめます',
     ],
     [
       'error(http)',
@@ -170,21 +170,34 @@ describe('いつもの表示', () => {
     expect(text('update-check-status')).toBe(expected);
   });
 
-  it('確認の結果が ok でも、新しい版があれば「新しい版はありません」とは出さない', () => {
+  it('自動の確認がオフなら、つながらなかったときも「また確かめます」とは言わない（配信は確かめ直さない）', () => {
+    setView({
+      status: status({
+        settings: { autoCheck: false },
+        check: { ...status().check, state: 'offline' },
+      }),
+    });
+    render(<UpdateSection />);
+    expect(text('update-check-status')).toBe(
+      'インターネットにつながっていないため、確かめられませんでした',
+    );
+  });
+
+  it('確認の結果が ok でも、新しいバージョンがあれば「新しいバージョンはありません」とは出さない', () => {
     setView({ status: status({ latest: NEWER }) });
     render(<UpdateSection />);
-    expect(text('update-check-status')).not.toContain('新しい版はありません');
+    expect(text('update-check-status')).not.toContain('新しいバージョンはありません');
   });
 });
 
-describe('新しい版があるとき', () => {
+describe('新しいバージョンがあるとき', () => {
   beforeEach(() => setView({ status: status({ latest: NEWER }) }));
 
-  it('版・公開日・変わった点（文字として）・大きさ・更新するボタンと注意', () => {
+  it('バージョン・公開日・変わった点（文字として）・大きさ・更新するボタンと注意', () => {
     render(<UpdateSection />);
     const box = screen.getByTestId('update-available');
     expect(box.className).toContain('p-alert');
-    expect(box.textContent).toContain('新しい版 2.2.0 があります（公開日 2026-11-20）');
+    expect(box.textContent).toContain('新しいバージョン 2.2.0 があります（公開日 2026-11-20）');
     const notes = screen.getByTestId('update-notes').querySelectorAll('li');
     expect(notes).toHaveLength(2);
     // HTML として解釈しない
@@ -194,7 +207,7 @@ describe('新しい版があるとき', () => {
     expect(screen.getByTestId('update-apply').className).toContain('p-primary');
     expect(screen.getByTestId('update-apply').textContent).toBe('更新する');
     expect(box.textContent).toContain(
-      '押すと、ダウンロード・確認・切り替え・教材の取り直しまで自動で行います。終わるとアプリを1回読み込み直します（そのあと保護者画面を開き直すと結果が見られます）。学習の記録は消えません。お子さんが遊んでいないときに押してください。',
+      '押すと、ダウンロード・確認・切り替え・教材の取得し直しまで自動で行います。終わるとアプリを1回読み込み直します。そのあと保護者画面を開き直すと結果が見られます。学習の記録は消えません。お子さんが遊んでいないときに押してください。',
     );
     expect(screen.queryByTestId('update-disk-warning')).toBeNull();
     expect(screen.queryByTestId('update-blocked')).toBeNull();
@@ -209,7 +222,7 @@ describe('新しい版があるとき', () => {
     expect(text('update-size')).toContain('約 1.3 GB');
   });
 
-  it('［更新する］は requestApply(新しい版) を呼ぶ', () => {
+  it('［更新する］は requestApply(新しいバージョン) を呼ぶ', () => {
     render(<UpdateSection />);
     fireEvent.click(screen.getByTestId('update-apply'));
     expect(m.requestApply).toHaveBeenCalledWith('2.2.0');
@@ -230,7 +243,7 @@ describe('新しい版があるとき', () => {
     expect(apply.disabled).toBe(false);
   });
 
-  it('自動では入れられない版（newer && !installable）は案内だけ', () => {
+  it('自動では入れられないバージョン（newer && !installable）は案内だけ', () => {
     setView({
       status: status({
         latest: { ...NEWER, installable: false, blockedReason: 'min-version' },
@@ -238,7 +251,7 @@ describe('新しい版があるとき', () => {
     });
     render(<UpdateSection />);
     expect(text('update-blocked')).toBe(
-      '新しい版 2.2.0 があります。この版からは自動で更新できません。README の「新しい版に更新するとき」の手順で入れ直してください。',
+      '新しいバージョン 2.2.0 があります。このバージョンからは自動で更新できません。README の「新しいバージョンに更新するとき」の手順で入れ直してください。',
     );
     expect(screen.queryByTestId('update-available')).toBeNull();
     expect(screen.queryByTestId('update-apply')).toBeNull();
@@ -300,7 +313,7 @@ describe('作業中', () => {
         swProgress: null,
         packs: null,
       },
-      '新しい版を確かめています',
+      '新しいバージョンを確かめています',
       false,
     ],
     [
@@ -352,7 +365,7 @@ describe('作業中', () => {
         swProgress: { done: 6, total: 10 },
         packs: null,
       },
-      'アプリの新しい版を準備しています 60%',
+      'アプリの新しいバージョンを準備しています 60%',
       false,
     ],
     [
@@ -378,7 +391,7 @@ describe('作業中', () => {
         swProgress: null,
         packs: { done: 3, total: 5, doneBytes: 30, totalBytes: 100 },
       },
-      '教材を取り直しています（3 / 5）',
+      '教材を取得し直しています（3 / 5）',
       false,
     ],
   ];
@@ -442,7 +455,7 @@ describe('失敗', () => {
     packs: null,
   });
 
-  it('理由の文・いまの版はそのまま使える・もう一度ためす（requestApply(latest.version)）', () => {
+  it('理由の文・いまのバージョンはそのまま使える・もう一度ためす（requestApply(latest.version)）', () => {
     m.view = failedView(
       'sha256-mismatch',
       withUpdate(
@@ -458,10 +471,10 @@ describe('失敗', () => {
     const err = screen.getByTestId('update-error');
     expect(err.className).toContain('p-error');
     expect(err.textContent).toContain(
-      '更新できませんでした: 取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      '更新できませんでした: ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     );
     expect(text('update-error-detail')).toBe('expected abc got def');
-    expect(err.textContent).toContain('いまの版はそのまま使えます');
+    expect(err.textContent).toContain('いまのバージョンはそのまま使えます');
     // 失敗のあいだは、更新するボタンを二重に出さない
     expect(screen.queryByTestId('update-apply')).toBeNull();
     fireEvent.click(screen.getByTestId('update-retry'));
@@ -471,15 +484,15 @@ describe('失敗', () => {
   const reasons: [string, string][] = [
     [
       'offline',
-      'インターネットにつながっていないか、GitHub に接続できませんでした。つながってから「もう一度ためす」を押してください（取得した分は残っていて、続きから始めます）。',
+      'インターネットにつながっていないか、GitHub に接続できませんでした。つながってから「もう一度ためす」を押してください。ダウンロードした分は残っていて、続きから始めます。',
     ],
     [
       'http',
-      '配布元（GitHub）から取得できませんでした。新しい版の準備中かもしれません。しばらくしてからお試しください。',
+      '配布元（GitHub）からダウンロードできませんでした。新しいバージョンの準備中かもしれません。しばらくしてからお試しください。',
     ],
     [
       'not-found',
-      '配布元（GitHub）から取得できませんでした。新しい版の準備中かもしれません。しばらくしてからお試しください。',
+      '配布元（GitHub）からダウンロードできませんでした。新しいバージョンの準備中かもしれません。しばらくしてからお試しください。',
     ],
     [
       'redirect-host',
@@ -491,42 +504,51 @@ describe('失敗', () => {
     ],
     [
       'bad-manifest',
-      '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     ],
     [
       'size-mismatch',
-      '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     ],
     [
       'sha256-mismatch',
-      '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     ],
     [
       'unsafe-zip',
-      '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     ],
     [
       'content-check',
-      '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
+      'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。',
     ],
-    ['self-test', '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。'],
-    ['switch-failed', '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。'],
+    [
+      'self-test',
+      '新しいバージョンを動かす準備で問題が見つかったため、元のバージョンのままにしました。',
+    ],
+    [
+      'switch-failed',
+      '新しいバージョンを動かす準備で問題が見つかったため、元のバージョンのままにしました。',
+    ],
     ['switch-broken', 'アプリのファイルの切り替えで問題が起き、元に戻せませんでした。'],
     ['interrupted', '前回の更新が途中で止まりました。もう一度押すと続きから始めます。'],
     [
       'version-changed',
-      'さらに新しい版が出ていました。表示を新しくしたので、もう一度「更新する」を押してください。',
+      'さらに新しいバージョンが出ていました。表示を新しくしたので、もう一度「更新する」を押してください。',
     ],
     ['busy', 'ほかの更新が進んでいます。終わるまでお待ちください。'],
-    ['blocked', 'この版からは自動で更新できません。README の手順で入れ直してください。'],
+    ['blocked', 'このバージョンからは自動で更新できません。README の手順で入れ直してください。'],
     [
       'server-timeout',
       '配信が起動し直しませんでした。アプリの窓を閉じて、デスクトップのアイコンから開き直してください。',
     ],
-    ['sw-failed', 'アプリの新しい版の準備に失敗しました。アプリを開き直すと、もう一度準備します。'],
+    [
+      'sw-failed',
+      'アプリの新しいバージョンの準備に失敗しました。アプリを開き直すと、もう一度準備します。',
+    ],
     [
       'sw-mismatch',
-      '読み込み直しても新しい版に切り替わりませんでした。アプリの窓を全部閉じて、開き直してください。',
+      '読み込み直しても新しいバージョンに切り替わりませんでした。アプリの窓を全部閉じて、開き直してください。',
     ],
     ['something-new', '更新できませんでした。'],
   ];
@@ -540,13 +562,13 @@ describe('失敗', () => {
     );
   });
 
-  it('元に戻せなかった（switch-broken）ときは「いまの版はそのまま使えます」と言わず、次にすることを出す', () => {
+  it('元に戻せなかった（switch-broken）ときは「いまのバージョンはそのまま使えます」と言わず、次にすることを出す', () => {
     m.view = failedView('switch-broken');
     render(<UpdateSection />);
     const err = screen.getByTestId('update-error');
-    expect(err.textContent).not.toContain('いまの版はそのまま使えます');
+    expect(err.textContent).not.toContain('いまのバージョンはそのまま使えます');
     expect(text('update-error-next')).toBe(
-      '「もう一度ためす」を押すと、前の版に戻してから入れ直します。直らないときは、README の「新しい版に更新するとき」の手順で入れ直してください（学習の記録は消えません）。',
+      '「もう一度ためす」を押すと、前のバージョンに戻してから入れ直します。直らないときは、README の「新しいバージョンに更新するとき」の手順で入れ直してください（学習の記録は消えません）。',
     );
     fireEvent.click(screen.getByTestId('update-retry'));
     expect(m.requestApply).toHaveBeenCalledWith('2.2.0');
@@ -554,7 +576,9 @@ describe('失敗', () => {
     cleanup();
     m.view = failedView('switch-failed');
     render(<UpdateSection />);
-    expect(screen.getByTestId('update-error').textContent).toContain('いまの版はそのまま使えます');
+    expect(screen.getByTestId('update-error').textContent).toContain(
+      'いまのバージョンはそのまま使えます',
+    );
     expect(screen.queryByTestId('update-error-next')).toBeNull();
   });
 
@@ -594,7 +618,7 @@ describe('失敗', () => {
     expect(updateReasonText('disk-full', 0)).not.toContain('GB');
   });
 
-  it('アプリ側の失敗（sw-failed）でも、もう一度ためすで requestApply を呼ぶ。最新が無ければ今の版で', () => {
+  it('アプリ側の失敗（sw-failed）でも、もう一度ためすで requestApply を呼ぶ。最新が無ければ今のバージョンで', () => {
     m.view = failedView('sw-failed', status({ current: { version: '2.2.0' } }));
     render(<UpdateSection />);
     expect(screen.queryByTestId('update-error-detail')).toBeNull();
@@ -602,7 +626,7 @@ describe('失敗', () => {
     expect(m.requestApply).toHaveBeenCalledWith('2.2.0');
   });
 
-  it('配信に前回の失敗が残っていて、入れられる新しい版があるときも失敗を出す', () => {
+  it('配信に前回の失敗が残っていて、入れられる新しいバージョンがあるときも失敗を出す', () => {
     setView({
       status: withUpdate(
         {
@@ -616,7 +640,7 @@ describe('失敗', () => {
     render(<UpdateSection />);
     expect(text('update-error')).toContain('インターネットにつながっていないか');
     expect(text('update-error-detail')).toBe('timed out');
-    // 新しい版が無いなら、古い失敗は出さない
+    // 新しいバージョンが無いなら、古い失敗は出さない
     cleanup();
     setView({
       status: withUpdate({ phase: 'failed', error: { code: 'offline', detail: 'x' } }),
@@ -627,7 +651,7 @@ describe('失敗', () => {
 });
 
 describe('更新したあと', () => {
-  it('lastApplied の版が今の版なら「○ に更新しました」', () => {
+  it('lastApplied のバージョンが今のバージョンなら「○ に更新しました」', () => {
     setView({
       status: status({
         current: { version: '2.2.0' },
@@ -639,7 +663,7 @@ describe('更新したあと', () => {
     expect(text('update-done')).toBe(`2.2.0 に更新しました（${at}）`);
   });
 
-  it('lastApplied が今の版でなければ出さない', () => {
+  it('lastApplied が今のバージョンでなければ出さない', () => {
     setView({
       status: status({
         lastApplied: { version: '2.0.5', from: '2.0.4', at: '2026-11-01T00:00:00Z' },
@@ -657,7 +681,7 @@ describe('自動の確認と「今すぐ確かめる」', () => {
     expect(box.type).toBe('checkbox');
     expect(box.checked).toBe(true);
     expect(screen.getByTestId('update-section').textContent).toContain(
-      '起動したときに、新しい版があるかを自動で確かめる（インターネットにつながっているときだけ）',
+      '起動したときに、新しいバージョンがあるかを自動で確かめる（インターネットにつながっているときだけ）',
     );
     fireEvent.click(box);
     expect(m.setAutoCheck).toHaveBeenCalledWith(false);
@@ -688,16 +712,16 @@ describe('自動の確認と「今すぐ確かめる」', () => {
   it('GitHub への接続についての注意', () => {
     render(<UpdateSection />);
     expect(screen.getByTestId('update-section').textContent).toContain(
-      '更新を確かめるときと取得するときだけ、GitHub（github.com）に接続します。送るのはアプリの名前だけで、記録や個人の情報は送りません。',
+      '更新を確かめるときとダウンロードするときだけ、GitHub（github.com）に接続します。送るのはアプリの名前だけで、記録や個人の情報は送りません。',
     );
   });
 });
 
 describe('保護者画面の上の知らせ', () => {
-  it('新しい版があれば出す。［くわしく］は「このアプリについて」へ', () => {
+  it('新しいバージョンがあれば出す。［くわしく］は「このアプリについて」へ', () => {
     setView({ status: status({ latest: NEWER }) });
     render(<UpdateNotice />);
-    expect(text('parent-update-notice')).toContain('新しい版 2.2.0 があります');
+    expect(text('parent-update-notice')).toContain('新しいバージョン 2.2.0 があります');
     fireEvent.click(screen.getByTestId('parent-update-notice-open'));
     expect(m.navigate).toHaveBeenCalledWith({ name: 'parent', tab: 'about' }, { force: true });
   });
@@ -709,7 +733,7 @@ describe('保護者画面の上の知らせ', () => {
     expect(screen.queryByTestId('parent-update-notice-open')).toBeNull();
   });
 
-  it('新しい版が無い・自動では入れられない・窓口が無いときは出さない', () => {
+  it('新しいバージョンが無い・自動では入れられない・窓口が無いときは出さない', () => {
     for (const v of [
       { status: status() },
       { status: status({ latest: { ...NEWER, newer: false } }) },
@@ -729,7 +753,7 @@ describe('このアプリについて・保護者画面への組み込み', () =
     setView({ status: status({ latest: NEWER }) });
     render(<AboutTab />);
     expect(text('about-privacy')).toBe(
-      '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときと取得するときだけです（下の「アプリの更新」で自動の確認を止められます）。',
+      '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときとダウンロードするときだけです。下の「アプリの更新」で自動の確認を止められます。',
     );
     const sections = [...screen.getByTestId('tab-about').querySelectorAll('section')];
     expect(sections[0]!.querySelector('h2')?.textContent).toBe('このアプリについて');
@@ -767,7 +791,7 @@ describe('このアプリについて・保護者画面への組み込み', () =
       const notice = await screen.findByTestId('parent-update-notice');
       const tabs = screen.getByRole('tablist');
       expect(notice.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-      expect(notice.textContent).toContain('新しい版 2.2.0 があります');
+      expect(notice.textContent).toContain('新しいバージョン 2.2.0 があります');
     });
 
     it('窓口が無ければ知らせは出ない', async () => {

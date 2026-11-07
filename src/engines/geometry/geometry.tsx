@@ -174,7 +174,7 @@ function judgeDraw(
   if (!closed || path.length < 3)
     return {
       result: 'retry',
-      message: 'さいしょの てんを もういちど タップして かたちを とじてね',
+      message: 'さいしょの てんを もういちど おして かたちを とじてね',
     };
   const poly = normalizePolygon(path);
   if (poly.length < 3 || !isSimple(poly)) return { result: 'wrong', mark: true };

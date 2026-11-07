@@ -98,3 +98,31 @@ describe.each(sets)('%s の画面', (name, def, samples, texts) => {
     }
   });
 });
+
+describe('実験の注記（2.1.0 の文言の点検 A8）', () => {
+  // 5歳の p5.env.predict にも出るので、幼児の画面ではカタカナ（DESINGN.md 4章）を使わない
+  const cases = [
+    [true, 'この あそびの せっていでは'],
+    [false, 'この アプリの せっていでは'],
+  ] as const;
+  it.each(cases)('preschool=%s: 「%s」', (preschool, want) => {
+    const Comp = (experimentEngine as unknown as AnyDef).Component;
+    render(
+      <Comp
+        item={experimentSamples[0] as never}
+        ctx={{
+          ...ctx,
+          preschool,
+          ...(preschool ? { learnerGrade: 0, ux: audienceUx('p5') } : null),
+        }}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={vi.fn()}
+      />,
+    );
+    const note = screen.getByTestId('exp-note').textContent ?? '';
+    expect(note).toContain(want);
+    if (preschool) expect(note).not.toMatch(/[ァ-ヶ]/);
+  });
+});

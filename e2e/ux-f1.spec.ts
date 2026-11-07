@@ -15,7 +15,7 @@ import {
  * 使いやすさの直し（2.1.0 の FX）のうち、単元の枠（F1 組）の操作の流れ。
  *  - FX01: 解説の板が出てから 700ms は「つぎへ」を受け付けない（すばやい2回押しで解説を飛ばさない）
  *  - FX08: 中断（おうち）→ 再開のあと、途中の問題のヒント・誤答の数が残る（正解しても「自力」にならない）
- *  - FX10: 利用時間の目安を超えたあと、単元の完了で「きょうは ここまでに しよう」（もういちど は出ない）。
+ *  - FX10: 利用時間の目安を超えたあと、単元の完了で「きょうは ここまでに しよう」（もういっかい は出ない）。
  *          新しいプロフィールと「おすすめにする」の区分の既定
  *  - FX12: 教材の無い単元の画面に保護者向けの説明
  * 単体の確かめは src/units/*.test.ts(x)・src/core/session/sessionTime.test.ts。
@@ -266,7 +266,7 @@ test.describe('FX10 利用時間の目安', () => {
     ];
 
   for (const c of CASES) {
-    test(`${c.name}: 目安を超えたあとの単元の完了で合図が出て、もういちど は出ない`, async ({
+    test(`${c.name}: 目安を超えたあとの単元の完了で合図が出て、もういっかい は出ない`, async ({
       page,
     }) => {
       test.setTimeout(180_000);
@@ -292,7 +292,7 @@ test.describe('FX10 利用時間の目安', () => {
     });
   }
 
-  test('目安に届いていなければ出ない（もういちど が残る）', async ({ page }) => {
+  test('目安に届いていなければ出ない（もういっかい が残る）', async ({ page }) => {
     test.setTimeout(120_000);
     await gotoApp(page);
     await prepare(page, { settings: { sessionMinutes: 5 } });
@@ -372,7 +372,7 @@ test.describe('FX12 教材の無い単元の画面', () => {
     // 理由（取得していない・版が古い・読み込めない）で文が分かれる（packs/loader.ts の PACK_UNAVAILABLE_PARENT_TEXT。
     // どれになるかは配信の確かめ方しだいなので、どれでもよい。理由ごとの文は src/units/UnitRunner.test.tsx）
     await expect(parent).toHaveText(
-      /^(この教材はまだ取得していません|アプリが更新され|教材を読み込めませんでした)/,
+      /^（保護者の方へ）(この教材はまだ取得していません|アプリが更新され|教材を読み込めませんでした)/,
     );
     await expect(parent).toContainText('「きょうざい」タブ');
     // 小さな字（12px 以上。DESINGN.md 10章・24章）で、舞台の中にある

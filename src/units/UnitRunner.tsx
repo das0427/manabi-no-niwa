@@ -59,6 +59,7 @@ import { Tap } from '../ui/Tap';
 import {
   canSkip,
   currentItem,
+  doneCaption,
   draftOf,
   flowReducer,
   initialFlow,
@@ -1172,10 +1173,7 @@ function UnitDone({
   onAgain(): void;
   onHome(): void;
 }) {
-  const self = state.results.filter(
-    (r) => r.outcome === 'independent' || r.outcome === 'self_corrected',
-  ).length;
-  // 目安の判定が済むまでは中身を出さない（「もういちど」が一瞬出て消えないように。判定は数十 ms で終わる）。
+  // 目安の判定が済むまでは中身を出さない（「もういっかい」が一瞬出て消えないように。判定は数十 ms で終わる）。
   // 上の帯（おうち）は残す（空の画面にしない。保存が遅い端末でも戻れる）
   if (timeUp === null)
     return (
@@ -1200,9 +1198,10 @@ function UnitDone({
           <Rt text={unit.title} ctx={ctx} />
         </p>
         <p className="label-text" data-testid="unit-done-caption">
-          {soft
-            ? 'いっぱい あそんだね'
-            : `${state.results.length}もん おわったね。じぶんで できたのは ${self}もん`}
+          {doneCaption(
+            state.results.map((r) => r.outcome),
+            soft,
+          )}
         </p>
         {timeUp ? (
           <p className="label-text" data-testid="unit-done-timeup">
@@ -1218,7 +1217,7 @@ function UnitDone({
               data-testid="again-button"
             >
               <Illust id="again" className="tap__icon" decorative />
-              もういちど
+              もういっかい
             </button>
           ) : null}
           <button

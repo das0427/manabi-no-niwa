@@ -189,7 +189,7 @@ function PinSection() {
               const rec = await db.getAppRecord();
               await db.saveAppRecord({ ...rec, parentPinHash: null });
               setHasPin(false);
-              setMsg('暗証番号を解除しました。入口は計算問題になります。');
+              setMsg('暗証番号を解除しました。保護者画面を開くときは、計算問題を出します。');
             })();
           }}
         >
@@ -486,7 +486,7 @@ export function SettingsTab() {
             <tr>
               <th>設定</th>
               <th>ふつうの問題</th>
-              <th>盤面型（なかまわけ・みち）</th>
+              <th>盤面型（なかまわけ・みちづくり）</th>
               <th>なぞり</th>
             </tr>
           </thead>
@@ -569,7 +569,7 @@ export function SettingsTab() {
 
       <Section title="なぞりの判定幅">
         <Note>
-          「ひろい」ほどはみ出しても受け入れます。入力の種類（指・ペン・マウス）ごとに選べます。
+          「ひろい」ほど、お手本の線からはみ出しても受け入れます。入力の種類（指・ペン・マウス）ごとに選べます。
         </Note>
         {(['touch', 'pen', 'mouse'] as const).map((k) => (
           <label key={k} className="p-field p-field--inline">

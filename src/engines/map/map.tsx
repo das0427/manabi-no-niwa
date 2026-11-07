@@ -245,7 +245,7 @@ function townDir(t: Extract<MapTask, { kind: 'town' }>, a: number, b: number, po
 export function judgeMap(item: MapItem, res: MapResponse): Judgement {
   const t = item.task;
   if (t.kind === 'spell') {
-    if (!('tiles' in res)) return { result: 'retry', message: 'タイルを ならべて こたえよう。' };
+    if (!('tiles' in res)) return { result: 'retry', message: 'もじを ならべて こたえよう。' };
     return judgeBuild(spellBuild(item, t), res.tiles);
   }
   if (t.kind === 'find') {

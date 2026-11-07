@@ -63,7 +63,7 @@ function ParentScreen({ tab }: { tab: string }) {
   return (
     <div className="parent-root" data-testid="parent-app">
       <header className="p-header">
-        <h1>保護者の画面</h1>
+        <h1>保護者画面</h1>
         <div className="p-header__right">
           {profile ? (
             <label className="p-profile-switch">

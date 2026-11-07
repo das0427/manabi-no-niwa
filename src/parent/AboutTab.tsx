@@ -19,9 +19,9 @@ const STAGE_LABEL: Record<string, string> = { p23: '2〜3歳', p4: '4歳', p5: '
 
 const PRIVACY_TEXT =
   '広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。';
-/** 更新の窓口があるとき: 外へ通信するのは、配信（serve.py）が更新を確かめるとき・取得するときだけ */
+/** 更新の窓口があるとき: 外へ通信するのは、配信（serve.py）が更新を確かめるとき・ダウンロードするときだけ */
 const PRIVACY_TEXT_WITH_UPDATER =
-  '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときと取得するときだけです（下の「アプリの更新」で自動の確認を止められます）。';
+  '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときとダウンロードするときだけです。下の「アプリの更新」で自動の確認を止められます。';
 
 export function AboutTab() {
   const off = useOfflineState();
@@ -38,7 +38,8 @@ export function AboutTab() {
     // 起動画面の保護者向けの表示（setupParentNote）と同じ文（開き直す前は「つかえます」と言わない）
     status = isPageControlled() ? 'オフラインで使えます' : OFFLINE_REOPEN_NOTE;
   } else if (off.status === 'error') {
-    status = `オフラインの準備ができませんでした${off.error ? `（${off.error}）` : ''}`;
+    // off.error は保護者向けの文（src/core/offline/index.ts）。括弧に入れて前置きの文の後ろに付けない
+    status = off.error ?? 'オフラインの準備ができませんでした';
   } else {
     status = 'オフラインの準備は、まだ始まっていません（開発中の表示では登録しません）。';
   }
@@ -46,8 +47,8 @@ export function AboutTab() {
   return (
     <div data-testid="tab-about">
       <Section title="このアプリについて">
-        <p>まなびのにわ（4歳ごろ向けの、日本語・オフラインの学習アプリ）</p>
-        <p data-testid="app-version">版: {APP_VERSION}</p>
+        <p>まなびのにわは2歳から小学生までの子供向けの、日本語・オフラインの学習アプリです。</p>
+        <p data-testid="app-version">バージョン: {APP_VERSION}</p>
         <p className="p-small" data-testid="about-privacy">
           {upd.available ? PRIVACY_TEXT_WITH_UPDATER : PRIVACY_TEXT}
         </p>
@@ -57,10 +58,10 @@ export function AboutTab() {
 
       <Section title="オフラインの準備">
         <p data-testid="offline-status">{status}</p>
-        {off.version ? <p className="p-small">キャッシュの版: {off.version}</p> : null}
+        {off.version ? <p className="p-small">キャッシュのバージョン: {off.version}</p> : null}
         {off.updateReady && !(upd.available && upd.flow !== 'none') ? (
           <div data-testid="update-ready">
-            <p>あたらしい ばーじょんが あります。</p>
+            <p>新しいバージョンがあります。</p>
             <button type="button" data-testid="apply-update" onClick={() => void applyUpdate()}>
               更新する
             </button>
@@ -70,8 +71,8 @@ export function AboutTab() {
           </div>
         ) : null}
         <Note>
-          PWAとしてのインストールはブラウザによって異なります（Chromium系は可。Firefox
-          はデスクトップではインストールできませんが、ブラウザのままオフラインで使えます）。くわしくは
+          PWAとしてのインストールはブラウザによって異なります。Chromium系はインストールできます。Firefox
+          はデスクトップではインストールできませんが、ブラウザのままオフラインで使えます。くわしくは
           README を参照してください。ファイルを直接開く（file://）と、オフライン機能は動きません。
         </Note>
       </Section>
@@ -107,10 +108,10 @@ export function AboutTab() {
         <h3>使い方のこつ</h3>
         <ul>
           <li>
-            お子さんが絵を指さしたら、英語で言ってみてください（正しく言えたかは気にしなくて大丈夫です）。
+            お子さんが絵を指さしたら、英語で言ってみてください。正しく言えたかは気にしなくて大丈夫です。
           </li>
           <li>英語のあいさつは、毎日の決まった場面で言い合うと続けやすくなります。</li>
-          <li>体を動かす遊びは、大人がまねして見せると、子どもも動きやすくなります。</li>
+          <li>体を動かす遊びは、大人がまねしてみせると、子どもも動きやすくなります。</li>
         </ul>
         <p>
           日本語の絵本の読み聞かせやおしゃべりの時間を減らさないでください。画面の文字は日本語（ひらがな）だけで、英語は音声だけで出します。

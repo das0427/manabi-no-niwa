@@ -102,7 +102,7 @@ function ProfileRow({
                 onChange={(e) => setApplySupport(e.target.checked)}
                 data-testid={`profile-apply-support-${p.id}`}
               />
-              表示と支援の設定（ふりがな・読み上げ・画面の表現・おえかきの道具）と利用時間の目安を、この区分のおすすめにする
+              表示と支援の設定（ふりがな・読み上げ・文字の大きさ・画面の表現・おえかきの道具・声かけ・演出）と利用時間の目安を、この区分のおすすめにする
             </label>
           ) : null}
           <p className="p-muted">区分を変えても、学習の記録・作品・できたことは変わりません。</p>
@@ -195,7 +195,7 @@ export function ProfilesTab() {
       await fn();
     } catch {
       setError(
-        '保存できませんでした。容量不足などの可能性があります（「データ」タブをご確認ください）。',
+        '保存できませんでした。容量不足などの可能性があります。「データ」タブをご確認ください。',
       );
     }
   };

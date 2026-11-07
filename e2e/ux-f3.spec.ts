@@ -331,7 +331,7 @@ test.describe('FX13 起動画面と「このアプリについて」の「オフ
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('start-button')).toBeEnabled();
     expect(await page.evaluate(() => navigator.serviceWorker.controller !== null)).toBe(true);
-    await expect(startNote).toHaveText('オフラインで つかえます', { timeout: 90_000 });
+    await expect(startNote).toHaveText('オフラインで使えます', { timeout: 90_000 });
     await start(page);
     await openParent(page, 'about');
     await expect(page.getByTestId('offline-status')).toHaveText('オフラインで使えます');

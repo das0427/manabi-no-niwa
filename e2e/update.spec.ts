@@ -313,18 +313,18 @@ test('2.1.0 で開く → 自動の確認 → 「更新する」を 1 回 → 2.
 
   // 保護者画面「このアプリについて」: 表示
   await openAbout(page);
-  await expect(page.getByTestId('app-version')).toHaveText(`版: ${OLD_VERSION}`);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${OLD_VERSION}`);
+  await expect(page.getByTestId('app-version')).toHaveText(`バージョン: ${OLD_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${OLD_VERSION}`);
   await expect(page.getByTestId('update-check-status')).toContainText('に確かめました');
   await expect(page.getByTestId('update-available')).toContainText(
-    `新しい版 ${NEW_VERSION} があります（公開日 2026-11-20）`,
+    `新しいバージョン ${NEW_VERSION} があります（公開日 2026-11-20）`,
   );
   await expect(page.getByTestId('update-notes')).toContainText(
     '小学4年の算数に「がい数」を足しました',
   );
   await expect(page.getByTestId('update-size')).toContainText('変わった部分だけ');
   await expect(page.getByTestId('parent-update-notice')).toContainText(
-    `新しい版 ${NEW_VERSION} があります`,
+    `新しいバージョン ${NEW_VERSION} があります`,
   );
   await expect(page.getByTestId('update-disk-warning')).toHaveCount(0);
   await expect(page.getByTestId('update-autocheck')).toBeChecked();
@@ -344,14 +344,14 @@ test('2.1.0 で開く → 自動の確認 → 「更新する」を 1 回 → 2.
 
   // 新しい版に切り替わっている
   await openAbout(page);
-  await expect(page.getByTestId('app-version')).toHaveText(`版: ${NEW_VERSION}`);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${NEW_VERSION}`);
+  await expect(page.getByTestId('app-version')).toHaveText(`バージョン: ${NEW_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${NEW_VERSION}`);
   await expect(page.getByTestId('update-done')).toContainText(`${NEW_VERSION} に更新しました`);
   await expect(page.getByTestId('update-available')).toHaveCount(0);
   await expect(page.getByTestId('update-error')).toHaveCount(0);
   await expect(page.getByTestId('parent-update-notice')).toHaveCount(0);
   // アプリ（Service Worker）の新しい版に切り替わっている（Service Worker は直前の版のキャッシュも残す）
-  await expect(page.getByText(`キャッシュの版: ${next.swVersion}`)).toBeVisible();
+  await expect(page.getByText(`キャッシュのバージョン: ${next.swVersion}`)).toBeVisible();
   const coreCaches = await page.evaluate(async () =>
     (await caches.keys()).filter((k) => k.startsWith('mnw-') && !k.startsWith('mnw-pack/')).sort(),
   );
@@ -474,7 +474,7 @@ test('取得の途中で接続が切れても、続きから取得して入れ�
   expect(requests.map((r) => r.range)).toEqual([null, `bytes=${cutAt}-`]);
   expect(env.fake.bytesSentFor(main.name)).toBe(main.bytes); // 切れるまでの分を、もう一度は配っていない
   await openAbout(page);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${NEW_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${NEW_VERSION}`);
   await expectUpdatedLayout(env, next);
 });
 
@@ -503,12 +503,14 @@ test('sha256 が合わない zip は入れずに、元の版のまま残る（�
   // 失敗を案内する: 入れずに中止した・いまの版はそのまま使える・もう一度ためせる
   const error = page.getByTestId('update-error');
   await expect(error).toBeVisible({ timeout: 120_000 });
-  await expect(error).toContainText('取得した内容が正しくなかったため、入れずに中止しました');
-  await expect(error).toContainText('いまの版はそのまま使えます');
+  await expect(error).toContainText(
+    'ダウンロードした内容が正しくなかったため、入れずに中止しました',
+  );
+  await expect(error).toContainText('いまのバージョンはそのまま使えます');
   await expect(page.getByTestId('update-error-detail')).toContainText(main.name);
   await expect(page.getByTestId('update-retry')).toBeVisible();
   await expect(page.getByTestId('update-apply')).toHaveCount(0);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${OLD_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${OLD_VERSION}`);
   expect(await isMarked(page)).toBe(true); // 読み込み直されていない
 
   // 元のまま: 置き場の中身は 1 バイトも変わらない。作りかけ・控え・壊れた zip は残らない
@@ -536,7 +538,7 @@ test('sha256 が合わない zip は入れずに、元の版のまま残る（�
   await page.getByTestId('update-retry').click();
   await expectReloaded(page);
   await openAbout(page);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${NEW_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${NEW_VERSION}`);
   await expect(page.getByTestId('update-done')).toContainText(`${NEW_VERSION} に更新しました`);
   await expectUpdatedLayout(env, next);
 });
@@ -617,9 +619,9 @@ test('新しい版の serve.py が動かないときは、入れ替えずに元�
   const error = page.getByTestId('update-error');
   await expect(error).toBeVisible({ timeout: 120_000 });
   await expect(error).toContainText(
-    '新しい版を動かす準備で問題が見つかったため、元の版のままにしました',
+    '新しいバージョンを動かす準備で問題が見つかったため、元のバージョンのままにしました',
   );
-  await expect(error).toContainText('いまの版はそのまま使えます');
+  await expect(error).toContainText('いまのバージョンはそのまま使えます');
   const failed = await env.serve.status();
   expect(failed.update.error?.code).toBe('self-test');
   expect(failed.current.version).toBe(OLD_VERSION);
@@ -641,7 +643,7 @@ test('新しい版の serve.py が動かないときは、入れ替えずに元�
     'もう一度ためした結果が出ません',
   );
   await expect(error).toContainText(
-    '新しい版を動かす準備で問題が見つかったため、元の版のままにしました',
+    '新しいバージョンを動かす準備で問題が見つかったため、元のバージョンのままにしました',
   );
   expect(env.fake.blobRequestsFor(main.name)).toHaveLength(1);
   expect(treeDigest(env.sandbox.app)).toBe(digest);
@@ -687,7 +689,7 @@ test('空き容量が足りないときは、取得を始めずに案内する�
   const error = page.getByTestId('update-error');
   await expect(error).toBeVisible({ timeout: 60_000 });
   await expect(error).toContainText(`空き容量が足りません（あと約 ${shortGb} GB 必要です）`);
-  await expect(error).toContainText('いまの版はそのまま使えます');
+  await expect(error).toContainText('いまのバージョンはそのまま使えます');
   await expect(page.getByTestId('update-retry')).toBeVisible();
   const failed = await env.serve.status();
   expect(failed.update.phase).toBe('failed');
@@ -706,7 +708,7 @@ test('空き容量が足りないときは、取得を始めずに案内する�
   await page.getByTestId('update-retry').click();
   await expectReloaded(page);
   await openAbout(page);
-  await expect(page.getByTestId('update-current')).toHaveText(`いまの版: ${NEW_VERSION}`);
+  await expect(page.getByTestId('update-current')).toHaveText(`いまのバージョン: ${NEW_VERSION}`);
   await expectUpdatedLayout(env, next);
 });
 
@@ -973,7 +975,7 @@ test('許可されていないホストへ転送されたら、つながずに�
   const error = page.getByTestId('update-error');
   await expect(error).toBeVisible({ timeout: 60_000 });
   await expect(error).toContainText('配布元への接続を安全に確かめられなかったため、中止しました');
-  await expect(error).toContainText('いまの版はそのまま使えます');
+  await expect(error).toContainText('いまのバージョンはそのまま使えます');
   const failed = await env.serve.status();
   expect(failed.update.error?.code).toBe('redirect-host');
   expect(installedVersion(env.sandbox.app)).toBe(OLD_VERSION);
@@ -1016,7 +1018,9 @@ test('自動の確認をオフにすると、起動し直しても確認の要�
   await expect(page.getByTestId('update-autocheck')).not.toBeChecked();
   await page.getByTestId('update-check-now').click();
   await expect.poll(() => env.fake.manifestRequests().length).toBe(requested + 1);
-  await expect(page.getByTestId('update-available')).toContainText(`新しい版 ${NEW_VERSION}`);
+  await expect(page.getByTestId('update-available')).toContainText(
+    `新しいバージョン ${NEW_VERSION}`,
+  );
 
   // オンに戻すと、少しあとに自動で確かめる
   await page.getByTestId('update-autocheck').check();

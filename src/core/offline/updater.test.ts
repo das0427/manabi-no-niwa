@@ -688,7 +688,7 @@ describe('Service Worker の新しい版の準備（sw）', () => {
 
   it('準備に失敗（OfflineState.error）したら sw-failed', async () => {
     await toSw();
-    setOff({ error: 'あたらしい ばーじょんの じゅんびに しっぱいしました' });
+    setOff({ error: '新しいバージョンの準備に失敗しました。いまのバージョンはそのまま使えます。' });
     expect(getUpdaterView()).toMatchObject({ flow: 'failed', flowError: 'sw-failed' });
     expect(m.applyUpdate).not.toHaveBeenCalled();
   });

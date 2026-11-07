@@ -160,6 +160,7 @@ export function MemosTab() {
         <ConfirmDialog
           title="メモを削除します"
           target={`${del.date} のメモ「${del.text.slice(0, 30)}${del.text.length > 30 ? '…' : ''}」`}
+          message="削除すると元に戻せません。"
           confirmLabel="削除する"
           onCancel={() => setDel(null)}
           onConfirm={async () => {

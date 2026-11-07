@@ -20,10 +20,10 @@ import { formatBytes, formatDateTime } from './util';
 const GIB = 1024 * 1024 * 1024;
 const SERVER_WORKING = ['downloading', 'extracting', 'testing', 'switching', 'restarting'];
 const ACTIVE_FLOWS = ['server', 'waiting-server', 'sw', 'reloading', 'packs'];
-/** 入れ替えも元に戻すこともできなかった（app が無い）。このときは「いまの版はそのまま使えます」と言わない */
+/** 入れ替えも元に戻すこともできなかった（app が無い）。このときは「いまのバージョンはそのまま使えます」と言わない */
 const SWITCH_BROKEN = 'switch-broken';
 const SWITCH_BROKEN_NEXT =
-  '「もう一度ためす」を押すと、前の版に戻してから入れ直します。直らないときは、README の「新しい版に更新するとき」の手順で入れ直してください（学習の記録は消えません）。';
+  '「もう一度ためす」を押すと、前のバージョンに戻してから入れ直します。直らないときは、README の「新しいバージョンに更新するとき」の手順で入れ直してください（学習の記録は消えません）。';
 
 /** 大きさ（1 GB 未満は MB・KB、それ以上は GB） */
 function sizeText(n: number): string {
@@ -53,10 +53,10 @@ export function updateReasonText(code: string, shortBytes?: number): string {
   const needBytes = shortBytes !== undefined && shortBytes > 0 ? shortBytes : undefined;
   switch (code) {
     case 'offline':
-      return 'インターネットにつながっていないか、GitHub に接続できませんでした。つながってから「もう一度ためす」を押してください（取得した分は残っていて、続きから始めます）。';
+      return 'インターネットにつながっていないか、GitHub に接続できませんでした。つながってから「もう一度ためす」を押してください。ダウンロードした分は残っていて、続きから始めます。';
     case 'http':
     case 'not-found':
-      return '配布元（GitHub）から取得できませんでした。新しい版の準備中かもしれません。しばらくしてからお試しください。';
+      return '配布元（GitHub）からダウンロードできませんでした。新しいバージョンの準備中かもしれません。しばらくしてからお試しください。';
     case 'redirect-host':
     case 'tls':
       return '配布元への接続を安全に確かめられなかったため、中止しました。ネットワークの設定（プロキシなど）をご確認ください。';
@@ -65,37 +65,37 @@ export function updateReasonText(code: string, shortBytes?: number): string {
     case 'sha256-mismatch':
     case 'unsafe-zip':
     case 'content-check':
-      return '取得した内容が正しくなかったため、入れずに中止しました。もう一度お試しください。';
+      return 'ダウンロードした内容が正しくなかったため、入れずに中止しました。もう一度お試しください。';
     case 'disk-full':
       return needBytes !== undefined
         ? `空き容量が足りません（あと約 ${gbText(needBytes)} 必要です）。不要なファイルを消してから、もう一度お試しください。`
         : '空き容量が足りません。不要なファイルを消してから、もう一度お試しください。';
     case 'self-test':
     case 'switch-failed':
-      return '新しい版を動かす準備で問題が見つかったため、元の版のままにしました。';
+      return '新しいバージョンを動かす準備で問題が見つかったため、元のバージョンのままにしました。';
     case 'switch-broken':
       return 'アプリのファイルの切り替えで問題が起き、元に戻せませんでした。';
     case 'interrupted':
       return '前回の更新が途中で止まりました。もう一度押すと続きから始めます。';
     case 'version-changed':
-      return 'さらに新しい版が出ていました。表示を新しくしたので、もう一度「更新する」を押してください。';
+      return 'さらに新しいバージョンが出ていました。表示を新しくしたので、もう一度「更新する」を押してください。';
     case 'busy':
       return 'ほかの更新が進んでいます。終わるまでお待ちください。';
     case 'blocked':
-      return 'この版からは自動で更新できません。README の手順で入れ直してください。';
+      return 'このバージョンからは自動で更新できません。README の手順で入れ直してください。';
     case 'server-timeout':
       return '配信が起動し直しませんでした。アプリの窓を閉じて、デスクトップのアイコンから開き直してください。';
     case 'sw-failed':
-      return 'アプリの新しい版の準備に失敗しました。アプリを開き直すと、もう一度準備します。';
+      return 'アプリの新しいバージョンの準備に失敗しました。アプリを開き直すと、もう一度準備します。';
     case 'sw-mismatch':
-      return '読み込み直しても新しい版に切り替わりませんでした。アプリの窓を全部閉じて、開き直してください。';
+      return '読み込み直しても新しいバージョンに切り替わりませんでした。アプリの窓を全部閉じて、開き直してください。';
     default:
       return '更新できませんでした。';
   }
 }
 
 function blockedText(version: string): string {
-  return `新しい版 ${version} があります。この版からは自動で更新できません。README の「新しい版に更新するとき」の手順で入れ直してください。`;
+  return `新しいバージョン ${version} があります。このバージョンからは自動で更新できません。README の「新しいバージョンに更新するとき」の手順で入れ直してください。`;
 }
 
 /** 確認が失敗したときの、かっこの中の短い理由 */
@@ -121,14 +121,17 @@ function checkText(st: UpdaterStatus): string {
     case 'never':
       return 'まだ確かめていません';
     case 'checking':
-      return '新しい版があるか確かめています…';
+      return '新しいバージョンがあるか確かめています…';
     case 'ok': {
       const at = atText(check.at);
       const done = at ? `${at} に確かめました` : '確かめました';
-      return latest && latest.newer ? done : `${done}。新しい版はありません`;
+      return latest && latest.newer ? done : `${done}。新しいバージョンはありません`;
     }
     case 'offline':
-      return 'インターネットにつながっていないため、確かめられませんでした（つながっているときに、また確かめます）';
+      // 確かめ直すのは自動の確認がオンのときだけ（deploy/zorin/mnwupdate/service.py の _do_check）
+      return st.settings.autoCheck
+        ? 'インターネットにつながっていないため、確かめられませんでした。つながっているときに、また確かめます'
+        : 'インターネットにつながっていないため、確かめられませんでした';
     case 'error':
       return `確かめられませんでした（${checkErrorText(check.error)}）`;
   }
@@ -167,7 +170,7 @@ function serverWork(st: UpdaterStatus): Work {
         cancellable: true,
       };
     case 'testing':
-      return { text: '新しい版を確かめています', value: null, max: 1, cancellable: false };
+      return { text: '新しいバージョンを確かめています', value: null, max: 1, cancellable: false };
     case 'switching':
       return { text: '切り替えています', value: null, max: 1, cancellable: false };
     case 'restarting':
@@ -184,7 +187,7 @@ function workOf(v: UpdaterView): Work | null {
     case 'packs': {
       const p = v.packs;
       return {
-        text: p ? `教材を取り直しています（${p.done} / ${p.total}）` : '教材を取り直しています',
+        text: p ? `教材を取得し直しています（${p.done} / ${p.total}）` : '教材を取得し直しています',
         value: p && p.totalBytes > 0 ? p.doneBytes : p ? p.done : null,
         max: p ? (p.totalBytes > 0 ? p.totalBytes : Math.max(1, p.total)) : 1,
         cancellable: false,
@@ -196,7 +199,7 @@ function workOf(v: UpdaterView): Work | null {
       const p = v.swProgress;
       const pct = p ? percentOf(p.done, p.total) : null;
       return {
-        text: `アプリの新しい版を準備しています${pct !== null ? ` ${pct}%` : ''}`,
+        text: `アプリの新しいバージョンを準備しています${pct !== null ? ` ${pct}%` : ''}`,
         value: p && pct !== null ? p.done : null,
         max: p ? Math.max(1, p.total) : 1,
         cancellable: false,
@@ -267,7 +270,7 @@ export function UpdateSection() {
 
   return (
     <Section title="アプリの更新" id="update-section">
-      <p data-testid="update-current">いまの版: {st.current.version}</p>
+      <p data-testid="update-current">いまのバージョン: {st.current.version}</p>
       <p data-testid="update-check-status">{checkText(st)}</p>
 
       {work ? (
@@ -299,7 +302,7 @@ export function UpdateSection() {
         <div className="p-alert" data-testid="update-available">
           <p>
             <strong>
-              新しい版 {latest.version} があります（公開日 {latest.date}）
+              新しいバージョン {latest.version} があります（公開日 {latest.date}）
             </strong>
           </p>
           {latest.notes.length > 0 ? (
@@ -331,7 +334,7 @@ export function UpdateSection() {
                 </button>
               </div>
               <Note>
-                押すと、ダウンロード・確認・切り替え・教材の取り直しまで自動で行います。終わるとアプリを1回読み込み直します（そのあと保護者画面を開き直すと結果が見られます）。学習の記録は消えません。お子さんが遊んでいないときに押してください。
+                押すと、ダウンロード・確認・切り替え・教材の取得し直しまで自動で行います。終わるとアプリを1回読み込み直します。そのあと保護者画面を開き直すと結果が見られます。学習の記録は消えません。お子さんが遊んでいないときに押してください。
               </Note>
             </>
           )}
@@ -361,7 +364,7 @@ export function UpdateSection() {
           {failure.code === SWITCH_BROKEN ? (
             <p data-testid="update-error-next">{SWITCH_BROKEN_NEXT}</p>
           ) : (
-            <p>いまの版はそのまま使えます</p>
+            <p>いまのバージョンはそのまま使えます</p>
           )}
         </div>
       ) : null}
@@ -395,7 +398,7 @@ export function UpdateSection() {
             void setAutoCheck(on).finally(() => setPendingAuto(null));
           }}
         />
-        起動したときに、新しい版があるかを自動で確かめる（インターネットにつながっているときだけ）
+        起動したときに、新しいバージョンがあるかを自動で確かめる（インターネットにつながっているときだけ）
       </label>
       <div className="p-row">
         <button
@@ -408,7 +411,7 @@ export function UpdateSection() {
         </button>
       </div>
       <Note>
-        更新を確かめるときと取得するときだけ、GitHub（github.com）に接続します。送るのはアプリの名前だけで、記録や個人の情報は送りません。
+        更新を確かめるときとダウンロードするときだけ、GitHub（github.com）に接続します。送るのはアプリの名前だけで、記録や個人の情報は送りません。
       </Note>
     </Section>
   );
@@ -433,7 +436,7 @@ export function UpdateNotice() {
   if (!latest || !latest.newer || !latest.installable) return null;
   return (
     <div className="p-alert p-update-notice" role="status" data-testid="parent-update-notice">
-      <span>新しい版 {latest.version} があります</span>
+      <span>新しいバージョン {latest.version} があります</span>
       <button
         type="button"
         data-testid="parent-update-notice-open"

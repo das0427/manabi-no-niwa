@@ -14,7 +14,7 @@ export function StorageHealthMark() {
     <span
       className="home-health"
       role="img"
-      aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください"
+      aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面の「データ」を見てください"
       data-testid="home-health"
     >
       !

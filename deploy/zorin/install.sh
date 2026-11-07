@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# まなびのにわ 導入スクリプト（保護者が 1 回だけ実行します。sudo は使いません）
+# まなびのにわ 導入スクリプト。保護者が 1 回だけ実行します。sudo は使いません。
 #
 #   bash install.sh               アプリを配置し、アプリ一覧とデスクトップにアイコンを作る
 #   bash install.sh --autostart   上に加えて、ログイン時に配信を自動で始める設定（systemd ユーザー単位）も行う
 #   bash install.sh --yes         確認の質問を省く（上記の内容をそのまま実行）
 #
 # 実行の前に「何をするか」を表示して、y/N で確認します。
-# 新しい版を手で入れ直すときは、新しい配布物を展開して、もういちどこのスクリプトを実行してください
-# （2.1.0 以降は、保護者画面「このアプリについて」の「更新する」でも更新できます）。
+# 新しいバージョンを手で入れ直すときは、新しい配布物を展開して、もういちどこのスクリプトを実行してください。
+# 2.1.0 以降は、保護者画面「このアプリについて」の「更新する」でも更新できます。
 # 学習データはブラウザの中にあるため、更新しても消えません。
 #
 # 置き場: ${XDG_DATA_HOME:-~/.local/share}/manabi-no-niwa/
-#   app/        いまの版（dist・deploy/zorin・parts など）
-#   app.next/   この入れ替えの途中だけある（組み立て中の新しい版）
-#   app.prev/   更新の仕組みが前の版を控えるところ（このスクリプトは片付ける。app が無いときだけは、先に app に戻す）
+#   app/        いまのバージョン（dist・deploy/zorin・parts など）
+#   app.next/   この入れ替えの途中だけある（組み立て中の新しいバージョン）
+#   app.prev/   更新の仕組みが前のバージョンを控えるところ。このスクリプトは片付ける。app が無いときだけは、先に app に戻す。
 #   update/     更新の作業用（このスクリプトは片付ける）
 set -euo pipefail
 
@@ -90,7 +90,7 @@ for f in serve.py manabi.sh mnwwindow.py uninstall.sh manabi-no-niwa.desktop man
   if [ ! -f "$HERE/$f" ]; then echo "エラー: $HERE/$f がありません。" >&2; exit 1; fi
 done
 if ! command -v python3 >/dev/null 2>&1; then
-  echo "エラー: python3 が見つかりません。ターミナルで 'sudo apt install python3' を実行してから、もういちど試してください。" >&2
+  echo "エラー: python3 が見つかりません。端末で 'sudo apt install python3' を実行してから、もういちど試してください。" >&2
   exit 1
 fi
 
@@ -114,11 +114,11 @@ for pid, p in sorted(packs.items()):
     if any(not os.path.isfile(os.path.join(d, f)) for f in p.get("files", [])):
         need.add(zip_of(pid))
 for z in sorted(need):
-    print(f"  manabi-no-niwa-<版>-{z}.zip")
+    print(f"  manabi-no-niwa-<バージョン>-{z}.zip")
 PY
 )
 if [ -n "$MISSING" ]; then
-  echo "エラー: 教材の音声が足りません（ダウンロードした zip が足りないか、途中で止まっています）。" >&2
+  echo "エラー: 教材の音声が足りません。ダウンロードした zip が足りないか、途中で止まっています。" >&2
   echo "次の zip をダウンロードし直して、ほかの zip と同じ場所に置いてから、もういちど同じ手順を行ってください:" >&2
   echo "$MISSING" >&2
   exit 1
@@ -134,24 +134,24 @@ echo "これから次のことを行います（sudo・管理者権限は使い�
 echo
 echo "  1. アプリ本体をコピー:   $DIST_SRC"
 echo "                         と deploy/zorin の起動用ファイルなど  →  $APP_DIR"
-echo "       ・動いている配信（まなびのにわのものだけ）を止めて、新しい版で始め直します"
-echo "       ・今の版があれば、新しい版に置き換えます（$APP_NEXT に組み立ててから入れ替えます）"
-echo "       ・前の版の控え・更新の作業用のフォルダ（app.prev・app.next・update）を片付けます"
+echo "       ・動いている配信（まなびのにわのものだけ）を止めて、新しいバージョンで始め直します"
+echo "       ・今のバージョンがあれば、新しいバージョンに置き換えます（$APP_NEXT に組み立ててから入れ替えます）"
+echo "       ・前のバージョンの控え・更新の作業用のフォルダ（app.prev・app.next・update）を片付けます"
 echo "         （$BASE_DIR の中）"
 echo "  2. アプリ一覧に登録:     $DESKTOP_FILE"
 echo "  3. デスクトップにアイコン: $SHORTCUT_FILE"
 if [ "$AUTOSTART" -eq 1 ]; then
   echo "  4. 自動起動を設定:       $SERVICE_FILE を作り、"
   echo "                         systemctl --user enable --now manabi-no-niwa.service を実行"
-  echo "                         （ログインすると配信が自動で始まります。127.0.0.1 だけで待ち受けます）"
+  echo "       ・ログインすると配信が自動で始まります。127.0.0.1 だけで待ち受けます。"
 else
-  echo "  （自動起動は設定しません。設定する場合は --autostart を付けて実行してください）"
+  echo "  自動起動は設定しません。設定する場合は --autostart を付けて実行してください。"
 fi
 echo
 echo "配信は 127.0.0.1:8765 だけで待ち受けます（同じパソコンのブラウザからしか開けません）。"
 echo "学習データはブラウザの中に保存され、このスクリプトは触りません。"
 if [ "$HAS_PARTS" -eq 1 ]; then
-  echo "新しい版があるかは、配信が起動したときにインターネットにつながっていれば GitHub（github.com）に確かめます。"
+  echo "新しいバージョンがあるかは、配信が起動したときにインターネットにつながっていれば GitHub（github.com）に確かめます。"
   echo "確かめるだけで、入れるのは保護者画面で「更新する」を押したときだけです。"
   echo "保護者画面「このアプリについて」で、この自動の確認をオフにできます。"
 else
@@ -184,14 +184,14 @@ on_exit() {
   if [ "$NEXT_ACTIVE" -eq 1 ]; then rm -rf "$APP_NEXT" 2>/dev/null || true; fi
   if [ "$rc" -ne 0 ]; then
     if [ "$SWAPPED" -eq 1 ]; then
-      echo "エラー: 途中で止まりました（終了コード $rc）。アプリ本体は新しい版に入れ替わっています。" >&2
+      echo "エラー: 途中で止まりました（終了コード $rc）。アプリ本体は新しいバージョンに入れ替わっています。" >&2
     elif [ -d "$APP_DIR" ]; then
-      echo "エラー: 途中で止まりました（終了コード $rc）。今までの版は、そのまま残してあります。" >&2
+      echo "エラー: 途中で止まりました（終了コード $rc）。今までのバージョンは、そのまま残してあります。" >&2
     else
       # app が無い（初めての導入の途中、または前の版を元に戻せなかった）。「残してあります」とは言わない
       echo "エラー: 途中で止まりました（終了コード $rc）。アプリ本体（$APP_DIR）は、まだ入っていません。" >&2
       if [ -d "$APP_PREV" ]; then
-        echo "前の版は $APP_PREV に残っています。消さないでください。" >&2
+        echo "前のバージョンは $APP_PREV に残っています。消さないでください。" >&2
       fi
       echo "展開した配布物のフォルダで、もういちど bash deploy/zorin/install.sh を実行して、入れ直してください（学習データは消えません）。" >&2
     fi
@@ -239,9 +239,9 @@ fi
 # 戻さずに進むと、あとの入れ替えで app.prev を消してしまい、入れ替えに失敗したときに動く版が 1 つも残らない。戻せなければ止める
 if [ ! -d "$APP_DIR" ] && [ -d "$APP_PREV" ]; then
   if mv "$APP_PREV" "$APP_DIR"; then
-    echo "[準備] 更新の途中で止まっていた前の版を、元の場所に戻しました: $APP_DIR"
+    echo "[準備] 更新の途中で止まっていた前のバージョンを、元の場所に戻しました: $APP_DIR"
   else
-    echo "エラー: 更新の途中で止まっていた前の版（$APP_PREV）を、元の場所（$APP_DIR）に戻せませんでした。" >&2
+    echo "エラー: 更新の途中で止まっていた前のバージョン（$APP_PREV）を、元の場所（$APP_DIR）に戻せませんでした。" >&2
     exit 1
   fi
 fi
@@ -265,7 +265,7 @@ fi
 chmod +x "$APP_NEXT/deploy/zorin/"*.sh "$APP_NEXT/deploy/zorin/serve.py"
 for f in dist/index.html dist/icons/icon-192.png deploy/zorin/serve.py deploy/zorin/manabi.sh deploy/zorin/mnwwindow.py deploy/zorin/uninstall.sh deploy/zorin/mnwupdate/__init__.py; do
   if [ ! -f "$APP_NEXT/$f" ]; then
-    echo "エラー: 新しい版の組み立てに失敗しました（$APP_NEXT/$f がありません）。" >&2
+    echo "エラー: 新しいバージョンの組み立てに失敗しました（$APP_NEXT/$f がありません）。" >&2
     exit 1
   fi
 done
@@ -283,7 +283,7 @@ NEXT_ACTIVE=0
 SWAPPED=1
 # 前の版を消す前に、名前の変更も書き切る（消した版が戻せなくなる前に、新しい版を確定させる）
 sync || true
-rm -rf "$APP_PREV" "$UPDATE_DIR" || echo "前の版の控え・更新の作業用のフォルダを片付けられませんでした（$APP_PREV $UPDATE_DIR）。あとで手で消してかまいません。" >&2
+rm -rf "$APP_PREV" "$UPDATE_DIR" || echo "前のバージョンの控え・更新の作業用のフォルダを片付けられませんでした（$APP_PREV $UPDATE_DIR）。あとで手で消してかまいません。" >&2
 echo "[1/4] アプリ本体を配置しました: $APP_DIR"
 
 # ---- テンプレートの @APP_DIR@ を置き換えて書き出す ----
@@ -308,7 +308,7 @@ if mkdir -p "$DESKTOP_DIR" 2>/dev/null; then
   # GNOME 系は、起動を許可（信頼）しないとデスクトップのアイコンが開けないことがある
   if command -v gio >/dev/null 2>&1; then gio set "$SHORTCUT_FILE" metadata::trusted true 2>/dev/null || true; fi
   echo "[3/4] デスクトップにアイコンを作りました: $SHORTCUT_FILE"
-  echo "      （初めて開くときに「起動を許可する」が出たら、許可してください）"
+  echo "      初めて開くときに「起動を許可する」が出たら、許可してください。"
 else
   echo "[3/4] デスクトップのフォルダを作れなかったため、アイコンは作りませんでした（アプリ一覧からは開けます）"
 fi
@@ -337,7 +337,7 @@ fi
 if [ "$STOPPED_UNIT" -eq 1 ]; then
   STOPPED_UNIT=0
   if systemctl --user start manabi-no-niwa.service 2>/dev/null; then
-    echo "[完了] 止めていた自動起動の配信を、新しい版で始め直しました"
+    echo "[完了] 止めていた自動起動の配信を、新しいバージョンで始め直しました"
   else
     echo "止めていた自動起動の配信を始め直せませんでした。デスクトップのアイコンから開いてください。" >&2
   fi
@@ -346,7 +346,7 @@ fi
 echo
 echo "完了しました。デスクトップの「まなびのにわ」アイコン（またはアプリ一覧）から開けます。"
 if [ "$HAS_PARTS" -eq 1 ]; then
-  echo "新しい版が出たときは、保護者画面「このアプリについて」の「更新する」で入れられます。"
+  echo "新しいバージョンが出たときは、保護者画面「このアプリについて」の「更新する」で入れられます。"
 else
   echo "$NO_PARTS_MSG"
 fi

@@ -454,8 +454,8 @@ class InstallTest(InstallShTestBase):
                 for phrase in (
                     "sudo",
                     "動いている配信",
-                    "新しい版で始め直",
-                    "前の版の控え・更新の作業用のフォルダ",
+                    "新しいバージョンで始め直",
+                    "前のバージョンの控え・更新の作業用のフォルダ",
                     "app.prev",
                     "app.next",
                     "update",
@@ -565,7 +565,7 @@ class InstallTest(InstallShTestBase):
         b = self.make_release("b", "2.2.0")
         r = self.install(b, env_extra={"MNW_TEST_FAIL_CP": "1", "MNW_TEST_UNIT_ACTIVE": "1"})
         self.assertNotEqual(r.returncode, 0, r.out)
-        self.assertIn("今までの版は、そのまま残してあります", r.stderr)
+        self.assertIn("今までのバージョンは、そのまま残してあります", r.stderr)
         self.assertTrue((self.app / "marker.txt").is_file())
         self.assertEqual("2.1.0", read_json(self.app / "parts" / "main.json")["version"])
         self.assertFalse((self.base / "app.next").exists())
@@ -700,7 +700,7 @@ class SwapTest(InstallShTestBase):
         state = self.describe()
         self.assertEqual("old-2.1.0 (the only working copy)", state["app"], state)
         self.assertIsNone(state["app.next"], state)
-        self.assertIn("今までの版は、そのまま残してあります", r.stderr)
+        self.assertIn("今までのバージョンは、そのまま残してあります", r.stderr)
         self.assertNotIn("まだ入っていません", r.stderr)
 
     def test_switch_broken_state_that_cannot_be_restored_stops_and_deletes_nothing(self):
@@ -717,7 +717,7 @@ class SwapTest(InstallShTestBase):
         # 「残してあります」とは言わず、入れ直しの手順を出す
         self.assertNotIn("そのまま残してあります", r.stderr)
         self.assertIn("まだ入っていません", r.stderr)
-        self.assertIn("前の版は", r.stderr)
+        self.assertIn("前のバージョンは", r.stderr)
         self.assertIn(to_posix(self.base) + "/app.prev", r.stderr)
         self.assertIn("もういちど bash deploy/zorin/install.sh", r.stderr)
         self.assertFalse(self.desktop_file.exists())
@@ -750,7 +750,7 @@ class SwapTest(InstallShTestBase):
         self.assertNotIn("そのまま残してあります", r.stderr)
         self.assertIn("まだ入っていません", r.stderr)
         self.assertIn("もういちど bash deploy/zorin/install.sh", r.stderr)
-        self.assertNotIn("前の版は", r.stderr)  # 前の版は無い
+        self.assertNotIn("前のバージョンは", r.stderr)  # 前の版は無い
         self.assertFalse((self.base / "app.next").exists())
 
 

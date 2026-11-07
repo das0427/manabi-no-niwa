@@ -46,7 +46,7 @@ async function renderTab(statuses: PackStatus[]): Promise<void> {
 }
 
 describe('PacksTab（きょうざい）', () => {
-  it('一覧・大きさ・状態。版が古いものがあれば一括再取得の札', async () => {
+  it('一覧・大きさ・状態。バージョンが古いものがあれば一括再取得の札', async () => {
     await renderTab([
       st('g1-math', 'ready'),
       st('g3-kokugo', 'outdated'),
@@ -56,7 +56,7 @@ describe('PacksTab（きょうざい）', () => {
     expect(screen.getByTestId('pack-row-g1-math').textContent).toContain('小1 算数');
     expect(screen.getByTestId('pack-row-g1-math').textContent).toContain('2.0 MB');
     expect(screen.getByTestId('pack-state-g1-math').textContent).toContain('取得済み');
-    expect(screen.getByTestId('pack-state-g3-kokugo').textContent).toContain('版が古い');
+    expect(screen.getByTestId('pack-state-g3-kokugo').textContent).toContain('バージョンが古い');
     expect(screen.getByTestId('pack-state-kanji-g12').textContent).toBe('未取得');
     expect(screen.getByTestId('packs-core').textContent).toContain('4歳');
     expect(screen.queryByTestId('pack-row-p4')).toBeNull();

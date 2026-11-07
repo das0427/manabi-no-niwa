@@ -497,7 +497,7 @@ def main(argv=None):
         "--port",
         type=int,
         default=DEFAULT_PORT,
-        help="ポート（既定 %d。変えると学習データが別扱いになるため非推奨）" % DEFAULT_PORT,
+        help="ポート（既定 %d）。変えると学習データが別扱いになるため非推奨" % DEFAULT_PORT,
     )
     parser.add_argument("--self-test", action="store_true", help="この置き場を自己検査して終わる")
     parser.add_argument("--check-update", action="store_true", help="最新の版の情報を取得して表示する")

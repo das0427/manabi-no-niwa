@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import type { Outcome } from '../core/types';
 import type { Item } from '../curriculum/types';
 import {
   canSkip,
+  doneCaption,
   draftOf,
   flowReducer,
   initialFlow,
@@ -105,5 +107,39 @@ describe('不正解の効果音', () => {
     expect(playsWrongSfx(true)).toBe(false);
     expect(playsWrongSfx(false, true)).toBe(false);
     expect(playsWrongSfx(true, true)).toBe(false);
+  });
+});
+
+describe('完了画面の文（点数に見せない）', () => {
+  const skip5: Outcome[] = ['skipped', 'skipped', 'skipped', 'skipped', 'skipped'];
+  const mixed5: Outcome[] = ['independent', 'skipped', 'self_corrected', 'skipped', 'after_hint'];
+  it('ふつう: 問題の数と、最後までやったこと。正解の数は出さない', () => {
+    expect(doneCaption(mixed5, false)).toBe('5もん さいごまで やったね');
+    expect(doneCaption(['independent', 'independent', 'independent'], false)).toBe(
+      '3もん さいごまで やったね',
+    );
+    expect(doneCaption(['self_corrected'], false)).toBe('1もん さいごまで やったね');
+  });
+  it('ヒントや見直しのあとで正解した問題も、答えた問題として数える（v1 の praiseOf と同じ）', () => {
+    expect(doneCaption(['after_hint', 'skipped', 'skipped'], false)).toBe(
+      '3もん さいごまで やったね',
+    );
+    expect(doneCaption(['after_review', 'after_hint'], false)).toBe('2もん さいごまで やったね');
+  });
+  it('正解が 1つもない（全部「つぎへ」）回は、できたと言わず、数も出さない', () => {
+    expect(doneCaption(skip5, false)).toBe('いっしょに さいごまで みたね');
+    expect(doneCaption([], false)).toBe('いっしょに さいごまで みたね');
+  });
+  it('2歳段階（soft）は、遊んだことだけ（数も出さない）', () => {
+    expect(doneCaption(mixed5, true)).toBe('いっぱい あそんだね');
+    expect(doneCaption(skip5, true)).toBe('いっぱい あそんだね');
+  });
+  it('どの文にも「じぶんで」「できた」と、正解の数の言い方は入らない', () => {
+    for (const c of [
+      doneCaption(mixed5, false),
+      doneCaption(skip5, false),
+      doneCaption(mixed5, true),
+    ])
+      expect(c).not.toMatch(/じぶんで|できた|てん|ばんめ/);
   });
 });

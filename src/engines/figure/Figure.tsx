@@ -350,6 +350,10 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
   );
 }
 
+/** 分の読み。1・3・4・6・8・0 で終わる数は「ぷん」（clock.tsx の minuteWord と同じ規則。読み上げ用の名前に使う） */
+const minuteReading = (m: number): string =>
+  [0, 1, 3, 4, 6, 8].includes(m % 10) ? 'ぷん' : 'ふん';
+
 export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNumbers?: boolean }) {
   const R = 100;
   const svgRef = useRef<SVGSVGElement>(null);
@@ -374,7 +378,7 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
       viewBox="-130 -130 260 260"
       className="fig-svgbox fig-clock"
       role="img"
-      aria-label={`${h}じ${m === 0 ? '' : `${m}ふん`}`}
+      aria-label={`${h}じ${m === 0 ? '' : `${m}${minuteReading(m)}`}`}
       style={floorStyle(floor)}
     >
       <circle r={R} className="clk-face" />

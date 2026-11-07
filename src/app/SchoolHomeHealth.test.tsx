@@ -64,7 +64,7 @@ describe('小学生ホームの保存の問題の「!」', () => {
       expect(mark.textContent).toBe('!');
       expect(mark.getAttribute('role')).toBe('img');
       expect(mark.getAttribute('aria-label')).toBe(
-        '（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください',
+        '（保護者の方へ）記録の保存に問題があります。保護者画面の「データ」を見てください',
       );
       // 押せない（ボタンでも、キーボードで届く物でもない。子供の操作を止めない）
       expect(mark.tagName).toBe('SPAN');

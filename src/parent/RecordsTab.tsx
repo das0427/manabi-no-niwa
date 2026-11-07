@@ -142,7 +142,7 @@ function LegacyRecords({
           {playOnly ? null : (
             <p className="p-small" data-testid="legacy-progress-count">
               段階の記録が残っているスキル: {keptProgress}
-              （段階と直近の結果は、上の「スキルごとの様子」に出ています）
+              。段階と直近の結果は、上の「スキルごとの様子」に出ています。
             </p>
           )}
           {old.length > 0 ? (
@@ -194,7 +194,7 @@ function PlayOnlyRecords({ attempts }: { attempts: AttemptRecord[] }) {
     <>
       <Section title="あそんだ内容" id="play-summary">
         <Note>
-          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。2歳の段階と3歳の段階は「プロフィール」で切り替えます（3歳の段階にすると、正誤などの表に戻ります）。
+          2歳の段階では、正誤・ヒントの数・「むずかしそう」は表示しません。どのあそびで、どんな内容に触れたかだけを表示します。2歳の段階と3歳の段階は「プロフィール」で切り替えます。3歳の段階にすると、正誤などの表に戻ります。
         </Note>
         {played.length === 0 ? (
           <p className="p-muted" data-testid="play-empty">
@@ -360,7 +360,7 @@ export function RecordsTab() {
           {skillIds.length === 0 ? null : (
             <Section title="スキルごとの様子">
               <Note>
-                「直近」は、いまの段階での直近10問までの結果です。「もういちど」はヒント1の後に自分で選び直して正解、「ヒント後」は具体的なヒントの後に正解、「見直し後」は見直し機能を使って正解した数です。
+                「直近」は、いまの段階での直近10問までの結果です。「もういちど」はヒント1の後に自分で選び直して正解した数です。「ヒント後」は具体的なヒントの後に正解した数です。「見直し後」は見直し機能を使って正解した数です。
               </Note>
               <table className="p-table p-table--skills" data-testid="skill-table">
                 <thead>
@@ -463,7 +463,7 @@ export function RecordsTab() {
               <table className="p-table" data-testid="hard-items">
                 <thead>
                   <tr>
-                    <th>モード</th>
+                    <th>あそび</th>
                     <th>問題</th>
                     <th>取り組んだ回数</th>
                   </tr>
@@ -489,7 +489,7 @@ export function RecordsTab() {
                 <thead>
                   <tr>
                     <th>日時</th>
-                    <th>モード</th>
+                    <th>あそび</th>
                     <th>段階</th>
                     {showRecentProblem ? <th>問題</th> : null}
                     <th>結果</th>
@@ -525,7 +525,7 @@ export function RecordsTab() {
                 <thead>
                   <tr>
                     <th>日時</th>
-                    <th>モード</th>
+                    <th>あそび</th>
                     {showIssueProblem ? <th>問題</th> : null}
                     <th>入力</th>
                   </tr>

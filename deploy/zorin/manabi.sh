@@ -66,7 +66,7 @@ show_error() {
 
 PY="$(command -v python3 || true)"
 if [ -z "$PY" ]; then
-  show_error "python3 が見つかりません。ターミナルで 'sudo apt install python3' を実行してください（保護者の作業）。"
+  show_error "python3 が見つかりません。端末で 'sudo apt install python3' を実行してください（保護者の作業）。"
   exit 1
 fi
 
@@ -130,7 +130,7 @@ PYEOF
 }
 
 PORT_BUSY_MSG="ポート ${PORT} を、まなびのにわ以外のものが使っています。
-そのプログラムを止めてから、もういちど開いてください（別のポートでは開きません。学習データが別扱いになるためです）。"
+そのプログラムを止めてから、もういちど開いてください。別のポートでは開きません。学習データが別扱いになるためです。"
 
 check_health
 status=$?

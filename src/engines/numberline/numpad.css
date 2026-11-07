@@ -40,10 +40,38 @@
   border-style: dashed;
 }
 .mnp-pad {
+  /* キーは主操作（6u 以上。DESINGN.md 5.1・18章）なので、問題・ヒントのあいだは作業領域の --fit で縮めず、
+     縮める前の --u0 で決める（number の数字キーと同じ。--u のままだと fit 0.87 で 5.2u になっていた。FX05）。
+     --k がキーの単位（キーの字・線・影も --u = --k で決まるので、キーの中で比が変わらない）。
+     作業領域（--work-h。UnitRunner が fit=1 の高さを px で書く）が、4 段 × 6u ＋ 3 つの間（0.2u）= 24.6u に足りないとき
+     （問題文が長い単元で 24.7〜25.8u。文字を大きくした設定ではさらに狭い）だけ、作業領域に収まる大きさまで縮める
+     （下限 0.8。縮めないとスクロールの枠になり、下の段の 0 と こたえあわせ が隠れる）。--work-h が無い画面は縮めない */
+  --k: max(
+    calc(var(--u0) * 0.8),
+    min(var(--u0), calc(var(--work-h, calc(var(--u0) * 99)) / 24.62))
+  );
+  --u: var(--k);
   display: grid;
-  grid-template-columns: repeat(4, calc(var(--u) * 6));
-  grid-auto-rows: calc(var(--u) * 6);
-  gap: calc(var(--u) * 0.8);
+  grid-template-columns: repeat(4, calc(var(--k) * 6));
+  grid-auto-rows: calc(var(--k) * 6);
+  column-gap: calc(var(--k) * 0.8);
+  /* キーの段の間: 作業領域の余りを 3 つの間に分ける。0.8u（いつもの間）〜0.2u。
+     問題文が 2 行以上で作業領域が 24.7〜25.8u に狭まる単元
+     （g3.sci.light-sound・g4.math.angle・g5.math.average・g6.math.frequency・g6.math.proportion）でも、
+     数字キー全体が作業領域に収まり、スクロールの枠にも、ほかの中身の縮み（fit）にもならない。
+     （24.1u は 4 段 × 6u ＋ 下に残す 0.1u。間 = (作業領域 − 24.1u) ÷ 3）。
+     --work-h が無い画面（UnitRunner の外）は 26.5u（= 24.1u + 3 × 0.8u）として 0.8u */
+  row-gap: clamp(
+    calc(var(--k) * 0.2),
+    calc((var(--work-h, calc(var(--k) * 26.5)) - var(--k) * 24.1) / 3),
+    calc(var(--k) * 0.8)
+  );
+}
+/* 解説（つぎへ だけを押す）のあいだは、キーは使えない（disabled）。作業領域が解説の板の上までに狭まるので、
+   今までどおり --fit（下限 0.6）で縮める */
+.unit[data-phase='explain'] .mnp-pad {
+  --k: calc(var(--u0) * var(--fit, 1));
+  row-gap: calc(var(--k) * 0.8);
 }
 .mnp-key {
   white-space: nowrap;

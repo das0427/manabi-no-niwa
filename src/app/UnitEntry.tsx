@@ -89,8 +89,8 @@ export function LegacyEntry({ unitId, variantId }: { unitId: string; variantId?:
       variantId={variantId}
       onlyVariants={lg.variants}
       levelRange={lg.levelRange}
-      onPickVariant={(v) =>
-        navigate({ name: 'legacy', unitId, variantId: v }, { replace: false, force: true })
+      onPickVariant={(v, say) =>
+        navigate({ name: 'legacy', unitId, variantId: v }, { replace: false, force: true, say })
       }
     />
   );

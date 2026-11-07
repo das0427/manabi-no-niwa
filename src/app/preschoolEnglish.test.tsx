@@ -13,6 +13,9 @@ vi.mock('./AppState', () => ({ useApp: () => h.app }));
 vi.mock('./router', () => ({ navigate: h.navigate }));
 vi.mock('../core/storage/index', () => ({
   listRounds: vi.fn(async () => []),
+  // 幼児ホームの保存の問題の印（StorageHealthMark）が読む。ここでは問題なし
+  getStorageHealth: () => 'ok',
+  onStorageHealth: () => () => undefined,
 }));
 
 import { Explore } from './Explore';

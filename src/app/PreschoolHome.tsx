@@ -3,8 +3,7 @@
  * 2歳段階は札4枚（2×2）・おすすめなし・えいごの札なし（review-1 #23）。保護者向けの案内は起動画面で出す。
  * 「ほかの がくねん」は上の帯（鍵の左）。右の列の一番下を「えいご」の札にするため（設計: preschool-english.md 8章）。
  */
-import { useEffect, useState, type CSSProperties } from 'react';
-import { audio } from '../core/audio/index';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import * as db from '../core/storage/index';
 import { MODE_IDS } from '../core/types';
 import { PRESCHOOL_EN_CARDS, showsEnglishCard } from '../curriculum/preschoolEnglish';
@@ -16,17 +15,28 @@ import {
 } from '../curriculum/preschoolHome';
 import { unitMeta } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
+import type { VoiceSeq } from '../voice/catalog/index';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
-import { navigate } from './router';
+import { navigate, type Route } from './router';
 import './home.css';
 import './school-home.css';
 
-/** 単元を開く（v1 のモードを使う単元は ModeEntry、それ以外は UnitRunner） */
-export function openUnit(unitId: string): void {
+/**
+ * 単元を開く（v1 のモードを使う単元は ModeEntry、それ以外は UnitRunner）。
+ * say: 開いたあとに読み上げる声（札の名前）。navigate は遷移のはじめに前の声を止めるので、声は
+ * navigate の say で遷移のあとに鳴らす（先に audio.play すると鳴り始める前に止まる。FX02）
+ */
+export function openUnit(unitId: string, say?: VoiceSeq): void {
   const m = unitMeta(unitId);
   if (!m) return;
-  navigate(m.legacy ? { name: 'legacy', unitId } : { name: 'unit', unitId });
+  go(m.legacy ? { name: 'legacy', unitId } : { name: 'unit', unitId }, say);
+}
+
+/** 遷移する。say があれば遷移のあとに読み上げる（無いときは navigate の第2引数を渡さない） */
+function go(route: Route, say?: VoiceSeq): void {
+  if (say) navigate(route, { say });
+  else navigate(route);
 }
 
 /** 札の単元のうち、子供画面に出すもの（保護者が開いていない hiddenByDefault は出さない） */
@@ -40,6 +50,26 @@ export function cardUnits(card: HomeCard, opened: readonly string[] = []): strin
 /** v1 のモード名の札は v1 と同じ目印（既存の E2E と保護者の手順書の互換） */
 function cardTestId(id: string): string {
   return (MODE_IDS as readonly string[]).includes(id) ? `home-mode-${id}` : `home-card-${id}`;
+}
+
+/**
+ * 保存に問題があるときの、保護者向けの小さな印「!」（鍵の左。子供の操作は止めない）。
+ * v1 の Home.tsx の「!」と同じ作り（`.home-health`〔home.css〕・role="img"・文・data-testid）。押せる物ではない。
+ * 幼児ホームは v1 のホームを通らないので、ここに置く（FX16）。小学生ホームも同じ作りで置く（SchoolHome。F4）。
+ */
+export function StorageHealthMark() {
+  const health = useSyncExternalStore(db.onStorageHealth, db.getStorageHealth);
+  if (health === 'ok') return null;
+  return (
+    <span
+      className="home-health"
+      role="img"
+      aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください"
+      data-testid="home-health"
+    >
+      !
+    </span>
+  );
 }
 
 function TwoLine({ text, className = 'home-card__name' }: { text: string; className?: string }) {
@@ -104,11 +134,11 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
     showsEnglishCard({ stage2, showPreschoolEnglish: settings?.showPreschoolEnglish }) &&
     cardUnits(eigo, settings?.unitsOpened).length > 0;
 
+  // 札の名前の声は、遷移のあとに鳴らす（navigate の say。v1 の Home.tsx の open と同じ。FX02）
   const open = (c: HomeCard) => {
     const units = cardUnits(c, app.settings?.unitsOpened);
-    if (c.titleVoice) void audio.play(c.titleVoice);
-    if (units.length === 1) openUnit(units[0]!);
-    else if (units.length > 1) navigate({ name: 'card', stage: def.stage, cardId: c.id });
+    if (units.length === 1) openUnit(units[0]!, c.titleVoice);
+    else if (units.length > 1) go({ name: 'card', stage: def.stage, cardId: c.id }, c.titleVoice);
   };
 
   return (
@@ -130,6 +160,7 @@ export function PreschoolHome({ def }: { def: PreschoolHomeDef }) {
             <Illust id="explore" className="home-explore__illust" decorative />
             <span className="home-explore__name">ほかの がくねん</span>
           </button>
+          <StorageHealthMark />
           <ParentGateButton />
         </div>
       </div>

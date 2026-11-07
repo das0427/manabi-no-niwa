@@ -464,7 +464,7 @@ function props(level: number, rng: Rng, alt: boolean): Item {
           : `となり合う 角を たすと 180°なので、角イは 180 − ${deg} ＝ ${ans}°です。`,
     identity: `props:${name}:${a}-${bb}:${deg}:${ask}`,
     alt: false,
-    fields: [{ label: unit, answer: answers[0]! }],
+    fields: [{ unit, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, wr),
   };
   return item;
@@ -603,7 +603,7 @@ function diag(level: number, rng: Rng, alt: boolean): Item {
     explain: `${name}の 対角線は まん中で 交わるので、アオ ＝ オウ。${toWhole ? `アウ ＝ ${half} × 2 ＝ ${ans}cm` : `アオ ＝ ${half * 2} ÷ 2 ＝ ${ans}cm`}です。`,
     identity: `diag:${name}:${half}:${toWhole ? 'w' : 'h'}`,
     alt: false,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [[toWhole ? half : half * 2, 'diag-half']]),
   };
 }

@@ -6,7 +6,7 @@
     "stage": "g1",
     "subject": "ja",
     "domain": "yomu",
-    "icon": "book",
+    "icon": "p5-book",
     "prereq": [],
     "priority": "P2",
     "status": "ready",
@@ -210,7 +210,7 @@
     "stage": "g1",
     "subject": "ja",
     "domain": "kotoba",
-    "icon": "music-note",
+    "icon": "p5-note",
     "prereq": [
       "p4.ja.word-play"
     ],
@@ -3338,7 +3338,7 @@
     "stage": "g6",
     "subject": "ja",
     "domain": "kotoba",
-    "icon": "book",
+    "icon": "p5-book",
     "prereq": [],
     "priority": "P2",
     "status": "ready",

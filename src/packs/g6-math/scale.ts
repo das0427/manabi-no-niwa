@@ -319,7 +319,7 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `拡大図や 縮図では、対応する 角の 大きさは 等しく なります。角Eは 角Bと 同じ ${B}度です。`,
       identity: `side:angle:${t.a},${t.b},${t.c}:${k}`,
       alt: true,
-      fields: [{ label: '度', answer }],
+      fields: [{ unit: '度', answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -354,7 +354,7 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `辺${which === 'ef' ? 'EF' : 'FD'}に 対応する 辺は 辺${which === 'ef' ? 'BC' : 'CA'}です。${kText(k)}なので、${known} × ${k >= 1 ? k : qText(q(1, 1 / k))} ＝ ${ans}（cm）です。`,
     identity: `side:${t.a},${t.b},${t.c}:${k}:${which}`,
     alt: false,
-    fields: [{ label: 'cm', answer }],
+    fields: [{ unit: 'cm', answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -480,7 +480,7 @@ function realItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${meters}m ＝ ${meters * 100}cm。${meters * 100} ÷ ${N} ＝ ${L}なので、地図の 上では ${L}cmです。`,
       identity: `real:map:${N}:${meters}:${asFrac ? 'f' : 'r'}`,
       alt: true,
-      fields: [{ label: 'cm', answer }],
+      fields: [{ unit: 'cm', answer }],
       keys: ['decimal'],
       wrongAnswers: wrongList(
         [answer],
@@ -506,7 +506,7 @@ function realItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${L} × ${N} ＝ ${L * N}（cm）。${L * N}cm ＝ ${meters}mです。`,
     identity: `real:${N}:${L}:${asFrac ? 'f' : 'r'}`,
     alt: false,
-    fields: [{ label: 'm', answer }],
+    fields: [{ unit: 'm', answer }],
     wrongAnswers: wrongList(
       [answer],
       [

@@ -178,7 +178,7 @@ function times(level: number, rng: Rng, alt: boolean): Item {
     explain: `${k * b} ÷ ${k * a} ＝ ${m}。□が ${m}倍に なると ○も ${m}倍に なります。○は □に 比例しています。`,
     identity: `times:${sc.id}:${k}:${a}:${b}`,
     alt: false,
-    fields: [{ label: '倍', answer: answers[0]! }],
+    fields: [{ unit: '倍', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [k * b - k * a, 'add-not-mult'],
       [b - a, 'add-not-mult'],
@@ -208,7 +208,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `□が 1の とき ○は ${k * a} ÷ ${a} ＝ ${k}。□が ${t}の ときは ${k} × ${t} ＝ ${k * t}。答えは ${k * t}${sc.yu}です。`,
       identity: `fill-alt:${sc.id}:${k}:${a}:${t}`,
       alt: true,
-      fields: [{ label: sc.yu, answer: answers[0]! }],
+      fields: [{ unit: sc.yu, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [k * a + (t - a), 'add-not-mult'],
         [k * a * t, 'skip-per-one'],
@@ -234,7 +234,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `□が ${t}倍に なると ○も ${t}倍。${k} × ${t} ＝ ${k * t}です。`,
     identity: `fill:${sc.id}:${k}:${t}`,
     alt: false,
-    fields: [{ label: sc.yu, answer: answers[0]! }],
+    fields: [{ unit: sc.yu, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [2 * k + (t - 2), 'add-not-mult'],
       [k + t, 'add-not-mult'],
@@ -350,7 +350,7 @@ function formula(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `○ ＝ ${t} × ${k} ＝ ${k * t}。答えは ${k * t}${sc.yu}です。`,
       identity: `formula-alt:${sc.id}:${k}:${t}`,
       alt: true,
-      fields: [{ label: sc.yu, answer: answers[0]! }],
+      fields: [{ unit: sc.yu, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [[t + k, 'add-not-mult']]),
     };
   }
@@ -409,7 +409,7 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `□ × ${k} ＝ ${y}なので、□ ＝ ${y} ÷ ${k} ＝ ${t}。答えは ${xn(sc, t)}です。`,
     identity: `inverse${alt ? '-alt' : ''}:${sc.id}:${k}:${t}`,
     alt,
-    fields: [{ label: sc.xu, answer: answers[0]! }],
+    fields: [{ unit: sc.xu, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [y * k, 'k-swap'],
       [y - k, 'add-not-mult'],

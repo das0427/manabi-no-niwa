@@ -110,7 +110,7 @@ function split(level: number, rng: Rng, alt: boolean): NumberItem {
       level,
       prompt: `あめが 1ふくろに ${a}こずつ はいって います。${b}ふくろでは ぜんぶで なんこ？`,
       figure: arrayFig(a, b),
-      fields: [{ label: 'こ', answer: { kind: 'int', value: p } }],
+      fields: [{ unit: 'こ', answer: { kind: 'int', value: p } }],
       hints: [
         `${a}は 10と ${o}。`,
         `10の ${b}つぶんと、${o}の ${b}つぶんに わけよう。`,

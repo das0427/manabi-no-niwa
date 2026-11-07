@@ -71,7 +71,7 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${B} ÷ ${A} ＝ ${n}。${sc.b}は ${sc.a}の ${n}倍です。`,
     identity: `times:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
-    fields: [{ label: '倍', answer: answers[0]! }],
+    fields: [{ unit: '倍', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [B - A, 'diff-compare'],
       [B * A, 'mult-instead'],
@@ -147,7 +147,7 @@ function compare(level: number, rng: Rng, alt: boolean): Item {
         explain: `アは ${n1}倍、イは ${n2}倍。${win}の ${Math.max(n1, n2)}倍の ほうが 大きいです。`,
         identity: `compare-calc:${sc.id}:${a1}x${n1}:${a2}x${n2}`,
         alt: true,
-        fields: [{ label: '倍', answer: answers[0]! }],
+        fields: [{ unit: '倍', answer: answers[0]! }],
         wrongAnswers: wrongList(answers, [
           [Math.min(n1, n2), 'diff-compare'],
           [Math.max(d1, d2), 'diff-compare'],
@@ -206,7 +206,7 @@ function amount(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${A} × ${n} ＝ ${A * n}。${sc.b}は ${A * n}${sc.u}です。`,
     identity: `amount:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
-    fields: [{ label: sc.u, answer: answers[0]! }],
+    fields: [{ unit: sc.u, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [A + n, 'add-instead'],
       [A % n === 0 ? A / n : null, 'base-swap'],
@@ -236,7 +236,7 @@ function base(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `□ × ${n} ＝ ${B} なので、□ ＝ ${B} ÷ ${n} ＝ ${A}。${sc.a}は ${A}${sc.u}です。`,
     identity: `base:${sc.id}:${A}x${n}${alt ? ':tape' : ''}`,
     alt,
-    fields: [{ label: sc.u, answer: answers[0]! }],
+    fields: [{ unit: sc.u, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [B * n, 'mult-instead'],
       [B - n, 'add-instead'],

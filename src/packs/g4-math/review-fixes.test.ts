@@ -153,6 +153,71 @@ describe('review: g4.math.area（重大4・中-B units-alt）', () => {
     expect(n).toBeGreaterThan(20);
   });
 
+  /** count の 図（方がん）から、ぬった ますと 方がんの 大きさ（ます数）を 読む */
+  function gridOf(it: Item): { cells: [number, number][]; cols: number; rows: number } {
+    const fig = (it as { figure?: { kind: string; markup?: string } }).figure;
+    expect(fig?.kind, it.id).toBe('svg');
+    const markup = fig!.markup!;
+    const vb = /viewBox="0 0 (\d+) (\d+)"/.exec(markup);
+    expect(vb, it.id).not.toBeNull();
+    // 方がんの まわりの あき（PAD 4）と ます（24）。ぬった ます以外の rect は 無い
+    const cells = [
+      ...markup.matchAll(
+        /<rect x="(\d+)" y="(\d+)" width="24" height="24" fill="var\(--sky\)"\/>/g,
+      ),
+    ].map((m) => [(Number(m[1]) - 4) / 24, (Number(m[2]) - 4) / 24] as [number, number]);
+    return { cells, cols: (Number(vb![1]) - 8) / 24, rows: (Number(vb![2]) - 8) / 24 };
+  }
+
+  it('count: 方がんは 形の 外接の 長方形 ＋ まわり 1 ます（第8回。ます 1 つ 2.4u 以上）', () => {
+    let numbers = 0;
+    let pairs = 0;
+    for (const it of items) {
+      if (!it.id.startsWith('count')) continue;
+      const alt = it.id.startsWith('count-alt:');
+      const { cells, cols, rows } = gridOf(it);
+      expect(cells.length, it.id).toBeGreaterThan(0);
+      const xs = cells.map(([x]) => x);
+      const ys = cells.map(([, y]) => y);
+      // 形の まわりに 1 ます あく（形が 方がんの ふちに つかない）。方がんは 形の 外接の 長方形に ぴったり
+      expect(Math.min(...xs), it.id).toBe(1);
+      expect(Math.min(...ys), it.id).toBe(1);
+      expect(Math.max(...xs), it.id).toBe(cols - 2);
+      expect(Math.max(...ys), it.id).toBe(rows - 2);
+      // 数の入力の 図の段（高さ 約 18u）で 7 ます以内（viewBox の たて 176 → ます 2.46u）。
+      // 広さくらべは 図の 幅 23u に 9 ます以内（viewBox の 横 224 → ます 2.46u）
+      expect(rows, it.id).toBeLessThanOrEqual(7);
+      expect(cols, it.id).toBeLessThanOrEqual(alt ? 9 : 7);
+      if (alt) pairs++;
+      else numbers++;
+    }
+    expect(numbers).toBeGreaterThan(20);
+    expect(pairs).toBeGreaterThan(20);
+  });
+
+  it('count: まわりの 長さの 誤答は 方がんの 位置に よらず 形から 決まる', () => {
+    let n = 0;
+    for (const it of items) {
+      if (it.engine !== 'number' || !it.id.startsWith('count:')) continue;
+      const { cells } = gridOf(it);
+      const key = new Set(cells.map((c) => c.join(',')));
+      let per = 0;
+      for (const [x, y] of cells)
+        for (const [dx, dy] of [
+          [1, 0],
+          [-1, 0],
+          [0, 1],
+          [0, -1],
+        ] as const)
+          if (!key.has(`${x + dx},${y + dy}`)) per++;
+      const w = (it.wrongAnswers ?? []).find((x) => x.misconception === 'perimeter');
+      if (!w) continue;
+      n++;
+      expect(Number(w.value), it.id).toBe(per);
+    }
+    expect(n).toBeGreaterThan(20);
+  });
+
   it('units-alt: ヒントは 答えの 単位に よらず 同じ（どれか 1つだけを 説明しない）', () => {
     const hs = new Set(
       items.filter((it) => it.id.startsWith('units-alt:')).map((it) => JSON.stringify(it.hints)),

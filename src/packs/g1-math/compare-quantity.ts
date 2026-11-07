@@ -173,7 +173,7 @@ function clips(level: number, rng: Rng): NumberItem {
     explainFigure: { kind: 'blocks', ones: n },
     identity: id,
     alt: true,
-    fields: [{ label: `${u.ko}ぶん`, answer: { kind: 'int', value: n } }],
+    fields: [{ answer: { kind: 'int', value: n }, unit: `${u.ko}ぶん` }],
     wrongAnswers: [
       { value: String(n + 1), misconception: 'mis-miscount' },
       { value: String(n - 1), misconception: 'mis-miscount' },
@@ -196,12 +196,8 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
         (_, i) =>
           `<rect x="${44 + i * size * U}" y="${y}" width="${size * U}" height="30" fill="${fill}" ${INK}/>`,
       ).join('');
-    const top = bigIsA
-      ? row(16, a, 2, 'var(--sun)')
-      : row(16, b, 1, 'var(--sky)');
-    const bottom = bigIsA
-      ? row(76, b, 1, 'var(--sky)')
-      : row(76, a, 2, 'var(--sun)');
+    const top = bigIsA ? row(16, a, 2, 'var(--sun)') : row(16, b, 1, 'var(--sky)');
+    const bottom = bigIsA ? row(76, b, 1, 'var(--sky)') : row(76, a, 2, 'var(--sun)');
     const fig = svg(
       60 + 10 * U,
       130,
@@ -229,12 +225,8 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
       alt: true,
       options: [
         // あ・い の順に固定して並べ、正答の印だけを入れかえる
-        bigIsA
-          ? { label: 'あ', correct: true }
-          : { label: 'あ', misconception: 'mis-unit-size' },
-        bigIsA
-          ? { label: 'い', misconception: 'mis-unit-size' }
-          : { label: 'い', correct: true },
+        bigIsA ? { label: 'あ', correct: true } : { label: 'あ', misconception: 'mis-unit-size' },
+        bigIsA ? { label: 'い', misconception: 'mis-unit-size' } : { label: 'い', correct: true },
         { label: 'おなじ', misconception: 'mis-same' },
       ],
       fixedOrder: true,
@@ -293,7 +285,7 @@ function tani(level: number, rng: Rng, alt: boolean): Item {
     ],
     explain: `${Math.max(a, b)} − ${Math.min(a, b)} ＝ ${d}。${d}${cnt}ぶん ながいよ。`,
     identity: id,
-    fields: [{ label: `${cnt}ぶん`, answer: { kind: 'int', value: d } }],
+    fields: [{ answer: { kind: 'int', value: d }, unit: `${cnt}ぶん` }],
     wrongAnswers: [
       { value: String(a + b), misconception: 'mis-add' },
       { value: String(Math.max(a, b)), misconception: 'mis-one-number' },
@@ -368,7 +360,7 @@ function hirosa(level: number, rng: Rng, alt: boolean): Item {
     explain: `あは ${A[0]}ます、いは ${A[1]}ます。${Math.max(...A)} − ${Math.min(...A)} ＝ ${d}で、${d}ますぶん ひろいよ。`,
     identity: id,
     alt: true,
-    fields: [{ label: 'ますぶん', answer: { kind: 'int', value: d } }],
+    fields: [{ answer: { kind: 'int', value: d }, unit: 'ますぶん' }],
     wrongAnswers: [
       { value: String(A[0]! + A[1]!), misconception: 'mis-add' },
       { value: String(Math.max(...A)), misconception: 'mis-one-number' },
@@ -479,7 +471,7 @@ function kasa(level: number, rng: Rng, alt: boolean): Item {
     explain: `${Math.max(a, b)} − ${Math.min(a, b)} ＝ ${d}。コップ ${d}はいぶん おおいよ。`,
     identity: id,
     alt: true,
-    fields: [{ label: 'はいぶん', answer: { kind: 'int', value: d } }],
+    fields: [{ answer: { kind: 'int', value: d }, unit: 'はいぶん' }],
     wrongAnswers: [
       { value: String(a + b), misconception: 'mis-add' },
       { value: String(Math.max(a, b)), misconception: 'mis-one-number' },

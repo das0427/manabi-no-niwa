@@ -128,7 +128,7 @@ function multiple(level: number, rng: Rng, alt: boolean): Item {
       alt: true,
       multi: true,
       fixedOrder: true,
-      layout: 'grid',
+      layout: 'row',
       options: all.map((x): ChoiceOption =>
         x % n === 0
           ? { label: String(x), correct: true }
@@ -181,7 +181,7 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
       objective: 'divisor',
       level,
       prompt: `${n}の 約数は 全部で 何こ ありますか。`,
-      figure: expr(`${n} ÷ □ が わりきれる □`),
+      figure: expr(`${n} ÷ □ が わりきれる`),
       hints: [
         `${n}を わりきる 整数が ${n}の 約数だよ。1と ${n}も 入るよ。`,
         `かけて ${n}に なる 組を 見つけよう。1 × ${n}、…`,
@@ -197,7 +197,7 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
       explain: `${n}の 約数は ${ds.join('、')}の ${ds.length}こです。`,
       identity: `divisor-count:${n}`,
       alt: true,
-      fields: [{ label: 'こ', answer: answers[0]! }],
+      fields: [{ unit: 'こ', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [ds.length - 2, 'miss-ends'],
         [ds.length - 1, 'miss-ends'],
@@ -208,8 +208,12 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
   }
   // 約数を すべて選ぶ（1〜n の中から 約数＋ まぎらわしい数）
   const non = range(2, n - 1).filter((x) => n % x !== 0);
-  const extra = rng.sample(non, Math.min(non.length, Math.max(2, 10 - ds.length - 1)));
   const multipleOpt = level >= 1 && n * 2 <= 120 ? [n * 2] : [];
+  // 選択肢は 10 こまで（横に 5 こずつ 2 段。作業領域に入る）
+  const extra = rng.sample(
+    non,
+    Math.min(non.length, Math.max(1, 10 - ds.length - multipleOpt.length)),
+  );
   const all = [...new Set([...ds, ...extra, ...multipleOpt])].sort((a, b) => a - b);
   const item: ChoiceItem = {
     engine: 'choice',
@@ -217,6 +221,8 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
     objective: 'divisor',
     level,
     prompt: `${n}の 約数を すべて 選ぼう。`,
+    // 図があると、選択肢の数字の札が 5 こずつの横並び（2 段）になる（図が無いと 2 列で 5 段になり作業領域に入らない）
+    figure: expr(`${n}の 約数`),
     hints: [
       `${n}を わりきる 整数を さがそう。1と ${n}も 約数だよ。`,
       `かけて ${n}に なる 2つの 数の 組を 考えよう。1 × ${n}、…`,
@@ -234,7 +240,6 @@ function divisor(level: number, rng: Rng, alt: boolean): Item {
     alt: false,
     multi: true,
     fixedOrder: true,
-    layout: 'grid',
     options: all.map((x): ChoiceOption =>
       n % x === 0
         ? { label: String(x), correct: true }
@@ -306,7 +311,7 @@ function lcmItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${a}と ${b}の 最小公倍数は ${L}。答えは ${L}${sc.unit}です。`,
       identity: `lcm-scene:${sc.id}:${key}`,
       alt: true,
-      fields: [{ label: sc.unit, answer: answers[0]! }],
+      fields: [{ unit: sc.unit, answer: answers[0]! }],
       wrongAnswers: wr,
     };
   }
@@ -422,7 +427,7 @@ function gcdItem(level: number, rng: Rng, alt: boolean): Item {
       explain: `${a}と ${b}の 最大公約数は ${G}。答えは ${G}${sc.unit}です。`,
       identity: `gcd-scene:${sc.id}:${key}`,
       alt: true,
-      fields: [{ label: sc.unit, answer: answers[0]! }],
+      fields: [{ unit: sc.unit, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, wrongCands),
     };
   }
@@ -439,6 +444,7 @@ function gcdItem(level: number, rng: Rng, alt: boolean): Item {
       objective: 'gcd',
       level,
       prompt: `${a}と ${b}の 公約数を すべて 選ぼう。`,
+      figure: expr(`${a}と ${b}の 公約数`),
       hints: [
         `${a}も ${b}も わりきれる 数が 公約数だよ。1も 入るよ。`,
         hint2,
@@ -449,7 +455,6 @@ function gcdItem(level: number, rng: Rng, alt: boolean): Item {
       alt: false,
       multi: true,
       fixedOrder: true,
-      layout: 'grid',
       options: all.map((x): ChoiceOption =>
         commons.includes(x)
           ? { label: String(x), correct: true }

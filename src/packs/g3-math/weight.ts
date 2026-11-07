@@ -106,7 +106,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           explain: `1t ＝ 1000kg なので ${t}t ＝ ${t * 1000}kgです。`,
           identity: `t-kg:${t}`,
           alt: true,
-          fields: [{ label: 'kg', answer: { kind: 'int', value: t * 1000 } }],
+          fields: [{ unit: 'kg', answer: { kind: 'int', value: t * 1000 } }],
           wrongAnswers: wrongList(String(t * 1000), 1, [[t * 100, 'kg-as-100']]),
         }
       : {
@@ -123,7 +123,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
           explain: `1000kg ＝ 1t なので ${t * 1000}kg ＝ ${t}tです。`,
           identity: `kg-t:${t}`,
           alt: true,
-          fields: [{ label: 't', answer: { kind: 'int', value: t } }],
+          fields: [{ unit: 't', answer: { kind: 'int', value: t } }],
           wrongAnswers: wrongList(String(t), 1, [[t * 10, 'kg-as-100']]),
         };
   }
@@ -146,7 +146,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         explain: `1kg ＝ 1000g なので ${k}kg ＝ ${k * 1000}g。${k * 1000} ＋ ${g} ＝ ${total}で ${total}gです。`,
         identity: `kg-g:${k}:${g}`,
         alt: false,
-        fields: [{ label: 'g', answer: { kind: 'int', value: total } }],
+        fields: [{ unit: 'g', answer: { kind: 'int', value: total } }],
         wrongAnswers: wrongList(String(total), 1, [
           [`${k}${g}`, 'unit-place'],
           [k * 100 + g, 'kg-as-100'],
@@ -168,8 +168,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         identity: `g-kg:${total}`,
         alt: false,
         fields: [
-          { label: 'kg', answer: { kind: 'int', value: k } },
-          { label: 'g', answer: { kind: 'int', value: g } },
+          { unit: 'kg', answer: { kind: 'int', value: k } },
+          { unit: 'g', answer: { kind: 'int', value: g } },
         ],
         wrongAnswers: wrongList(`${k}|${g}`, 2, [
           [`${Math.floor(total / 100)}|${total % 100}`, 'kg-as-100'],
@@ -256,8 +256,8 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
     identity: `${sc.id}:${a}${sc.op}${b}`,
     alt,
     fields: [
-      { label: 'kg', answer: { kind: 'int', value: K } },
-      { label: 'g', answer: { kind: 'int', value: G } },
+      { unit: 'kg', answer: { kind: 'int', value: K } },
+      { unit: 'g', answer: { kind: 'int', value: G } },
     ],
     wrongAnswers: wrongList(`${K}|${G}`, 2, [
       [`${Math.floor(ans / 100)}|${ans % 100}`, 'kg-as-100'],

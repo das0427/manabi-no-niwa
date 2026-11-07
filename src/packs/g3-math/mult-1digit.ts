@@ -14,6 +14,7 @@ import {
   bundleFigure,
   columnFigure,
   digits,
+  hon,
   pickObj,
   placeFields,
   placeName,
@@ -267,7 +268,7 @@ const SCENES: Scene[] = [
     unit: 'cm',
     times: false,
     text: (a, b) =>
-      `1本《ぽん》 ${a}cmの リボンを ${b}本《ほん》 つなぎます（つなぎめの 長《なが》さは 考《かんが》えない）。全部《ぜんぶ》で 何《なん》cmですか。`,
+      `1本《ぽん》 ${a}cmの リボンを ${hon(b)} つなぎます（つなぎめの 長《なが》さは 考《かんが》えない）。全部《ぜんぶ》で 何《なん》cmですか。`,
   },
   {
     id: 'tape',
@@ -333,7 +334,7 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: columnFigure(a, b, '×', String(ans).length, [], ans),
     identity: `${sc.id}:${a}x${b}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongs(a, b, 1),
   };
 }

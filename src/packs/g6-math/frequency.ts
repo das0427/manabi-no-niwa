@@ -145,7 +145,7 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       explain: `${up ? `${lab(c, i)}から ${lab(c, c.k - 1)}` : `${lab(c, 0)}から ${lab(c, i - 1)}`}の 階級の 人数を たして ${ans}人です。`,
       identity: `table:cum:${c.id}:${cnt.join(',')}:${i}`,
       alt: true,
-      fields: [{ label: '人', answer }],
+      fields: [{ unit: '人', answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -187,7 +187,7 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
       .join('、')}の ${ans}人です。${b}${c.unit}は 入りません。`,
     identity: `table:${c.id}:${[...shuffled].sort((p, q) => p - q).join(',')}:${i}`,
     alt: false,
-    fields: [{ label: '人', answer }],
+    fields: [{ unit: '人', answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -266,7 +266,7 @@ function histItem(level: number, rng: Rng, alt: boolean): GraphItem {
     },
     task: {
       kind: 'number',
-      fields: [{ label: '人', answer }],
+      fields: [{ unit: '人', answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -393,7 +393,7 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${cond}の 人は ${part}人。${part} ÷ ${n} ＝ ${part / n}、× 100で ${pct}%です。`,
     identity: `ratio:${c.id}:${cnt.join(',')}:${i}${alt ? ':graph' : ''}`,
     alt,
-    fields: [{ label: '%', answer }],
+    fields: [{ unit: '%', answer }],
     wrongAnswers: wrongList(
       [answer],
       [

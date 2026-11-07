@@ -229,7 +229,7 @@ function kazu(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, false),
     task: {
       kind: 'number',
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: v } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: v } }],
       wrongAnswers: [
         { value: String(v + 1), misconception: 'mis-miscount' },
         ...(v > 1 ? [{ value: String(v - 1), misconception: 'mis-miscount' }] : []),
@@ -273,7 +273,7 @@ function chigai(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, alt),
     task: {
       kind: 'number',
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: diff } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: diff } }],
       wrongAnswers: wrongs.filter((w) => w.value !== String(diff)),
     },
   });

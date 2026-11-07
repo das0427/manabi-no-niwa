@@ -277,7 +277,7 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `同じ 長さの 辺が 4本ずつ あるので、（${d[0]} ＋ ${d[1]} ＋ ${d[2]}）× 4 ＝ ${sum}cmです。`,
       identity: `count-sum:${[...d].sort().join('x')}`,
       alt: true,
-      fields: [{ label: 'cm', answer: answers[0]! }],
+      fields: [{ unit: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [d[0] + d[1] + d[2], 'edge-count'],
         [2 * (d[0] + d[1] + d[2]), 'edge-count'],
@@ -341,7 +341,7 @@ function count(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${name}では 同じ 向きの 辺 4本の 長さが 等しいので、${len}cmの 辺は ${ans}本です。`,
     identity: `count:len:${[...d].sort().join('x')}:${len}`,
     alt: false,
-    fields: [{ label: '本', answer: answers[0]! }],
+    fields: [{ unit: '本', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [ans === 4 ? 1 : 2, 'hidden-miss'],
       [ans === 4 ? 2 : 4, 'hidden-miss'],
@@ -441,7 +441,7 @@ function relation(level: number, rng: Rng, alt: boolean): Item {
     explain: `${edgeName(e)}に ${kind === 1 ? '平行な 辺は 3本' : '垂直な 辺は 4本'}です。`,
     identity: `relation:edge:${edgeName(e)}:${kind}`,
     alt: false,
-    fields: [{ label: '本', answer: answers[0]! }],
+    fields: [{ unit: '本', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [kind === 1 ? 4 : 3, 'perp-par-swap'],
       [kind === 1 ? 1 : 2, 'hidden-miss'],

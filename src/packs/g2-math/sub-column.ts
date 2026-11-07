@@ -249,7 +249,7 @@ function wordItem(level: number, a: number, b: number, alt: boolean, rng: Rng): 
     explain: `しきは ${a} − ${b} ＝ ${d}。こたえは ${d}${sc.unit} です。`,
     identity: `${sc.id}:${key(a, b)}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: d } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: d } }],
     wrongAnswers: wrongs(a, b, 1),
   };
 }

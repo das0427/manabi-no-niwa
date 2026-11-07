@@ -21,7 +21,7 @@
 | ヒント | 3段（①何を見る／聞くか ②手がかりの一部 ③最後の一手を残す）。どの段も答えの語そのものを書かない |
 | 音声 | 作らない（統括が台本から作る）。listen の `audio.text` は文として書くだけ（`key` は付けない。英字を含まない） |
 | 絵 | 既存の絵だけを使う（新しい絵は要らない）。`src/illust/content/g1-ja.tsx` は作らない |
-| 絵の ID の確認 | `ship`・`cat`・`balloon`・`fox`・`flower`・`eggplant`・`scissors`・`banana`・`music-note`・`book`（いずれも `src/illust/` に登録済み） |
+| 絵の ID の確認 | `ship`・`cat`・`p5-balloon`・`fox`・`flower`・`eggplant`・`scissors`・`banana`・`p5-note`・`p5-book`（いずれも素材一覧 `src/illust/registry.ts` に登録済みで `final`）。はじめは `balloon`・`music-note`・`book` と書いたが、これははんこ用の絵（`src/illust/stamps/`）で素材一覧に無く、本番でも赤い破線の枠になった（第8回で直した。`g1-ja.test.ts` が問題・選択肢・導入の絵を調べる） |
 | 状態 | 両方 `status: 'ready'`、`priority: 'P2'` |
 
 **避けたもの（独自性）**: 教科書の定番教材として載っている昔話（おむすびころりん・かさじぞう（かさこじぞう）・おおきなかぶ・いなばのしろうさぎ）は使わない。
@@ -41,7 +41,7 @@
 | stage / subject / domain | `'g1'` / `'ja'` / `'kotoba'` |
 | kind | `'play'`（curriculum-matrix の種別「遊」）。量の基準は qa.ts で 12 だが、matrix の「手30」を満たすよう 49 問作る |
 | priority / status | `'P2'` / `'ready'` |
-| icon | `'music-note'` |
+| icon | `'p5-note'`（おんぷ。はじめの `'music-note'` は素材一覧に無かった） |
 | prereq | `['p4.ja.word-play']` |
 | engine | choice・listen |
 | review | `'none'`（matrix の復習「−」） |
@@ -342,7 +342,7 @@ prompt（#7〜#12）: `'さかさに よんでも おなじに なる ものは 
 | stage / subject / domain | `'g1'` / `'ja'` / `'yomu'` |
 | kind | `'reading'`（matrix の種別「読」。基準 30） |
 | priority / status | `'P2'` / `'ready'` |
-| icon | `'book'` |
+| icon | `'p5-book'`（えほん。はじめの `'book'` は素材一覧に無かった） |
 | prereq | `[]`（matrix の前提「−」） |
 | engine | listen（聞く。level 0）・reading（読んで確かめる。level 1） |
 | review | `'none'`（matrix の復習「−」） |

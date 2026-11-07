@@ -249,14 +249,50 @@ function reasonItem(w: Why): Item {
 const TELL_H2 = 'かいたら、どうして そう おもったか、おうちの ひとに おはなし しよう。';
 const TELL_REASON_H2 = 'えらんだら、どうして そう おもったか、おうちの ひとに おはなし しよう。';
 
-/** つづきを かく（練習） */
-const DRAWS: [id: string, figure: string, prompt: string][] = [
-  ['draw:rain-stop', 'p5-rain', 'あめが やんだよ。この あと どう なる？ えに かこう。'],
-  ['draw:snowman', 'life-snowman', 'ゆきだるまに おひさまが あたるよ。この あと どう なる？'],
-  ['draw:seed', 'life-seed', 'たねを まいて みずを あげたよ。この あと どう なる？'],
-  ['draw:icecream', 'p5-icecream', 'あつい ひに アイスを そとに おいたよ。この あと どう なる？'],
-  ['draw:balloon', 'p5-balloon', 'ふうせんに いきを どんどん いれると、どう なる？'],
-  ['draw:frog', 'frog', 'かえるが いけに とびこんだよ。この あと どう なる？'],
+/**
+ * つづきを かく（練習）。解説は、かけたことを前提にしない（ヒントを出すと つぎへ が出て、かかずに解説へ進める）。
+ * 問題ごとに「この あと」の例を 1 つ言い、どう なると おもったかを おうちの ひとに おはなし する誘いで終える
+ * （「どう なると」で問題文の「この あと どう なる？」に答える話だと分かる。「どう おもったか」だけだと、例の文の感想とも読める）。
+ * 例は、ヒント①「つぎに おきる ことを かんがえよう」と、問題文の場面（あめ・おひさま・みず・あつい ひ・いき・とびこむ）に対応させる。
+ */
+const DRAW_TELL = 'どう なると おもったか、おうちの ひとに おはなし してね。';
+const DRAWS: [id: string, figure: string, prompt: string, after: string][] = [
+  [
+    'draw:rain-stop',
+    'p5-rain',
+    'あめが やんだよ。この あと どう なる？ えに かこう。',
+    'あめが やむと、にじが かかる ことも あるね。',
+  ],
+  [
+    'draw:snowman',
+    'life-snowman',
+    'ゆきだるまに おひさまが あたるよ。この あと どう なる？',
+    'ゆきだるまは とけて、ちいさく なるね。',
+  ],
+  [
+    'draw:seed',
+    'life-seed',
+    'たねを まいて みずを あげたよ。この あと どう なる？',
+    'たねから めが でて、ふたばが ひらくね。',
+  ],
+  [
+    'draw:icecream',
+    'p5-icecream',
+    'あつい ひに アイスを そとに おいたよ。この あと どう なる？',
+    'アイスは とけて、ぽたぽた しずくが おちるね。',
+  ],
+  [
+    'draw:balloon',
+    'p5-balloon',
+    'ふうせんに いきを どんどん いれると、どう なる？',
+    'ふうせんは どんどん おおきく ふくらむね。',
+  ],
+  [
+    'draw:frog',
+    'frog',
+    'かえるが いけに とびこんだよ。この あと どう なる？',
+    'みずが はねて、まるい なみが ひろがるね。',
+  ],
 ];
 /** わけを えらんで おはなし（別例） */
 const TELLS: [id: string, figure: string, prompt: string, reasons: string[]][] = [
@@ -280,7 +316,7 @@ const TELLS: [id: string, figure: string, prompt: string, reasons: string[]][] =
   ],
 ];
 
-function drawItem([id, figure, prompt]: (typeof DRAWS)[number]): ExplainItem {
+function drawItem([id, figure, prompt, after]: (typeof DRAWS)[number]): ExplainItem {
   return {
     engine: 'explain',
     id,
@@ -290,7 +326,7 @@ function drawItem([id, figure, prompt]: (typeof DRAWS)[number]): ExplainItem {
     figure: ill(figure),
     canvas: { aspect: 4 / 3 },
     hints: ['えを よく みて、つぎに おきる ことを かんがえよう。', TELL_H2],
-    explain: 'かけたね。どうして そう おもったのか、おうちの ひとに おはなし してね。',
+    explain: `${after}${DRAW_TELL}`,
     identity: id,
   };
 }

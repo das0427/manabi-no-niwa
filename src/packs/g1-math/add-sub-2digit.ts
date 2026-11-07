@@ -280,7 +280,7 @@ function item(obj: Obj, level: number, e: Expr, alt: boolean, sc?: Scene): Numbe
     explainFigure: blk(c),
     identity: key(e),
     alt,
-    fields: [{ answer: { kind: 'int', value: c }, label: sc?.unit }],
+    fields: [{ answer: { kind: 'int', value: c }, unit: sc?.unit }],
     wrongAnswers: wrongs(e),
   };
 }

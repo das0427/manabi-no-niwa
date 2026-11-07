@@ -228,9 +228,9 @@ for (let a = 2; a <= 5; a++) {
     key: `1000-xa:${a}`,
     ex: `1000 − x × ${a}`,
     words: `1000 − えんぴつ 1本の ねだん × ${a}`,
-    correct: `1000円 出して えんぴつを ${a}本 買った ときの おつり`,
+    correct: `1000円で えんぴつを ${a}本 買った おつり`,
     wrongs: [
-      [`1000円 出して えんぴつを 1本 買った ときの おつり`, 'drop-term'],
+      [`1000円で えんぴつを 1本 買った おつり`, 'drop-term'],
       [`えんぴつ ${a}本と 1000円の 品物の 代金`, 'op-swap'],
       [`1000円を ${a}人で 分けた 1人分`, 'op-swap'],
     ],
@@ -345,7 +345,7 @@ function valueItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${x} × ${a} ＋ ${b} ＝ ${x * a} ＋ ${b} ＝ ${y}。かけ算を 先に 計算します。`,
     identity: `value:${a},${b},${x}${alt ? ':scene' : ''}`,
     alt,
-    fields: [{ label: alt ? '円' : undefined, answer }],
+    fields: [alt ? { unit: '円', answer } : { answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -473,7 +473,7 @@ function solveItem(level: number, rng: Rng, alt: boolean): NumberItem {
         : `${step} ＝ ${x}。たしかめ: x に ${x}を 入れると ${eq.replace('x', String(x))} に なります。`,
     identity: `solve:${eq}${alt ? ':scene' : ''}`,
     alt,
-    fields: [{ label: alt ? unit : 'x', answer }],
+    fields: [alt ? { unit, answer } : { label: 'x', answer }],
     wrongAnswers: wrongList(
       [answer],
       form === 'two'

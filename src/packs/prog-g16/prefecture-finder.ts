@@ -275,7 +275,7 @@ const countItems: NumberItem[] = NCOUNT.map((c) => {
     alt: true,
     prompt: `${condText(c.steps)} の 県《けん》は いくつ あるかな。`,
     figure: col([legendFigure(), candidatesFigure(POOL6, '6つの 県《けん》の ふだ')], 0.8),
-    fields: [{ label: 'つ', answer: { kind: 'int', value: left.length } }],
+    fields: [{ answer: { kind: 'int', value: left.length }, unit: 'つ' }],
     wrongAnswers: wrongs,
     hints: [
       `ふだの しるしを 見《み》よう。${READ}`,
@@ -431,7 +431,7 @@ const fewerItems: NumberItem[] = FEWER.map((w) => {
       [legendFigure(), candidatesFigure(w.pool, `${w.pool.length}つの 県《けん》の ふだ`)],
       0.8,
     ),
-    fields: [{ label: 'こ', answer: { kind: 'int', value: m } }],
+    fields: [{ answer: { kind: 'int', value: m }, unit: 'こ' }],
     wrongAnswers: [
       ...(m > 1 ? [{ value: String(m - 1), misconception: 'not-enough' }] : []),
       ...(m < 3 ? [{ value: String(m + 1), misconception: 'too-many-q' }] : []),

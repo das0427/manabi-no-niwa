@@ -147,7 +147,7 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
     explain: `y ÷ x は いつも ${k}なので、x が ${ax}の とき y ＝ ${k} × ${ax} ＝ ${ans}です。`,
     identity: `table:${c.id}:${k}:${shown.join(',')}:${ax}`,
     alt: false,
-    fields: [{ label: c.yu, answer }],
+    fields: [{ unit: c.yu, answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -316,7 +316,7 @@ function graphItem(level: number, rng: Rng, alt: boolean): Item {
     },
     task: {
       kind: 'number',
-      fields: [{ label: c.yu, answer }],
+      fields: [{ unit: c.yu, answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -487,7 +487,7 @@ function applyItem(level: number, rng: Rng, alt: boolean): NumberItem {
       : `${N} ÷ ${n} ＝ ${N / n}（倍）。${w} × ${N / n} ＝ ${W}（${sc.unitW}）。${sc.yn}は ${sc.xn}に 比例します。`,
     identity: `use:${sc.id}:${n}:${w}:${N}${alt ? ':rev' : ''}`,
     alt,
-    fields: [{ label: unit, answer }],
+    fields: [{ unit, answer }],
     wrongAnswers: wrongList(
       [answer],
       alt

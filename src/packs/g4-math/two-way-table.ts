@@ -137,7 +137,7 @@ function tally(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${rowsA[ri]}の 子で ${colWord[cj]}の 記録は ${ans}こ。${ans}人です。`,
       identity: `tally-rec:${recs.map((r) => r.join('')).join('.')}:${ri}${cj}`,
       alt: true,
-      fields: [{ label: '人', answer: answers[0]! }],
+      fields: [{ unit: '人', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [recs.filter(([a]) => a === ri).length, 'one-aspect'],
         [recs.filter(([, b]) => b === cj).length, 'one-aspect'],
@@ -245,7 +245,7 @@ function read(level: number, rng: Rng, alt: boolean): Item {
     explain: `${sc.rows[i]}の 行と ${sc.cols[j]}の 列が 交わる ますは ${ans}${sc.unit}です。`,
     identity: `read:${sc.id}:${gkey(g)}:${i}${j}`,
     alt: false,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [rowSum(g, i), 'total-as-cell'],
       [colSum(g, j), 'total-as-cell'],
@@ -278,7 +278,7 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${sc.rows.map((_, i) => rowSum(g, i)).join(' ＋ ')} ＝ ${all(g)}。合計の 行（${sc.cols.map((_, j) => colSum(g, j)).join(' ＋ ')}）でも ${all(g)}です。`,
       identity: `total-all:${sc.id}:${gkey(g)}`,
       alt: true,
-      fields: [{ label: sc.unit, answer: answers[0]! }],
+      fields: [{ unit: sc.unit, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [[2 * all(g), 'double-count']]),
     };
   }
@@ -305,7 +305,7 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${parts.join(' ＋ ')} ＝ ${ans}です。`,
     identity: `total:${sc.id}:${gkey(g)}:${byRow ? 'r' : 'c'}${k}`,
     alt: false,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [ans - parts[parts.length - 1]!, 'drop-row'],
       [byRow ? colSum(g, Math.min(k, C - 1)) : rowSum(g, Math.min(k, R - 1)), 'row-col-swap'],
@@ -353,7 +353,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${colSum(g, j)} − ${other} ＝ ${ans}。？は ${ans}です。`,
       identity: `fill-2x2:${gkey(g)}:${i}${j}`,
       alt: true,
-      fields: [{ label: '人', answer: answers[0]! }],
+      fields: [{ unit: '人', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [colSum(g, j), 'total-as-cell'],
         [colSum(g, j) + other, 'sum-others'],
@@ -383,7 +383,7 @@ function fill(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${rowSum(g, i)} − （${others.join(' ＋ ')}）＝ ${ans}。？は ${ans}です。`,
     identity: `fill:${sc.id}:${gkey(g)}:${i}${j}`,
     alt: false,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [rowSum(g, i), 'total-as-cell'],
       [others.reduce((s, x) => s + x, 0), 'sum-others'],

@@ -104,8 +104,8 @@ function after(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
       prompt: `${tt(t)}の ${d}${fun(d)}まえは なんじ なんぷん？`,
       figure: { kind: 'clock', h, m, minuteNumbers: true },
       fields: [
-        { label: 'じ', answer: { kind: 'int', value: e.h === 0 ? 12 : e.h } },
-        { label: 'ふん', answer: { kind: 'int', value: e.m } },
+        { unit: 'じ', answer: { kind: 'int', value: e.h === 0 ? 12 : e.h } },
+        { unit: 'ふん', answer: { kind: 'int', value: e.m } },
       ],
       hints: [
         'ながい はりを ぎゃくに まわして かんがえよう。',
@@ -224,7 +224,7 @@ function units(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
           { at: 12 + e, tone: 'focus' },
         ],
       },
-      fields: [{ label: 'じかん', answer: { kind: 'int', value: dur } }],
+      fields: [{ unit: 'じかん', answer: { kind: 'int', value: dur } }],
       hints: [
         'しょうご（ひるの 12じ）を はさんで かんがえよう。',
         `ごぜん${s}じから しょうごまで ${12 - s}じかん。`,
@@ -251,7 +251,7 @@ function units(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
       level,
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${H}じかん${M}${fun(M)} ＝ □ふん`, size: 'l' },
-      fields: [{ label: 'ふん', answer: { kind: 'int', value: v } }],
+      fields: [{ unit: 'ふん', answer: { kind: 'int', value: v } }],
       hints: [
         '1じかんは 60ぷん だよ。',
         `${H}じかんは ${H * 60}ぷん。`,
@@ -279,8 +279,8 @@ function units(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${v}${fun(v)} ＝ □じかん□ふん`, size: 'l' },
       fields: [
-        { label: 'じかん', answer: { kind: 'int', value: H } },
-        { label: 'ふん', answer: { kind: 'int', value: M } },
+        { unit: 'じかん', answer: { kind: 'int', value: H } },
+        { unit: 'ふん', answer: { kind: 'int', value: M } },
       ],
       hints: [
         '60ぷんで 1じかん だよ。',

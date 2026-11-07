@@ -152,7 +152,7 @@ function sameRadius(level: number, rng: Rng): NumberItem {
         : `中心《ちゅうしん》を とおって まわりから まわりまでは 直径《ちょっけい》。半径《はんけい》の 2倍《ばい》で ${2 * r}cmです。`,
     identity: `same:${ask}:${r}`,
     alt: false,
-    fields: [{ label: 'cm', answer: { kind: 'int', value: ask === 'r' ? r : 2 * r } }],
+    fields: [{ unit: 'cm', answer: { kind: 'int', value: ask === 'r' ? r : 2 * r } }],
     wrongAnswers: wrongList(String(ask === 'r' ? r : 2 * r), 1, [
       [ask === 'r' ? 2 * r : r, 'radius-diameter-swap'],
       [ask === 'd' && r % 2 === 0 ? r / 2 : null, 'half-wrong-way'],
@@ -179,7 +179,7 @@ function rd(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `コンパスを ひらいた 長《なが》さが 半径《はんけい》で ${r}cm。直径《ちょっけい》は 半径《はんけい》の 2倍《ばい》で ${d}cmです。`,
       identity: `compass:${r}`,
       alt: true,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: d } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: d } }],
       wrongAnswers: wrongList(String(d), 1, [
         [r, 'radius-diameter-swap'],
         [r % 2 === 0 ? r / 2 : null, 'half-wrong-way'],
@@ -200,7 +200,7 @@ function rd(level: number, rng: Rng, alt: boolean): NumberItem {
         explain: `直径《ちょっけい》は 半径《はんけい》の 2倍《ばい》。${r} × 2 ＝ ${d}で ${d}cmです。`,
         identity: `diam:${r}`,
         alt: false,
-        fields: [{ label: 'cm', answer: { kind: 'int', value: d } }],
+        fields: [{ unit: 'cm', answer: { kind: 'int', value: d } }],
         wrongAnswers: wrongList(String(d), 1, [
           [r % 2 === 0 ? r / 2 : null, 'half-wrong-way'],
           [r, 'radius-diameter-swap'],
@@ -220,7 +220,7 @@ function rd(level: number, rng: Rng, alt: boolean): NumberItem {
         explain: `半径《はんけい》は 直径《ちょっけい》の 半分《はんぶん》。${d} ÷ 2 ＝ ${r}で ${r}cmです。`,
         identity: `rad:${d}`,
         alt: false,
-        fields: [{ label: 'cm', answer: { kind: 'int', value: r } }],
+        fields: [{ unit: 'cm', answer: { kind: 'int', value: r } }],
         wrongAnswers: wrongList(String(r), 1, [
           [d * 2, 'half-wrong-way'],
           [d, 'radius-diameter-swap'],
@@ -254,7 +254,7 @@ function apply(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${d * n} ÷ ${n} ＝ ${d}で、ボールの 直径《ちょっけい》は ${d}cm。半径《はんけい》は ${d} ÷ 2 ＝ ${r}で ${r}cmです。`,
       identity: `box-rev:${r}:${n}`,
       alt: true,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: r } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: r } }],
       wrongAnswers: wrongList(String(r), 1, [[d, 'radius-diameter-swap']]),
     };
   }
@@ -285,7 +285,7 @@ function apply(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `直径《ちょっけい》は ${d}cm。${d} × ${n} ＝ ${d * n}で ${d * n}cmです。`,
     identity: `${thing}:${givenR ? 'r' : 'd'}:${r}:${n}`,
     alt: false,
-    fields: [{ label: 'cm', answer: { kind: 'int', value: d * n } }],
+    fields: [{ unit: 'cm', answer: { kind: 'int', value: d * n } }],
     wrongAnswers: wrongList(String(d * n), 1, [
       [givenR ? r * n : null, 'use-radius'],
       [givenR ? null : r * n, 'half-wrong-way'],
@@ -358,7 +358,7 @@ function sphere(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem 
       explain: `板《いた》の あいだの 長《なが》さは 球《きゅう》の 直径《ちょっけい》で ${d}cm。半径《はんけい》は ${d / 2}cmです。`,
       identity: `sphere:boards:${d}`,
       alt: true,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: d / 2 } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: d / 2 } }],
       wrongAnswers: wrongList(String(d / 2), 1, [
         [d, 'radius-diameter-swap'],
         [d * 2, 'half-wrong-way'],
@@ -382,7 +382,7 @@ function sphere(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem 
         explain: `はこの 1辺《ぺん》は ボールの 直径《ちょっけい》と おなじ。${r} × 2 ＝ ${2 * r}で ${2 * r}cmです。`,
         identity: `sphere:box:${r}`,
         alt: false,
-        fields: [{ label: 'cm', answer: { kind: 'int', value: 2 * r } }],
+        fields: [{ unit: 'cm', answer: { kind: 'int', value: 2 * r } }],
         wrongAnswers: wrongList(String(2 * r), 1, [[r, 'use-radius']]),
       }
     : {
@@ -399,7 +399,7 @@ function sphere(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem 
         explain: `球《きゅう》の 半径《はんけい》は 直径《ちょっけい》の 半分《はんぶん》。${2 * r} ÷ 2 ＝ ${r}で ${r}cmです。`,
         identity: `sphere:rd:${r}`,
         alt: false,
-        fields: [{ label: 'cm', answer: { kind: 'int', value: r } }],
+        fields: [{ unit: 'cm', answer: { kind: 'int', value: r } }],
         wrongAnswers: wrongList(String(r), 1, [
           [2 * r, 'radius-diameter-swap'],
           [4 * r, 'half-wrong-way'],

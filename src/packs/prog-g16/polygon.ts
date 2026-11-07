@@ -66,7 +66,7 @@ const repeatItems: Item[] = [
     prompt: `「すすむ 3、みぎに 120ど」を くりかえして ${PN[3]}を ちょうど 1しゅう かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(P(3, 3), PN[3]!, {}),
     answer: 3,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [4, 'repeat-count'],
       [2, 'repeat-count'],
@@ -82,7 +82,7 @@ const repeatItems: Item[] = [
     prompt: `「すすむ 2、みぎに 60ど」を くりかえして ${PN[6]}を かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(P(6, 2), PN[6]!, {}),
     answer: 6,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [5, 'repeat-count'],
       [4, 'repeat-count'],
@@ -136,7 +136,7 @@ const repeatItems: Item[] = [
     prompt: `「すすむ 2、みぎに 45ど」を くりかえして ${PN[8]}を かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(P(8, 2), PN[8]!, {}),
     answer: 8,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [7, 'repeat-count'],
       [6, 'repeat-count'],
@@ -170,7 +170,7 @@ const repeatItems: Item[] = [
     level: 2,
     prompt: `「すすむ 1、みぎに 36ど」を くりかえして ${PN[10]}を かくよ。なんかい くりかえすかな。`,
     answer: 10,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [9, 'repeat-count'],
       [36, 'turn-as-count'],
@@ -263,7 +263,7 @@ const angleItems: Item[] = TA.map((t) =>
     prompt: `${PN[t.n]}を かくよ。かどで「みぎに ◯ど」と まがる。◯に はいる ${ANG}を いれよう。`,
     figure: t.n <= 10 ? turtleFigure(P(t.n, t.a), PN[t.n]!, {}) : undefined,
     answer: 360 / t.n,
-    label: 'ど',
+    unit: 'ど',
     wrongs: [
       [inner(t.n), 'turn-interior'],
       [t.n, 'turn-as-count'],
@@ -325,7 +325,7 @@ const ruleNums: Item[] = RU.map((r) =>
     level: r.level,
     prompt: `「みぎに ${r.d}ど」を くりかえして 1しゅう（360ど）。\nなんかい くりかえす？`,
     answer: 360 / r.d,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [r.d, 'turn-as-count'],
       [Math.round(360 / r.d) + 1, 'repeat-count'],
@@ -346,7 +346,7 @@ const ruleExtra: Item[] = [
     level: 2,
     prompt: `${PN[6]}を かくときに まがった 角度《かくど》を、ぜんぶ たすと 何《なん》どに なるかな。（「みぎに 60ど」を 6かい）`,
     answer: 360,
-    label: 'ど',
+    unit: 'ど',
     wrongs: [
       [60, 'turn-as-count'],
       [120, 'turn-interior'],

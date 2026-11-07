@@ -147,7 +147,7 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem | NumberItem {
       explain: `合計《ごうけい》 ${total}から ほかの 数《かず》の 合計《ごうけい》を ひいて ${answer}です。`,
       identity: `table1:${d.key}:${shown[j]}`,
       alt: true,
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: answer } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: answer } }],
       wrongAnswers: wrongList(String(answer), 1, [[total, 'table-total']]),
     };
   }
@@ -168,7 +168,7 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem | NumberItem {
     data: graphData(d),
     task: {
       kind: 'number',
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: v } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: v } }],
       wrongAnswers: wrongList(String(v), 1, [
         [v / d.step, 'scale-as-one'],
         [v + d.step, 'neighbor-tick'],
@@ -202,7 +202,7 @@ function scale(level: number, rng: Rng, alt: boolean): GraphItem {
       data: graphData(d, undefined, every),
       task: {
         kind: 'number',
-        fields: [{ label: 'めもり', answer: { kind: 'int', value: v / d.step } }],
+        fields: [{ unit: 'めもり', answer: { kind: 'int', value: v / d.step } }],
         wrongAnswers: wrongList(String(v / d.step), 1, [[v, 'scale-as-one']]),
       },
     };
@@ -224,7 +224,7 @@ function scale(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, undefined, every),
     task: {
       kind: 'number',
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: d.step } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: d.step } }],
       wrongAnswers: wrongList(String(d.step), 1, [
         [1, 'scale-as-one'],
         [d.step * every, 'label-as-step'],
@@ -258,7 +258,7 @@ function compare(level: number, rng: Rng, alt: boolean): GraphItem {
       data: graphData(d),
       task: {
         kind: 'number',
-        fields: [{ label: d.theme.unit, answer: { kind: 'int', value: diff } }],
+        fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: diff } }],
         wrongAnswers: wrongList(String(diff), 1, [
           [diff / d.step, 'scale-as-one'],
           [four[hi], 'diff-wrong'],
@@ -285,7 +285,7 @@ function compare(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d),
     task: {
       kind: 'number',
-      fields: [{ label: d.theme.unit, answer: { kind: 'int', value: diff } }],
+      fields: [{ unit: d.theme.unit, answer: { kind: 'int', value: diff } }],
       wrongAnswers: wrongList(String(diff), 1, [
         [diff / d.step, 'scale-as-one'],
         [d.values[i]!, 'diff-wrong'],
@@ -474,7 +474,7 @@ function table(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem {
           : `1組《くみ》 ${rowA}人《にん》、2組《くみ》 ${rowB}人《にん》で、${rowA} ＋ ${rowB} ＝ ${ans}人《にん》です。`,
     identity: ask === 'col' ? `table:col:${k}:${key}` : `table:${ask}:${key}`,
     alt: false,
-    fields: [{ label: '人《にん》', answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: '人《にん》', answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongList(String(ans), 1, [
       [ask === 'col' ? b[k] : ask === 'row' ? b[0] : rowB, 'table-total'],
       [ask === 'grand' ? rowA : ask === 'col' ? a[k] : rowA, 'table-total'],

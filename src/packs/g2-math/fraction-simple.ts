@@ -303,7 +303,7 @@ function motoItems(level: number): NumberItem[] {
         level,
         prompt: `${n}この ${FR[k]}は なんこ？`,
         figure: { kind: 'illust', id, count: n },
-        fields: [{ label: 'こ', answer: { kind: 'int', value: q } }],
+        fields: [{ unit: 'こ', answer: { kind: 'int', value: q } }],
         hints: [
           `${FR[k]}は、おなじ かずずつ ${k}つに わけた 1つ ぶん。`,
           `${n}こを ${k}つの さらに 1こずつ じゅんに くばって みよう。`,
@@ -342,7 +342,7 @@ function motoItems(level: number): NumberItem[] {
         })),
         total: `${len}cm`,
       },
-      fields: [{ label: 'cm', answer: { kind: 'int', value: len / k } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: len / k } }],
       hints: [
         `${FR[k]}は おなじ ながさに ${k}つに わけた 1つ ぶん。`,
         `${len}cmを おなじ ながさに ${k}つに わけよう。`,
@@ -377,7 +377,7 @@ function motoItems(level: number): NumberItem[] {
         })),
         total: '？こ',
       },
-      fields: [{ label: 'こ', answer: { kind: 'int', value: part * k } }],
+      fields: [{ unit: 'こ', answer: { kind: 'int', value: part * k } }],
       hints: [
         `${FR[k]}が ${k}つ あつまると もとの おおきさ。`,
         `${part}こが ${k}つ ぶん。`,

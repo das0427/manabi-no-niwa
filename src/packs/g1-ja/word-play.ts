@@ -291,7 +291,8 @@ const shiriAlt: Item[] = [
     layout: 'row',
     options: [
       { label: 'ねこ', figure: illust('cat'), correct: true },
-      { label: 'ふうせん', figure: illust('balloon'), misconception: HEAD },
+      // 'balloon' ははんこ用の絵（stamps/）で素材一覧に無く、本番でも赤い破線の枠になる。同じ絵を登録した p5-balloon を使う
+      { label: 'ふうせん', figure: illust('p5-balloon'), misconception: HEAD },
       { label: 'きつね', figure: illust('fox'), misconception: TAIL },
     ],
     hints: [
@@ -835,7 +836,7 @@ export const wordPlay: UnitSpec = {
   kind: 'play',
   priority: 'P2',
   status: 'ready',
-  icon: 'music-note',
+  icon: 'p5-note',
   prereq: ['p4.ja.word-play'],
   objectives: [
     { id: 'shiri', title: 'しりとりで ことばを つなぐ' },

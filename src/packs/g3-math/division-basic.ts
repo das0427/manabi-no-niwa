@@ -9,7 +9,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, pickOne, wrongList } from './util';
+import { hon, opts, pickObj, pickOne, withUnit, wrongList } from './util';
 
 type Obj = 'touwake' | 'hougan' | 'kuku' | 'zero-one' | 'big';
 
@@ -78,9 +78,9 @@ const SCENES: Scene[] = [
   {
     id: 'pencils',
     type: 'touwake',
-    unit: '本《ぽん》',
+    unit: '本《ほん》',
     text: (D, d) =>
-      `えんぴつ ${D}本《ほん》を ${d}つの ふでばこに 同《おな》じ 数《かず》ずつ 入《い》れます。1つの ふでばこは 何《なん》本《ぼん》に なりますか。`,
+      `えんぴつ ${hon(D)}を ${d}つの ふでばこに 同《おな》じ 数《かず》ずつ 入《い》れます。1つの ふでばこは 何《なん》本《ぼん》に なりますか。`,
   },
   {
     id: 'cards',
@@ -92,9 +92,9 @@ const SCENES: Scene[] = [
   {
     id: 'flowers',
     type: 'touwake',
-    unit: '本《ぽん》',
+    unit: '本《ほん》',
     text: (D, d) =>
-      `花《はな》が ${D}本《ほん》 あります。${d}つの 花《か》びんに 同《おな》じ 数《かず》ずつ 分《わ》けて さします。1つの 花《か》びんは 何《なん》本《ぼん》ですか。`,
+      `花《はな》が ${hon(D)} あります。${d}つの 花《か》びんに 同《おな》じ 数《かず》ずつ 分《わ》けて さします。1つの 花《か》びんは 何《なん》本《ぼん》ですか。`,
   },
   {
     id: 'cookies',
@@ -113,7 +113,7 @@ const SCENES: Scene[] = [
   {
     id: 'ribbon',
     type: 'hougan',
-    unit: '本《ぽん》',
+    unit: '本《ほん》',
     text: (D, d) =>
       `${D}cmの リボンを ${d}cmずつ 切《き》ります。${d}cmの リボンは 何《なん》本《ぼん》 できますか。`,
   },
@@ -150,7 +150,7 @@ function wordItem(
           `式《しき》は ${D} ÷ ${d}。`,
           `□ × ${d} ＝ ${D} の □を 九九《くく》で さがそう（${d}の だん）。`,
         ];
-  const explain = `式《しき》は ${D} ÷ ${d} ＝ ${q}。${obj === 'touwake' ? `${d} × ${q} ＝ ${D}` : `${q} × ${d} ＝ ${D}`} だから、答《こた》えは ${q}${sc.unit}です。`;
+  const explain = `式《しき》は ${D} ÷ ${d} ＝ ${q}。${obj === 'touwake' ? `${d} × ${q} ＝ ${D}` : `${q} × ${d} ＝ ${D}`} だから、答《こた》えは ${withUnit(q, sc.unit)}です。`;
   if (alt)
     return {
       engine: 'choice',
@@ -183,7 +183,7 @@ function wordItem(
     explain,
     identity: `${sc.id}:${D}÷${d}`,
     alt: false,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: q } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: q } }],
     wrongAnswers: wrongList(String(q), 1, divWrongs(D, d)),
   };
 }
@@ -248,7 +248,7 @@ function zeroOne(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: why,
     identity: `${D}÷${d}`,
     alt,
-    fields: [{ ...(alt ? { label: 'こ' } : {}), answer: { kind: 'int', value: q } }],
+    fields: [{ ...(alt ? { unit: 'こ' } : {}), answer: { kind: 'int', value: q } }],
     wrongAnswers: wrongList(String(q), 1, [
       [kind === 'zero' ? d : null, 'zero-div'],
       [kind === 'one' ? 1 : null, 'one-div'],
@@ -270,7 +270,7 @@ function big(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'big',
     level,
     prompt: alt
-      ? `10の たばと ばらで 考《かんが》えよう。${D}本《ぽん》を ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》本《ぼん》？`
+      ? `10の たばと ばらで 考《かんが》えよう。${hon(D)}を ${d}人《にん》で 同《おな》じ 数《かず》ずつ 分《わ》けると、1人分《ひとりぶん》は 何《なん》本《ぼん》？`
       : '計算《けいさん》しよう。',
     figure: alt
       ? { kind: 'blocks', tens: x, ones: y }
@@ -288,7 +288,7 @@ function big(level: number, rng: Rng, alt: boolean): NumberItem {
         : `${x * 10} ÷ ${d} ＝ ${(x / d) * 10}、${y} ÷ ${d} ＝ ${y / d}。あわせて ${q}。${D} ÷ ${d} ＝ ${q}です。`,
     identity: `${D}÷${d}`,
     alt,
-    fields: [{ ...(alt ? { label: '本《ぽん》' } : {}), answer: { kind: 'int', value: q } }],
+    fields: [{ ...(alt ? { unit: '本《ほん》' } : {}), answer: { kind: 'int', value: q } }],
     wrongAnswers: wrongList(String(q), 1, [
       [x / d + y / d, 'tens-drop'],
       [y ? (x / d) * 10 : null, 'ones-forget'],

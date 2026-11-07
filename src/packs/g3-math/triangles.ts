@@ -326,7 +326,7 @@ function circleTri(level: number, rng: Rng, alt: boolean): ChoiceItem | NumberIt
       explain: `辺《へん》アイと 辺《へん》アウは 半径《はんけい》で ${r}cm。まわりの 長《なが》さは ${r} ＋ ${r} ＋ ${c} ＝ ${2 * r + c}で ${2 * r + c}cmです。`,
       identity: `circle-len:${r}:${c}`,
       alt: true,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: 2 * r + c } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: 2 * r + c } }],
       wrongAnswers: wrongList(String(2 * r + c), 1, [
         [r + c, 'radius-equal'],
         [4 * r + c, 'radius-equal'],
@@ -379,7 +379,7 @@ function sides(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `3つの 辺《へん》が 等《ひと》しいので、${3 * a} ÷ 3 ＝ ${a}で ${a}cmです。`,
       identity: `eq-rev:${a}`,
       alt: true,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: a } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: a } }],
       wrongAnswers: wrongList(String(a), 1, [
         [(3 * a) % 2 === 0 ? (3 * a) / 2 : null, 'equal-sides-forget'],
         [3 * a * 3, 'equal-sides-forget'],
@@ -415,7 +415,7 @@ function sides(level: number, rng: Rng, alt: boolean): NumberItem {
       : `${a} ＋ ${a} ＋ ${b} ＝ ${ans}で ${ans}cmです。`,
     identity: eq ? `eq:${a}` : `iso:${a}:${b}`,
     alt: false,
-    fields: [{ label: 'cm', answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: 'cm', answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongList(String(ans), 1, [
       [eq ? 2 * a : a + b, 'equal-sides-forget'],
       [eq ? null : a + 2 * b, 'equal-sides-forget'],

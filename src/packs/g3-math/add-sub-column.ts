@@ -460,7 +460,7 @@ function wordItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: columnFigure(a, b, sc.op, String(ans).length, [], ans),
     identity: `${sc.id}:${key}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: ans } }],
     wrongAnswers: sc.op === '＋' ? addWrongs(a, b, 1) : subWrongs(a, b, 1),
   };
 }

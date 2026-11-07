@@ -68,18 +68,35 @@ const ORD_T: Task[] = [
 const LEVEL_T: Task[][] = [COUNT_T, MATCH_T, ORD_T];
 
 const ST = 'stroke="var(--ink)" stroke-width="3"';
-/** 5この まる。hl の番号を こく ぬる */
-function dotsRow(len: number, hl: number[]): Figure {
+/**
+ * まる（len こ）の列。hl の番号を こく ぬる。
+ * compact: 選択肢の札の中の図（ふたつ縦に並べる）。パックの SVG は、中のいちばん小さい字（「まえ」）が最小の大きさになる幅で
+ * 描かれ、高さは「字の大きさ → 図の高さ」の比で決まる。字を大きく（20）・高さを低く（40）して、図を 6.1u → 約 4.5u にし、
+ * 札ふたつが作業領域に入るようにする（入らないと 2 つ目の札がスクロールの先になった。1280×720 で 3.2u 不足）。
+ * 字は左端に寄せて置く（text-anchor: start）。画面サイズを変えた直後は、字の引き上げが前の大きさのまま残って字が 1.45 倍ほどになり、
+ * 中央そろえだと左の端で切れ、字の高さ（約 1.45 倍の箱）が図の高さ 40 を超える。左の余白（66）は幅 60 まで入る広さ。
+ * 高さは overflow: visible にして、そのときも字を切らずに描く（検査 C20 は overflow: visible の図を切れていないとみなす）。
+ */
+function dotsRow(len: number, hl: number[], compact = false): Figure {
+  const font = compact ? 20 : 14;
+  const head = compact ? 66 : 40;
+  const pitch = compact ? 38 : 40;
+  const r = compact ? 17 : 15;
+  const h = compact ? 40 : 44;
+  const cx = (i: number) => (compact ? head + (i - 0.5) * pitch : i * pitch + 18);
+  const text = compact
+    ? `<text x="3" y="${h / 2 + 7}" font-size="${font}" fill="var(--ink)">まえ</text>`
+    : `<text x="16" y="28" font-size="${font}" text-anchor="middle" fill="var(--ink)">まえ</text>`;
   return {
     kind: 'svg',
     label: `まえから ${hl.join('、')}ばんめ`,
-    markup: `<svg viewBox="0 0 ${len * 40 + 40} 44" xmlns="http://www.w3.org/2000/svg"><text x="16" y="28" font-size="14" text-anchor="middle" fill="var(--ink)">まえ</text>${range(
+    markup: `<svg viewBox="0 0 ${head + len * pitch} ${h}"${compact ? ' overflow="visible"' : ''} xmlns="http://www.w3.org/2000/svg">${text}${range(
       1,
       len,
     )
       .map(
         (i) =>
-          `<circle cx="${i * 40 + 18}" cy="22" r="15" fill="${hl.includes(i) ? 'var(--sun)' : 'var(--paper)'}" ${ST}/>`,
+          `<circle cx="${cx(i)}" cy="${h / 2}" r="${r}" fill="${hl.includes(i) ? 'var(--sun)' : 'var(--paper)'}" ${ST}/>`,
       )
       .join('')}</svg>`,
   };
@@ -216,9 +233,11 @@ function make(t: Task, level: number, rng: Rng): Item {
         ],
         explain: `まえから かぞえて ${t.pos}ばんめは ${ans.name}。`,
         identity: id,
+        // 札は絵だけ（主の図と同じ絵で選べる。5さいは字を読めない子がいる）。名前の行（約 4.5u）が絵に回り、
+        // 1280×620 でも絵が 6u を割らない。名前は解説（explain）が言う
         options: mix(id + as.map((a) => a.id).join(), [
-          { label: ans.name, figure: ill(ans.id), correct: true },
-          ...wrong.map((w) => ({ label: w.a.name, figure: ill(w.a.id), misconception: w.mis })),
+          { figure: ill(ans.id), correct: true },
+          ...wrong.map((w) => ({ figure: ill(w.a.id), misconception: w.mis })),
         ]),
       };
     }
@@ -246,10 +265,10 @@ function make(t: Task, level: number, rng: Rng): Item {
         identity: id,
         // ラベルに かず（「よっつ」など）を 書くと、もんだいの かずと あわせるだけで こたえられるので 書かない
         options: mix(id, [
-          { label: KIND_LABEL(asIs.length), figure: dotsRow(6, asIs), correct: true },
+          { label: KIND_LABEL(asIs.length), figure: dotsRow(6, asIs, true), correct: true },
           {
             label: KIND_LABEL(other.length),
-            figure: dotsRow(6, other),
+            figure: dotsRow(6, other, true),
             misconception: 'ord-vs-count',
           },
         ]),

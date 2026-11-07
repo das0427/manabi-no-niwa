@@ -190,7 +190,7 @@ function shiftItem(obj: 'up' | 'down', level: number, rng: Rng, alt: boolean): N
     ]),
     identity: form === 0 ? key : `${key}:${form === 1 ? 'tbl' : `story:${sc!.id}`}`,
     alt: form !== 0,
-    fields: [{ ...(sc ? { label: sc.unit } : {}), answer: answers[0]! }],
+    fields: [{ ...(sc ? { unit: sc.unit } : {}), answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongs(v, p, s, ans),
   };
@@ -248,7 +248,7 @@ function factorItem(level: number, rng: Rng, alt: boolean): Item {
     explain: `${small}の 小数点を 右へ ${e}けた うつすと ${big}。だから ${big}は ${small}の ${POW[e]}倍です。`,
     identity: `factor:${big}:${e}`,
     alt: false,
-    fields: [{ label: '倍', answer: answers[0]! }],
+    fields: [{ unit: '倍', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [e > 1 ? 10 ** (e - 1) : null, 'shift-count'],
       [e < 3 ? 10 ** (e + 1) : null, 'shift-count'],

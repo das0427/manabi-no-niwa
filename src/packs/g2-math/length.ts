@@ -185,7 +185,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `1cm ＝ 10mm なので ${c}cm ＝ ${c * 10}mm。${c * 10} ＋ ${m} ＝ ${v}で ${v}mmです。`,
       identity: `cmmm-mm:${v}`,
       alt,
-      fields: [{ label: 'mm', answer: { kind: 'int', value: v } }],
+      fields: [{ unit: 'mm', answer: { kind: 'int', value: v } }],
       wrongAnswers: wrongList(String(v), 1, [
         [c + m, 'digit-sum'],
         [c * 100 + m, 'factor'],
@@ -207,8 +207,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${v}mm ＝ □cm□mm`, size: 'xl' },
       fields: [
-        { label: 'cm', answer: { kind: 'int', value: c } },
-        { label: 'mm', answer: { kind: 'int', value: m } },
+        { unit: 'cm', answer: { kind: 'int', value: c } },
+        { unit: 'mm', answer: { kind: 'int', value: m } },
       ],
       hints: [
         '10mmで 1cm だよ。',
@@ -246,7 +246,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `1m ＝ 100cm なので ${mm}m ＝ ${mm * 100}cm。${mm * 100} ＋ ${c} ＝ ${v}で ${v}cmです。`,
       identity: `mcm-cm:${v}`,
       alt,
-      fields: [{ label: 'cm', answer: { kind: 'int', value: v } }],
+      fields: [{ unit: 'cm', answer: { kind: 'int', value: v } }],
       wrongAnswers: wrongList(String(v), 1, [
         [mm * 10 + c, 'factor'],
         [Number(`${mm}${c}`), c < 10 ? 'factor' : 'concat'],
@@ -268,8 +268,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
     prompt: '□に あう かずは？',
     figure: { kind: 'text', text: `${v}cm ＝ □m□cm`, size: 'xl' },
     fields: [
-      { label: 'm', answer: { kind: 'int', value: mm } },
-      { label: 'cm', answer: { kind: 'int', value: c } },
+      { unit: 'm', answer: { kind: 'int', value: mm } },
+      { unit: 'cm', answer: { kind: 'int', value: c } },
     ],
     hints: [
       '100cmで 1m だよ。',
@@ -423,8 +423,8 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
         }
       : { kind: 'text', text: `${fmt(a)} ${op} ${fmt(b)} ＝ □${U}□${u}`, size: 'l' },
     fields: [
-      { label: U, answer: { kind: 'int', value: ra } },
-      { label: u, answer: { kind: 'int', value: rb } },
+      { unit: U, answer: { kind: 'int', value: ra } },
+      { unit: u, answer: { kind: 'int', value: rb } },
     ],
     hints: [
       'おなじ たんいどうしを けいさん しよう。',

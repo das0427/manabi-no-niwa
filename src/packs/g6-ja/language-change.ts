@@ -1292,7 +1292,7 @@ export const languageChange: UnitSpec = {
   kind: 'knowledge',
   priority: 'P2',
   status: 'ready',
-  icon: 'book',
+  icon: 'p5-book',
   prereq: [],
   objectives: [
     {

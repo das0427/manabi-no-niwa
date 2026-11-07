@@ -366,7 +366,7 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `角${target}に 対応するのは 角${L1[k]}なので、${ang[k]}°です。`,
       identity: `measure-ang:${key(pr)}:${k}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(
         answers,
         [0, 1, 2]
@@ -409,7 +409,7 @@ function measure(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `頂点${a}に ${L1[s]}、頂点${b}に ${L1[(s + 1) % 3]}が 対応するので、辺${side}は 辺${L1[s]}${L1[(s + 1) % 3]}と 同じ ${dec(L[s]!, 1)}cmです。`,
     identity: `measure:${key(pr)}:${s}`,
     alt: false,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(
       answers,

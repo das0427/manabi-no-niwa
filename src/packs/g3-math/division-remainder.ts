@@ -10,7 +10,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, pickOne, wrongList } from './util';
+import { hon, opts, pickObj, pickOne, withUnit, wrongList } from './util';
 
 type Obj = 'calc' | 'check' | 'word' | 'up' | 'down';
 
@@ -96,7 +96,11 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
     alt,
     fields: [
       { label: alt ? 'まとまり' : 'しょう', answer: { kind: 'int', value: q } },
-      { label: alt ? 'あまり（こ）' : 'あまり', answer: { kind: 'int', value: r } },
+      {
+        label: 'あまり',
+        ...(alt ? { unit: 'こ' } : {}),
+        answer: { kind: 'int', value: r },
+      },
     ],
     wrongAnswers: wrongList(`${q}|${r}`, 2, remWrongs(d, q, r)),
   };
@@ -182,12 +186,12 @@ const SCENES: Scene[] = [
     unit: 'こ',
     unit2: 'こ',
     text: (D, d) =>
-      `ビーズ ${D}こを ${d}本《ほん》の ひもに 同《おな》じ 数《かず》ずつ とおします。1本《ぽん》に 何《なん》こで、何《なん》こ あまりますか。`,
+      `ビーズ ${D}こを ${hon(d)}の ひもに 同《おな》じ 数《かず》ずつ とおします。1本《ぽん》に 何《なん》こで、何《なん》こ あまりますか。`,
   },
   {
     id: 'tape',
     kind: 'word',
-    unit: '本《ぽん》',
+    unit: '本《ほん》',
     unit2: 'cm',
     text: (D, d) =>
       `${D}cmの テープを ${d}cmずつ 切《き》ります。${d}cmの テープは 何《なん》本《ぼん》 できて、何《なん》cm あまりますか。`,
@@ -223,7 +227,7 @@ const SCENES: Scene[] = [
   {
     id: 'ribbon',
     kind: 'down',
-    unit: '本《ぽん》',
+    unit: '本《ほん》',
     text: (D, d) => `${D}cmの リボンから、${d}cmの リボンは 何《なん》本《ぼん》 とれますか。`,
   },
   {
@@ -238,7 +242,7 @@ const SCENES: Scene[] = [
     kind: 'down',
     unit: 'たば',
     text: (D, d) =>
-      `花《はな》が ${D}本《ほん》 あります。${d}本《ほん》ずつ たばに すると、${d}本《ほん》の 花《はな》たばは 何《なん》たば できますか。`,
+      `花《はな》が ${hon(D)} あります。${hon(d)}ずつ たばに すると、${hon(d)}の 花《はな》たばは 何《なん》たば できますか。`,
   },
   {
     id: 'pack',
@@ -267,12 +271,12 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
       `式《しき》は ${D} ÷ ${d}。`,
       `${d} × ${q} ＝ ${d * q}。のこりは？`,
     ],
-    explain: `${D} ÷ ${d} ＝ ${q} あまり ${r}。答《こた》えは ${q}${sc.unit}で、${r}${sc.unit2} あまります。`,
+    explain: `${D} ÷ ${d} ＝ ${q} あまり ${r}。答《こた》えは ${withUnit(q, sc.unit)}で、${r}${sc.unit2} あまります。`,
     identity: `${sc.id}:${D}÷${d}`,
     alt,
     fields: [
-      { label: sc.unit, answer: { kind: 'int', value: q } },
-      { label: `あまり（${sc.unit2}）`, answer: { kind: 'int', value: r } },
+      { label: 'しょう', unit: sc.unit, answer: { kind: 'int', value: q } },
+      { label: 'あまり', unit: sc.unit2, answer: { kind: 'int', value: r } },
     ],
     wrongAnswers: wrongList(`${q}|${r}`, 2, remWrongs(d, q, r)),
   };
@@ -301,11 +305,11 @@ function rounding(obj: 'up' | 'down', level: number, rng: Rng, alt: boolean): Nu
     ],
     explain:
       obj === 'up'
-        ? `${D} ÷ ${d} ＝ ${q} あまり ${r}。${q}${sc.unit}では あまりの ${r}が のこるので、もう 1つ いります。${q} ＋ 1 ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`
-        : `${D} ÷ ${d} ＝ ${q} あまり ${r}。あまりの ${r}では ${d}に たりないので、答《こた》えは ${q}${sc.unit}です。`,
+        ? `${D} ÷ ${d} ＝ ${q} あまり ${r}。${withUnit(q, sc.unit)}では あまりの ${r}が のこるので、もう 1つ いります。${q} ＋ 1 ＝ ${ans}。答《こた》えは ${withUnit(ans, sc.unit)}です。`
+        : `${D} ÷ ${d} ＝ ${q} あまり ${r}。あまりの ${r}では ${d}に たりないので、答《こた》えは ${withUnit(q, sc.unit)}です。`,
     identity: `${sc.id}:${D}÷${d}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongList(String(ans), 1, [
       [obj === 'up' ? q : q + 1, obj === 'up' ? 'round-up-miss' : 'round-down-miss'],
       [r, 'swap-fields'],

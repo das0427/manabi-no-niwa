@@ -49,6 +49,24 @@ export const SAME_START: Record<number, number[]> = {
 
 const num = (n: number) => en('num', WORDS[n]!);
 
+/**
+ * 絵を えらぶ 問題（num-pic。答えが 10 以下）の まちがいの 数。絵の数が 10 を こえると（7 の
+ * 「11 こ」）札が 3 行に なり、解説で 数える 絵が 4u を 切る（文字の配置の検査 C29）ので、
+ * まちがいも 10 以下に する。SAME_START の 10 より 大きい 数は 使わず、足りない ぶんは
+ * となりの 数（7 なら 8。絵を かぞえまちがえやすい。near-count）で 補う。
+ * 数の 札を えらぶ 問題（num。字の 札）は SAME_START の まま（11 でも 行が 増えない）。
+ */
+export function picWrong(n: number): [number, string][] {
+  const out: [number, string][] = SAME_START[n]!.filter((m) => m <= 10)
+    .slice(0, 2)
+    .map((m) => [m, 'same-start']);
+  for (const m of [n + 1, n - 1]) {
+    if (out.length >= 2) break;
+    if (m >= 1 && m <= 10 && !out.some(([x]) => x === m)) out.push([m, 'near-count']);
+  }
+  return out;
+}
+
 function numberItems(): Item[] {
   const out: Item[] = [];
   for (let n = 1; n <= 20; n++) {
@@ -113,7 +131,7 @@ function numberItems(): Item[] {
         ? { kind: 'illust', id, count: k }
         : { kind: 'blocks', tens: Math.floor(k / 10), ones: k % 10 };
     const wrong: [number, string][] = small
-      ? SAME_START[n]!.slice(0, 2).map((m) => [m, 'same-start'])
+      ? picWrong(n)
       : n === 20
         ? [
             [12, 'tw-start'],
@@ -441,6 +459,10 @@ export const numbersColors: UnitSpec = {
       explain: '12と 20は はじめの 音《おと》が にているね。おわりの 音《おと》を くらべよう。',
     },
     { id: 'teen-near', explain: 'となりの かずと まちがえたのかな。ブロックを かぞえなおそう。' },
+    {
+      id: 'near-count',
+      explain: 'となりの かずと まちがえたのかな。えを ひとつずつ かぞえなおそう。',
+    },
     {
       id: 'color-mix',
       explain: 'ほかの 色《いろ》の なまえと とりちがえたのかな。もういちど 聞《き》こう。',

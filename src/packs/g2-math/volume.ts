@@ -178,7 +178,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       level,
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${l}L${d}dL ＝ □dL`, size: 'xl' },
-      fields: [{ label: 'dL', answer: { kind: 'int', value: v } }],
+      fields: [{ unit: 'dL', answer: { kind: 'int', value: v } }],
       hints: ['1Lは 10dL だよ。', `${l}Lは ${l * 10}dL。`, `${l * 10}dLと ${d}dLを あわせよう。`],
       explain: `1L ＝ 10dL なので ${l}L ＝ ${l * 10}dL。${l * 10} ＋ ${d} ＝ ${v}で ${v}dL です。`,
       identity: `ldl-dl:${v}`,
@@ -204,8 +204,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${v}dL ＝ □L□dL`, size: 'xl' },
       fields: [
-        { label: 'L', answer: { kind: 'int', value: l } },
-        { label: 'dL', answer: { kind: 'int', value: d } },
+        { unit: 'L', answer: { kind: 'int', value: l } },
+        { unit: 'dL', answer: { kind: 'int', value: d } },
       ],
       hints: [
         '10dLで 1L だよ。',
@@ -231,7 +231,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       level,
       prompt: '□に あう かずは？',
       figure: { kind: 'text', text: `${d}dL ＝ □mL`, size: 'xl' },
-      fields: [{ label: 'mL', answer: { kind: 'int', value: d * 100 } }],
+      fields: [{ unit: 'mL', answer: { kind: 'int', value: d * 100 } }],
       hints: ['1dLは 100mL だよ。', `${d}dLは 100mLの ${d}つぶん。`, `100mLが ${d}こで…`],
       explain: `1dL ＝ 100mL なので、${d}dL ＝ ${d * 100}mL です。`,
       identity: `dl-ml:${d}`,
@@ -254,7 +254,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
     level,
     prompt: '□に あう かずは？',
     figure: { kind: 'text', text: `${l}L ＝ □${u}`, size: 'xl' },
-    fields: [{ label: u, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: u, answer: { kind: 'int', value: ans } }],
     hints: [
       toMl ? '1Lは 1000mL だよ。' : '1Lは 10dL だよ。',
       `${l}Lは 1Lの ${l}つぶん。`,
@@ -398,8 +398,8 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
         }
       : { kind: 'text', text: `${ldl(a)} ${op} ${ldl(b)} ＝ □L□dL`, size: 'l' },
     fields: [
-      { label: 'L', answer: { kind: 'int', value: ra } },
-      { label: 'dL', answer: { kind: 'int', value: rb } },
+      { unit: 'L', answer: { kind: 'int', value: ra } },
+      { unit: 'dL', answer: { kind: 'int', value: rb } },
     ],
     hints: [
       'おなじ たんいどうしを けいさん しよう。',

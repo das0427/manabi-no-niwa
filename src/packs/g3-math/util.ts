@@ -154,6 +154,25 @@ export function tenths(t: number): string {
   return s.endsWith('.0') ? s.slice(0, -2) : s;
 }
 
+/**
+ * 数のあとの「本」。読みは数で変わる（1・6・8・10 → ぽん、3 → ぼん、2・4・5・7・9 → ほん。千・万の ちょうどは ぼん）。
+ * 回答欄の右の単位（unit）は、答えの手がかりに ならないよう 数に よらない 本《ほん》にする（問題の状態では 欄が 空）。
+ */
+export function hon(n: number): string {
+  const d = n % 10;
+  const r =
+    (n > 0 && n % 1000 === 0) || d === 3
+      ? 'ぼん'
+      : d === 1 || d === 6 || d === 8 || (d === 0 && n > 0)
+        ? 'ぽん'
+        : 'ほん';
+  return `${n}本《${r}》`;
+}
+
+/** 数と 場面の単位（「本」は 数に あわせた 読みにする。ほかの単位は そのまま つなぐ） */
+export const withUnit = (n: number, unit: string): string =>
+  unit.startsWith('本《') ? hon(n) : `${n}${unit}`;
+
 /** 3けたごとの区切りなしの数を、万で区切った読みやすい文字（12345678 → '1234万5678'） */
 export function manText(n: number): string {
   if (n < 10000) return String(n);

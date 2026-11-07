@@ -103,8 +103,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
       identity: `m-km:${total}`,
       alt: true,
       fields: [
-        { label: 'km', answer: { kind: 'int', value: k } },
-        { label: 'm', answer: { kind: 'int', value: m } },
+        { unit: 'km', answer: { kind: 'int', value: k } },
+        { unit: 'm', answer: { kind: 'int', value: m } },
       ],
       wrongAnswers: wrongList(`${k}|${m}`, 2, [
         [`${Math.floor(total / 100)}|${total % 100}`, 'km-as-100'],
@@ -128,7 +128,7 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         explain: `1km ＝ 1000m なので ${k}km ＝ ${k * 1000}m。${k * 1000} ＋ ${m} ＝ ${total}で ${total}mです。`,
         identity: `km-m:${k}:${m}`,
         alt: false,
-        fields: [{ label: 'm', answer: { kind: 'int', value: total } }],
+        fields: [{ unit: 'm', answer: { kind: 'int', value: total } }],
         wrongAnswers: wrongList(String(total), 1, [
           [`${k}${m}`, 'km-place'],
           [k * 100 + m, 'km-as-100'],
@@ -150,8 +150,8 @@ function convert(level: number, rng: Rng, alt: boolean): NumberItem {
         identity: `m-km:${total}`,
         alt: false,
         fields: [
-          { label: 'km', answer: { kind: 'int', value: k } },
-          { label: 'm', answer: { kind: 'int', value: m } },
+          { unit: 'km', answer: { kind: 'int', value: k } },
+          { unit: 'm', answer: { kind: 'int', value: m } },
         ],
         wrongAnswers: wrongList(`${k}|${m}`, 2, [
           [`${Math.floor(total / 100)}|${total % 100}`, 'km-as-100'],
@@ -183,10 +183,10 @@ function path(level: number, rng: Rng, alt: boolean): NumberItem {
   const fields =
     total >= 1000
       ? [
-          { label: 'km', answer: { kind: 'int' as const, value: Math.floor(total / 1000) } },
-          { label: 'm', answer: { kind: 'int' as const, value: total % 1000 } },
+          { unit: 'km', answer: { kind: 'int' as const, value: Math.floor(total / 1000) } },
+          { unit: 'm', answer: { kind: 'int' as const, value: total % 1000 } },
         ]
-      : [{ label: 'm', answer: { kind: 'int' as const, value: total } }];
+      : [{ unit: 'm', answer: { kind: 'int' as const, value: total } }];
   const asFields = (v: number) =>
     total >= 1000 ? `${Math.floor(v / 1000)}|${v % 1000}` : String(v);
   const story = `家《いえ》（●）から 曲《ま》がり角《かど》まで ${a}m、曲《ま》がり角《かど》から 学校《がっこう》（■）まで ${b}mの 道《みち》を 歩《ある》きます。家《いえ》から 学校《がっこう》まで まっすぐに はかった 長《なが》さ（点線《てんせん》）は ${dist}mです。`;
@@ -206,7 +206,7 @@ function path(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `道《みち》のりは ${a} ＋ ${b} ＝ ${total}m、きょりは ${dist}m。ちがいは ${total} − ${dist} ＝ ${total - dist}mです。`,
       identity: `path-diff:${a}:${b}:${dist}`,
       alt: true,
-      fields: [{ label: 'm', answer: { kind: 'int', value: total - dist } }],
+      fields: [{ unit: 'm', answer: { kind: 'int', value: total - dist } }],
       wrongAnswers: wrongList(String(total - dist), 1, [
         [total, 'path-vs-distance'],
         [Math.abs(a - b), 'path-vs-distance'],

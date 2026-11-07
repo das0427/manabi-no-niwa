@@ -334,7 +334,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} ${sym} ${n} ＝ ${dec(ans, p)}。答えは ${dec(ans, p)}${sc.unit}です。`,
     identity: `story:${sc.id}:${a}${sym}${n}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [ans, 'point-place'],

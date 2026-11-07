@@ -232,7 +232,7 @@ function bunshou(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a}の ${b}つぶんなので ${a} × ${b} ＝ ${p}。こたえは ${p}${sc.unit} です。`,
     identity: `${sc.id}:${a}x${b}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: p } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: p } }],
     wrongAnswers: wrongs(a, b),
   };
 }

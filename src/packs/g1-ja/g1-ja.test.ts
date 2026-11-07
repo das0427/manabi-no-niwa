@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { Item, UnitSpec } from '../../curriculum/types';
 import { checkReading } from '../../engines/reading/reading';
+import { getIllust } from '../../illust/registry';
 import { kanjiGrade } from '../../text/kanji-grades';
 import { parseRich, type Token } from '../../text/rich';
 import pack from './index';
@@ -23,6 +24,22 @@ function overGrade(src: string): string[] {
   return bad;
 }
 
+/**
+ * 問題・選択肢・導入の図に出る絵の ID。素材一覧に無い ID や final でない絵は、本番でも赤い破線の枠になる
+ * （はんこ用の絵 stamps/ は素材一覧に入っていない。g1.ja.word-play の balloon で見つかった）。
+ */
+function illustIds(v: unknown, out = new Set<string>()): Set<string> {
+  if (!v || typeof v !== 'object') return out;
+  if (Array.isArray(v)) {
+    for (const x of v) illustIds(x, out);
+    return out;
+  }
+  const o = v as Record<string, unknown>;
+  if (o.kind === 'illust' && typeof o.id === 'string') out.add(o.id);
+  for (const x of Object.values(o)) illustIds(x, out);
+  return out;
+}
+
 function extraChecks(unit: UnitSpec): string[] {
   const errs: string[] = [];
   const items = sampleItems(unit, 50);
@@ -41,6 +58,8 @@ function extraChecks(unit: UnitSpec): string[] {
   ];
   for (const t of texts)
     for (const k of overGrade(t)) errs.push(`${GRADE}年より上の漢字「${k}」: ${t.slice(0, 30)}`);
+  for (const id of illustIds([unit.intro, items]))
+    if (getIllust(id)?.status !== 'final') errs.push(`素材一覧に無い（final でない）絵: ${id}`);
   for (const it of items) {
     if (
       (it.engine === 'choice' || it.engine === 'listen' || it.engine === 'reading') &&

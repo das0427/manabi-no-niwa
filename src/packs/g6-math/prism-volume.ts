@@ -165,7 +165,7 @@ function numItem(
     explain,
     identity: `${obj}:${key}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label: 'cm³', answer }],
+    fields: [{ unit: 'cm³', answer }],
     keys: places > 0 ? ['decimal'] : undefined,
     wrongAnswers: wrongList(
       [answer],

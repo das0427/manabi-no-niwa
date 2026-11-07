@@ -375,7 +375,7 @@ function partCount(id: string, level: number, r: Route, upTo: number): NumberIte
     prompt:
       'みちを ふたつに わけたよ。はじめから ほしの ところまで、「すすむ」の ふだは ぜんぶで なんかい いるかな。',
     figure: gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 9 }),
-    fields: [{ label: 'かい', answer: { kind: 'int', value: forwards } }],
+    fields: [{ answer: { kind: 'int', value: forwards }, unit: 'かい' }],
     wrongAnswers: [
       { value: String(sol.length), misconception: 'count-turn' },
       { value: String(forwards - 1), misconception: 'count-miss' },

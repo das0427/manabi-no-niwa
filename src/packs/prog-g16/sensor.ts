@@ -555,7 +555,7 @@ const saveAlts: NumberItem[] = [
     alt: true,
     prompt: `きまり: ${condText(sc, q.rule)}\n${sc.action}のは、8つの じかんの うち なんかい？`,
     figure: timelineFig(sc, t),
-    fields: [{ label: 'かい', answer: { kind: 'int', value: answer } }],
+    fields: [{ answer: { kind: 'int', value: answer }, unit: 'かい' }],
     wrongAnswers: [...new Set([...others, HOURS.length])]
       .filter((v) => v !== answer)
       .map((v) => ({ value: String(v), misconception: 'count-cond' })),

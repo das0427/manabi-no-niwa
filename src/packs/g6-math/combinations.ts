@@ -43,7 +43,7 @@ function numItem(
     explain,
     identity: `${obj}:${key}`,
     alt,
-    fields: [{ label: unit, answer }],
+    fields: [{ unit, answer }],
     wrongAnswers: wrongList([answer], cands),
   };
 }
@@ -192,7 +192,9 @@ function leagueFig(n: number): Figure {
 
 function combItem(level: number, rng: Rng, alt: boolean): NumberItem {
   if (alt) {
-    const n = rng.int(3, 10);
+    // 表（n + 1 行）は 図の段に入る 6 行まで。6 チーム以上は 数の入力の作業領域で入らず、
+    // 図の段がスクロールになる（文字の配置の検査 第8回。--fit の下限でも 6 チームで 2u 足りない）
+    const n = rng.int(3, 5);
     const ans = C(n, 2);
     return numItem(
       'comb',
@@ -437,7 +439,8 @@ const LEVELS: { objs: Obj[] }[] = [
 export function generateCombinations(level: number, rng: Rng, index: number): Item {
   const lv = LEVELS[Math.min(level, LEVELS.length - 1)]!;
   const obj = pickObj(rng, lv.objs, index);
-  const alt = rng.next() < 0.3;
+  // 組み合わせの表（alt）は 3〜5 チームの 3 通りだけなので、同じ 同一性キーが 3% を超えないよう 少なめにする
+  const alt = rng.next() < (obj === 'comb' ? 0.1 : 0.3);
   switch (obj) {
     case 'perm':
       return permItem(level, rng, alt);

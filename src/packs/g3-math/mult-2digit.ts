@@ -51,9 +51,15 @@ function partialFigure(a: number, b: number): Figure {
   return columnFigure(a, b, '×', String(a * b).length, [String(p1), `${p2}\u3000`], a * b);
 }
 
-function explainOf(a: number, b: number): string {
+/**
+ * 解説。compact は、解説の筆算の図（explainFigure）と一緒に出す 3けた × 2けたの文。答えが 5けたに近いと
+ * 3行になり、1280×620 で図の段が 2.5行に切れた（text-layout-fixes 第8回）ので、ずらす言いかえをやめて 2行に入れる。
+ */
+function explainOf(a: number, b: number, compact = false): string {
   const b1 = b % 10;
   const b10 = Math.floor(b / 10);
+  if (compact)
+    return `一《いち》のくらい: ${a} × ${b1} ＝ ${a * b1}。十《じゅう》のくらい: ${a} × ${b10 * 10} ＝ ${a * b10 * 10}。${a * b1} ＋ ${a * b10 * 10} ＝ ${a * b}。答《こた》えは ${a * b}です。`;
   return `一《いち》のくらい: ${a} × ${b1} ＝ ${a * b1}。十《じゅう》のくらい: ${a} × ${b10} ＝ ${a * b10}（1けた 左《ひだり》に ずらして ${a * b10 * 10}）。${a * b1} ＋ ${a * b10 * 10} ＝ ${a * b}。答《こた》えは ${a * b}です。`;
 }
 
@@ -101,7 +107,7 @@ function tens(level: number, rng: Rng, alt: boolean): NumberItem {
     alt,
     fields: [
       alt
-        ? { label: '円《えん》', answer: { kind: 'int', value: a * b } }
+        ? { unit: '円《えん》', answer: { kind: 'int', value: a * b } }
         : { answer: { kind: 'int', value: a * b } },
     ],
     wrongAnswers: wrongList(String(a * b), 1, [
@@ -189,7 +195,7 @@ function calc(obj: Obj, level: number, a: number, b: number, alt: boolean): Numb
         '横《よこ》書《が》きの 式《しき》を 筆算《ひっさん》に なおして 計算《けいさん》しよう。',
       figure: { kind: 'text', text: `${a} × ${b} ＝ {{}}`, size: 'xl' },
       hints: hintsOf(a, b),
-      explain: explainOf(a, b),
+      explain: explainOf(a, b, a >= 100),
       explainFigure: partialFigure(a, b),
       identity: `${a}x${b}`,
       alt: true,
@@ -303,7 +309,7 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: partialFigure(a, b),
     identity: `${sc.id}:${a}x${b}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongs(a, b, 1),
   };
 }

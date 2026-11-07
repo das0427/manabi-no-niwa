@@ -90,7 +90,7 @@ function quotient(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} ÷ ${b} ＝ ${F(a, b)}。わり算の 商は、わられる数を 分子、わる数を 分母に した 分数で 表せます。${sc ? `答えは ${F(a, b)}${sc.unit}です。` : ''}`,
     identity: sc ? `quotient:${sc.id}:${a}÷${b}` : `quotient:${a}÷${b}`,
     alt,
-    fields: [{ ...(sc ? { label: sc.unit } : {}), answer: answers[0]! }],
+    fields: [{ ...(sc ? { unit: sc.unit } : {}), answer: answers[0]! }],
     keys: ['fraction'],
     wrongAnswers: wrongList(answers, [
       [`${b}/${a}`, 'div-swap'],

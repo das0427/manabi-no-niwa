@@ -157,7 +157,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
       explain: `中心の まわりに できる 6つの 三角形は 正三角形なので、正六角形の 1辺は 半径と 同じ ${r}cmです。`,
       identity: `regular:hex:${r}`,
       alt: false,
-      fields: [{ label: 'cm', answer: answers[0]! }],
+      fields: [{ unit: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [[2 * r, 'r-d-swap']]),
     };
     return item;
@@ -180,7 +180,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
       explain: `360 ÷ ${ans} ＝ ${n}なので、中心の まわりが ${n}こに 分かれて、${NAME[n]}が できます。`,
       identity: `regular:count:${n}`,
       alt: false,
-      fields: [{ label: '角形', answer: answers[0]! }],
+      fields: [{ unit: '角形', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [Number.isInteger(180 / ans) ? 180 / ans : null, 'use-180'],
       ]),
@@ -203,7 +203,7 @@ function regular(level: number, rng: Rng, alt: boolean): Item {
     explain: `中心の まわりの 角 360°を ${n}等分するので、360 ÷ ${n} ＝ ${ans}°です。`,
     identity: `regular:${n}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [180 / n, 'use-180'],
       [((n - 2) * 180) / n, 'inner-angle'],
@@ -337,7 +337,7 @@ function circum(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${useR ? `直径は ${v} × 2 ＝ ${d}cm。` : ''}円周 ＝ 直径 × 3.14 ＝ ${d} × 3.14 ＝ ${dec(ans, 2)}。${form === 'story' ? `1回転で ${dec(ans, 2)}cm 進みます。` : `円周は ${dec(ans, 2)}cmです。`}`,
     identity: `circum${alt ? `-${form}` : ''}:${useR ? 'r' : 'd'}${v}`,
     alt,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [useR ? dec(circ(v), 2) : dec(circ(2 * v), 2), 'r-d-swap'],
@@ -376,7 +376,7 @@ function diam(level: number, rng: Rng, alt: boolean): NumberItem {
       : `□ × 3.14 ＝ ${C} なので、□ ＝ ${C} ÷ 3.14 ＝ ${d}。直径は ${d}cmです。`,
     identity: `diam${alt ? '-r' : ''}:${d}`,
     alt,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [alt ? d : d / 2, 'r-d-swap'],

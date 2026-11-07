@@ -320,7 +320,7 @@ export function generateAddBasic(level: number, rng: Rng, index: number): Item {
             : 'ふえると かずは おおきく なるね。',
         ),
         id: `bunshou${alt ? '-alt' : ''}:${sc.id}:${a}+${b}`,
-        fields: [{ answer: { kind: 'int', value: a + b }, label: sc.unit }],
+        fields: [{ answer: { kind: 'int', value: a + b }, unit: sc.unit }],
         explain: `しきは ${a} ＋ ${b} ＝ ${a + b}。こたえは ${a + b}${sc.unit} です。`,
       };
     }

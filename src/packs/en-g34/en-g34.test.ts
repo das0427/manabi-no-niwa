@@ -246,6 +246,8 @@ interface AnyOpt {
     kind: string;
     id?: string;
     count?: number;
+    tens?: number;
+    ones?: number;
     markup?: string;
     items?: AnyOpt['figure'][];
   };
@@ -393,6 +395,58 @@ describe('g4.en.want', () => {
       const w = /(\w+)\.$/.exec(textsOfAudio(it)[0]!)![1]!;
       expect(correctOf(it).label!.startsWith(NAMES[single(w)]!), it.id).toBe(true);
     }
+  });
+});
+
+describe('g3.en.numbers-colors', () => {
+  const items = itemsOf('g3.en.numbers-colors');
+  const picCount = (o: AnyOpt): number => {
+    const f = o.figure!;
+    return f.kind === 'blocks' ? f.tens! * 10 + f.ones! : f.count!;
+  };
+  it('絵を えらぶ 問題（num-pic。答えが 10 以下）の まちがいは 1〜10 の 絵で、札が 3 行に ならない', () => {
+    // 11 こ（5・5・1 の 3 行）の 札が あると、解説で 数える 絵が 4u を 切る（文字の配置の検査 C29）
+    for (const it of items.filter((x) => /^num-pic:\d+$/.test(x.id))) {
+      const n = Number(it.id.slice('num-pic:'.length));
+      if (n > 10) continue;
+      const c = correctOf(it);
+      expect(c.figure!.kind, it.id).toBe('illust');
+      expect(picCount(c), it.id).toBe(n);
+      const wrong = it.options!.filter((o) => !o.correct);
+      expect(wrong, it.id).toHaveLength(2);
+      const counts = wrong.map(picCount);
+      expect(new Set([...counts, n]).size, it.id).toBe(3);
+      for (const m of counts) {
+        expect(m, it.id).toBeGreaterThanOrEqual(1);
+        expect(m, it.id).toBeLessThanOrEqual(10);
+      }
+      for (const o of wrong) {
+        // 聞きまちがえる 数（はじめの 音が にている）か、絵を かぞえまちがえる となりの 数
+        if (o.misconception === 'same-start') expect(SAME_START[n], it.id).toContain(picCount(o));
+        else {
+          expect(o.misconception, it.id).toBe('near-count');
+          expect(Math.abs(picCount(o) - n), it.id).toBe(1);
+        }
+      }
+    }
+  });
+  it('num-pic:7 の まちがいは 6（same-start）と 8（near-count）。数の 札の num:7 は 11 の まま', () => {
+    const pic = items.find((x) => x.id === 'num-pic:7')!;
+    expect(
+      pic.options!.filter((o) => !o.correct).map((o) => [picCount(o), o.misconception]),
+    ).toEqual([
+      [6, 'same-start'],
+      [8, 'near-count'],
+    ]);
+    const word = items.find((x) => x.id === 'num:7')!;
+    expect(word.options!.map((o) => o.label)).toContain('11');
+  });
+  it('誤概念 teen-near は ブロックの 絵、near-count は 絵（illust）の 問題だけ', () => {
+    for (const it of items)
+      for (const o of it.options ?? []) {
+        if (o.misconception === 'teen-near') expect(o.figure?.kind, it.id).toBe('blocks');
+        if (o.misconception === 'near-count') expect(o.figure?.kind, it.id).toBe('illust');
+      }
   });
 });
 

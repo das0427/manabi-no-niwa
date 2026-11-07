@@ -396,7 +396,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: columnFig(a, b, sym, false),
     identity: `story:${sc.id}:${key(a, b, sc.op)}`,
     alt,
-    fields: [{ label: sc.unit, answer: w.answers[0]! }],
+    fields: [{ unit: sc.unit, answer: w.answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: w.wrongs,
   };

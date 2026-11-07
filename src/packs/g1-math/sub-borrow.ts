@@ -162,7 +162,7 @@ function numberItem(
     explainFigure: { kind: 'blocks', ones: c, frame: true },
     identity: key(a, b),
     alt,
-    fields: [{ answer: { kind: 'int', value: c }, label: unit }],
+    fields: [{ answer: { kind: 'int', value: c }, unit }],
     wrongAnswers: wrongs(a, b),
   };
 }

@@ -227,7 +227,7 @@ function times(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${k}倍《ばい》すると くらいが ${z}つ 上《あ》がり、右《みぎ》に 0を ${z}こ つけた 数《かず》に なります。${n} × ${k} ＝ ${ans}。`,
     identity: `times:${n}x${k}`,
     alt,
-    fields: [{ ...(alt ? { label: '円《えん》' } : {}), answer: { kind: 'int', value: ans } }],
+    fields: [{ ...(alt ? { unit: '円《えん》' } : {}), answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongList(String(ans), 1, [
       [n * k * 10, 'zeros-count'],
       [k > 10 ? (n * k) / 10 : null, 'zeros-count'],
@@ -256,7 +256,7 @@ function div10(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `10で わると くらいが 1つ 下《さ》がり、一《いち》のくらいの 0を とった 数《かず》に なります。${n} ÷ 10 ＝ ${ans}。`,
     identity: `div10:${n}`,
     alt,
-    fields: [{ ...(alt ? { label: '円《えん》' } : {}), answer: { kind: 'int', value: ans } }],
+    fields: [{ ...(alt ? { unit: '円《えん》' } : {}), answer: { kind: 'int', value: ans } }],
     wrongAnswers: wrongList(String(ans), 1, [
       [n % 100 === 0 ? n / 100 : null, 'zeros-count'],
       [n * 10, 'zeros-count'],

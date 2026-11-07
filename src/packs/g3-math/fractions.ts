@@ -54,7 +54,7 @@ function unit(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${F(k, n)}は ${F(1, n)}の ${k}こ分《ぶん》です。`,
       identity: `unit-r:${k}/${n}`,
       alt: false,
-      fields: [{ label: 'こ分《ぶん》', answer: { kind: 'int', value: k } }],
+      fields: [{ unit: 'こ分《ぶん》', answer: { kind: 'int', value: k } }],
       wrongAnswers: wrongList(String(k), 1, [[n, 'den-as-count']]),
     };
   return {
@@ -75,7 +75,7 @@ function unit(level: number, rng: Rng, alt: boolean): NumberItem {
     identity: `unit:${k}/${n}`,
     alt,
     keys: ['fraction'],
-    fields: [{ ...(alt ? { label: 'm' } : {}), answer: frac(k, n) }],
+    fields: [{ ...(alt ? { unit: 'm' } : {}), answer: frac(k, n) }],
     wrongAnswers: wrongList(`${k}/${n}`, 1, [
       [`${k}/${k * n}`, 'mult-den'],
       [`1/${n * k}`, 'mult-den'],
@@ -139,7 +139,7 @@ function figureItem(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceI
     identity: `figure:${k}/${n}`,
     alt: false,
     keys: ['fraction'],
-    fields: [{ label: 'm', answer: frac(k, n) }],
+    fields: [{ unit: 'm', answer: frac(k, n) }],
     wrongAnswers: wrongList(`${k}/${n}`, 1, [
       [`${k}/${n - k}`, 'part-to-part'],
       [`${n - k}/${n}`, 'part-to-part'],
@@ -309,7 +309,7 @@ function addSub(obj: 'add' | 'sub', level: number, rng: Rng, alt: boolean): Numb
     identity: key,
     alt,
     keys: ['fraction'],
-    fields: [{ ...(alt ? { label: obj === 'add' ? 'L' : 'm' } : {}), answer: frac(ans, n) }],
+    fields: [{ ...(alt ? { unit: obj === 'add' ? 'L' : 'm' } : {}), answer: frac(ans, n) }],
     wrongAnswers: wrongList(`${ans}/${n}`, 1, [
       [obj === 'add' ? `${a + b}/${n + n}` : null, 'add-dens'],
       [obj === 'sub' ? `${a + b}/${n}` : null, 'wrong-op'],

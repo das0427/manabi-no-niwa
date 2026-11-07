@@ -422,7 +422,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${as} ÷ ${bs} ＝ ${S(q)}。答えは ${S(q)}${sc.unit}です。`,
     identity: `story:${sc.id}:${as}÷${bs}${alt ? ':tbl' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [quot(b, a), 'div-swap'],

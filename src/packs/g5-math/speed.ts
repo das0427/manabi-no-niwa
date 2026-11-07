@@ -155,7 +155,7 @@ function speedItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `speed:${sc.id}:${d}:${t}${alt ? ':line' : ''}`,
     alt,
-    fields: [{ label: sc.dUnit, answer: answers[0]! }],
+    fields: [{ unit: sc.dUnit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [divText(t, d), 'div-swap'],
@@ -185,7 +185,7 @@ function distItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `dist:${sc.id}:${s}:${t}${alt ? ':line' : ''}`,
     alt,
-    fields: [{ label: sc.dUnit, answer: answers[0]! }],
+    fields: [{ unit: sc.dUnit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [divText(s, t), 'formula-swap'],
@@ -216,7 +216,7 @@ function timeItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: lineFig(sc, String(s), t, String(d)),
     identity: `time:${sc.id}:${s}:${d}${alt ? ':line' : ''}`,
     alt,
-    fields: [{ label: T(sc.tUnit), answer: answers[0]! }],
+    fields: [{ unit: T(sc.tUnit), answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [divText(s, d), 'div-swap'],
@@ -340,7 +340,7 @@ function convItem(level: number, rng: Rng, alt: boolean): Item {
     explain,
     identity: `convert:${key}`,
     alt: false,
-    fields: [{ label: kind === 'm2h' ? 'km' : 'm', answer: answers[0]! }],
+    fields: [{ unit: kind === 'm2h' ? 'km' : 'm', answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, wrong),
   };

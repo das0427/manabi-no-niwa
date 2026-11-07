@@ -218,7 +218,7 @@ function tri(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: polyFig([a, b, c], [`${a}°`, `${b}°`, `${c}°`], '三角形'),
     identity: `tri${alt ? '-fig' : ''}:${sorted([a, b])}`,
     alt,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [360 - a - b, 'use-360'],
       [180 - a, 'one-angle'],
@@ -249,7 +249,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `三角形の のこりの 角は ${c}°。外がわの 角は 180 − ${c} ＝ ${a + b}°です。（${a} ＋ ${b}と 同じに なります）`,
       identity: `ext:${sorted([a, b])}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [c, 'ext-inner'],
         [360 - a - b, 'use-360'],
@@ -275,7 +275,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `のこりの 2つの 角の 和は 180 − ${x} ＝ ${180 - x}°。2つは 等しいので ${180 - x} ÷ 2 ＝ ${ans}°です。`,
       identity: `special:apex:${x}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [180 - x, 'isos-half'],
         [x, 'isos-pair'],
@@ -301,7 +301,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `底辺の 両はしの 角は どちらも ${y}°。180 − ${y} × 2 ＝ ${ans}°です。`,
       identity: `special:base:${y}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         // 底辺の 角を 1つだけ ひいた（180 − y）／ 与えられた 角を 等しい 2辺の 間の 角と 取りちがえた（(180 − y) ÷ 2）
         [180 - y, 'one-angle'],
@@ -327,7 +327,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `180 − （90 ＋ ${a}） ＝ ${ans}。もう1つの 角は ${ans}°です。`,
     identity: `special:right:${a}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [180 - a, 'right-90'],
       [270 - a, 'use-360'],
@@ -397,7 +397,7 @@ function quad(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: polyFig([a, b, c, d], [`${a}°`, `${b}°`, `${c}°`, `${d}°`], '四角形'),
     identity: `quad${alt ? '-fig' : ''}:${sorted([a, b, c])}`,
     alt,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [180 - a - b - c > 0 ? 180 - a - b - c : null, 'use-180'],
       [a + b + c, 'add-only'],
@@ -470,7 +470,7 @@ function poly(level: number, rng: Rng, alt: boolean): Item {
       explain: `${NAME[n]}は 三角形 ${n - 2}こに 分けられるので、180 × ${n - 2} ＝ ${ans}°です。`,
       identity: `poly:sum:${n}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [n * 180, 'n-times-180'],
         [(n - 1) * 180, 'tri-count'],
@@ -497,7 +497,7 @@ function poly(level: number, rng: Rng, alt: boolean): Item {
     explain: `${NAME[n]}の 角の 和は ${(n - 2) * 180}°。正${NAME[n]}は ${n}つの 角が 等しいので、${(n - 2) * 180} ÷ ${n} ＝ ${ans}°です。`,
     identity: `poly:regular:${n}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [360 / n, 'center-angle'],
       [(n - 2) * 180, 'sum-no-divide'],

@@ -181,7 +181,7 @@ function read(level: number, rng: Rng, alt: boolean): GraphItem {
       kind: 'number',
       fields: [
         {
-          label: d.unit,
+          unit: d.unit,
           answer: dec ? { kind: 'decimal', value: ans } : { kind: 'int', value: ans },
         },
       ],
@@ -226,7 +226,7 @@ function change(level: number, rng: Rng, alt: boolean): GraphItem {
       data: graphData(d, vals),
       task: {
         kind: 'number',
-        fields: [{ label: d.unit, answer: { kind: 'int', value: diffs[k]! } }],
+        fields: [{ unit: d.unit, answer: { kind: 'int', value: diffs[k]! } }],
         wrongAnswers: wrongList(
           [{ kind: 'int', value: diffs[k]! }],
           [
@@ -375,7 +375,12 @@ function make(level: number, rng: Rng, alt: boolean): GraphItem {
   };
 }
 
-/** 2本の 折れ線（SVG） */
+/**
+ * 2本の 折れ線（SVG）。目もりの 字は 14（第8回）。図が 25u 四方ほどに 縮む 画面では、11 だと
+ * エンジンの 字の 引き上げ（もとの 2倍まで）でも 最小の 1.8u に 届かず small-text に なった。
+ * 縦の 目もりの 字は 約 22 ずつ 離れて いる（2 目もり分）ので、25u 四方の 図で 引き上げた 字（約 23）でも
+ * 数字の 形（字の 高さの 7わりほど）は 重ならない。
+ */
 function twoFig(a: number[], b: number[], step: number, max: number): Figure {
   const W = 320;
   const H = 200;
@@ -388,10 +393,10 @@ function twoFig(a: number[], b: number[], step: number, max: number): Figure {
   let body = '';
   for (let v = 0; v <= max; v += step) {
     body += `<line x1="${L}" y1="${Y(v)}" x2="${L + gw}" y2="${Y(v)}" stroke="var(--ink)" stroke-opacity="0.15" stroke-width="1"/>`;
-    if ((v / step) % 2 === 0) body += svgText(L - 8, Y(v), String(v), 11, 'end');
+    if ((v / step) % 2 === 0) body += svgText(L - 8, Y(v), String(v), 14, 'end');
   }
   body += `<line x1="${L}" y1="${T}" x2="${L}" y2="${T + gh}" ${STROKE}/><line x1="${L}" y1="${T + gh}" x2="${L + gw}" y2="${T + gh}" ${STROKE}/>`;
-  a.forEach((_, i) => (body += svgText(X(i), T + gh + 16, String(i + 1), 12)));
+  a.forEach((_, i) => (body += svgText(X(i), T + gh + 16, String(i + 1), 14)));
   body += `<polyline points="${a.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" ${STROKE}/>`;
   body += `<polyline points="${b.map((v, i) => `${X(i)},${Y(v)}`).join(' ')}" fill="none" ${STROKE} stroke-dasharray="7 5"/>`;
   a.forEach((v, i) => (body += `<circle cx="${X(i)}" cy="${Y(v)}" r="5" fill="var(--ink)"/>`));

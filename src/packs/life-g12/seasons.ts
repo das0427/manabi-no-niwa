@@ -292,18 +292,13 @@ const compareSorts = [
     boxes: ['はる', 'なつ', 'あき', 'ふゆ'],
     cards: [
       ['さくら', 0, illust('life-cherry')],
-      ['おはなみ', 0],
       ['うきわ', 1, illust('life-swimring')],
-      ['すいか', 1, illust('watermelon')],
       ['もみじ', 2, illust('life-redleaf')],
-      ['きのこ', 2, illust('life-mushroom')],
-      ['ゆきだるま', 3, illust('life-snowman')],
       ['ゆき', 3, illust('life-snowflake')],
     ],
     mis: 'season-mix',
     hints: SORT_HINTS,
-    explain:
-      'はるは さくら・おはなみ、なつは うきわ・すいか、あきは もみじ・きのこ、ふゆは ゆきだるま・ゆき。いっぱんてきな れいだよ。',
+    explain: 'はるは さくら、なつは うきわ、あきは もみじ、ふゆは ゆき。いっぱんてきな れいだよ。',
   }),
   sortItem({
     id: 'compare-alt-s2',
@@ -315,15 +310,12 @@ const compareSorts = [
     cards: [
       ['さくら', 0, illust('life-cherry')],
       ['おはなみ', 0],
-      ['たんぽぽ', 0],
-      ['ゆきだるま', 1, illust('life-snowman')],
       ['ゆき', 1, illust('life-snowflake')],
       ['こたつ', 1],
     ],
     mis: 'season-mix',
     hints: SORT_HINTS,
-    explain:
-      'さくら・おはなみ・たんぽぽ は はるの こと。ゆきだるま・ゆき・こたつ は ふゆの ことだよ。',
+    explain: 'さくら・おはなみ は はるの こと。ゆき・こたつ は ふゆの ことだよ。',
   }),
   sortItem({
     id: 'compare-alt-s3',
@@ -335,14 +327,12 @@ const compareSorts = [
     cards: [
       ['うきわ', 0, illust('life-swimring')],
       ['すいか', 0, illust('watermelon')],
-      ['プール', 0],
       ['もみじ', 1, illust('life-redleaf')],
       ['きのこ', 1, illust('life-mushroom')],
-      ['おつきみ', 1],
     ],
     mis: 'season-mix',
     hints: SORT_HINTS,
-    explain: 'うきわ・すいか・プール は なつの こと。もみじ・きのこ・おつきみ は あきの ことだよ。',
+    explain: 'うきわ・すいか は なつの こと。もみじ・きのこ は あきの ことだよ。',
   }),
 ];
 

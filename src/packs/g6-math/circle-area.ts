@@ -145,7 +145,7 @@ function numItem(
   hints: [string, string, string],
   explain: string,
   wrongs: [number | null, string][],
-  label = 'cm²',
+  unit = 'cm²',
 ): NumberItem {
   const answer = decAns(ans100, 2);
   return {
@@ -159,7 +159,7 @@ function numItem(
     explain,
     identity: `${obj}:${key}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label, answer }],
+    fields: [{ unit, answer }],
     keys: ['decimal'],
     wrongAnswers: wrongList(
       [answer],

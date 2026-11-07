@@ -178,6 +178,27 @@ describe('p5 レビュー: さんすう', () => {
     }
   });
 
+  it('10までの かず: 「まえから なんばんめ」の 選択肢は 絵だけの札（名前の行で絵が小さくならない）・解説が どうぶつの なまえを いう', () => {
+    const NAMES = ['いぬ', 'ねこ', 'うさぎ', 'くま', 'さる', 'かえる', 'きつね'];
+    const ords = itemsOf(unit('p5.math.numbers-10')).filter((it) => /^ord:\d+:\d+:/.test(it.id));
+    expect(ords.length).toBeGreaterThan(0);
+    for (const it of ords) {
+      const os = optionsOf(it);
+      for (const o of os) {
+        expect(o.label, it.id).toBeUndefined();
+        expect(o.figure?.kind, it.id).toBe('illust');
+      }
+      // 正解の絵は、主の図の まえから pos ばんめの どうぶつ（id は「ord:pos:len:どうぶつ-どうぶつ-…」）
+      const [, pos, , animals] = it.id.split(':');
+      const right = os.find((o) => o.correct)!.figure as { id: string };
+      expect(right.id, it.id).toBe(animals!.split('-')[Number(pos) - 1]);
+      expect(
+        NAMES.some((n) => it.explain.includes(n)),
+        it.id,
+      ).toBe(true);
+    }
+  });
+
   it('ながさくらべ: かぞえ わすれ（skip-unit）は すくない かず、すきまを かぞえた（gap-count）は おおい かず', () => {
     for (const it of itemsOf(unit('p5.math.measure-compare'))) {
       if (!it.id.startsWith('units:')) continue;
@@ -186,6 +207,21 @@ describe('p5 レビュー: さんすう', () => {
         if (o.misconception === 'skip-unit') expect(Number(o.label), it.id).toBeLessThan(n);
         if (o.misconception === 'gap-count') expect(Number(o.label), it.id).toBeGreaterThan(n);
       }
+    }
+  });
+
+  it('ながさくらべ: 塔（tower）の解説は つみきの数を いわない（高さを くらべる もんだい。ヒント②と おなじ「したを そろえる」）', () => {
+    const towers = itemsOf(unit('p5.math.measure-compare')).filter((it) =>
+      it.id.startsWith('tower:'),
+    );
+    expect(towers.length).toBe(3);
+    const mis = unit('p5.math.measure-compare').misconceptions;
+    for (const it of towers) {
+      expect(it.explain, it.id).not.toMatch(/[0-9０-９]|こ、|この/);
+      expect(it.explain, it.id).toContain('ひだりから');
+      // 順が はんたいの ときの説明も「たかい」から（「ながい」から は テープの問題の説明）
+      const rev = anyItem(it).reverseMisconception as string;
+      expect(mis.find((m) => m.id === rev)?.explain, it.id).toContain('「たかい」から');
     }
   });
 
@@ -371,6 +407,16 @@ describe('p5 レビュー: どうしてかな', () => {
         expect(it.engine, it.id).toBe('explain');
         expect((it as ExplainItem).reasons?.length ?? 0, it.id).toBeLessThanOrEqual(4);
       }
+    }
+  });
+  it('描く問題（draw:）の解説は かけたことを前提にしない・「この あと」の例を 1 つ言い、おうちの ひとへの おはなしで終える', () => {
+    const draws = items.filter((it) => it.id.startsWith('draw:'));
+    expect(draws.length).toBe(6);
+    for (const it of draws) {
+      expect(it.explain, it.id).not.toMatch(/かけた|かいた/);
+      expect(it.explain, it.id).toMatch(/おうちの ひとに おはなし してね。$/);
+      // 文は 2 つだけ（例の 1 文 ＋ おはなしの誘い）
+      expect(it.explain.split('。').filter(Boolean).length, it.id).toBe(2);
     }
   });
 });

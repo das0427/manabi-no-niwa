@@ -375,7 +375,7 @@ function para(level: number, rng: Rng, alt: boolean): Item {
           : explain,
       identity: `para${form ? '-out' : ''}:${key}`,
       alt: form !== 0,
-      fields: [{ label: 'cm²', answer: answers[0]! }],
+      fields: [{ unit: 'cm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [b * s, 'slant-height'],
         [intOr(S / 2), 'half-extra'],
@@ -444,7 +444,7 @@ function tri(level: number, rng: Rng, alt: boolean): Item {
           : explain,
       identity: `tri${form ? '-out' : ''}:${key}`,
       alt: form !== 0,
-      fields: [{ label: 'cm²', answer: answers[0]! }],
+      fields: [{ unit: 'cm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [b * h, 'no-half'],
         [intOr((b * s) / 2), 'slant-height'],
@@ -504,7 +504,7 @@ function trap(level: number, rng: Rng, alt: boolean): Item {
       explain,
       identity: `trap${form ? '-word' : ''}:${key}`,
       alt: form !== 0,
-      fields: [{ label: 'cm²', answer: answers[0]! }],
+      fields: [{ unit: 'cm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [(a + b) * h, 'no-half'],
         [intOr((b * h) / 2), 'trap-one-base'],
@@ -563,7 +563,7 @@ function rhombus(level: number, rng: Rng, alt: boolean): Item {
       explain,
       identity: `rhombus${form ? '-word' : ''}:${key}`,
       alt: form !== 0,
-      fields: [{ label: 'cm²', answer: answers[0]! }],
+      fields: [{ unit: 'cm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [d1 * d2, 'no-half'],
         [d1 + d2, 'add-sides'],
@@ -614,7 +614,7 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
           : `${eq}なので、□ ＝ ${S} ÷ ${known} ＝ ${ans}。${un}は ${ans}cmです。`,
       identity: `inverse${alt ? '-alt' : ''}:${key}`,
       alt,
-      fields: [alt ? { answer: answers[0]! } : { label: 'cm', answer: answers[0]! }],
+      fields: [alt ? { answer: answers[0]! } : { unit: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [
           shape === 'tri' ? intOr(S / known) : intOr(S / known / 2),

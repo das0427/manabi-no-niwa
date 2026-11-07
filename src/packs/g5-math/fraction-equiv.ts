@@ -106,7 +106,7 @@ function equal(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `上の 1目もりに 下の 目もりが ${m}こ 入るので、${a} × ${m} ＝ ${A}こ分。${F(a, b)} ＝ ${F(A, B)}です。`,
       identity: `equal-tape:${a}/${b}:${B}`,
       alt: true,
-      fields: [{ label: 'こ分', answer: answers[0]! }],
+      fields: [{ unit: 'こ分', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [a + (B - b), 'add-instead'],
         [a, 'one-side'],

@@ -59,10 +59,10 @@ interface Data {
 }
 
 /** 割合の 並び（step の倍数・ちがう値・大きい順・合計 100）。must の値を 必ず ふくむ */
-function makeData(rng: Rng, step: number, must: number[] = []): Data {
+function makeData(rng: Rng, step: number, must: number[] = [], maxN = 5): Data {
   const theme = pick(rng, THEMES);
   for (;;) {
-    const n = rng.int(Math.max(3, must.length + 1), Math.min(5, theme.items.length));
+    const n = rng.int(Math.max(3, must.length + 1), Math.min(maxN, theme.items.length));
     const vals = [...must];
     while (vals.length < n - 1) vals.push(rng.int(1, 40 / step) * step);
     const last = 100 - vals.reduce((s, v) => s + v, 0);
@@ -70,10 +70,20 @@ function makeData(rng: Rng, step: number, must: number[] = []): Data {
     vals.push(last);
     if (new Set(vals).size !== vals.length) continue;
     vals.sort((a, b) => b - a);
+    // となりあう 2 つの 合計が 14% 未満だと、円・帯の 部分の 番号（①②…）が かさなる
+    if (vals.some((v, i) => i > 0 && v + vals[i - 1]! < 14)) continue;
     const labels = rng.sample(theme.items, n);
     return { theme, labels, values: vals };
   }
 }
+
+/**
+ * 横長の 表の おおよその 幅（u）: 見出しの 全角の 字数 × 2.4 ＋ 列の 余白 2.8 × 列の 数 ＋ 左の 見出し「割合（%）」と「合計」。
+ * 数字の 欄は 見出しより せまい。キーの 左の 段（約 60u）に、字を 少し 縮めて（最小 2.1u）入る 64u まで。
+ */
+const tableWidthU = (labels: string[]) =>
+  22.4 + 2.4 * labels.reduce((n, l) => n + [...l].length, 0) + 2.8 * labels.length;
+const TABLE_MAX_U = 64;
 
 const keyOf = (d: Data) => `${d.theme.id}:${d.labels.join('-')}:${d.values.join('-')}`;
 
@@ -109,7 +119,7 @@ function readItem(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, kind),
     task: {
       kind: 'number',
-      fields: [{ label: '%', answer: { kind: 'int', value: v } }],
+      fields: [{ unit: '%', answer: { kind: 'int', value: v } }],
       wrongAnswers: wrongList(
         [{ kind: 'int', value: v }],
         [
@@ -146,7 +156,7 @@ function timesItem(level: number, rng: Rng, alt: boolean): GraphItem {
     data: graphData(d, kind),
     task: {
       kind: 'number',
-      fields: [{ label: '倍', answer: { kind: 'int', value: k } }],
+      fields: [{ unit: '倍', answer: { kind: 'int', value: k } }],
       wrongAnswers: wrongList(
         [{ kind: 'int', value: k }],
         [
@@ -193,7 +203,7 @@ function amountItem(level: number, rng: Rng, alt: boolean): GraphItem {
       data: graphData(d, kind),
       task: {
         kind: 'number',
-        fields: [{ label: u, answer: { kind: 'int', value: ans } }],
+        fields: [{ unit: u, answer: { kind: 'int', value: ans } }],
         keys: ['decimal'],
         wrongAnswers: wrongList(
           [{ kind: 'int', value: ans }],
@@ -213,7 +223,10 @@ function amountItem(level: number, rng: Rng, alt: boolean): GraphItem {
 
 /** 合計 100% から のこりを 求める（表。alt: 文で） */
 function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
-  const d = makeData(rng, level === 0 ? 5 : 1);
+  let d: Data;
+  // 表（横長）は 種類を 4 つまでにし、見出しの 字数の 合計が 幅に 入る 組だけ 使う（5 つ・長い 名前の 組は キーの 下に はみ出す）
+  do d = makeData(rng, level === 0 ? 5 : 1, [], alt ? 5 : 4);
+  while (!alt && tableWidthU(d.labels) > TABLE_MAX_U);
   const i = rng.int(0, d.values.length - 1);
   const v = d.values[i]!;
   const others = d.values.filter((_, j) => j !== i);
@@ -225,7 +238,9 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
         // 横長の表（種類を横に並べる）。たてに 並べると 7 行になり、図の段（約 14u）に入らない
         kind: 'table',
         header: ['', ...d.labels, '合計'],
-        rows: [['割合（%）', ...d.labels.map((_, j) => (j === i ? '？' : String(d.values[j]))), '100']],
+        rows: [
+          ['割合（%）', ...d.labels.map((_, j) => (j === i ? '？' : String(d.values[j]))), '100'],
+        ],
       };
   const listText = d.labels
     .map((l, j) => (j === i ? null : `${l} ${d.values[j]}%`))
@@ -248,7 +263,7 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `全体は 100%なので、100 − ${sum} ＝ ${v}。「${d.labels[i]}」は ${v}%です。`,
     identity: `missing:${keyOf(d)}:${i}${alt ? ':text' : ''}`,
     alt,
-    fields: [{ label: '%', answer: answers[0]! }],
+    fields: [{ unit: '%', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [sum, 'ignore-total'],
       [100 + sum, 'ignore-total'],
@@ -256,27 +271,31 @@ function missingItem(level: number, rng: Rng, alt: boolean): NumberItem {
   };
 }
 
-/** 帯グラフ（1〜2本。tag は 左に 書く 年など）の 図 */
+/**
+ * 帯グラフ（1〜2本。tag は 左に 書く 年など）の 図。
+ * 字は 14 にそろえる: 図の幅は「いちばん 小さい 字が 最小（--text-min）になる 幅」で決まるので、字が 小さいと 図が 広く（高く）なり、
+ * 2本の 帯と 注の 文が 選択肢の 札に かさなった（高さも 2本で 92 に 詰めた）。
+ */
 function bands(rows: { vals: number[]; tag: string }[], letters: string[], label: string): Figure {
   const X = (p: number) => 70 + p * 3;
   let body = '';
   rows.forEach(({ vals, tag }, r) => {
-    const y = 10 + r * 60;
+    const y = 6 + r * 32;
     let acc = 0;
-    if (tag) body += svgText(34, y + 20, tag, 14);
+    if (tag) body += svgText(34, y + 13, tag, 14);
     vals.forEach((v, i) => {
       const fill = i % 2 === 0 ? 'var(--sky)' : 'var(--white)';
-      body += `<rect x="${X(acc)}" y="${y}" width="${v * 3}" height="40" fill="${fill}" ${STROKE}/>`;
-      if (v >= 8) body += svgText(X(acc + v / 2), y + 20, `${letters[i]}${v}`, 13);
+      body += `<rect x="${X(acc)}" y="${y}" width="${v * 3}" height="26" fill="${fill}" ${STROKE}/>`;
+      if (v >= 8) body += svgText(X(acc + v / 2), y + 13, `${letters[i]}${v}`, 14);
       acc += v;
     });
   });
-  const ty = 10 + rows.length * 60 - 2;
+  const ty = 6 + rows.length * 32 - 2;
   for (let p = 0; p <= 100; p += 10) {
-    body += `<line x1="${X(p)}" y1="${ty}" x2="${X(p)}" y2="${ty + 8}" ${STROKE}/>`;
-    body += svgText(X(p), ty + 20, String(p), 11);
+    body += `<line x1="${X(p)}" y1="${ty}" x2="${X(p)}" y2="${ty + 6}" ${STROKE}/>`;
+    body += svgText(X(p), ty + 16, String(p), 14);
   }
-  return svg(400, ty + 30, body, label);
+  return svg(400, ty + 24, body, label);
 }
 
 /** 割合と 量: 全体が ちがう 2つの 帯グラフ（alt: 表で） */

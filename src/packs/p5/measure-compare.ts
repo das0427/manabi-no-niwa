@@ -113,12 +113,15 @@ function towerItem(set: [number, number, number]): OrderItem {
     prompt: 'つみきを たかい じゅんに ならべよう。',
     cards: set.map((n) => ({ figure: tower(n), name: `つみき ${n}こ` })),
     ends: ['たかい', 'ひくい'],
-    reverseMisconception: 'order-reverse',
+    // 「ながい」から ならべる（order-reverse）の説明は、たかさの問題と食い違う
+    reverseMisconception: 'tower-reverse',
     hints: [
       'いちばん たかい ものから さがそう。',
       'したは そろって いるよ。うえの はしを くらべよう。',
     ],
-    explain: `つみき ${set.join('こ、')}この じゅんに たかいね。`,
+    // つみきの数は言わない（高さを比べる問題。数えると高さを見ずに答えられる）。ヒント②「したは そろって いるよ」に対応し、
+    // 解説では札が正しい順（たかい → ひくい）に左から並ぶ
+    explain: 'したを そろえて くらべると、ひだりから たかい じゅんだね。',
     identity: `tower:${set.join('-')}`,
   };
 }
@@ -268,6 +271,7 @@ export const measureCompare: UnitSpec = {
   ],
   misconceptions: [
     { id: 'order-reverse', explain: 'じゅんばんが はんたいかな。「ながい」から ならべよう。' },
+    { id: 'tower-reverse', explain: 'じゅんばんが はんたいかな。「たかい」から ならべよう。' },
     {
       id: 'close-lengths',
       explain: 'ちかい ながさを とりちがえたかな。みぎの はしを よく くらべよう。',

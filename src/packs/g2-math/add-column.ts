@@ -250,7 +250,7 @@ function wordItem(level: number, a: number, b: number, alt: boolean, rng: Rng): 
     explain: `しきは ${a} ＋ ${b} ＝ ${s}。こたえは ${s}${sc.unit} です。`,
     identity: `${sc.id}:${key(a, b)}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: s } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: s } }],
     wrongAnswers: wrongs(a, b, 1),
   };
 }

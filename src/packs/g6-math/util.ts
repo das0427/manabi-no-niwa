@@ -186,6 +186,12 @@ export function opts(
 // ---- 図 ----
 /** 大きな式（{{}} が答えの欄の位置） */
 export const expr = (text: string): Figure => ({ kind: 'text', text, size: 'xl' });
+/**
+ * 欄を 2 つ並べる式（「a : b ＝ □ : □」）。小数・分数の比は xl（7u）だと 1280×620・1280×720 の解説で、
+ * 2 つめの欄が次の行に落ちる（検査の orphan）ので、1 段小さい l（5.2u）にする。
+ * 同じ到達項目（simplify）の中で式の大きさが変わらないよう、整数の比も これを使う
+ */
+export const exprPair = (text: string): Figure => ({ kind: 'text', text, size: 'l' });
 
 /** SVG の線の共通の属性 */
 export const STROKE =

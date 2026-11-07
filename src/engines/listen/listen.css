@@ -5,6 +5,10 @@
   justify-content: center;
   gap: calc(var(--u) * 4);
   width: 100%;
+  /* 「きく」の札を上の段に置くと、選択肢の列より上に積まれる高さ（上の余白 1.9u ＋ 札 5.5u ＋ 段のすき間 1.6u）。
+     絵の札の並べ方を選ぶとき、札が上のとき・左のときの空きを比べるのに使う（choice.tsx の usePicsGeometry。第7回 X2）。
+     下の .eng-listen--pics の寸法を変えたらここも合わせる */
+  --ear-top-h: calc(var(--u) * 9);
 }
 .eng-listen__ear {
   flex: none;

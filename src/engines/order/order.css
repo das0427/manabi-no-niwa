@@ -68,3 +68,8 @@
 .eng-order__main--column .tk-card {
   align-items: stretch;
 }
+/* 解説（order.tsx の solo）: おくもの の列は空の枠だけなので出さない。縦並びは、並べた所の 1 列が作業領域の幅いっぱい
+   （2 列の格子の半分に折れた札の 4 枚目が切れた: g4.ja.read-summary/41）。詳しさで上の --column・--two に勝つ */
+.eng-order__main--column.eng-order__main--solo {
+  grid-template-columns: minmax(0, 1fr);
+}

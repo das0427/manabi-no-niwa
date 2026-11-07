@@ -2403,3 +2403,110 @@ systemic のファイル（エンジン・`src/units`・`src/ui`・`src/text`）
 - systemic・検査・content のあとで、`MNW_FRESH=1 npm run check:text-layout` を全単元で流す（`MNW_WORKERS` は 2〜4。第6回のあとは 4 で 1.6 時間・失敗 0）。失敗した単元 0・errors 0 を確かめてから件数を見る。
 - 新しい種類（figure-outside-box・small-figure・label-gap）は、この回で初めて全単元を見るので、上の点検の単元のほかにも出てよい。出たものは次の回で同じように原因を分ける。
 - `npm run check:app-layout` も流し、単元の題（5.）と Rt（X7）の違反が 0、新しい種類で増えたものが無いことを確かめる。
+
+### 8. 第7回の共通の直しの実施とレビュー（2026-11-07）
+
+X1〜X7・C27〜C31 を、担当ごとにファイルを分けて実装した。レビューでは、git の差分と追加したファイルを全部読んだ。自分の開発サーバー（127.0.0.1:4787。`node_modules/.vite` の最適化が止まったので、cacheDir を分けた一時の設定で起動した。4299 は使っていない。終わってから止めた）で代表の画面を Playwright で撮って目で見て、DOM の寸法を測り、検査を単元に絞って流した（下の「確かめたこと」）。
+
+担当の判断で設計から変えたところ:
+
+- X1: listen の絵の段の輪は、左右を段より 0.8u まで広げてよい（細長い絵でも輪が絵を囲む。横長の段では段の中央のまま）。DESINGN.md 17 章に「第7回の規約」の節を作り、X2〜X7 の規約をまとめた。
+- X2:
+  - 寸法を測って決めるのは、選択肢が全部「絵だけの図」の列（`data-fit`）だけ。時計・パックの SVG が混じる列は CSS の式のまま。
+  - 11 こ以上は 5・5・1 の行。絵が 2 種類の札（りんご 3 こ＋バナナ 6 こ）は、種類ごとのまとまりを縦に積む（まとまりの間は 1.2u）。
+  - 寸法は `--fit` を 1 に戻した単位で決める（縮んだ値では、画面サイズを往復したときに作業領域がスクロールの枠のまま戻らなかった）。
+  - 並べ方を替えるのは、`s` が 1.1 倍以上になるときだけ（行き来しない）。`--pic-floor` は JS が 0 にする。
+  - listen の「きく」の札の場所は、測った結果で選ぶ（解説では替えない）。
+  - 解説で札を左に置くときの右の列の幅の見積り（`sideWidth`）を、絵の札と is-caption の字に合わせた（右の選択肢が作業領域から 1.15u 出ていた）。
+  - 安全網はパックの SVG（`.fig-svg`）にも当てた（p4.ja.word-play の点の図で figure-outside-box が 936 件）。
+- X3:
+  - 札の図の枠は height が auto なので、設計の `max-height: 100%` が効かない。枠の寸法を変数（`--tk-fig-w`・`--tk-fig-h`）で子に渡した。
+  - 枠に縮めると、match の数える札（p5.math.numbers-10/3 の ひよこ 6〜7 こ）が 1.8〜2.2u になった。そこで「絵 4.1u・5 こずつの行・枠の幅 23u まで」を足した。
+  - 空の札置き場を出さなくなると、sort の解説の `--fit` が 1 に戻った。すると箱が 34u 止まりになり、20 字前後の札が語の途中で折れた（g4.ja.plain-polite-style/13・g5.ja.figurative/13）。解説の箱を 44u まで広げた。
+- X4:
+  - すき間（字の 0.4 倍）から、枠のあるボタンの枠線・余白と札の列のすき間を引く（引かないと g2.math.tables-graphs/1 が不要に 2 段になり、スクロールした）。
+  - 札の列は正方形に限らず、同じ大きさ・辺の比 1:2 以内の rect とした（手順の札は角丸の 24×28）。
+  - 1 列の選択肢の余白は 0.2u、すき間は 0.4u（余白 0.8u では `--fit` が 0.83 まで縮み、札 1 枚が 2.2u になった）。
+- X5: p5.math.numbers-10/4・5 の動物の列には「まえ」の `.fig-text` があり、1 回目の判定（文字の図は縮めない）に当たっていた。2 回目の縮めの対象は「表が無く、絵がある図」にした。
+- X6:
+  - 判定と見本の探索が同じ基準を使うよう、`shapes.ts` に `matchShape` を足した。
+  - 正しく描けていれば、見本を出さない（以前は exact・reflect・rotate180 の点線を、正しく描けていても出していた）。
+- X7: 分数の直前の括弧を包みに入れると、「□／・□」の kinsoku-start が新しく出た。そこで、分数の後ろの終わり括弧・句読点・「・」も包みに付けた。
+- C29 (b): 正方形のほか、角丸（rx > 0）で縦横比 1.5 倍以内の札も数える。角のない長方形の分割と、縦横比 1.5 倍を超えるものは除く（docs/test-plan.md 3.2）。
+
+レビューで直したもの:
+
+1. **札の列（手順の札）が、絵の札の大きさ `--pic-max` の幅に縮んでいた**（X2 の安全網と X4 の札の列の組み合わせ）:
+   - X2 は、絵の札の列（`.is-pics`）の中のパックの SVG に `max-width: min(100%, --pic-max)` を足した。`--pic-max` は 1 段に並べる絵の大きさ（高さの予算）の式で、横長の札の列にも幅の上限として当たっていた。
+   - 1 列（`fig-svg--wide`）の列: svg の箱が 11.2u×4.6u に止まり、縦横比 5.8 の図が meet で縮んで、札 1 枚が約 1.1u（g6.prog.efficient/11 の問題と解説・g5.prog.debug-plan/8）。
+   - 1 段の列: svg が 6.2u 幅になり、札 1 枚が 1.5u・番号の字が 0.76u（g2.prog.repeat/2・/4 の解説。small-text 16・small-figure 20）。
+   - X4 が測ったのは、X2 の安全網が入る前だった。
+   - パックの SVG の幅の上限は札の中（100%）にし、`--pic-max` は高さの上限にした。正方形に近い図（p4.ja.word-play の点の図）は、幅も高さも今までどおり min(札の中, `--pic-max`) に収まる。1 列の列は `--pic-max` で止めない（高さは figure.css の 4.6u）。
+   - 直したあとの svg は、efficient/11 で 26.7u×4.6u、debug-plan/8 で 13.7u×4.6u、repeat/2 の解説で 10.5〜11.0u 幅（札 1 枚 約 2.6u）。
+2. **数える札の正解の大きな輪が、数える絵を横切っていた**（X2 の残し事項。X1 の範囲で扱われていなかった）:
+   - g3.en.numbers-colors/26 の いちご、p5.en.phrases/92 の くるま（解説）。輪は札の短い辺で決まる真円なので、横長の札の真ん中で絵を 3 つ横切る。
+   - 絵が 2 つ以上並ぶ札（`.fig-illust__group` の絵が 2 つ以上か、絵の図が 2 つ以上）は、絵だけの札でも listen の絵と語の札でも、輪郭＋右下の ○ にした（ui.css）。
+   - はじめは border を 0.6u に太くした。すると札の中が 0.5u 狭くなり、解説の数える絵が 4u を割った（g4.en.want/37 で 3.9u。g3.en.numbers-colors/25・27〜29 で 3.9u）。輪郭の足し分 0.25u は、内側の影で描くことにした（直したあとの g4.en.want/37 は 4 サイズで 4.01〜4.08u）。DESINGN.md 17 章に書いた。
+3. **DESINGN.md の「第7回の規約」を実装に合わせて書き直した**:
+   - X1 は、設計書の文から書いていた。そのため、次のものが抜けていたり、実装と違っていたりした。
+     - X3 の変数・数える札・44u
+     - X4 の札の列の判定・すき間の引き方・viewBox
+     - X5 の 2 回目の縮めの対象
+     - X6 の「正しく描けていれば出さない」と置き方
+     - X7 の分数の後ろ
+     - X2 の data-fit の対象・縦積み・1.1 倍・`--pic-floor` の 0
+   - V2 の項には、data-fit の列では `--pic-floor` を当てないことを足した。正解の印の listen の輪には、絵の後ろなので段いっぱいの絵では一部が隠れることを足した。
+4. **コメント・テスト名の誤り**:
+   - choice.tsx の「下限は並べ方の選び方で見ている」は誤り（見ていない）。
+   - pics.ts の `COUNT_FLOOR_U` は計算では使わない（検査の下限）。
+   - rt-wrap.test.ts のテスト名「分数と離す」は「離さない」の誤り。
+
+確かめたこと:
+
+- 静的な検査:
+  - `npx tsc -b`・`npx eslint .`・`npx prettier --check`（変えたファイル）: 通った。
+  - `npx vitest run`: 180 ファイル 4,011 件が通った。
+  - `npm run check:design`: OK。
+  - `npm run check:text-layout:probe` 相当（ポートだけ変えた一時の設定）: 34 本が通った。
+  - `npm run check:app-layout:probe`: 13 本が通った。
+- 検査（`MNW_FRESH=1`・`MNW_WORKERS=3〜4`、ポートを 4787 にした一時の設定。終わってから消した）:
+  - 直したところと設計の確かめ方に当たる単元、選択肢にパックの SVG がある単元（31 単元）、prog の全単元を、4 回に分けて流した（のべ 64 単元、重ならない 52 単元・32,736 画面）。どの回も、失敗した単元 0・errors 0。
+  - 最後の結果で違反が 0 だった単元（49）:
+    - prog: g1.prog.sequence・g1.prog.condition・g2.prog.debug・g3.prog.condition-combo・g3.prog.decompose・g4.prog.draw-shapes・g4.prog.prefecture-finder・g5.prog.debug-plan・g5.prog.polygon・g6.prog.efficient・g6.prog.sensor
+    - 英語: g4.en.directions・g4.en.want・g5.en.letters-write・g6.en.future・p4.en.colors-numbers・p4.en.hello・p4.en.move・p4.en.picture-book・p4.en.where・p4.en.words（2,352 画面）・p5.en.phrases（2,592 画面）・p5.en.picture-book
+    - 算数: g1.math.numbers-10・g1.math.position・g1.math.shapes・g2.math.box・g2.math.fraction-simple・g3.math.abacus・g3.math.circle-sphere・g4.math.abacus・g4.math.cuboid・g5.math.polygon-circle・p23.math.compare・p23.math.shop・p4.math.count-pictures・p5.math.compose・p5.math.numbers-10・p5.math.shapes
+    - ほか: p23.think.road・p4.think.pattern・p4.ja.word-play（X2 の安全網の単元。figure-outside-box も 0）・p5.ja.story-listen・g4.sci.current・g5.sci.birth・g5.sci.weather-change・g6.sci.moon-sun・g6.sci.plant-water・g6.sci.strata
+  - 違反が残った単元: g3.en.numbers-colors/26 の解説（small-figure 12。2.6u。X2 の残し事項）、g2.prog.repeat（small-figure 46。X4 の残し事項と同じ数）、p5.think.pattern/2・3 の解説（scroll-hidden 2。パックの担当）。
+- アプリの画面（`check:app-layout`。同じサーバー・全 13 プロフィール・422 画面・2,064 回）: 違反の 43 件は、レビューの前の結果（X7 のあと。2026-11-06T22:22Z）と同じ。新しい種類・増えたもの・開けない画面は無い。幼児ホーム・ほかの がくねん・おえかき は画面でも見た。
+- 開発用の画面で目で確かめたもの:
+  - X1: g1.math.shapes/1 の解説（1280×720。geometry の札が輪郭＋右下の ○）、g6.en.future/7、p4.en.words/89・p5.en.phrases/29（1280×620）、p4.en.where/0・p4.en.hello/0・p5.en.picture-book/0・g6.en.places/14 の解説。輪は ふりがなにかからない。
+  - X2: p5.en.picture-book/42（1280×620・1920×1080 の解説）・/50、g3.en.numbers-colors/26、p5.en.phrases/92、p23.math.shop/12、g4.en.time-days/14、g4.en.want/37。どれも、絵は札の外に出ない。
+  - X3: p5.math.measure-compare/8（塔 3 本が上から下まで見える）、p5.math.numbers-10/2・/3、g4.ja.read-summary/41・g6.sci.strata/17・p4.env.seasons/22 の解説。
+  - X4: g4.sci.weather/9（単位が図の左上・札は 1 つおきの段）、g5.ja.text-figure/17、g4.math.fraction-kinds/4 の解説（印のラベルが ▼ の真上）、g6.prog.efficient/11・g5.prog.debug-plan/8。
+  - X5: p5.math.numbers-10/4（1280×620）・/5（1280×720 のヒント②）。動物の列と選択肢の名前が見える。
+  - X6: p5.math.shapes/8 の解説（何も描かずに つぎへ。2×2 のましかくの点線）。
+
+残したもの:
+
+- 絵が 1 つの札の下限（`--pic-floor`。幼児 10u・ほかの段階 6u）:
+  - 絵だけの札の列では、JS が `--pic-floor` を 0 にする。検査（small-figure）も、数える札と手順の札しか見ない。
+  - p5.math.numbers-10/4 の問題（1280×620）では、選択肢の札の絵が約 3u になる。札は動物の名前の札で、主の図は上の動物の列。
+  - 下限に合わせて大きくすると、作業領域がスクロールの枠に戻って札が隠れる。そのため今回は受け入れた。次の回で、C29 に絵が 1 つの札の下限を足すか決める。
+- listen の絵の段の輪は絵の後ろにあるので、段いっぱいに描かれた絵では一部が隠れる:
+  - 輪の形は分かる（ぞう・ねこ・さる・おひさま）。
+  - 緑の絵（p5.en.picture-book/42 の かえる）では、緑の輪が見えにくい。
+- g3.en.numbers-colors/26 の解説の数える絵（2.6u。X2 の残し事項 1）:
+  - 書き起こしの段と「きく」の札が上に積まれ、11 この札が 3 行になる。
+  - 直すには、書き起こしの段の幅か、解説の板の高さを見直す必要がある（設計の判断）。
+- X4 の残し事項:
+  - g2.prog.repeat の盤（n=28・30 の 4×4 は数の入力で `--fit` が 0.8）と、n=3 の解説の札（2.2u）。
+  - 数直線で jump と印のラベルを同時に使うと、ラベルが弧に近い（今のパックにこの組み合わせは無い）。
+- X6: `geometryAnswerText` の similar・congruent は、given の座標を返すまま（画面には出ない）。
+- X1: Choice の札のラベルの class の足し忘れを止める静的なテストは無い（DESINGN.md 17 章に運用を書いた）。
+- p23.math.shop/12: 札の中の絵の高さが札ごとに違うので、中央にそろえたラベルの高さがそろわない（違反ではない）。
+- パックの担当（5. の content）:
+  - g1.math.shapes の すいか・p5.math.shapes の解説の文（「ましかくが かけたね。」）
+  - p4.env.seasons/22 の札 8 枚・g4.math.fraction-kinds/4 の数直線 2 本と小数の目もり
+  - g6.math.proportion/2・g5.ja.sentence-relations/37〜39・g6.sci.solutions/22・g6.sci.strata/17 の札
+  - p5.think.pattern の解説
+- 全単元の検査は流していない（統括が `MNW_FRESH=1` で流す）。新しい種類（figure-outside-box・small-figure・label-gap）は、全単元で初めて数える。絞った実行で、`.cache/text-layout/units/` と報告書は一部の単元だけが新しい。

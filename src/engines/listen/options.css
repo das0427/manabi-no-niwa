@@ -86,8 +86,9 @@
   font-size: max(calc(var(--u) * 2.8), var(--text-min, 0px));
   z-index: 4;
 }
-/* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語） */
-.eng-listen .eng-opts__opt .fig-row svg {
+/* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語）。
+   絵だけの図（data-fit）は、絵の大きさを JS が測って決める（choice.css の第7回 X2）ので、この固定の大きさは当てない */
+.eng-listen .eng-opts__list:not([data-fit]) .eng-opts__opt .fig-row svg {
   width: calc(var(--u) * 6) !important;
   height: calc(var(--u) * 6) !important;
 }
@@ -111,7 +112,8 @@
   min-width: 0;
 }
 /* 絵・時計の選択肢は幅を min(既定, (作業領域の幅 − 札の幅 --pics-side − 間隔) ÷ 数) に縮める（札が上の段なら --pics-side は 0。
-   上の段に置くのは eng-listen--pics。choice.tsx の earOnTop）。g4.en.time-days/14 */
+   上の段に置くのは eng-listen--pics。choice.tsx の earOnTop）。g4.en.time-days/14。
+   絵だけの図（data-fit）の列は、この式は測る前の初めの値だけ（JS が --pic-max を決める。choice.css の第7回 X2） */
 .eng-listen .eng-opts__list.is-pics {
   /* 高さの上限（--fit で縮む u）: 作業領域（27u）から 札の段（7.1u）・選択肢の余白と文字（約 7.5u）を引いた分に近い */
   --pic-w: min(
@@ -147,9 +149,10 @@
   --w-font: max(calc(var(--u) * 2.6), var(--text-min, 0px));
 }
 
-/* 語のラベルの札は、絵の札の縮み（is-pics の min-width: 0）より札の幅を優先する（V2 1）。幅は choice.css の --word-min-w */
+/* 語のラベルの札は、絵の札の縮み（is-pics の min-width: 0）より札の幅を優先する（V2 1）。幅は choice.css の --word-min-w と、
+   絵のある札の --card-w（絵の数から JS が決める。第7回 X2） */
 .eng-listen .eng-opts__list .eng-opts__opt.has-word {
-  min-width: var(--word-min-w);
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
   max-width: 100%;
 }
 .eng-listen .eng-opts__list--grid .eng-opts__opt.has-word,
@@ -161,4 +164,14 @@
    列は親の幅いっぱいにする（横に並ぶ「きく」の札の隣では残りの幅を取る。choice.css の語のラベル） */
 .eng-opts:has(.eng-opts__list.is-caption, .eng-opts__list[data-row4]) {
   flex: 1 1 0;
+}
+
+/* 絵の札の列の幅（第7回 X2）: 札を並べられる幅は 88u（choice の 90u より狭い。左の「きく」の札の幅は JS が引く）。
+   2×2（data-arr）は、「きく」の札の隣の残りの幅を取る（2 列のグリッドと同じ） */
+.eng-opts__list.is-pics {
+  --pics-col-w: calc(var(--u0, var(--u)) * 88);
+}
+.eng-opts:has(.eng-opts__list[data-arr='grid']) {
+  flex: 1 1 0;
+  min-width: 0;
 }

@@ -209,11 +209,14 @@ function OrderView({
     item.cards.filter((c) => c.label !== undefined && plainText(c.label).length > 8).length >= 4;
   const ends = (pos: number) =>
     item.ends ? (pos === 0 ? item.ends[0] : pos === k - 1 ? item.ends[1] : null) : null;
+  // 解説では、並べた所に全部の札が入り、おくもの の列は空の枠（ghost）だけになる。空の枠の列は出さず、
+  // 並べた所を作業領域の幅いっぱいにする（縦並びの 2 列の格子で札が半分の幅に折れ、4 枚目が切れた: g4.ja.read-summary/41）
+  const solo = revealed && pool.every((c) => shown.includes(c));
 
   return (
     <div className={['tk-frame', 'tk-frame--band', 'eng-order', auto ? 'tk--big' : ''].join(' ')}>
       <div
-        className={`tk-frame__main eng-order__main eng-order__main--${column ? 'column' : 'row'}${twoCols ? ' eng-order__main--two' : ''}`}
+        className={`tk-frame__main eng-order__main eng-order__main--${column ? 'column' : 'row'}${twoCols ? ' eng-order__main--two' : ''}${solo ? ' eng-order__main--solo' : ''}`}
       >
         <ol className="eng-order__track" aria-label="ならべる ところ">
           {shown.map((c, pos) => (
@@ -239,22 +242,24 @@ function OrderView({
             </li>
           ))}
         </ol>
-        <div className="eng-order__pool" role="group" aria-label="おく もの">
-          {pool.map((c) =>
-            shown.includes(c) ? (
-              <span key={c} className="tk-slot eng-order__ghost" aria-hidden />
-            ) : (
-              <TapCard
-                key={c}
-                card={item.cards[c]!}
-                ctx={ctx}
-                disabled={locked || complete}
-                onPress={() => place(c)}
-                testId={`card-${c}`}
-              />
-            ),
-          )}
-        </div>
+        {solo ? null : (
+          <div className="eng-order__pool" role="group" aria-label="おく もの">
+            {pool.map((c) =>
+              shown.includes(c) ? (
+                <span key={c} className="tk-slot eng-order__ghost" aria-hidden />
+              ) : (
+                <TapCard
+                  key={c}
+                  card={item.cards[c]!}
+                  ctx={ctx}
+                  disabled={locked || complete}
+                  onPress={() => place(c)}
+                  testId={`card-${c}`}
+                />
+              ),
+            )}
+          </div>
+        )}
       </div>
       {!auto && !revealed ? (
         <CheckButton disabled={disabled || !complete} onPress={() => submit(slots as number[])} />

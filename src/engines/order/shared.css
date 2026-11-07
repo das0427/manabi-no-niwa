@@ -50,12 +50,41 @@
   line-height: 1.25;
 }
 .tk-card__fig {
+  /* 札の図の枠（16u×9u）。枠の中の図はこの寸法に縮めて入れる（切らない）。
+     高さは枠の height が auto なので `max-height: 100%` が効かない（% は none になる）。
+     枠と同じ長さを変数で子に渡す（sort の箱の名前の図などは変数を上書きする） */
+  --tk-fig-w: calc(var(--u) * 16);
+  --tk-fig-h: calc(var(--u) * 9);
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: calc(var(--u) * 16);
-  max-height: calc(var(--u) * 9);
+  max-width: var(--tk-fig-w);
+  max-height: var(--tk-fig-h);
   overflow: hidden;
+}
+/* 枠の中の svg・img は枠に収まるまで縮める。縦横比は preserveAspectRatio（既定 meet）で保つので、
+   縦長の図（塔 viewBox 40×170）は高さ 9u で描かれ、Blocks のようにインラインで height を書く図（12.4u）も枠の高さで止まる
+   （図の枠で上下が切れ、1 枚が空の札に見えた: p5.math.measure-compare/8〜10・p5.math.numbers-10/2・3） */
+.tk-card__fig svg,
+.tk-card__fig img {
+  max-width: min(100%, var(--tk-fig-w));
+  max-height: var(--tk-fig-h);
+}
+/* 数える札（絵が count 個。Figure の .fig-illust__group）: 枠に縮めると 6 こで 2.2u・7 こで 1.8u になった（p5.math.numbers-10/3）。
+   絵は 4.1u（数える絵の下限 4u。text-layout C29）の正方形、5 こずつの行に折る（6〜10 こは 5＋残りの 2 行 = 8.8u で、枠の高さ 9u に入る）。
+   枠の幅は 5 こぶん（4.1u × 5 ＋ すき間 0.6u × 4 = 22.9u）まで広げる。絵のインラインの width・height（8u・12u）は max-* で抑える */
+.tk-card__fig:has(.fig-illust__group) {
+  --tk-fig-w: calc(var(--u) * 23);
+}
+.tk-card__fig .fig-illust__group {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(var(--u) * 22.9);
+}
+.tk-card__fig .fig-illust__group svg {
+  flex: 0 0 auto;
+  max-width: calc(var(--u) * 4.1);
+  max-height: calc(var(--u) * 4.1);
 }
 .tk-card__illust {
   width: calc(var(--u) * 5.6);

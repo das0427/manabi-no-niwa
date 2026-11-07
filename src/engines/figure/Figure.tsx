@@ -274,6 +274,10 @@ function Tape({ fig, ctx }: { fig: Extract<FigureData, { kind: 'tape' }>; ctx: C
   );
 }
 
+/** 数直線の viewBox の縦の範囲（上: ▼ とジャンプの弧の少し上、下: 目もりの数の下） */
+const NL_TOP = 10;
+const NL_BOTTOM = 120;
+
 function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline' }>; ctx: Ctx }) {
   const W = 1000;
   const pad = 40;
@@ -307,11 +311,26 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
       </g>,
     );
   }
+  const markLabels = (fig.marks ?? []).some((m) => m.label) ? (
+    // 印（▼）のラベルは ▼ の真上（svg の上）。以前は svg の下の余白のさらに下で、線から約 8u 離れた（第7回 X4）
+    <div className="fig-nl__labels">
+      {(fig.marks ?? []).map((mk, i) =>
+        mk.label ? (
+          <span key={i} style={{ left: `${(X(mk.at) / W) * 100}%` }}>
+            <Rt text={mk.label} ctx={ctx} />
+          </span>
+        ) : null,
+      )}
+    </div>
+  ) : null;
   return (
     <div className="fig-nl">
+      {markLabels}
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${W} 150`}
+        // 上は ▼（y=20〜40）とジャンプの弧（頂点 y≈15）の少し上から、下は目もりの数（y=108）の下まで。
+        // 以前は 0〜150 で、目もりの数の下に 30 単位ぶん（図の幅 60u で 1.8u）の空きがあった
+        viewBox={`0 ${NL_TOP} ${W} ${NL_BOTTOM - NL_TOP}`}
         className="fig-svgbox"
         role="img"
         aria-label="すうちょくせん"
@@ -335,17 +354,6 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
           </g>
         ))}
       </svg>
-      {(fig.marks ?? []).some((m) => m.label) ? (
-        <div className="fig-nl__labels">
-          {(fig.marks ?? []).map((mk, i) =>
-            mk.label ? (
-              <span key={i} style={{ left: `${(X(mk.at) / W) * 100}%` }}>
-                <Rt text={mk.label} ctx={ctx} />
-              </span>
-            ) : null,
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -467,6 +475,12 @@ function Chart({ fig, ctx }: { fig: Extract<FigureData, { kind: 'bar' | 'line' }
   }
   return (
     <div className="fig-chart">
+      {fig.unit ? (
+        // 単位は縦軸の上（図の左上）。横軸の下の左はしの「（℃）」は、横軸の単位に読める（第7回 X4）
+        <div className="fig-chart__unit">
+          （<Rt text={fig.unit} ctx={ctx} />）
+        </div>
+      ) : null}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -512,11 +526,6 @@ function Chart({ fig, ctx }: { fig: Extract<FigureData, { kind: 'bar' | 'line' }
           </span>
         ))}
       </div>
-      {fig.unit ? (
-        <div className="fig-chart__unit">
-          （<Rt text={fig.unit} ctx={ctx} />）
-        </div>
-      ) : null}
     </div>
   );
 }

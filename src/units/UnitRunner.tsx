@@ -837,8 +837,9 @@ export function UnitRound({
     };
   }, [bubbleKey, isDone]);
 
-  // 作業領域の中身が空きに収まらないとき、まず図を縮め（--fig-max）、足りない分を --fit（0.8〜1。解説は 0.6〜1）で
+  // 作業領域の中身が空きに収まらないとき、まず図を縮め（--fig-max。下限 12u）、足りない分を --fit（0.8〜1。解説は 0.6〜1）で
   // 中身の寸法 --u ごと縮める。図が高く幅が狭いときは図を左・エンジンを右の横並び（data-layout="side"）にする。
+  // fit の下限でも入らなければ、図の下限を 6u に下げてもう一度図を縮める（絵のある図だけ）。
   // それでも収まらなければ重ねずに作業領域の中でスクロールさせ（data-scroll-region="work"・▼）、1件として検査に残す。
   // 子の寸法は --fit=1 に戻して測り直す（文字の折り返しが変わるので 2 回まで補正）。問題が変わったら 1 から
   const engineId = item?.engine ?? '';
@@ -881,31 +882,37 @@ export function UnitRound({
           work.setAttribute('data-layout', 'side');
         }
       }
-      // 図を先に縮める: 自然な高さ figH と不足から --fig-max = max(min(figH, 12u), figH − 不足)
+      // 図を縮める。自然な高さ figH と不足から --fig-max = max(min(figH, 下限), figH − 不足)（下限は floorU 単位。
+      // 図が下限以下なら縮めない）。作業領域の単位 --u0 の px は、測る箱で求める
+      const u0Px = (n: number): number => {
+        const probe = document.createElement('div');
+        probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:calc(var(--u0, var(--u)) * ${n})`;
+        work.appendChild(probe);
+        const w = probe.getBoundingClientRect().width;
+        probe.remove();
+        return w;
+      };
+      const shrinkFig = (figEl: HTMLElement, figH: number, shortage: number, floorU: number) => {
+        const figMax = Math.max(Math.min(figH, u0Px(floorU)), figH - shortage);
+        work.style.setProperty('--fig-max', `${figMax.toFixed(1)}px`);
+        // 中の SVG・画像の寸法の上書き（max-height・height: auto）は、縮めるときだけ（unit.css）
+        work.setAttribute('data-fig-fit', '');
+        // 絵を並べた図（行・格子）は SVG 1つずつの高さでは縮まないので、図の中の --u ごと縮める（--fig-k。下限 0.35）。
+        // 縮めた図をさらに縮めるときは、今の --fig-k から続ける
+        let k = Number.parseFloat(figEl.style.getPropertyValue('--fig-k')) || 1;
+        for (let i = 0; i < 2; i++) {
+          // 高さの上限で切られていても、中身の高さで測る
+          const h = Math.max(figEl.getBoundingClientRect().height, figEl.scrollHeight);
+          if (h <= figMax + 1) break;
+          k = Math.max(0.35, k * (figMax / h));
+          figEl.style.setProperty('--fig-k', k.toFixed(3));
+        }
+      };
+      // 図を先に縮める: 下限は 12u（12u 以下の図は、ここでは縮めない。下の fit の下限でも入らないときに 6u まで縮める）
       if (fig && !textFig && !NO_FIG_FIT.has(engineId) && work.clientHeight > 0) {
         const shortage = work.scrollHeight - work.clientHeight;
         const figH = fig.getBoundingClientRect().height;
-        if (shortage > 1 && figH > 0) {
-          const probe = document.createElement('div');
-          probe.style.cssText =
-            'position:absolute;visibility:hidden;pointer-events:none;width:calc(var(--u0, var(--u)) * 12)';
-          work.appendChild(probe);
-          const u12 = probe.getBoundingClientRect().width;
-          probe.remove();
-          const figMax = Math.max(Math.min(figH, u12), figH - shortage);
-          work.style.setProperty('--fig-max', `${figMax.toFixed(1)}px`);
-          // 中の SVG・画像の寸法の上書き（max-height・height: auto）は、縮めるときだけ（unit.css）
-          work.setAttribute('data-fig-fit', '');
-          // 絵を並べた図（行・格子）は SVG 1つずつの高さでは縮まないので、図の中の --u ごと縮める（--fig-k）
-          let k = 1;
-          for (let i = 0; i < 2; i++) {
-            // 高さの上限で切られていても、中身の高さで測る
-            const h = Math.max(fig.getBoundingClientRect().height, fig.scrollHeight);
-            if (h <= figMax + 1) break;
-            k = Math.max(0.35, k * (figMax / h));
-            fig.style.setProperty('--fig-k', k.toFixed(3));
-          }
-        }
+        if (shortage > 1 && figH > 0) shrinkFig(fig, figH, shortage, 12);
       }
       let fit = 1;
       for (let i = 0; i < 6; i++) {
@@ -934,11 +941,27 @@ export function UnitRound({
       // 読解・数の入力は作業領域を枠にしない（NO_WORK_SCROLL）。0.5u までの不足は枠にしない
       // （下の 2.4u の余白に収まり、板・吹き出しに重ならない。枠にすると数 px のために ▼ とスクロールが出る）
       const tol = Math.max(1, (work.clientWidth / 92) * 0.5);
-      if (
+      const overflows = () =>
         !NO_WORK_SCROLL.has(engineId) &&
         work.clientHeight > 0 &&
-        work.scrollHeight > work.clientHeight + tol
+        work.scrollHeight > work.clientHeight + tol;
+      // fit の下限でも入らない（このままだとスクロールの枠になる）ときだけ、図の下限を 12u から 6u に下げて、もう一度図を縮めて
+      // 測り直す（絵の並びは --fig-k。下限 0.35 のまま）。12u 以下の図は上の段では縮まず、p5.math.numbers-10/4・5 の動物の列
+      // （9.6u）が 2.3u 足りずにスクロールになり、選択肢の名前が切れた（点検 7）。文字の図（表・文だけ）と数の入力は縮めない。
+      // 絵に「まえ」のような短い文字の札が添えてある図（.fig-text が絵の列の中）は、絵のある図として縮める
+      // （札の字は --text-min を割らない）。ここまで来る画面は fit の下限でも入らなかったものだけで、ほかの図は変わらない
+      if (
+        fit <= minFit + 0.001 &&
+        fig &&
+        !NO_FIG_FIT.has(engineId) &&
+        !fig.querySelector('.fig-table') &&
+        fig.querySelector('.fig-illust, svg, img') &&
+        overflows()
       ) {
+        const figH = Math.max(fig.getBoundingClientRect().height, fig.scrollHeight);
+        if (figH > 0) shrinkFig(fig, figH, work.scrollHeight - work.clientHeight, 6);
+      }
+      if (overflows()) {
         work.setAttribute('data-scroll-region', 'work');
         if (keepTop > 0) work.scrollTop = keepTop;
       }

@@ -31,7 +31,9 @@
 }
 /* 絵・図だけの選択肢の横一列（choice.tsx の picsProps が --pics-n・--pics-total を渡す）。
    入らないときは絵を min(既定, (作業領域の幅 − 間隔) ÷ (数 × 1つの中の絵の数)) に縮める（g1.math.numbers-10/4）。
-   絵の既定の寸法は Figure のインライン指定なので max-width・max-height で抑える */
+   絵の既定の寸法は Figure のインライン指定なので max-width・max-height で抑える。
+   絵だけの図（data-fit）の列は、この式（--pic-w）は測る前の初めの値だけで、JS が札ごとの絵の数から決めた --pic-max に替わる
+   （下の「絵の札の幅と数える絵」。text-layout-fixes 第7回 X2） */
 .eng-choice__options.is-pics {
   --pic-w: calc(
     (
@@ -120,7 +122,9 @@
 /* 語のラベル（V2 1。choice.tsx の wordTrait が data-word・--len を付け、札に .has-word）。語の途中で折らない。
    札を container（inline-size）にし、字を max(--text-min, min(既定, 札の中の幅 ÷ (字数 × 1.05))) にする。
    inline-size の container は中身の幅を持たないので、札の min-width を 字数 × 既定の字 × 1.05 ＋ 余白（下限 14u）にして
-   既定の字が入る幅にする（上限 30u。入らなければ字が下限まで縮み、句は空白で折る）。listen・reading の選択肢も同じ */
+   既定の字が入る幅にする（上限 30u。入らなければ字が下限まで縮み、句は空白で折る）。listen・reading の選択肢も同じ。
+   絵のある札（絵だけの列。data-fit）は、さらに中の絵が入る幅 --card-w（usePicsGeometry が札ごとに決める）以上にする
+   （中身の幅を持たないので、絵の列が 14u の札から出た。p5.en.picture-book/42。text-layout-fixes 第7回 X2） */
 .choice.has-word {
   container-type: inline-size;
   --w-font: max(calc(var(--u) * 3.2), var(--text-min, 0px));
@@ -134,7 +138,7 @@
 }
 .eng-choice__options .eng-choice__opt.has-word,
 .eng-opts__list .eng-opts__opt.has-word {
-  min-width: var(--word-min-w);
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
   max-width: 100%;
 }
 /* 2列のグリッドは列の幅（約 43u）に任せる */
@@ -175,7 +179,9 @@
    列より上の段（--pics-above。tsx が測る）と、札のうち絵の下の分（--pics-below。ラベルの行・札の余白。tsx が測る。
    測る前は 余白と輪郭 3.6u ＋ ラベルの1行 4.8u の見積り）と、輪郭の影（1u）を引いた分。
    --pic-max は、これと幅の式（--pic-w）の小さいほう。下限は幼児の絵の 10u（--pic-floor。DESINGN 17章）。
-   下限でも入らないときだけ作業領域のスクロールが残る */
+   下限でも入らないときだけ作業領域のスクロールが残る。
+   ただし絵だけの図の列（data-fit）は JS が --pic-max（と --pic-floor: 0）を決める（幅・高さに収まる最大。下限は並べ方の選び方で
+   見て、届かないときも s が最大の並べ方のまま。第7回 X2） */
 .eng-choice__options,
 .eng-opts__list {
   --pic-h: calc(
@@ -250,7 +256,7 @@
     [data-row4]
   )
   > .choice.has-word {
-  min-width: var(--word-min-w);
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
 }
 .stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word] {
   word-break: keep-all;
@@ -261,4 +267,106 @@
 }
 .stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word='word'] {
   text-wrap: nowrap;
+}
+
+/* ---- 絵の札の幅と数える絵（text-layout-fixes 第7回 X2。pics.ts・choice.tsx の usePicsGeometry）----
+   絵だけの札の列（data-fit。選択肢が全部、絵だけの図）は、JS が札ごとの 1 行の絵の数・行の数・余白・ラベルの高さを測り、
+   「札の幅の合計 ≦ 列の幅」「並べた高さ ≦ 作業領域の空き」を満たす最大の絵の大きさを --pic-max に、札の幅を札ごとに --card-w に、
+   並べ方（data-arr="grid" は 2×2）を書く。上の --pic-w の式は、測る前（描いた直後）の初めの値だけ。
+   --pics-col-w は札を並べられる幅（--pic-w の式と同じ 90u。聞く問題は options.css で 88u。左の「きく」の札の幅は JS が引く） */
+.eng-choice__options.is-pics {
+  --pics-col-w: calc(var(--u0, var(--u)) * 90);
+}
+.eng-choice__options.is-pics[data-arr='grid'],
+.eng-opts__list.is-pics[data-arr='grid'] {
+  display: grid;
+  /* 列の幅は札の幅の大きいほう（--card-w。語のラベルの札は min-width）。右の列は 2 つ目・4 つ目の札 */
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  width: auto;
+}
+
+/* 数える札（data-count: 選択肢のどれかに絵が 6 こ以上）は、札の中の絵を 5 こずつの行に並べる（6〜10 こは 5＋残り。
+   11 こ以上は今の 5 のまとまりを 1 行ずつ）。Figure.tsx は変えず、絵の包みの幅を「5 こぶん」にして折り返す。
+   5 こぶん = 5 × 絵 1 つの大きさ（札ごとの既定 --pic-cap と --pic-max の小さいほう）＋ すき間 4 つ。行の間は絵のすき間（0.6u）。
+   割合（100%）は混ぜない（札の中身の幅を決めるとき割合は無いものとして扱われ、5 こぶんで止まらず 1 行に並べた幅になる） */
+.eng-choice__options[data-count] > .choice .fig-illust,
+.eng-choice__options[data-count] > .choice .fig-illust__group,
+.eng-opts__list[data-count] > .choice .fig-illust,
+.eng-opts__list[data-count] > .choice .fig-illust__group {
+  max-width: calc(5 * min(var(--pic-cap), var(--pic-max)) + 4 * var(--u) * 0.6 + 1px);
+  row-gap: calc(var(--u) * 0.6);
+}
+.eng-choice__options[data-count] > .choice .fig-illust__group,
+.eng-opts__list[data-count] > .choice .fig-illust__group {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* 数える札では、絵を並べた図（りんご 3 こ＋バナナ 6 こ。2 しゅるいの かいもの）はまとまりを縦に積む（まとまりごとに 5 こずつの行。
+   pics.ts の picLines）。まとまりの間は 1.2u（Figure の行のすき間 2u は縦に積むと 3 行ぶんの高さを食い、絵が 4u を割る。
+   絵のすき間 0.6u の 2 倍で、種類の切れ目は分かる）。Figure のインラインの gap は !important で上書きする */
+.eng-choice__options[data-count] > .choice .fig-row,
+.eng-opts__list[data-count] > .choice .fig-row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  row-gap: calc(var(--u) * 1.2) !important;
+}
+
+/* 絵を 1 行に並べた図（色のボール＋物）も、札から折り返さず出さない（絵の列は絵の分だけの幅） */
+.eng-choice__options[data-fit] > .choice .fig-row,
+.eng-opts__list[data-fit] > .choice .fig-row {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+/* 安全網: 札の中の絵は札の内側に入れる。flex の子は min-width: auto なので、絵の列が札より広くても縮まず、はみ出していた
+   （p23.math.shop/12 の くだもの 3 こ。札の中 26.9u に 31.2u）。絵の包みは札の幅まで、絵は縦横比 1 のまま縮める
+   （下の絵の大きさの上限・下限は、これより詳しい指定で今までどおり） */
+.eng-choice__options .choice .fig-illust,
+.eng-choice__options .choice .fig-illust__group,
+.eng-opts__list .choice .fig-illust,
+.eng-opts__list .choice .fig-illust__group {
+  min-width: 0;
+  max-width: 100%;
+}
+.eng-choice__options .choice .fig-illust__group > *,
+.eng-opts__list .choice .fig-illust__group > * {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1;
+  /* Illust のインラインの height（width と同じ値）をやめて、縮んだ幅に高さを合わせる */
+  height: auto !important;
+}
+
+/* 安全網（パックの SVG の図）: 札の中のパックの SVG（.fig-svg）も札の内側に縮める。絵のほかの図（点の図など）の札は、語のラベルで 14u に
+   なり、図は上の絵の大きさの式（--pic-max）の幅のままだったので、札から出た（p4.ja.word-play の点の図。text-layout-fixes 第7回 C28）。
+   flex の子の min-width: auto で縮まなかったので 0 にし、図の幅の上限は札の中の幅（100%）にする。
+   絵の大きさ --pic-max は、図の高さの上限にする（絵の札の高さの予算。幅の上限にすると、横長の図〔札の列。gridFloor.ts の
+   aspect-ratio〕が札の中より細く描かれ、札 1 枚が 1.5u・番号の字が 0.76u になった: g2.prog.repeat/2・/4 の解説。第7回のレビュー）。
+   正方形に近い図（点の図）は、幅も高さも min(札の中, --pic-max) に収まる（今までと同じ） */
+.eng-choice__options .choice .fig-svg,
+.eng-opts__list .choice .fig-svg {
+  min-width: 0;
+  max-width: 100%;
+}
+.unit__work .eng-choice__options.is-pics .choice .fig-svg svg,
+.unit__work .eng-opts__list.is-pics .choice .fig-svg svg {
+  max-width: 100%;
+  max-height: var(--pic-max, none);
+}
+/* 1 列にした札の列（figure.css の fig-svg--wide。小1以上）は、上の --pic-max（1 段に並べる絵の高さの式）で高さを止めない
+   （図の高さは figure.css の 4.6u）。止めると札の列が細く描かれ、札 1 枚が 1.1u になった（g6.prog.efficient/11・g5.prog.debug-plan/8。
+   第7回のレビュー。X2 の安全網と X4 の札の列の組み合わせ） */
+.unit__work
+  :is(.eng-choice__options, .eng-opts__list).is-pics:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  )
+  .choice
+  .fig-svg
+  svg {
+  max-width: 100%;
+  max-height: none;
 }

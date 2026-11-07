@@ -729,3 +729,247 @@ test('分かち書きの教材（C22）: 小3以上でも pack が en-g34・en-g
   expect(await split('g5-ja')).toEqual([]);
   expect(await split()).toEqual([]);
 });
+
+test('正解の輪と字（C27）: 字の矩形が輪の線の帯と交われば出す（中心が帯の外でも）・ふりがなも数える・帯に触れない字は出さない', async ({
+  page,
+}) => {
+  const crossing = async () =>
+    (await inspectText(page, { stage: 'g3' })).issues.filter(
+      (i) => i.kind === 'covered' && i.detail === '正解の ○ が字を横切る',
+    );
+  const ring = (
+    diameter: number,
+    line: number,
+    pos = 'left:50%;top:50%;transform:translate(-50%,-50%)',
+  ) =>
+    `<span class="mark mark--correct" aria-hidden="true" style="position:absolute;${pos};width:calc(var(--u)*${diameter});height:calc(var(--u)*${diameter});border:calc(var(--u)*${line}) solid #0a0;border-radius:50%;box-sizing:border-box;pointer-events:none;z-index:0"></span>`;
+  const card = (text: string, inner: string, place = 'place-items:center') =>
+    `<div class="abs box" style="top:calc(var(--u)*10);left:calc(var(--u)*10);width:calc(var(--u)*40);height:calc(var(--u)*16);display:grid;${place}"><span style="position:relative;z-index:1;white-space:nowrap">${text}</span>${inner}</div>`;
+  // 「すいか」（9u）の真ん中に、直径 9.6u・線 0.9u の細い輪。「す」「か」の中心は帯（半径 3.9〜4.8u）の内側にあるが、
+  // 字の矩形が帯を横切る。字の中心だけを見ていた C21 までは通り抜けた（g1.math.shapes/1・2 の「すいか」「かん」）
+  await show(page, card('すいか', ring(9.6, 0.9)));
+  const thin = await crossing();
+  expect(thin).toHaveLength(1);
+  expect(thin[0]!.text).toMatch(/[すか]/);
+  // 輪の中に字が収まる（内の円に入りきっている）: 出さない
+  await show(page, card('あい', ring(14, 3)));
+  expect(await crossing()).toEqual([]);
+  // 輪から離れた字（外の円の外）: 出さない
+  await show(page, card('あい', ring(6, 0.9), 'place-items:start start;padding:calc(var(--u)*1)'));
+  expect(await crossing()).toEqual([]);
+  // ふりがな（rt）だけを輪の線が横切る: 出す（C27 までは rt を除いていた。listen の絵の段の輪とふりがな）。
+  // 輪の上の弧の帯（線 0.8u）の中央を rt の縦の中央に合わせる。親字は輪の内の円に入りきる
+  const withRuby = () =>
+    card('<ruby>湖<rt>うみ</rt></ruby>', ring(16, 0.8, 'left:0;top:0'), 'place-items:center');
+  await show(page, withRuby());
+  await page.evaluate(() => {
+    const c = document.querySelector('.abs.box') as HTMLElement;
+    const rt = c.querySelector('rt') as HTMLElement;
+    const ring = c.querySelector('.mark') as HTMLElement;
+    const cr = c.getBoundingClientRect();
+    const rr = rt.getBoundingClientRect();
+    const u = Math.min(window.innerWidth / 100, (window.innerHeight * 1.7778) / 100);
+    ring.style.left = `${rr.left + rr.width / 2 - cr.left - 8 * u}px`;
+    ring.style.top = `${(rr.top + rr.bottom) / 2 - cr.top - 0.4 * u}px`;
+  });
+  const rtHit = await crossing();
+  expect(rtHit).toHaveLength(1);
+  expect(rtHit[0]!.text).toBe('うみ');
+  // 輪が字から離れていれば（ふりがなにもかからない）出さない
+  await show(page, withRuby());
+  await page.evaluate(() => {
+    const ring = document.querySelector('.abs.box .mark') as HTMLElement;
+    ring.style.left = '0px';
+    ring.style.top = '-60px';
+  });
+  expect(await crossing()).toEqual([]);
+});
+
+test('絵が札の外に出る・札で切れる（C28）: 札の外へ 0.3u を超えて出れば札ごとに 1 件・収まる絵と正誤の印・バッジは出さない', async ({
+  page,
+}) => {
+  const pic = (sizeU: number) =>
+    `<svg viewBox="0 0 100 100" style="flex:none;width:calc(var(--u)*${sizeU});height:calc(var(--u)*${sizeU})"><rect width="100" height="100" fill="#fc9"/></svg>`;
+  const figs = async () =>
+    (await inspectText(page, { stage: 'p5' })).issues.filter(
+      (i) => i.kind === 'figure-outside-box',
+    );
+  const choice = (left: number, inner: string) =>
+    `<div class="choice abs box" style="top:calc(var(--u)*8);left:calc(var(--u)*${left});width:calc(var(--u)*14);height:calc(var(--u)*14);display:flex;align-items:center;justify-content:center">${inner}</div>`;
+  const row = (n: number, sizeU: number) =>
+    `<div class="fig-illust__group" style="display:flex;gap:calc(var(--u)*0.6)">${pic(sizeU).repeat(n)}</div>`;
+  // 札（14u）より広い絵の列（5 ひき × 7u ＋すき間 ＝ 37.4u。p5.en.picture-book/42 の いぬ）: 札ごとに 1 件
+  await show(page, choice(10, row(5, 7)) + choice(40, row(2, 5)));
+  const out = await figs();
+  expect(out).toHaveLength(1);
+  expect(out[0]!.detail).toMatch(/^絵が札の外に 1\d\.\du 出る$/);
+  // 札に収まる絵・0.3u 以内の出（線の太さ・丸め）は出さない
+  await show(page, choice(10, row(2, 5)) + choice(40, pic(14.2)));
+  expect(await figs()).toEqual([]);
+  // 札の中の枠（overflow: hidden）で切れる（p5.math.measure-compare/8 の塔。16u×68u の絵が 16u×9u の枠）: 「札の枠で切れる」
+  await show(
+    page,
+    `<div class="tk-card abs box" style="top:calc(var(--u)*8);left:calc(var(--u)*10);width:calc(var(--u)*18);height:calc(var(--u)*12)">
+       <div class="tk-card__fig" style="width:calc(var(--u)*16);height:calc(var(--u)*9);overflow:hidden;margin:calc(var(--u)*1) auto">
+         <svg viewBox="0 0 40 170" style="display:block;width:calc(var(--u)*16);height:calc(var(--u)*68)"><rect width="40" height="170" fill="#9cf"/></svg></div></div>`,
+  );
+  const clip = await figs();
+  expect(clip).toHaveLength(1);
+  expect(clip[0]!.detail).toBe('絵が札の枠で 59u 切れる'); // 68u − 9u（上は枠の上端から始まるので下だけ）
+  // 札の角の正誤の印・番号のバッジは、札の外に半分出ていても絵に数えない
+  await show(
+    page,
+    choice(
+      10,
+      `${pic(6)}<span class="mark mark--wrong" aria-hidden="true" style="position:absolute;right:calc(var(--u)*-2);top:calc(var(--u)*-2)">${pic(4)}</span>
+       <span class="tk-badge" style="position:absolute;left:calc(var(--u)*-2);top:calc(var(--u)*-2)">${pic(4)}</span>`,
+    ),
+  );
+  expect(await figs()).toEqual([]);
+});
+
+test('絵・札が小さすぎる（C29）: 数える札の絵が 4u 未満・同じ大きさの正方形が 3 つ以上並ぶ札の 1 つが 2.4u 未満は出す・間をあけた図形は出さない', async ({
+  page,
+}) => {
+  const small = async () =>
+    (await inspectText(page, { stage: 'p5' })).issues.filter((i) => i.kind === 'small-figure');
+  const pic = (sizeU: number) =>
+    `<svg viewBox="0 0 100 100" style="flex:none;width:calc(var(--u)*${sizeU});height:calc(var(--u)*${sizeU})"><rect width="100" height="100" fill="#fc9"/></svg>`;
+  const counting = (left: number, n: number, sizeU: number, group = true) =>
+    `<div class="choice abs box" style="top:calc(var(--u)*8);left:calc(var(--u)*${left});width:calc(var(--u)*24);height:calc(var(--u)*12);display:flex;align-items:center;justify-content:center">
+       <div class="${group ? 'fig-illust__group' : 'icons'}" style="display:flex;gap:calc(var(--u)*0.4)">${pic(sizeU).repeat(n)}</div></div>`;
+  // (a) 数える札: 絵が 5 つで 1 つ 2u（p5.en.phrases/92 の くるま 5 ほん）は出す。4.2u なら出さない
+  await show(page, counting(10, 5, 2) + counting(40, 5, 4.2));
+  const a = await small();
+  expect(a).toHaveLength(1);
+  expect(a[0]!.detail).toBe('数える絵が 2u（最小 4u・5こ）');
+  // 絵が 1 つの札（下限は --pic-floor）と、.fig-illust__group でない小さな絵（アイコン）は数える札ではない
+  await show(page, counting(10, 1, 2) + counting(40, 3, 2, false));
+  expect(await small()).toEqual([]);
+
+  // (b) パックの SVG の正方形の列。viewBox 200×100 を 20u×10u に描く（1 単位 ＝ 0.1u）
+  const fig = (rects: string) =>
+    `<div class="fig-svg abs" role="img" aria-label="てじゅん" style="top:calc(var(--u)*10);left:calc(var(--u)*10)"><svg viewBox="0 0 200 100" style="display:block;width:calc(var(--u)*20);height:calc(var(--u)*10)">${rects}</svg></div>`;
+  const sq = (x: number, y: number, s: number) =>
+    `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="#cde" stroke="#333"/>`;
+  const row3 = (s: number, step: number) => [0, 1, 2].map((i) => sq(10 + i * step, 30, s)).join('');
+  // 一辺 2u（20 単位）の札が、すき間 0.5u（辺の 1/4）で 3 つ並ぶ（g6.prog.efficient/9 の手順の札）: 出す
+  await show(page, fig(row3(20, 25)));
+  const b = await small();
+  expect(b).toHaveLength(1);
+  expect(b[0]!.detail).toBe('手順の札・盤のますの短い辺が 2u（最小 2.4u・3こ並ぶ）');
+  // 3×3 の盤のます（1 ます 2u）: 出す
+  await show(
+    page,
+    fig([0, 1, 2].flatMap((r) => [0, 1, 2].map((c) => sq(10 + c * 20, 10 + r * 20, 20))).join('')),
+  );
+  expect(await small()).toHaveLength(1);
+  // 2.5u（25 単位）なら出さない
+  await show(page, fig(row3(25, 30)));
+  expect(await small()).toEqual([]);
+  // 手順の札は正方形でない角丸の矩形（prog の stripFigure。1.5u×1.8u）: 短い辺で見て出す。2.5u×3u なら出さない
+  const card = (x: number, w: number, h: number) =>
+    `<rect x="${x}" y="20" width="${w}" height="${h}" rx="3" fill="#fff" stroke="#333"/>`;
+  await show(page, fig([0, 1, 2, 3].map((i) => card(10 + i * 18, 15, 18)).join('')));
+  const cards = await small();
+  expect(cards).toHaveLength(1);
+  expect(cards[0]!.detail).toBe('手順の札・盤のますの短い辺が 1.5u（最小 2.4u・4こ並ぶ）');
+  await show(page, fig([0, 1, 2].map((i) => card(10 + i * 30, 25, 30)).join('')));
+  expect(await small()).toEqual([]);
+  // 角のない長方形の分割（分数の帯の等分。g4.math.fraction-kinds の 24 等分の 2.2u）は札でも盤のますでもない
+  const strip = (i: number) =>
+    `<rect x="${10 + i * 15}" y="20" width="15" height="18" fill="#cde" stroke="#333"/>`;
+  await show(page, fig([0, 1, 2, 3].map(strip).join('')));
+  expect(await small()).toEqual([]);
+  // 横長の絵（p23.math.compare の電車。角丸の 40×24 の 1 両が 4 つ並ぶ。縦横比 1.7 倍）は札・ますではない
+  await show(
+    page,
+    fig(
+      [0, 1, 2, 3]
+        .map((i) => `<rect x="${4 + i * 46}" y="30" width="40" height="24" rx="5" fill="#9cf"/>`)
+        .join(''),
+    ),
+  );
+  expect(await small()).toEqual([]);
+  // 細長い帯（縦横比 1.5 倍超。枠・バー）は札・ますではない
+  await show(page, fig([0, 1, 2].map((i) => card(10 + i * 62, 60, 20)).join('')));
+  expect(await small()).toEqual([]);
+  // 辺の半分より離して置いた正方形（p5.think.pattern の 「ちいさい しかく」）・2 つだけ・大きさの違う正方形は数えない
+  await show(page, fig(row3(20, 50)));
+  expect(await small()).toEqual([]);
+  await show(page, fig([sq(10, 30, 20), sq(40, 30, 20)].join('')));
+  expect(await small()).toEqual([]);
+  await show(page, fig([sq(10, 30, 20), sq(40, 30, 14), sq(65, 30, 26)].join('')));
+  expect(await small()).toEqual([]);
+});
+
+test('並んだ札のすき間（C30）: 横軸の札・数直線の印のラベルの隣どうしが字の 0.25 倍未満なら出す・離れていれば出さない・文の中の span は出さない', async ({
+  page,
+}) => {
+  const gaps = async () =>
+    (await inspectText(page, { stage: 'g4' })).issues.filter((i) => i.kind === 'label-gap');
+  const labels = (cls: string, style: string, items: string[], spanStyle = (_i: number) => '') =>
+    `<div class="${cls} abs" style="top:calc(var(--u)*10);left:calc(var(--u)*10);display:flex;font-size:calc(var(--u)*2.2);${style}">${items
+      .map((t, i) => `<span style="${spanStyle(i)}">${t}</span>`)
+      .join('')}</div>`;
+  const hours = ['9時', '10時', '11時', '12時'];
+  // 札のすき間が 0（g4.sci.weather/9 の「9時10時11時12時」）: 列ごとに 1 件
+  await show(page, labels('fig-chart__labels', '', hours));
+  const tight = await gaps();
+  expect(tight).toHaveLength(1);
+  expect(tight[0]!.text).toBe('9時｜10時｜11時｜12時');
+  expect(tight[0]!.detail).toMatch(/すき間が字の -?\d+(\.\d+)? 倍（最小 0\.25 倍）/);
+  // graph の横軸の札・数直線の印のラベルも見る
+  await show(page, labels('gr-xlabels', '', hours));
+  expect(await gaps()).toHaveLength(1);
+  await show(page, labels('fig-nl__labels', '', hours));
+  expect(await gaps()).toHaveLength(1);
+  // 字の 0.25 倍以上あいていれば出さない（0.5em）
+  await show(page, labels('fig-chart__labels', 'gap:calc(var(--u)*1.1)', hours));
+  expect(await gaps()).toEqual([]);
+  // 1 つおきに下へずらした段（data-stagger）: 隣どうしは別の行。同じ行の札は離れているので出さない
+  await show(
+    page,
+    labels('fig-chart__labels', 'align-items:flex-start', hours, (i) =>
+      i % 2 ? 'margin-top:calc(var(--u)*3)' : '',
+    ),
+  );
+  expect(await gaps()).toEqual([]);
+  // 札の列でない文の中の span（Rt の ruby・nobr の包みのように、すき間 0 で並ぶのが正しい）は対象にしない
+  await show(page, labels('', '', hours));
+  expect(await gaps()).toEqual([]);
+});
+
+test('SVG の text の重なり（C31）: 字の高さに詰めた箱で比べる・枠で切れた箱で閾値を下げない・本当に重なる字は出す', async ({
+  page,
+}) => {
+  const overlaps = async () =>
+    (await inspectText(page, { stage: 'g5' })).issues.filter((i) => i.kind === 'overlap-text');
+  // 縦軸の数「10」「15」を字（24px）の 1.1 倍だけ離して並べる。外接の箱（約 1.47em）は 0.37em 重なるが、字の本体は重ならない。
+  // 下の「15」は本文の枠（overflow: hidden）で半分切れている（g5.ja.text-figure/8 のヒント①・1920×1080）
+  const build = async (pitch: number, clip: boolean) => {
+    await show(
+      page,
+      `<div id="clip" class="abs" style="top:calc(var(--u)*5);left:calc(var(--u)*5);width:calc(var(--u)*20);${clip ? 'overflow:hidden;' : ''}">
+         <svg width="300" height="200" viewBox="0 0 300 200" style="display:block;overflow:visible">
+           <text x="20" y="40" font-size="24">10</text><text x="20" y="${40 + pitch}" font-size="24">15</text></svg></div>`,
+    );
+    if (clip)
+      // 枠の下端を「15」の外接の箱の上から 40% の所にする（切れた箱が低くなり、旧い閾値は 0.3 × その高さに下がる）
+      await page.evaluate(() => {
+        const box = document.getElementById('clip') as HTMLElement;
+        const t = box.querySelectorAll('text')[1]!.getBoundingClientRect();
+        box.style.height = `${t.top + t.height * 0.4 - box.getBoundingClientRect().top}px`;
+      });
+  };
+  // 字の 1.1 倍（26.4px）離れた 2 つ: 出さない（枠で切れていても）
+  await build(26.4, false);
+  expect(await overlaps()).toEqual([]);
+  await build(26.4, true);
+  expect(await overlaps()).toEqual([]);
+  // 字の 0.5 倍（12px）しか離れていない 2 つ: 本当に重なっているので出す（枠が無くても、切れていても）
+  await build(12, false);
+  expect(await overlaps()).toHaveLength(1);
+  await build(12, true);
+  expect((await overlaps()).length).toBeGreaterThanOrEqual(1);
+});

@@ -13,6 +13,9 @@ import {
   judgeChoice,
   OptionLabel,
   optionTraits,
+  picCapStyle,
+  picsAttrs,
+  picsFitOf,
   picsProps,
   usePicsGeometry,
   wordCardProps,
@@ -70,6 +73,11 @@ interface Props {
   autoArrange?: boolean;
   /** 選択肢の横に並ぶものの幅（u）。絵の縮み（picsProps）の見積りに使う */
   picsSide?: number;
+  /**
+   * 聞く問題で、「きく」の札の場所を絵の大きさから選ばせる（第7回 X2。usePicsGeometry）。at: 今の場所／side: 左に置くとき
+   * 取る幅（u）／onChange: 選んだ場所を伝える（呼び出し側が札の場所を替える）。解説（revealed）では場所を替えない
+   */
+  ear?: { at: 'top' | 'left'; side: number; onChange(at: 'top' | 'left'): void };
 }
 
 export function ChoiceOptions({
@@ -84,6 +92,7 @@ export function ChoiceOptions({
   className,
   autoArrange = true,
   picsSide = 0,
+  ear,
 }: Props) {
   const [picked, setPicked] = useState<number[]>([]);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -135,7 +144,12 @@ export function ChoiceOptions({
     layout,
     pics.className !== '',
   );
-  usePicsGeometry(listRef, pics.className !== '' || traits.caption);
+  const fit = picsFitOf(
+    shown.map((i) => ({ figure: part.options[i]!.figure })),
+    pics.className !== '',
+    ear ? { ...ear, free: !revealed } : undefined,
+  );
+  const shape = usePicsGeometry(listRef, pics.className !== '' || traits.caption, fit);
   const hasLabel = shown.some((i) => part.options[i]!.label !== undefined);
   return (
     <div className={['eng-opts', className ?? ''].join(' ')}>
@@ -149,10 +163,11 @@ export function ChoiceOptions({
         }
         data-long={traits.long ? '' : undefined}
         data-row4={traits.row4 ? '' : undefined}
+        {...picsAttrs(fit, shape)}
       >
         {shown
           .map((i) => ({ o: part.options[i]!, i }))
-          .map(({ o, i }) => {
+          .map(({ o, i }, pos) => {
             const word = traits.long
               ? null
               : wordTrait(typeof o.label === 'string' ? o.label : undefined, traits.row4 ? 9 : 8);
@@ -166,7 +181,7 @@ export function ChoiceOptions({
                 onPress={() => press(i)}
                 testId={`opt-${i}`}
                 className={`eng-opts__opt${o.figure ? '' : ' eng-opts__opt--text'}${wc.cls}`}
-                style={wc.style}
+                style={picCapStyle(fit, pos, wc.style)}
               >
                 {o.figure && o.label !== undefined ? (
                   <span className="eng-opts__pic">

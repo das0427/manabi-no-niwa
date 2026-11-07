@@ -189,6 +189,28 @@ describe('画面', () => {
     expect(poolOf(5)).not.toContain('eng-sort__pool--cols3');
     expect(poolOf(6)).toContain('eng-sort__pool--cols3');
   });
+  it('解説（revealed）では、空の札置き場を出さない。問題の状態では、札を入れ終わっても高さを残す', () => {
+    const p = props();
+    const q = render(createElement(sortEngine.Component, p));
+    expect(q.container.querySelector('.eng-sort__pool')).not.toBeNull();
+    // 全部の札を箱に入れても、札置き場（高さの確保）は残る
+    for (const [c, b] of [
+      [0, 0],
+      [1, 1],
+      [2, 0],
+      [3, 1],
+    ] as const) {
+      fireEvent.click(screen.getByTestId(`card-${c}`));
+      fireEvent.click(screen.getByTestId(`box-${b}`));
+    }
+    expect(q.container.querySelector('.eng-sort__pool')).not.toBeNull();
+    expect(q.container.querySelectorAll('.eng-sort__pool .tk-card')).toHaveLength(0);
+    q.unmount();
+    // 解説: 札は全部、正しい箱の中。札置き場は描かない
+    const r = render(createElement(sortEngine.Component, { ...p, revealed: true }));
+    expect(r.container.querySelector('.eng-sort__pool')).toBeNull();
+    expect(r.container.querySelectorAll('.eng-sort__inside .tk-card')).toHaveLength(4);
+  });
   it('2〜3歳: 少ない枚数で、入れ終わると自動で答える', () => {
     const p = props(ctxFor('toddler2'));
     render(createElement(sortEngine.Component, p));

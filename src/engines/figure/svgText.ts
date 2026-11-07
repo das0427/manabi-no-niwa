@@ -353,8 +353,43 @@ export function useFitWidth(
 }
 
 /**
- * 横軸の札の列（子が同じ幅の枠）: 札が枠に入らなければ --text-min まで縮め、なお入らなければ
- * 1つおきに下の段へずらす（data-stagger。札は2つぶんの幅まで使える）。graph.tsx の横軸と同じ考え（S6）。
+ * 横軸の札と札の間にあけるすき間の下限（字の大きさの倍率。text-layout-fixes.md 第7回 X4。DESINGN.md 17章）。
+ * 検査 C30（label-gap）が数えるのは 0.25 倍未満。丸めと字体の差で割らないよう、作る側は 0.4 倍を取る。
+ * graph.tsx の横軸の札（useXLabelFit）も同じ値。
+ */
+export const LABEL_GAP_EM = 0.4;
+
+/**
+ * 横軸の札が枠に入るかの比（1 以下なら入る）: (札の中身の幅 ＋ すき間) ÷ 枠の幅。すき間は字の大きさ × LABEL_GAP_EM。
+ * spare は、字の外側にもともとあるとなりの札との間（枠のあるボタンの枠線・余白と、札の列のすき間）で、すき間から引く
+ * （引ききれば 0）。検査 C30 が見るのは字どうしの実際のすき間なので、列のすき間が広い絵グラフの札
+ * （g2.math.tables-graphs。すき間 1.2u）まで 2 段にしない。
+ * 中身の幅とすき間は字の大きさに比例するので、spare が 0 のときは、この比で字を縮めれば入る
+ */
+export function labelFitRatio(
+  contentWidth: number,
+  fontSize: number,
+  slotWidth: number,
+  spare = 0,
+): number {
+  if (!(slotWidth > 0)) return 0;
+  const gap = Math.max(0, LABEL_GAP_EM * fontSize - spare);
+  return (contentWidth + gap) / slotWidth;
+}
+
+/** 横に並んだ札の列で、となりの札の枠との間のすき間（px。1 つ目と 2 つ目の間。1 つだけなら 0） */
+export function slotGapPx(items: HTMLElement[]): number {
+  if (items.length < 2) return 0;
+  const a = items[0]!.getBoundingClientRect();
+  const b = items[1]!.getBoundingClientRect();
+  return Math.max(0, b.left - a.right);
+}
+
+/**
+ * 横軸の札の列（子が同じ幅の枠）: 札の中身の幅に字の 0.4 倍（LABEL_GAP_EM）を足したものが枠に入らなければ
+ * --text-min まで縮め、なお入らなければ 1つおきに下の段へずらす（data-stagger。札は2つぶんの幅まで使える）。
+ * graph.tsx の横軸と同じ考え（S6）。以前は「中身の幅 ≦ 枠の幅 × 1.01」で、すき間を見なかったので、
+ * 「10時」「11時」がすき間 0〜0.05 字でつながって見えた（g4.sci.weather。第7回 X4）。
  */
 export function useStaggerLabels(ref: RefObject<HTMLElement | null>, key: unknown): void {
   useLayoutEffect(() => {
@@ -367,23 +402,31 @@ export function useStaggerLabels(ref: RefObject<HTMLElement | null>, key: unknow
       box.style.removeProperty('--fig-slot-pad');
       box.style.fontSize = '';
       if (items.length === 0) return;
-      const ratio = () =>
-        Math.max(
+      const ratio = () => {
+        const colGap = slotGapPx(items);
+        return Math.max(
           ...items.map((it) => {
-            // 中央寄せではみ出す分は左右に出るので、中身の幅で比べる（scrollWidth は右側しか数えない）
+            // 中央寄せではみ出す分は左右に出るので、中身の幅で比べる（scrollWidth は右側しか数えない）。
+            // すき間（字の 0.4 倍）は字の大きさに比例するので、縮めるときも同じ比で縮む
             const c = it.firstElementChild;
-            return c && it.clientWidth > 0 ? c.getBoundingClientRect().width / it.clientWidth : 0;
+            if (!c) return 0;
+            const fs = parseFloat(getComputedStyle(it).fontSize) || 0;
+            return labelFitRatio(c.getBoundingClientRect().width, fs, it.clientWidth, colGap);
           }),
         );
-      const r = ratio();
-      if (r <= 1.01) return;
-      const base = parseFloat(getComputedStyle(box).fontSize);
+      };
+      let r = ratio();
+      if (r <= 1) return;
       const min = textMinPx(box);
-      const shrunk = Math.floor((base / r) * 100) / 100;
-      if (shrunk >= min) {
-        box.style.fontSize = `${shrunk}px`;
-        return;
+      let size = parseFloat(getComputedStyle(box).fontSize);
+      // 比で縮めて測り直す（すき間の一部を列のすき間が受け持つときは比例しないので、数回くり返す）
+      for (let i = 0; i < 6 && r > 1; i++) {
+        size = Math.floor((size / r) * 100) / 100;
+        if (size < min) break;
+        box.style.fontSize = `${size}px`;
+        r = ratio();
       }
+      if (r <= 1 && size >= min) return;
       box.style.fontSize = `${min}px`;
       const slotW = items[0]!.clientWidth;
       box.style.setProperty('--fig-slot-pad', `${-Math.round(slotW * 0.48)}px`);

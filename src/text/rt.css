@@ -4,6 +4,9 @@
 }
 .rt ruby {
   ruby-position: over;
+  /* 隣の字を包み（.rt-nobr）に取り込めなかった ruby でも、親字の途中で折らない
+     （Chrome は keep-all でも ruby の親字を「食／料生産」のように割る。docs/expansion/text-layout-fixes.md 第7回 X7） */
+  white-space: nowrap;
 }
 .rt rt {
   /* 本文の約半分。ただし 1.1u を下回らない（--u0 は fit で縮める前の u） */

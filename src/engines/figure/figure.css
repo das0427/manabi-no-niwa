@@ -193,14 +193,18 @@
   stroke: var(--ink);
   stroke-width: 3;
 }
+/* 印（▼）のラベルは、▼ の真上（svg の上）に置く（第7回 X4。以前は svg の下の余白のさらに下で、線から約 8u 離れた）。
+   箱は svg の上の段で、ラベルは箱の下はしにそろえる（▼ は svg の上はしのすぐ下。ラベルの下と ▼ の間は約 1.4u）。
+   箱の高さは字の 1.7 倍（Rt の行の高さ。ふりがなの分を含む） */
 .fig-nl__labels {
   position: relative;
-  height: calc(var(--u) * 4);
+  height: calc(max(calc(var(--u) * 2.4), var(--text-min, 0px)) * 1.7);
 }
 /* 直下の span だけ（子孫の span まで absolute にすると、分数の分子・分母が 0×0 で重なっていた。
    g4.math.fraction-kinds/4 の解説）。分数のラベルは、箱の高さを字の 2.2 倍にして縦に並べる */
 .fig-nl__labels > span {
   position: absolute;
+  bottom: 0;
   transform: translateX(-50%);
   font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   font-weight: 700;
@@ -345,6 +349,7 @@ button .fig-chart {
 .fig-chart__labels[data-stagger] > span:nth-child(even) {
   margin-top: var(--fig-stagger, 0px);
 }
+/* 単位の札は縦軸の上（図の左上。Figure.tsx は svg の前に置く）。横軸の下の左はしの「（℃）」は、横軸の単位に読める（第7回 X4） */
 .fig-chart__unit {
   font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   text-align: left;
@@ -389,15 +394,22 @@ button .fig-chart {
 }
 /* 1 列にした札は、図の横に記号（A・B・C）を並べて低くする（縦に積むと作業領域に入らずスクロールした）。
    札の列の図は高さを 4.6u に抑える（パックの指定は 6.5u。3 枚積むと作業領域の高さを超える）。
-   幅は 4.6u × 縦横比（約 27u）。字は横幅いっぱいの 1 列なので、横に並べたときより大きく描ける */
-.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *) {
-  gap: calc(var(--u) * 0.8);
+   幅は 4.6u × 縦横比（約 27u）。字は横幅いっぱいの 1 列なので、横に並べたときより大きく描ける。
+   札の上下の余白（0.2u）とすき間（0.4u）は、choice.css の絵の札（.is-pics。余白 0.8u・すき間 0.4u）より詳しい指定で当てる
+   （クラスの重ね書きで詳しさを 1 つ上げる）。余白が 0.8u のままだと 3 枚で作業領域に入らず、--fit が 0.83 まで縮み、
+   札 1 枚が 4.6u × 24/42 × 0.83 ＝ 2.2u になった（g6.prog.efficient/11 の解説。第7回 X4。下限は 2.4u） */
+.eng-choice__options.eng-choice__options:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  ) {
+  gap: calc(var(--u) * 0.4);
 }
-.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)
+.eng-choice__options.eng-choice__options:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  )
   > .eng-choice__opt {
   flex-direction: row;
   min-height: 0;
-  padding-block: calc(var(--u) * 0.4);
+  padding-block: calc(var(--u) * 0.2);
   gap: calc(var(--u) * 2);
 }
 .eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)

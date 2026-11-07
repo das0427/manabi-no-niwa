@@ -10,12 +10,16 @@
  *   - clipped          … 親の overflow: hidden / clip で文字・ボタン・図が切れる（隠れた文字）
  *   - scroll-hidden    … 親の overflow: auto / scroll の枠の中で、スクロールしないと見えない文字・ボタン
  *   - text-outside-box … 文字が、線や背景のある枠（札・吹き出し・ボタン）の外に出る（overflow: visible）
+ *   - figure-outside-box … 札（ボタン・.tk-card・.choice）の中の絵（外の svg・img・.fig-illust__group の子）が、札の外に
+ *                         出る・札の中の overflow の枠で切れる（C28。札ごとに 1 件。字の検査では見えない）
  *   重なり
  *   - overlap-text     … 文字どうしが重なる（ふりがなが前の行や隣のふりがなに重なる場合を含む）
  *   - covered          … 文字・ボタンの上に、別の要素（ボタン・枠・図）がかぶさって隠れる
  *   - text-on-figure   … 文字の下に図（SVG の線・面、画像）がある（意図した重ねもあるため参考）
  *   - overlap-button   … ボタンどうしが重なる
  *   - ruby-overlap     … ふりがなが自分の親字に重なる
+ *   - label-gap        … 横軸の札の列・数直線の印のラベルで、同じ行の隣どうしの字のすき間が字の 0.25 倍未満
+ *                         （重ならなくても札がつながって読める。C30。文の中の span は対象外）
  *   変な改行（自動の折り返しだけ。\n・<br>・ブロックの区切りによる改行は見ない）
  *   - kinsoku-start    … 行頭禁則の字（、。」）！？ ゃゅょっー〜・ 等）で始まる行
  *   - kinsoku-end      … 行末禁則の字（「『（ 等）で終わる行
@@ -26,6 +30,9 @@
  *   - narrow-wrap      … 1行1〜2文字で縦に並ぶような極端に狭い折り返し
  *   文字の大きさ
  *   - small-text       … DESINGN.md 17章の最小（補助の文字・ふりがな 1.1u）より小さい
+ *   - small-figure     … 絵・札が小さすぎる（C29）。(a) 数える札（1 つの札に .fig-illust__group の絵が 2 つ以上）の絵が 4u 未満
+ *                         (b) パックの SVG の同じ大きさの正方形か角丸の札（縦横比 1.5 倍以内）が 3 つ以上並ぶ（手順の札・盤のます）
+ *                         短い辺が 2.4u 未満
  *   記法の漏れ
  *   - markup-leak      … 画面に《》・{{・}} の記法（ふりがな・差し込みの書き方）がそのまま出ている
  */
@@ -37,11 +44,13 @@ export const TEXT_ISSUE_KINDS = [
   'clipped',
   'scroll-hidden',
   'text-outside-box',
+  'figure-outside-box',
   'overlap-text',
   'covered',
   'text-on-figure',
   'overlap-button',
   'ruby-overlap',
+  'label-gap',
   'kinsoku-start',
   'kinsoku-end',
   'orphan',
@@ -50,6 +59,7 @@ export const TEXT_ISSUE_KINDS = [
   'button-split',
   'narrow-wrap',
   'small-text',
+  'small-figure',
   'markup-leak',
 ] as const;
 export type TextIssueKind = (typeof TEXT_ISSUE_KINDS)[number];
@@ -61,11 +71,13 @@ export const TEXT_ISSUE_LABEL: Record<TextIssueKind, string> = {
   clipped: '親の枠で切れる',
   'scroll-hidden': 'スクロールしないと見えない',
   'text-outside-box': '文字が枠の外に出る',
+  'figure-outside-box': '絵が札の外に出る・札で切れる',
   'overlap-text': '文字どうしの重なり',
   covered: '文字・ボタンが隠れる',
   'text-on-figure': '文字が図に重なる（参考）',
   'overlap-button': 'ボタンどうしの重なり',
   'ruby-overlap': 'ふりがなが親字に重なる',
+  'label-gap': '札がつながって見える',
   'kinsoku-start': '行頭禁則',
   'kinsoku-end': '行末禁則',
   orphan: '最後の行が1文字',
@@ -74,6 +86,7 @@ export const TEXT_ISSUE_LABEL: Record<TextIssueKind, string> = {
   'button-split': 'ボタン・選択肢の中で語が折れる',
   'narrow-wrap': '極端に狭い折り返し',
   'small-text': '文字が小さすぎる',
+  'small-figure': '絵・札が小さすぎる',
   'markup-leak': '《》・{{ }} の記法がそのまま出る',
 };
 
@@ -546,6 +559,12 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       ruby: Element | null;
       text: string;
       svg: boolean;
+      /**
+       * SVG の text だけ（C31）: 上下を字の大きさ（font-size × 図の拡大率）の高さに詰めた箱。外接の箱（ascent＋descent、
+       * 約 1.47em）は字の上下の余白を含むので、縦軸の数のように字の 1.1 倍だけ離して並べた字が「重なる」と出ていた。
+       * 重なりの判定（(6)）の SVG の text どうしだけが使う。切れ・はみ出し（(5)）は外接の箱のまま
+       */
+      core?: { t: number; b: number };
     }
     const boxes: LineBox[] = [];
     for (const node of textNodes) {
@@ -626,6 +645,12 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       if (zeroFigs.some((z) => z.contains(t))) continue; // 大きさが 0 の図の中の字は、図の1件にまとめた
       const r = t.getBoundingClientRect();
       if (r.width < 1 || r.height < 1) continue;
+      // C31: 字の大きさの高さに詰めた箱（外接の箱の縦の中央に置く。HTML の字の Range と同じ詰め方）
+      let fsPx = parseFloat(cs(t).fontSize) || 0;
+      const ctm = (t as unknown as SVGGraphicsElement).getScreenCTM?.();
+      if (ctm) fsPx *= Math.sqrt(Math.abs(ctm.a * ctm.d - ctm.b * ctm.c));
+      const coreH = fsPx > 0 ? Math.min(r.height, fsPx) : r.height;
+      const mid = (r.top + r.bottom) / 2;
       boxes.push({
         l: r.left,
         t: r.top,
@@ -637,6 +662,7 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         ruby: null,
         text: (t.textContent ?? '').trim(),
         svg: true,
+        core: { t: mid - coreH / 2, b: mid + coreH / 2 },
       });
     }
 
@@ -954,12 +980,18 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       };
       return over(A.el, Bx.el) || over(Bx.el, A.el);
     };
+    /** 見えている部分の箱。SVG の text は、詰めた箱（core）を枠で切った箱（cv。C31）も持つ */
+    type ShownBox = LineBox & { cv?: { l: number; t: number; r: number; b: number } | null };
     const shownBoxes = boxes
-      .map((bx) => {
+      .map((bx): ShownBox | null => {
         const v = visible(bx.el, bx);
-        return v ? { ...bx, ...v } : null;
+        if (!v) return null;
+        const cv = bx.core
+          ? visible(bx.el, { l: bx.l, t: bx.core.t, r: bx.r, b: bx.core.b })
+          : undefined;
+        return { ...bx, ...v, cv };
       })
-      .filter((x): x is LineBox => x !== null);
+      .filter((x): x is ShownBox => x !== null);
     for (let i = 0; i < shownBoxes.length; i++) {
       const A = shownBoxes[i]!;
       for (let j = i + 1; j < shownBoxes.length; j++) {
@@ -970,8 +1002,19 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
         // 図の文字と、その図の中の文字（svg の中の text と tspan）: 同じ要素の入れ子
         if (A.el.contains(Bx.el) && A.svg && Bx.svg) continue;
         if (Bx.el.contains(A.el) && A.svg && Bx.svg) continue;
-        const ow = Math.min(A.r, Bx.r) - Math.max(A.l, Bx.l);
-        const oh = Math.min(A.b, Bx.b) - Math.max(A.t, Bx.t);
+        // C31: SVG の text どうしは、上下を字の大きさの高さに詰めた箱で比べ、閾値（低いほうの 0.3 倍）は、スクロールの枠で
+        // 切る前の詰めた箱で決める。外接の箱（約 1.47em）では、字の 1.1 倍だけ離して並べた縦軸の数が重なるうえ、
+        // 本文の枠で切れた箱が低くなって閾値が 4px まで下がり、重なっていない「10｜15」を出していた
+        // （g5.ja.text-figure/8 のヒント①・1920×1080）。HTML の字は今までどおり（Range で字の高さに詰めてある）
+        const core = !!(A.svg && Bx.svg && A.core && Bx.core);
+        if (core && (!A.cv || !Bx.cv)) continue; // 字の本体が枠で隠れている（隠れたことは (5) で出る）
+        const ba = core ? A.cv! : A;
+        const bb = core ? Bx.cv! : Bx;
+        const ow = Math.min(ba.r, bb.r) - Math.max(ba.l, bb.l);
+        const oh = Math.min(ba.b, bb.b) - Math.max(ba.t, bb.t);
+        const oMin = core
+          ? Math.min(A.core!.b - A.core!.t, Bx.core!.b - Bx.core!.t)
+          : Math.min(A.b - A.t, Bx.b - Bx.t);
         // 長いふりがなの張り出し: rt が上（相手の字の行の上側）で、横の重なりが rt の字の 0.5 字以内なら、
         // 同じ行の隣の字の上に張り出しているだけ。前の行に重なる（rt の中心が相手より下）ときは出す
         if (A.rt !== Bx.rt) {
@@ -980,15 +1023,15 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
           const rtFs = rtB.b - rtB.t;
           if ((rtB.t + rtB.b) / 2 < (other.t + other.b) / 2 && ow <= 0.5 * rtFs + 1) continue;
         }
-        if (ow > 1.5 && oh > 0.3 * Math.min(A.b - A.t, Bx.b - Bx.t)) {
+        if (ow > 1.5 && oh > 0.3 * oMin) {
           // 一方が、不透明な背景の板・吹き出しの下に隠れているときは、文字どうしの重なりに数えない
           // （隠れたことは (8) の covered で出る。二重に出さない）
           if (
             hiddenUnderOpaque(
               A,
               Bx,
-              (Math.max(A.l, Bx.l) + Math.min(A.r, Bx.r)) / 2,
-              (Math.max(A.t, Bx.t) + Math.min(A.b, Bx.b)) / 2,
+              (Math.max(ba.l, bb.l) + Math.min(ba.r, bb.r)) / 2,
+              (Math.max(ba.t, bb.t) + Math.min(ba.b, bb.b)) / 2,
             )
           )
             continue;
@@ -1554,7 +1597,8 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
 
     // ---- (8b) 正解の印 .mark--correct（C16・C21）。輪の中は透明で当たり判定（elementsFromPoint）が通り抜けるので、
     // (8) では数えられない。字の後ろか前かは問わない（線は字の後ろでも字を横切って読みにくい）。
-    //   - 大きな輪（札の中央に置く真円）: 字の中心が輪の線の帯（外の円 − 内の円）に入る字が 1 つでもあれば covered。
+    //   - 大きな輪（札の中央に置く真円）: 字の矩形（上下左右を 15% ずつ内側。ふりがなを含む）が輪の線の帯（外の円 − 内の円）と
+    //     交わる字が 1 つでもあれば covered（C27。C21 までは字の中心だけで、rt を除いていた）。
     //     札の字数では外さない（C21。幼児の英語の短い札で「輪は字の上下を通るだけ」が成り立たなかった）。
     //     輪が札の枠からはみ出して、隣の札の矩形に入るものも covered
     //   - 角の小さな ○（transform なし。白地）: 字（ふりがなを含む）の矩形と ○ の円が重なれば covered
@@ -1611,12 +1655,30 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
       }
       const bw = parseFloat(cs(mk).borderTopWidth) || 0;
       if (bw > 0) {
-        // 線の無い印（背景だけ）は帯が無い
-        const inner = 1 - bw / Math.min(rx, ry);
+        // 線の無い印（背景だけ）は帯が無い。
+        // C27: 字の中心でなく、字の矩形（上下左右を 15% ずつ内側）が帯（外の円 − 内の円）と交わるかで見る。外の円の外、
+        // 内の円に入りきった字は数えない。ふりがな（rt）の字も数える。中心だけでは、輪が字を横切るのに中心が帯の外で
+        // 通り抜けた（g1.math.shapes/1・2 の「すいか」「かん」）うえ、rt を除いていたので、listen の絵の段の輪が
+        // ふりがなにかかるものが出なかった
+        const irx = rx - bw;
+        const iry = ry - bw;
         const hit = cardChars.filter((c) => {
-          if (c.rt) return false;
-          const d = Math.hypot(((c.l + c.r) / 2 - cx) / rx, ((c.t + c.b) / 2 - cy) / ry);
-          return d <= 1 && d >= inner;
+          const dw = (c.r - c.l) * 0.15;
+          const dh = (c.b - c.t) * 0.15;
+          const q = { l: c.l + dw, t: c.t + dh, r: c.r - dw, b: c.b - dh };
+          if (!circleHitsRect(cx, cy, rx, ry, q)) return false; // 外の円の外
+          if (irx <= 0 || iry <= 0) return true; // 線が半径いっぱい（塗りつぶし）
+          const far = Math.max(
+            ...(
+              [
+                [q.l, q.t],
+                [q.r, q.t],
+                [q.l, q.b],
+                [q.r, q.b],
+              ] as const
+            ).map(([x, y]) => Math.hypot((x - cx) / irx, (y - cy) / iry)),
+          );
+          return far > 1; // 内の円に入りきっていない
         });
         if (hit.length >= 1)
           add(
@@ -1721,6 +1783,278 @@ export function textLayoutProbe(opt: TextProbeOptions): TextProbeResult {
             '線が別の札の後ろを通る',
           );
       });
+    }
+
+    // ---- (12) 札の中の絵（C28・C29 a）・パックの SVG の札の列（C29 b）・並んだ札のすき間（C30）
+    // 字の検査は字しか見ないので、絵が札の外に出ても、小さくても、札がつながっても何も出なかった（第7回の点検 1〜5・19〜22）
+    {
+      /** 札ごとの絵。絵は、いちばん外の svg・img・.fig-illust__group の子（入れ子は外側の 1 つ）。.mark・.tk-badge は絵に数えない */
+      const picsOf = new Map<Element, Element[]>();
+      {
+        const cands: Element[] = [];
+        for (const el of Array.from(root.querySelectorAll('svg, img, .fig-illust__group > *'))) {
+          if (el.closest('.mark, .tk-badge')) continue;
+          if (el.parentElement?.closest('svg')) continue; // 入れ子の svg は外側で見る
+          if (!shown(el)) continue;
+          const r = el.getBoundingClientRect();
+          if (r.width < 1 || r.height < 1) continue; // 大きさが 0 の図は (3b)
+          cands.push(el);
+        }
+        for (const el of cands) {
+          if (cands.some((o) => o !== el && o.contains(el))) continue; // 絵の中の絵
+          const card = el.closest(cardSelector);
+          if (!card || !root.contains(card)) continue;
+          const list = picsOf.get(card);
+          if (list) list.push(el);
+          else picsOf.set(card, [el]);
+        }
+      }
+      let allCards: Element[] | null = null;
+      /** 札の名前（ボタンの文字か aria-label。無ければ、札の並びの何番目か） */
+      const cardLabel = (card: Element): string => {
+        const t = card.getAttribute('aria-label') ?? textOf(card);
+        if (t) return t;
+        allCards ??= Array.from(root.querySelectorAll(cardSelector));
+        return `札${allCards.indexOf(card) + 1}`;
+      };
+
+      // C28 絵が札の外に出る・札で切れる: 絵の矩形が (b) 札の中の overflow が visible でない祖先の枠（札自身を含む）から
+      // 0.3u を超えて出る（その枠で切れる）か、(a) 札の矩形（枠線の内側）から 0.3u を超えて出る。札ごとに 1 件（いちばん大きいもの）
+      const FIG_TOL = 0.3 * u;
+      for (const [card, list] of picsOf) {
+        const cb = clientBox(card);
+        let best: { amt: number; kind: 'out' | 'clip'; el: Element; r: DOMRect } | null = null;
+        for (const p of list) {
+          const pr = p.getBoundingClientRect();
+          let hit: { amt: number; kind: 'out' | 'clip' } | null = null;
+          for (let a: Element | null = p.parentElement; a; a = a.parentElement) {
+            const s = cs(a);
+            if (s.overflowX !== 'visible' || s.overflowY !== 'visible') {
+              const c = clientBox(a);
+              const amt = Math.max(
+                s.overflowX !== 'visible' ? Math.max(c.l - pr.left, pr.right - c.r) : 0,
+                s.overflowY !== 'visible' ? Math.max(c.t - pr.top, pr.bottom - c.b) : 0,
+              );
+              if (amt > FIG_TOL) {
+                hit = { amt, kind: 'clip' };
+                break;
+              }
+            }
+            if (a === card) break;
+          }
+          if (!hit) {
+            const amt = Math.max(cb.l - pr.left, pr.right - cb.r, cb.t - pr.top, pr.bottom - cb.b);
+            if (amt > FIG_TOL) hit = { amt, kind: 'out' };
+          }
+          if (hit && (!best || hit.amt > best.amt)) best = { ...hit, el: p, r: pr };
+        }
+        if (best)
+          add(
+            'figure-outside-box',
+            `${cardLabel(card)}（絵 ${list.length}）`,
+            `${describe(best.el)} ⊂ ${describe(card)}`,
+            best.r,
+            best.kind === 'clip'
+              ? `絵が札の枠で ${r1(best.amt / u)}u 切れる`
+              : `絵が札の外に ${r1(best.amt / u)}u 出る`,
+          );
+      }
+
+      // C29 (a) 数える札: 1 つの札に .fig-illust__group の絵が 2 つ以上あるとき、絵の短い辺が 4u 未満（段階を問わない）。
+      // 下限は DESINGN.md 17 章（第7回 X2）。丸めの 1% は数えない
+      const COUNT_MIN_U = 4;
+      for (const [card, list] of picsOf) {
+        const counted = list.filter((p) =>
+          p.parentElement?.classList.contains('fig-illust__group'),
+        );
+        if (counted.length < 2) continue;
+        let small: Element = counted[0]!;
+        let side = Infinity;
+        for (const p of counted) {
+          const pr = p.getBoundingClientRect();
+          const sd = Math.min(pr.width, pr.height);
+          if (sd < side) {
+            side = sd;
+            small = p;
+          }
+        }
+        if (side < COUNT_MIN_U * u * 0.99)
+          add(
+            'small-figure',
+            `${cardLabel(card)}（${counted.length}こ）`,
+            `${describe(small)} ⊂ ${describe(card)}`,
+            small.getBoundingClientRect(),
+            `数える絵が ${r1(side / u)}u（最小 ${COUNT_MIN_U}u・${counted.length}こ）`,
+          );
+      }
+
+      // C29 (b) パックの SVG（.fig-svg の svg）の中の、同じ大きさの矩形（rect。縦横比 1.5 倍以内）が 3 つ以上、
+      // すき間が短い辺の半分以下で縦か横に並ぶもの（手順の札・盤のます）の短い辺が 2.4u 未満。矩形は、正方形（盤のます）か
+      // 角丸（rx > 0）の札。手順の札（prog の stripFigure の rx=5 の角丸の札、1.5u×1.7u など）は正方形ではない（点検 22 の
+      // g6.prog.efficient・g5.prog.debug-plan）ので、正方形だけに絞ると、検査の目的の札が出ない。角のない長方形の分割
+      // （分数の帯の 24 等分）と、細長い帯・枠・横長の絵（縦横比 1.5 倍超）は札・ますではない。
+      // 間をあけて置いた図形（p5.think.pattern の「ちいさい しかく」）は並んでいないので数えない。
+      // 下限は DESINGN.md 17 章（第6回 W8・第7回 X4）の盤の 1 ます
+      const CELL_MIN_U = 2.4;
+      for (const svg of Array.from(root.querySelectorAll('.fig-svg svg'))) {
+        if (svg.parentElement?.closest('svg') || !shown(svg)) continue;
+        interface Cell {
+          l: number;
+          t: number;
+          w: number;
+          h: number;
+        }
+        const cells: Cell[] = [];
+        for (const rc of Array.from(svg.querySelectorAll('rect'))) {
+          if (rc.closest('defs, symbol, clipPath, mask, pattern, marker')) continue;
+          const r = rc.getBoundingClientRect();
+          if (r.width < 2 || r.height < 2) continue;
+          const long = Math.max(r.width, r.height);
+          const short = Math.min(r.width, r.height);
+          if (long > 1.5 * short) continue; // 細長い帯・枠・横長の絵（p23.math.compare の電車の 1 両は 1.7 倍）
+          // 正方形（盤のます）か、角丸の札（手順の札。rx > 0）だけ。角のない長方形の分割（分数の帯のます。
+          // g4.math.fraction-kinds の 24 等分など）は札でも盤のますでもないので数えない
+          const rounded =
+            (parseFloat(rc.getAttribute('rx') ?? '') || parseFloat(cs(rc).rx) || 0) > 0;
+          if (long - short > 0.04 * long && !rounded) continue;
+          cells.push({ l: r.left, t: r.top, w: r.width, h: r.height });
+        }
+        // 同じ大きさ（幅・高さがどちらも 4% 以内）のまとまり。同じ位置の重ね描き（面と枠など）は 1 つ
+        const groups: Cell[][] = [];
+        for (const c of cells) {
+          const g = groups.find(
+            (x) =>
+              Math.abs(x[0]!.w - c.w) <= 0.04 * x[0]!.w &&
+              Math.abs(x[0]!.h - c.h) <= 0.04 * x[0]!.h,
+          );
+          const tol = 0.1 * Math.min(c.w, c.h);
+          if (!g) groups.push([c]);
+          else if (!g.some((q) => Math.abs(q.l - c.l) <= tol && Math.abs(q.t - c.t) <= tol))
+            g.push(c);
+        }
+        let worst = Infinity;
+        let worstN = 0;
+        for (const group of groups) {
+          if (group.length < 3) continue;
+          const w = group[0]!.w;
+          const h = group[0]!.h;
+          const s = Math.min(w, h);
+          const tol = 0.1 * s;
+          const parent = group.map((_, k) => k);
+          const find = (k: number): number =>
+            parent[k] === k ? k : (parent[k] = find(parent[k]!));
+          for (let a = 0; a < group.length; a++) {
+            for (let b = a + 1; b < group.length; b++) {
+              const dx = Math.abs(group[b]!.l - group[a]!.l);
+              const dy = Math.abs(group[b]!.t - group[a]!.t);
+              // 同じ行（縦のずれが小さい）で横のすき間が、または同じ列で縦のすき間が、短い辺の半分以下
+              const gap = dy <= tol ? dx - w : dx <= tol ? dy - h : Infinity;
+              if (gap >= -tol && gap <= 0.5 * s + 0.5) parent[find(a)] = find(b);
+            }
+          }
+          const comp = new Map<number, number>();
+          group.forEach((_, k) => comp.set(find(k), (comp.get(find(k)) ?? 0) + 1));
+          const n = Math.max(...comp.values());
+          if (n >= 3 && s < worst) {
+            worst = s;
+            worstN = n;
+          }
+        }
+        if (worst < CELL_MIN_U * u * 0.99) {
+          const fig = svg.closest('.fig-svg') ?? svg;
+          add(
+            'small-figure',
+            fig.getAttribute('aria-label') ?? textOf(fig),
+            describe(fig),
+            svg.getBoundingClientRect(),
+            `手順の札・盤のますの短い辺が ${r1(worst / u)}u（最小 ${CELL_MIN_U}u・${worstN}こ並ぶ）`,
+          );
+        }
+      }
+
+      // C30 並んだ札のすき間: 横軸の札の列（.fig-chart__labels・graph の .gr-xlabels の子）と数直線の印のラベル
+      // （.fig-nl__labels の子）で、同じ行の隣どうしの字の矩形（ふりがな rt は除く）のすき間が字の大きさの 0.25 倍未満。
+      // 重ならなくても、すき間が無いと「9時10時11時」のようにつながって読める（overlap-text は重なりしか見ない）。
+      // 文の中の span どうし（Rt の ruby・nobr の包み）はすき間 0 で並ぶのが正しいので、札の列に絞る
+      const GAP_MIN = 0.25;
+      for (const lab of Array.from(
+        root.querySelectorAll('.fig-chart__labels, .gr-xlabels, .fig-nl__labels'),
+      )) {
+        if (!shown(lab)) continue;
+        const inLab = textNodes.filter((n) => lab.contains(n));
+        const items: { l: number; t: number; r: number; b: number; fs: number; text: string }[] =
+          [];
+        for (const ch of Array.from(lab.children)) {
+          if (!shown(ch)) continue;
+          let l = Infinity;
+          let t = Infinity;
+          let r = -Infinity;
+          let b = -Infinity;
+          let fs = 0;
+          let text = '';
+          for (const node of inLab) {
+            if (!ch.contains(node)) continue;
+            for (const c of charsOf(node)) {
+              if (!c || c.rt) continue;
+              l = Math.min(l, c.l);
+              t = Math.min(t, c.t);
+              r = Math.max(r, c.r);
+              b = Math.max(b, c.b);
+              fs = Math.max(fs, c.b - c.t);
+              text += c.ch;
+            }
+          }
+          if (text) items.push({ l, t, r, b, fs, text });
+        }
+        if (items.length < 2) continue;
+        // 行に分ける（縦の中心が字の 0.5 倍以内。1 つおきに下へずらした段は別の行）
+        items.sort((a, b) => (a.t + a.b) / 2 - (b.t + b.b) / 2);
+        const rows: (typeof items)[] = [];
+        for (const it of items) {
+          const row = rows[rows.length - 1];
+          const first = row?.[0];
+          if (
+            row &&
+            first &&
+            Math.abs((it.t + it.b) / 2 - (first.t + first.b) / 2) <= 0.5 * first.fs
+          )
+            row.push(it);
+          else rows.push([it]);
+        }
+        let worstGap = Infinity;
+        let wa: (typeof items)[number] | null = null;
+        let wb: (typeof items)[number] | null = null;
+        for (const row of rows) {
+          row.sort((a, b) => a.l - b.l);
+          for (let k = 0; k + 1 < row.length; k++) {
+            const a = row[k]!;
+            const b = row[k + 1]!;
+            const ratio = (b.l - a.r) / Math.max(a.fs, b.fs);
+            if (ratio < GAP_MIN && ratio < worstGap) {
+              worstGap = ratio;
+              wa = a;
+              wb = b;
+            }
+          }
+        }
+        if (wa && wb)
+          add(
+            'label-gap',
+            items
+              .slice()
+              .sort((a, b) => a.l - b.l)
+              .map((x) => x.text)
+              .join('｜'),
+            describe(lab),
+            {
+              left: Math.min(wa.l, wb.l),
+              top: Math.min(wa.t, wb.t),
+              right: Math.max(wa.r, wb.r),
+              bottom: Math.max(wa.b, wb.b),
+            },
+            `隣の札「${wa.text}」「${wb.text}」のすき間が字の ${r2(worstGap)} 倍（最小 ${GAP_MIN} 倍）`,
+          );
+      }
     }
 
     return { u: r1(u), viewport: [W, H], chars: charCount, issues };

@@ -230,26 +230,31 @@ function SortView({
             </div>
           ))}
         </div>
-        <div
-          className={[
-            'eng-sort__pool',
-            cols ? `eng-sort__pool--cols eng-sort__pool--cols${cols}` : '',
-          ].join(' ')}
-          role="group"
-          aria-label="わける もの"
-        >
-          {pooled.map((i) => (
-            <TapCard
-              key={i}
-              card={item.cards[i]!}
-              ctx={ctx}
-              state={picked === i ? 'selected' : null}
-              disabled={locked}
-              onPress={() => pressCard(i)}
-              testId={`card-${i}`}
-            />
-          ))}
-        </div>
+        {/* 解説で札が全部箱に入っているときは、空の札置き場（min-height 7u）を出さない。
+            高さを取り、何も無いのに作業領域の ▼ が出た（p4.env.seasons/22・g6.sci.strata/17 の解説）。
+            問題の状態では、札を入れ終わっても札置き場の高さを残す（箱が動かないように） */}
+        {revealed && pooled.length === 0 ? null : (
+          <div
+            className={[
+              'eng-sort__pool',
+              cols ? `eng-sort__pool--cols eng-sort__pool--cols${cols}` : '',
+            ].join(' ')}
+            role="group"
+            aria-label="わける もの"
+          >
+            {pooled.map((i) => (
+              <TapCard
+                key={i}
+                card={item.cards[i]!}
+                ctx={ctx}
+                state={picked === i ? 'selected' : null}
+                disabled={locked}
+                onPress={() => pressCard(i)}
+                testId={`card-${i}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
       {!auto && !revealed ? (
         <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} />

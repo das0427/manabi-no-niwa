@@ -188,6 +188,22 @@ export function sameSides(ps: Pt[], lengths: number[]): boolean {
   return a.every((v, i) => near(v, b[i]!));
 }
 
+/**
+ * 形の仲間の目標（shape）に合うか。classOk: 仲間が合う（exclusive なら、より特別な仲間でない）、sidesOk: 辺の長さが合う。
+ * 判定（judgeDraw）と見本の形の探索（example.ts）が同じ基準を使う。
+ */
+export function matchShape(
+  poly: Pt[],
+  shape: ShapeClass,
+  sides?: number[],
+  exclusive?: boolean,
+): { classOk: boolean; sidesOk: boolean } {
+  return {
+    classOk: shapeClasses(poly).has(shape) && (!exclusive || mostSpecific(poly) === shape),
+    sidesOk: !sides || sameSides(poly, sides),
+  };
+}
+
 /** 直線 a-b について線対称の位置 */
 export function reflectPt(p: Pt, a: Pt, b: Pt): Pt {
   const v = sub(b, a);

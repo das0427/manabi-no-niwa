@@ -6,7 +6,7 @@
  *          垂直・平行な直線
  *  angle … 角の大きさを分度器で測る（数字キー。許容誤差 既定 ±2度）
  */
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { parseNumberInput, RETRY_MESSAGE } from '../../core/answer/number';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -19,19 +19,16 @@ import { floorStyle, useSvgTextFloor } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry } from '../numberline/NumPad';
 import type { Judgement } from '../types';
+import { exampleFor, targetPolygon } from './example';
 import {
   isSimple,
   isTranslation,
   lineRelation,
-  mostSpecific,
+  matchShape,
   normalizePolygon,
   onLine,
-  reflectPt,
-  rotate180,
   sameCycle,
   samePt,
-  sameSides,
-  shapeClasses,
   SHAPE_NAME,
   similarCycle,
   type Pt,
@@ -131,19 +128,6 @@ export type GeometryResponse =
   { pick: number[] } | { path: Pt[]; closed: boolean } | { fields: string[] };
 
 // ---- 判定 ----
-function targetPolygon(t: GeoTarget): Pt[] | null {
-  switch (t.kind) {
-    case 'exact':
-      return t.points;
-    case 'reflect':
-      return t.points.map((p) => reflectPt(p, t.axis[0], t.axis[1]));
-    case 'rotate180':
-      return t.points.map((p) => rotate180(p, t.center));
-    default:
-      return null;
-  }
-}
-
 const isLineTarget = (t: GeoTarget) => t.kind === 'perpendicular' || t.kind === 'parallel';
 
 function judgeDraw(
@@ -199,11 +183,15 @@ function judgeDraw(
   }
   // 形の仲間
   const sg = g as Extract<GeoTarget, { kind: 'shape' }>;
-  const cls = shapeClasses(poly);
-  const classOk = cls.has(sg.shape) && (!sg.exclusive || mostSpecific(poly) === sg.shape);
-  const sidesOk = !sg.sides || sameSides(poly, sg.sides);
+  const { classOk, sidesOk } = matchShape(poly, sg.shape, sg.sides, sg.exclusive);
   if (classOk && sidesOk) return { result: 'correct' };
   return { result: 'wrong', misconception: classOk ? mis.wrongSides : mis.wrongClass, mark: true };
+}
+
+/** 解説で見本の形を出すか。子供の図が目標を満たしていないとき（何も描いていないときを含む）だけ */
+export function needsExample(item: GeometryItem, path: Pt[], closed: boolean): boolean {
+  const t = item.task;
+  return t.kind === 'draw' && judgeDraw(item, t, path, closed).result !== 'correct';
 }
 
 function judgeAngle(
@@ -485,15 +473,10 @@ function DrawView({
   };
   const ready = line ? path.length === 2 : closed;
   const wrong = !!wrongMark && !revealed && !dirty;
-  // 正答の例（revealed）
   const tg = t.target;
-  const ans: GeoShape | null = revealed
-    ? isLineTarget(tg)
-      ? null
-      : targetPolygon(tg)
-        ? { points: targetPolygon(tg)! }
-        : null
-    : null;
+  // 解説（revealed）: 子供の図が目標を満たしていなければ（何も描いていないときを含む）、見本の形を点線で出す
+  const example = useMemo(() => (revealed ? exampleFor(t) : null), [revealed, t]);
+  const showExample = example !== null && needsExample(item, path, closed);
   const dots = [];
   for (let x = 0; x <= g.w; x++)
     for (let y = 0; y <= g.h; y++)
@@ -565,7 +548,15 @@ function DrawView({
             <circle cx={P(tg.through).x} cy={P(tg.through).y} r={10} className="geo-center" />
           ) : null}
           {dots}
-          {ans ? <ShapeSvg s={ans} g={g} cls="geo-answer" /> : null}
+          {showExample ? (
+            <g data-testid="geo-example">
+              <ShapeSvg
+                s={{ points: example.points, infinite: example.kind === 'line' }}
+                g={g}
+                cls="geo-answer"
+              />
+            </g>
+          ) : null}
           {line && path.length === 2 ? (
             <ShapeSvg s={{ points: path, infinite: true }} g={g} cls="geo-mine geo-mine--thin" />
           ) : null}

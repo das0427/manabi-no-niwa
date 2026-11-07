@@ -65,6 +65,9 @@
 }
 /* ふたの中の名前の図（色の丸など）: ふたの高さ（5.5u）から 1u 引いた高さまで。幅は比で決め、上下を切らない（p23.think.sort） */
 .eng-sort__name .tk-card__fig {
+  /* 図の枠の寸法（shared.css の --tk-fig-w・--tk-fig-h）。幅は縛らない（舞台の幅 100u） */
+  --tk-fig-w: calc(var(--u) * 100);
+  --tk-fig-h: calc(var(--u) * 4.5);
   max-width: none;
   max-height: calc(var(--u) * 4.5);
   overflow: visible;
@@ -151,6 +154,12 @@
    1 枚で箱の幅を超える札だけが、今までどおり箱の幅（max-width: 100%）で折れる */
 .eng-sort__boxes[data-explain] .eng-sort__inside {
   gap: calc(var(--u) * 0.6);
+}
+/* 解説の箱は 44u まで広げる（箱が 2 つなら 88u ＋ すき間 2u = 90u ≤ 作業領域 92u。3 つ以上は幅いっぱいで 29.3u 以下なので変わらない）。
+   空の札置き場（9.4u）を出さなくなって作業領域が縮まず（--fit が 1 のまま）、箱が 34u 止まりのとき、20 字前後の札が
+   「とあい／さつした」「ふりそ／そぐ」と語の途中で折れた（g4.ja.plain-polite-style/13・g5.ja.figurative/13 の解説）。44u なら 1 行に入る */
+.eng-sort__boxes[data-explain] .eng-sort__box {
+  max-width: max(calc(var(--u) * 44), calc(var(--u0, var(--u)) * 29.5));
 }
 .eng-sort__boxes[data-explain] .eng-sort__inside[data-cols2] > .tk-card {
   flex: 1 0 auto;

@@ -224,6 +224,44 @@ describe('画面', () => {
     expect(run(3)).toBe(false);
     expect(run(4)).toBe(true);
   });
+  it('解説（revealed）では空の枠だけの おくもの の列を出さない。縦並びは並べた所が幅いっぱい（solo）', () => {
+    const long = item({
+      layout: 'column',
+      cards: Array.from({ length: 4 }, (_, i) => ({
+        label: `とても ながい ぶんの カード ${i + 1}`,
+      })),
+      alsoAccept: undefined,
+      wrongOrders: undefined,
+      reverseMisconception: undefined,
+      initial: undefined,
+      ends: undefined,
+    });
+    const q = render(createElement(orderEngine.Component, props(long)));
+    // 問題の状態: おくもの の列があり、札が 4 枚入っている（solo にならない）
+    expect(q.container.querySelector('.eng-order__pool')).not.toBeNull();
+    expect(q.container.querySelector('.eng-order__main--solo')).toBeNull();
+    q.unmount();
+    for (const it2 of [long, item()]) {
+      const { container, unmount } = render(
+        createElement(orderEngine.Component, { ...props(it2), revealed: true }),
+      );
+      expect(container.querySelector('.eng-order__pool')).toBeNull();
+      expect(container.querySelector('.eng-order__ghost')).toBeNull();
+      expect(container.querySelector('.eng-order__main--solo')).not.toBeNull();
+      // 並べた所には、全部の札が正しい順で入っている
+      expect(container.querySelectorAll('.eng-order__track .tk-card')).toHaveLength(
+        it2.cards.length,
+      );
+      unmount();
+    }
+  });
+  it('置いていくあいだは、置いたあとの空の枠（ghost）を残して並びを動かさない', () => {
+    const { container } = render(createElement(orderEngine.Component, props(item())));
+    fireEvent.click(screen.getByTestId('card-0'));
+    expect(container.querySelector('.eng-order__pool')).not.toBeNull();
+    expect(container.querySelectorAll('.eng-order__ghost')).toHaveLength(1);
+    expect(container.querySelector('.eng-order__main--solo')).toBeNull();
+  });
   it('2〜3歳: 少ない枚数で、置き終わると自動で答える', () => {
     const p = props(item(), ctxFor('toddler2'));
     render(createElement(orderEngine.Component, p));

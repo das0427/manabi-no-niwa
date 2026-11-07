@@ -85,7 +85,8 @@ function isGlue(tk: Token | undefined, ctx: Ctx): boolean {
 /**
  * 文字の token を [前の token に付ける頭, 本体, 次の token に付ける尻] に分ける。
  * 付けるのは括弧・句読点の並び（頭は終わり括弧・句読点、尻は始め括弧）、無ければ隣の1字（空白は付けない）。
- * 付ける部分は前後の token と同じ nowrap の span に入れる（別の span にすると、span の境目で折れてしまう）
+ * 付ける部分は前後の token と同じ nowrap の span に入れる（別の span にすると、span の境目で折れてしまう）。
+ * 分数の直前は始め括弧だけ（隣の字は付けない）。
  */
 function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
   const tk = ts[i];
@@ -97,12 +98,18 @@ function textParts(ts: Token[], i: number, ctx: Ctx): [string, string, string] {
     [head, body] = splitAfterBlank(body);
     if (!head && /^\S/u.test(body)) [head, body] = [[...body][0]!, [...body].slice(1).join('')];
   }
-  // 分数のすぐ後ろの仮名（空白まで）は分数と離さない（「□／は」）
+  // 分数のすぐ後ろの仮名（空白まで）は分数と離さない（「□／は」）。
+  // 続く終わり括弧・句読点・「・」も付ける（分数のあとは、行頭に置けない字の前でも折れてしまう。「□／・□」）
   if (ts[i - 1]?.t === 'frac') {
     const m = KANA_RUN.exec(body);
-    if (m && [...m[0]].length <= FRAC_RUN_MAX) [head, body] = [m[0], body.slice(m[0].length)];
+    const kana = m && [...m[0]].length <= FRAC_RUN_MAX ? m[0] : '';
+    const trail = FRAC_TRAIL.exec(body.slice(kana.length))?.[0] ?? '';
+    [head, body] = [kana + trail, body.slice(kana.length + trail.length)];
   }
-  if (isGlue(ts[i + 1], ctx)) {
+  if (ts[i + 1]?.t === 'frac') {
+    // 分数の直前の始め括弧は分数と離さない（「ぶんすう（／1/2」。隣の字までは付けない）
+    [body, tail] = splitBeforeBlank(body);
+  } else if (isGlue(ts[i + 1], ctx)) {
     // 式の演算子と空白（「＝ {{}}」「÷ {{}}」）は空欄と離さない
     const op = /[＋−×÷＝][ \u3000]+$/u.exec(body);
     if (op) {
@@ -130,6 +137,8 @@ const LINE_START_NG = /^[、。，．」』）)〕\]】ーぁぃぅぇぉっゃ�
 /** 記号・分数のすぐ後ろの仮名（空白・句読点・数字の前まで）。後ろの終わり括弧・句読点は別に付ける */
 const KANA_RUN = /^[ぁ-ゖァ-ヺー]+(?=$|[\s、。，．！？!?」』）)\d])/u;
 const FRAC_RUN_MAX = 8;
+/** 分数のすぐ後ろに付ける、行頭に置けない字（終わり括弧・句読点・「・」） */
+const FRAC_TRAIL = /^[」』）)\]】〉》”’、。，．！？!?・]+/u;
 /** 記号（○●□■△▲◎×〜…）＋仮名の最大字数（12 字を超えるまとまりは作らない） */
 const SYMBOL_MAX = 12;
 const SYMBOL_RE = String.raw`(?<sym>[○●□■△▲◎×〜…][ぁ-ゖァ-ヺー]+(?=$|[\s、。，．！？!?」』）)\d]))`;
@@ -266,9 +275,11 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
         return <Fragment key={k}>{tk.base}</Fragment>;
       }
       case 'frac': {
+        // 直前の始め括弧と直後の仮名は、分数と同じ nowrap の包みに入れる
+        const before = textParts(ts, i - 1, ctx)[2];
         const after = textParts(ts, i + 1, ctx)[0];
         const fr = (
-          <span key={after ? undefined : k} className="rt-frac-wrap">
+          <span key={before || after ? undefined : k} className="rt-frac-wrap">
             {tk.whole !== undefined ? <span className="rt-frac-whole">{tk.whole}</span> : null}
             <span
               className="rt-frac"
@@ -280,8 +291,9 @@ function renderTokens(ts: Token[], ctx: Ctx, key = ''): ReactNode[] {
             </span>
           </span>
         );
-        return after ? (
+        return before || after ? (
           <span key={k} className="rt-nobr">
+            {before}
             {fr}
             {after}
           </span>

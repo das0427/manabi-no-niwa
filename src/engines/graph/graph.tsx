@@ -16,7 +16,9 @@ import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
 import {
   floorStyle,
+  labelFitRatio,
   observeResize,
+  slotGapPx,
   textMinPx,
   useSvgTextFloor,
   useWidenToText,
@@ -482,6 +484,9 @@ function XYChart({
 /**
  * 横軸の札: 1行のまま（語の途中で折らない）。入らなければ --text-min まで縮め、
  * なお入らなければ 1つおきに下へずらして2段にする（「みか／ん」「1960／年」）。
+ * 「入る」は、札の中身の幅に字の 0.4 倍（labelFitRatio。figure の横軸の札と同じ。第7回 X4）を足したものが枠の中の幅以下。
+ * 枠のあるボタンの札の枠線・余白（chrome）と、札の列のすき間（絵グラフの列は 1.2u）は、もともとあるとなりとの間なので、
+ * その分は 0.4 倍から引く（字どうしの実際のすき間が 0.4 倍あればよい。検査 C30 も実際のすき間を見る）。
  */
 function useXLabelFit(ref: React.RefObject<HTMLElement | null>, key: unknown): void {
   useLayoutEffect(() => {
@@ -494,26 +499,41 @@ function useXLabelFit(ref: React.RefObject<HTMLElement | null>, key: unknown): v
       box.style.removeProperty('--gr-slot-pad');
       for (const it of items) it.style.fontSize = '';
       if (items.length === 0) return;
-      const need = () =>
-        Math.max(
+      const need = () => {
+        const colGap = slotGapPx(items);
+        return Math.max(
           ...items.map((it) => {
             const t = it.querySelector<HTMLElement>('.gr-xlabel__t');
             if (!t) return 0;
             const cs = getComputedStyle(it);
             const room = it.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-            return room > 0 ? t.getBoundingClientRect().width / room : 0;
+            // 札の枠・余白（枠のあるボタンだけ。字の外側が、となりの札との間に入る）と、列のすき間
+            const chrome = Math.max(0, it.offsetWidth - room);
+            return labelFitRatio(
+              t.getBoundingClientRect().width,
+              parseFloat(cs.fontSize) || 0,
+              room,
+              chrome + colGap,
+            );
           }),
         );
-      const r = need();
+      };
+      let r = need();
       if (r <= 1) return;
-      const base = parseFloat(getComputedStyle(items[0]!).fontSize);
       const min = textMinPx(box);
-      const shrunk = base / r;
-      if (shrunk >= min) {
-        for (const it of items) it.style.fontSize = `${Math.floor(shrunk * 100) / 100}px`;
-        return;
+      let size = parseFloat(getComputedStyle(items[0]!).fontSize);
+      const setAll = (px: number) => {
+        for (const it of items) it.style.fontSize = `${px}px`;
+      };
+      // 比で縮めて測り直す（すき間の一部を枠・列のすき間が受け持つときは比例しないので、数回くり返す）
+      for (let i = 0; i < 6 && r > 1; i++) {
+        size = Math.floor((size / r) * 100) / 100;
+        if (size < min) break;
+        setAll(size);
+        r = need();
       }
-      for (const it of items) it.style.fontSize = `${min}px`;
+      if (r <= 1 && size >= min) return;
+      setAll(min);
       // 2段: 1つおきに下へ。札は2つぶんの幅まで使える（となりの札と同じ段には並ばない）。
       // 2つぶんでも入らない札（枠のあるボタンで、字が最小のまま長い: 「オートバイ」）は、3段にすると
       // 作業領域をさらに 1行ぶん（6u）使い、図が舞台に入らなくなる（g3.math.bar-graph/7 で確かめた）。

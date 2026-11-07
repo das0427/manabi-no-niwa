@@ -2,7 +2,7 @@
  * choice エンジン: 選択肢から選ぶ（1つ、またはすべて選ぶ）。
  * 1つ選ぶ問題はタップでそのまま答える（v1 と同じ）。すべて選ぶ問題は「こたえあわせ」で答える。
  */
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import type { ChoiceItem, RichText } from '../../curriculum/types';
 import { displayOrder as sharedOrder, displayPosition } from '../shared/order';
 import { Rt } from '../../text/Rt';
@@ -12,6 +12,19 @@ import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
 import { observeResize } from '../figure/svgText';
 import type { EngineDef, EngineProps, Judgement, RenderCtx } from '../types';
+import {
+  cardWidths,
+  chooseArrange,
+  isCounting,
+  picSpecsOf,
+  solveFit,
+  SHADOW_U,
+  type PicSpec,
+  type PicsArrange,
+  type PicsCard,
+  type PicsEnv,
+  type PicsOption,
+} from './pics';
 import './choice.css';
 
 /** 答え: 選んだ選択肢の番号（multi は複数） */
@@ -196,42 +209,100 @@ export function wordCardProps(word: WordTrait | null): { cls: string; style?: CS
   return word ? { cls: ' has-word', style: { '--len': word.len } as CSSProperties } : { cls: '' };
 }
 
+/** 測るための箱: 要素の中に置いた箱の幅（px）。CSS の式（var(--u) など）を px にする */
+function pxOf(host: HTMLElement, expr: string): number {
+  const probe = document.createElement('div');
+  probe.style.cssText = `position:absolute;visibility:hidden;pointer-events:none;width:${expr}`;
+  host.appendChild(probe);
+  const w = probe.getBoundingClientRect().width;
+  probe.remove();
+  return w;
+}
+
+/**
+ * 絵だけの札の列で、絵の大きさと札の幅・並べ方を測って決める（text-layout-fixes 第7回 X2）。
+ * specs は 並べる札（表示の順）の絵。ear は聞く問題の「きく」の札（今の場所 at・左に置くときに取る幅 side（u）・
+ * 場所を選んでよいか free・決めた場所を伝える onChange）。
+ */
+export interface PicsFit {
+  specs: readonly PicSpec[];
+  ear?: {
+    at: 'top' | 'left';
+    side: number;
+    free: boolean;
+    onChange(at: 'top' | 'left'): void;
+  };
+}
+
+/** 絵の札の列が変わったか（問題・選択肢・きく札の取る幅が変わったら測り直す。選んだ並べ方は捨てる） */
+const picsSig = (fit: PicsFit | null | undefined): string =>
+  fit
+    ? `${fit.specs.map((s) => `${s.groups.map((g) => g.n).join('+')}/${s.gap}`).join(',')}|${
+        fit.ear ? `${fit.ear.side}${fit.ear.free ? 'f' : 'x'}` : ''
+      }`
+    : '';
+
 /**
  * 絵の札の高さの上限の手がかり（V2 2）: 選択肢の列より上に積まれるものの高さ（px）を --pics-above に、
  * 札のうち絵の下にある分（ラベルの行・札の余白・間隔。いちばん大きい札）を --pics-below に書く。
  * 上は、列から作業領域（.unit__work）まで親をたどり、縦に積む親（flex の column・block）で、前の兄弟の高さ＋間隔と、
  * 親の上の余白を足す。横に並べる親（左の列）は数えない。--work-h（作業領域の高さ）は UnitRunner が書く。
  * ラベルが2行になる札（「はな（くさばな）」）は、行の数のぶん --pics-below が大きくなる（推測でなく測る）。
+ *
+ * fit を渡すと（絵だけの札の列。第7回 X2）、さらに次を測って決め、戻り値と CSS に書く。
+ * - 札ごとの 1 行の絵の数 r・行の数 k・札の余白・ラベルの高さから、幅の合計が列に、並べた高さが作業領域に収まる最大の
+ *   絵の大きさ s（上限 15u）を --pic-max に、札の幅を札ごとに --card-w に書く（pics.ts の solveS）。
+ * - 4 つの選択肢は、1 段／2×2（聞く問題は「きく」の札が上／左も）の s を比べ、最大の並べ方にする（chooseArrange）。
+ *   決めた 1 段／2×2 は戻り値（data-arr="grid"）、「きく」の札の場所は fit.ear.onChange で伝える。
+ * 並べ方が変わるときは、書かずに状態だけ変えて、描き直したあとの測り直しで書く（描く前の寸法を残さない）。
+ * 測る前（描いた直後）は choice.css の式（--pic-w）の初めの値のまま。
  */
-export function usePicsGeometry(listRef: RefObject<HTMLElement | null>, enabled: boolean): void {
-  useEffect(() => {
+export function usePicsGeometry(
+  listRef: RefObject<HTMLElement | null>,
+  enabled: boolean,
+  fit?: PicsFit | null,
+): 'row' | 'grid' {
+  const sig = picsSig(fit);
+  const [picked, setPicked] = useState<{ sig: string; shape: 'row' | 'grid' } | null>(null);
+  const shape = picked && picked.sig === sig ? picked.shape : 'row';
+  const earAt = fit?.ear?.at;
+  useLayoutEffect(() => {
     const list = listRef.current;
     if (!list || !enabled) return undefined;
     const work = list.closest('.unit__work');
     if (!work) return undefined;
     const watch: Element[] = [work, ...Array.from(list.children)];
-    const put = (name: string, px: number) => {
-      const v = `${Math.round(px)}px`;
-      if (list.style.getPropertyValue(name) !== v) list.style.setProperty(name, v);
+    const put = (el: HTMLElement, name: string, value: string) => {
+      if (el.style.getPropertyValue(name) !== value) el.style.setProperty(name, value);
     };
+    const putPx = (name: string, px: number) => put(list, name, `${Math.round(px)}px`);
     const measure = () => {
       let above = 0;
+      // 作業領域がスクロールの枠のときの上の余白（UnitRunner が data-scroll-region と一緒に付ける）は、列より上のものではない
+      let aboveFit = 0;
       for (let el: HTMLElement = list; el !== work && el.parentElement; el = el.parentElement) {
         const parent = el.parentElement as HTMLElement;
         const st = getComputedStyle(parent);
-        const stacked = !(st.display.includes('flex') && st.flexDirection.startsWith('row'));
+        // 横に並べる親は数えない: flex の row、2 列以上の grid（作業領域の横並び data-layout="side"。図は左の列）
+        const stacked = !(
+          (st.display.includes('flex') && st.flexDirection.startsWith('row')) ||
+          (st.display.includes('grid') && st.gridTemplateColumns.trim().split(/\s+/).length > 1)
+        );
         if (!stacked) continue;
         const gap = parseFloat(st.rowGap) || 0;
-        above += parseFloat(st.paddingTop) || 0;
+        const pad = parseFloat(st.paddingTop) || 0;
+        above += pad;
+        if (!(parent === work && work.hasAttribute('data-scroll-region'))) aboveFit += pad;
         for (let s = parent.firstElementChild; s && s !== el; s = s.nextElementSibling) {
           const pos = getComputedStyle(s).position;
           if (pos === 'absolute' || pos === 'fixed') continue;
           if (!watch.includes(s)) watch.push(s);
           above += (s as HTMLElement).offsetHeight + gap;
+          aboveFit += (s as HTMLElement).offsetHeight + gap;
         }
         if (parent === work) break;
       }
-      put('--pics-above', above);
+      putPx('--pics-above', above);
       let below = 0;
       for (const card of Array.from(list.children) as HTMLElement[]) {
         const cs = getComputedStyle(card);
@@ -246,11 +317,106 @@ export function usePicsGeometry(listRef: RefObject<HTMLElement | null>, enabled:
           edge + (label ? label.offsetHeight + (parseFloat(cs.rowGap) || 0) : 0),
         );
       }
-      put('--pics-below', below);
+      putPx('--pics-below', below);
+      if (fit) place(fit, aboveFit);
+    };
+    /** 札の寸法を測り、並べ方と絵の大きさ・札の幅を決めて書く（描き直しが要るときは状態だけ変えて戻る） */
+    const place = (f: PicsFit, above: number) => {
+      const cards = Array.from(list.children) as HTMLElement[];
+      if (cards.length !== f.specs.length) return;
+      // 寸法は、作業領域の縮み（--fit）を 1 に戻した値（--u0 の単位）で決める。--fit が 1 より小さいときの測った値（余白・ラベルの高さ）
+      // を g 倍して戻す。--work-h・--pics-col-w（--u0 の単位）は縮まない。縮んだ値のまま使うと、空きが広く見えて絵が大きくなり、
+      // 入らなくて --fit がさらに縮む行き来になり、作業領域がスクロールの枠のまま戻らなかった（画面サイズを往復したとき）
+      const u = pxOf(list, 'var(--u0, var(--u))');
+      const uNow = pxOf(list, 'var(--u)');
+      const g = uNow > 0 ? u / uNow : 1;
+      // 列の幅: CSS の既定（--pics-col-w。作業領域の 88u・90u）と、置き場の幅（図を左に置く横並びでは右の列だけ）の小さいほう
+      const box = list.closest<HTMLElement>('.eng-listen, .eng-choice');
+      const boxW = box
+        ? box.clientWidth +
+          (work.hasAttribute('data-scroll-region')
+            ? parseFloat(getComputedStyle(work).paddingRight) || 0
+            : 0)
+        : Infinity;
+      const colW = Math.min(pxOf(list, 'var(--pics-col-w)'), boxW);
+      // 測れない（隠れている・寸法の無い環境）ときは CSS の式に任せる
+      if (!(u > 0) || !(colW > 0)) return;
+      const cs = getComputedStyle(list);
+      const group = list.querySelector<HTMLElement>('.fig-illust__group');
+      const picGap =
+        ((group ? parseFloat(getComputedStyle(group).columnGap) : NaN) || 0.6 * uNow) * g;
+      const workH =
+        parseFloat(getComputedStyle(list).getPropertyValue('--work-h')) ||
+        (work as HTMLElement).clientHeight ||
+        Infinity;
+      const geo: PicsCard[] = cards.map((card, i) => {
+        const st = getComputedStyle(card);
+        const label = card.querySelector<HTMLElement>('[class$="__label"]');
+        const edgeY =
+          (parseFloat(st.paddingTop) || 0) +
+          (parseFloat(st.paddingBottom) || 0) +
+          (parseFloat(st.borderTopWidth) || 0) +
+          (parseFloat(st.borderBottomWidth) || 0);
+        return {
+          ...f.specs[i]!,
+          minW: card.classList.contains('has-word') ? pxOf(card, 'var(--word-min-w)') * g : 0,
+          padX:
+            ((parseFloat(st.paddingLeft) || 0) +
+              (parseFloat(st.paddingRight) || 0) +
+              (parseFloat(st.borderLeftWidth) || 0) +
+              (parseFloat(st.borderRightWidth) || 0)) *
+            g,
+          minH: (parseFloat(st.minHeight) || 0) * g,
+          below: (edgeY + (label ? label.offsetHeight + (parseFloat(st.rowGap) || 0) : 0)) * g,
+        };
+      });
+      const ear = f.ear;
+      const earTopH = ear ? pxOf(list, 'var(--ear-top-h, 0px)') * g : 0;
+      // 「きく」の札が上の分（--ear-top-h）を除いた、列より上のもの
+      const aboveBase = Math.max(0, above * g - (ear?.at === 'top' ? earTopH : 0));
+      const aboveNow = above * g;
+      /** 並べ方 e（「きく」の札の場所）で札を並べられる寸法 */
+      const envFor = (e: 'top' | 'left' | undefined): PicsEnv => ({
+        width: colW - (e === 'left' && ear ? ear.side * u : 0),
+        height: workH - (ear ? aboveBase + (e === 'top' ? earTopH : 0) : aboveNow) - SHADOW_U * u,
+        gapX: (parseFloat(cs.columnGap) || 0) * g,
+        gapY: (parseFloat(cs.rowGap) || 0) * g,
+        picGap,
+        u,
+      });
+      const ears: ('top' | 'left' | undefined)[] = !ear
+        ? [undefined]
+        : ear.free
+          ? [ear.at, ear.at === 'top' ? 'left' : 'top']
+          : [ear.at];
+      const other = shape === 'row' ? 'grid' : 'row';
+      const shapes: ('row' | 'grid')[] = cards.length === 4 ? [shape, other] : ['row'];
+      const options: PicsOption[] = [];
+      for (const e of ears)
+        for (const sh of shapes)
+          options.push({ shape: sh, ear: e, ...solveFit(geo, sh, envFor(e)) });
+      const now: PicsArrange = { shape, ear: ear?.at };
+      const best = chooseArrange(options, now, Math.max(...geo.map((c) => c.cap)) * u);
+      const earMoves = best.ear !== undefined && best.ear !== ear?.at;
+      if (best.shape !== shape || earMoves) {
+        if (best.shape !== shape) setPicked({ sig, shape: best.shape });
+        if (earMoves) ear?.onChange(best.ear!);
+        return;
+      }
+      // 選んだ並べ方で、絵の大きさと札の幅を書く（--pic-floor は 0: s が下限より小さくても s のまま描く。下限に合わせて
+      // 大きくすると作業領域がスクロールの枠になり、札が隠れる。数える絵の下限 4u は検査 small-figure が見る。pics.ts）
+      put(list, '--pic-max', `${(Math.floor(best.s * 100) / 100).toFixed(2)}px`);
+      put(list, '--pic-floor', '0px');
+      cardWidths(geo, best.s, envFor(best.ear)).forEach((w, i) =>
+        put(cards[i]!, '--card-w', `${w.toFixed(1)}px`),
+      );
     };
     measure();
     return observeResize([...watch], measure);
-  }, [listRef, enabled]);
+    // fit の中身は sig（と ear.at・shape）が変わるたびに測り直す
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listRef, enabled, sig, shape, earAt]);
+  return shape;
 }
 
 /** 図 1 つに並ぶ絵の数（横幅の見積り用。絵以外の図は 1） */
@@ -311,6 +477,37 @@ export function earOnTop(options: readonly { figure?: unknown }[]): boolean {
   const total = options.reduce((a, o) => a + (o.figure !== undefined ? picCount(o.figure) : 0), 0);
   return !(all && options.length <= 3 && total === options.length);
 }
+
+/**
+ * 絵だけの札の列（is-pics）で、全部の選択肢が絵だけの図（pics.ts の picSpecsOf）なら、絵の大きさと札の幅・並べ方を
+ * 測って決める対象（第7回 X2）。時計・図・表などが混じる列は null（今までどおり choice.css の式に任せる）。
+ */
+export function picsFitOf(
+  options: readonly { figure?: unknown }[],
+  isPics: boolean,
+  ear?: NonNullable<PicsFit['ear']>,
+): PicsFit | null {
+  if (!isPics) return null;
+  const specs = picSpecsOf(options);
+  return specs ? { specs, ear } : null;
+}
+
+/** 絵の札の列に付ける目印。data-fit: 寸法を測る列／data-count: 数える札（5 こずつの行）／data-arr: 2×2 */
+export const picsAttrs = (fit: PicsFit | null, shape: 'row' | 'grid') => ({
+  'data-fit': fit ? '' : undefined,
+  'data-count': fit && isCounting(fit.specs) ? '' : undefined,
+  'data-arr': fit && shape === 'grid' ? 'grid' : undefined,
+});
+
+/** 絵の札に付ける、絵 1 つの既定の大きさ（--pic-cap。数える札の 1 行の幅を決める。choice.css） */
+export const picCapStyle = (
+  fit: PicsFit | null,
+  pos: number,
+  base?: CSSProperties,
+): CSSProperties | undefined =>
+  fit
+    ? ({ ...base, '--pic-cap': `calc(var(--u) * ${fit.specs[pos]!.minCap})` } as CSSProperties)
+    : base;
 
 const labelsOf = (item: Pick<ChoiceItem, 'options'>) =>
   item.options.map((o) => (typeof o.label === 'string' ? o.label : undefined));
@@ -414,7 +611,11 @@ function ChoiceView({
     layout,
     pics.className !== '',
   );
-  usePicsGeometry(listRef, pics.className !== '' || traits.caption);
+  const fit = picsFitOf(
+    shown.map((i) => ({ figure: item.options[i]!.figure })),
+    pics.className !== '',
+  );
+  const shape = usePicsGeometry(listRef, pics.className !== '' || traits.caption, fit);
   const hasLabel = shown.some((i) => item.options[i]!.label !== undefined);
   return (
     <div className="eng-choice">
@@ -428,6 +629,7 @@ function ChoiceView({
         }
         data-long={traits.long ? '' : undefined}
         data-row4={traits.row4 ? '' : undefined}
+        {...picsAttrs(fit, shape)}
       >
         {shown
           .map((i) => ({ o: item.options[i]!, i }))
@@ -445,7 +647,7 @@ function ChoiceView({
                 onPress={() => press(i)}
                 testId={`opt-${i}`}
                 className={`eng-choice__opt${o.figure ? '' : ' eng-choice__opt--text'}${wc.cls}`}
-                style={wc.style}
+                style={picCapStyle(fit, pos, wc.style)}
               >
                 {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
                 {o.label !== undefined ? (

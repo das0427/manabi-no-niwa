@@ -140,3 +140,55 @@ describe('記号・分数・式の演算子のまとまり（V6）', () => {
     );
   });
 });
+
+describe('分数の直前の始め括弧を分数と離さない（X7。g2.math.fraction-simple の題）', () => {
+  const ctx = { furigana: 'unlearned', learnerGrade: 1 } as const;
+  const html = (text: string) => renderToStaticMarkup(createElement(Rt, { text, ctx }));
+  const frac = (n: number, d: number) =>
+    `<span class="rt-frac-wrap"><span class="rt-frac" role="math" aria-label="${d}ぶんの${n}"><span class="rt-frac__num">${n}</span><span class="rt-frac__den">${d}</span></span></span>`;
+  it('「ぶんすう（[[1/2]]・[[1/4]]・[[1/3]]）」の「（」は最初の分数と、続く「・」「）」は各分数と同じ nowrap に入る', () => {
+    const h = html('ぶんすう（[[1/2]]・[[1/4]]・[[1/3]]）');
+    expect(h).toBe(
+      `<span class="rt ">ぶんすう<span class="rt-nobr">（${frac(1, 2)}・</span><span class="rt-nobr">${frac(1, 4)}・</span><span class="rt-nobr">${frac(1, 3)}）</span></span>`,
+    );
+  });
+  it('始め括弧が無いときは、前の字を付けない（隣の字までは付けない）', () => {
+    expect(html('ぶんすう[[1/2]]')).toBe(`<span class="rt ">ぶんすう${frac(1, 2)}</span>`);
+  });
+  it('始め括弧が2つ重なっても、分数に付ける', () => {
+    expect(html('あ「（[[1/2]]')).toContain(`あ<span class="rt-nobr">「（${frac(1, 2)}</span>`);
+  });
+  it('始め括弧と、分数のすぐ後ろの仮名は両方とも同じ nowrap に入る', () => {
+    expect(html('（[[1/2]]は')).toBe(
+      `<span class="rt "><span class="rt-nobr">（${frac(1, 2)}は</span></span>`,
+    );
+  });
+  it('分数のすぐ後ろの終わり括弧・句読点・「・」は分数と離さない（行頭に来ない）。仮名の後ろの句読点もいっしょ', () => {
+    expect(html('[[1/2]]、[[1/3]]')).toContain(`<span class="rt-nobr">${frac(1, 2)}、</span>`);
+    expect(html('（[[1/2]]）')).toContain(`<span class="rt-nobr">（${frac(1, 2)}）</span>`);
+    expect(html('[[1/2]]は、つぎ')).toContain(`<span class="rt-nobr">${frac(1, 2)}は、</span>つぎ`);
+  });
+  it('分数の直前が閉じ括弧・空白・句読点なら付けない', () => {
+    expect(html('あ） [[1/2]]')).not.toContain('rt-nobr');
+  });
+});
+
+describe('ふりがな付きの語（ruby）は、隣の字を包みに取り込めなくても親字の途中で折らない（X7）', () => {
+  it('rt.css が .rt ruby を nowrap にしている', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/text/rt.css', 'utf8');
+    const block = /\.rt ruby\s*\{([^}]*)\}/.exec(css);
+    expect(block?.[1]).toMatch(/white-space:\s*nowrap/);
+  });
+  it('「と」が前の語の包みに取られて、後ろの ruby が1つだけ残っても、ruby は包みの外の素の <ruby> のまま', () => {
+    const html = renderToStaticMarkup(
+      createElement(Rt, {
+        text: 'わたしたちの生活《せいかつ》と食料生産《しょくりょうせいさん》',
+        ctx: { furigana: 'all', learnerGrade: 1 },
+      }),
+    );
+    // 食料生産 は包みに入らない（隣の「と」は前の ruby の包みに入っている）。折れないようにするのは CSS（上）
+    expect(html).toContain('</span><ruby>食料生産<rt>しょくりょうせいさん</rt></ruby>');
+    expect(html).toContain('<span class="rt-nobr">の<ruby>生活<rt>せいかつ</rt></ruby>と</span>');
+  });
+});

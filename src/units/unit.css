@@ -112,7 +112,8 @@
   justify-content: center;
 }
 /*
- * 図が先に縮む（DESINGN.md 5.1）。--fig-max は UnitRunner が図の自然な高さと不足から書く。
+ * 図が先に縮む（DESINGN.md 5.1）。--fig-max は UnitRunner が図の自然な高さと不足から書く（下限は 12u。
+ * --fit が下限でも入らないときだけ、絵のある図は 6u まで縮める）。
  * 文字の図（.fig-text・.fig-table）には書かない（縮めず、横並びかスクロールに任せる）
  */
 .unit__work > .unit__figure {

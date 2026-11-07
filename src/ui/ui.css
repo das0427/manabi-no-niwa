@@ -132,22 +132,57 @@
    （輪が両端の字を横切る・縦長の札で輪が札より広がり隣の札に重なる。text-layout-fixes 第6回 W1）。
    札の輪郭を太い緑（0.6u）にし、右下の角に小さな ○（3.2u・白地）を置く（色だけにしない）。右下なのは、右上だと札の上のふりがなを隠すため。
    札の padding は変えない。絵・図だけの札（:has で判定）は大きな輪のまま（listen の絵と語の両方がある札は絵の段の輪。下の .eng-opts__pic）。
-   choice・experiment の絵と語の両方がある札（ラベルの子がある札）も、字の札と同じにする: 札を囲む輪はラベルの字を横切り（g5.en.read-words の
-   「はな（しょくぶつ）」）、縦長の幼児の札では札より広がって隣の札にかかった（p23.math.shape-match）。絵の段だけを囲むと、横長の絵・字を含む図を
-   輪が横切り、輪の中心が絵からずれた（レビューで確かめた）。字を含む図（svg の text・表・文の図。グラフ・時計・数直線）の札も同じにする:
+   choice・experiment・geometry・graph・explain の絵と語の両方がある札（ラベルの子 .eng-choice__label・.exp-opt__label・.eng-geo__optlabel・
+   .eng-graph__optlabel・.eng-explain__reason-label がある札）も、字の札と同じにする: 札を囲む輪はラベルの字を横切り（g5.en.read-words の
+   「はな（しょくぶつ）」・g1.math.shapes の「すいか」「かん」。第7回 X1）、縦長の幼児の札では札より広がって隣の札にかかった（p23.math.shape-match）。
+   絵の段だけを囲むと、横長の絵・字を含む図を輪が横切り、輪の中心が絵からずれた（レビューで確かめた）。
+   Choice の子に絵・図とラベルの両方を置く新しいエンジンは、ラベルの class をこの 2 つの :is() に足す（listen の .eng-opts__label は別。下の絵の段の輪）。
+   字を含む図（svg の text・表・文の図。グラフ・時計・数直線）の札も同じにする:
    大きな輪は上限 20u（作業領域の --fit で縮む）なので、大きな札では輪が札の中に入り、グラフの目もりの数・単位を横切った（g5.ja.text-figure の解説）。
    .tk-card は絵の札・語の札も含む（幼児の絵の札は .choice や .tk-card__illust で別系統。ここは単元の作業領域の札に限る） */
 .unit__work .tk-card:has(> .mark--correct),
 .unit__work .choice:not(:has(.fig-illust, .fig-svgbox, svg, img)):has(> .mark--correct),
-.unit__work .choice:has(> :is(.eng-choice__label, .exp-opt__label)):has(> .mark--correct),
+.unit__work
+  .choice:has(
+    > :is(
+      .eng-choice__label,
+      .exp-opt__label,
+      .eng-geo__optlabel,
+      .eng-graph__optlabel,
+      .eng-explain__reason-label
+    )
+  ):has(> .mark--correct),
 .unit__work .choice:has(svg text, .fig-table, .fig-text):has(> .mark--correct) {
   border-color: var(--correct);
   border-width: calc(var(--u) * 0.6);
 }
+/* 絵が 2 つ以上並ぶ札（下の .eng-opts__pic の規則の説明）の輪郭: 太さの足し分（0.25u）は内側の影で描き、border は太くしない。
+   border を太くすると札の中が 0.5u 狭く・低くなり、解説で数える絵が 4u を割った（g4.en.want/37 の解説 3.9u。第7回のレビュー）。
+   語のラベルのある札（上の :is() の札）は上の規則で border が太くなる（第7回 X1 のまま） */
+.unit__work
+  .choice:has(.fig-illust__group > :nth-child(2), .fig-illust ~ .fig-illust):has(> .mark--correct) {
+  border-color: var(--correct);
+  box-shadow:
+    inset 0 0 0 calc(var(--u) * 0.25) var(--correct),
+    0 var(--step) 0 var(--paper-2);
+}
 .unit__work .tk-card > .mark--correct,
 .unit__work .choice:not(:has(.fig-illust, .fig-svgbox, svg, img)) > .mark--correct,
-.unit__work .choice:has(> :is(.eng-choice__label, .exp-opt__label)) > .mark--correct,
-.unit__work .choice:has(svg text, .fig-table, .fig-text) > .mark--correct {
+.unit__work
+  .choice:has(
+    > :is(
+      .eng-choice__label,
+      .exp-opt__label,
+      .eng-geo__optlabel,
+      .eng-graph__optlabel,
+      .eng-explain__reason-label
+    )
+  )
+  > .mark--correct,
+.unit__work .choice:has(svg text, .fig-table, .fig-text) > .mark--correct,
+.unit__work
+  .choice:has(.fig-illust__group > :nth-child(2), .fig-illust ~ .fig-illust)
+  > .mark--correct {
   display: block;
   top: auto;
   bottom: calc(var(--u) * -1.8);
@@ -162,7 +197,9 @@
   z-index: 2;
 }
 /* 絵とラベルの両方がある listen の札（options.tsx。choice・experiment は上の「輪郭＋右下の ○」）: 正解の輪は絵の段（.eng-opts__pic）だけを囲む
-   （ラベルの字にかけない。text-layout-fixes 第6回 W1）。中心は絵の段の中心、直径は「絵の段の高さ＋1.6u」。
+   （ラベルの字にかけない。text-layout-fixes 第6回 W1）。中心は絵の段の中心、直径は「絵の段の高さ − 0.7u」（外の白い縁取り 0.35u ×2 まで
+   絵の段の中に収める。第7回 X1。段の上下に出ると、段の下端から始まるラベルのふりがなに輪と縁取りが重なった: g6.en.future/7）。
+   左右は段より 0.8u まで広げてよい（細長い絵でも輪が絵を囲む。円は高さの上限で決まるので、横長の段では段の中央のまま）。
    札自身の輪（Choice の StateMark）は隠す。輪は絵の後ろ（z-index: -1。.eng-opts__pic が重なりの文脈） */
 .eng-opts__pic {
   position: relative;
@@ -180,12 +217,25 @@
 .choice:has(> .eng-opts__pic) > .mark--correct {
   display: none;
 }
+.eng-opts__pic > .mark--correct {
+  inset: 0 calc(var(--u) * -0.8);
+  max-height: min(calc(100% - var(--u) * 0.7), calc(var(--u) * 20));
+}
 .unit__work .eng-opts__pic > .mark--correct {
   z-index: -1;
 }
 /* 字を含む図（札の列・グラフ・時計など。svg の text・表・文の図）は、輪が図の字を横切るので、絵の段の輪も出さず、
    札に字だけの札と同じ「輪郭＋右下の ○」を出す（上の .choice:has(svg text, …)。g6.prog.efficient の解説。レビューで追加） */
 .eng-opts__pic:has(svg text, .fig-table, .fig-text) > .mark--correct {
+  display: none;
+}
+/* 絵が 2 つ以上並ぶ札（数える札・絵を並べた札。.fig-illust__group の絵が 2 つ以上か、絵の図が 2 つ以上）は、大きな輪（札を囲む輪・
+   絵の段の輪）を使わず、札に「輪郭＋右下の ○」を出す（上の 2 つの規則の最後の行）。輪は札の短い辺で決まる真円なので、横長の札の
+   真ん中で数える絵を横切り、解説で数を確かめにくかった（g3.en.numbers-colors/26・p5.en.phrases/92 の解説の くるま。
+   第7回のレビュー。X2 の残し事項） */
+.unit__work
+  .eng-opts__pic:has(.fig-illust__group > :nth-child(2), .fig-illust ~ .fig-illust)
+  > .mark--correct {
   display: none;
 }
 /* 作業領域の高さを測る間（UnitRunner・listen が data-measure を付け、同じ処理の中で外す。描かれない）は、印を外す。

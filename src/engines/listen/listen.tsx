@@ -31,6 +31,7 @@ import { Tap } from '../../ui/Tap';
 import { VOICE_CATALOG, type VoiceSeq } from '../../voice/catalog/index';
 import { registerRich } from '../../voice/dynamic';
 import { earOnTop, wordTrait, type ChoiceResponse } from '../choice/choice';
+import { PIC_GAP_U, picSpecOf } from '../choice/pics';
 import { observeResize } from '../figure/svgText';
 import type { EngineProps, Judgement } from '../types';
 import { checkOptions, ChoiceOptions, correctLabels, judgeOptions } from './options';
@@ -294,12 +295,25 @@ function Transcript({
 
 /**
  * 解説で札を左の列に置くとき、右の選択肢の列が取る幅（u）の見積り。語のラベルの札は 14u より広い
- * （choice.css の --word-min-w。字が下限 2.2u で入る幅、上限 30u）ので、その分を左の列（head）から引く
+ * （choice.css の --word-min-w。字 1 つ × 1.05 ＋ 余白 3.2u、上限 30u。字は絵だけの列で 3.2u、絵に 5 字以上の文が付く列
+ * （is-caption）で下限の 2.2u）ので、その分を左の列（head）から引く。
+ * 絵のある札は、絵（既定の大きさ。pics.ts）の列が入る幅（札の余白 3u）以上（絵 1 つの札は 12u ＋ 3u ＝ 15u。
+ * 14u と見積もると、左の列が広すぎて右の選択肢が作業領域の外にはみ出した。text-layout-fixes 第7回 X2）
  */
-export function sideWidth(options: readonly { label?: string }[]): number {
+export function sideWidth(options: readonly { label?: string; figure?: unknown }[]): number {
+  // 絵に 5 字以上の文が付く選択肢がある列は is-caption（札の字が下限で入る幅。choice.css の --w-min-font）
+  const caption = options.some(
+    (o) => o.figure !== undefined && o.label !== undefined && [...plainText(o.label)].length >= 5,
+  );
+  const font = caption ? 2.2 : 3.2;
   return options.reduce((a, o) => {
     const w = wordTrait(o.label);
-    return a + (w ? Math.min(30, Math.max(14, Math.ceil(w.len * 2.2 * 1.05 + 3.2))) : 14);
+    const word = w ? Math.min(30, Math.max(14, Math.ceil(w.len * font * 1.05 + 3.2))) : 14;
+    const spec = picSpecOf(o.figure);
+    const pic = spec
+      ? Math.min(30, Math.ceil(spec.cap * spec.n + PIC_GAP_U * (spec.n - 1) + 3))
+      : 0;
+    return a + Math.max(word, pic);
   }, 0);
 }
 
@@ -406,8 +420,10 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
   // 描くたびに作り直すと、書き起こしの行数（--tr-lines）の測り直しが音の再生のたびに走る（3 行に戻ってから 2 行に縮む）
   const sounds = useMemo(() => soundsOf(item), [item]);
   const showTranscript = revealed && !item.hideTranscript;
-  // 選択肢に絵・図があるときは、「きく」の札を上の段（補助の寸法）に置く（左の列に置くと選択肢の幅が足りない）
-  const hasPics = earOnTop(item.options);
+  // 選択肢に絵・図があるときは、「きく」の札を上の段（補助の寸法）に置く（左の列に置くと選択肢の幅が足りない）。
+  // 絵だけの選択肢（絵の大きさを測って決める列）は、測った結果の場所（earPick。options.tsx の usePicsGeometry）が先
+  const [earPick, setEarPick] = useState<'top' | 'left' | null>(null);
+  const hasPics = earPick === null ? earOnTop(item.options) : earPick === 'top';
   // 解説のとき、絵・図が3つ以下で1つに1つずつ（時計）なら、札と書き起こしを左の列に置く（上の段にすると縦が足りず絵が縮む）
   const sideHead = showTranscript && !hasPics && item.options.some((o) => o.figure !== undefined);
   const ear = (
@@ -464,6 +480,8 @@ function ListenView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSho
         locked={disabled || !heard || pressed !== null}
         submit={submit}
         picsSide={hasPics ? 0 : sideHead ? 32 : showTranscript ? 0 : 22}
+        // 札を左に置くとき取る幅（u）: 問題は札（「もういちど きく」で 22.6u）＋ すき間 4u、解説は書き起こしの列（28u〜）＋ すき間 4u
+        ear={{ at: hasPics ? 'top' : 'left', side: showTranscript ? 32 : 27, onChange: setEarPick }}
         {...(item.nameBack ? { onPress, pressed } : {})}
       />
     </div>

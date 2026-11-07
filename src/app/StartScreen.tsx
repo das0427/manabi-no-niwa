@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { audio } from '../core/audio/index';
+import { isPageControlled } from '../core/offline/index';
 import { setupView, usePackSetup, type SetupState } from '../core/offline/setup';
 import { getStorageProblem, type StorageProblem } from '../core/storage/index';
 import { setupPackIds } from '../curriculum/defaultPacks';
@@ -17,14 +18,22 @@ const NAME_CTX = { furigana: 'none', learnerGrade: 0 } as const;
 
 /**
  * 起動画面。「はじめる」のタップで音声を有効にする（ブラウザの自動再生制約: VO-05）。
- * 2人以上のプロフィールがあれば、だれが遊ぶかを選ぶ。
+ * 2人以上のプロフィールがあれば、だれが遊ぶかを選ぶ。保護者画面から「こどもの画面へ」で戻ったとき
+ * （app.choosePlayer。音声はもう有効）は、「はじめる」を押さずに、この「だれが あそぶ？」から始める。
  * 初回準備の2段階（R#20）: 本体の準備のあと、登録しているプロフィールの区分の既定パックを自動で取得し、
  * その様子を見せる（PackSetupStatus）。待たせない: 取得中・失敗中でも「はじめる」は押せる。
  * 画面は縦の 2 段の格子（上: 真ん中の列、下: 保護者向けの表示）。保護者向けの表示は真ん中の列に重ならない。
  */
 export function StartScreen() {
   const app = useApp();
-  const [choosing, setChoosing] = useState(false);
+  // 保護者画面から戻ったとき（app.choosePlayer）は、最初から「だれが あそぶ？」。旗は読んだらすぐ下ろす
+  const [choosing, setChoosing] = useState(
+    () => app.choosePlayer && app.started && app.profiles.length > 1,
+  );
+  const { choosePlayer, setChoosePlayer } = app;
+  useEffect(() => {
+    if (choosePlayer) setChoosePlayer(false);
+  }, [choosePlayer, setChoosePlayer]);
   const packIds = useMemo(() => setupPackIds(app.profiles), [app.profiles]);
   const realSetup = usePackSetup(packIds);
   const dev = useMemo(devStartOverride, []);
@@ -120,7 +129,8 @@ function ParentNotes({
 }) {
   const app = useApp();
   const problem = devProblem ?? (app.storageUnavailable ? (getStorageProblem() ?? 'error') : null);
-  const offline = setupParentNote(setup);
+  // 開き直す前（Service Worker がまだページを制御していない）は、まだオフラインでは開けない
+  const offline = setupParentNote(setup, isPageControlled());
   return (
     <div className="start-notes" data-testid="start-notes">
       {problem ? (

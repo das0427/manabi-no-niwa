@@ -15,10 +15,19 @@ const FAILURE_NOTE: Partial<Record<SetupFailureReason, string>> = {
 };
 
 /**
+ * オフラインの準備はできたが、ページがまだ Service Worker に制御されていない（初めて開いた画面。開き直す前）ときの文。
+ * この画面のままではオフラインで開けないので、「つかえます」と言い切らない。
+ * 起動画面の保護者向けの表示（setupParentNote）と、保護者画面の「このアプリについて」（AboutTab）が同じ文を使う（FX13）。
+ */
+export const OFFLINE_REOPEN_NOTE = 'オフラインの準備ができました。いちど開き直すと使えます。';
+
+/**
  * 起動画面の隅の、保護者向けの準備状況（OF-02。漢字かな交じり）。準備の2段階がそろうまで「オフラインで つかえます」を出さない。
+ * controlled: このページが Service Worker に制御されているか（isPageControlled()。開き直したあとは true）。
+ * 準備ができても制御されていない間は、「いちど開き直すと使えます」と案内する（保護者画面と食い違わせない）。
  * 表示しないときは null。
  */
-export function setupParentNote(s: SetupState): string | null {
+export function setupParentNote(s: SetupState, controlled = true): string | null {
   switch (s.stage) {
     case 'core':
       return s.progress
@@ -27,7 +36,8 @@ export function setupParentNote(s: SetupState): string | null {
     case 'error':
       return 'オフラインの準備に失敗しました（保護者画面を見てください）';
     case 'ready':
-      return s.unsupported ? null : 'オフラインで つかえます';
+      if (s.unsupported) return null;
+      return controlled ? 'オフラインで つかえます' : OFFLINE_REOPEN_NOTE;
     case 'packs': {
       const view = setupView(s);
       if (view.kind === 'hidden') return null;

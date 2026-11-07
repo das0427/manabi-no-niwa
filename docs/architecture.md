@@ -239,7 +239,7 @@ interface VocabItem {
 - 生成: `npm run voice:script` が台本を `voice/script.json` に出力 → `npm run voice:build` が Open JTalk で `public/audio/<key>.mp3` と `manifest.json` を差分生成（docs/assets-pipeline.md）。
 - 実行時: `AudioEngine.play(keys)` は、再生中の列を止めてから新しい列を順に再生する。返り値の Promise は「最後まで再生」か「止められた」で解決する。
 - 停止: ルート変更、`visibilitychange`（hidden）、`pagehide` で `stopAll()`。
-- 欠損時: mp3 が取得できないキーは、`speechSynthesis`（ja-JP の声があるとき）で読み上げ。それもなければ無音で進み、`audioHealth` を `degraded` にして保護者画面に表示。
+- 欠損時: mp3 が取得できないキーは、`speechSynthesis`（端末の中で読む日本語の声＝`localService` が true のものがあるとき。ネットワークの声は読む文を外へ送るので使わない。DESINGN.md 9章）で読み上げ。それもなければ無音で進み、`audioHealth` を `degraded` にして保護者画面に表示。
 
 ### 5.3 保存（IndexedDB: データベース名 `manabi-no-niwa`）
 

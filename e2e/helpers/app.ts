@@ -306,17 +306,29 @@ export async function openParent(page: Page, tab?: string): Promise<void> {
   }
 }
 
-/** 計算問題の文（「a ＋ b は？」）から足し算して入力する */
-export async function answerGate(page: Page, opts: { wrongFirst?: boolean } = {}): Promise<void> {
+/** 計算問題の文（「a ＋ b は？」）の答え */
+async function readGateAnswer(page: Page): Promise<string> {
   const q = page.getByTestId('gate-question');
   await expect(q).toContainText('＋');
   const m = /(\d+)\s*＋\s*(\d+)/.exec((await q.textContent()) ?? '');
   expect(m).not.toBeNull();
-  const answer = String(Number(m![1]) + Number(m![2]));
+  return String(Number(m![1]) + Number(m![2]));
+}
+
+/**
+ * 計算問題の文（「a ＋ b は？」）から足し算して入力する。
+ * wrongFirst: 先にわざとまちがえる。まちがえると問題が替わる（答えは前と違う。公開の前の点検 R3）ので、
+ * 答えを読み直してから入れる
+ */
+export async function answerGate(page: Page, opts: { wrongFirst?: boolean } = {}): Promise<void> {
+  let answer = await readGateAnswer(page);
   if (opts.wrongFirst) {
     await page.getByTestId('gate-key-1').click();
     await page.getByTestId('gate-key-OK').click();
     await expect(page.locator('.gate-error')).toBeVisible();
+    const before = answer;
+    answer = await readGateAnswer(page);
+    expect(answer).not.toBe(before);
     await page.getByTestId('gate-key-けす').click();
   }
   for (const ch of answer) await page.getByTestId(`gate-key-${ch}`).click();

@@ -68,10 +68,17 @@ export interface AudioContextLike {
   createOscillator(): OscillatorLike;
   createBufferSource(): BufferSourceLike;
 }
+/** 読み上げの声（SpeechSynthesisVoice の最小形） */
+export interface VoiceLike {
+  lang: string;
+  /** true: 端末の中で読む声。false: ネットワークの先（ブラウザの提供元など）に文を送って読ませる声 */
+  localService: boolean;
+}
 export interface UtteranceLike {
   lang: string;
   rate: number;
   volume: number;
+  voice: VoiceLike | null;
   onend: (() => void) | null;
   onerror: (() => void) | null;
 }
@@ -79,7 +86,10 @@ export interface SpeechLike {
   synth: {
     speak(u: UtteranceLike): void;
     cancel(): void;
-    getVoices(): readonly { lang: string }[];
+    getVoices(): readonly VoiceLike[];
+    /** 声の一覧が遅れて届くブラウザ（Chrome など）の通知。無い環境では待たない */
+    addEventListener?(type: 'voiceschanged', cb: () => void): void;
+    removeEventListener?(type: 'voiceschanged', cb: () => void): void;
   };
   createUtterance(text: string): UtteranceLike;
 }
@@ -100,6 +110,15 @@ export interface AudioDeps {
 const TRIM = 0.03;
 const HEALTH_RANK = { ok: 0, fallback: 1, silent: 2 } as const;
 
+/**
+ * 代わりの読み上げ（mp3 が無いとき）に使う声は、日本語で、端末の中で読む声（localService）だけ。
+ * ネットワークの声（Chrome の既定の声が Google のものになるときなど）は、読む文を外へ送るので使わない。
+ * `ja`・`ja-JP`・`ja_JP`（Android の Chrome）に合わせる。
+ */
+const JA_LANG = /^ja(?:[-_]|$)/i;
+/** 声の一覧がまだ空のとき、届くのを待つ長さ（ミリ秒）。1 回だけ待つ（声の無い環境で毎回待たない） */
+const VOICES_WAIT_MS = 1000;
+
 const noop = () => {};
 
 export function createAudioEngine(deps: AudioDeps): AudioApi {
@@ -108,6 +127,8 @@ export function createAudioEngine(deps: AudioDeps): AudioApi {
   let volume = 1;
   let sfxEnabled = true;
   let watching = false;
+  /** 声の一覧が空のときの待ちを、もう済ませたか（1 回だけ待つ） */
+  let voicesWaited = false;
 
   let gen = 0;
   let cancelStep: (() => void) | null = null;
@@ -202,27 +223,65 @@ export function createAudioEngine(deps: AudioDeps): AudioApi {
     });
   }
 
-  function hasJapaneseVoice(sp: SpeechLike): boolean {
+  function listVoices(sp: SpeechLike): readonly VoiceLike[] {
     try {
-      return sp.synth.getVoices().some((v) => /^ja/i.test(v.lang));
+      return sp.synth.getVoices();
     } catch {
-      return false;
+      return [];
     }
   }
 
-  function speakFallback(key: string): Promise<void> {
+  /** 声の一覧が届くのを待つ（届く通知か時間切れまで。stop で途中でやめられる）。通知が無い環境では待たない */
+  function waitForVoices(sp: SpeechLike): Promise<void> {
+    const synth = sp.synth;
+    if (typeof synth.addEventListener !== 'function') return Promise.resolve();
+    return waitStep((done) => {
+      try {
+        synth.addEventListener?.('voiceschanged', done);
+      } catch {
+        done();
+        return noop;
+      }
+      const timer = setTimeout(done, VOICES_WAIT_MS);
+      return () => {
+        clearTimeout(timer);
+        try {
+          synth.removeEventListener?.('voiceschanged', done);
+        } catch {
+          /* 無視 */
+        }
+      };
+    });
+  }
+
+  async function speakFallback(myGen: number, key: string): Promise<void> {
     const entry = hasVoice(key) ? VOICE_CATALOG[key] : undefined;
     const sp = deps.speech;
-    if (entry === undefined || !sp || !hasJapaneseVoice(sp)) {
+    if (entry === undefined || !sp) {
       raiseHealth('silent');
-      return Promise.resolve();
+      return;
+    }
+    let voices = listVoices(sp);
+    if (voices.length === 0 && !voicesWaited) {
+      // 一覧がまだ届いていないブラウザ。1 回だけ届くのを待ってから決める
+      voicesWaited = true;
+      await waitForVoices(sp);
+      if (myGen !== gen) return;
+      voices = listVoices(sp);
+    }
+    const voice = voices.find((v) => v.localService === true && JA_LANG.test(v.lang));
+    if (voice === undefined) {
+      // 端末の中で読む日本語の声が無い（ネットワークの声しか無いときを含む）: 読み上げず、無音で進む
+      raiseHealth('silent');
+      return;
     }
     raiseHealth('fallback');
     const text = voiceYomi(entry);
     return waitStep((done) => {
       let ended = false;
       const u = sp.createUtterance(text);
-      u.lang = 'ja-JP';
+      u.voice = voice;
+      u.lang = voice.lang;
       u.rate = 0.85;
       u.volume = volume;
       const finish = () => {
@@ -269,7 +328,7 @@ export function createAudioEngine(deps: AudioDeps): AudioApi {
       const buf = await getBuffer(it);
       if (myGen !== gen) return 'stopped';
       if (buf) await playBuffer(buf);
-      else await speakFallback(it);
+      else await speakFallback(myGen, it);
     }
     return myGen === gen ? 'done' : 'stopped';
   }

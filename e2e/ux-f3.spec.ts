@@ -189,11 +189,15 @@ test.describe('FX11 保護者ゲートのキーボードと押す所の大きさ
     await expect(page.locator('.gate-error')).toBeVisible();
     await expect(page.getByTestId('parent-app')).toHaveCount(0);
 
+    // まちがえると問題が替わる（公開の前の点検 R3）。前の答えとは違う、新しい問題の答えを読み直す
+    const next = await gateAnswer(page);
+    expect(next).not.toBe(answer);
+
     // ボタンにフォーカスがあるとき（マウスでキーを押したあと）も、Enter は OK として働く（数字が1つ増えない）
     await page.getByTestId('gate-key-1').click();
     await page.keyboard.press('Backspace');
-    await page.keyboard.type(answer);
-    await expect(input).toHaveText(answer);
+    await page.keyboard.type(next);
+    await expect(input).toHaveText(next);
     await page.keyboard.press('Enter');
     await expect(page.getByTestId('parent-app')).toBeVisible();
   });

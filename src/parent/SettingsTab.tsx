@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { useApp } from '../app/AppState';
 import { hashPin } from '../app/pin';
+import { sessionMinuteChoices } from '../audience/audience';
 import { setLevelByParent } from '../core/progress/rules';
 import * as db from '../core/storage/index';
 import {
@@ -459,7 +460,7 @@ export function SettingsTab() {
             data-testid="setting-sessionMinutes"
           >
             <option value={0}>なし</option>
-            {[5, 10, 15, 20, 30].map((m) => (
+            {sessionMinuteChoices(s.sessionMinutes).map((m) => (
               <option key={m} value={m}>
                 {m}分
               </option>

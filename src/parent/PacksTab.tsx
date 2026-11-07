@@ -43,7 +43,7 @@ function gradeRange(digits: string): string {
   return g.map((x) => `小${x}`).join('・');
 }
 
-/** 幼児のパック（アプリ本体に含まれる）。dev で一覧を読めないときも、ID の頭で分ける */
+/** 幼児のパック（アプリ本体に含まれる）。dev で一覧を読めないときも、ID が p23・p4・p5・en-pre のどれかと一致するかで分ける（ID 全体の一致。先頭の一致ではない） */
 const isToddlerPack = (packId: string): boolean => /^(p23|p4|p5|en-pre)$/.test(packId);
 const isToddlerEnglish = (packId: string): boolean => packId === 'en-pre';
 

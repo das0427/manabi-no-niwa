@@ -8,7 +8,7 @@ export type ToddlerStage = 2 | 3;
 export type Grade = 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface SupportSettings {
-  /** unlearned = 保護者画面の「がくねんに あわせる」 */
+  /** unlearned = 保護者画面の「学年に合わせる」 */
   furigana: 'unlearned' | 'all' | 'none';
   readAloud: 'always' | 'button' | 'off';
   textScale: 1 | 1.15 | 1.3;
@@ -125,6 +125,21 @@ function grade(
 export function audienceUx(a: AudienceId, toddlerStage: ToddlerStage = 3): AudienceUx {
   if (a === 'toddler') return UX[toddlerStage === 2 ? 'toddler2' : 'toddler3'];
   return UX[a];
+}
+
+/**
+ * 保護者画面「せってい」の利用時間の目安の選択肢（分。0 の「なし」は別に出す）。
+ * 区分の既定（audienceUx の sessionMinutes。2歳段階 5・3歳段階 8・4〜5歳 10・小1〜2 15・小3〜6 20）をすべて含む。
+ */
+export const SESSION_MINUTE_CHOICES: readonly number[] = [5, 8, 10, 15, 20, 30];
+
+/**
+ * 選ぶ欄に並べる値。今の値が選択肢に無いとき（読み込んだ記録など。0〜600 分を受け付ける）は、その値も並べる
+ * （選ぶ欄が別の値を見せないように）。
+ */
+export function sessionMinuteChoices(current: number): number[] {
+  if (current <= 0 || SESSION_MINUTE_CHOICES.includes(current)) return [...SESSION_MINUTE_CHOICES];
+  return [...SESSION_MINUTE_CHOICES, current].sort((a, b) => a - b);
 }
 
 /** 区分の既定の支援設定（architecture.md 2章、統括の判断6: 小1〜2は自動で読み上げ） */

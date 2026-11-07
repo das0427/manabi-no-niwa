@@ -5,6 +5,7 @@
  * 札の名前・題は AppLabel（中身の段階で折る。text-layout-fixes「アプリの画面」A0・A3）。
  * おすすめの題は札（30u × 8.6u）に入るまで縮める（fit。下限は画面の --text-min）。
  * 「ふくしゅう」は題の中の字の札をやめ、絵の右下の時計の印（単元の地図と同じ MarkIcon）で示す。
+ * 記録の保存に問題があるときは、鍵の左に保護者向けの「!」（v1 のホームと同じ。StorageHealthMark。FX16）。
  */
 import { useEffect, useMemo, useState } from 'react';
 import { gradeOf, type Grade } from '../audience/audience';
@@ -20,6 +21,7 @@ import { AppLabel } from '../ui/AppLabel';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate } from './router';
+import { StorageHealthMark } from './StorageHealthMark';
 import { MarkIcon } from './SubjectMap';
 import './home.css';
 import './school-home.css';
@@ -71,6 +73,7 @@ export function SchoolHome() {
           <span className="label-text">{profile.name}</span>
         </div>
         <div className="home-top__right">
+          <StorageHealthMark />
           <ParentGateButton />
         </div>
       </div>

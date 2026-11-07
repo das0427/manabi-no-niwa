@@ -135,7 +135,7 @@ htsvoice 本体と辞書はアプリには同梱されない(生成された mp3
 - 出力サイズ(base-chars のみ): zen-maru-gothic-400 約 628 KiB / -700 約 651 KiB / klee-one-400 約 49 KiB / -600 約 49 KiB (合計約 1.34 MiB)。
   src に実際に出る文字だけに絞ると Zen は大幅に小さくなる(漢字を使わなければ数十 KiB)。**統括側で src から抽出した文字を `--chars` に渡し、`base-chars.txt` の漢字を外す運用が望ましい**(`--chars` を指定すると `base-chars.txt` は使われない)
 
-ライセンス: SIL OFL 1.1 — `licenses/OFL-ZenMaruGothic.txt`, `licenses/OFL-KleeOne.txt`。
+ライセンス: SIL OFL 1.1。原文は `licenses/OFL-ZenMaruGothic.txt`, `licenses/OFL-KleeOne.txt`。
 OFL はフォントの改変(サブセット)・同梱再配布を許可する。予約フォント名(Reserved Font Name)は両ファミリーとも宣言なし(OFL.txt 先頭の著作権表記に RFN の記載なし)。
 単体でフォントを販売してはならない。
 
@@ -154,7 +154,7 @@ OFL はフォントの改変(サブセット)・同梱再配布を許可する�
 - `scripts/strokes/preview.svg` に番号付きプレビュー(丸が始点、数字が書き順)。ブラウザで開いて目視確認できる(確認済み)
 - KanjiVG のストローク数: し1 く1 つ1 へ1 の1 て1 こ2 い2 り2 う2 そ1 ち2 る1 ろ1 ひ1(「そ」は 1 画の字形)
 
-ライセンス: CC BY-SA 3.0 (Ulrich Apel / KanjiVG) — `licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt`, `licenses/CC-BY-SA-3.0-legalcode.txt`。
+ライセンス: CC BY-SA 3.0 (Ulrich Apel / KanjiVG)。原文は `licenses/KanjiVG-COPYING-CC-BY-SA-3.0.txt`, `licenses/CC-BY-SA-3.0-legalcode.txt`。
 **ShareAlike**: `kana-strokes.json` は KanjiVG の改変物(翻案)なので CC BY-SA 3.0 で提供する必要がある。アプリ全体への波及範囲は要判断(データファイルを独立ファイルとして同ライセンスで明示するのが無難)。
 
 ## 3b. 書き順データの拡張: かな全部と学年別漢字 1026 字 (`scripts/strokes/extract_all.py`)

@@ -1,6 +1,6 @@
 # モードの作り方（mode-guide.md）
 
-全9モードの体験をそろえるための実装ガイド。手本は **src/modes/shopping/**（おかいものごっこ）。
+全9モードの体験をそろえるための実装ガイド。手本は **src/modes/shopping/**（おかいもの ごっこ）。
 新しいモードを作る・直すときは、まず shopping の index.tsx / logic.ts / logic.test.ts / voice.ts を読むこと。
 
 ## 1. ファイル構成（NF-04）

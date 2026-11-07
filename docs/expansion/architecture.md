@@ -41,7 +41,7 @@ interface LearnerProfileV2 {
   ageGuide?: string;             // 年齢の目安（自由記述ではなく 'y2'..'y12' の選択。生年月日は保存しない）
 }
 interface SupportSettings {      // ChildSettings に追加
-  furigana: 'unlearned' | 'all' | 'none';   // がくねんに あわせる／すべて／なし（4章）
+  furigana: 'unlearned' | 'all' | 'none';   // 学年に合わせる／すべての漢字に付ける／習った学年までの漢字には付けない（4章）
   readAloud: 'always' | 'button' | 'off';
   textScale: 1 | 1.15 | 1.3;
   instruction: 'short' | 'normal';
@@ -78,7 +78,7 @@ interface UnitMeta {
 - 進度と復習（実装: `src/curriculum/review.ts`、ストア `unitProgress`、キー `[profileId, unitId]`）:
   ```ts
   interface ReviewState {
-    stage: 'none' | 'learning' | 'learned' | 'secured';  // まだ／とりくみちゅう／できた／しっかりできた
+    stage: 'none' | 'learning' | 'learned' | 'secured';  // まだ／とりくみちゅう／できた／しっかり できた
     reviewDue: number | null;   // 次の復習の時刻
     reviewStep: number;         // 通過した復習の回数 0〜3 → 次まで 1日, 3日, 7日, 21日
     lastReviewAt: number | null;
@@ -89,7 +89,7 @@ interface UnitMeta {
   - 復習は「きょうの おすすめ」に出す（強制しない）。
 - **復習の優先順位と滞留**（R#14）:
   - 優先度 ＝ 超過日数 ×（後続単元の数 ＋ 1）。後続単元＝その単元を prereq に持つ単元。
-  - おすすめに出す復習は**同じ教科で1日1件まで**。残りは単元の地図の時計の印（ふくしゅう まち）で示す。
+  - おすすめに出す復習は**同じ教科で1日1件まで**。残りは単元の地図の時計の印（「ふくしゅう」）で示す。
   - 超過が間隔（REVIEW_INTERVAL_DAYS[reviewStep]）の **2倍以上**なら reviewStep を1つ戻す（stage は下げない）。
   - 復習用に「別の表現の問題 ≥2 種」を単元の ready 条件に含める（acceptance.md 2章）。
 
@@ -100,7 +100,7 @@ interface UnitMeta {
 
 | 設定 | 配当学年 ≥ 在籍学年 の字（その学年で習う途中の字・上の学年の字） | 配当学年 < 在籍学年 の字（前の学年までに習った字） |
 |---|---|---|
-| 'unlearned'（保護者画面「がくねんに あわせる」、既定） | 付ける | 付けない |
+| 'unlearned'（保護者画面「学年に合わせる」、既定） | 付ける | 付けない |
 | 'all'（すべて） | 付ける | 付ける |
 | 'none'（なし） | 配当学年 = 在籍学年 の字は付けない。配当学年 > 在籍学年 の字は**常に付ける** | 付けない |
 
@@ -151,11 +151,11 @@ type Verdict =
   | { result: 'wrong'; misconception?: string }
   | { result: 'retry'; reason: 'reduce' | 'form' | 'unit' | 'unreadable' };  // 誤答にせず、もう一度
 ```
-- 分数: 値が等しければ正解（2/4 と 1/2）。`mustReduce`（約分が目標の単元）のときだけ約分していないものを `retry`（「約分できるよ」）にする。仮分数⇔帯分数も目標でなければ等価として受け入れる。
+- 分数: 値が等しければ正解（2/4 と 1/2）。`mustReduce`（約分が目標の単元）のときだけ約分していないものを `retry`（「あってるよ。もっと かんたんな ぶんすうに できるかな」）にする。仮分数⇔帯分数も目標でなければ等価として受け入れる。
 - 小数と分数: `allowDecimal` の単元だけ等価（0.5 と 1/2）。
 - 単位: 単位換算が目標でない限り、換算後の値が等しければ正解。許容誤差は概数・測定の単元だけ（`tolerance`）。
 - 入力形式だけの誤り（全角・余分な0）は正規化してから判定。
-- **中立の「もう一度」**（R#13）: questionFlow（core/session）に `nudge()` を追加する。`retry` の判定で呼び、wrongTries を増やさず短い声（例「やくぶん できるよ」）を返す。同じ問題で2回まで。3回目の `retry` は wrong として扱う。
+- **中立の「もう一度」**（R#13）: questionFlow（core/session）に `nudge()` を追加する。`retry` の判定で呼び、wrongTries を増やさず短い声（例「あってるよ。もっと かんたんな ぶんすうに できるかな」）を返す。同じ問題で2回まで。3回目の `retry` は wrong として扱う。
 
 ### 5.2 legacy エンジン
 初期版のモード部品（src/modes/*）は `legacy` エンジンとして UnitRunner から呼ぶか、ModeRunner のまま幼児ホームから呼ぶ。再設計の判断は curriculum-matrix.md 4章。
@@ -287,7 +287,7 @@ type ArtItem =
 - 台本はパックごと（`packs/<id>/voice.ts`）。幼児の台本はコア。キーの接頭辞はパックID。生成した mp3 は `public/audio/<packId>/`、マニフェストもパックごと。
 - 読み: RichText の《》から作る。数式は読み上げ用の規則（「3/4」→「よんぶんの さん」）。
 - 英語（R#17）: Kokoro-82M（Apache-2.0）＋ kokoro-onnx（MIT）で生成し mp3 を同梱（docs/assets-pipeline.md 5節、scripts/voice/generate_en.py）。**聴感は未確認**のため、英語単元は試聴して問題が無いものだけ ready にする。`speechSynthesis` には頼らない。
-- 読み上げ設定: always（問題を開くと読む）／button（「よむ」を押したとき）／off（音声を出さない。効果音も設定に従う）。
+- 読み上げ設定: always（問題を開くと読む）／button（「きく」を押したとき）／off（音声を出さない。効果音も設定に従う）。
 
 ## 11. 性能（X-NF-04）
 

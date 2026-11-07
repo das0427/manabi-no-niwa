@@ -84,18 +84,18 @@
 | E-22 | 二重起動の防止（`e2e/single-instance.spec.ts`。chromium・firefox。15 件ずつ）: 2つ目を開くと1つ目が閉じ、2つ目は起動画面から始まる／画面を移した窓は「べつの まどで ひらいています」になり、記録を書かない／［この まどで ひらく］で引き継ぎ直せる／おえかきの保存を待ってから引き継ぐ（PNG づくりが遅くても）／3つ続けて開いても残るのは1つ／引き下がった窓は、使っている窓が閉じられたら起動画面に戻る／「戻る」で使っている窓を追い出さない／引き継いだ画面だけ、「はじめる」で全画面にする（1回）／Web Locks が無い・試験の旗があるときは守りなし／`page.reload()` を5回続けても毎回ふつうに始まる／`?retired=1` は音・記録・Service Worker・教材に触れない／新しい2つの画面の見た目（4つの大きさ）／外部通信なし | OP-07, IN-14, IN-15, BC-03 |
 
 **更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:
-- Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストと道・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。
-- vitest: `scripts/release-lib.test.ts`（版の情報・zip・版の番号の確かめ）・`src/core/offline/updater.test.ts`・`src/parent/UpdateSection.test.tsx`・`src/app/ParentGate.test.tsx`・`src/core/framed.test.ts`。
+- Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストとパス・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。
+- vitest: `scripts/release-lib.test.ts`（版の情報・zip・版の番号の確認）・`src/core/offline/updater.test.ts`・`src/parent/UpdateSection.test.tsx`・`src/app/ParentGate.test.tsx`・`src/core/framed.test.ts`。
 
 **二重起動の防止の単体・Python・シェルの試験**（docs/expansion/single-instance-design.md 5 章）:
 - vitest: `src/core/instance/instance.test.ts`（役割の決め方・引き下がり・3つ続けて開いた場合・戻る進むの読み込み・送り主・鍵が空いたら戻る見張り）・`src/core/pendingWrites.test.ts`・`src/drawing/autosave.test.ts`（保存の待ち）・`src/app/RetiredScreen.test.tsx`・`src/ui/fullscreen.test.ts`・`src/parent/FullscreenSection.test.tsx`。
-- Python の unittest（`npm run test:py`）: `deploy/tests/test_mnwwindow.py`（窓の判定・前に出すやり直し・`wait`・`ozone-flag`・記録・ctypes の構造体）、`deploy/tests/test_manabi_sh.py`（bash があるときだけ。偽のコマンドで、focus の結果ごとの動き・`--ozone-platform` の付け方・`flock` の呼び方・鍵の fd を子に渡さないこと・配信の確かめの Python）、`deploy/tests/test_install_sh.py`（`mnwwindow.py` が必要なファイルの一覧にあること）。本物の `flock` の試験は Linux だけで動く。
+- Python の unittest（`npm run test:py`）: `deploy/tests/test_mnwwindow.py`（窓の判定・前に出すやり直し・`wait`・`ozone-flag`・記録・ctypes の構造体）、`deploy/tests/test_manabi_sh.py`（bash があるときだけ。偽のコマンドで、focus の結果ごとの動き・`--ozone-platform` の付け方・`flock` の呼び方・鍵の fd を子に渡さないこと・配信を確かめる Python）、`deploy/tests/test_install_sh.py`（`mnwwindow.py` が必要なファイルの一覧にあること）。本物の `flock` の試験は Linux だけで動く。
 - 旗（`allowMultiWindow`）を立てる既存の E2E: `e2e/drawing.spec.ts` の2つのタブの試験、`e2e/offline.spec.ts` の2つのページを同時に開く試験。
 
 **2.1.0 の公開前の点検（3回目。updater-design.md 16.2・single-instance-design.md 8.6）で足した試験**。どれも、直しを1つずつ外すと落ちることを確かめてから戻した。
 - Python（`deploy/tests/`）: `test_serve.py`（NUL などを含むパスは 404 で記録が出ない・予期しない例外は型名 1 行・全応答に `Cross-Origin-Resource-Policy`・自己検査の失敗の説明にパスが出ない・`--check-update` が Traceback で落ちない）、`test_fetch.py`（満杯のあと取得物が残らない・深い入れ子の版の情報・形の壊れた `Location`）、`test_service.py`（組み立ての途中の満杯でも取得物が空・満杯で捨てたあとの `needBytes` が全部を取り直す見積もりと同じ・深い入れ子の状態は `idle`）、`test_install.py`（壊れた deflate は `unsafe-zip`・失敗の説明のパスの置き換え・リンクの先に `chmod` しない）、`test_manifest.py`（深い入れ子は `bad-manifest`）、`test_mnwwindow.py`（`--browser`・時間切れの終了コード 1）。
 - シェル（bash が無ければ skip）: `test_manabi_sh.py`（使うブラウザの種類が `focus`・`wait` に渡る・`MANABI_BROWSER` を評価しない）、`test_install_sh.py`（偽の `sync`・`mv`・`rm` で入れ替えの前後の `sync` の順・`switch-broken` を先に戻す・戻せないとき止まる）。
-- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比べ・タグの読み取り。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 9 件）。
+- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比較・タグの読み取り。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 9 件）。
 
 **使いやすさの直し（FX。2.1.0）で足した試験**（記録は docs/expansion/ab-evaluations.md・handover.md B4）。どれも、直しを外すと落ちることを確かめた（FX03・FX04・FX06 は配置の作業で直っていたので、外して落ちるかは試していない）。
 - E2E（chromium・firefox）:
@@ -182,7 +182,7 @@
   | `g3-big` | 小3 | `textScale: 1.3`・`furigana: 'all'` | 字がいちばん大きく、ふりがなが多い |
   | `g4-left` | 小4 | `drawingHand: 'left'` | おえかきだけ（道具欄が右） |
 
-- **中身の状態は二つ**。`fresh`（作ったばかり。プロフィール 1 人）と `full`（遊んだ記録 14 日分〔12月31日から数える＝日付の字がいちばん長い〕・すき 3 つ・作品 18 枚＋なぞり・みち 5 枚・メモ 10 件・記録・単元の進度。名前が 20 字・空白のある・英字・ふつうのプロフィール 4 人。小学生は、その学年でいちばん長い題の 2 単元を「ふくしゅう まち」〔教科は別々〕、次に長い 6 単元を「とりくみちゅう」、2 単元を「できた」「しっかり」。p4 は v1 のモードの単元に「つづきから？」の下書き）。fresh と full は別の context（別の IndexedDB）で流す。設定と中身は IndexedDB に直接書いて読み込み直す（テスト専用。`e2e/helpers/app.ts` と同じ）。作品は、1 枚を描く画面で描き（線 1 本）、残りを開発サーバーの `duplicateArtwork` で増やす（画像の形を検査の側で作り直さない）。
+- **中身の状態は二つ**。`fresh`（作ったばかり。プロフィール 1 人）と `full`（遊んだ記録 14 日分〔12月31日から数える＝日付の字がいちばん長い〕・すき 3 つ・作品 18 枚＋なぞり・みち 5 枚・メモ 10 件・記録・単元の進度。名前が 20 字・空白のある・英字・ふつうのプロフィール 4 人。小学生は、その学年でいちばん長い題の 2 単元を「ふくしゅう」〔教科は別々〕、次に長い 6 単元を「とりくみちゅう」、2 単元を「できた」「しっかり できた」。p4 は v1 のモードの単元に「つづきから する？」の下書き）。fresh と full は別の context（別の IndexedDB）で流す。設定と中身は IndexedDB に直接書いて読み込み直す（テスト専用。`e2e/helpers/app.ts` と同じ）。作品は、1 枚を描く画面で描き（線 1 本）、残りを開発サーバーの `duplicateArtwork` で増やす（画像の形を検査の側で作り直さない）。
 - **画面**（`e2e/helpers/app-layout.ts` の `screenDefs`）。段階（stage）は、その画面の中身の段階（ほかの がくねん のタブ・単元の地図の学年のタブでは、子供の区分でなく表示している区分）。
 
   | 画面の ID | 行き方 | プロフィール・状態 |
@@ -193,7 +193,7 @@
   | `home` | `#/home` | 全部・fresh と full |
   | `explore-own`・`explore-<p23〜g6>` | `#/explore`・`#/explore/<区分>` | 全部・fresh |
   | `card-<札>` | `#/card/<区分>/<札>`（単元が 2 つ以上の札。えいごを含む） | 幼児・fresh |
-  | `variant-<単元>`・`resume-<単元>` | `#/legacy/<単元>`（遊び方を選ぶ画面）・下書きを入れて `#/legacy/<単元>/<遊び方>`（つづきから？） | p23-3・p4／p4（full）。遊び方の選ぶ画面が出ない単元は「飛ばした」と要約に残す |
+  | `variant-<単元>`・`resume-<単元>` | `#/legacy/<単元>`（遊び方を選ぶ画面）・下書きを入れて `#/legacy/<単元>/<遊び方>`（つづきから する？） | p23-3・p4／p4（full）。遊び方の選ぶ画面が出ない単元は「飛ばした」と要約に残す |
   | `subject-<教科>-g<学年>` | `#/subject/<教科>/g<学年>` | 小学生は自分の学年の全教科（fresh・full）。p4 と g3 は全部の教科 × 学年 |
   | `notebook` | `#/notebook` | 全部・fresh と full |
   | `gallery`・`gallery-old-view`・`gallery-confirm`（幼児は `gallery-confirm-2`＝「ほんとうに？」） | `#/gallery`・なぞりの作品を開く・すてる | p23-3・p4・g4・full |

@@ -745,19 +745,6 @@
     "engine": "listen"
   },
   {
-    "id": "g2.life.growth",
-    "pack": "life-g12",
-    "title": "じぶんの せいちょう",
-    "stage": "g2",
-    "subject": "life",
-    "domain": "life",
-    "icon": "subj-seikatsu",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "explain"
-  },
-  {
     "id": "g2.life.town",
     "pack": "life-g12",
     "title": "まちの ばしょと ひと",
@@ -801,34 +788,17 @@
     "engine": "choice"
   },
   {
-    "id": "g2.math.numbers-1000",
-    "pack": "g2-math",
-    "title": "1000までの かず",
+    "id": "g2.life.growth",
+    "pack": "life-g12",
+    "title": "じぶんの せいちょう",
     "stage": "g2",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "mode-math",
-    "prereq": [
-      "g1.math.numbers-120"
-    ],
+    "subject": "life",
+    "domain": "life",
+    "icon": "subj-seikatsu",
+    "prereq": [],
     "priority": "P1",
     "status": "ready",
-    "engine": "number"
-  },
-  {
-    "id": "g2.math.numbers-10000",
-    "pack": "g2-math",
-    "title": "1万《まん》までの かず",
-    "stage": "g2",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "mode-math",
-    "prereq": [
-      "g2.math.numbers-1000"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
+    "engine": "explain"
   },
   {
     "id": "g2.math.add-column",
@@ -855,6 +825,21 @@
     "icon": "math-formula-sub",
     "prereq": [
       "g2.math.add-column"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g2.math.numbers-1000",
+    "pack": "g2-math",
+    "title": "1000までの かず",
+    "stage": "g2",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "mode-math",
+    "prereq": [
+      "g1.math.numbers-120"
     ],
     "priority": "P1",
     "status": "ready",
@@ -932,6 +917,21 @@
       "g2.math.times-tables"
     ],
     "priority": "P2",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g2.math.numbers-10000",
+    "pack": "g2-math",
+    "title": "1万《まん》までの かず",
+    "stage": "g2",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "mode-math",
+    "prereq": [
+      "g2.math.numbers-1000"
+    ],
+    "priority": "P1",
     "status": "ready",
     "engine": "number"
   },
@@ -1310,36 +1310,6 @@
     "engine": "listen"
   },
   {
-    "id": "g3.math.large-numbers",
-    "pack": "g3-math",
-    "title": "大《おお》きい 数《かず》（万《まん》の くらい）",
-    "stage": "g3",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "subj-sansu",
-    "prereq": [
-      "g2.math.numbers-10000"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
-    "id": "g3.math.add-sub-column",
-    "pack": "g3-math",
-    "title": "たし算《ざん》と ひき算《ざん》の 筆算《ひっさん》",
-    "stage": "g3",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "math-formula-add",
-    "prereq": [
-      "g2.math.add-sub-3digit"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
     "id": "g3.math.mult-rules",
     "pack": "g3-math",
     "title": "かけ算《ざん》の きまり",
@@ -1349,36 +1319,6 @@
     "icon": "math-split",
     "prereq": [
       "g2.math.times-tables"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
-    "id": "g3.math.mult-1digit",
-    "pack": "g3-math",
-    "title": "×1けたの 筆算《ひっさん》",
-    "stage": "g3",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.mult-rules"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
-    "id": "g3.math.mult-2digit",
-    "pack": "g3-math",
-    "title": "×2けたの 筆算《ひっさん》",
-    "stage": "g3",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "math-formula-add",
-    "prereq": [
-      "g3.math.mult-1digit"
     ],
     "priority": "P1",
     "status": "ready",
@@ -1400,6 +1340,21 @@
     "engine": "choice"
   },
   {
+    "id": "g3.math.add-sub-column",
+    "pack": "g3-math",
+    "title": "たし算《ざん》と ひき算《ざん》の 筆算《ひっさん》",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g2.math.add-sub-3digit"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
     "id": "g3.math.division-remainder",
     "pack": "g3-math",
     "title": "あまりの ある わり算《ざん》",
@@ -1409,6 +1364,36 @@
     "icon": "math-split",
     "prereq": [
       "g3.math.division-basic"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g3.math.large-numbers",
+    "pack": "g3-math",
+    "title": "大《おお》きい 数《かず》（万《まん》の くらい）",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "subj-sansu",
+    "prereq": [
+      "g2.math.numbers-10000"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g3.math.mult-1digit",
+    "pack": "g3-math",
+    "title": "×1けたの 筆算《ひっさん》",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g3.math.mult-rules"
     ],
     "priority": "P1",
     "status": "ready",
@@ -1454,6 +1439,21 @@
     "icon": "math-formula-add",
     "prereq": [
       "g3.math.division-basic"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g3.math.mult-2digit",
+    "pack": "g3-math",
+    "title": "×2けたの 筆算《ひっさん》",
+    "stage": "g3",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g3.math.mult-1digit"
     ],
     "priority": "P1",
     "status": "ready",
@@ -1625,45 +1625,6 @@
     "engine": "choice"
   },
   {
-    "id": "g3.sci.magnets",
-    "pack": "sci-g34",
-    "title": "じしゃくの せいしつ",
-    "stage": "g3",
-    "subject": "sci",
-    "domain": "A-matter",
-    "icon": "subj-rika",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "experiment"
-  },
-  {
-    "id": "g3.sci.circuits",
-    "pack": "sci-g34",
-    "title": "電気《でんき》の 通《とお》り道《みち》",
-    "stage": "g3",
-    "subject": "sci",
-    "domain": "A-matter",
-    "icon": "subj-rika",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "experiment"
-  },
-  {
-    "id": "g3.sci.weight",
-    "pack": "sci-g34",
-    "title": "ものと 重《おも》さ",
-    "stage": "g3",
-    "subject": "sci",
-    "domain": "A-matter",
-    "icon": "subj-rika",
-    "prereq": [],
-    "priority": "P2",
-    "status": "ready",
-    "engine": "experiment"
-  },
-  {
     "id": "g3.sci.wind-rubber",
     "pack": "sci-g34",
     "title": "風《かぜ》と ゴムの 力《ちから》",
@@ -1688,6 +1649,45 @@
     "priority": "P2",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g3.sci.circuits",
+    "pack": "sci-g34",
+    "title": "電気《でんき》の 通《とお》り道《みち》",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g3.sci.magnets",
+    "pack": "sci-g34",
+    "title": "じしゃくの せいしつ",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g3.sci.weight",
+    "pack": "sci-g34",
+    "title": "ものと 重《おも》さ",
+    "stage": "g3",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "experiment"
   },
   {
     "id": "g3.soc.map-symbols",
@@ -1718,19 +1718,6 @@
     "engine": "choice"
   },
   {
-    "id": "g3.soc.city-changes",
-    "pack": "soc-g34",
-    "title": "市《し》のうつりかわり",
-    "stage": "g3",
-    "subject": "soc",
-    "domain": "soc",
-    "icon": "subj-shakai",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "order"
-  },
-  {
     "id": "g3.soc.safety",
     "pack": "soc-g34",
     "title": "まちの安全《あんぜん》を守《まも》るはたらき",
@@ -1742,6 +1729,19 @@
     "priority": "P2",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g3.soc.city-changes",
+    "pack": "soc-g34",
+    "title": "市《し》のうつりかわり",
+    "stage": "g3",
+    "subject": "soc",
+    "domain": "soc",
+    "icon": "subj-shakai",
+    "prereq": [],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "order"
   },
   {
     "id": "g4.en.alphabet-lower",
@@ -1969,21 +1969,6 @@
     "engine": "number"
   },
   {
-    "id": "g4.math.rounding",
-    "pack": "g4-math",
-    "title": "がい数《すう》と 見積《みつ》もり",
-    "stage": "g4",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "subj-sansu",
-    "prereq": [
-      "g4.math.oku-cho"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
     "id": "g4.math.div-1digit",
     "pack": "g4-math",
     "title": "わり算《ざん》の 筆算《ひっさん》（1けたで わる）",
@@ -1993,6 +1978,21 @@
     "icon": "mode-math",
     "prereq": [
       "g3.math.division-remainder"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g4.math.decimal-add-sub",
+    "pack": "g4-math",
+    "title": "小数《しょうすう》の しくみと たし算《ざん》・ひき算《ざん》",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-add",
+    "prereq": [
+      "g3.math.decimals"
     ],
     "priority": "P1",
     "status": "ready",
@@ -2014,15 +2014,30 @@
     "engine": "choice"
   },
   {
-    "id": "g4.math.decimal-add-sub",
+    "id": "g4.math.rounding",
     "pack": "g4-math",
-    "title": "小数《しょうすう》の しくみと たし算《ざん》・ひき算《ざん》",
+    "title": "がい数《すう》と 見積《みつ》もり",
     "stage": "g4",
     "subject": "math",
     "domain": "A-number",
-    "icon": "math-formula-add",
+    "icon": "subj-sansu",
     "prereq": [
-      "g3.math.decimals"
+      "g4.math.oku-cho"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g4.math.order-ops",
+    "pack": "g4-math",
+    "title": "計算《けいさん》の 順《じゅん》じょと きまり",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-formula-sub",
+    "prereq": [
+      "g3.math.mult-2digit"
     ],
     "priority": "P1",
     "status": "ready",
@@ -2075,21 +2090,6 @@
     "engine": "number"
   },
   {
-    "id": "g4.math.order-ops",
-    "pack": "g4-math",
-    "title": "計算《けいさん》の 順《じゅん》じょと きまり",
-    "stage": "g4",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "math-formula-sub",
-    "prereq": [
-      "g3.math.mult-2digit"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
     "id": "g4.math.parallel-perp",
     "pack": "g4-math",
     "title": "垂直《すいちょく》と 平行《へいこう》",
@@ -2135,21 +2135,6 @@
     "engine": "choice"
   },
   {
-    "id": "g4.math.area",
-    "pack": "g4-math",
-    "title": "面積《めんせき》",
-    "stage": "g4",
-    "subject": "math",
-    "domain": "C-measure",
-    "icon": "mode-shapes",
-    "prereq": [
-      "g4.math.order-ops"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
     "id": "g4.math.angle",
     "pack": "g4-math",
     "title": "角《かく》の 大《おお》きさ",
@@ -2163,6 +2148,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "geometry"
+  },
+  {
+    "id": "g4.math.area",
+    "pack": "g4-math",
+    "title": "面積《めんせき》",
+    "stage": "g4",
+    "subject": "math",
+    "domain": "C-measure",
+    "icon": "mode-shapes",
+    "prereq": [
+      "g4.math.order-ops"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
   },
   {
     "id": "g4.math.change-relations",
@@ -2298,6 +2298,21 @@
     "engine": "experiment"
   },
   {
+    "id": "g4.sci.seasons-life",
+    "pack": "sci-g34",
+    "title": "季節《きせつ》と 生《い》き物《もの》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g3.sci.living-things"
+    ],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g4.sci.weather",
     "pack": "sci-g34",
     "title": "天気《てんき》の ようす",
@@ -2307,21 +2322,6 @@
     "icon": "subj-rika",
     "prereq": [
       "g4.math.line-graph"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "experiment"
-  },
-  {
-    "id": "g4.sci.moon-stars",
-    "pack": "sci-g34",
-    "title": "月《つき》と 星《ほし》",
-    "stage": "g4",
-    "subject": "sci",
-    "domain": "B-life",
-    "icon": "subj-rika",
-    "prereq": [
-      "g3.sci.sun-ground"
     ],
     "priority": "P1",
     "status": "ready",
@@ -2343,34 +2343,6 @@
     "engine": "experiment"
   },
   {
-    "id": "g4.sci.body",
-    "pack": "sci-g34",
-    "title": "人《ひと》の 体《からだ》の つくりと 運動《うんどう》",
-    "stage": "g4",
-    "subject": "sci",
-    "domain": "B-life",
-    "icon": "subj-rika",
-    "prereq": [],
-    "priority": "P2",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g4.sci.seasons-life",
-    "pack": "sci-g34",
-    "title": "季節《きせつ》と 生《い》き物《もの》",
-    "stage": "g4",
-    "subject": "sci",
-    "domain": "B-life",
-    "icon": "subj-rika",
-    "prereq": [
-      "g3.sci.living-things"
-    ],
-    "priority": "P2",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
     "id": "g4.sci.rainwater",
     "pack": "sci-g34",
     "title": "雨水《あまみず》の ゆくえと 地面《じめん》の ようす",
@@ -2382,6 +2354,34 @@
     "priority": "P2",
     "status": "ready",
     "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.moon-stars",
+    "pack": "sci-g34",
+    "title": "月《つき》と 星《ほし》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g3.sci.sun-ground"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
+  },
+  {
+    "id": "g4.sci.body",
+    "pack": "sci-g34",
+    "title": "人《ひと》の 体《からだ》の つくりと 運動《うんどう》",
+    "stage": "g4",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
   },
   {
     "id": "g4.soc.prefectures",
@@ -2689,21 +2689,6 @@
     "engine": "choice"
   },
   {
-    "id": "g5.math.multiples-divisors",
-    "pack": "g5-math",
-    "title": "偶数《ぐうすう》と 奇数《きすう》、倍数《ばいすう》と 約数《やくすう》",
-    "stage": "g5",
-    "subject": "math",
-    "domain": "A-number",
-    "icon": "math-split",
-    "prereq": [
-      "g3.math.division-remainder"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
     "id": "g5.math.decimal-shift",
     "pack": "g5-math",
     "title": "10倍《ばい》・100倍《ばい》と [[1/10]]・[[1/100]]（小数点《しょうすうてん》の いどう）",
@@ -2744,6 +2729,21 @@
     "icon": "math-split",
     "prereq": [
       "g5.math.decimal-mult"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g5.math.multiples-divisors",
+    "pack": "g5-math",
+    "title": "偶数《ぐうすう》と 奇数《きすう》、倍数《ばいすう》と 約数《やくすう》",
+    "stage": "g5",
+    "subject": "math",
+    "domain": "A-number",
+    "icon": "math-split",
+    "prereq": [
+      "g3.math.division-remainder"
     ],
     "priority": "P1",
     "status": "ready",
@@ -2826,6 +2826,21 @@
     "engine": "number"
   },
   {
+    "id": "g5.math.area-formulas",
+    "pack": "g5-math",
+    "title": "三角形《さんかくけい》・四角形《しかくけい》の 面積《めんせき》",
+    "stage": "g5",
+    "subject": "math",
+    "domain": "B-shape",
+    "icon": "mode-shapes",
+    "prereq": [
+      "g4.math.area"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g5.math.polygon-circle",
     "pack": "g5-math",
     "title": "正多角形《せいたかくけい》と 円周《えんしゅう》",
@@ -2851,21 +2866,6 @@
     "icon": "g1m-box",
     "prereq": [
       "g4.math.cuboid"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g5.math.area-formulas",
-    "pack": "g5-math",
-    "title": "三角形《さんかくけい》・四角形《しかくけい》の 面積《めんせき》",
-    "stage": "g5",
-    "subject": "math",
-    "domain": "B-shape",
-    "icon": "mode-shapes",
-    "prereq": [
-      "g4.math.area"
     ],
     "priority": "P1",
     "status": "ready",
@@ -2948,21 +2948,6 @@
     "engine": "choice"
   },
   {
-    "id": "g5.math.pie-band",
-    "pack": "g5-math",
-    "title": "帯《おび》グラフと 円《えん》グラフ",
-    "stage": "g5",
-    "subject": "math",
-    "domain": "D-data",
-    "icon": "mode-sorting",
-    "prereq": [
-      "g5.math.percent"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "number"
-  },
-  {
     "id": "g5.math.average",
     "pack": "g5-math",
     "title": "平均《へいきん》",
@@ -2972,6 +2957,21 @@
     "icon": "mode-compare",
     "prereq": [
       "g5.math.decimal-div"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "number"
+  },
+  {
+    "id": "g5.math.pie-band",
+    "pack": "g5-math",
+    "title": "帯《おび》グラフと 円《えん》グラフ",
+    "stage": "g5",
+    "subject": "math",
+    "domain": "D-data",
+    "icon": "mode-sorting",
+    "prereq": [
+      "g5.math.percent"
     ],
     "priority": "P1",
     "status": "ready",
@@ -3053,21 +3053,6 @@
     "engine": "experiment"
   },
   {
-    "id": "g5.sci.germination",
-    "pack": "sci-g56",
-    "title": "植物《しょくぶつ》の 発芽《はつが》と 成長《せいちょう》",
-    "stage": "g5",
-    "subject": "sci",
-    "domain": "B-life",
-    "icon": "subj-rika",
-    "prereq": [
-      "g5.sci.pendulum"
-    ],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "experiment"
-  },
-  {
     "id": "g5.sci.weather-change",
     "pack": "sci-g56",
     "title": "天気《てんき》の 変化《へんか》",
@@ -3081,6 +3066,21 @@
     "priority": "P1",
     "status": "ready",
     "engine": "choice"
+  },
+  {
+    "id": "g5.sci.germination",
+    "pack": "sci-g56",
+    "title": "植物《しょくぶつ》の 発芽《はつが》と 成長《せいちょう》",
+    "stage": "g5",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g5.sci.pendulum"
+    ],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "experiment"
   },
   {
     "id": "g5.sci.electromagnet",
@@ -3632,6 +3632,19 @@
     "engine": "program"
   },
   {
+    "id": "g6.sci.combustion",
+    "pack": "sci-g56",
+    "title": "物《もの》の 燃《も》え方《かた》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "A-matter",
+    "icon": "subj-rika",
+    "prereq": [],
+    "priority": "P1",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
     "id": "g6.sci.lever",
     "pack": "sci-g56",
     "title": "てこの きまり",
@@ -3647,30 +3660,17 @@
     "engine": "choice"
   },
   {
-    "id": "g6.sci.combustion",
+    "id": "g6.sci.body",
     "pack": "sci-g56",
-    "title": "物《もの》の 燃《も》え方《かた》",
-    "stage": "g6",
-    "subject": "sci",
-    "domain": "A-matter",
-    "icon": "subj-rika",
-    "prereq": [],
-    "priority": "P1",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
-    "id": "g6.sci.moon-sun",
-    "pack": "sci-g56",
-    "title": "月《つき》と 太陽《たいよう》",
+    "title": "人《ひと》の 体《からだ》の つくりと 働《はたら》き",
     "stage": "g6",
     "subject": "sci",
     "domain": "B-life",
     "icon": "subj-rika",
     "prereq": [
-      "g4.sci.moon-stars"
+      "g4.sci.body"
     ],
-    "priority": "P1",
+    "priority": "P2",
     "status": "ready",
     "engine": "choice"
   },
@@ -3703,21 +3703,6 @@
     "engine": "choice"
   },
   {
-    "id": "g6.sci.body",
-    "pack": "sci-g56",
-    "title": "人《ひと》の 体《からだ》の つくりと 働《はたら》き",
-    "stage": "g6",
-    "subject": "sci",
-    "domain": "B-life",
-    "icon": "subj-rika",
-    "prereq": [
-      "g4.sci.body"
-    ],
-    "priority": "P2",
-    "status": "ready",
-    "engine": "choice"
-  },
-  {
     "id": "g6.sci.plant-water",
     "pack": "sci-g56",
     "title": "植物《しょくぶつ》の 養分《ようぶん》と 水《みず》の 通《とお》り道《みち》",
@@ -3742,6 +3727,21 @@
     "icon": "subj-rika",
     "prereq": [],
     "priority": "P2",
+    "status": "ready",
+    "engine": "choice"
+  },
+  {
+    "id": "g6.sci.moon-sun",
+    "pack": "sci-g56",
+    "title": "月《つき》と 太陽《たいよう》",
+    "stage": "g6",
+    "subject": "sci",
+    "domain": "B-life",
+    "icon": "subj-rika",
+    "prereq": [
+      "g4.sci.moon-stars"
+    ],
+    "priority": "P1",
     "status": "ready",
     "engine": "choice"
   },

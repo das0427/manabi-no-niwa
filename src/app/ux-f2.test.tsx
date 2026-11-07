@@ -9,7 +9,7 @@ import { PRESCHOOL_HOMES } from '../curriculum/preschoolHome';
  * 使いやすさの直し（F2 幼児の入口。FX02・FX16）。
  *  - FX02: 札・遊び方の名前の声は、遷移のあとに鳴る（前は audio.play のすぐあとに navigate が audio.stop して、
  *    鳴り始める前に止まっていた）。本物のルーターを使い、audio の呼ばれた順を見る。
- *  - FX16: 保存に問題があるとき、幼児ホームにも v1 のホームと同じ「!」（鍵の左）を出す。
+ *  - FX16: 保存に問題があるとき、幼児ホームにも v1 のホームと同じ「!」（鍵の左。部品は StorageHealthMark）を出す。
  */
 const au = vi.hoisted(() => ({ calls: [] as string[] }));
 vi.mock('../core/audio/index', () => ({
@@ -214,16 +214,17 @@ describe('FX16: 保存の問題の「!」が幼児ホームにも出る', () => 
     expect(screen.getByTestId('home-health')).toBeTruthy();
   });
 
-  it('v1 のホーム（Home.tsx）の「!」と、文・目印・見た目の名前が同じ（小学生ホームと揃える元）', () => {
-    const v1 = readFileSync('src/app/Home.tsx', 'utf8');
-    // 取り込みで v1 のホームもこの部品にまとめたら、同じ部品なので文も見た目も一致する
-    if (/<StorageHealthMark\s*\/>/.test(v1)) return;
-    // まだ v1 のホームが自分で書いているあいだは、文（文言の直しで片方だけ変えない）と class を比べる
-    const label = /aria-label="([^"]+)"\s+data-testid="home-health"/.exec(v1)?.[1];
-    expect(label).toBeTruthy();
-    st.health = 'full';
-    renderHome();
-    expect(screen.getByTestId('home-health').getAttribute('aria-label')).toBe(label);
-    expect(v1).toContain('className="home-health"');
+  it('幼児ホーム・小学生ホーム・v1 のホームは同じ部品（StorageHealthMark）を使い、自分で「!」を書かない', () => {
+    // 文（文言の直しで片方だけ変えない）・見た目・動きを1か所で揃えるため
+    for (const file of [
+      'src/app/PreschoolHome.tsx',
+      'src/app/SchoolHome.tsx',
+      'src/app/Home.tsx',
+    ]) {
+      const src = readFileSync(file, 'utf8');
+      expect(src, file).toMatch(/import \{ StorageHealthMark \} from '\.\/StorageHealthMark'/);
+      expect(src, file).toMatch(/<StorageHealthMark\s*\/>/);
+      expect(src, file).not.toContain('data-testid="home-health"');
+    }
   });
 });

@@ -3,7 +3,7 @@
  * 2歳段階は札4枚（2×2）・おすすめなし・えいごの札なし（review-1 #23）。保護者向けの案内は起動画面で出す。
  * 「ほかの がくねん」は上の帯（鍵の左）。右の列の一番下を「えいご」の札にするため（設計: preschool-english.md 8章）。
  */
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import * as db from '../core/storage/index';
 import { MODE_IDS } from '../core/types';
 import { PRESCHOOL_EN_CARDS, showsEnglishCard } from '../curriculum/preschoolEnglish';
@@ -19,6 +19,7 @@ import type { VoiceSeq } from '../voice/catalog/index';
 import { useApp } from './AppState';
 import { ParentGateButton } from './ParentGate';
 import { navigate, type Route } from './router';
+import { StorageHealthMark } from './StorageHealthMark';
 import './home.css';
 import './school-home.css';
 
@@ -50,26 +51,6 @@ export function cardUnits(card: HomeCard, opened: readonly string[] = []): strin
 /** v1 のモード名の札は v1 と同じ目印（既存の E2E と保護者の手順書の互換） */
 function cardTestId(id: string): string {
   return (MODE_IDS as readonly string[]).includes(id) ? `home-mode-${id}` : `home-card-${id}`;
-}
-
-/**
- * 保存に問題があるときの、保護者向けの小さな印「!」（鍵の左。子供の操作は止めない）。
- * v1 の Home.tsx の「!」と同じ作り（`.home-health`〔home.css〕・role="img"・文・data-testid）。押せる物ではない。
- * 幼児ホームは v1 のホームを通らないので、ここに置く（FX16）。小学生ホームも同じ作りで置く（SchoolHome。F4）。
- */
-export function StorageHealthMark() {
-  const health = useSyncExternalStore(db.onStorageHealth, db.getStorageHealth);
-  if (health === 'ok') return null;
-  return (
-    <span
-      className="home-health"
-      role="img"
-      aria-label="（保護者の方へ）記録の保存に問題があります。保護者画面のデータを見てください"
-      data-testid="home-health"
-    >
-      !
-    </span>
-  );
 }
 
 function TwoLine({ text, className = 'home-card__name' }: { text: string; className?: string }) {

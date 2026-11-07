@@ -13,6 +13,9 @@ vi.mock('./AppState', () => ({ useApp: () => h.app }));
 vi.mock('./router', () => ({ navigate: vi.fn() }));
 vi.mock('../core/storage/index', () => ({
   listUnitProgress: vi.fn(async () => h.progress),
+  // 記録の保存の状態（StorageHealthMark。FX16）。ここでは問題なし
+  getStorageHealth: () => 'ok',
+  onStorageHealth: () => () => undefined,
 }));
 
 import { SchoolHome } from './SchoolHome';

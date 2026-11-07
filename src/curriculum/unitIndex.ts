@@ -2,9 +2,12 @@
  * 単元の索引（本体に同梱する軽い一覧。architecture.md 3章）。
  * 正本は各パックの UnitSpec。`npm run build:unit-index` で unit-index.json を作り直す
  * （古いままだと unitIndex.test.ts が失敗する）。
+ * 並びは、段階・教科ごとに「習う順」（単元対応表の行の順。前提は先。unitOrder.ts）。
+ * 単元の地図の列（visibleUnits の結果）は、この並びのまま出す。
  */
 import { createRng } from '../core/util/rng';
 import type { PackContent, StageId, SubjectId, UnitMeta, UnitSpec } from './types';
+import { orderUnits } from './unitOrder';
 import data from './unit-index.json';
 
 export const UNIT_INDEX: readonly UnitMeta[] = data as UnitMeta[];
@@ -15,7 +18,7 @@ export function unitMeta(id: string): UnitMeta | undefined {
   return BY_ID.get(id);
 }
 
-/** 子供画面に出す単元（planned は出さない） */
+/** 子供画面に出す単元（planned は出さない）。並びは索引の並び（習う順）のまま */
 export function visibleUnits(
   filter: { subject?: SubjectId; stage?: StageId } = {},
   /** 保護者が開いた単元（hiddenByDefault の単元はこれに含まれるときだけ出す） */
@@ -58,8 +61,13 @@ export function metaOf(packId: string, u: UnitSpec): UnitMeta {
   };
 }
 
-export function buildIndex(packs: PackContent[]): UnitMeta[] {
-  return packs
-    .flatMap((p) => p.units.map((u) => metaOf(p.packId, u)))
-    .sort((a, b) => a.id.localeCompare(b.id));
+/**
+ * 索引を作る。matrixOrder は単元対応表の行の順（parseMatrixOrder）。
+ * 並びは orderUnits（段階・教科ごとに、表の順で前提を先に）。
+ */
+export function buildIndex(packs: PackContent[], matrixOrder: readonly string[]): UnitMeta[] {
+  return orderUnits(
+    packs.flatMap((p) => p.units.map((u) => metaOf(p.packId, u))),
+    matrixOrder,
+  );
 }

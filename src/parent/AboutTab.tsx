@@ -1,3 +1,4 @@
+import { OFFLINE_REOPEN_NOTE } from '../app/PackSetupStatus';
 import { applyUpdate, isPageControlled, useOfflineState } from '../core/offline/index';
 import { useUpdater } from '../core/offline/updater';
 import { UNIT_INDEX } from '../curriculum/unitIndex';
@@ -34,9 +35,8 @@ export function AboutTab() {
       ? `オフラインの準備中です（${Math.round((p.done / Math.max(1, p.total)) * 100)}%）`
       : 'オフラインの準備中です';
   } else if (off.status === 'ready') {
-    status = isPageControlled()
-      ? 'オフラインで使えます'
-      : 'オフラインの準備ができました。いちど開き直すと使えます。';
+    // 起動画面の保護者向けの表示（setupParentNote）と同じ文（開き直す前は「つかえます」と言わない）
+    status = isPageControlled() ? 'オフラインで使えます' : OFFLINE_REOPEN_NOTE;
   } else if (off.status === 'error') {
     status = `オフラインの準備ができませんでした${off.error ? `（${off.error}）` : ''}`;
   } else {

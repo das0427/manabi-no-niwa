@@ -60,6 +60,11 @@
   padding-left: 0;
 }
 
+/* 音量のスライダー（range）は、棒だけだと高さ 16px で押しにくい。押せる高さを 44px にする（FX11） */
+.parent-root input[type='range'] {
+  min-height: 44px;
+}
+
 .parent-root input[type='file']::file-selector-button {
   min-height: 32px;
   margin-right: 10px;

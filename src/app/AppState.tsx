@@ -1,5 +1,9 @@
 /**
  * アプリ全体の状態（いま遊んでいるプロフィール・設定・すき）。保存は core/storage。
+ *
+ * 「遊ぶ人」（profile。子供の画面が使う。保存は AppRecord.activeProfileId）と、保護者画面で「見る人」は別。
+ * 保護者画面の中では ParentViewScope が profile・settings・favorites を「見る人」のものに差し替えるので、
+ * 保護者画面の各タブ（useApp() を読む）は何も変えずに見る人の記録を扱える。遊ぶ人は替わらない（FX09）。
  */
 import {
   createContext,
@@ -7,6 +11,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -28,8 +33,15 @@ export interface AppStateValue {
   started: boolean;
   /** 保護者ゲートを通過したか（このページの間だけ。再読み込みで戻る） */
   parentUnlocked: boolean;
+  /**
+   * 保護者画面から戻ったとき、起動画面を「だれが あそぶ？」から始める（2人以上のとき。このページの間だけ）。
+   * 起動画面（StartScreen）が読み、選んだら下ろす。
+   */
+  choosePlayer: boolean;
   setStarted(v: boolean): void;
   setParentUnlocked(v: boolean): void;
+  setChoosePlayer(v: boolean): void;
+  /** 遊ぶ人を替える（起動画面の「だれが あそぶ？」だけが呼ぶ。保護者画面で見る人を替えるときは使わない） */
   selectProfile(id: string): Promise<void>;
   updateSettings(s: ChildSettings): Promise<void>;
   toggleFavorite(modeId: ModeId): Promise<boolean>;
@@ -74,6 +86,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   // 開発用の ?dev-open（開発サーバーだけ。本番では false に畳まれる）は、起動画面とゲートを通らずに hash の画面を開く
   const [started, setStarted] = useState(DEV_OPEN);
   const [parentUnlocked, setParentUnlocked] = useState(devOpenParent);
+  const [choosePlayer, setChoosePlayer] = useState(false);
 
   const load = useCallback(async () => {
     await initOnce();
@@ -175,8 +188,10 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       favorites,
       started,
       parentUnlocked,
+      choosePlayer,
       setStarted,
       setParentUnlocked,
+      setChoosePlayer,
       selectProfile,
       updateSettings,
       toggleFavorite,
@@ -192,6 +207,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       favorites,
       started,
       parentUnlocked,
+      choosePlayer,
       selectProfile,
       updateSettings,
       toggleFavorite,
@@ -206,4 +222,136 @@ export function useApp(): AppStateValue {
   const v = useContext(Ctx);
   if (!v) throw new Error('AppStateProvider がありません');
   return v;
+}
+
+/* ---- 保護者画面で「見る人」（遊ぶ人とは別） ---- */
+
+export interface ParentViewValue {
+  /** 保護者画面で見ているプロフィールの id（読み込み前は null）。遊ぶ人（子供の画面のプロフィール）とは別 */
+  viewProfileId: string | null;
+  /** 見るプロフィールを替える。遊ぶ人は替わらない（保存の activeProfileId も書かない） */
+  viewProfile(id: string): void;
+}
+
+const ViewCtx = createContext<ParentViewValue | null>(null);
+
+export function useParentView(): ParentViewValue {
+  const v = useContext(ViewCtx);
+  if (!v) throw new Error('ParentViewScope がありません');
+  return v;
+}
+
+const NO_FAVORITES: ModeId[] = [];
+
+/** 見る人が遊ぶ人と別のときに読み込む、見る人の設定とすき */
+interface OtherView {
+  id: string;
+  settings: ChildSettings;
+  favorites: ModeId[];
+}
+
+/**
+ * 保護者画面の中だけで、useApp() の profile・settings・favorites を「見る人」のものに差し替える。
+ * 保護者画面の各タブはこれまでどおり useApp() を読むだけで、見ているプロフィールの記録・設定を扱える。
+ * 見る人を替えても、遊ぶ人（子供の画面のプロフィール。保存の activeProfileId）は替わらない。
+ * 保護者画面を開き直すと、見る人は遊ぶ人から始まる。
+ *
+ * - updateSettings: 見る人が遊ぶ人なら今までどおり。別の人なら、その人の設定だけを保存する（遊ぶ人の設定は変えない）。
+ * - reload: 保存を読み直して、見る人の分も読み直す。見る人が削除されたら遊ぶ人に戻る。
+ * - 音: 設定の音量・効果音は、見ている人の値で鳴らす（設定を試し聞きできるように）。保護者画面を出るときは、
+ *   遊ぶ人の値へ戻す。
+ */
+export function ParentViewScope({ children }: { children: ReactNode }) {
+  const base = useApp();
+  const [viewId, setViewId] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+  const [other, setOther] = useState<OtherView | null>(null);
+  const playing = base.profile;
+  const viewed = base.profiles.find((p) => p.id === viewId) ?? playing;
+  const viewedId = viewed?.id ?? null;
+  const isPlaying = viewedId === (playing?.id ?? null);
+  const { storageUnavailable, profiles } = base;
+
+  // 見る人が遊ぶ人と別のとき、その人の設定とすきを読む（保存を読み直したとき・見る人を替えたときにも）
+  useEffect(() => {
+    if (!viewedId || isPlaying || storageUnavailable) return;
+    let alive = true;
+    void (async () => {
+      const [settings, favorites] = await Promise.all([
+        db.getSettings(viewedId),
+        db.getFavorites(viewedId),
+      ]);
+      if (alive) setOther({ id: viewedId, settings, favorites });
+    })();
+    return () => {
+      alive = false;
+    };
+    // profiles: 保存を読み直す（reload）と新しい配列になる。tick: reload の完了
+  }, [viewedId, isPlaying, storageUnavailable, profiles, tick]);
+
+  const viewedSettings = isPlaying
+    ? base.settings
+    : other && other.id === viewedId
+      ? other.settings
+      : null;
+  const viewedFavorites = isPlaying
+    ? base.favorites
+    : other && other.id === viewedId
+      ? other.favorites
+      : NO_FAVORITES;
+
+  const { updateSettings: updatePlaying, reload: reloadBase } = base;
+  const updateSettings = useCallback(
+    async (s: ChildSettings) => {
+      if (isPlaying) return updatePlaying(s);
+      await db.saveSettings(s);
+      setOther((o) => (o && o.id === s.profileId ? { ...o, settings: s } : o));
+    },
+    [isPlaying, updatePlaying],
+  );
+  const reload = useCallback(async () => {
+    await reloadBase();
+    setTick((t) => t + 1);
+  }, [reloadBase]);
+
+  // 音は見ている人の設定で鳴らす。保護者画面を出るときは遊ぶ人の設定へ戻す
+  useEffect(() => {
+    if (!viewedSettings) return;
+    audio.setVolume(viewedSettings.volume);
+    audio.setSfxEnabled(viewedSettings.sfx);
+  }, [viewedSettings]);
+  const playingSettings = useRef(base.settings);
+  useEffect(() => {
+    playingSettings.current = base.settings;
+  }, [base.settings]);
+  useEffect(
+    () => () => {
+      const s = playingSettings.current;
+      if (!s) return;
+      audio.setVolume(s.volume);
+      audio.setSfxEnabled(s.sfx);
+    },
+    [],
+  );
+
+  const appValue = useMemo<AppStateValue>(
+    () => ({
+      ...base,
+      profile: viewed ?? null,
+      settings: viewedSettings,
+      favorites: viewedFavorites,
+      updateSettings,
+      reload,
+    }),
+    [base, viewed, viewedSettings, viewedFavorites, updateSettings, reload],
+  );
+  const viewValue = useMemo<ParentViewValue>(
+    () => ({ viewProfileId: viewedId, viewProfile: setViewId }),
+    [viewedId],
+  );
+  return (
+    <Ctx.Provider value={appValue}>
+      <ViewCtx.Provider value={viewValue}>{children}</ViewCtx.Provider>
+    </Ctx.Provider>
+  );
 }

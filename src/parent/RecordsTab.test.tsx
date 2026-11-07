@@ -203,7 +203,9 @@ describe('2歳段階の記録の見せ方（review-1 #8）', () => {
     expect(rows).toHaveLength(2);
     const counts = rows.map((r) => r.querySelectorAll('td')[1]!.textContent);
     expect(counts.sort()).toEqual(['1', '3']);
-    expect(screen.getByTestId('play-recent-table').textContent).toContain('いぬ');
+    // 1.0 のあそびの記録の文（あ）は出し、単元の記録の key（内部の ID の形。ここでは「いぬ」）は出さない（FX14）
+    expect(screen.getByTestId('play-recent-table').textContent).toContain('あ');
+    expect(screen.getByTestId('play-recent-table').textContent).not.toContain('いぬ');
 
     // 正誤・ヒント数・むずかしそう・とまどい・おすすめの表は出さない
     for (const id of [

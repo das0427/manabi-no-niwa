@@ -865,7 +865,7 @@ const items: Item[] = [
 
 export const history2: UnitSpec = {
   ...baseSoc('g6.soc.history-2', 'g6'),
-  title: '歴史《れきし》2 武士《ぶし》の世《よ》の中《なか》から江戸《えど》の文化《ぶんか》まで',
+  title: '歴史《れきし》2 武士《ぶし》の世《よ》から 江戸《えど》の文化《ぶんか》まで',
   kind: 'inquiry',
   status: 'ready',
   prereq: ['g6.soc.history-1'],

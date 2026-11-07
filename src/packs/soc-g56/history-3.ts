@@ -874,7 +874,7 @@ const items: Item[] = [
 
 export const history3: UnitSpec = {
   ...baseSoc('g6.soc.history-3', 'g6'),
-  title: '歴史《れきし》3 明治《めいじ》から今《いま》の日本《にほん》へ',
+  title: '歴史《れきし》3 明治《めいじ》から 今《いま》の日本《にほん》へ',
   kind: 'inquiry',
   status: 'ready',
   prereq: ['g6.soc.history-2'],

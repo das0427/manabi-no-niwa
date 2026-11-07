@@ -762,7 +762,7 @@ const ITEMS: Item[] = [
 
 export const figurative: UnitSpec = {
   id: 'g5.ja.figurative',
-  title: '表現《ひょうげん》の工夫《くふう》（比喩《ひゆ》・反復《はんぷく》など）',
+  title: '表現《ひょうげん》の 工夫《くふう》',
   stage: 'g5',
   subject: 'ja',
   domain: 'kotoba',

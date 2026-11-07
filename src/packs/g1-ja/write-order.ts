@@ -1,5 +1,5 @@
 /**
- * g1.ja.write-order じゅんじょよく かこう（けいけんを じゅんに ならべる。curriculum-matrix 3.4）。
+ * g1.ja.write-order じゅんじょ よく かこう（けいけんを じゅんに ならべる。curriculum-matrix 3.4）。
  *
  * 到達項目:
  *   pics  … えにっきの えを じかんの じゅんに ならべる（order・え＋みじかい ことば）。別例: えだけの カード
@@ -607,7 +607,9 @@ const items: Item[] = [
 
 export const writeOrder: UnitSpec = {
   id: 'g1.ja.write-order',
-  title: 'じゅんじょよく かこう',
+  // 「じゅんじょ」（名詞）と「よく」は文節の切れ目なので空白を入れる。「じゅんじょよく」7 字のままだと、単元の地図の札の 1 行
+  // （小1 で約 6 字）に入らず語の途中で折れる。単元の中の「じゅんじょの ことば」と同じ語を残すため「じゅんばん」には変えない。
+  title: 'じゅんじょ よく かこう',
   stage: 'g1',
   subject: 'ja',
   domain: 'kaku',

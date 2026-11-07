@@ -1052,7 +1052,9 @@ const items: Item[] = [
 export const tradition: UnitSpec = {
   ...baseSoc('g4.soc.tradition', 'g4'),
   priority: 'P2',
-  title: '地《ち》いきの伝統《でんとう》と先人《せんじん》の働《はたら》き',
+  // 題は文節の切れ目に空白を 2 つ入れて、地図の札で空白のところでだけ折る（spacedLabel。12 字＋空白 2 つで 2×12 ≧ 14）。
+  // 空白が無いと、ふりがなの語と隣の字の包み（「の伝統と」）のせいで「地いき／の伝統と先人の働き」と折れた（text-layout-fixes 第7回のレビュー）
+  title: '地《ち》いきの 伝統《でんとう》と 先人《せんじん》の働《はたら》き',
   kind: 'inquiry',
   status: 'ready',
   prereq: [],

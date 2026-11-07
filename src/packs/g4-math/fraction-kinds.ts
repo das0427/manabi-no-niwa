@@ -13,7 +13,18 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { NumberlineItem } from '../../engines/numberline/numberline';
 import type { ChoiceItem, Item, NumberItem, SortItem, UnitSpec } from '../../curriculum/types';
-import { expr, finishUnit, gcd, opts, pick, pickObj, REVISED, svg, wrongList } from './util';
+import {
+  expr,
+  finishUnit,
+  gcd,
+  opts,
+  pick,
+  pickObj,
+  REVISED,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'kind' | 'nl' | 'toMixed' | 'toImproper' | 'equiv' | 'compare';
 
@@ -306,6 +317,8 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
   const k = rng.int(2, Math.max(2, Math.floor(12 / d)));
   const N = n * k;
   const D = d * k;
+  // 選ぶ問題の図: 分母の ちがう 数直線 2本。数は 0 と 1 だけ（labelEvery: 1。目もりの数が 0.2・0.333333 の
+  // 小数で 出ない）
   const lineFig: Figure = {
     kind: 'column',
     gap: 1,
@@ -315,6 +328,7 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
         min: 0,
         max: 1,
         step: 1 / d,
+        labelEvery: 1,
         marks: [{ at: n / d, label: F(n, d), tone: 'focus' }],
       },
       {
@@ -322,9 +336,21 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
         min: 0,
         max: 1,
         step: 1 / D,
+        labelEvery: 1,
         marks: [{ at: N / D, label: '？', tone: 'focus' }],
       },
     ],
+  };
+  // 数の入力の解説の図: 数直線 1本。長い 目もりは 1を d こに 分けた もの、短い 目もりは D こに 分けた もの。
+  // 印は 1つで、ラベルは 2つの 分数を ＝ で 結ぶ（解説の図に「？」は 出さない。text-layout-fixes 第7回）
+  const answerFig: Figure = {
+    kind: 'numberline',
+    min: 0,
+    max: 1,
+    step: 1 / d,
+    minorStep: 1 / D,
+    labelEvery: 1,
+    marks: [{ at: n / d, label: `${F(n, d)} ＝ ${F(N, D)}`, tone: 'focus' }],
   };
   if (alt) {
     const item: ChoiceItem = {
@@ -360,16 +386,23 @@ function equiv(level: number, rng: Rng, alt: boolean): Item {
     prompt: '□に あてはまる 数を 求めよう。',
     figure: expr(askNum ? `${F(n, d)} ＝ [[□/${D}]]` : `${F(n, d)} ＝ [[${N}/□]]`),
     hints: [
-      '数直線を ならべると、大きさの 等しい 分数が 見つかるよ。',
+      // ①は 解説の図（数直線 1本に 2つの めもり）に 合わせる。分母を 求める 問題では 分母（D）が 答えなので、
+      // めもりの 数を 言わずに 考え方だけを 言う
       askNum
-        ? `分母は ${d}から ${D}に なったね。${D} ÷ ${d} ＝ ${k}。`
+        ? `数直線に、1を ${d}こに 分けた めもりと ${D}こに 分けた めもりを かさねて みよう。`
+        : '大きさの 等しい 分数は、数直線の 同じ 位置に あるよ。',
+      // 分子が 1の とき、答えの 分子は かける数（k）と 同じ。②で「＝ k」まで 言うと 答えを 言うので、式だけに する
+      askNum
+        ? n === 1
+          ? `分母は ${d}から ${D}に なったね。${D} ÷ ${d}を 計算しよう。`
+          : `分母は ${d}から ${D}に なったね。${D} ÷ ${d} ＝ ${k}。`
         : `分子は ${n}から ${N}に なったね。${N} ÷ ${n} ＝ ${k}。`,
       askNum
         ? `分子にも 同じ数を かけよう。${n} × ${k}。`
         : `分母にも 同じ数を かけよう。${d} × ${k}。`,
     ],
     explain: `分母と 分子に 同じ数 ${k}を かけると、大きさの 等しい 分数に なります。${F(n, d)} ＝ ${F(N, D)}。`,
-    explainFigure: lineFig,
+    explainFigure: answerFig,
     identity: `equiv:${n}/${d}:${N}/${D}:${askNum ? 'n' : 'd'}`,
     alt: false,
     fields: [{ answer: answers[0]! }],
@@ -415,7 +448,9 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
             Math.ceil(Math.max(num, mixedVal) / den) +
             (Math.max(num, mixedVal) % den === 0 ? 1 : 0),
           step: 1 / den,
-          labelEvery: den,
+          // labelEvery は 値の 間かく（目もりの 本数では ない）。整数 0・1・2…に 数を 書く。以前の den だと
+          // den の 倍数（分母 5 以上では 0 だけ）に しか 数が 出ず、くらべる 手がかりが 無かった（第7回の レビュー）
+          labelEvery: 1,
         }
       : undefined,
     fixedOrder: true,
@@ -429,6 +464,37 @@ function compare(level: number, rng: Rng, alt: boolean): ChoiceItem {
     alt,
     options,
   };
+}
+
+/**
+ * 大きさの 等しい 分数の 数直線（1/2・2/4・3/6 の 3本）。同じ 位置に ▼ と 点線を 通す。
+ * 数直線の 図を 3本 たてに ならべた 列（fig-column）は 1本が 約 10u で、作業領域（26u）に 入らず 3本目が 隠れた
+ * （text-layout-fixes 第7回）。1つの 図に まとめて 低くした（図の 高さは 幅の 約 0.53倍）
+ */
+function equalLinesFig(): Figure {
+  const x0 = 110;
+  const x1 = 450;
+  const len = x1 - x0;
+  const xm = x0 + len / 2;
+  const dens = [2, 4, 6];
+  const rowY = (i: number) => 50 + i * 88;
+  const ink = 'stroke="var(--ink)" stroke-width="3"';
+  let body = `<line x1="${xm}" y1="10" x2="${xm}" y2="${rowY(2) + 8}" stroke="var(--sky-dark)" stroke-width="3" stroke-dasharray="7 5"/>`;
+  dens.forEach((d, i) => {
+    const y = rowY(i);
+    body += `<line x1="${x0 - 12}" y1="${y}" x2="${x1 + 14}" y2="${y}" ${ink}/>`;
+    for (let k = 0; k <= d; k++) {
+      const x = x0 + (len * k) / d;
+      body += `<line x1="${x}" y1="${y - 9}" x2="${x}" y2="${y + 9}" ${ink}/>`;
+    }
+    body += `<path d="M ${xm} ${y - 10} l -9 -16 h 18 z" fill="var(--sun)" stroke="var(--ink)" stroke-width="3"/>`;
+    body += svgText(x0, y + 30, '0', 22) + svgText(x1, y + 30, '1', 22);
+    // 左の 分数（分子・線・分母）
+    body += svgText(46, y - 16, String(d / 2), 26);
+    body += `<line x1="30" y1="${y}" x2="62" y2="${y}" ${ink}/>`;
+    body += svgText(46, y + 18, String(d), 26);
+  });
+  return svg(500, rowY(2) + 38, body, '大きさの 等しい 分数の 数直線');
 }
 
 const LEVELS: { objs: Obj[] }[] = [
@@ -460,7 +526,7 @@ export function generateFractionKinds(level: number, rng: Rng, index: number): I
 
 export const fractionKinds: UnitSpec = finishUnit({
   id: 'g4.math.fraction-kinds',
-  title: '分数の しゅるい（真分数・仮分数・帯分数）',
+  title: '分数の しゅるい （真分数・ 仮分数・ 帯分数）',
   stage: 'g4',
   subject: 'math',
   domain: 'A-number',
@@ -575,7 +641,8 @@ export const fractionKinds: UnitSpec = finishUnit({
         min: 0,
         max: 2,
         step: 1 / 3,
-        labelEvery: 3,
+        // 値の 間かく。0・1・2 に 数を 書く（以前の 3 では 0 だけで、文の「1」が 図に 無かった）
+        labelEvery: 1,
         marks: [
           { at: 2 / 3, label: '[[2/3]]' },
           { at: 5 / 3, label: '[[5/3]]', tone: 'focus' },
@@ -592,33 +659,7 @@ export const fractionKinds: UnitSpec = finishUnit({
     },
     {
       text: '[[1/2]]と [[2/4]]と [[3/6]]は、数直線の 同じ 位置に あります。大きさの 等しい 分数です。',
-      figure: {
-        kind: 'column',
-        gap: 1,
-        items: [
-          {
-            kind: 'numberline',
-            min: 0,
-            max: 1,
-            step: 1 / 2,
-            marks: [{ at: 0.5, label: '[[1/2]]' }],
-          },
-          {
-            kind: 'numberline',
-            min: 0,
-            max: 1,
-            step: 1 / 4,
-            marks: [{ at: 0.5, label: '[[2/4]]' }],
-          },
-          {
-            kind: 'numberline',
-            min: 0,
-            max: 1,
-            step: 1 / 6,
-            marks: [{ at: 0.5, label: '[[3/6]]' }],
-          },
-        ],
-      },
+      figure: equalLinesFig(),
     },
   ],
   source: {

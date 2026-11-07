@@ -99,7 +99,8 @@ function copyItem(c: (typeof COPY)[number]): GeometryItem {
       'みほんの かどの てんを かぞえよう。',
       'よこに いくつ、たてに いくつ すすむか みほんで たしかめよう。',
     ],
-    explain: `みほんと おなじ おおきさの ${c.name}が かけたね。`,
+    // かけたことを まえに しない（なにも かかずに 解説へ すすんでも うそに ならない）。見本の かたちは エンジンが だす
+    explain: `${c.name}は かどが ${c.pts.length}つ。かどから かどまで みほんと おなじだけ すすむと、おなじ おおきさに なるよ。`,
     identity: `copy:${c.id}`,
     task: {
       kind: 'draw',
@@ -117,6 +118,13 @@ const DRAW: { id: string; name: string; shape: 'triangle' | 'square' | 'rectangl
   { id: 'square', name: 'ましかく', shape: 'square' },
   { id: 'rectangle', name: 'ながしかく', shape: 'rectangle' },
 ];
+// ながしかくは向きによらない特徴で言う（判定は縦に長いながしかくも正解。
+// 「よこの へんが ながい」と言うと、縦にかいた子が まちがえたと思ってしまう）
+const DRAW_FEATURE = {
+  triangle: 'へんも 3つ。',
+  square: 'へんの ながさが みんな おなじ。',
+  rectangle: 'ながい へんと みじかい へんが ある。',
+} as const;
 function drawItem(d: (typeof DRAW)[number]): GeometryItem {
   return {
     engine: 'geometry',
@@ -133,7 +141,8 @@ function drawItem(d: (typeof DRAW)[number]): GeometryItem {
           ? 'たてより よこを ながく しよう。'
           : 'てんを 3つ えらんで つなごう。',
     ],
-    explain: `${d.name}が かけたね。`,
+    // かけたことを まえに しない。かたちの とくちょう（かどの かずと へんの ながさ）で いう
+    explain: `${d.name}は かどが ${d.shape === 'triangle' ? 3 : 4}つ、${DRAW_FEATURE[d.shape]}`,
     identity: `draw:${d.id}`,
     task: {
       kind: 'draw',

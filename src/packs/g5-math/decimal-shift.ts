@@ -274,7 +274,7 @@ export function generateDecimalShift(level: number, rng: Rng, index: number): It
 
 export const decimalShift: UnitSpec = finishUnit({
   id: 'g5.math.decimal-shift',
-  title: '10倍・100倍と [[1/10]]・[[1/100]]（小数点の いどう）',
+  title: '10倍・100倍と [[1/10]]・[[1/100]] （小数点の いどう）',
   stage: 'g5',
   subject: 'math',
   domain: 'A-number',

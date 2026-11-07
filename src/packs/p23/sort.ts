@@ -4,6 +4,10 @@
  * 色の組は あか×きいろ、きいろ×みどり だけ（あか×みどりは出さない: DESINGN 3.1）。
  * 色の箱は 色名・代表の絵の色・模様（あか＝てん、きいろ＝しま、みどり＝なみ）を併記する。
  * 同一性キー: 箱の組とカードの組（並びは問わない）。
+ *
+ * 解説の文は、どの段階の画面にも出る札だけを名指す。2〜3歳は札を減らし（sortVisible。2歳の段階 2枚・3歳の段階 3枚。
+ * 箱ごとに 1枚ずつ順に選ぶ）、4さい以上は全部の札が出る。名指すのは 各箱の 1枚目（cards の並びで）だけにして、
+ * 残りの札は「おなじ いろは おなじ はこへ」の決まりで言う（画面に無い札の名前を言わない）。
  */
 import type { Item, UnitSpec } from '../../curriculum/types';
 import type { Figure } from '../../engines/figure/types';
@@ -67,12 +71,28 @@ const card = (t: Thing, box: number, mis: string): SortCard => ({
   wrongBoxes: [{ box: 1 - box, misconception: mis }],
 });
 
+/**
+ * 解説で名指す札: 各箱の 1枚目（cards の並びで）。sortVisible は 2枚以上のとき必ずこの札を含む
+ * （どの段階でも画面に出る）。箱の順に並べる。
+ */
+function firstOfEachBox(cards: SortCard[], boxCount: number): SortCard[] {
+  const out: SortCard[] = [];
+  for (let b = 0; b < boxCount; b++) {
+    const c = cards.find((x) => x.box === b);
+    if (c) out.push(c);
+  }
+  return out;
+}
+
 function colorItem(level: number, a: Color, b: Color, things: Thing[], alt = false): SortItem {
   const key = things
     .map((t) => t.illust)
     .sort()
     .join('+');
   const id = `color:${a}-${b}:${key}`;
+  const cards = mix(id, things).map((t) => card(t, t.color === a ? 0 : 1, 'color-mix'));
+  const boxNames = [COLOR_NAME[a], COLOR_NAME[b]];
+  const named = firstOfEachBox(cards, 2).map((c) => `${c.name}は ${boxNames[c.box as number]}`);
   return {
     engine: 'sort',
     id,
@@ -85,9 +105,9 @@ function colorItem(level: number, a: Color, b: Color, things: Thing[], alt = fal
       { figure: swatch(a), name: COLOR_NAME[a] },
       { figure: swatch(b), name: COLOR_NAME[b] },
     ],
-    cards: mix(id, things).map((t) => card(t, t.color === a ? 0 : 1, 'color-mix')),
+    cards,
     hints: ['えの いろを よく みよう。', 'はこの いろと おなじ いろは どれかな。'],
-    explain: things.map((t) => `${t.name}は ${COLOR_NAME[t.color]}`).join('、') + '。',
+    explain: `${named.join('、')}。${things.length > 2 ? 'おなじ いろは おなじ はこへ。' : ''}`,
     identity: id,
   };
 }
@@ -263,6 +283,13 @@ const KINDS: KindSet[] = [
 function kindItem(k: KindSet): SortItem {
   const id = `kind:${k.id}`;
   const all = [...k.a.map((x) => ({ ...x, box: 0 })), ...k.b.map((x) => ({ ...x, box: 1 }))];
+  const cards: SortCard[] = mix(id, all).map((x) => ({
+    figure: ill(x.illust),
+    name: x.name,
+    box: x.box,
+    wrongBoxes: [{ box: 1 - x.box, misconception: 'kind-mix' }],
+  }));
+  const named = firstOfEachBox(cards, 2).map((c) => `${c.name}は ${k.boxes[c.box as number]}`);
   return {
     engine: 'sort',
     id,
@@ -274,14 +301,9 @@ function kindItem(k: KindSet): SortItem {
       { figure: ill(k.boxIllust[0]), name: k.boxes[0], label: k.boxes[0] },
       { figure: ill(k.boxIllust[1]), name: k.boxes[1], label: k.boxes[1] },
     ],
-    cards: mix(id, all).map((x) => ({
-      figure: ill(x.illust),
-      name: x.name,
-      box: x.box,
-      wrongBoxes: [{ box: 1 - x.box, misconception: 'kind-mix' }],
-    })),
+    cards,
     hints: [k.hint, 'はこの えと おなじ なかまは どれかな。'],
-    explain: `${k.a.map((x) => x.name).join('と ')}は ${k.boxes[0]}、${k.b.map((x) => x.name).join('と ')}は ${k.boxes[1]}。`,
+    explain: `${named.join('、')}。おなじ なかまは おなじ はこへ。`,
     identity: id,
   };
 }

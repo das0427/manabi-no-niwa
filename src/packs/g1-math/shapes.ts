@@ -35,7 +35,7 @@ const THINGS: Thing[] = [
   { id: 'g1m-cyl', name: 'つみきの つつ', cls: 'cyl', face: 'circle' },
   { id: 'ball', name: 'ボール', cls: 'ball' },
   { id: 'mikan', name: 'みかん', cls: 'ball' },
-  { id: 'watermelon', name: 'すいか', cls: 'ball' },
+  // すいか（絵 watermelon）は入れない: 絵が切った一切れ（半月の形）で、球に見えない（text-layout-fixes 第7回）
   { id: 'tomato', name: 'トマト', cls: 'ball' },
   { id: 'g1m-cheese', name: 'さんかくの はこ', cls: 'prism', face: 'triangle' },
 ];
@@ -430,20 +430,24 @@ function katachiDraw(level: number, rng: Rng): GeometryItem {
   };
 }
 
-/** 図の多角形（格子の座標 → 0〜100 の座標、1ます = 24） */
-function polyFig(pts: Pt[], w: number, h: number): Figure {
+/**
+ * 図の多角形（格子の座標 → 0〜100 の座標、1ます = 24）。w × h ます の形を、bw × bh ます の枠の中央に置く
+ * （同じ枠・同じ縮尺で並べるため）
+ */
+function polyFigIn(pts: Pt[], w: number, h: number, bw: number, bh: number): Figure {
+  const ox = (bw - w) / 2;
+  const oy = (bh - h) / 2;
   return {
     kind: 'shape',
     shape: 'polygon',
-    points: pts.map(([x, y]) => [(x / w) * 100, (y / h) * 100]),
-    w: w * 24,
-    h: h * 24,
+    points: pts.map(([x, y]) => [((x + ox) / bw) * 100, ((y + oy) / bh) * 100]),
+    w: bw * 24,
+    h: bh * 24,
   };
 }
-/** 90度まわした形 */
-function rotated(s: Shape): Figure {
-  const pts = pointsOf(s).map(([x, y]): Pt => [s.h - y, x]);
-  return polyFig(pts, s.h, s.w);
+/** 90度まわした形（点の列と、まわしたあとの よこ・たての ます数） */
+function rotated(s: Shape): { pts: Pt[]; w: number; h: number } {
+  return { pts: pointsOf(s).map(([x, y]): Pt => [s.h - y, x]), w: s.h, h: s.w };
 }
 
 function katachiChoice(level: number, rng: Rng): ChoiceItem {
@@ -458,19 +462,39 @@ function katachiChoice(level: number, rng: Rng): ChoiceItem {
   const other = rng.pick(sameKind);
   const diff = rng.pick(SHAPES.filter((o) => (s.kind === 'triangle') !== (o.kind === 'triangle')));
   const key = `katachi-alt:${s.key}`;
+  // 3つの選択肢は同じ枠・同じ縮尺（1ます = 同じ長さ）で描く。図の形は幅が一定（18u）で描かれるので、
+  // それぞれの形ぴったりの枠にすると、まわした細長い形（4×1 → 1×4）が 54u の高さになり、選択肢が作業領域に入らない。
+  // 枠は、よこ幅 = どの形のよこ・たての最大、たて幅 = たての最大（たて ≦ よこ なので、高さは幅（18u）を超えない）
+  const rot = rotated(s);
+  const bw = Math.max(rot.w, rot.h, other.w, diff.w);
+  const bh = Math.max(rot.h, other.h, diff.h);
+  const place = (o: { pts: Pt[]; w: number; h: number }): Figure =>
+    polyFigIn(o.pts, o.w, o.h, bw, bh);
   return {
     engine: 'choice',
     id: `${key}:${other.key}:${diff.key}`,
     objective: 'katachi',
     level,
     alt: true,
-    prompt: 'うえの かたちと おなじ かたちは どれ？ むきが かわって いても よいよ。',
-    figure: polyFig(pointsOf(s), s.w, s.h),
+    // おてほんは、図が高いと選択肢の左に並ぶ（作業領域の横並び）ので「うえの」と言わない
+    prompt: 'おてほんの かたちと おなじ かたちは どれ？ むきが かわって いても よいよ。',
+    // おてほんも選択肢と同じ枠（bw × bh ます）・同じ縮尺で描く。まわすと ぴったり かさなる（ヒント③・解説）ことが、図の大きさでも分かるように。
+    // おてほんの形ぴったりの枠にすると、ほかの選択肢が おてほんより広いとき、正解が おてほんより小さく描かれる（1×1 の ましかくで 1/4）。
+    // たての枠も選択肢と同じにする: 枠が高い（選択肢が高い）ときは おてほんも高くなり、作業領域の横並び（おてほんが左）になって入る。
+    // おてほんだけ低い枠（たて s.h ます）にすると、上下に並んだまま高い選択肢が入らず、作業領域がスクロールした
+    // （1920×1080 の rect2x1 で 2.1u）
+    figure: place({ pts: pointsOf(s), w: s.w, h: s.h }),
     layout: 'row',
     options: [
-      { figure: rotated(s), correct: true },
-      { figure: polyFig(pointsOf(other), other.w, other.h), misconception: 'count-dots' },
-      { figure: polyFig(pointsOf(diff), diff.w, diff.h), misconception: 'corner-count' },
+      { figure: place(rot), correct: true },
+      {
+        figure: place({ pts: pointsOf(other), w: other.w, h: other.h }),
+        misconception: 'count-dots',
+      },
+      {
+        figure: place({ pts: pointsOf(diff), w: diff.w, h: diff.h }),
+        misconception: 'corner-count',
+      },
     ],
     hints: [
       'かどの かずを くらべよう。',

@@ -4,7 +4,7 @@ import type { UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
 import { ILLUST } from '../../illust/registry';
 import { tilingFor } from '../../engines/build/build';
-import { parseRich, spokenReading, type Token } from '../../text/rich';
+import { parseRich, plainText, spacedLabel, spokenReading, type Token } from '../../text/rich';
 import pack from './index';
 
 const GRADE = 3;
@@ -108,6 +108,10 @@ function fixedOrderBias(units: typeof pack.units): string[] {
  * 小3以上は通常の文（curriculum-matrix 2.1）。分かち書きの残りを探す。
  * 本文（詩の行・日記の見出し）・選択肢は見ない（ローマ字の2語の句は語の区切りに合わせて空白を残す）。
  * 「」『』の中（引用）は空白を残してよい。
+ * 単元の題は文でなく札の見出し。単元の地図・ホームの札は幅が 13u ほどで、文節で折る自動の折り方
+ * （auto-phrase）が語の途中で折れる題（「ロー／マ字の読み書き」「俳句を楽しも／う」。text-layout-fixes 第7回 5.）は、
+ * 文節の切れ目に空白を 1 つ入れて空白でだけ折る（spacedLabel。AppLabel が data-spaced を付ける）。
+ * そのため題は wakachiTitleErrors（空白の数 × 12 ≧ 字数）で見て、ここでは見ない。
  */
 function wakachiLeft(units: readonly UnitSpec[]): string[] {
   const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
@@ -115,7 +119,6 @@ function wakachiLeft(units: readonly UnitSpec[]): string[] {
   for (const unit of units) {
     if (unit.status === 'planned') continue;
     const texts = [
-      unit.title,
       ...unit.intro.map((s) => s.text),
       ...unit.misconceptions.map((m) => m.explain),
       ...unit.objectives.map((o) => o.title),
@@ -130,6 +133,24 @@ function wakachiLeft(units: readonly UnitSpec[]): string[] {
     }
   }
   return [...errs];
+}
+
+/**
+ * 題に空白を入れてよいのは、空白でだけ折る札になるとき（spacedLabel）。長い題に空白が 1 つだけ（空白の数 × 12 < 字数）だと
+ * spacedLabel にならず、文節で折る札に空白だけが残るので誤り。空白でだけ折る札では、空白で区切った 1 まとまりが
+ * 札の 1 行（小3〜小6 で 6〜7 字。text-layout-fixes 第7回 5. の単元の題）に入らないと、まとまりの途中で折れるか札からはみ出す
+ */
+function wakachiTitleErrors(units: readonly UnitSpec[]): string[] {
+  const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
+  const errs: string[] = [];
+  for (const u of units) {
+    const t = plainText(u.title).trim();
+    if (u.status === 'planned' || !ja.test(t)) continue;
+    if (!spacedLabel(u.title)) errs.push(`${u.id}: 空白が少ない「${t}」`);
+    for (const chunk of t.split(/\s+/u))
+      if ([...chunk].length > 7) errs.push(`${u.id}: 7 字をこえるまとまり「${chunk}」`);
+  }
+  return errs;
 }
 
 describe('誤概念の説明と誤答の位置関係（content-review-g34 重大5・6）', () => {
@@ -216,6 +237,10 @@ describe('誤概念の説明と誤答の位置関係（content-review-g34 重大
 
   it('小3以上は通常の文: 日本語どうしの間の空白（文節分かち書き）がほとんどない', () => {
     expect(wakachiLeft(pack.units)).toEqual([]);
+  });
+
+  it('単元の題: 空白を入れるなら空白でだけ折る札になる（空白の数 × 12 ≧ 字数）・1 まとまりは 7 字まで', () => {
+    expect(wakachiTitleErrors(pack.units)).toEqual([]);
   });
 
   it('write-reasons riyuu-match:anzen: 誤答の理由が「速い」でない（正解が2つにならない）', () => {

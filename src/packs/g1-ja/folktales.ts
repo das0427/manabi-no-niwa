@@ -1,5 +1,5 @@
 /**
- * g1.ja.folktales むかしばなしを きこう（curriculum-matrix 3.4・P2）。
+ * g1.ja.folktales むかしばなし（curriculum-matrix 3.4・P2）。
  * 練習（level 0）は おはなし全体を聞いて問い1つ（listen）。別例（level 1）は同じ本文を読んで根拠の文を確かめる（reading）。
  * 本文はすべて、作者不詳の伝承の昔話を本アプリが自分の文で再話したもの。設計: docs/expansion/p2-design/g1-ja.md 2章。
  * 使わなかった話: おむすびころりん・かさじぞう・おおきなかぶ・いなばのしろうさぎ（教科書の定番）と、read-story の ねずみの およめいり。
@@ -688,7 +688,10 @@ const ITEMS: Item[] = SETS.flatMap(([p, qs]) =>
 
 export const folktales: UnitSpec = {
   id: 'g1.ja.folktales',
-  title: 'むかしばなしを きこう',
+  // 単元の地図の札の 1 行（小1 で約 6 字）に入るよう、設計の題「むかしばなしを きこう」（「むかしばなしを」7 字が語の途中で折れる）を
+  // 「むかしばなし」にする。「を」を落とした「むかしばなし きこう」は、助詞を教える 1年の国語の題として不自然なので使わない。
+  // 練習は聞く・別例は読むので、名詞だけの題でも単元の中身と合う（g1 の「カタカナ」「ことばあそび」と同じ形）。
+  title: 'むかしばなし',
   stage: 'g1',
   subject: 'ja',
   domain: 'yomu',

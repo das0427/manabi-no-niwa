@@ -1,6 +1,7 @@
 /** 教材レビュー（2026-10-24）で直した点の再発防止 */
 import { describe, expect, it } from 'vitest';
 import type { Item } from '../../curriculum/types';
+import { sortVisible, type SortItem } from '../../engines/sort/sort';
 import { clash } from './daily-life';
 import pack from './index';
 
@@ -59,6 +60,23 @@ describe('p23 教材レビューの再発防止', () => {
       }
     }
     expect(seen).toBeGreaterThan(0);
+  });
+
+  it('わけてみよう: 解説は どの段階でも画面に出る札（各箱の 1枚目）の名前だけを言う', () => {
+    // 2〜3歳は札を 2〜3枚に減らす（sortVisible）。減らした画面と食い違う文（画面に無い札の名前）にしない
+    const items = unitItems('p23.think.sort').filter((it): it is SortItem => it.engine === 'sort');
+    expect(items.length).toBeGreaterThan(0);
+    for (const it of items) {
+      const always = new Set(sortVisible(it, 2));
+      const names = it.cards.map((c) => String(c.name));
+      it.cards.forEach((c, i) => {
+        const said = it.explain.toString().includes(`${c.name}は `);
+        // 名指してよいのは 2枚の段階でも出る札だけ。2枚の問題（段階0）は両方とも出る
+        if (!always.has(i)) expect(said, `${it.id}: ${c.name}`).toBe(false);
+        else expect(said, `${it.id}: ${c.name}`).toBe(true);
+      });
+      expect(new Set(names).size, it.id).toBe(names.length);
+    }
   });
 
   it('おおきい・ちいさい: ヒントに 難しい語（こぢんまり）を使わない', () => {

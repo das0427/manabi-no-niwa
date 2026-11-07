@@ -1,5 +1,5 @@
 /**
- * g4.ja.info-compare くらべる・分ける・引用（curriculum-matrix 3.7）。
+ * g4.ja.info-compare くらべる 分ける 引用（curriculum-matrix 3.7）。
  * 2つの物を表で比べる（共通点・ちがう点）→ 観点を決めて分ける → 本から写した部分と自分の考えを分ける
  * → 出典の書き方。表・報告文・本・書いた人・出版社はすべて本アプリの架空のもの（実在の名前を使わない）。
  * 「比」「情報」「出版」は5年以上の字なので、かなで書く。
@@ -873,7 +873,7 @@ const items: Item[] = [
 
 export const infoCompare: UnitSpec = {
   id: 'g4.ja.info-compare',
-  title: 'くらべる・分《わ》ける・引用《いんよう》',
+  title: 'くらべる 分《わ》ける 引用《いんよう》',
   stage: 'g4',
   subject: 'ja',
   domain: 'yomu',

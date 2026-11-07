@@ -482,7 +482,7 @@ export function generateChangeRelations(level: number, rng: Rng, index: number):
 
 export const changeRelations: UnitSpec = finishUnit({
   id: 'g4.math.change-relations',
-  title: '変わり方（ともなって 変わる 2つの 数）',
+  title: '変わり方 （ともなって 変わる 2つの 数）',
   stage: 'g4',
   subject: 'math',
   domain: 'C-measure',

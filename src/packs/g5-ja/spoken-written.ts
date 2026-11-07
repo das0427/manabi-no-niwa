@@ -677,7 +677,7 @@ const ITEMS: Item[] = [
 
 export const spokenWritten: UnitSpec = {
   id: 'g5.ja.spoken-written',
-  title: '話《はな》し言葉《ことば》と書《か》き言葉《ことば》',
+  title: '話《はな》し言葉《ことば》と 書《か》き言葉《ことば》',
   stage: 'g5',
   subject: 'ja',
   domain: 'kotoba',

@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { Item, UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
-import { parseRich, plainText, type Token } from '../../text/rich';
+import { parseRich, plainText, spacedLabel, type Token } from '../../text/rich';
 import pack, { ALLOW } from './index';
 
 /** 小3〜小6 の選択肢の上限（ux-by-age: 4。多いと先頭から切られ、正解が消えることがある） */
 const MAX_CHOICES = 4;
+
+/** 日本語の字（かな・漢字・句読点・括弧）どうしのあいだの空白 */
+const JA_SPACE = /[ぁ-ゖァ-ヺー一-鿿々、。」）][ \t\u3000]+[ぁ-ゖァ-ヺ一-鿿々「（]/;
 
 /** よみ付きの漢字のうち、配当学年が grade より上の字 */
 function overGrade(src: string, grade: number): string[] {
@@ -81,6 +84,18 @@ describe('soc-g56 の教材検査（curriculum-matrix 1.8）', () => {
     expect(pack.packId).toBe('soc-g56');
     const ids = pack.units.map((u) => u.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+  /*
+   * 単元の題は地図・ホームの札（AppLabel）に出る。小3以上は分かち書きしないが、題だけは文節の切れ目に空白を入れて、
+   * 空白のところでだけ折る札（data-spaced。spacedLabel の条件は 空白の数 × 12 ≧ 字数）にしてよい（history-2・history-3。
+   * 空白が無いと Chrome の文節折りが「世の／中」「今の／日本へ」のように折る。text-layout-fixes 第7回。soc-g34 の
+   * review-soc34.test.ts と同じ考え）。空白が足りず data-spaced にならない題は、空白が文の中に残るだけで折れも直らない
+   */
+  it('題の空白は札で空白折りになるときだけ（spacedLabel）', () => {
+    const bad = pack.units
+      .filter((u) => JA_SPACE.test(plainText(u.title)) && !spacedLabel(u.title))
+      .map((u) => `${u.id}: ${plainText(u.title)}`);
+    expect(bad).toEqual([]);
   });
   for (const unit of pack.units) {
     if (unit.status === 'planned') continue;

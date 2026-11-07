@@ -267,10 +267,14 @@ export const SORTS: { id: string; obj: Obj; cards: string[] }[] = [
   },
   { id: 'l1', obj: 'life', cards: ['carp', 'swimring', 'potato', 'mittens'] },
   { id: 'l2', obj: 'life', cards: ['bamboo', 'watermelon', 'chestnut', 'snowman'] },
+  // l3 は 6 枚（はる 1・なつ 2・あき 1・ふゆ 2）。8 枚（5 字の語が 4 枚）だと札の幅の合計が約 100u になり、
+  // 作業領域の 1 段（88u）に入らず、2 段では高さが足りず てぶくろ・ゆきだるま が切れた（text-layout 第7回）。
+  // 6 枚なら 5 字の語は かきごおり・ゆきだるま の 2 枚で、4 サイズとも 1 段に入る。
+  // どの季節にも 1 枚以上あり、l1・l2 とは札の組が違う（かきごおり は l3 だけ）
   {
     id: 'l3',
     obj: 'life',
-    cards: ['carp', 'bamboo', 'swimring', 'kakigori', 'potato', 'chestnut', 'snowman', 'mittens'],
+    cards: ['bamboo', 'swimring', 'kakigori', 'chestnut', 'snowman', 'mittens'],
   },
 ];
 

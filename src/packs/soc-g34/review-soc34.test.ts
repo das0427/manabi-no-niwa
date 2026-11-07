@@ -1,6 +1,7 @@
 /**
  * soc-g34 の内容レビュー（2026-10-24）で直した誤りの再発を防ぐ検査。
- * - 小3以上は分かち書きしない（文節の空白を残さない）
+ * - 小3以上は分かち書きしない（文節の空白を残さない。単元の題だけは例外。下の WAKACHI_EXEMPT）
+ * - 数字の直後の《よみ》に数の読みを重ねない（「47都道府県《とどうふけん》」）
  * - ヒントに正答の文字列を出さない（元号・県庁所在地など、短い語も含む）
  * - 県庁所在地・地図記号の名前・元号の始まりの年の事実
  * - 実在の企業名・店名を出さない、消防(119)・警察(110)の番号を取り違えない、性別役割の決めつけをしない
@@ -8,12 +9,13 @@
 import { describe, expect, it } from 'vitest';
 import { sampleItems, textsOf } from '../../curriculum/qa';
 import type { Item, UnitSpec } from '../../curriculum/types';
-import { plainText } from '../../text/rich';
+import { numberReading, plainText, spacedLabel } from '../../text/rich';
 import pack from './index';
 
 const units = pack.units.filter((u) => u.status !== 'planned');
 
-function allTexts(u: UnitSpec): { where: string; text: string }[] {
+/** 単元の文（《よみ》付きのまま） */
+function rawTexts(u: UnitSpec): { where: string; text: string }[] {
   const out: { where: string; text: string }[] = [
     { where: 'title', text: u.title },
     ...u.intro.map((s, i) => ({ where: `intro${i}`, text: s.text })),
@@ -23,12 +25,25 @@ function allTexts(u: UnitSpec): { where: string; text: string }[] {
   ];
   for (const it of sampleItems(u, 50))
     for (const t of textsOf(it)) out.push({ where: it.id, text: t });
-  return out.map((x) => ({ ...x, text: plainText(x.text) }));
+  return out;
+}
+
+function allTexts(u: UnitSpec): { where: string; text: string }[] {
+  return rawTexts(u).map((x) => ({ ...x, text: plainText(x.text) }));
 }
 
 const JP = 'ぁ-んァ-ヶー一-龯々';
 /** 日本語どうしの間の空白（「→」の前後の空白は図の書き方なので対象外） */
 const WAKACHI = new RegExp(`[${JP}」）、。][ \\u3000]+[${JP}「（]`);
+/**
+ * 分かち書きの検査から外す場所: 単元の題（title）。
+ * 題は地図・ホームの札（AppLabel）に出る。空白で区切って書くと、空白のところでだけ折る（data-spaced。spacedLabel の条件は
+ * 空白の数 × 12 ≧ 字数）。空白が無いと Chrome の文節折りが語の途中で折る（g3.soc.safety の「は／たらき」。
+ * text-layout-fixes 第7回）。本文（問題・ヒント・解説・つかみ）は今までどおり分かち書きしない。
+ * 題の空白は、spacedLabel になるときだけ認める（下の「題の空白は札で空白折りになるときだけ」。g3-ja・g4-ja の
+ * wakachiTitleErrors と同じ考え）。空白が足りず data-spaced にならない題は、空白が文の中に残るだけで折れも直らない。
+ */
+const WAKACHI_EXEMPT: ReadonlySet<string> = new Set(['title']);
 
 /** 正解の文字列（choice・reading・graph の choice・fill の答え） */
 function answersOf(it: Item): string[] {
@@ -44,8 +59,25 @@ describe('soc-g34 レビューの再発防止', () => {
   for (const u of units) {
     it(`${u.id}: 小3以上は分かち書きしない`, () => {
       const bad = allTexts(u)
-        .filter((x) => WAKACHI.test(x.text))
+        .filter((x) => !WAKACHI_EXEMPT.has(x.where) && WAKACHI.test(x.text))
         .map((x) => `${x.where}: ${x.text.slice(0, 40)}`);
+      expect([...new Set(bad)]).toEqual([]);
+    });
+
+    it(`${u.id}: 題の空白は札で空白折りになるときだけ（spacedLabel）`, () => {
+      if (WAKACHI.test(plainText(u.title)))
+        expect(spacedLabel(u.title), plainText(u.title)).toBe(true);
+    });
+
+    // 《》のよみは親字（直前の漢字の並び）だけに付く。前の数字の読みまで入れると、ふりがなが親字より長くなって字の間が空き（47都道府県）、
+    // 読み上げも数の部品と重なる（「よんじゅうなな よんじゅうななとどうふけん」。第7回のレビュー）
+    it(`${u.id}: 数字の直後の《よみ》に数の読みを重ねない`, () => {
+      const bad: string[] = [];
+      for (const { where, text } of rawTexts(u))
+        for (const m of text.matchAll(/(\d+)[一-龯々]+《!?([^》]*)》/gu)) {
+          const n = numberReading(Number(m[1]));
+          if (n !== m[1] && m[2]!.startsWith(n)) bad.push(`${where}: ${m[0]}`);
+        }
       expect([...new Set(bad)]).toEqual([]);
     });
 

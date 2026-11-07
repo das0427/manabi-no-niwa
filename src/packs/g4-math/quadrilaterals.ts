@@ -121,7 +121,9 @@ const ptsKey = (ps: Pt[]) => ps.map((p) => p.join(',')).join(' ');
 /** 形の 仲間を 見分ける（alt: なかま分け） */
 function classify(level: number, rng: Rng, alt: boolean): Item {
   if (alt) {
-    const kinds: Kind[] = ['trap', 'trap', 'para', 'para', 'rhombus', 'rhombus'];
+    // 札は 5まい（台形 2・平行四辺形 2・ひし形 1）。6まいだと 1列に 入らず 2段に なり、1280×620 で
+    // 作業領域に 2.1u 足りず スクロールした（text-layout-fixes 第7回）
+    const kinds: Kind[] = ['trap', 'trap', 'para', 'para', 'rhombus'];
     const shapes = kinds.map((k) => orient(shapeOf(k, rng), rng.int(0, 7)));
     const fig = (ps: Pt[]): Figure => {
       const mx = Math.max(...ps.map((p) => p[0]), 1);
@@ -223,34 +225,87 @@ function classify(level: number, rng: Rng, alt: boolean): Item {
   return item;
 }
 
-/** 平行四辺形・ひし形の 図（辺の長さ・角の大きさの 文字つき） */
+/** 字の 幅の 見積もり（字の 大きさ 1 あたり。数字 0.52・°と 英字 0.68。g5-math/angle-labels と 同じ） */
+const emWidth = (s: string) => [...s].reduce((t, c) => t + (/\d/.test(c) ? 0.52 : 0.68), 0);
+
+/** 角の しるし（弧）の 半径 */
+const ARC_R = 13;
+
+/**
+ * 平行四辺形・ひし形の 図（辺の長さ・角の大きさの 文字つき）。
+ * 数の入力の 問題では 図が 高さ 12u まで 縮むことが ある。字は liftSvgText が 最小（1.8u）まで 引き上げるが、
+ * 引き上げは 書いた 大きさの 2倍まで。図を 小さめに（k = 16）・字を 大きめに（vertex 22・辺と 角 20）書いて、
+ * 縮んだ 図でも 引き上げが 足りる ようにした（text-layout-fixes 第7回。以前は k = 22・字 14〜16 で 8cm・70° が 0.84u）。
+ *
+ * 角の 大きさの 字（angA）は、角アの しるし（弧）の すぐ 外で、辺アイと 辺アエの 間に 置く（第7回の レビュー）。
+ * 字を 決まった ずれ（ア から 右へ 36・上へ 12）に 置いて いた ときは、底辺 3cm（48 単位）の 図で 字が 辺イウを
+ * またいで イの 近くに 出て、角イを 問う 問題で 角イの 大きさに 読めた。50°・55°では 辺アエにも かかった。
+ * - 字の 箱は 引き上げた あとの 大きさで 見積もる。図の 高さ（余白 74 ＋ 形）が 150 単位を 超えると、字は ほぼ
+ *   高さ ÷ 150 倍に 引き上がる（実測: ひし形 8cm・70° の 高さ 194 で 1.27倍）。線との すき間も 同じ 倍率に する
+ * - 底辺が 短くて 字が 角アの 中に 入らない ときだけ、k を 1ずつ 大きく する（底辺 3cm の 図。4cm 以上は k = 16）
+ */
 function paraFig(
   a: number,
   b: number,
   deg: number,
   labels: { ab?: string; ad?: string; angA?: string },
 ): Figure {
-  const k = 22;
   const th = (deg * Math.PI) / 180;
-  const x0 = 30;
-  const y0 = 30 + b * k * Math.sin(th);
+  const sin = Math.sin(th);
+  const cos = Math.cos(th);
+  const FS = 20;
+  /**
+   * 1cm を k 単位で 描いた ときの 角の 字の 中心（ア からの ずれ。x は 右、y は 上）。
+   * 字は 辺アイの 上と 辺アエの 右に すき間 g を あけ、弧の 外（半径 ARC_R ＋ g）に 出す。
+   * ok は 辺イウ・辺エウとも g 以上 離れる こと
+   */
+  const spot = (k: number) => {
+    const hs = b * k * sin;
+    const lift = Math.max(1, (74 + hs) / 150);
+    const g = 4 * lift;
+    const hw = (emWidth(labels.angA ?? '') * FS * lift) / 2;
+    const hh = 0.4 * FS * lift;
+    const ay = hh + g;
+    const ax = Math.max(
+      hw + (g + (ay + hh) * cos) / sin,
+      hw + Math.sqrt((ARC_R + g) ** 2 - g ** 2),
+    );
+    const clearBC = (ax + hw - a * k) * sin - (ay - hh) * cos <= -g;
+    const clearTop = ay + hh <= hs - g;
+    return { k, ax, ay, ok: !labels.angA || (clearBC && clearTop) };
+  };
+  // 縦に 細長い 組み合わせ（底辺より 3cm 以上 長い 辺）は 字が 入らないので、問題の 側（props）で 出さない
+  let s = spot(16);
+  for (let kk = 17; !s.ok && kk <= 24; kk++) s = spot(kk);
+  if (!s.ok) s = spot(16);
+  const { k, ax, ay } = s;
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+  const x0 = 34;
+  const y0 = 34 + b * k * sin;
   const A: [number, number] = [x0, y0];
   const B: [number, number] = [x0 + a * k, y0];
-  const D: [number, number] = [x0 + b * k * Math.cos(th), y0 - b * k * Math.sin(th)];
+  const D: [number, number] = [x0 + b * k * cos, y0 - b * k * sin];
   const Cc: [number, number] = [B[0] + D[0] - A[0], D[1]];
   const minX = Math.min(A[0], D[0]);
-  const shift = minX < 20 ? 20 - minX : 0;
-  const P = (p: [number, number]) => `${p[0] + shift},${p[1]}`;
+  const shift = minX < 34 ? 34 - minX : 0;
+  const P = (p: [number, number]) => `${r1(p[0] + shift)},${r1(p[1])}`;
+  const T = (x: number, y: number, t: string, size: number) =>
+    svgText(r1(x + shift), r1(y), t, size);
   let body = `<polygon points="${[A, B, Cc, D].map(P).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
-  body += svgText(A[0] + shift - 12, A[1] + 14, 'ア', 16);
-  body += svgText(B[0] + shift + 12, B[1] + 14, 'イ', 16);
-  body += svgText(Cc[0] + shift + 12, Cc[1] - 10, 'ウ', 16);
-  body += svgText(D[0] + shift - 12, D[1] - 10, 'エ', 16);
-  if (labels.ab) body += svgText((A[0] + B[0]) / 2 + shift, A[1] + 18, labels.ab, 14);
-  if (labels.ad) body += svgText((A[0] + D[0]) / 2 + shift - 22, (A[1] + D[1]) / 2, labels.ad, 14);
-  if (labels.angA) body += svgText(A[0] + shift + 30, A[1] - 10, labels.angA, 14);
-  const W = Math.max(B[0], Cc[0]) + shift + 40;
-  return svg(W, y0 + 34, body, '四角形 アイウエ');
+  body += T(A[0] - 16, A[1] + 16, 'ア', 22);
+  body += T(B[0] + 16, B[1] + 16, 'イ', 22);
+  body += T(Cc[0] + 16, Cc[1] - 14, 'ウ', 22);
+  body += T(D[0] - 16, D[1] - 14, 'エ', 22);
+  if (labels.ab) body += T((A[0] + B[0]) / 2, A[1] + 24, labels.ab, FS);
+  if (labels.ad) body += T((A[0] + D[0]) / 2 - 26, (A[1] + D[1]) / 2, labels.ad, FS);
+  if (labels.angA) {
+    // 角アの しるし（辺アイから 辺アエまでの 弧）
+    const [ex, ey] = [A[0] + ARC_R * cos, A[1] - ARC_R * sin];
+    body += `<path d="M ${r1(A[0] + shift + ARC_R)} ${r1(A[1])} A ${ARC_R} ${ARC_R} 0 0 0 ${r1(ex + shift)} ${r1(ey)}" fill="none" ${STROKE}/>`;
+    body += T(A[0] + ax, A[1] - ay, labels.angA, FS);
+  }
+  const W = Math.max(B[0], Cc[0]) + shift + 44;
+  return svg(r1(W), r1(y0 + 40), body, '四角形 アイウエ');
 }
 
 /** 性質（辺・角）。alt: せいしつを 選ぶ */
@@ -336,7 +391,9 @@ function props(level: number, rng: Rng, alt: boolean): Item {
   }
   const rh = rng.next() < 0.35;
   const a = rng.int(3, 8);
-  const others = [2, 3, 4, 5, 6, 7].filter((x) => x !== a);
+  // 辺アエは 底辺（辺アイ）より 2cm 長い まで。縦に 細長い 図（3cm と 6cm など）は、角の 字が 角アの 中に 入らない
+  // （paraFig。第7回の レビュー）
+  const others = [2, 3, 4, 5, 6, 7].filter((x) => x !== a && x <= a + 2);
   const bb = rh ? a : pick(rng, others);
   const deg = rng.int(10, 16) * 5;
   const ask = rng.int(0, 3);
@@ -639,7 +696,7 @@ export function generateQuadrilaterals(level: number, rng: Rng, index: number): 
 
 export const quadrilaterals: UnitSpec = finishUnit({
   id: 'g4.math.quadrilaterals',
-  title: 'いろいろな 四角形（台形・平行四辺形・ひし形）',
+  title: 'いろいろな 四角形 （台形・ 平行四辺形・ ひし形）',
   stage: 'g4',
   subject: 'math',
   domain: 'B-shape',

@@ -593,7 +593,7 @@ export function generatePerUnit(level: number, rng: Rng, index: number): Item {
 export const perUnit: UnitSpec = finishUnit(
   {
     id: 'g5.math.per-unit',
-    title: '単位量あたりの 大きさ',
+    title: '単位量 あたりの 大きさ',
     stage: 'g5',
     subject: 'math',
     domain: 'C-measure',

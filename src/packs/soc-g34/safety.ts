@@ -829,7 +829,9 @@ const items: Item[] = [
 export const safety: UnitSpec = {
   ...baseSoc('g3.soc.safety', 'g3'),
   priority: 'P2',
-  title: 'まちの安全《あんぜん》を守《まも》るはたらき',
+  // 題は文節の切れ目に空白を 2 つ入れて、地図の札で空白のところでだけ折る（spacedLabel。空白 1 つでは 12 < 13 字で効かない）。
+  // 空白が無いと「まちの安全を守るは／たらき」と語の途中で折れた（text-layout-fixes 第7回）
+  title: 'まちの 安全《あんぜん》を 守《まも》るはたらき',
   kind: 'inquiry',
   status: 'ready',
   prereq: [],

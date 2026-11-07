@@ -1285,7 +1285,7 @@ const ITEMS: Item[] = [...MATCHES.map(matchItem), ...CHOICES.map(choiceItem), ..
 
 export const languageChange: UnitSpec = {
   id: 'g6.ja.language-change',
-  title: '方言《ほうげん》と共通語《きょうつうご》、言葉《ことば》の変化《へんか》と由来《ゆらい》',
+  title: '方言《ほうげん》と共通語《きょうつうご》 言葉《ことば》の 変化《へんか》と由来《ゆらい》',
   stage: 'g6',
   subject: 'ja',
   domain: 'kotoba',

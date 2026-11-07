@@ -129,3 +129,32 @@ describe('g4-math: ヒントが 答えを そのまま 言わない（内容レ�
     });
   }
 });
+
+describe('g4-math: 等しい分数（equiv）の ヒントが 答えを 言わない', () => {
+  // 数の入力の 答えは □の 数（分子なら N、分母なら D）。上の 中-B と 同じく「＝ 答え」を 見るほか、
+  // ヒント①は 答えの 数を どこにも 言わない（第7回の レビュー。分母を 求める 問題の ①が「1を Dこに 分けた
+  // めもり」と 答えを 言っていた）。問題の 式に もともと 出る 数（[[1/2]] ＝ [[□/4]] の 答え 2 と 分母 2）は 数えない。
+  // ③の 式の 中の 数（1 × 4）は 中-B と 同じく 数えない
+  it('g4.math.fraction-kinds: equiv（分子・分母とも）', () => {
+    const unit = pack.units.find((u) => u.id === 'g4.math.fraction-kinds');
+    expect(unit).toBeDefined();
+    const errs: string[] = [];
+    const seen = { n: 0, d: 0 };
+    for (const it of itemsOf(unit!)) {
+      const m = /^equiv:(\d+)\/(\d+):(\d+)\/(\d+):([nd])$/.exec(it.id);
+      if (!m || it.engine !== 'number') continue;
+      const ask = m[5] as 'n' | 'd';
+      seen[ask]++;
+      const ans = ask === 'n' ? m[3]! : m[4]!;
+      const anywhere = new RegExp(`(?<!\\d)${ans}(?!\\d)`);
+      if (anywhere.test(contextText(it))) continue;
+      it.hints.map(plain).forEach((h, i) => {
+        if (resultRe(ans).test(h) || (i === 0 && anywhere.test(h)))
+          errs.push(`[${it.id}] ヒント${i + 1}に 答えの 数 ${ans}: ${h}`);
+      });
+    }
+    expect(seen.n).toBeGreaterThan(0);
+    expect(seen.d).toBeGreaterThan(0);
+    expect([...new Set(errs)].slice(0, 20)).toEqual([]);
+  });
+});

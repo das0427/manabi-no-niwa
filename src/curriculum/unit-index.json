@@ -2,7 +2,7 @@
   {
     "id": "g1.ja.folktales",
     "pack": "g1-ja",
-    "title": "むかしばなしを きこう",
+    "title": "むかしばなし",
     "stage": "g1",
     "subject": "ja",
     "domain": "yomu",
@@ -221,7 +221,7 @@
   {
     "id": "g1.ja.write-order",
     "pack": "g1-ja",
-    "title": "じゅんじょよく かこう",
+    "title": "じゅんじょ よく かこう",
     "stage": "g1",
     "subject": "ja",
     "domain": "kaku",
@@ -332,7 +332,7 @@
   {
     "id": "g1.math.add-sub-2digit",
     "pack": "g1-math",
-    "title": "2けたの たしざん・ひきざん（かんたんな けいさん）",
+    "title": "2けたの かんたんな たしざん・ひきざん",
     "stage": "g1",
     "subject": "math",
     "domain": "A-number",
@@ -407,7 +407,7 @@
   {
     "id": "g1.math.numbers-120",
     "pack": "g1-math",
-    "title": "100までの かず・120くらいまでの かず",
+    "title": "100までの かず・120くらいの かず",
     "stage": "g1",
     "subject": "math",
     "domain": "A-number",
@@ -569,7 +569,7 @@
   {
     "id": "g2.ja.culture",
     "pack": "g2-ja",
-    "title": "むかしばなしと ことばあそび",
+    "title": "むかし話《ばなし》と ことばあそび",
     "stage": "g2",
     "subject": "ja",
     "domain": "kotoba",
@@ -1138,7 +1138,7 @@
   {
     "id": "g3.ja.haiku",
     "pack": "g3-ja",
-    "title": "俳句《はいく》を楽《たの》しもう",
+    "title": "俳句《はいく》を 楽《たの》しもう",
     "stage": "g3",
     "subject": "ja",
     "domain": "kotoba",
@@ -1151,7 +1151,7 @@
   {
     "id": "g3.ja.kanji-parts",
     "pack": "g3-ja",
-    "title": "漢字《かんじ》の組《く》み立《た》て",
+    "title": "漢字《かんじ》の 組《く》み立《た》て",
     "stage": "g3",
     "subject": "ja",
     "domain": "kanji",
@@ -1254,7 +1254,7 @@
   {
     "id": "g3.ja.read-paragraphs",
     "pack": "g3-ja",
-    "title": "だんらくの役《やく》わり",
+    "title": "だんらくの 役《やく》わり",
     "stage": "g3",
     "subject": "ja",
     "domain": "yomu",
@@ -1282,7 +1282,7 @@
   {
     "id": "g3.ja.romaji",
     "pack": "g3-ja",
-    "title": "ローマ字《じ》の読《よ》み書《か》き",
+    "title": "ローマ字《じ》の 読《よ》み書《か》き",
     "stage": "g3",
     "subject": "ja",
     "domain": "kotoba",
@@ -1720,7 +1720,7 @@
   {
     "id": "g3.soc.safety",
     "pack": "soc-g34",
-    "title": "まちの安全《あんぜん》を守《まも》るはたらき",
+    "title": "まちの 安全《あんぜん》を 守《まも》るはたらき",
     "stage": "g3",
     "subject": "soc",
     "domain": "soc",
@@ -1821,7 +1821,7 @@
   {
     "id": "g4.ja.info-compare",
     "pack": "g4-ja",
-    "title": "くらべる・分《わ》ける・引用《いんよう》",
+    "title": "くらべる 分《わ》ける 引用《いんよう》",
     "stage": "g4",
     "subject": "ja",
     "domain": "yomu",
@@ -2001,7 +2001,7 @@
   {
     "id": "g4.math.change-relations",
     "pack": "g4-math",
-    "title": "変《か》わり方《かた》（ともなって 変《か》わる 2つの 数《かず》）",
+    "title": "変《か》わり方《かた》 （ともなって 変《か》わる 2つの 数《かず》）",
     "stage": "g4",
     "subject": "math",
     "domain": "C-measure",
@@ -2092,7 +2092,7 @@
   {
     "id": "g4.math.fraction-kinds",
     "pack": "g4-math",
-    "title": "分数《ぶんすう》の しゅるい（真分数《しんぶんすう》・仮分数《かぶんすう》・帯分数《たいぶんすう》）",
+    "title": "分数《ぶんすう》の しゅるい （真分数《しんぶんすう》・ 仮分数《かぶんすう》・ 帯分数《たいぶんすう》）",
     "stage": "g4",
     "subject": "math",
     "domain": "A-number",
@@ -2182,7 +2182,7 @@
   {
     "id": "g4.math.quadrilaterals",
     "pack": "g4-math",
-    "title": "いろいろな 四角形《しかくけい》（台形《だいけい》・平行四辺形《へいこうしへんけい》・ひし形《かたち》）",
+    "title": "いろいろな 四角形《しかくけい》 （台形《だいけい》・ 平行四辺形《へいこうしへんけい》・ ひし形《かたち》）",
     "stage": "g4",
     "subject": "math",
     "domain": "B-shape",
@@ -2356,7 +2356,7 @@
   {
     "id": "g4.sci.temperature",
     "pack": "sci-g34",
-    "title": "金《きん》ぞく・水《みず》・空気《くうき》と 温度《おんど》",
+    "title": "金《きん》ぞく・ 水《みず》・ 空気《くうき》と 温度《おんど》",
     "stage": "g4",
     "subject": "sci",
     "domain": "A-matter",
@@ -2401,7 +2401,7 @@
   {
     "id": "g4.soc.prefectures",
     "pack": "soc-g34",
-    "title": "47都道府県《よんじゅうななとどうふけん》",
+    "title": "47都道府県《とどうふけん》",
     "stage": "g4",
     "subject": "soc",
     "domain": "soc",
@@ -2416,7 +2416,7 @@
   {
     "id": "g4.soc.tradition",
     "pack": "soc-g34",
-    "title": "地《ち》いきの伝統《でんとう》と先人《せんじん》の働《はたら》き",
+    "title": "地《ち》いきの 伝統《でんとう》と 先人《せんじん》の働《はたら》き",
     "stage": "g4",
     "subject": "soc",
     "domain": "soc",
@@ -2530,7 +2530,7 @@
   {
     "id": "g5.ja.figurative",
     "pack": "g5-ja",
-    "title": "表現《ひょうげん》の工夫《くふう》（比喩《ひゆ》・反復《はんぷく》など）",
+    "title": "表現《ひょうげん》の 工夫《くふう》",
     "stage": "g5",
     "subject": "ja",
     "domain": "kotoba",
@@ -2618,7 +2618,7 @@
   {
     "id": "g5.ja.sentence-relations",
     "pack": "g5-ja",
-    "title": "文《ぶん》の組《く》み立《た》てとつながり",
+    "title": "文《ぶん》の 組《く》み立《た》てと つながり",
     "stage": "g5",
     "subject": "ja",
     "domain": "kotoba",
@@ -2633,7 +2633,7 @@
   {
     "id": "g5.ja.spoken-written",
     "pack": "g5-ja",
-    "title": "話《はな》し言葉《ことば》と書《か》き言葉《ことば》",
+    "title": "話《はな》し言葉《ことば》と 書《か》き言葉《ことば》",
     "stage": "g5",
     "subject": "ja",
     "domain": "kotoba",
@@ -2661,7 +2661,7 @@
   {
     "id": "g5.ja.word-structure",
     "pack": "g5-ja",
-    "title": "熟語《じゅくご》の組《く》み立《た》てと言葉《ことば》の種類《しゅるい》",
+    "title": "熟語《じゅくご》の 組《く》み立《た》てと 言葉《ことば》の 種類《しゅるい》",
     "stage": "g5",
     "subject": "ja",
     "domain": "kotoba",
@@ -2782,7 +2782,7 @@
   {
     "id": "g5.math.decimal-shift",
     "pack": "g5-math",
-    "title": "10倍《ばい》・100倍《ばい》と [[1/10]]・[[1/100]]（小数点《しょうすうてん》の いどう）",
+    "title": "10倍《ばい》・100倍《ばい》と [[1/10]]・[[1/100]] （小数点《しょうすうてん》の いどう）",
     "stage": "g5",
     "subject": "math",
     "domain": "A-number",
@@ -2873,7 +2873,7 @@
   {
     "id": "g5.math.per-unit",
     "pack": "g5-math",
-    "title": "単位量《たんいりょう》あたりの 大《おお》きさ",
+    "title": "単位量《たんいりょう》 あたりの 大《おお》きさ",
     "stage": "g5",
     "subject": "math",
     "domain": "C-measure",
@@ -3304,7 +3304,7 @@
   {
     "id": "g6.ja.kanji-usage",
     "pack": "g6-ja",
-    "title": "同《おな》じ読《よ》みの言葉《ことば》と、漢字《かんじ》とかなの使《つか》い分《わ》け",
+    "title": "同《おな》じ読《よ》みの 言葉《ことば》と 漢字《かんじ》とかなの 使《つか》い分《わ》け",
     "stage": "g6",
     "subject": "ja",
     "domain": "kotoba",
@@ -3334,7 +3334,7 @@
   {
     "id": "g6.ja.language-change",
     "pack": "g6-ja",
-    "title": "方言《ほうげん》と共通語《きょうつうご》、言葉《ことば》の変化《へんか》と由来《ゆらい》",
+    "title": "方言《ほうげん》と共通語《きょうつうご》 言葉《ことば》の 変化《へんか》と由来《ゆらい》",
     "stage": "g6",
     "subject": "ja",
     "domain": "kotoba",
@@ -3778,7 +3778,7 @@
   {
     "id": "g6.soc.history-2",
     "pack": "soc-g56",
-    "title": "歴史《れきし》2 武士《ぶし》の世《よ》の中《なか》から江戸《えど》の文化《ぶんか》まで",
+    "title": "歴史《れきし》2 武士《ぶし》の世《よ》から 江戸《えど》の文化《ぶんか》まで",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",
@@ -3793,7 +3793,7 @@
   {
     "id": "g6.soc.history-3",
     "pack": "soc-g56",
-    "title": "歴史《れきし》3 明治《めいじ》から今《いま》の日本《にほん》へ",
+    "title": "歴史《れきし》3 明治《めいじ》から 今《いま》の日本《にほん》へ",
     "stage": "g6",
     "subject": "soc",
     "domain": "soc",

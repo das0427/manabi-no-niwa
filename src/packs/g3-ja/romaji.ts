@@ -770,7 +770,7 @@ const ITEMS: Item[] = [
 
 export const romaji: UnitSpec = {
   id: 'g3.ja.romaji',
-  title: 'ローマ字《じ》の読《よ》み書《か》き',
+  title: 'ローマ字《じ》の 読《よ》み書《か》き',
   stage: 'g3',
   subject: 'ja',
   domain: 'kotoba',

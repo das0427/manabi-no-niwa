@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
-import { parseRich, plainText, type Token } from '../../text/rich';
+import { parseRich, plainText, spacedLabel, type Token } from '../../text/rich';
 import pack from './index';
 import { TANKA } from './tanka';
 
@@ -66,6 +66,11 @@ function extraChecks(unit: UnitSpec): string[] {
  * 小3以上は通常の文（curriculum-matrix 2.1）。分かち書きの残りを探す。
  * 本文（詩の行・日記の見出し）・選択肢は見ない。「」『』の中（引用・詩の引用）と、
  * 作者名の姓と名の間（「森 ゆうき」）は空白を残してよい。
+ * 単元の題は文でなく札の見出し。単元の地図・ホームの札は幅が 13u ほどで、文節で折る自動の折り方
+ * （auto-phrase）が語の途中で折れる題（「くらべる・分け／る・引用」。ふりがなの付く漢字の前後の 1 字が
+ * 漢字と同じ nowrap にまとまるため、句読点・「・」の前後で折れない。text-layout-fixes 第7回 5.）は、
+ * 文節の切れ目に空白を入れて空白でだけ折る（spacedLabel。AppLabel が data-spaced を付ける）。
+ * そのため題は wakachiTitleErrors（空白の数 × 12 ≧ 字数）で見て、ここでは見ない。
  */
 function wakachiLeft(units: readonly UnitSpec[]): string[] {
   const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
@@ -73,7 +78,6 @@ function wakachiLeft(units: readonly UnitSpec[]): string[] {
   for (const unit of units) {
     if (unit.status === 'planned') continue;
     const texts = [
-      unit.title,
       ...unit.intro.map((s) => s.text),
       ...unit.misconceptions.map((m) => m.explain),
       ...unit.objectives.map((o) => o.title),
@@ -91,6 +95,17 @@ function wakachiLeft(units: readonly UnitSpec[]): string[] {
     }
   }
   return [...errs];
+}
+
+/**
+ * 題に空白を入れるなら、空白でだけ折る札になる数を入れる（spacedLabel: 空白の数 × 12 ≧ 字数）。
+ * 空白が足りない題は札で data-spaced にならず、空白が文の中に残るだけで、語の途中で折れるのも直らないので誤り。
+ */
+function wakachiTitleErrors(units: readonly UnitSpec[]): string[] {
+  const ja = /[ぁ-ヿ一-鿿々]\p{Zs}+[ぁ-ヿ一-鿿々]/u;
+  return units
+    .filter((u) => u.status !== 'planned' && ja.test(plainText(u.title)) && !spacedLabel(u.title))
+    .map((u) => `${u.id}: ${plainText(u.title)}`);
 }
 
 describe('位置で解けない・小3以上は通常の文（content-review-g34 重大8・中-C）', () => {
@@ -126,8 +141,12 @@ describe('位置で解けない・小3以上は通常の文（content-review-g34
     expect(pos.size).toBe(2);
   });
 
-  it('題・説明・問題文・ヒント・解説に文節分かち書き（日本語どうしの間の空白）がない', () => {
+  it('説明・問題文・ヒント・解説に文節分かち書き（日本語どうしの間の空白）がない', () => {
     expect(wakachiLeft(pack.units)).toEqual([]);
+  });
+
+  it('単元の題: 空白を入れるなら、空白でだけ折る札になる数（空白の数 × 12 ≧ 字数）', () => {
+    expect(wakachiTitleErrors(pack.units)).toEqual([]);
   });
 });
 

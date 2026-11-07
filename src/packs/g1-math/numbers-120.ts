@@ -1,5 +1,5 @@
 /**
- * g1.math.numbers-120 100までの かずと 120くらいまでの かず（2けたの かずの あらわしかた）（curriculum-matrix 3.4）。
+ * g1.math.numbers-120 100までの かず・120くらいの かず（2けたの かずの あらわしかた）（curriculum-matrix 3.4）。
  *
  * 同一性キー（1.4）: 数と表し方の組。
  *   10の たばと ばら: 21〜100（ブロック）／ことばで、
@@ -506,7 +506,7 @@ export function generateNumbers120(level: number, rng: Rng, index: number): Item
 
 export const numbers120: UnitSpec = {
   id: 'g1.math.numbers-120',
-  title: '100までの かず・120くらいまでの かず',
+  title: '100までの かず・120くらいの かず',
   stage: 'g1',
   subject: 'math',
   domain: 'A-number',

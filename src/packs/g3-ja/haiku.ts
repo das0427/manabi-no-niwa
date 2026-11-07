@@ -963,7 +963,7 @@ const ITEMS: Item[] = [
 
 export const haiku: UnitSpec = {
   id: 'g3.ja.haiku',
-  title: '俳句《はいく》を楽《たの》しもう',
+  title: '俳句《はいく》を 楽《たの》しもう',
   stage: 'g3',
   subject: 'ja',
   domain: 'kotoba',

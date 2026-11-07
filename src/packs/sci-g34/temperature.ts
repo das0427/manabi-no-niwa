@@ -708,7 +708,7 @@ const fluidItems: Item[] = [
 export const temperature: UnitSpec = {
   ...baseSci('g4.sci.temperature', 'g4', 'A-matter'),
   priority: 'P2',
-  title: '金《きん》ぞく・水《みず》・空気《くうき》と 温度《おんど》',
+  title: '金《きん》ぞく・ 水《みず》・ 空気《くうき》と 温度《おんど》',
   prereq: ['g4.sci.air-water'],
   objectives: [
     { id: 'vol', title: '温度《おんど》と 体積《たいせき》' },

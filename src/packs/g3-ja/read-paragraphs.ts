@@ -1243,7 +1243,7 @@ const ITEMS: Item[] = [...READING, ...ORDER];
 
 export const readParagraphs: UnitSpec = {
   id: 'g3.ja.read-paragraphs',
-  title: 'だんらくの役《やく》わり',
+  title: 'だんらくの 役《やく》わり',
   stage: 'g3',
   subject: 'ja',
   domain: 'yomu',

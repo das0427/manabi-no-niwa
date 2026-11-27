@@ -131,8 +131,7 @@ function cylFig(rLabel: string, hLabel: string, label: string, topLabel?: string
     `<ellipse cx="80" cy="34" rx="62" ry="22" fill="var(--sky)" ${STROKE}/>` +
     `<path d="M18 130 A62 22 0 0 1 142 130" ${HID}/>` +
     (rLabel
-      ? `<line x1="80" y1="34" x2="142" y2="34" ${STROKE}/>` +
-        svgText(148, 34, rLabel, FS, 'start')
+      ? `<line x1="80" y1="34" x2="142" y2="34" ${STROKE}/>` + svgText(148, 34, rLabel, FS, 'start')
       : '') +
     svgText(150, 96, hLabel, FS, 'start') +
     (topLabel ? svgText(80, 34, topLabel, FS) : '');

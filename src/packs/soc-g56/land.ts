@@ -1118,8 +1118,7 @@ const climate: Item[] = [
     obj: 'climate',
     level: 2,
     alt: true,
-    prompt:
-      '冬《ふゆ》は0度《ど》ぐらい、夏《なつ》は25度《ど》ぐらいの地域《ちいき》はどれかな。',
+    prompt: '冬《ふゆ》は0度《ど》ぐらい、夏《なつ》は25度《ど》ぐらいの地域《ちいき》はどれかな。',
     data: tempData('highland'),
     right: CLIMATE.highland.name,
     wrongs: [

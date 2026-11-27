@@ -355,9 +355,7 @@ function cardOrder(d: Diary): OrderItem {
       'いちばん はじめに した ことの ぶんを さがそう。',
       `はじめの ぶんは 「${d.lines[0]}」。つぎを かんがえよう。`,
     ],
-    explain: d.gist
-      ? d.gist.join(' → ')
-      : d.lines.map((l, i) => `${i + 1}. ${l}`).join(' '),
+    explain: d.gist ? d.gist.join(' → ') : d.lines.map((l, i) => `${i + 1}. ${l}`).join(' '),
     identity: `cards:${d.id}`,
   };
 }

@@ -617,8 +617,7 @@ const power: Item[] = [
     obj: 'power',
     level: 2,
     alt: true,
-    prompt:
-      'あいだに ものを はさんだ けっか（れい）。わかる ことは？',
+    prompt: 'あいだに ものを はさんだ けっか（れい）。わかる ことは？',
     figure: table(
       ['はさんだ もの', 'クリップは'],
       [

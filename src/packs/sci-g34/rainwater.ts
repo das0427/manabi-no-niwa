@@ -385,8 +385,7 @@ const soakItems: Item[] = [
     id: 'rs-table',
     obj: 'soak',
     level: 1,
-    prompt:
-      'しみこむ 時間《じかん》の きろく（れい）。わかる ことは？',
+    prompt: 'しみこむ 時間《じかん》の きろく（れい）。わかる ことは？',
     figure: table(
       ['土《つち》', 'じゃり', 'すな', '校庭《こうてい》の 土《つち》'],
       [
@@ -450,8 +449,7 @@ const soakItems: Item[] = [
       id: 'rs-svg-grains',
       obj: 'soak',
       level: 2,
-      prompt:
-        '2つの 土《つち》の つぶを 大《おお》きく した 図《ず》。はやく しみこむのは？',
+      prompt: '2つの 土《つち》の つぶを 大《おお》きく した 図《ず》。はやく しみこむのは？',
       figure: {
         kind: 'row',
         gap: 8,

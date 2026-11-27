@@ -118,8 +118,7 @@ export const SCENES: Scene[] = [
       ask: 'rock',
       rightKey: 'sink',
       result: ['rock', 'しずむ'],
-      explain:
-        'こいしは しずむよ。ちいさくても しずむ ものが あるね。おうちで ためして みよう。',
+      explain: 'こいしは しずむよ。ちいさくても しずむ ものが あるね。おうちで ためして みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。しずんだ ものは どれ？',
@@ -164,8 +163,7 @@ export const SCENES: Scene[] = [
       ask: 'sun',
       rightKey: 'fast',
       result: ['p5-sun', 'とける'],
-      explain:
-        'ひなたの こおりは、ひかげより はやく とけるよ。おうちで くらべて みよう。',
+      explain: 'ひなたの こおりは、ひかげより はやく とけるよ。おうちで くらべて みよう。',
     },
     q2: {
       prompt: 'りょうほう やって みよう。はやく とけたのは どっち？',
@@ -208,8 +206,7 @@ export const SCENES: Scene[] = [
       ask: 'ball',
       rightKey: 'roll',
       result: ['ball', 'ころがる'],
-      explain:
-        'まるい ボールは さかで ころがるよ。ほんで さかを つくって みよう。',
+      explain: 'まるい ボールは さかで ころがるよ。ほんで さかを つくって みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。ころがらなかった ものは どれ？',
@@ -257,8 +254,7 @@ export const SCENES: Scene[] = [
       ask: 'leaf',
       rightKey: 'move',
       result: ['leaf', 'とぶ'],
-      explain:
-        'かるい はっぱは、かぜで とんで いくよ。かみを うちわで あおいで みよう。',
+      explain: 'かるい はっぱは、かぜで とんで いくよ。かみを うちわで あおいで みよう。',
     },
     q2: {
       prompt: 'ぜんぶ やって みよう。うごかなかった ものは どれ？',
@@ -303,8 +299,7 @@ export const SCENES: Scene[] = [
       ask: 'freezer',
       rightKey: 'ice',
       result: ['p5-ice', 'こおる'],
-      explain:
-        'みずは れいとうこで こおって、こおりに なるよ。おうちで つくって みよう。',
+      explain: 'みずは れいとうこで こおって、こおりに なるよ。おうちで つくって みよう。',
     },
     q2: {
       prompt: 'りょうほう やって みよう。こおったのは どっち？',

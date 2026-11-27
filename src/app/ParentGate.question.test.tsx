@@ -33,14 +33,21 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-async function openGate(): Promise<void> {
-  render(<ParentGateButton />);
-  fireEvent.pointerDown(screen.getByTestId('parent-key'));
+/** 鍵を2秒長押しして板を開く（描いたあとの鍵のボタンで） */
+async function holdKey(): Promise<void> {
+  const k = screen.getByTestId('parent-key');
+  fireEvent.pointerUp(k);
+  fireEvent.pointerDown(k);
   await act(async () => {
     vi.advanceTimersByTime(2100);
     await Promise.resolve();
   });
   expect(screen.getByTestId('parent-gate')).toBeTruthy();
+}
+
+async function openGate(): Promise<void> {
+  render(<ParentGateButton />);
+  await holdKey();
 }
 
 const settle = () =>
@@ -52,6 +59,12 @@ const key = (k: string) => fireEvent.keyDown(window, { key: k });
 const tapKeys = (digits: string) => {
   for (const ch of digits) fireEvent.click(screen.getByTestId(`gate-key-${ch}`));
 };
+/** 数字を押して OK（答え合わせが終わるまで待つ） */
+async function submitDigits(digits: string): Promise<void> {
+  tapKeys(digits);
+  fireEvent.click(screen.getByTestId('gate-key-OK'));
+  await settle();
+}
 
 /** いま出ている問題の文と答え（「a ＋ b は？」） */
 function current(): { text: string; answer: number } {
@@ -138,19 +151,23 @@ describe('保護者ゲートの計算問題: まちがえたら新しい問題',
     expect(screen.queryByTestId('parent-gate')).toBeNull();
   });
 
-  it('何度まちがえても、そのたびに答えが前と違う問題になる（答えは 23〜111 のまま）', async () => {
+  it('何度まちがえても、そのたびに答えが前と違う問題になる（答えは 23〜111 のまま。開き直しても同じ）', async () => {
     await openGate();
-    let prev = current();
-    for (let i = 0; i < 60; i++) {
-      // 今の答えの次の数（今の答えとは違うので、まちがいになる）
-      tapKeys(String(prev.answer + 1));
-      fireEvent.click(screen.getByTestId('gate-key-OK'));
-      await settle();
-      const next = current();
-      expect(next.answer).not.toBe(prev.answer);
-      expect(next.answer).toBeGreaterThanOrEqual(23);
-      expect(next.answer).toBeLessThanOrEqual(111);
-      prev = next;
+    for (let round = 0; round < 30; round++) {
+      let prev = current();
+      // 板が開いている間に替わるのは 2 回まで（3 回目のまちがいで板が閉じる）
+      for (let i = 0; i < 2; i++) {
+        // 今の答えの次の数（今の答えとは違うので、まちがいになる）
+        await submitDigits(String(prev.answer + 1));
+        const next = current();
+        expect(next.answer).not.toBe(prev.answer);
+        expect(next.answer).toBeGreaterThanOrEqual(23);
+        expect(next.answer).toBeLessThanOrEqual(111);
+        prev = next;
+      }
+      await submitDigits(String(prev.answer + 1));
+      expect(screen.queryByTestId('parent-gate')).toBeNull();
+      await holdKey();
     }
     expect(m.unlocked).not.toHaveBeenCalled();
   });
@@ -228,6 +245,99 @@ describe('保護者ゲートの計算問題: まちがえたら新しい問題',
     // Esc で閉じる
     key('Escape');
     expect(screen.queryByTestId('parent-gate')).toBeNull();
+    expect(m.unlocked).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * まちがいが 3 回続くと板を閉じる（公開前の最後の確かめ SEC-1）。問題を替えるだけでは、同じ数を打ち続けて
+ * 通れてしまう（通るまでの回数は、答えを順に試すのとほとんど変わらない）。数回ごとに2秒の長押しを求める。
+ */
+describe('保護者ゲート: まちがいが 3 回続くと板を閉じる', () => {
+  it('2 回までは板が開いたまま。3 回目で閉じ、開かない。開き直すと数え直しで、正しい答えで開く', async () => {
+    await openGate();
+    await submitDigits(String(current().answer + 1));
+    await submitDigits(String(current().answer + 1));
+    expect(screen.getByTestId('parent-gate')).toBeTruthy();
+    expect(screen.getByText('ちがいます。もう一度どうぞ。')).toBeTruthy();
+
+    await submitDigits(String(current().answer + 1));
+    expect(screen.queryByTestId('parent-gate')).toBeNull();
+    expect(m.unlocked).not.toHaveBeenCalled();
+    expect(location.hash).toBe('#/home');
+    // 閉じたあとは数字キー・Enter を受けない（後ろの画面に何も起きない）
+    key('1');
+    key('Enter');
+    await settle();
+    expect(screen.queryByTestId('parent-gate')).toBeNull();
+    expect(m.unlocked).not.toHaveBeenCalled();
+
+    // 開き直すには長押しが要る。開き直した板は、まちがいの数も「ちがいます」も残っていない
+    await holdKey();
+    expect(screen.queryByText('ちがいます。もう一度どうぞ。')).toBeNull();
+    expect(typed()).toBe('');
+    await submitDigits(String(current().answer + 1));
+    await submitDigits(String(current().answer + 1));
+    expect(screen.getByTestId('parent-gate')).toBeTruthy();
+    await submitDigits(String(current().answer));
+    expect(m.unlocked).toHaveBeenCalledWith(true);
+    expect(location.hash).toBe('#/parent/records');
+  });
+
+  it('同じ数を打ち続けても、長押しなしでは 3 回までしか試せない（4 問目が当たる並びでも開かない）', async () => {
+    // 問題の答えが 23 → 24（同じにならないよう b をずらす）→ 23 → 55 と並ぶ乱数。「55」を打ち続ける
+    fixRandom(0, 0, 0, 0, 0, 0, 0.5, 0.07);
+    await openGate();
+    for (let i = 0; i < 3; i++) {
+      expect(current().answer).not.toBe(55);
+      for (const ch of '55') key(ch);
+      key('Enter');
+      await settle();
+    }
+    // 3 回目のまちがいで閉じたので、4 回目の「55」は届かない
+    expect(screen.queryByTestId('parent-gate')).toBeNull();
+    for (const ch of '55') key(ch);
+    key('Enter');
+    await settle();
+    expect(m.unlocked).not.toHaveBeenCalled();
+    // 長押しで開き直したときに初めて、次の問題（答え 55）になる
+    await holdKey();
+    expect(current().answer).toBe(55);
+  });
+
+  it('暗証番号のときも、3 回続けてまちがえると閉じる。開き直して正しい番号で開く', async () => {
+    m.pinHash = '4321';
+    await openGate();
+    for (let i = 0; i < 2; i++) {
+      await submitDigits('1111');
+      expect(screen.getByText('ちがいます。もう一度どうぞ。')).toBeTruthy();
+    }
+    await submitDigits('1111');
+    expect(screen.queryByTestId('parent-gate')).toBeNull();
+    expect(m.unlocked).not.toHaveBeenCalled();
+
+    await holdKey();
+    await submitDigits('4321');
+    expect(m.unlocked).toHaveBeenCalledWith(true);
+    expect(location.hash).toBe('#/parent/records');
+  });
+
+  it('入力・Backspace・「けす」・Esc はまちがいに数えない。Esc で閉じて開き直すと数え直し', async () => {
+    await openGate();
+    await submitDigits(String(current().answer + 1));
+    await submitDigits(String(current().answer + 1));
+    // 入力して消すだけ・「けす」は数えない（板は開いたまま）
+    key('9');
+    key('Backspace');
+    fireEvent.click(screen.getByTestId('gate-key-けす'));
+    expect(screen.getByTestId('parent-gate')).toBeTruthy();
+    // Esc で閉じて開き直すと、また 2 回までまちがえられる
+    key('Escape');
+    expect(screen.queryByTestId('parent-gate')).toBeNull();
+    await holdKey();
+    await submitDigits(String(current().answer + 1));
+    await submitDigits(String(current().answer + 1));
+    expect(screen.getByTestId('parent-gate')).toBeTruthy();
     expect(m.unlocked).not.toHaveBeenCalled();
   });
 });

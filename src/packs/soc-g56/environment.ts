@@ -554,8 +554,7 @@ const protect: Item[] = [
     id: 'env-pro-alt-sort',
     obj: 'protect',
     level: 0,
-    prompt:
-      '災害《さいがい》へのそなえを、2つの箱《はこ》に分《わ》けよう。',
+    prompt: '災害《さいがい》へのそなえを、2つの箱《はこ》に分《わ》けよう。',
     boxes: ['国《くに》や県《けん》・市《し》', 'わたしたちの家《いえ》'],
     cards: [
       ['ていぼうをつくる', 0],
@@ -579,8 +578,7 @@ const protect: Item[] = [
     id: 'env-pro-alt-table',
     obj: 'protect',
     level: 2,
-    prompt:
-      '表《ひょう》は、ハザードマップ（例《れい》）だよ。ひなん先《さき》によいのは？',
+    prompt: '表《ひょう》は、ハザードマップ（例《れい》）だよ。ひなん先《さき》によいのは？',
     figure: table(
       ['場所《ばしょ》', '大雨《おおあめ》のときのようす'],
       [

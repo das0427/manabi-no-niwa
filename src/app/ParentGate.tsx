@@ -2,6 +2,7 @@
  * 保護者画面の入口（PA-01）。鍵ボタンを2秒長押し → 大人向けの計算問題（または暗証番号）。
  * これは誤操作の防止であり、認証ではない（README・保護者画面に明記）。
  * 計算問題は、まちがえるたびに新しい問題に替わる（同じ問題のまま、答えの範囲を続けて試せない）。
+ * まちがいが 3 回続くと板を閉じる（計算問題も暗証番号も）。開き直すには、また2秒の長押しが要る。
  * 板の中はキーボードでも操作できる（FX11）: 数字（0〜9。テンキーも）・Backspace（1字消す）・Enter（OK。「もどる」に
  * フォーカスがあるときは もどる）・Esc（もどる）。
  * 板が開いている間、Tab の移動は板の中のボタンだけを回る（後ろのホームに出ない）。
@@ -23,6 +24,12 @@ const A_MIN = 12;
 const A_COUNT = 60;
 const B_MIN = 11;
 const B_COUNT = 30;
+/**
+ * まちがいがこの回数続いたら板を閉じる（開き直すには、また2秒の長押し）。問題を替えるだけでは、同じ数を打ち続けて
+ * 通るまでの回数（中央値 約41回）が、答えを順に試す回数（中央値 45回）とほとんど変わらない。数回ごとに長押しを
+ * 求めて、続けて試すことを止める（公開前の最後の確かめ SEC-1。docs/expansion/updater-design.md 16.5）
+ */
+const MAX_MISSES = 3;
 
 interface Question {
   a: number;
@@ -104,6 +111,8 @@ function GateDialog({ onClose }: { onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
   const [question, setQuestion] = useState<Question>(() => makeQuestion());
+  /** この板を開いてからのまちがいの数（板を閉じると数え直し。正しく答えると板は閉じる） */
+  const misses = useRef(0);
 
   useEffect(() => {
     void db.getAppRecord().then((r) => setPinHash(r.parentPinHash));
@@ -120,6 +129,12 @@ function GateDialog({ onClose }: { onClose: () => void }) {
       onClose();
       navigate({ name: 'parent', tab: 'records' }, { force: true });
     } else {
+      misses.current += 1;
+      if (misses.current >= MAX_MISSES) {
+        // まちがいが続いたら板を閉じる。開き直すには、また鍵を2秒長押しする（フォーカスは鍵のボタンへ戻る）
+        onClose();
+        return;
+      }
       setError(true);
       setInput('');
       // まちがえるたびに問題を作り直す（同じ問題のまま、答えの範囲 23〜111 を続けて試せないように）。

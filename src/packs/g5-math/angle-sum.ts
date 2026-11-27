@@ -113,7 +113,12 @@ function labeledFig(
     ],
   ];
   for (const [a, b] of extra?.lines ?? [])
-    boxes.push([Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])]);
+    boxes.push([
+      Math.min(a[0], b[0]),
+      Math.min(a[1], b[1]),
+      Math.max(a[0], b[0]),
+      Math.max(a[1], b[1]),
+    ]);
   const texts: { x: number; y: number; s: string }[] = [...(extra?.texts ?? [])];
   for (const t of texts) {
     const w = labelW(t.s);

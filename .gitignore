@@ -21,3 +21,8 @@ Thumbs.db
 public/audio/*/
 !public/audio/num/
 !public/audio/_sample-*/
+
+# 手元の作業の設定（AI の作業ツリーと起動の設定・ローカルの環境変数）は git に入れない（公開前の最後の確かめ P-02）
+.claude/
+.env
+.env.*

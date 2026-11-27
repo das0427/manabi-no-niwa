@@ -422,7 +422,11 @@ export function RecordsTab() {
                       >
                         <td>{def.label}</td>
                         <td>
-                          {lv.code}（{lv.label}）
+                          {/* 段階の名前は語の途中で折らない（「H2（音を聞いて3／択）」と数と助数詞の間で折れた。
+                              check:app-layout の word-split）。括弧の前でだけ折る */}
+                          <span className="p-keep">
+                            {lv.code}（{lv.label}）
+                          </span>
                           {hard ? (
                             <span className="p-badge p-badge--hard" data-testid={`hard-${id}`}>
                               むずかしそう

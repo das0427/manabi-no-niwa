@@ -9,7 +9,18 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { expr, finishUnit, pick, pickObj, r1, REVISED, STROKE, svg, svgText, wrongList } from './util';
+import {
+  expr,
+  finishUnit,
+  pick,
+  pickObj,
+  r1,
+  REVISED,
+  STROKE,
+  svg,
+  svgText,
+  wrongList,
+} from './util';
 
 type Obj = 'para' | 'tri' | 'trap' | 'rhombus' | 'inverse';
 type P = [number, number];
@@ -67,7 +78,10 @@ const FS = 17;
 /** 図の高さの上限（viewBox の単位）。字 1.8u のとき 12.5u に収まる: 12.5 ÷ 1.8 × 17 */
 const MAX_VB_H = 118;
 const textW = (t: string) =>
-  [...t].reduce((w, ch) => w + (/[0-9]/.test(ch) ? 0.56 : ch === 'c' ? 0.5 : ch === 'm' ? 0.85 : 1) * FS, 0);
+  [...t].reduce(
+    (w, ch) => w + (/[0-9]/.test(ch) ? 0.56 : ch === 'c' ? 0.5 : ch === 'm' ? 0.85 : 1) * FS,
+    0,
+  );
 
 /**
  * 図（座標は 数学の向き: y が上）。文字は 数字と cm だけ。
@@ -112,7 +126,13 @@ function draw(f: Fig, label: string): Figure {
           Y(a[1] + ((b[1] - a[1]) * i) / 40),
         ]),
       );
-    const placed: { x: number; y: number; anchor: string; text: string; box: [number, number, number, number] }[] = [];
+    const placed: {
+      x: number;
+      y: number;
+      anchor: string;
+      text: string;
+      box: [number, number, number, number];
+    }[] = [];
     for (const l of f.labels) {
       const seg = l.seg ?? [l.at, l.at];
       const w = textW(l.text);
@@ -121,10 +141,15 @@ function draw(f: Fig, label: string): Figure {
       // 辺から はなす 距離を 近い順に、seg の 上の 位置を ずらしながら、辺・点線・ほかの字に かさならない 所を さがす。
       // 高さ（flip）は 点線の 右・左の どちらにも 置ける。図形の 辺を またいだ 所（例: 高さの 字が ななめの 辺の 外）は、
       // その 辺の 長さに 見えるので 使わない（大きな 減点）
-      const sides: number[] = l.dx ? (l.flip ? [Math.sign(l.dx), -Math.sign(l.dx)] : [Math.sign(l.dx)]) : [0];
+      const sides: number[] = l.dx
+        ? l.flip
+          ? [Math.sign(l.dx), -Math.sign(l.dx)]
+          : [Math.sign(l.dx)]
+        : [0];
       const tries2: [number, number, number][] = [];
       for (const gap of [0, 5, 10, 16, 24, 34])
-        for (const side of sides) for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]) tries2.push([gap, side, t]);
+        for (const side of sides)
+          for (const t of [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8]) tries2.push([gap, side, t]);
       for (const [gap, side, t] of tries2) {
         const px = X(seg[0][0] + (seg[1][0] - seg[0][0]) * t);
         const py = Y(seg[0][1] + (seg[1][1] - seg[0][1]) * t);
@@ -141,11 +166,18 @@ function draw(f: Fig, label: string): Figure {
         for (const pts of edges)
           for (const [ex, ey] of pts)
             if (ex > box[0] - 1 && ex < box[2] + 1 && ey > box[1] - 1 && ey < box[3] + 1) score++;
-        if (polyEdges.some(([a, b]) => crosses([px, py], [(box[0] + box[2]) / 2, y], a, b))) score += 1000;
+        if (polyEdges.some(([a, b]) => crosses([px, py], [(box[0] + box[2]) / 2, y], a, b)))
+          score += 1000;
         // 決めた 向きを 先に（反対がわは、決めた 向きより はっきり よいときだけ）
         if (side && side !== Math.sign(l.dx ?? 0)) score += 3;
         for (const o of placed)
-          if (box[0] < o.box[2] + 2 && o.box[0] < box[2] + 2 && box[1] < o.box[3] && o.box[1] < box[3]) score += 100;
+          if (
+            box[0] < o.box[2] + 2 &&
+            o.box[0] < box[2] + 2 &&
+            box[1] < o.box[3] &&
+            o.box[1] < box[3]
+          )
+            score += 100;
         if (score < bestScore) {
           bestScore = score;
           best = { x, y, anchor, text: l.text, box };
@@ -210,7 +242,17 @@ function paraFig(b: number, o: number, h: number, s: number, showH = true): Figu
       labels: [
         { at: mid(A, B), text: `${b}cm`, dy: 16 },
         { at: mid(A, D), text: `${s}cm`, dx: -24, seg: [A, D] },
-        ...(showH ? [{ at: [o, h / 2] as P, text: `${h}cm`, dx: 24, seg: [D, [o, 0]] as [P, P], flip: true }] : []),
+        ...(showH
+          ? [
+              {
+                at: [o, h / 2] as P,
+                text: `${h}cm`,
+                dx: 24,
+                seg: [D, [o, 0]] as [P, P],
+                flip: true,
+              },
+            ]
+          : []),
       ],
     },
     outside ? '平行四辺形（高さが 外に ある）' : '平行四辺形',

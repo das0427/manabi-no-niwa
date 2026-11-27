@@ -475,8 +475,7 @@ const tempItems: Item[] = [
     identity: 'st-explain-compare',
     objective: 'temp',
     level: 0,
-    prompt:
-      '前《まえ》と 今《いま》の 記録《きろく》を くらべて、かわった ことを えらぼう。',
+    prompt: '前《まえ》と 今《いま》の 記録《きろく》を くらべて、かわった ことを えらぼう。',
     reasons: [
       { label: '気温《きおん》が かわった' },
       { label: '生《い》き物《もの》の 数《かず》が かわった' },

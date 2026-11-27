@@ -154,7 +154,9 @@ function read(level: number, rng: Rng, alt: boolean): ChoiceItem {
       : 'この 数《かず》の 読《よ》み方《かた》は どれ？',
     // 12 けたの 数字を 大（l）・特大（xl）に すると、図が 高く（作業領域の 空きの 45% 超）なって 解説の 板が 開いたとき 図の 右に 並ぶ
     // 並び（data-layout=side）に なり、横 1 列の 漢数字の 選択肢（4つ）が 札に 入らず はみ出す。数字の 図は 中（m）に して 下の 段に 置く
-    figure: alt ? { kind: 'text', text: kanjiNumber(n), size: 'l' } : { kind: 'text', text: String(n), size: 'm' },
+    figure: alt
+      ? { kind: 'text', text: kanjiNumber(n), size: 'l' }
+      : { kind: 'text', text: String(n), size: 'm' },
     hints: [
       alt
         ? '「兆《ちょう》」「億《おく》」「万《まん》」の ところで 4けたずつ 区切《くぎ》って 考《かんが》えよう。'

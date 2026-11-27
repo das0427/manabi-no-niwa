@@ -2,7 +2,7 @@
   "name": "manabi-no-niwa",
   "private": true,
   "version": "2.1.0",
-  "description": "4歳児向け 日本語のオフライン学習アプリ（ブラウザ / PWA）",
+  "description": "2歳〜小6向け 日本語のオフライン学習アプリ（ブラウザ / PWA）",
   "license": "MIT",
   "type": "module",
   "scripts": {

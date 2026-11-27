@@ -24,7 +24,7 @@
 | 項目 | 状態 | 詳細・対処の案 |
 |---|---|---|
 | 本体を更新すると教材パックの版も変わる | 対応済み（2.1.0） | 原因: パックの入口（src/packs/<packId>/index.ts）が codeSplitting のグループに入り、rolldown が動的 import 用の名前空間オブジェクトを作っていた。その補助関数（`__export`）が本体の hash 付きチャンク（Illust-*.js）にあり、パックがそれを import していた。対処: 入口だけをグループから外し、独立したチャンク `assets/packs/<packId>/index.js`（hash なし。`export { x as default }` をそのまま持つ）にした（scripts/vite-plugin-precache.ts の packChunkName・packChunkFileName）。パックは 2 ファイル（index.js と <packId>.js）になる。本体だけを変えた（Illust.tsx・Home.tsx の一時変更）2回の本番ビルドで dist/packs.json が一致することを確認。`npm run check:packs` に「小学生のパックのファイルが pack-runtime・共有データ以外の本体のチャンクを直接 import しない」検査を追加。残した点: 2.0.x で取得済みのパックは、2.1.0 への更新のときだけファイル構成が変わる。2.1.0 のアプリが自動で取り直す（updater-design.md 6.4 節・8 章）。取り直しに失敗したときは、保護者画面「きょうざい」の「まとめて取得し直す」で取り直す。共有データ（assets/packs/_data/…）のチャンクは今も `__export` を本体から import するが、今はすべてコアに属するのでパックの版に影響しない（パックだけが使う共有データができたら、上の検査が知らせる） |
-| オフライン・教材パックの E2E は音声を外したビルドで実行 | 制約 | 音声入りの dist（数百MB）を検査ごとに写すと時間切れになる。本番ビルドは `npm run check:packs` で分離を確認。音声入りでの E2E は未実施 |
+| オフライン・教材パックの E2E は音声を外したビルドで実行 | 制約 | 音声入りの dist（数百MB・約12万ファイル）をテストごとに写すと時間切れになる（2026-11-28 の確かめで、offline・packs が両ブラウザで落ちた。ほかの spec は音声入りで通った。同じく dist を写す serve.spec は流していない）。本番ビルドは `npm run check:packs` で分離を確認。テストの作り（写す範囲・組み立てを前もって行う）を直すのは次の版 |
 | 教材パックの音声は git に入れていない | 運用 | 配布 zip にだけ含める。作り方は README「音声の作り直し・差し替え」と docs/assets-pipeline.md。全部作ると約1時間（並列）。数の部品は教材に出てくる大きな数も台本に入れる（scripts/export-pack-voice.ts） |
 | 配布 zip は4つ（本体＋学年ごとの音声） | 運用 | ZIP（ZIP64 でない形）は1つ 65,535 ファイルまで、GitHub の添付は 2GB まで。scripts/package-release.ts。学年ごとの音声がさらに増えたら分け方を見直す |
 | 文書の作業ツリーで改行が CRLF になると `prettier --check` が全ファイルで警告 | 注意 | git worktree で出た。中身の差ではない |

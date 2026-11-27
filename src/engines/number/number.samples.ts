@@ -54,7 +54,11 @@ export const numberSamples: NumberItem[] = [
     id: 'number-sample:col-sub',
     objective: 'column-sub',
     prompt: 'ひっさんで けいさんしよう',
-    hints: ['いちの くらいから ひこう', '3から 8は ひけないね', 'じゅうの くらいが 0のときは ひゃくの くらいから'],
+    hints: [
+      'いちの くらいから ひこう',
+      '3から 8は ひけないね',
+      'じゅうの くらいが 0のときは ひゃくの くらいから',
+    ],
     explain: '403 − 178 ＝ 225 だよ',
     identity: 'col:403-178',
     fields: [{ answer: { kind: 'int', value: 225 } }],

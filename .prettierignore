@@ -17,3 +17,6 @@ scripts/strokes/preview.svg
 src/packs/_data/strokes/*.json
 scripts/strokes/preview-*.svg
 src/engines/map/data/*.json
+# 書き出す台本・索引（生成物。生成器の書式のまま。prettier では整えない）
+src/curriculum/unit-index.json
+voice/script-en.json

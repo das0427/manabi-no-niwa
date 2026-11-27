@@ -42,7 +42,9 @@ describe('g1-math の教材検査（curriculum-matrix 1.8）', () => {
   describe('ヒントが答えを言わない（全段階・seed 600 通り）', () => {
     const unitOf = (id: string) => pack.units.find((u) => u.id === id)!;
     const numIn = (s: string, n: number) =>
-      new RegExp(`(?<![0-9])${n}(?![0-9])`).test(s.replace(/1めもりは 1 /g, '').replace(/\d+めもり/g, ''));
+      new RegExp(`(?<![0-9])${n}(?![0-9])`).test(
+        s.replace(/1めもりは 1 /g, '').replace(/\d+めもり/g, ''),
+      );
 
     /** 単元の全段階から seed 600 通りで生成した問題のうち、id が prefix で始まるもの */
     function sample(unitId: string, ids: RegExp) {
@@ -98,10 +100,15 @@ describe('g1-math の教材検査（curriculum-matrix 1.8）', () => {
   });
 
   it('compare-quantity tani-size: あ・い の どちらも正答になり、同一性は入れかえで増えない', () => {
-    const items = sampleItems(pack.units.find((u) => u.id === 'g1.math.compare-quantity')!, 600)
+    const items = sampleItems(
+      pack.units.find((u) => u.id === 'g1.math.compare-quantity')!,
+      600,
+    )
       .filter((it) => it.id.startsWith('tani-size:'))
       .filter((it) => it.engine === 'choice');
-    const answers = items.map((it) => (it.engine === 'choice' ? it.options.find((o) => o.correct)!.label : ''));
+    const answers = items.map((it) =>
+      it.engine === 'choice' ? it.options.find((o) => o.correct)!.label : '',
+    );
     const a = answers.filter((x) => x === 'あ').length;
     const i = answers.filter((x) => x === 'い').length;
     expect(a).toBeGreaterThan(items.length * 0.4);
@@ -167,7 +174,10 @@ describe('g1-math の教材検査（curriculum-matrix 1.8）', () => {
     const unit = pack.units.find((u) => u.id === 'g1.math.picture-graph')!;
     const items = sampleItems(unit, 600).filter((it) => it.id.includes('-diff:'));
     expect(items.length).toBeGreaterThan(30);
-    for (const it of items) expect(it.prompt, it.id).toMatch(/(すきな ひと|のって みたい ひと|みつけた とり|に さいた はな|で とれた りんご)は/);
+    for (const it of items)
+      expect(it.prompt, it.id).toMatch(
+        /(すきな ひと|のって みたい ひと|みつけた とり|に さいた はな|で とれた りんご)は/,
+      );
   });
 
   it('add-basic: 定義域35通りがすべて出る・正答で正解・誤答例で誤り', () => {

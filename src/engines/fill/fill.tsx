@@ -6,7 +6,7 @@
  */
 import { useState } from 'react';
 import type { ItemBase, RichText } from '../../curriculum/types';
-import { Rt } from '../../text/Rt';
+import { Rt, splitRichEdge } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import type { Judgement } from '../types';
 import {
@@ -143,6 +143,23 @@ function FillView({
   const marks = useMarks(wrongMark, revealed || ctx.ux.softJudgement);
   const locked = disabled || revealed;
   const parts = item.text.split(BLANK);
+  // 各断片を [前の空欄に付ける頭, 本体, 次の空欄に付ける尻] に分ける
+  const edges = parts.map((p, i): [string, string, string] => {
+    let head = '';
+    let body = p;
+    let tail = '';
+    if (i > 0) [head, body] = splitRichEdge(body, 'head');
+    if (i < nb) [body, tail] = splitRichEdge(body, 'tail');
+    // 「→ □」「＋ □」のように、記号・矢印＋空白＋空欄は 1 つのまとまりにする（記号のあとで折らない。空白は 1 つの空白にそろえる）
+    if (i < nb && !tail) {
+      const m = /([\p{S}…・])\s+$/u.exec(body);
+      if (m) {
+        body = body.slice(0, body.length - m[0].length);
+        tail = `${m[1]} `;
+      }
+    }
+    return [head, body, tail];
+  });
   const valueAt = (i: number) =>
     revealed ? (item.blanks[i]?.answers[0] ?? null) : (vals[i] ?? null);
   const complete = vals.every((v) => v !== null);
@@ -175,35 +192,41 @@ function FillView({
   };
 
   return (
-    <div className="tk-frame eng-fill">
+    <div className="tk-frame tk-frame--band eng-fill">
       <div className="tk-frame__main">
         <p className="eng-fill__text">
-          {parts.map((p, i) => (
+          {edges.map(([, body], i) => (
             <span key={i}>
-              {p ? <Rt text={p} ctx={ctx} /> : null}
+              {body ? <Rt text={body} ctx={ctx} /> : null}
               {i < nb ? (
-                <button
-                  type="button"
-                  className={[
-                    'eng-fill__blank',
-                    i === active && !locked ? 'is-active' : '',
-                    valueAt(i) === null ? 'is-empty' : '',
-                    revealed ? 'is-revealed' : '',
-                    marks.has(i) ? 'is-wrong' : '',
-                  ].join(' ')}
-                  onClick={() => pressBlank(i)}
-                  disabled={locked}
-                  aria-label={`${i + 1}ばんめの あいている ところ ${valueAt(i) !== null ? plainText(valueAt(i)!) : 'から'}`}
-                  aria-pressed={i === active && !locked}
-                  data-testid={`blank-${i}`}
-                >
-                  {valueAt(i) !== null ? <Rt text={valueAt(i)!} ctx={ctx} /> : ' '}
-                  {marks.has(i) ? (
-                    <span className="mark mark--wrong" aria-hidden>
-                      ？
-                    </span>
-                  ) : null}
-                </button>
+                // 空欄と、その前後の括弧・句読点（無ければ隣の1字）を離さない（「あらいました／□」を防ぐ。DESINGN.md 17章）
+                <span className="rt-nobr">
+                  {edges[i]![2] ? <Rt text={edges[i]![2]} ctx={ctx} /> : null}
+                  <button
+                    type="button"
+                    className={[
+                      'eng-fill__blank',
+                      i === active && !locked ? 'is-active' : '',
+                      valueAt(i) === null ? 'is-empty' : '',
+                      revealed ? 'is-revealed' : '',
+                      revealed && (edges[i]![2] || edges[i + 1]?.[0]) ? 'is-glued' : '',
+                      marks.has(i) ? 'is-wrong' : '',
+                    ].join(' ')}
+                    onClick={() => pressBlank(i)}
+                    disabled={locked}
+                    aria-label={`${i + 1}ばんめの あいている ところ ${valueAt(i) !== null ? plainText(valueAt(i)!) : 'から'}`}
+                    aria-pressed={i === active && !locked}
+                    data-testid={`blank-${i}`}
+                  >
+                    {valueAt(i) !== null ? <Rt text={valueAt(i)!} ctx={ctx} /> : ' '}
+                    {marks.has(i) ? (
+                      <span className="mark mark--wrong" aria-hidden>
+                        ？
+                      </span>
+                    ) : null}
+                  </button>
+                  {edges[i + 1]?.[0] ? <Rt text={edges[i + 1]![0]} ctx={ctx} /> : null}
+                </span>
               ) : null}
             </span>
           ))}

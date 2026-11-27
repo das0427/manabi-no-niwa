@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import * as db from '../core/storage/index';
-import type { ModeId, WorkRecord } from '../core/types';
+import { profileAudience, type ModeId, type WorkRecord } from '../core/types';
 import { Illust } from '../illust/Illust';
 import { MODE_BY_ID } from '../modes/registry';
 import { WorkThumb } from '../modes/workThumb';
 import { ModeHeader } from '../ui/ModeHeader';
+import { ScrollList } from '../ui/ScrollList';
 import { audio } from '../core/audio/index';
 import { unitMeta } from '../curriculum/unitIndex';
 import { plainText } from '../text/rich';
 import { useApp } from './AppState';
+import { ownStage } from './Explore';
 import { navigate } from './router';
 import './notebook.css';
 
@@ -33,6 +35,10 @@ const dayKey = (t: number) => {
 export function Notebook() {
   const app = useApp();
   const [days, setDays] = useState<Day[] | null>(null);
+  // 見ている子供の区分。幼児は ▲▼ の札、小学生は ▼ の印が出る（ScrollList。text-layout-fixes「アプリの画面」A6）
+  const viewer = app.profile
+    ? ownStage(profileAudience(app.profile), app.profile.enrolledGrade ?? undefined)
+    : 'g1';
 
   useEffect(() => {
     if (!app.profile) return;
@@ -77,14 +83,19 @@ export function Notebook() {
   }, [app.profile]);
 
   return (
-    <div className="screen" data-testid="notebook">
+    <div className="screen" data-testid="notebook" data-stage={viewer}>
       <ModeHeader
         promptText="がんばりノート"
         onHome={() => navigate({ name: 'home' }, { force: true })}
         onListen={() => void audio.play('app.notebook')}
         canListen
       />
-      <div className="notebook" style={{ top: 'calc(var(--u) * 8)' }}>
+      <ScrollList
+        viewer={viewer}
+        className="notebook"
+        label="がんばりノート"
+        testId="notebook-days"
+      >
         {days && days.length === 0 ? (
           <p className="label-text" style={{ textAlign: 'center' }}>
             あそぶと ここに のこるよ
@@ -121,7 +132,7 @@ export function Notebook() {
             </div>
           </section>
         ))}
-      </div>
+      </ScrollList>
     </div>
   );
 }

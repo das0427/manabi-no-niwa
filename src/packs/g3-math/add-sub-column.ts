@@ -103,26 +103,47 @@ function subZeroAsTen(a: number, b: number): number | null {
   return fromDigits(out);
 }
 
-function addSteps(a: number, b: number): string[] {
+/**
+ * 解説に書く、位ごとの計算。text はわけ（くり上げ・かした・かりた）つき、short は わけなし
+ * （わけは 次の位の式と 引く数の上の数で 見える）。plain は くり上げ・くり下げが からまない 位。
+ * 4けたの筆算で 解説が 6行になった（text-layout の第4回）ので、長いときは 言い回しを短くして 4行に入れる。
+ */
+interface Step {
+  text: string;
+  short: string;
+  plain: boolean;
+  /** 0の 位から かりた 位（解説を 短くしても わけを 残す） */
+  zero?: boolean;
+  /** ヒントに使う形（ひき算の 一のくらいで かりるときは「となりから 10 かりて」を残す。前と同じ文） */
+  lead?: string;
+}
+
+function addSteps(a: number, b: number): Step[] {
   const da = digits(a);
   const db = digits(b);
-  const out: string[] = [];
+  const out: Step[] = [];
   let c = 0;
   for (let i = 0; i < Math.max(da.length, db.length); i++) {
     const s = (da[i] ?? 0) + (db[i] ?? 0) + c;
-    out.push(
-      `${placeName(i)}: ${da[i] ?? 0} ＋ ${db[i] ?? 0}${c ? ' ＋ 1' : ''} ＝ ${s}${s >= 10 ? `（${s % 10}を 書《か》いて 1 くり上《あ》げる）` : ''}`,
-    );
+    const short = `${placeName(i)}: ${da[i] ?? 0} ＋ ${db[i] ?? 0}${c ? ' ＋ 1' : ''} ＝ ${s}`;
+    out.push({
+      text: `${short}${s >= 10 ? '（1 くり上《あ》げる）' : ''}`,
+      short,
+      plain: !c && s < 10,
+    });
     c = s >= 10 ? 1 : 0;
   }
-  if (c) out.push(`くり上《あ》げた 1が ${placeName(out.length)}に なる`);
+  if (c) {
+    const t = `くり上《あ》げた 1が ${placeName(out.length)}に なる`;
+    out.push({ text: t, short: t, plain: false });
+  }
   return out;
 }
 
-function subSteps(a: number, b: number): string[] {
+function subSteps(a: number, b: number): Step[] {
   const da = digits(a);
   const db = digits(b);
-  const out: string[] = [];
+  const out: Step[] = [];
   let bin = 0;
   for (let i = 0; i < da.length; i++) {
     const y = db[i] ?? 0;
@@ -130,23 +151,75 @@ function subSteps(a: number, b: number): string[] {
     const top0 = x - bin;
     const bout = top0 < y ? 1 : 0;
     const top = top0 + bout * 10;
-    const notes: string[] = [];
-    if (bin && x === 0) notes.push('0なので、となりから 10 かりて 10。1 かしたので 9');
-    else if (bin) notes.push(`1 かしたので ${x}は ${x - 1}`);
-    if (bout && !(bin && x === 0)) notes.push(`となりから 10 かりて ${top}`);
     const d = top - y;
-    if (i === da.length - 1 && d === 0 && i > 0) {
-      out.push(
-        `${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}0に なるので 書《か》かない`,
-      );
-    } else {
-      out.push(
-        `${placeName(i)}: ${notes.join('、')}${notes.length ? '。' : ''}${top} − ${y} ＝ ${d}`,
-      );
-    }
+    // 引く数に ぶつける 上の数（かした・かりたあとの数）と、その わけを 短く
+    const note =
+      bin && x === 0
+        ? '（0は 10 かりて 1 かした）'
+        : bin && bout
+          ? '（1 かして、10 かりた）'
+          : bin
+            ? '（1 かした）'
+            : bout
+              ? '（10 かりた）'
+              : '';
+    const short =
+      i === da.length - 1 && d === 0 && i > 0
+        ? `${placeName(i)}: 0に なるので 書《か》かない`
+        : `${placeName(i)}: ${top} − ${y} ＝ ${d}`;
+    out.push({
+      text: `${short}${note}`,
+      short,
+      plain: !bin && !bout,
+      zero: bin === 1 && x === 0,
+      lead:
+        i === 0 && bout
+          ? `${placeName(i)}: となりから 10 かりて ${top}。${top} − ${y} ＝ ${d}`
+          : undefined,
+    });
     bin = bout;
   }
   return out;
+}
+
+/** 解説の文字数（《よみ》を除く）の上限。図つき（横書きの式を 筆算に なおす問題）は 図が 板の右か下に入る */
+const EXPLAIN_MAX = 100;
+const EXPLAIN_MAX_FIG = 78;
+/**
+ * 図つきの解説で、0の 位から かりる わけを 残す形だけ、上限を 少し ゆるめる（この単元の 大事な つまずき）。
+ * 78字では 3けたでも 入らず、図つきの subz で わけが 全部 消えた。86字で text-layout（seed 32）0件を確かめた。
+ */
+const ZERO_SLACK = 8;
+const plainLen = (t: string) => t.replace(/《[^》]*》/g, '').length;
+
+/**
+ * 位ごとの計算に 答えの文を つなぐ。上限に入る、いちばん くわしい形を えらぶ
+ * （わけつき → 0から かりる 位だけ わけつき（からまない 位を まとめても）→ わけなし → からまない 位を 答えの前に まとめる）。
+ * tail: 答えの文、verify: たしかめ
+ */
+function explainOfSteps(steps: Step[], tail: string, verify: string, max: number): string {
+  // keep: わけを 残す 位（0の 位から かりる ところ。この単元の 大事な つまずき）
+  const keep = (st: Step) => (st.zero ? st.text : st.short);
+  const join = (f: (st: Step) => string, extra = '') =>
+    `${steps.map(f).join('。')}。${extra}${tail}`;
+  // からまない 位は 答えの前に「ほかの くらいは そのまま」と まとめる（文の先頭に 来ないように）
+  const merged = (f: (st: Step) => string): string =>
+    `${steps
+      .filter((st) => !st.plain)
+      .map(f)
+      .join('。')}。ほかの くらいは そのまま 計算《けいさん》。${tail}`;
+  const canMerge = steps.some((st) => st.plain) && steps.some((st) => !st.plain);
+  const hasZero = steps.some((st) => st.zero);
+  const zmax = hasZero && max === EXPLAIN_MAX_FIG ? max + ZERO_SLACK : max;
+  const tries: [string, number][] = [
+    [join((st) => st.text, verify), max],
+    [join((st) => st.text), zmax],
+    [join(keep), zmax],
+    ...(canMerge && hasZero ? [[merged(keep), zmax] as [string, number]] : []),
+    [join((st) => st.short), max],
+    ...(canMerge ? [[merged((st) => st.short), max] as [string, number]] : []),
+  ];
+  return (tries.find(([t, m]) => plainLen(t) <= m) ?? tries[tries.length - 1]!)[0];
 }
 
 // ---- 式を選ぶ（定義域から均等に） ----
@@ -215,12 +288,18 @@ function calcItem(
   const key = op === '＋' ? addKey(a, b) : `${a}-${b}`;
   const hints = [
     'くらいを たてに そろえて、一《いち》のくらいから 計算《けいさん》しよう。',
-    `${steps[0]!.replace(/ ＝ .*$/, ' を 計算《けいさん》')}。`,
+    `${(steps[0]!.lead ?? steps[0]!.short).replace(/ ＝ .*$/, ' を 計算《けいさん》')}。`,
     op === '＋'
       ? 'くり上《あ》げた 1を わすれずに たしながら、上《うえ》の くらいへ すすもう。'
       : 'かりた ときは、かした くらいを 1 へらすのを わすれずに。0の くらいから かりる ときは、もう 1つ 上《うえ》から かりよう。',
   ];
-  const explain = `${steps.join('。')}。答《こた》えは ${ans}です。${op === '−' ? `たしかめ: ${ans} ＋ ${b} ＝ ${a}。` : ''}`;
+  const verify = op === '−' ? `たしかめ: ${ans} ＋ ${b} ＝ ${a}。` : '';
+  const explain = explainOfSteps(
+    steps,
+    `答《こた》えは ${ans}です。`,
+    verify,
+    alt ? EXPLAIN_MAX_FIG : EXPLAIN_MAX,
+  );
   if (alt) {
     return {
       engine: 'number',
@@ -232,7 +311,7 @@ function calcItem(
       figure: { kind: 'text', text: `${a} ${op} ${b} ＝ {{}}`, size: 'xl' },
       hints,
       explain,
-      explainFigure: columnFigure(a, b, op, String(ans).length),
+      explainFigure: columnFigure(a, b, op, String(ans).length, [], ans),
       identity: key,
       alt: true,
       fields: [{ answer: { kind: 'int', value: ans } }],
@@ -373,16 +452,15 @@ function wordItem(level: number, rng: Rng, alt: boolean): NumberItem {
         ? `「${sc.type}」場面《ばめん》だね。たし算《ざん》かな、ひき算《ざん》かな。`
         : `「${sc.type}」を もとめる 場面《ばめん》だね。たし算《ざん》かな、ひき算《ざん》かな。`,
       `式《しき》は ${a} ${sc.op} ${b}。筆算《ひっさん》で 計算《けいさん》しよう。`,
-      (sc.op === '＋' ? addSteps(a, b) : subSteps(a, b))[0]!.replace(
-        / ＝ .*$/,
-        ' から はじめよう。',
-      ),
+      ((st0) => st0.lead ?? st0.short)(
+        (sc.op === '＋' ? addSteps(a, b) : subSteps(a, b))[0]!,
+      ).replace(/ ＝ .*$/, ' から はじめよう。'),
     ],
     explain: `式《しき》は ${a} ${sc.op} ${b} ＝ ${ans}。答《こた》えは ${ans}${sc.unit}です。`,
-    explainFigure: columnFigure(a, b, sc.op, String(ans).length),
+    explainFigure: columnFigure(a, b, sc.op, String(ans).length, [], ans),
     identity: `${sc.id}:${key}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: ans } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: ans } }],
     wrongAnswers: sc.op === '＋' ? addWrongs(a, b, 1) : subWrongs(a, b, 1),
   };
 }

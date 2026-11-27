@@ -9,7 +9,14 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { longDivFigure, qrFields, qrWrongs, stepTexts } from './div-1digit';
+import {
+  answerDivFigure,
+  divSteps,
+  longDivFigure,
+  qrFields,
+  qrWrongs,
+  stepTexts,
+} from './div-1digit';
 import { expr, finishUnit, opts, pick, pickObj, REVISED, wrongList } from './util';
 
 type Obj = 'tens' | 'kari' | 'twoq' | 'rule' | 'check' | 'story';
@@ -140,6 +147,12 @@ function twoq(level: number, rng: Rng, alt: boolean): NumberItem {
   const qq = Math.floor(a / d);
   const rr = a % d;
   const steps = stepTexts(a, d);
+  // 商は 2けた（十の位から たつ）なので、手順は 十の位 と 一の位 の 2 段。
+  // ヒント③は 一の位の 段（あまりに 一の位を おろして わる）まで 進める（解説は 答えと たしかめだけ）
+  const st = divSteps(a, d);
+  const tensStep = st[st.length - 2]!;
+  const onesStep = st[st.length - 1]!;
+  const down = String(a).slice(-1);
   return {
     engine: 'number',
     id: `twoq${alt ? '-alt' : ''}:${a}÷${d}`,
@@ -152,10 +165,14 @@ function twoq(level: number, rng: Rng, alt: boolean): NumberItem {
     hints: [
       `上から 2けたの ${String(a).slice(0, 2)}が ${d}で われるか 見よう。商は 十の位から たつよ。`,
       steps[0]!,
-      `${steps.slice(0, -1).join('。')}。のこりの 位も 同じように。`,
+      // ②と 同じ「○の位: …」の 形で 短く（長いと 2 行に なり「一／の位」と 折れる）。
+      // 1280×620 では 式の 前後で 2 行に なるので、式の 中は 折れない 空白（U+00A0）に して「141／÷ 16」と 割れないように する
+      `一の位: ${tensStep.r ? `あまりの ${tensStep.r}に ` : 'あまりは 0。'}${down}を おろして ${onesStep.cur}\u00a0÷\u00a0${d}。`,
     ],
-    explain: `${steps.join('。')}。${a} ÷ ${d} ＝ ${qq}${rr ? ` あまり ${rr}` : '（わりきれる）'}。たしかめ: ${d} × ${qq}${rr ? ` ＋ ${rr}` : ''} ＝ ${a}`,
-    explainFigure: alt ? undefined : longDivFigure(a, d),
+    // 手順は ヒントに ある（②が 十の位、③が 一の位）。解説は 上の 位から わる 流れと 答え・たしかめだけに 短くし、
+    // 筆算の 図は 商を 入れた 2 行の 形にする（位の名前の 見出しは ふりがなで 高く、文と いっしょに 板に 入らない）
+    explain: `上の 位から じゅんに わると、${a} ÷ ${d} ＝ ${qq}${rr ? ` あまり ${rr}` : '（わりきれる）'}。たしかめ: ${d} × ${qq}${rr ? ` ＋ ${rr}` : ''} ＝ ${a}`,
+    explainFigure: alt ? undefined : answerDivFigure(a, d, qq),
     identity: `${a}÷${d}`,
     alt,
     fields: qrFields(qq, rr),
@@ -272,7 +289,9 @@ function check(level: number, rng: Rng, alt: boolean): Item {
     objective: 'check',
     level,
     prompt: '□に あてはまる 数を 求めよう。',
-    figure: expr(`□ ÷ ${d} ＝ ${q} あまり ${r}`),
+    // 2けたの わる数・商・あまりが 並ぶと 'xl' では 1 行に 入らず「あまり」と 数の 間で 折れて 数が 1 つだけ 残る。
+    // 'l' に して、間も 折れない 空白（U+00A0）に する
+    figure: { kind: 'text', text: `□ ÷ ${d} ＝ ${q} あまり\u00a0${r}`, size: 'l' },
     hints: [
       '答えの たしかめの 式を 使おう。',
       'わる数 × 商 ＋ あまり ＝ わられる数',
@@ -560,7 +579,12 @@ export const div2digit: UnitSpec = finishUnit({
     },
     {
       text: '156 ÷ 24: 24を 20と みて、15 ÷ 2で 見当を つけると 7。24 × 7 ＝ 168は 156より 大きいので、商を 1 小さく して 6。',
-      figure: expr('24 × 6 ＝ 144　156 − 144 ＝ 12'),
+      // 1 行では 入らず「＝ 12」だけ 次の 行に 落ちるので、式ごとに 2 行に 分ける
+      figure: {
+        kind: 'column',
+        gap: 1,
+        items: [expr('24 × 6 ＝ 144'), expr('156 − 144 ＝ 12')],
+      },
     },
     {
       text: '答えは 6 あまり 12。たしかめ: 24 × 6 ＋ 12 ＝ 156。',

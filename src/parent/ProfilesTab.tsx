@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../app/AppState';
 import * as db from '../core/storage/index';
-import { defaultSupport } from '../audience/audience';
+import { audienceUx, defaultSupport } from '../audience/audience';
 import { profileAudience, type Profile } from '../core/types';
 import { Illust } from '../illust/Illust';
 import { AudienceFields, audienceLabel, type AudienceValue } from './AudienceFields';
@@ -102,7 +102,7 @@ function ProfileRow({
                 onChange={(e) => setApplySupport(e.target.checked)}
                 data-testid={`profile-apply-support-${p.id}`}
               />
-              表示と支援の設定（ふりがな・読み上げ・画面の表現・おえかきの道具）を、この区分のおすすめにする
+              表示と支援の設定（ふりがな・読み上げ・文字の大きさ・画面の表現・おえかきの道具・声かけ・演出）と利用時間の目安を、この区分のおすすめにする
             </label>
           ) : null}
           <p className="p-muted">区分を変えても、学習の記録・作品・できたことは変わりません。</p>
@@ -116,7 +116,13 @@ function ProfileRow({
                   await db.updateProfile(withAudience({ ...p, name: name.trim(), avatar }, aud));
                   if (audChanged && applySupport) {
                     const s = await db.getSettings(p.id);
-                    await db.saveSettings({ ...s, support: defaultSupport(aud.audience ?? 'p4') });
+                    const a = aud.audience ?? 'p4';
+                    await db.saveSettings({
+                      ...s,
+                      support: defaultSupport(a),
+                      // 区分のおすすめの利用時間の目安（FX10。「おすすめにする」を選んだときだけ入れる）
+                      sessionMinutes: audienceUx(a, aud.toddlerStage ?? 3).sessionMinutes,
+                    });
                   }
                   setEditing(false);
                   await app.reload();
@@ -189,7 +195,7 @@ export function ProfilesTab() {
       await fn();
     } catch {
       setError(
-        '保存できませんでした。容量不足などの可能性があります（「データ」タブをご確認ください）。',
+        '保存できませんでした。容量不足などの可能性があります。「データ」タブをご確認ください。',
       );
     }
   };

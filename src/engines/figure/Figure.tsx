@@ -2,12 +2,22 @@
  * 図の描画（データ → SVG/DOM）。色は DESINGN.md のトークン（CSS 変数）だけ。
  * 色だけで区別しない: tone の違いは線の太さ・模様（斜線）・形でも示す。
  */
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useMemo, useRef, type ReactNode } from 'react';
 import { Illust } from '../../illust/Illust';
 import { Rt } from '../../text/Rt';
 import { plainText } from '../../text/rich';
 import type { RenderCtx } from '../types';
 import type { Figure as FigureData, Tone } from './types';
+import {
+  floorStyle,
+  useFitWidth,
+  useLiftedSvgText,
+  useStaggerLabels,
+  useSvgTextFloor,
+  useWidenToText,
+} from './svgText';
+import { sizePackSvg } from './gridFloor';
+import { thinNumberLabels } from './numberLabels';
 import './figure.css';
 
 type Ctx = Pick<RenderCtx, 'furigana' | 'learnerGrade'>;
@@ -15,11 +25,7 @@ type Ctx = Pick<RenderCtx, 'furigana' | 'learnerGrade'>;
 export function Figure({ fig, ctx }: { fig: FigureData; ctx: Ctx }): ReactNode {
   switch (fig.kind) {
     case 'text':
-      return (
-        <div className={`fig-text fig-text--${fig.size ?? 'l'}`}>
-          <Rt text={fig.text} ctx={ctx} />
-        </div>
-      );
+      return <FigText fig={fig} ctx={ctx} />;
     case 'illust':
       return <IllustGroup id={fig.id} count={fig.count ?? 1} tone={fig.tone} />;
     case 'blocks':
@@ -31,30 +37,7 @@ export function Figure({ fig, ctx }: { fig: FigureData; ctx: Ctx }): ReactNode {
     case 'clock':
       return <Clock h={fig.h} m={fig.m} minuteNumbers={fig.minuteNumbers} />;
     case 'table':
-      return (
-        <table className="fig-table">
-          <thead>
-            <tr>
-              {fig.header.map((h, i) => (
-                <th key={i}>
-                  <Rt text={h} ctx={ctx} />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {fig.rows.map((r, i) => (
-              <tr key={i}>
-                {r.map((c, j) => (
-                  <td key={j}>
-                    <Rt text={c} ctx={ctx} />
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      );
+      return <FigTable fig={fig} ctx={ctx} />;
     case 'bar':
     case 'line':
       return <Chart fig={fig} ctx={ctx} />;
@@ -63,7 +46,10 @@ export function Figure({ fig, ctx }: { fig: FigureData; ctx: Ctx }): ReactNode {
     case 'row':
     case 'column':
       return (
-        <div className={`fig-${fig.kind}`} style={{ gap: `calc(var(--u) * ${fig.gap ?? 2})` }}>
+        <div
+          className={`fig-${fig.kind}${fig.kind === 'column' && fig.items.length > 1 && fig.items.every((f) => f.kind === 'blocks') ? ' fig-column--blocks' : ''}`}
+          style={{ gap: `calc(var(--u) * ${fig.gap ?? 2})` }}
+        >
           {fig.items.map((f, i) => (
             <Fragment key={i}>
               <Figure fig={f} ctx={ctx} />
@@ -72,16 +58,75 @@ export function Figure({ fig, ctx }: { fig: FigureData; ctx: Ctx }): ReactNode {
         </div>
       );
     case 'svg':
-      return (
-        <div
-          className="fig-svg"
-          role="img"
-          aria-label={plainText(fig.label)}
-          // パックが用意した図（スクリプトを含まない SVG。check で検査）
-          dangerouslySetInnerHTML={{ __html: fig.markup }}
-        />
-      );
+      return <PackSvg markup={fig.markup} label={fig.label} />;
   }
+}
+
+/** 大きな文字・式。英単語の中では折らず、枠に入らなければ文字を縮める（S6） */
+function FigText({ fig, ctx }: { fig: Extract<FigureData, { kind: 'text' }>; ctx: Ctx }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const size = fig.size ?? 'l';
+  useFitWidth(ref, `${size}${fig.text}`);
+  return (
+    <div
+      ref={ref}
+      className={`fig-text fig-text--${size}`}
+      // 全角の空白で句・札を区切った文（短歌の句・手順の札の並び・2 つの式）は、小3以上でも空白のところでだけ折る
+      // （base.css の data-spaced。選択肢・札のラベルと同じ）。文節で折ると句の途中で折れ、最後の行が 1 字になった
+      // （g4.ja.tanka/47 の解説の「しずかなる／夜」。text-layout-fixes 第8回のレビュー）
+      data-spaced={fig.text.includes('　') ? '' : undefined}
+    >
+      <Rt text={fig.text} ctx={ctx} />
+    </div>
+  );
+}
+
+/** 表。見出しは1行のまま、表が入らないときは表全体の文字を縮める（S6） */
+function FigTable({ fig, ctx }: { fig: Extract<FigureData, { kind: 'table' }>; ctx: Ctx }) {
+  const ref = useRef<HTMLTableElement>(null);
+  useFitWidth(ref, JSON.stringify([fig.header, fig.rows]), 'parent');
+  return (
+    <table ref={ref} className="fig-table">
+      <thead>
+        <tr>
+          {fig.header.map((h, i) => (
+            <th key={i}>
+              <Rt text={h} ctx={ctx} />
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {fig.rows.map((r, i) => (
+          <tr key={i}>
+            {r.map((c, j) => (
+              <td key={j}>
+                <Rt text={c} ctx={ctx} />
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** パックが用意した SVG。中の文字は最小まで引き上げる（S6） */
+function PackSvg({ markup, label }: { markup: string; label: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // 盤の 1 ますの下限・横長の図の印（gridFloor.ts）
+  const sized = useMemo(() => sizePackSvg(markup), [markup]);
+  useLiftedSvgText(ref, sized.markup, { fitWidth: true });
+  return (
+    <div
+      ref={ref}
+      className={sized.wide ? 'fig-svg fig-svg--wide' : 'fig-svg'}
+      role="img"
+      aria-label={plainText(label)}
+      // パックが用意した図（スクリプトを含まない SVG。check で検査）
+      dangerouslySetInnerHTML={{ __html: sized.markup }}
+    />
+  );
 }
 
 /** 絵を count 個。10を超えたら5ずつのまとまりで並べる（数えやすさ） */
@@ -236,9 +281,16 @@ function Tape({ fig, ctx }: { fig: Extract<FigureData, { kind: 'tape' }>; ctx: C
   );
 }
 
+/** 数直線の viewBox の縦の範囲（上: ▼ とジャンプの弧の少し上、下: 目もりの数の下） */
+const NL_TOP = 10;
+const NL_BOTTOM = 120;
+
 function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline' }>; ctx: Ctx }) {
   const W = 1000;
   const pad = 40;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   const span = fig.max - fig.min || 1;
   const X = (v: number) => pad + ((v - fig.min) / span) * (W - pad * 2);
   const ticks: ReactNode[] = [];
@@ -249,13 +301,16 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
       ticks.push(<line key={`m${v}`} x1={X(v)} y1={52} x2={X(v)} y2={68} className="nl-minor" />);
   }
   const every = fig.labelEvery ?? fig.step;
-  for (let v = fig.min; v <= fig.max + eps; v += fig.step) {
-    const r = Math.round(v * 1e6) / 1e6;
-    const labeled = Math.abs(Math.round((r - fig.min) / every) * every - (r - fig.min)) < 1e-6;
+  const isLabeled = (r: number) =>
+    Math.abs(Math.round((r - fig.min) / every) * every - (r - fig.min)) < 1e-6;
+  const vals: number[] = [];
+  for (let v = fig.min; v <= fig.max + eps; v += fig.step) vals.push(Math.round(v * 1e6) / 1e6);
+  const shown = new Set(thinNumberLabels(vals.filter(isLabeled), vals, fig.marks ?? [], floor));
+  for (const r of vals) {
     ticks.push(
       <g key={`s${r}`}>
         <line x1={X(r)} y1={44} x2={X(r)} y2={76} className="nl-major" />
-        {labeled ? (
+        {shown.has(r) ? (
           <text x={X(r)} y={108} className="nl-label">
             {r}
           </text>
@@ -263,9 +318,31 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
       </g>,
     );
   }
+  const markLabels = (fig.marks ?? []).some((m) => m.label) ? (
+    // 印（▼）のラベルは ▼ の真上（svg の上）。以前は svg の下の余白のさらに下で、線から約 8u 離れた（第7回 X4）
+    <div className="fig-nl__labels">
+      {(fig.marks ?? []).map((mk, i) =>
+        mk.label ? (
+          <span key={i} style={{ left: `${(X(mk.at) / W) * 100}%` }}>
+            <Rt text={mk.label} ctx={ctx} />
+          </span>
+        ) : null,
+      )}
+    </div>
+  ) : null;
   return (
     <div className="fig-nl">
-      <svg viewBox={`0 0 ${W} 150`} className="fig-svgbox" role="img" aria-label="すうちょくせん">
+      {markLabels}
+      <svg
+        ref={svgRef}
+        // 上は ▼（y=20〜40）とジャンプの弧（頂点 y≈15）の少し上から、下は目もりの数（y=108）の下まで。
+        // 以前は 0〜150 で、目もりの数の下に 30 単位ぶん（図の幅 60u で 1.8u）の空きがあった
+        viewBox={`0 ${NL_TOP} ${W} ${NL_BOTTOM - NL_TOP}`}
+        className="fig-svgbox"
+        role="img"
+        aria-label="すうちょくせん"
+        style={floorStyle(floor)}
+      >
         <line x1={pad - 20} y1={60} x2={W - pad + 24} y2={60} className="nl-axis" />
         <path d={`M ${W - pad + 24} 60 l -16 -9 v 18 z`} className="nl-arrow" />
         {ticks}
@@ -284,23 +361,26 @@ function NumberLine({ fig, ctx }: { fig: Extract<FigureData, { kind: 'numberline
           </g>
         ))}
       </svg>
-      {(fig.marks ?? []).some((m) => m.label) ? (
-        <div className="fig-nl__labels">
-          {(fig.marks ?? []).map((mk, i) =>
-            mk.label ? (
-              <span key={i} style={{ left: `${(X(mk.at) / W) * 100}%` }}>
-                <Rt text={mk.label} ctx={ctx} />
-              </span>
-            ) : null,
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }
 
+/** 分の読み。1・3・4・6・8・0 で終わる数は「ぷん」（clock.tsx の minuteWord と同じ規則。読み上げ用の名前に使う） */
+const minuteReading = (m: number): string =>
+  [0, 1, 3, 4, 6, 8].includes(m % 10) ? 'ぷん' : 'ふん';
+
 export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNumbers?: boolean }) {
   const R = 100;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, 260);
+  useWidenToText(svgRef, floor);
+  // 数字は最小以上。大きくなるぶん、時の数字は内に、分の数字（0・5・10…）は外にずらす
+  const numSize = Math.max(20, floor);
+  const mnumSize = Math.max(11, floor);
+  // 時の数字の輪の半径と、となりの数字の間隔（弦の長さ 2r·sin15°）。2けたの数字（約 1.1 字）が入らないほど
+  // 混み合うときは 12・3・6・9 だけにする（DESINGN.md 17章。小さい選択肢の時計で「10」「11」「12」が重なっていた）
+  const numR = R - 14 - numSize * 0.55 - 5;
+  const crowded = 2 * numR * Math.sin(Math.PI / 12) < numSize * 1.15 + 2;
   const hourAngle = ((h % 12) + m / 60) * 30;
   const minAngle = m * 6;
   const hand = (deg: number, len: number) => {
@@ -309,10 +389,12 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
   };
   return (
     <svg
-      viewBox="-120 -120 240 240"
+      ref={svgRef}
+      viewBox="-130 -130 260 260"
       className="fig-svgbox fig-clock"
       role="img"
-      aria-label={`${h}じ${m === 0 ? '' : `${m}ふん`}`}
+      aria-label={`${h}じ${m === 0 ? '' : `${m}${minuteReading(m)}`}`}
+      style={floorStyle(floor)}
     >
       <circle r={R} className="clk-face" />
       {Array.from({ length: 60 }, (_, i) => {
@@ -331,12 +413,13 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
       })}
       {Array.from({ length: 12 }, (_, i) => {
         const n = i + 1;
+        if (crowded && n % 3 !== 0) return null;
         const a = ((n * 30 - 90) * Math.PI) / 180;
         return (
           <text
             key={n}
-            x={Math.cos(a) * (R - 30)}
-            y={Math.sin(a) * (R - 30) + 7}
+            x={Math.cos(a) * numR}
+            y={Math.sin(a) * numR + numSize * 0.35}
             className="clk-num"
           >
             {n}
@@ -349,8 +432,8 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
             return (
               <text
                 key={`mn${i}`}
-                x={Math.cos(a) * (R + 12)}
-                y={Math.sin(a) * (R + 12) + 4}
+                x={Math.cos(a) * (R + 8 + mnumSize * 0.75)}
+                y={Math.sin(a) * (R + 8 + mnumSize * 0.75) + mnumSize * 0.35}
                 className="clk-mnum"
               >
                 {i * 5}
@@ -368,29 +451,55 @@ export function Clock({ h, m, minuteNumbers }: { h: number; m: number; minuteNum
 function Chart({ fig, ctx }: { fig: Extract<FigureData, { kind: 'bar' | 'line' }>; ctx: Ctx }) {
   const W = 800;
   const H = 420;
-  const left = 70;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
+  // 横軸の札は棒・点の位置（同じ幅の枠）の下。入らなければ縮め、なお入らなければ2段にずらす
+  const labelsRef = useRef<HTMLDivElement>(null);
+  useStaggerLabels(labelsRef, fig.labels.map((l) => plainText(l)).join('|'));
   const bottom = 60;
-  const top = 20;
   const min = fig.kind === 'line' ? (fig.min ?? 0) : 0;
   const rawMax = Math.max(...fig.values, min + fig.scaleStep);
   const max = Math.ceil(rawMax / fig.scaleStep) * fig.scaleStep;
+  // 縦軸の数字は最小まで大きくする。その分、左・上の余白を広げ、混み合うときは目盛りの数字を間引く
+  const yFont = Math.max(22, floor);
+  const digits = Math.max(String(Math.round(max * 1e6) / 1e6).length, String(min).length);
+  const left = Math.max(70, Math.ceil(digits * 0.6 * yFont) + 16);
+  const top = Math.max(20, Math.ceil(yFont * 0.9) + 2);
+  const rows = Math.max(1, Math.round((max - min) / fig.scaleStep));
+  const labelEvery = Math.max(1, Math.ceil((yFont * 1.1) / ((H - top - bottom) / rows)));
   const Y = (v: number) => top + (1 - (v - min) / (max - min)) * (H - top - bottom);
   const n = fig.values.length;
   const slot = (W - left - 20) / n;
   const grid: ReactNode[] = [];
-  for (let v = min; v <= max + 1e-9; v += fig.scaleStep) {
+  for (let k = 0, v = min; v <= max + 1e-9; k++, v = min + k * fig.scaleStep) {
     grid.push(
-      <g key={v}>
+      <g key={k}>
         <line x1={left} y1={Y(v)} x2={W - 10} y2={Y(v)} className="ch-grid" />
-        <text x={left - 10} y={Y(v) + 7} className="ch-ylabel">
-          {Math.round(v * 1e6) / 1e6}
-        </text>
+        {k % labelEvery === 0 ? (
+          <text x={left - 10} y={Y(v) + yFont * 0.32} className="ch-ylabel">
+            {Math.round(v * 1e6) / 1e6}
+          </text>
+        ) : null}
       </g>,
     );
   }
   return (
     <div className="fig-chart">
-      <svg viewBox={`0 0 ${W} ${H}`} className="fig-svgbox" role="img" aria-label="グラフ">
+      {fig.unit ? (
+        // 単位は縦軸の上（図の左上）。横軸の下の左はしの「（℃）」は、横軸の単位に読める（第7回 X4）
+        <div className="fig-chart__unit">
+          （<Rt text={fig.unit} ctx={ctx} />）
+        </div>
+      ) : null}
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${W} ${H}`}
+        className="fig-svgbox"
+        role="img"
+        aria-label="グラフ"
+        style={floorStyle(floor)}
+      >
         {grid}
         <line x1={left} y1={top} x2={left} y2={H - bottom} className="ch-axis" />
         <line x1={left} y1={H - bottom} x2={W - 10} y2={H - bottom} className="ch-axis" />
@@ -417,18 +526,17 @@ function Chart({ fig, ctx }: { fig: Extract<FigureData, { kind: 'bar' | 'line' }
           </>
         )}
       </svg>
-      <div className="fig-chart__labels" style={{ paddingLeft: `${(left / W) * 100}%` }}>
+      <div
+        ref={labelsRef}
+        className="fig-chart__labels"
+        style={{ paddingLeft: `${(left / W) * 100}%`, paddingRight: `${(20 / W) * 100}%` }}
+      >
         {fig.labels.map((l, i) => (
           <span key={i}>
             <Rt text={l} ctx={ctx} />
           </span>
         ))}
       </div>
-      {fig.unit ? (
-        <div className="fig-chart__unit">
-          （<Rt text={fig.unit} ctx={ctx} />）
-        </div>
-      ) : null}
     </div>
   );
 }

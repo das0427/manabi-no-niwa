@@ -38,19 +38,29 @@ function pickBP(rng: Rng, pMax = 99, maxB = Infinity): { B: number; p: number; C
   }
 }
 
-/** 割合の 数直線（上: もとに する 量 B と 比べる量 C、下: 100% と p%）。pNum は 位置を 決める 百分率 */
+/**
+ * 割合の 数直線（上: もとに する 量 B と 比べる量 C、下: 100% と p%）。pNum は 位置を 決める 百分率。
+ * 目印の位置は 百分率の比で置くが、数が 近いとき（96% と 100%、110% と 100%）や 0 に 近いとき（3%）に
+ * 数字が 重ならないよう、となりどうしを GAP（字 4 こ分）以上 はなす（上下の 対応を 見せる 図。正しい 縮尺の 図では ない）。
+ */
+const PCT_GAP = 0.2;
 const pctLine = (B: string, C: string, p: string, pNum: number) => {
-  const m = Math.max(pNum, 100);
+  const hi = Math.max(pNum, 100);
+  const lo = Math.min(pNum, 100);
+  const atHi = 0.9;
+  const atLo = Math.min(Math.max((lo / hi) * atHi, PCT_GAP), atHi - PCT_GAP);
+  const atP = pNum >= 100 ? atHi : atLo;
+  const at100 = pNum > 100 ? atLo : atHi;
   return doubleLine(
     [
       { at: 0, text: '0' },
-      { at: (pNum / m) * 0.9, text: C },
-      { at: (100 / m) * 0.9, text: B },
+      { at: atP, text: C },
+      { at: at100, text: B },
     ],
     [
       { at: 0, text: '0' },
-      { at: (pNum / m) * 0.9, text: p },
-      { at: (100 / m) * 0.9, text: '100' },
+      { at: atP, text: p },
+      { at: at100, text: '100' },
     ],
     '上が 量、下が 割合（%）の 数直線',
     '',
@@ -121,7 +131,7 @@ function ratioItem(level: number, rng: Rng, alt: boolean): NumberItem {
       : `${C} ÷ ${B} ＝ ${r}。割合は ${r}です。`,
     identity: `ratio:${sc.id}:${B}:${C}${alt ? ':pct' : ''}`,
     alt,
-    fields: [{ ...(alt ? { label: '%' } : {}), answer: answers[0]! }],
+    fields: [{ ...(alt ? { unit: '%' } : {}), answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(
       answers,
@@ -166,8 +176,8 @@ function pctItem(level: number, rng: Rng, alt: boolean): Item {
         identity: `pct-bu:${p}`,
         alt: true,
         fields: [
-          { label: '割', answer: answers[0]! },
-          { label: '分《ぶ》', answer: answers[1]! },
+          { unit: '割', answer: answers[0]! },
+          { unit: '分《ぶ》', answer: answers[1]! },
         ],
         wrongAnswers: wrongList(answers, [
           [`${p}|0`, 'pct-shift'],
@@ -216,7 +226,7 @@ function pctItem(level: number, rng: Rng, alt: boolean): Item {
       explain: `${d} × 100 ＝ ${p}。${d}は ${p}%です。`,
       identity: `pct:d2p:${p}`,
       alt: false,
-      fields: [{ label: '%', answer: answers[0]! }],
+      fields: [{ unit: '%', answer: answers[0]! }],
       keys: ['decimal'],
       wrongAnswers: wrongList(answers, [
         [dec(p, 1), 'pct-shift'],
@@ -313,7 +323,7 @@ function compareItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${rate} ＝ ${dec(p, 2)}。${B} × ${dec(p, 2)} ＝ ${C}。答えは ${C}${sc.unit}です。`,
     identity: `compare:${sc.id}:${B}:${p}${alt ? ':wari' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [B * p, 'pct-shift'],
@@ -374,7 +384,7 @@ function baseItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `□ × ${dec(p, 2)} ＝ ${C} なので、□ ＝ ${C} ÷ ${dec(p, 2)} ＝ ${B}。答えは ${B}${sc.unit}です。`,
     identity: `base:${sc.id}:${C}:${p}${alt ? ':line' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [divText(C * p, 100), 'formula-swap'],
@@ -412,7 +422,7 @@ function saleItem(level: number, rng: Rng, alt: boolean): NumberItem {
         explain: `${X} × ${dec(100 + p, 2)} ＝ ${ans}。（${X} ＋ ${X} × ${dec(p, 2)} と しても よい）今日は ${ans}${u}です。`,
         identity: `sale-up:${X}${u}:${p}`,
         alt: true,
-        fields: [{ label: u, answer: answers[0]! }],
+        fields: [{ unit: u, answer: answers[0]! }],
         keys: ['decimal'],
         wrongAnswers: wrongList(answers, [
           [(X * p) / 100, 'discount-direct'],
@@ -444,7 +454,7 @@ function saleItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${X} × ${dec(100 - p, 2)} ＝ ${ans}。（${X} − ${X} × ${dec(p, 2)} と しても よい）代金は ${ans}円です。`,
       identity: `sale:${X}:${p}:${wari ? 'w' : 'p'}`,
       alt: false,
-      fields: [{ label: '円', answer: answers[0]! }],
+      fields: [{ unit: '円', answer: answers[0]! }],
       keys: ['decimal'],
       wrongAnswers: wrongList(answers, [
         [(X * p) / 100, 'discount-direct'],

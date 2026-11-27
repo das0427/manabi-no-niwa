@@ -874,7 +874,7 @@ const ITEMS: Item[] = [
 
 export const kanjiParts: UnitSpec = {
   id: 'g3.ja.kanji-parts',
-  title: '漢字《かんじ》の組《く》み立《た》て',
+  title: '漢字《かんじ》の 組《く》み立《た》て',
   stage: 'g3',
   subject: 'ja',
   domain: 'kanji',

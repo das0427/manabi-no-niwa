@@ -102,7 +102,7 @@ function marksFigure(k: Key, label: string, hU = 6.5): Figure {
 function candidatesFigure(keys: Key[], label: string): Figure {
   const W = keys.length * 69 + 3;
   const H = 40;
-  const hU = Math.min(8, (90 * H) / W);
+  const hU = Math.min(6.2, (90 * H) / W);
   const body = keys.map((k, i) => cardBody(k, 2 + i * 69)).join('');
   return {
     kind: 'svg',
@@ -110,14 +110,18 @@ function candidatesFigure(keys: Key[], label: string): Figure {
     markup: `<svg viewBox="0 0 ${W} ${H}" style="height:calc(var(--u) * ${hU.toFixed(1)})" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
   };
 }
-/** しるしの意味（A・B・C）を 1行で見せる図 */
-function legendFigure(hU = 3.4): Figure {
-  const t = 'A＝うみに めんして いる　B＝けんちょうの まちと なまえが おなじ　C＝ほんしゅうに ある';
+/**
+ * しるしの意味（A・B・C）を 2行で見せる図。1 単位 = 0.1u、字は 1.9u（小4 の最小 1.8u 以上）、幅は 60u 以内
+ * （数の入力の画面では左の列が 62u。1行（460 単位）にすると 78u になり、字が縮んで最小に届かない）
+ */
+function legendFigure(hU = 6.2): Figure {
+  const text = (y: number, t: string) =>
+    `<text x="0" y="${y}" font-size="19" font-weight="700" fill="var(--ink-soft)">${t}</text>`;
   return {
     kind: 'svg',
     label:
       'しるしの いみ。A は うみに めんして いる、B は けんちょうの まちと なまえが おなじ、C は ほんしゅうに ある',
-    markup: `<svg viewBox="0 0 460 20" style="height:calc(var(--u) * ${hU})" xmlns="http://www.w3.org/2000/svg"><text x="230" y="14" text-anchor="middle" font-size="12" font-weight="700" fill="var(--ink-soft)">${t}</text></svg>`,
+    markup: `<svg viewBox="0 0 600 62" style="height:calc(var(--u) * ${hU})" xmlns="http://www.w3.org/2000/svg">${text(19, 'A＝うみに めんして いる')}${text(55, 'B＝けんちょうの まちと なまえが おなじ　C＝ほんしゅうに ある')}</svg>`,
   };
 }
 
@@ -271,7 +275,7 @@ const countItems: NumberItem[] = NCOUNT.map((c) => {
     alt: true,
     prompt: `${condText(c.steps)} の 県《けん》は いくつ あるかな。`,
     figure: col([legendFigure(), candidatesFigure(POOL6, '6つの 県《けん》の ふだ')], 0.8),
-    fields: [{ label: 'つ', answer: { kind: 'int', value: left.length } }],
+    fields: [{ answer: { kind: 'int', value: left.length }, unit: 'つ' }],
     wrongAnswers: wrongs,
     hints: [
       `ふだの しるしを 見《み》よう。${READ}`,
@@ -427,7 +431,7 @@ const fewerItems: NumberItem[] = FEWER.map((w) => {
       [legendFigure(), candidatesFigure(w.pool, `${w.pool.length}つの 県《けん》の ふだ`)],
       0.8,
     ),
-    fields: [{ label: 'こ', answer: { kind: 'int', value: m } }],
+    fields: [{ answer: { kind: 'int', value: m }, unit: 'こ' }],
     wrongAnswers: [
       ...(m > 1 ? [{ value: String(m - 1), misconception: 'not-enough' }] : []),
       ...(m < 3 ? [{ value: String(m + 1), misconception: 'too-many-q' }] : []),
@@ -540,7 +544,7 @@ export const prefectureFinder: UnitSpec = {
     },
     {
       text: 'ふだには しるしが 3つ。A は 海《うみ》に めんして いる、B は けんちょうの ある 市《し》と なまえが おなじ、C は 本州《ほんしゅう》に ある。○は はい、×は いいえだよ。',
-      figure: legendFigure(5),
+      figure: legendFigure(),
     },
     {
       text: '県《けん》は、しらべた れいの データから えらんだものだよ。おおくの ふだを のぞける しつもんを さきに すると、はやく みつかるよ。これは 手順《てじゅん》を くふうして かんがえる プログラミングの かんがえ方《かた》だよ。',

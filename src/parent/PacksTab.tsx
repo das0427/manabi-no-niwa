@@ -26,10 +26,26 @@ const SUBJECT_LABEL: Record<string, string> = {
   seikatsu: '生活',
   life: '生活',
   english: '英語',
+  en: '英語',
+  ja: '国語',
   eigo: '英語',
+  sci: '理科',
+  soc: '社会',
   prog: 'プログラミング',
   programming: 'プログラミング',
 };
+
+/** 段階の範囲（g34 → 小3・小4、g16 → 小1〜小6）。2桁で数字が続かない（1,2 の連続）ときは「・」でつなぐ */
+function gradeRange(digits: string): string {
+  const g = [...digits];
+  if (g.length === 2 && Number(g[1]) - Number(g[0]) === 1) return `小${g[0]}・小${g[1]}`;
+  if (g.length === 2) return `小${g[0]}〜小${g[1]}`;
+  return g.map((x) => `小${x}`).join('・');
+}
+
+/** 幼児のパック（アプリ本体に含まれる）。dev で一覧を読めないときも、ID が p23・p4・p5・en-pre のどれかと一致するかで分ける（ID 全体の一致。先頭の一致ではない） */
+const isToddlerPack = (packId: string): boolean => /^(p23|p4|p5|en-pre)$/.test(packId);
+const isToddlerEnglish = (packId: string): boolean => packId === 'en-pre';
 
 /** packId から保護者向けの名前を作る（g3-math → 小3 算数、kanji-g12 → 漢字（小1・小2）） */
 export function packLabel(packId: string): string {
@@ -38,8 +54,12 @@ export function packLabel(packId: string): string {
   const grade = /^g([1-6])-(.+)$/.exec(packId);
   if (grade) return `小${grade[1]} ${SUBJECT_LABEL[grade[2]!] ?? grade[2]}`;
   const kanji = /^kanji-g(\d+)$/.exec(packId);
-  if (kanji) return `漢字（${[...kanji[1]!].map((g) => `小${g}`).join('・')}）`;
-  const toddler = { p23: '2〜3歳', p4: '4歳', p5: '5歳' }[packId];
+  if (kanji) return `漢字（${gradeRange(kanji[1]!)}）`;
+  const ranged = /^([a-z]+)-g(\d{2})$/.exec(packId);
+  if (ranged && SUBJECT_LABEL[ranged[1]!]) {
+    return `${SUBJECT_LABEL[ranged[1]!]}（${gradeRange(ranged[2]!)}）`;
+  }
+  const toddler = { p23: '2〜3歳', p4: '4歳', p5: '5歳', 'en-pre': '幼児の英語' }[packId];
   if (toddler) return toddler;
   return packId;
 }
@@ -47,11 +67,11 @@ export function packLabel(packId: string): string {
 const FAILURE_TEXT: Record<PackDownloadFailure, string> = {
   offline: 'ネットワークにつながっていません。つないでからもう一度お試しください。',
   'not-found':
-    '配信元に教材が見つかりません。配信元のアプリの版が違う可能性があります。アプリを更新してからお試しください。',
+    '配信元に教材が見つかりません。配信元のアプリのバージョンが違う可能性があります。アプリを更新してからお試しください。',
   mismatch:
-    '取得した教材の内容がアプリの版と合いません。配信元が更新された可能性があります。アプリを更新してからお試しください。',
+    '取得した教材の内容がアプリのバージョンと合いません。配信元が更新された可能性があります。アプリを更新してからお試しください。',
   quota: '保存できる容量が足りません。不要な作品や教材を削除してください。',
-  'unknown-pack': 'この教材は、いまのアプリの版にはありません。',
+  'unknown-pack': 'この教材は、いまのアプリのバージョンにはありません。',
   unsupported: 'このブラウザ・この開き方では、教材を保存できません。',
   error: '取得に失敗しました。もう一度お試しください。',
 };
@@ -69,7 +89,7 @@ function stateText(s: PackStatus): string {
         ? `取得済み（${formatDateTime(s.downloaded.downloadedAt)}）`
         : '取得済み';
     case 'outdated':
-      return '版が古い（取得し直しが必要）';
+      return 'バージョンが古い（取得し直しが必要）';
     case 'not-downloaded':
       return '未取得';
     case 'unavailable':
@@ -116,7 +136,7 @@ export function PacksTab() {
       setMsg(
         failed.length === 0
           ? '教材を取得し直しました。'
-          : `${failed.length}件の教材を取得できませんでした（各行の説明をご覧ください）。古い教材はそのまま残っています。`,
+          : `${failed.length}件の教材を取得できませんでした。各行の説明をご覧ください。古い教材はそのまま残っています。`,
       );
     });
   };
@@ -129,8 +149,10 @@ export function PacksTab() {
     );
   }
 
-  const separate = statuses.filter((s) => s.state !== 'core');
-  const core = statuses.filter((s) => s.state === 'core');
+  const isCore = (s: PackStatus): boolean => s.state === 'core' || isToddlerPack(s.packId);
+  const separate = statuses.filter((s) => !isCore(s));
+  const core = statuses.filter((s) => isCore(s) && !isToddlerEnglish(s.packId));
+  const toddlerEnglish = statuses.filter((s) => isToddlerEnglish(s.packId));
   const outdated = separate.filter((s) => s.state === 'outdated');
   const unavailable = separate.length > 0 && separate.every((s) => s.state === 'unavailable');
   const anyRunning = separate.some((s) => getPackProgress(s.packId) !== null);
@@ -147,7 +169,7 @@ export function PacksTab() {
       {outdated.length > 0 ? (
         <div className="p-alert" role="alert" data-testid="packs-outdated">
           アプリが更新されたため、{outdated.length}
-          件の教材の取得し直しが必要です。取得し直すまで、その教材の単元は開けません（子供の画面には「あたらしい
+          件の教材を取得し直す必要があります。取得し直すまで、その教材の単元は開けません（子供の画面には「あたらしい
           きょうざいを とってきてね」と表示されます）。
           <div className="p-row">
             <button
@@ -203,7 +225,11 @@ export function PacksTab() {
           取得済みの教材の合計: {downloadedBytes > 0 ? formatBytes(downloadedBytes) : 'なし'}
         </p>
         <Note>
-          取得は画面を離れても続きます。取得に失敗しても、それまでの教材は消えません。アプリの更新のあとは「版が古い」と表示されることがあります。そのときは取得し直してください。
+          取得は画面を離れても続きます。取得に失敗しても、それまでの教材は消えません。アプリの更新のあとは「バージョンが古い」と表示されることがあります。そのときは取得し直してください。
+        </Note>
+        <Note>
+          起動画面では、登録しているプロフィールの学年の教材（例:
+          小3なら、小3の算数・国語・漢字・理科・社会・英語とプログラミング）を自動で取得し、進み具合を表示します。バージョンが古いものも自動で取得し直します。取得中でも子供は遊べます。取得が終わるまで、その教材の単元は開けないことがあります。ネットワークにつながっていないときは、つながってから自動で続けます。ほかの学年の教材は、ここから取得してください。
         </Note>
       </Section>
 
@@ -212,6 +238,16 @@ export function PacksTab() {
           <ul data-testid="packs-core">
             {core.map((s) => (
               <li key={s.packId}>{packLabel(s.packId)}</li>
+            ))}
+          </ul>
+        </Section>
+      ) : null}
+
+      {toddlerEnglish.length > 0 ? (
+        <Section title="幼児の英語">
+          <ul data-testid="packs-core-en">
+            {toddlerEnglish.map((s) => (
+              <li key={s.packId}>{packLabel(s.packId)}（アプリ本体に含まれています）</li>
             ))}
           </ul>
         </Section>

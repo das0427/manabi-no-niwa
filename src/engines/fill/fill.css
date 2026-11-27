@@ -36,7 +36,18 @@
   outline-offset: calc(var(--u) * 0.3);
   box-shadow: 0 0 0 calc(var(--u) * 0.3) var(--sun);
 }
+/* 埋まった空欄は文の一部: 行ごとに折れる inline にし、空欄の元の幅（min-width）を外す。字は文と同じ（g4.ja.write-report/31・32） */
 .eng-fill__blank.is-revealed {
+  display: inline;
+  white-space: normal;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  vertical-align: baseline;
+  text-align: inherit;
+  padding: 0 calc(var(--u) * 0.6);
   border-color: var(--correct);
   border-width: calc(var(--u) * 0.5);
 }
@@ -54,4 +65,11 @@
 }
 .eng-fill__opt:disabled {
   opacity: 0.4;
+}
+/* 埋まった空欄は、前後の記号・句読点（「→ □」「□。」）と同じ nowrap の包み（.rt-nobr）に入れたまま折り返さない。
+   button は display: inline にしても inline-block になり、外側の包みを normal にすると「。」が行頭に来る（g2.ja.polite/23・g4.soc.water-waste/9）。
+   空欄の中の文は、空欄自身の white-space: normal と max-width で折り返す。前後の字の分（約 3 字）だけ狭くして、包みが行から出ないようにする
+   （長い引用の解説 g4.ja.write-report/30・32） */
+.eng-fill__blank.is-revealed.is-glued {
+  max-width: calc(100% - 3em);
 }

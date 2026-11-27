@@ -9,6 +9,10 @@
  * 同一性キー: 交換法則はこの単元の学習内容ではないので、交換しただけの式は同じ（小さい数+大きい数）。
  *   文章題は「場面 × 式」。別例（横書き・テープ図）は同じキーで alt。
  * 定義域: a は 10〜99、b は 1〜99（2位数＋1位数を含む）。数千通り。
+ *
+ * 解説の板（22u まで）には図を置かない（第4回）: 筆算の表（見出し＋3行で約 22u）を explainFigure にすると、
+ * 文2〜3行と合わせて板に 3.7 行ぶん入らなかった。別例（ブロック・式）の問題の図は解説でもそのまま見え、
+ * 位ごとの計算は解説の文に書いてある。
  */
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
@@ -156,6 +160,9 @@ function explain(a: number, b: number): string {
   const s = a + b;
   const carry = a1 + b1 >= 10;
   const tens = a10 + b10 + (carry ? 1 : 0);
+  // くりあがりが2回（答えが 3 けた）の解説は、くらいの名前を省いて 2 行に収める（3 行だと筆算の図の段が 3u 足りない）
+  if (carry && tens >= 10)
+    return `${a1} ＋ ${b1} ＝ ${a1 + b1} で、${(a1 + b1) % 10}を かいて 1を くりあげる。1 ＋ ${a10} ＋ ${b10} ＝ ${tens} で、ひゃくの くらいに 1。こたえは ${s} です。`;
   return carry
     ? `いちの くらい: ${a1} ＋ ${b1} ＝ ${a1 + b1}。${(a1 + b1) % 10}を かいて 1を くりあげる。じゅうの くらい: 1 ＋ ${a10} ＋ ${b10} ＝ ${tens}${tens >= 10 ? '。ひゃくの くらいに 1が たつ' : ''}。こたえは ${s} です。`
     : `いちの くらい: ${a1} ＋ ${b1} ＝ ${a1 + b1}。じゅうの くらい: ${a10} ＋ ${b10} ＝ ${tens}${tens >= 10 ? '。ひゃくの くらいに 1が たつ' : ''}。こたえは ${s} です。`;
@@ -191,7 +198,6 @@ function calcItem(
       figure: blocks ? blocksFig(a, b) : { kind: 'text', text: `${a} ＋ ${b} ＝ {{}}`, size: 'xl' },
       hints: hints(a, b),
       explain: explain(a, b),
-      explainFigure: columnFigure(a, b, '＋', String(s).length),
       identity: key(a, b),
       alt: true,
       fields: [{ answer: { kind: 'int', value: s } }],
@@ -242,10 +248,9 @@ function wordItem(level: number, a: number, b: number, alt: boolean, rng: Rng): 
       hints(a, b)[2]!,
     ],
     explain: `しきは ${a} ＋ ${b} ＝ ${s}。こたえは ${s}${sc.unit} です。`,
-    explainFigure: columnFigure(a, b, '＋', String(s).length),
     identity: `${sc.id}:${key(a, b)}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: s } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: s } }],
     wrongAnswers: wrongs(a, b, 1),
   };
 }

@@ -7,9 +7,8 @@
  *   定義域 = 1〜9 × 1〜9 の 81式（全件が基準）。きまり・文章題は別のキー（'kimari-up:7x8' など）。
  */
 import type { Rng } from '../../core/util/rng';
-import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, wrongList } from './util';
+import { dotArrayFig, opts, pickObj, wrongList } from './util';
 
 type Obj = 'low' | 'high' | 'kimari' | 'bunshou';
 
@@ -71,17 +70,7 @@ const SCENES: { id: string; unit: string; text: (a: number, b: number) => string
 ];
 
 /** アレイ図（●が a こずつ b れつ） */
-function arrayFig(a: number, b: number): Figure {
-  return {
-    kind: 'column',
-    gap: 1,
-    items: Array.from({ length: b }, () => ({
-      kind: 'text' as const,
-      text: '●'.repeat(a),
-      size: 'm' as const,
-    })),
-  };
-}
+const arrayFig = dotArrayFig;
 
 function wrongs(a: number, b: number): NumberItem['wrongAnswers'] {
   const p = a * b;
@@ -243,7 +232,7 @@ function bunshou(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a}の ${b}つぶんなので ${a} × ${b} ＝ ${p}。こたえは ${p}${sc.unit} です。`,
     identity: `${sc.id}:${a}x${b}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: p } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: p } }],
     wrongAnswers: wrongs(a, b),
   };
 }

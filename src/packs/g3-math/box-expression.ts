@@ -8,7 +8,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, pickOne, wrongList } from './util';
+import { hon, opts, pickObj, pickOne, wrongList } from './util';
 
 type Obj = 'make' | 'add' | 'sub' | 'mult' | 'bunshou';
 type Kind = 'add' | 'sub' | 'mult' | 'div';
@@ -76,7 +76,7 @@ const SCENES: Scene[] = [
     kind: 'div',
     unit: 'cm',
     text: (a, c) =>
-      `何《なん》cmかの テープを ${a}本《ほん》に 等分《とうぶん》したら、1本《ぽん》は ${c}cmに なりました。`,
+      `何《なん》cmかの テープを ${hon(a)}に 等分《とうぶん》したら、1本《ぽん》は ${c}cmに なりました。`,
   },
 ];
 
@@ -247,7 +247,7 @@ function word(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${expr(sc.kind, a, c)}。□ ＝ ${inverse(sc.kind, a, c)} ＝ ${x}。答《こた》えは ${x}${sc.unit}です。`,
     identity: `word:${sc.id}:${a}:${c}`,
     alt,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: x } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: x } }],
     wrongAnswers: wrongList(String(x), 1, wrongsFor(sc.kind, a, c)),
   };
 }

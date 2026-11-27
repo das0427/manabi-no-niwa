@@ -12,7 +12,7 @@
 import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { opts, pickObj, wrongList } from './util';
+import { dotArrayFig, opts, pickObj, wrongList } from './util';
 
 type Obj = 'ikutsubun' | 'shiki' | 'ruika' | 'bai' | 'bunshou';
 
@@ -32,18 +32,55 @@ function groupsFig(id: string, a: number, b: number): Figure {
   };
 }
 
-/** アレイ（●を a こずつ b れつ） */
-function arrayFig(a: number, b: number): Figure {
+/**
+ * a こずつの まとまりが b つ（●の入った枠。SVG）。数を答える問題（ikutsubun）の図に使う。
+ * 絵（illust）を並べる groupsFig は、数の入力の図の段（約 13u）に入らないことが多かった（第8回の見本 seed 60 で、
+ * 5 こずつ 6 つが 3.2u・9 こずつ 6 つが 20u 足りず、図の段がスクロールになった）。SVG は図の段いっぱい（約 63u × 12〜18u。
+ * 札つきの欄があると低い）に縮められるので、枠を並べる行数（1〜3）を「いちばん大きく入る」ものにして描く。
+ * 枠の中の ● は 5 こまでは 1 行、6 こ以上は 2 行（上が多いほう）。大きさの上限は ● が約 3u。
+ */
+function groupsDotsFig(a: number, b: number): Figure {
+  const P = 10; // ●の間隔
+  const perRowDots = a <= 5 ? a : Math.ceil(a / 2);
+  const dotRows = Math.ceil(a / perRowDots);
+  const fw = perRowDots * P + 4;
+  const fh = dotRows * P + 4;
+  const gap = 8;
+  let best = { rows: 1, perRow: b, scale: 0 };
+  for (let rows = 1; rows <= Math.min(3, b); rows++) {
+    const perRow = Math.ceil(b / rows);
+    const W = perRow * fw + (perRow - 1) * gap;
+    const H = rows * fh + (rows - 1) * gap;
+    const scale = Math.min(60 / W, 11.5 / H);
+    if (scale > best.scale + 1e-9) best = { rows, perRow, scale };
+  }
+  const { rows, perRow } = best;
+  const W = perRow * fw + (perRow - 1) * gap;
+  const H = rows * fh + (rows - 1) * gap;
+  const shapes: string[] = [];
+  for (let g = 0; g < b; g++) {
+    const x0 = (g % perRow) * (fw + gap);
+    const y0 = Math.floor(g / perRow) * (fh + gap);
+    shapes.push(
+      `<rect x="${x0}" y="${y0}" width="${fw}" height="${fh}" rx="3" fill="var(--white)" stroke="var(--ink)" stroke-width="1.2"/>`,
+    );
+    for (let i = 0; i < a; i++) {
+      const cx = x0 + 2 + (i % perRowDots) * P + P / 2;
+      const cy = y0 + 2 + Math.floor(i / perRowDots) * P + P / 2;
+      shapes.push(`<circle cx="${cx}" cy="${cy}" r="3.6" fill="var(--ink)"/>`);
+    }
+  }
+  // 枠の線が切れないよう 1 だけ余白をとる。大きくなりすぎない（● 1 こが約 3u まで）
+  const wU = (W + 2) * Math.min(best.scale, 0.45);
   return {
-    kind: 'column',
-    gap: 1,
-    items: Array.from({ length: b }, () => ({
-      kind: 'text' as const,
-      text: '●'.repeat(a),
-      size: 'l' as const,
-    })),
+    kind: 'svg',
+    label: `●が ${a}こずつ ${b}つの まとまり`,
+    markup: `<svg viewBox="-1 -1 ${W + 2} ${H + 2}" preserveAspectRatio="xMidYMid meet" style="width:calc(var(--u) * ${wU.toFixed(2)})" xmlns="http://www.w3.org/2000/svg">${shapes.join('')}</svg>`,
   };
 }
+
+/** アレイ（●を a こずつ b れつ） */
+const arrayFig = dotArrayFig;
 
 interface Scene {
   id: string;
@@ -107,7 +144,8 @@ const sumText = (a: number, b: number) => Array.from({ length: b }, () => String
 
 /** 1つぶんの かずと いくつぶんを 見つける */
 function ikutsubun(level: number, rng: Rng, a: number, b: number, alt: boolean): NumberItem {
-  const id = THINGS[rng.int(0, THINGS.length - 1)]!;
+  // 絵の種類は図に使わなくなったが、乱数の使い方は変えない（見本の問題が変わると音声の台本も変わる）
+  rng.int(0, THINGS.length - 1);
   return {
     engine: 'number',
     id: `ikutsubun${alt ? '-alt' : ''}:${a}x${b}`,
@@ -116,11 +154,11 @@ function ikutsubun(level: number, rng: Rng, a: number, b: number, alt: boolean):
     prompt: alt
       ? '●は なんこずつ、なんれつ ありますか。'
       : 'おなじ かずずつの まとまりが あります。1つぶんの かずと、いくつぶんを かこう。',
-    figure: alt ? arrayFig(a, b) : groupsFig(id, a, b),
+    figure: alt ? arrayFig(a, b) : groupsDotsFig(a, b),
     fields: alt
       ? [
-          { label: 'こずつ', answer: { kind: 'int', value: a } },
-          { label: 'れつ', answer: { kind: 'int', value: b } },
+          { unit: 'こずつ', answer: { kind: 'int', value: a } },
+          { unit: 'れつ', answer: { kind: 'int', value: b } },
         ]
       : [
           { label: '1つぶんの かず', answer: { kind: 'int', value: a } },
@@ -257,8 +295,8 @@ function bai(level: number, a: number, b: number, alt: boolean): NumberItem {
     figure: tape,
     fields: [
       alt
-        ? { label: 'ばい', answer: { kind: 'int', value: b } }
-        : { label: 'cm', answer: { kind: 'int', value: p } },
+        ? { unit: 'ばい', answer: { kind: 'int', value: b } }
+        : { unit: 'cm', answer: { kind: 'int', value: p } },
     ],
     hints: [
       `${b === 2 ? '2ばいは 2つぶん' : 'なんばいは いくつぶん'} と おなじ いみ だよ。`,
@@ -297,7 +335,7 @@ function bunshou(level: number, rng: Rng, a: number, b: number, alt: boolean): N
     level,
     prompt: sc.text(a, b),
     figure: alt ? arrayFig(a, b) : undefined,
-    fields: [{ label: sc.unit, answer: { kind: 'int', value: p } }],
+    fields: [{ unit: sc.unit, answer: { kind: 'int', value: p } }],
     hints: [
       '1つぶんの かずと いくつぶんを さがそう。',
       `${a}の ${b}つぶん。しきは ${a} × ${b}。`,

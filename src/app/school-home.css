@@ -64,24 +64,55 @@
   inset: 0 50% 0 0;
   background: var(--ink);
 }
-.school-rec__tag {
-  display: inline-block;
-  margin-left: calc(var(--u) * 0.8);
-  padding: 0 calc(var(--u) * 0.6);
-  border: calc(var(--u) * 0.25) solid var(--ink);
-  border-radius: calc(var(--u) * 0.6);
-  font-size: calc(var(--u) * 1.8);
-  background: var(--surface);
+/* おすすめの札（30u × 8.6u。home.css の .home-rec）。小学生ホームだけ、絵 5u・左右の余白 1u・間 1u にして
+   題の幅を約 21u（札の内側 27.3u − 絵 5u − 間 1u）にする。題は AppLabel の fit で、札に入るまで 2.6u（× 文字の大きさの設定）
+   から --text-min（app-label.css が画面の data-stage ごとに置く）まで縮める。入らない題は data-fit-overflow が付く（教材の題を短くする手がかり） */
+.school-rec {
+  gap: calc(var(--u) * 1);
+  padding: 0 calc(var(--u) * 1);
+}
+.school-rec__icon {
+  position: relative;
+  flex: none;
+  width: calc(var(--u) * 5);
+  height: calc(var(--u) * 5);
+}
+.school-rec__illust {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 「ふくしゅう」の印（単元の地図と同じ時計の印）は絵の右下の角。印は surface の地の輪なので絵の上でも読める。
+   右に −0.9u 出ても、絵と題の間 1u の中に収まる。subject-map.css の .umark の位置に頼らず、ここで決める */
+.school-rec__icon .umark {
+  position: absolute;
+  right: calc(var(--u) * -0.9);
+  bottom: calc(var(--u) * -0.7);
+  width: calc(var(--u) * 2.8);
+  height: calc(var(--u) * 2.8);
+}
+.school-rec__name {
+  --fit-fs: var(--text-label);
+  flex: 1 1 0;
+  min-width: 0;
+  line-height: 1.2;
 }
 .school-side__row {
   display: flex;
   gap: calc(var(--u) * 1.6);
 }
-/* 半分の幅の札は、絵の下に名前（縦に並べる） */
+/* 右の列の見出し: 行の高さを字体の normal（Zen Maru Gothic で約 1.47）に任せず 1.4 に決める（3.64u）。
+   normal だと列の下端が字体で 0.2u ほど動き、下の余白がちょうど 2u にならない */
+.home-side__title {
+  line-height: 1.4;
+}
+/* 半分の幅の札は、絵の下に名前（縦に並べる）。高さ 10.4u: 幼児ホーム（おすすめ 2＋えいご）と小学生ホーム（おすすめ 3）の
+   右の列の下端が 54.24u（= 8 + 見出し 3.64 + 間 1.6 + 札 3 枚 × (8.6 + 間 1.6) + 10.4。舞台の下の余白 2u）になる
+   （11u だと 54.84u で余白 1.4u だった）。この css は幼児ホームも読む */
 .school-side__half {
   flex: 1;
   min-width: 0;
-  height: calc(var(--u) * 11);
+  height: calc(var(--u) * 10.4);
   flex-direction: column;
   justify-content: center;
   gap: calc(var(--u) * 0.4);

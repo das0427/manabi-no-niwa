@@ -11,6 +11,8 @@ import { readStory } from './read-story';
 import { readInfo } from './read-info';
 import { listen } from './listen';
 import { writeOrder } from './write-order';
+import { wordPlay } from './word-play';
+import { folktales } from './folktales';
 
 const pack: PackContent = {
   packId: 'g1-ja',
@@ -27,6 +29,8 @@ const pack: PackContent = {
     readInfo,
     listen,
     writeOrder,
+    wordPlay,
+    folktales,
   ],
 };
 

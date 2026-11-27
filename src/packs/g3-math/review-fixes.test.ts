@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createRng, hashSeed } from '../../core/util/rng';
-import type { Item, UnitSpec } from '../../curriculum/types';
+import type { Item, NumberField, UnitSpec } from '../../curriculum/types';
 import pack from './index';
 
 const SEEDS = 400;
@@ -162,6 +162,29 @@ describe('g3-math 内容レビューの再発防止', () => {
       }
   });
 
+  it('bar-graph: 横軸の札は 4字まで、ならべ方を えらぶ問題の 図の札は 3字まで（text-layout-fixes 第6回）', () => {
+    // ふりがなを除いた字数。4字の札は ぼうグラフを かく問題の ボタンに ぎりぎり入り、
+    // 選択肢の小さい図では となりの札と 字が つく・重なる（bar-graph.ts の CHOICE_FIG_THEMES）
+    const len = (l: string) => [...l.replace(/《[^》]*》/g, '')].length;
+    let graphs = 0;
+    let choices = 0;
+    for (const it of many(unitOf('g3.math.bar-graph'))) {
+      const labels = (it as { data?: { labels?: string[] } }).data?.labels;
+      if (it.engine === 'graph' && labels) {
+        graphs++;
+        for (const l of labels) expect(len(l), `${it.id} ${l}`).toBeLessThanOrEqual(4);
+      }
+      if (it.engine === 'choice' && it.id.startsWith('make-alt:')) {
+        choices++;
+        for (const o of it.options)
+          for (const l of (o.figure as { labels?: string[] } | undefined)?.labels ?? [])
+            expect(len(l), `${it.id} ${l}`).toBeLessThanOrEqual(3);
+      }
+    }
+    expect(graphs).toBeGreaterThan(20);
+    expect(choices).toBeGreaterThan(5);
+  });
+
   it('mult-rules ten: 10 × a の ヒント・解説は 交換した形（a × 9）を 使わない', () => {
     for (const it of many(unitOf('g3.math.mult-rules'))) {
       if (!/^ten(-alt)?:/.test(it.id)) continue;
@@ -169,5 +192,85 @@ describe('g3-math 内容レビューの再発防止', () => {
       if (!first || it.id === 'ten:10x10') continue;
       expect(`${it.hints.join('')}${it.explain}`, it.id).not.toMatch(/(?<![0-9])[1-9] × 9/);
     }
+  });
+
+  it('数の欄: 単位は unit（回答欄の右）、label は見出し。欄の並びは問題の図と合う（text-layout-fixes 第8回）', () => {
+    const fieldsOf = (id: string): { it: Item; fields: NumberField[] }[] => {
+      const out: { it: Item; fields: NumberField[] }[] = [];
+      for (const it of many(unitOf(id))) {
+        if (it.engine === 'number') out.push({ it, fields: it.fields });
+        else if (it.engine === 'graph' && it.task.kind === 'number')
+          out.push({ it, fields: it.task.fields });
+      }
+      return out;
+    };
+    // 単位を換算する問題: 図「□kg□g」「□km□m」「□分□秒」の並びと、欄の単位の並びが同じ（解説で「[1] kg [228] g」と読める）
+    for (const [id, unitWords] of [
+      ['g3.math.weight', ['kg', 'g']],
+      ['g3.math.length-km', ['km', 'm']],
+      ['g3.math.time', ['分', '秒']],
+    ] as const) {
+      let two = 0;
+      for (const { it, fields } of fieldsOf(id)) {
+        if (fields.length !== 2 || it.engine !== 'number') continue;
+        const fig = it.figure as { kind?: string; text?: string } | undefined;
+        if (fig?.kind !== 'text' || !/{{}}.*{{}}/.test(fig.text ?? '')) continue;
+        two++;
+        const shown = fields.map((f) => (f.unit ?? '').replace(/《[^》]*》/g, ''));
+        expect(shown, it.id).toEqual([...unitWords]);
+        for (const f of fields) expect(f.label, it.id).toBeUndefined();
+        const order = [
+          ...(fig.text ?? '').replace(/《[^》]*》/g, '').matchAll(/{{}}(kg|g|km|m|分|秒)/g),
+        ].map((m) => m[1]);
+        expect(order, it.id).toEqual([...unitWords]);
+      }
+      expect(two, id).toBeGreaterThan(5);
+    }
+    // 数で読みが変わる単位（分・本）の欄: 問題の状態では欄が空なので、答えの数に よらない 読み（分《ふん》・本《ほん》）。
+    // 答えで ぷん・ぼん に かえると、ふりがなが答えの手がかりになり（本《ぼん》なら 3）、同じ画面の図「□分《ふん》」とも
+    // 読みが食いちがう。数に あわせた 読みは 解説の文（「4分《ぷん》2秒」「答えは 3本《ぼん》」）が受け持つ。
+    let counted = 0;
+    for (const u of pack.units)
+      for (const { it, fields } of fieldsOf(u.id))
+        for (const f of fields) {
+          const unit = String(f.unit ?? '');
+          if (!/^(分|本)《/.test(unit)) continue;
+          counted++;
+          expect(unit, it.id).toBe(unit.startsWith('分') ? '分《ふん》' : '本《ほん》');
+        }
+    expect(counted).toBeGreaterThan(20);
+    // あまりのある問題: しょう（まとまり）・あまりは見出しの label、数えるものの単位は unit に分ける
+    let rem = 0;
+    for (const { it, fields } of fieldsOf('g3.math.division-remainder')) {
+      if (fields.length !== 2) continue;
+      rem++;
+      expect(fields[0]!.label, it.id).toMatch(/^(しょう|まとまり)$/);
+      expect(fields[1]!.label, it.id).toBe('あまり');
+      for (const f of fields) expect(String(f.label ?? ''), it.id).not.toMatch(/[（(]/);
+      if (it.id.startsWith('word'))
+        expect(
+          fields.map((f) => !!f.unit),
+          it.id,
+        ).toEqual([true, true]);
+    }
+    expect(rem).toBeGreaterThan(20);
+  });
+
+  it('数のあとの「本」の読みが数に合う（3本《ぼん》・6本《ぽん》・5本《ほん》。text-layout-fixes 第8回のレビュー）', () => {
+    // 場面の単位を 本《ぽん》 で固定して「答えは 4本《ぽん》」「えんぴつ 32本《ほん》」と読みが合わなかった
+    const expected = (n: number): string => {
+      const d = n % 10;
+      if ((n > 0 && n % 1000 === 0) || d === 3) return 'ぼん';
+      if ([1, 6, 8].includes(d) || (d === 0 && n > 0)) return 'ぽん';
+      return 'ほん';
+    };
+    let seen = 0;
+    for (const u of pack.units)
+      for (const it of many(u))
+        for (const m of JSON.stringify(it).matchAll(/(?<![0-9])([0-9]+)本《([^》]+)》/g)) {
+          seen++;
+          expect(`${m[1]}本《${m[2]}》`, it.id).toBe(`${m[1]}本《${expected(Number(m[1]))}》`);
+        }
+    expect(seen).toBeGreaterThan(100);
   });
 });

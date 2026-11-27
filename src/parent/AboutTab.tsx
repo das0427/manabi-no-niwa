@@ -1,17 +1,33 @@
+import { OFFLINE_REOPEN_NOTE } from '../app/PackSetupStatus';
 import { applyUpdate, isPageControlled, useOfflineState } from '../core/offline/index';
+import { useUpdater } from '../core/offline/updater';
+import { UNIT_INDEX } from '../curriculum/unitIndex';
 import { MODES } from '../modes/registry';
+import { plainText } from '../text/rich';
 import { Note, Section } from './ui';
+import { UpdateSection } from './UpdateSection';
 import { APP_VERSION } from './util';
 
 const CREDITS: [string, string][] = [
   ['音声', 'Open JTalk / Mei（CC BY 3.0、名古屋工業大学）'],
+  ['英語の音声', 'Kokoro-82M（Apache 2.0）を kokoro-onnx（MIT）で動かして作成'],
   ['フォント', 'Zen Maru Gothic・Klee One（SIL OFL 1.1）'],
   ['書き順データ', 'KanjiVG（CC BY-SA 3.0）'],
+  ['プログラム', 'React・react-dom・scheduler（MIT、Meta Platforms, Inc. and affiliates）'],
   ['イラスト', 'オリジナル（このアプリのために描いたもの）'],
 ];
 
+const STAGE_LABEL: Record<string, string> = { p23: '2〜3歳', p4: '4歳', p5: '5歳' };
+
+const PRIVACY_TEXT =
+  '広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。';
+/** 更新の窓口があるとき: 外へ通信するのは、配信（serve.py）が更新を確かめるとき・ダウンロードするときだけ */
+const PRIVACY_TEXT_WITH_UPDATER =
+  '広告・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。外部への通信は、アプリの更新を確かめるときとダウンロードするときだけです。下の「アプリの更新」で自動の確認を止められます。';
+
 export function AboutTab() {
   const off = useOfflineState();
+  const upd = useUpdater();
   let status: string;
   if (!off.supported) {
     status = 'このブラウザ・この開き方では、オフライン機能が使えません。';
@@ -21,11 +37,11 @@ export function AboutTab() {
       ? `オフラインの準備中です（${Math.round((p.done / Math.max(1, p.total)) * 100)}%）`
       : 'オフラインの準備中です';
   } else if (off.status === 'ready') {
-    status = isPageControlled()
-      ? 'オフラインで使えます'
-      : 'オフラインの準備ができました。いちど開き直すと使えます。';
+    // 起動画面の保護者向けの表示（setupParentNote）と同じ文（開き直す前は「つかえます」と言わない）
+    status = isPageControlled() ? 'オフラインで使えます' : OFFLINE_REOPEN_NOTE;
   } else if (off.status === 'error') {
-    status = `オフラインの準備ができませんでした${off.error ? `（${off.error}）` : ''}`;
+    // off.error は保護者向けの文（src/core/offline/index.ts）。括弧に入れて前置きの文の後ろに付けない
+    status = off.error ?? 'オフラインの準備ができませんでした';
   } else {
     status = 'オフラインの準備は、まだ始まっていません（開発中の表示では登録しません）。';
   }
@@ -33,19 +49,21 @@ export function AboutTab() {
   return (
     <div data-testid="tab-about">
       <Section title="このアプリについて">
-        <p>まなびのにわ（4歳ごろ向けの、日本語・オフラインの学習アプリ）</p>
-        <p data-testid="app-version">版: {APP_VERSION}</p>
-        <p className="p-small">
-          広告・外部への通信・アカウント登録はありません。記録はこの端末のブラウザの中だけに保存されます。
+        <p>まなびのにわは2歳から小学生までの子供向けの、日本語・オフラインの学習アプリです。</p>
+        <p data-testid="app-version">バージョン: {APP_VERSION}</p>
+        <p className="p-small" data-testid="about-privacy">
+          {upd.available ? PRIVACY_TEXT_WITH_UPDATER : PRIVACY_TEXT}
         </p>
       </Section>
 
+      {upd.available ? <UpdateSection /> : null}
+
       <Section title="オフラインの準備">
         <p data-testid="offline-status">{status}</p>
-        {off.version ? <p className="p-small">キャッシュの版: {off.version}</p> : null}
-        {off.updateReady ? (
+        {off.version ? <p className="p-small">キャッシュのバージョン: {off.version}</p> : null}
+        {off.updateReady && !(upd.available && upd.flow !== 'none') ? (
           <div data-testid="update-ready">
-            <p>あたらしい ばーじょんが あります。</p>
+            <p>新しいバージョンがあります。</p>
             <button type="button" data-testid="apply-update" onClick={() => void applyUpdate()}>
               更新する
             </button>
@@ -55,8 +73,8 @@ export function AboutTab() {
           </div>
         ) : null}
         <Note>
-          PWAとしてのインストールはブラウザによって異なります（Chromium系は可。Firefox
-          はデスクトップではインストールできませんが、ブラウザのままオフラインで使えます）。くわしくは
+          PWAとしてのインストールはブラウザによって異なります。Chromium系はインストールできます。Firefox
+          はデスクトップではインストールできませんが、ブラウザのままオフラインで使えます。くわしくは
           README を参照してください。ファイルを直接開く（file://）と、オフライン機能は動きません。
         </Note>
       </Section>
@@ -83,6 +101,46 @@ export function AboutTab() {
           「なぞって
           あそぼう」の練習は、鉛筆の持ち方や筆圧の練習とは別です。持ち方や書き方は、大人が実際の鉛筆で見てあげてください。
         </Note>
+      </Section>
+
+      <Section title="幼児の英語について">
+        <p data-testid="about-preschool-english">
+          英語の音に親しみ、日本語とのちがいに気づく遊びです。英語の力を身につけることを目的にしていません。短い時間を、できるだけおうちの方と一緒に楽しんでください。
+        </p>
+        <h3>使い方のこつ</h3>
+        <ul>
+          <li>
+            お子さんが絵を指さしたら、英語で言ってみてください。正しく言えたかは気にしなくて大丈夫です。
+          </li>
+          <li>英語のあいさつは、毎日の決まった場面で言い合うと続けやすくなります。</li>
+          <li>体を動かす遊びは、大人がまねしてみせると、子どもも動きやすくなります。</li>
+        </ul>
+        <p>
+          日本語の絵本の読み聞かせやおしゃべりの時間を減らさないでください。画面の文字は日本語（ひらがな）だけで、英語は音声だけで出します。
+        </p>
+        <p className="p-small">
+          英語の音声は合成音声（Kokoro）で作っています。発音の正しさの判定や録音はしません。マイクは使いません。
+        </p>
+        <p className="p-small">
+          2〜3歳の2歳の段階では、ホームに英語の札を出しません。「ほかの
+          がくねん」から、おうちの方と一緒に遊べます。
+        </p>
+        <table
+          className="p-table p-table--compact p-table--units"
+          data-testid="preschool-english-units"
+        >
+          <tbody>
+            {UNIT_INDEX.filter((u) => u.pack === 'en-pre').map((u) => (
+              <tr key={u.id}>
+                <th>
+                  <span className="p-keep">{plainText(u.title)}</span>
+                  <span className="p-nowrap">（{STAGE_LABEL[u.stage] ?? u.stage}）</span>
+                </th>
+                <td>{u.parentNote}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </Section>
 
       <Section title="素材のクレジット">

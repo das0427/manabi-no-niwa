@@ -7,7 +7,15 @@
  * - 正答を見せるとき（revealed）は答えの根拠（evidence）の文に下線を引く。
  * - 本文の読み上げは任意の札（自動では読まない）。読み上げの設定が off のときは札を出さない。
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import { audio } from '../../core/audio/index';
 import type { ChoiceOption, Item, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
@@ -17,6 +25,7 @@ import type { VoiceSeq } from '../../voice/catalog/index';
 import { registerRich } from '../../voice/dynamic';
 import type { ChoiceResponse } from '../choice/choice';
 import { Figure } from '../figure/Figure';
+import { observeResize } from '../figure/svgText';
 import type { Figure as FigureData } from '../figure/types';
 import type { EngineProps, Judgement } from '../types';
 import { flatSeq } from '../listen/listen';
@@ -162,8 +171,16 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
   const focus = hintsShown > 0 ? (item.hintFocus?.[hintsShown - 1] ?? null) : null;
   const evidence = revealed ? item.evidence : null;
   const focusRef = useRef<HTMLSpanElement | null>(null);
+  const boxRef = useRef<HTMLElement | null>(null);
+  // 本文の枠の中だけをスクロールする（scrollIntoView だと外側の作業領域まで動かして、枠が上へずれる）
   useEffect(() => {
-    focusRef.current?.scrollIntoView?.({ block: 'nearest' });
+    const el = focusRef.current;
+    const b = boxRef.current;
+    if (!el || !b) return;
+    const er = el.getBoundingClientRect();
+    const br = b.getBoundingClientRect();
+    if (er.top < br.top) b.scrollTop += er.top - br.top;
+    else if (er.bottom > br.bottom) b.scrollTop += Math.min(er.bottom - br.bottom, er.top - br.top);
   }, [hintsShown, revealed]);
   const marks = (pi: number, si: number) => ({
     focus: locHas(focus, pi + 1, si + 1),
@@ -178,53 +195,132 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
     }),
   );
 
+  // 本文の枠（スクロール設計）: 下にまだ文があるときは「▼ つづき」、最後まで読んだら「▲ はじめから」を出す
+  // （ヒント・解説で根拠の文へ自動でスクロールしたあとも、上に文があることが分かるように）
+  const [cue, setCue] = useState<'down' | 'up' | null>(null);
+  const measure = useCallback(() => {
+    const b = boxRef.current;
+    if (!b) return;
+    if (b.scrollHeight <= b.clientHeight + 2) setCue(null);
+    else if (b.scrollTop + b.clientHeight < b.scrollHeight - 2) setCue('down');
+    else setCue('up');
+  }, []);
+  useEffect(() => {
+    const b = boxRef.current;
+    if (!b) return undefined;
+    measure();
+    // 字の読み込みで行の折り返しが変わったとき（枠の大きさは変わらない）にも測り直す
+    void document.fonts?.ready.then(measure);
+    // 枠の大きさだけでなく中身の高さが変わったとき（字の読み込み・ふりがな・表の縮み）にも印を付け外しする
+    return observeResize(
+      [b, ...Array.from(b.children).filter((c): c is HTMLElement => c instanceof HTMLElement)],
+      measure,
+    );
+  }, [measure, p]);
+  const scrollCue = () => {
+    const b = boxRef.current;
+    if (!b) return;
+    if (cue === 'up') b.scrollTo?.({ top: 0, behavior: 'smooth' });
+    else b.scrollBy?.({ top: b.clientHeight * 0.85, behavior: 'smooth' });
+  };
+
+  // 右の列の選択肢が収まらないとき（scrollHeight > clientHeight）は、本文:右 を 1:1・選択肢の余白を詰める。
+  // 右の列はスクロールさせない。問題が変わるたびに戻して測り直す（一度詰めたら、その問題の間は詰めたまま）
+  const sideRef = useRef<HTMLDivElement | null>(null);
+  // 段階: 0 = 通常、1 = data-tight（余白を詰める）、2 = data-tighter（字を 2.2u・行間 1.4・本文:右 = 1:1.3）
+  const [tight, setTight] = useState<0 | 1 | 2>(0);
+  useLayoutEffect(() => {
+    setTight(0);
+  }, [item]);
+  useEffect(() => {
+    const el = sideRef.current;
+    if (!el || tight === 2) return undefined;
+    // 収まる下端: 右の列の枠の下端と、板・吹き出しの上端のうち上のほう（ヒント・解説の状態でも測る）
+    const check = () => {
+      const limit = Math.min(
+        el.getBoundingClientRect().bottom,
+        ...Array.from(
+          document.querySelectorAll<HTMLElement>('.unit__explain, .unit__bubble'),
+          (x) => x.getBoundingClientRect().top,
+        ).filter((t) => t > 0),
+      );
+      const last = el.lastElementChild?.getBoundingClientRect().bottom ?? 0;
+      if (el.scrollHeight > el.clientHeight + 1 || last > limit + 1)
+        setTight((t) => (t === 0 ? 1 : 2));
+    };
+    check();
+    return observeResize([el], check);
+  }, [tight, item]);
+
   const size = ctx.learnerGrade >= 5 ? 's' : ctx.learnerGrade >= 3 ? 'm' : 'l';
   return (
-    <div className="eng-reading">
-      <section
-        className={`eng-reading__passage eng-reading__passage--${size}`}
-        aria-label="ほんぶん"
-        data-testid="reading-passage"
-      >
-        {p.title ? (
-          <h3 className="eng-reading__title">
-            <Rt text={p.title} ctx={ctx} />
-          </h3>
-        ) : null}
-        {p.figure ? (
-          <div className="eng-reading__figure">
-            <Figure fig={p.figure} ctx={ctx} />
-          </div>
-        ) : null}
-        {p.paragraphs.map((para, pi) => (
-          <p key={pi} className="eng-reading__para" data-p={pi + 1}>
-            {p.numbered ? (
-              <span className="eng-reading__num" aria-label={`だん ${pi + 1}`}>
-                {CIRCLED[pi] ?? `(${pi + 1})`}
-              </span>
-            ) : null}
-            {para.map((s, si) => {
-              const { focus: isFocus, evidence: isEvidence } = marks(pi, si);
-              return (
-                <span
-                  key={si}
-                  ref={firstKey === `${pi}-${si}` ? focusRef : undefined}
-                  className={[
-                    'eng-reading__s',
-                    isFocus ? 'is-focus' : '',
-                    isEvidence ? 'is-evidence' : '',
-                  ].join(' ')}
-                  data-testid={`s-${pi + 1}-${si + 1}`}
-                  data-mark={isEvidence ? 'evidence' : isFocus ? 'focus' : undefined}
-                >
-                  <Rt text={s} ctx={ctx} />
+    <div
+      className="eng-reading"
+      data-tight={tight >= 1 ? '' : undefined}
+      data-tighter={tight >= 2 ? '' : undefined}
+    >
+      <div className="eng-reading__passage-wrap">
+        <section
+          ref={boxRef}
+          onScroll={measure}
+          className={`eng-reading__passage eng-reading__passage--${size}`}
+          aria-label="ほんぶん"
+          data-testid="reading-passage"
+          data-scroll-region="passage"
+        >
+          {p.title ? (
+            <h3 className="eng-reading__title">
+              <Rt text={p.title} ctx={ctx} />
+            </h3>
+          ) : null}
+          {p.figure ? (
+            <div className="eng-reading__figure">
+              <Figure fig={p.figure} ctx={ctx} />
+            </div>
+          ) : null}
+          {p.paragraphs.map((para, pi) => (
+            <p key={pi} className="eng-reading__para" data-p={pi + 1}>
+              {p.numbered ? (
+                <span className="eng-reading__num" aria-label={`だん ${pi + 1}`}>
+                  {CIRCLED[pi] ?? `(${pi + 1})`}
                 </span>
-              );
-            })}
-          </p>
-        ))}
-      </section>
-      <div className="eng-reading__side">
+              ) : null}
+              {para.map((s, si) => {
+                const { focus: isFocus, evidence: isEvidence } = marks(pi, si);
+                return (
+                  <span
+                    key={si}
+                    ref={firstKey === `${pi}-${si}` ? focusRef : undefined}
+                    className={[
+                      'eng-reading__s',
+                      isFocus ? 'is-focus' : '',
+                      isEvidence ? 'is-evidence' : '',
+                    ].join(' ')}
+                    data-testid={`s-${pi + 1}-${si + 1}`}
+                    data-mark={isEvidence ? 'evidence' : isFocus ? 'focus' : undefined}
+                  >
+                    <Rt text={s} ctx={ctx} />
+                  </span>
+                );
+              })}
+            </p>
+          ))}
+        </section>
+        <div className="eng-reading__cue-slot">
+          {cue ? (
+            <button
+              type="button"
+              className="eng-reading__cue"
+              data-scroll-cue
+              data-testid="reading-cue"
+              onClick={scrollCue}
+            >
+              {cue === 'down' ? '▼ つづき' : '▲ はじめから'}
+            </button>
+          ) : null}
+        </div>
+      </div>
+      <div ref={sideRef} className="eng-reading__side">
         {ctx.readAloud !== 'off' ? (
           <Tap
             label={reading ? 'よむのを とめる' : 'ほんぶんを きく'}
@@ -250,6 +346,7 @@ function ReadingView({ item, ctx, revealed, wrongMark, disabled, submit, hintsSh
           locked={disabled}
           submit={submit}
           className="eng-reading__opts"
+          autoArrange={false}
         />
       </div>
     </div>

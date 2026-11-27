@@ -1,6 +1,6 @@
 /** 保護者画面（PA-01〜PA-12, DA-04〜08）。大人向けに px 基準・漢字かな交じり・白地 */
 import type { ReactNode } from 'react';
-import { useApp } from '../app/AppState';
+import { ParentViewScope, useApp, useParentView } from '../app/AppState';
 import { navigate } from '../app/router';
 import { Illust } from '../illust/Illust';
 import { AboutTab } from './AboutTab';
@@ -10,6 +10,7 @@ import { PacksTab } from './PacksTab';
 import { ProfilesTab } from './ProfilesTab';
 import { RecordsTab } from './RecordsTab';
 import { SettingsTab } from './SettingsTab';
+import { UpdateNotice } from './UpdateSection';
 import { WorksTab } from './WorksTab';
 import './parent.css';
 
@@ -25,8 +26,21 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
+/**
+ * 保護者画面。ヘッダーの「見ているプロフィール」は、記録を見る人を替えるだけで、遊ぶ人（子供の画面）は替わらない。
+ * 子供の画面へ戻るときに、2人以上なら起動画面の「だれが あそぶ？」で遊ぶ人を選ぶ（FX09）。
+ */
 export default function ParentApp({ tab }: { tab: string }) {
+  return (
+    <ParentViewScope>
+      <ParentScreen tab={tab} />
+    </ParentViewScope>
+  );
+}
+
+function ParentScreen({ tab }: { tab: string }) {
   const app = useApp();
+  const view = useParentView();
   const current: TabId = TABS.find((t) => t.id === tab)?.id ?? 'records';
   const profile = app.profile;
 
@@ -49,7 +63,7 @@ export default function ParentApp({ tab }: { tab: string }) {
   return (
     <div className="parent-root" data-testid="parent-app">
       <header className="p-header">
-        <h1>保護者の画面</h1>
+        <h1>保護者画面</h1>
         <div className="p-header__right">
           {profile ? (
             <label className="p-profile-switch">
@@ -57,7 +71,7 @@ export default function ParentApp({ tab }: { tab: string }) {
               <span>見ているプロフィール</span>
               <select
                 value={profile.id}
-                onChange={(e) => void app.selectProfile(e.target.value)}
+                onChange={(e) => view.viewProfile(e.target.value)}
                 data-testid="parent-profile-select"
               >
                 {app.profiles.map((p) => (
@@ -74,13 +88,20 @@ export default function ParentApp({ tab }: { tab: string }) {
             data-testid="parent-to-child"
             onClick={() => {
               app.setParentUnlocked(false);
-              navigate({ name: 'home' }, { force: true });
+              if (app.profiles.length > 1) {
+                // 見ていた人が遊ぶとは限らない。2人以上なら、起動画面の「だれが あそぶ？」で選んでもらう
+                app.setChoosePlayer(true);
+                navigate({ name: 'start' }, { force: true, say: 'app.who' });
+              } else {
+                navigate({ name: 'home' }, { force: true });
+              }
             }}
           >
             こどもの画面へ
           </button>
         </div>
       </header>
+      <UpdateNotice />
       <nav className="p-tabs" role="tablist" aria-label="保護者画面のタブ">
         {TABS.map((t) => (
           <button

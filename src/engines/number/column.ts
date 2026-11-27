@@ -60,7 +60,10 @@ export interface ColLayout {
 const digitsOf = (n: number) => String(n).split('');
 
 /** わり算の筆算の段（0 の商の段は書かない）。r は その段の いちばん右の、わられる数の位置（左から） */
-export function divisionSteps(dividend: number, divisor: number): {
+export function divisionSteps(
+  dividend: number,
+  divisor: number,
+): {
   quotient: number;
   remainder: number;
   /** 先頭が商の いちばん上の位がたつ位置（左から） */

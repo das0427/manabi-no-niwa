@@ -41,7 +41,7 @@ interface LearnerProfileV2 {
   ageGuide?: string;             // 年齢の目安（自由記述ではなく 'y2'..'y12' の選択。生年月日は保存しない）
 }
 interface SupportSettings {      // ChildSettings に追加
-  furigana: 'unlearned' | 'all' | 'none';   // がくねんに あわせる／すべて／なし（4章）
+  furigana: 'unlearned' | 'all' | 'none';   // 学年に合わせる／すべての漢字に付ける／習った学年までの漢字には付けない（4章）
   readAloud: 'always' | 'button' | 'off';
   textScale: 1 | 1.15 | 1.3;
   instruction: 'short' | 'normal';
@@ -78,7 +78,7 @@ interface UnitMeta {
 - 進度と復習（実装: `src/curriculum/review.ts`、ストア `unitProgress`、キー `[profileId, unitId]`）:
   ```ts
   interface ReviewState {
-    stage: 'none' | 'learning' | 'learned' | 'secured';  // まだ／とりくみちゅう／できた／しっかりできた
+    stage: 'none' | 'learning' | 'learned' | 'secured';  // まだ／とりくみちゅう／できた／しっかり できた
     reviewDue: number | null;   // 次の復習の時刻
     reviewStep: number;         // 通過した復習の回数 0〜3 → 次まで 1日, 3日, 7日, 21日
     lastReviewAt: number | null;
@@ -89,7 +89,7 @@ interface UnitMeta {
   - 復習は「きょうの おすすめ」に出す（強制しない）。
 - **復習の優先順位と滞留**（R#14）:
   - 優先度 ＝ 超過日数 ×（後続単元の数 ＋ 1）。後続単元＝その単元を prereq に持つ単元。
-  - おすすめに出す復習は**同じ教科で1日1件まで**。残りは単元の地図の時計の印（ふくしゅう まち）で示す。
+  - おすすめに出す復習は**同じ教科で1日1件まで**。残りは単元の地図の時計の印（「ふくしゅう」）で示す。
   - 超過が間隔（REVIEW_INTERVAL_DAYS[reviewStep]）の **2倍以上**なら reviewStep を1つ戻す（stage は下げない）。
   - 復習用に「別の表現の問題 ≥2 種」を単元の ready 条件に含める（acceptance.md 2章）。
 
@@ -100,7 +100,7 @@ interface UnitMeta {
 
 | 設定 | 配当学年 ≥ 在籍学年 の字（その学年で習う途中の字・上の学年の字） | 配当学年 < 在籍学年 の字（前の学年までに習った字） |
 |---|---|---|
-| 'unlearned'（保護者画面「がくねんに あわせる」、既定） | 付ける | 付けない |
+| 'unlearned'（保護者画面「学年に合わせる」、既定） | 付ける | 付けない |
 | 'all'（すべて） | 付ける | 付ける |
 | 'none'（なし） | 配当学年 = 在籍学年 の字は付けない。配当学年 > 在籍学年 の字は**常に付ける** | 付けない |
 
@@ -151,11 +151,11 @@ type Verdict =
   | { result: 'wrong'; misconception?: string }
   | { result: 'retry'; reason: 'reduce' | 'form' | 'unit' | 'unreadable' };  // 誤答にせず、もう一度
 ```
-- 分数: 値が等しければ正解（2/4 と 1/2）。`mustReduce`（約分が目標の単元）のときだけ約分していないものを `retry`（「約分できるよ」）にする。仮分数⇔帯分数も目標でなければ等価として受け入れる。
+- 分数: 値が等しければ正解（2/4 と 1/2）。`mustReduce`（約分が目標の単元）のときだけ約分していないものを `retry`（「あってるよ。もっと かんたんな ぶんすうに できるかな」）にする。仮分数⇔帯分数も目標でなければ等価として受け入れる。
 - 小数と分数: `allowDecimal` の単元だけ等価（0.5 と 1/2）。
 - 単位: 単位換算が目標でない限り、換算後の値が等しければ正解。許容誤差は概数・測定の単元だけ（`tolerance`）。
 - 入力形式だけの誤り（全角・余分な0）は正規化してから判定。
-- **中立の「もう一度」**（R#13）: questionFlow（core/session）に `nudge()` を追加する。`retry` の判定で呼び、wrongTries を増やさず短い声（例「やくぶん できるよ」）を返す。同じ問題で2回まで。3回目の `retry` は wrong として扱う。
+- **中立の「もう一度」**（R#13）: questionFlow（core/session）に `nudge()` を追加する。`retry` の判定で呼び、wrongTries を増やさず短い声（例「あってるよ。もっと かんたんな ぶんすうに できるかな」）を返す。同じ問題で2回まで。3回目の `retry` は wrong として扱う。
 
 ### 5.2 legacy エンジン
 初期版のモード部品（src/modes/*）は `legacy` エンジンとして UnitRunner から呼ぶか、ModeRunner のまま幼児ホームから呼ぶ。再設計の判断は curriculum-matrix.md 4章。
@@ -163,17 +163,19 @@ type Verdict =
 ### 5.3 UnitRunner の中断と再現（R#31）
 - 中断データのキーは `[profileId, unitId]`（v1 の drafts の `[profileId, modeId, variantId]` とは別）。
 - 生成問題は seed と番号（`gen:<seed>:<index>`）で再現する。手作り問題の並びも seed で決める（再開時に同じ順で続く）。
+- 途中の問題の様子も中断データ（`FlowDraft.current`。2.1.0 の FX08）に入れる: その問題で見たヒントの数・誤答の数など。問題の途中で、ヒント・誤答などが1つでもあるときだけ保存する（連打の時刻は入れない）。再開では、番号（index）が合うときだけ読み直し、壊れた値は直し、確定の印は引き継がない。ヒントの数はその問題のヒントの数までにする。これで、ヒントを見て中断し、再開して正解しても「自力」（independent）にならない（v1 の `useQuestion.restore` と同じ考え）。2.0 までの中断データ（`current` なし）は今までどおり読める。中断データはバックアップに入れない（端末の中だけ）。
+- 1問も確定する前に中断したときは、これまでどおり中断データを作らない（回の記録を残さない決まり）。次は新しい回（新しい seed）になる。
 - 学習連携の作品（7.1 の `origin.kind='lesson'`）は attempts を作らない。UnitRunner では「描いた＝完了」として扱う（R#35）。
 
 ## 6. 教材パック（packs/）と取得（X-OF-01〜04）
 
 ### 6.1 パックの範囲（R#20）
-- **幼児（toddler/p4/p5）の教材はコアに同梱**する（パックにしない）。初回のオフライン準備で必ずそろう。
+- **幼児（toddler/p4/p5）の教材はコアに同梱**する（パックにしない）。初回のオフライン準備で必ずそろう。コアに同梱するパックは `scripts/vite-plugin-precache.ts` の `CORE_PACK_IDS`（p23・p4・p5・**en-pre**（幼児向けの英語。p2-design/preschool-english.md）と見本のコア用）。英語の mp3（`public/audio/en/`）は `audio/<packId>/` ではないのでコアに入る。
 - 小学生の教材だけをパックにする。パック = 学年×教科（例 `g3-sansu`, `g3-kokugo`）。packId に '@' を使わない（R#26）。
 - `packs/<packId>/index.ts` が `PackContent = { units: Record<unitId, UnitContent> }` を default export。UnitContent は手作り問題の配列か、生成器（`generate(level, seed, count) → Item[]`）。
 
 ### 6.2 ビルド（R#5）
-- 遅延読み込み: `import(\`../packs/${id}/index.ts\`)`。Vite の `manualChunks` でパック配下のモジュールを `packs/<id>/` のチャンクに閉じ込める。
+- 遅延読み込み: `import(\`../packs/${id}/index.ts\`)`。Vite の `manualChunks`（rolldown の codeSplitting）でパック配下のモジュールを `packs/<id>/` のチャンクに閉じ込める。入口の index.ts だけはグループに入れず `assets/packs/<id>/index.js` にする（グループに入れると rolldown が名前空間の補助関数を本体の hash 付きチャンクから import し、本体の更新でパックの版が変わるため。2.1.0）。パックのファイル名に hash は付けない（版は packs.json の hash）。
 - パック間で共有するコードは `engines/`・`core/` に置いてコアに含める規約（1章）。
 - `npm run check:packs`: 「各パックの入口から辿れるチャンクが、コアかそのパック自身だけ」であることを build manifest から機械検査する。
 - precache プラグイン（scripts/vite-plugin-precache.ts）: `assets/packs/**` と `audio/<packId>/**` をコアの `__MNW_FILES__` から除外し、`dist/packs.json` を出力する: `{ [packId]: { files: string[], bytes: number, hash: string } }`。**コアの版ID（`__MNW_VERSION__`）にパックの内容を含めない**（パックだけの更新でコアを入れ直さない）。`packs.json` 自体はコアに含める。
@@ -285,11 +287,11 @@ type ArtItem =
 - 台本はパックごと（`packs/<id>/voice.ts`）。幼児の台本はコア。キーの接頭辞はパックID。生成した mp3 は `public/audio/<packId>/`、マニフェストもパックごと。
 - 読み: RichText の《》から作る。数式は読み上げ用の規則（「3/4」→「よんぶんの さん」）。
 - 英語（R#17）: Kokoro-82M（Apache-2.0）＋ kokoro-onnx（MIT）で生成し mp3 を同梱（docs/assets-pipeline.md 5節、scripts/voice/generate_en.py）。**聴感は未確認**のため、英語単元は試聴して問題が無いものだけ ready にする。`speechSynthesis` には頼らない。
-- 読み上げ設定: always（問題を開くと読む）／button（「よむ」を押したとき）／off（音声を出さない。効果音も設定に従う）。
+- 読み上げ設定: always（問題を開くと読む）／button（「きく」を押したとき）／off（音声を出さない。効果音も設定に従う）。
 
 ## 11. 性能（X-NF-04）
 
 - 起動時に読むもの: 本体 JS（目標 gzip 150KB 以下）、単元の索引、フォント（ひらがな・カタカナ・使う漢字のサブセット）。
-- **小学生用フォント**（R#22）: 配当漢字 1026 字＋画面で使う漢字のサブセットを1組作り、小学生のプロフィールで `FontFace` で読み込む（コアのキャッシュに含める）。パックごとの分割はしない。容量は `fonts:build` の出力で記録する。
+- **小学生用フォント**（R#22）: 配当漢字 1026 字＋画面で使う漢字のサブセットを1組作り、小学生のプロフィールで `FontFace` で読み込む（コアのキャッシュに含める）。パックごとの分割はしない。容量は `npm run fonts` の出力で記録する。実装（2.1.0）: 漢字だけの `zen-maru-gothic-kanji-400/700.woff2`（1254 字、各約 245KiB）を `src/ui/elementaryFont.ts` が `unicode-range`（漢字）つきの FontFace として読み込む。字は `npm run chars` が `scripts/fonts/used-chars-elementary.txt` に出す（コアのフォントには教材パックと配当表の漢字を入れない）。
 - 教材・画像・音声は単元を開いたときに読み込む。
 - おえかき: 1600×1000 のインクの層 最大6枚＋base＋表示用の合成1枚＋読み取り用の合成1枚＋undo 差分。メモリの目安 100MB 以内（1枚あたり約 6.4MB で計算。開発PCで計測して記録し、実機は未確認）。

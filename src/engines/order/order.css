@@ -30,7 +30,8 @@
 /* 縦（文のカード）: 左に並べる所、右に おくもの。4枚まで */
 .eng-order__main--column {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr): 長い文の札で列が作業領域より広がらない */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   column-gap: calc(var(--u) * 3);
   width: 100%;
@@ -47,8 +48,28 @@
 .eng-order__main--column .eng-order__ghost {
   min-height: calc(var(--u) * 6);
   width: 100%;
+  max-width: none;
 }
 .eng-order__main--column .tk-card__label {
-  font-size: calc(var(--u) * 2.2);
+  /* 縮む --u の --text-small（作業領域の --fit で札と一緒に縮む。下限は --text-min） */
+  font-size: var(--text-small);
   text-align: left;
+}
+/* 文の札（8字超）が4枚以上: 左に並べる所（1列）、右に おくもの（2列）。右の空きを使って縦を詰める */
+.eng-order__main--two {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+}
+.eng-order__main--two .eng-order__pool {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(var(--u) * 1) calc(var(--u) * 1.2);
+}
+/* 番号の丸は札の中（左の余白）に置く。角に突き出して作業領域・舞台の外に出ない（read-info/33 の「2」） */
+.eng-order__main--column .tk-card {
+  align-items: stretch;
+}
+/* 解説（order.tsx の solo）: おくもの の列は空の枠だけなので出さない。縦並びは、並べた所の 1 列が作業領域の幅いっぱい
+   （2 列の格子の半分に折れた札の 4 枚目が切れた: g4.ja.read-summary/41）。詳しさで上の --column・--two に勝つ */
+.eng-order__main--column.eng-order__main--solo {
+  grid-template-columns: minmax(0, 1fr);
 }

@@ -39,11 +39,63 @@
   font-size: 14px;
 }
 
+/*
+ * 押す所・入れる所の高さは 44px 以上（DESINGN.md 2章の保護者画面。text-layout-fixes A8）。
+ * ボタン・選ぶ欄・文字／数／ファイルの入力欄・summary が対象。checkbox・radio・range は箱が小さいので、
+ * ラベル全体（下の label:has）で 44px を取る。表の中のボタンも同じで、表が縦に伸びるのは受け入れる。
+ */
+.parent-root button,
+.parent-root select,
+.parent-root summary,
+.parent-root input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden']) {
+  min-height: 44px;
+}
+
+.parent-root select,
+.parent-root input:not([type='checkbox'], [type='radio'], [type='range'], [type='hidden']) {
+  padding: 6px 8px;
+}
+
+.parent-root input[type='file'] {
+  padding-left: 0;
+}
+
+/* 音量のスライダー（range）は、棒だけだと高さ 16px で押しにくい。押せる高さを 44px にする（FX11） */
+.parent-root input[type='range'] {
+  min-height: 44px;
+}
+
+.parent-root input[type='file']::file-selector-button {
+  min-height: 32px;
+  margin-right: 10px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .parent-root button {
-  padding: 5px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
   border: 1px solid color-mix(in srgb, var(--ink) 40%, var(--white));
   border-radius: 4px;
   background: var(--white);
+  cursor: pointer;
+}
+
+/*
+ * checkbox・radio は箱が小さいので、押せる所はラベル全体で 44px にする。
+ * :where() で優先度を 0 に下げ、.p-field・.p-avatars label など個別の指定を邪魔しない。
+ * display: block を直接書いたラベル（SettingsTab）も、上下の padding で 44px になる。
+ */
+:where(.parent-root) label:where(:has(> input[type='checkbox']), :has(> input[type='radio'])) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding-block: 10px;
   cursor: pointer;
 }
 
@@ -159,8 +211,44 @@
   color: var(--ink-soft);
 }
 
+/* 「画面」の節（全画面）の文。最後の行が1〜2字だけ（「す。」など）になるのを避ける。
+   Chromium・Firefox とも balance に対応している（長くて行が多いときは、ブラウザが通常の折り返しに戻す） */
+.p-fullscreen-text,
+.p-fullscreen .p-note {
+  text-wrap: balance;
+}
+/* キーの名前・カタカナの語・「」の名前は、行の途中で切らない（SettingsTab.tsx の keepTogether） */
+.p-keep {
+  white-space: nowrap;
+}
+
 .p-small {
   font-size: 13px;
+}
+
+/* 開いて見る一覧（まえの きろく の1問ごとの記録など）。押す所はボタンと同じ 44px 以上 */
+.p-details {
+  margin: 12px 0;
+}
+
+.p-details > summary {
+  /* list-item のまま（開閉の三角を残す）。行の高さ 42px＋線 2px = 44px */
+  display: list-item;
+  line-height: 42px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, var(--white));
+  border-radius: 6px;
+  background: var(--white);
+  cursor: pointer;
+}
+
+.p-details > summary:focus-visible {
+  outline: 2px solid var(--sky-dark);
+  outline-offset: 1px;
+}
+
+.p-details[open] > summary {
+  margin-bottom: 8px;
 }
 
 .p-error {
@@ -198,6 +286,33 @@
 
 .p-table--compact {
   width: auto;
+}
+
+/*
+ * 「幼児の英語」の表（AboutTab）。題は語の途中で折らず（p-keep）、年齢の括弧は数と単位の間で折らない（p-nowrap）。
+ * 見出しの列は最小 11em を確保して、「えほん」などが 1 字ずつ縦に割れないようにする（text-layout-fixes A8）
+ */
+.p-table--units th {
+  min-width: 11em;
+}
+
+/*
+ * 「スキルごとの様子」の表（RecordsTab）の 1 列目（スキルの名前。かなで書いた子供向けの名前）は語の途中で折らない。
+ * 説明の列が長いので、何もしないと 1 列目が詰まり「おぼえてさが／す」「ひらがな（よ／む）」と折れた（check:app-layout の orphan）。
+ * keep-all で、括弧の前（「ひらがな／（よむ）」）でだけ折る
+ */
+.p-table--skills td:first-child {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.p-keep {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.p-nowrap {
+  white-space: nowrap;
 }
 
 .p-table .is-current td {
@@ -328,6 +443,13 @@
   margin: 0 auto;
   background: var(--paper);
 }
+/* おえかきの作品の画像（16:10 を枠に収める） */
+.p-art__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
 
 .p-work__title {
   font-weight: 500;
@@ -403,4 +525,29 @@
 .parent-root select,
 .parent-root textarea {
   accent-color: var(--leaf);
+}
+
+/* アプリの更新（このアプリについて）。進み具合は <progress> の棒と割合の文 */
+.p-update-work {
+  margin: 12px 0;
+}
+
+.p-update-work progress {
+  display: block;
+  width: min(360px, 100%);
+  height: 14px;
+  margin: 6px 0;
+  accent-color: var(--leaf);
+}
+
+/* 保護者画面の上の知らせ（1行の小さな p-alert） */
+.p-update-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 6px 20px;
+  border-width: 0 0 1px;
+  font-size: 14px;
 }

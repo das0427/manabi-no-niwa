@@ -1,0 +1,69 @@
+/*
+ * 縦にスクロールする一覧の枠（ScrollList。text-layout-fixes「アプリの画面」A0）。
+ * 外側（.scroll-list）は呼び出し側の className が位置と大きさを決める。中のスクロールする枠は高さいっぱい、
+ * 右に印（▼）か札（▲▼）の余白を取る。余白は幅いっぱいの枠の外（呼び出し側の padding と重ならない）
+ */
+:where(.scroll-list) {
+  position: relative;
+}
+.scroll-list {
+  /* 右の余白: 小学生は ▼ の印 3.6u、幼児（▲▼ の札。補助 5.5u の左右に 0.75u）は 7u */
+  --scroll-gutter: calc(var(--u) * 3.6);
+}
+.scroll-list[data-buttons] {
+  --scroll-gutter: calc(var(--u) * 7);
+}
+
+.scroll-list__region {
+  box-sizing: border-box;
+  width: calc(100% - var(--scroll-gutter));
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 環境でスクロールバーの幅が変わると、折り返しが変わる。隠して、印（▼）と札（▲▼）で示す */
+  scrollbar-width: none;
+}
+.scroll-list__region::-webkit-scrollbar {
+  display: none;
+}
+.scroll-list__region:focus-visible {
+  outline: calc(var(--u) * 0.4) dashed var(--ink);
+  outline-offset: calc(var(--u) * -0.4);
+}
+
+/* 小学生: 下まで見ていないあいだ、右の余白の下に ▼（単元の画面の ▼ と同じ形。--text-min の大きさ、paper の地に ink） */
+.scroll-list__cue {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--scroll-gutter);
+  height: calc(var(--text-min, calc(var(--u) * 1.8)) * 1.2);
+  text-align: center;
+  white-space: nowrap;
+  font-size: var(--text-min, calc(var(--u) * 1.8));
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--paper);
+  pointer-events: none;
+}
+
+/* 幼児: ▲▼ の札（補助 5.5u）。右の余白の上と下。端では隠す（ScrollList が visibility: hidden を付ける） */
+.scroll-list .scroll-list__btn {
+  position: absolute;
+  right: calc((var(--scroll-gutter) - var(--tap-aux)) / 2);
+  width: var(--tap-aux);
+  height: var(--tap-aux);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+}
+.scroll-list .scroll-list__btn--up {
+  top: 0;
+}
+/* 札の影（--step）が外側の枠からはみ出さない */
+.scroll-list .scroll-list__btn--down {
+  bottom: var(--step);
+}

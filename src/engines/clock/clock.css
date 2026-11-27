@@ -23,13 +23,13 @@
   stroke-width: 3.5;
 }
 .clk2-num {
-  font-size: 21px;
+  font-size: max(21px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .clk2-mnum {
-  font-size: 15px;
+  font-size: max(15px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink-soft);
   text-anchor: middle;
@@ -76,7 +76,7 @@
   fill: var(--ink);
 }
 .clk2-q {
-  font-size: 64px;
+  font-size: 52px;
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -86,17 +86,23 @@
   height: calc(var(--u) * 26);
 }
 .eng-clock__mid {
-  width: calc(var(--u) * 17);
-  height: calc(var(--u) * 17);
+  width: calc(var(--u) * 19);
+  height: calc(var(--u) * 19);
 }
 .eng-clock__small {
-  width: calc(var(--u) * 13);
-  height: calc(var(--u) * 13);
+  width: calc(var(--u) * 16);
+  height: calc(var(--u) * 16);
 }
+/* 選択肢の時計は 18u 以上（数字を最小の文字の大きさで描くため） */
 .eng-clock__mini {
-  width: calc(var(--u) * 14);
-  height: calc(var(--u) * 14);
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
   pointer-events: none;
+}
+/* 選択肢が3つまでなら 22u（数字を12個とも最小の大きさで並べられる）。4つのときは 18u で、12・3・6・9 だけ */
+.eng-clock__mini--wide {
+  width: calc(var(--u) * 22);
+  height: calc(var(--u) * 22);
 }
 .eng-clock__dayhalf {
   font-size: calc(var(--u) * 2.4);
@@ -141,7 +147,7 @@
 }
 .eng-clock__hand {
   white-space: nowrap;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   display: inline-flex;
   flex-direction: column;
   align-items: center;
@@ -162,14 +168,15 @@
   stroke: var(--ink);
   stroke-width: 7;
 }
+/* 針を動かす4つの札: 2×2。「5ふん もどる」を札の中で折らない */
 .eng-clock__moves {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: calc(var(--u) * 1.2);
-  justify-content: center;
 }
 .eng-clock__moves > .mk-btn {
-  flex: 1;
-  font-size: calc(var(--u) * 2);
+  white-space: nowrap;
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
 }
 
 /* 時間の経過 */
@@ -185,7 +192,7 @@
   align-items: center;
 }
 .eng-clock__fig figcaption {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
 }
 .eng-clock--elapsed .mk__main {
@@ -224,8 +231,12 @@
 }
 .clk2-band-label,
 .clk2-band-dur {
-  font-size: 22px;
+  font-size: max(22px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
+}
+/* 選択肢の時計は1列に並べる（2段にすると作業領域の高さに入らない） */
+.eng-clock--pick .eng-clock__options {
+  flex-wrap: nowrap;
 }

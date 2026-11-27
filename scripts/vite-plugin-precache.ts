@@ -13,7 +13,7 @@ import type { Plugin, ResolvedConfig } from 'vite';
  * 「コア」と「小学生の教材パック」に分け、
  *  - dist/packs.json: { [packId]: { files, bytes, hash } }（パックごとの取得単位。コアに含める）
  *  - dist/sw.js: src/sw/sw.ts を変換し、先頭にコアの版IDとコアのファイル一覧を埋め込んだもの
- *  - dist/version.json
+ *  - dist/version.json: { version（SW の版ID）, fileCount, totalBytes, appVersion（package.json の版。ビルドのときだけ） }
  * を出力する。版ID はコアのファイル（packs.json を含む）だけから作り、パックのファイルの内容は含めない。
  * あわせて本番ビルドの index.html に CSP を入れる。
  *
@@ -35,7 +35,7 @@ export const PACKS_FILE = 'packs.json';
 /** Vite の build manifest（dist からの相対。build.manifest: true） */
 export const MANIFEST_FILE = '.vite/manifest.json';
 /** コアに同梱するパック（幼児: R#20）と、コア扱いの見本パック */
-export const CORE_PACK_IDS: readonly string[] = ['p23', 'p4', 'p5', '_sample-core'];
+export const CORE_PACK_IDS: readonly string[] = ['p23', 'p4', 'p5', 'en-pre', '_sample-core'];
 /** 共有データのディレクトリ名（src/packs/_data） */
 export const SHARED_DATA_DIR = '_data';
 /** 見本パック（VITE_MNW_SAMPLE_PACKS=1 のときだけビルドに入る）の接頭辞 */
@@ -51,14 +51,31 @@ function toPosix(p: string): string {
   return p.replaceAll('\\', '/');
 }
 
+/** モジュール ID がパックの入口（src/packs/<packId>/index.ts）なら packId を返す（共有データは除く） */
+export function packEntryId(moduleId: string | null | undefined): string | null {
+  if (!moduleId || moduleId.startsWith('\0')) return null;
+  const id = toPosix(moduleId.split('?')[0] ?? moduleId);
+  const m = /\/src\/packs\/([^/]+)\/index\.ts$/.exec(id);
+  if (!m || m[1] === SHARED_DATA_DIR) return null;
+  return m[1]!;
+}
+
 /**
  * codeSplitting（旧 manualChunks）の名前の関数。モジュール ID から、パックのチャンク名を返す（対象外は null）。
- *  - src/packs/<packId>/**            → packs/<packId>/<packId>   （出力: assets/packs/<packId>/<packId>-<hash>.js）
+ *  - src/packs/<packId>/index.ts      → null（入口は自分だけの動的 import のチャンクにする。下記）
+ *  - src/packs/<packId>/** の残り     → packs/<packId>/<packId>   （出力: assets/packs/<packId>/<packId>.js）
  *  - src/packs/_data/<path>.<ext>     → packs/_data/<path>         （1 ファイル 1 チャンク）
  *  - src/packs/loader.ts など直下のファイル → null（コア）
+ *
+ * 入口をグループに入れない理由: グループのチャンクに入った動的 import 先は、rolldown が名前空間
+ * オブジェクトを作って返す。その補助関数（__export）が本体の hash 付きチャンクに置かれ、パックが
+ * それを import するため、本体を更新するとパックの内容（packs.json の hash）も変わっていた。
+ * 入口だけを独立したチャンク（packChunkFileName: assets/packs/<packId>/index.js）にすると、
+ * そのチャンクは `export { x as default }` をそのまま持ち、名前空間も補助関数も要らない。
  */
 export function packChunkName(moduleId: string): string | null {
   if (moduleId.startsWith('\0')) return null;
+  if (packEntryId(moduleId)) return null;
   const id = toPosix(moduleId.split('?')[0] ?? moduleId);
   const m = /\/src\/packs\/([^/]+)\/(.+)$/.exec(id);
   if (!m) return null;
@@ -66,6 +83,17 @@ export function packChunkName(moduleId: string): string | null {
   const rest = m[2]!;
   if (dir === SHARED_DATA_DIR) return `packs/${SHARED_DATA_DIR}/${rest.replace(/\.[^./]+$/, '')}`;
   return `packs/${dir}/${dir}`;
+}
+
+/**
+ * chunkFileNames の関数。パックの入口・パックのグループ・pack-runtime は hash を付けない固定名
+ * （版は packs.json の内容 hash で管理する）。それ以外は本体として hash 付き。
+ */
+export function packChunkFileName(chunk: { name: string; facadeModuleId: string | null }): string {
+  const entry = packEntryId(chunk.facadeModuleId);
+  if (entry) return `assets/packs/${entry}/index.js`;
+  if (chunk.name === 'pack-runtime' || chunk.name.startsWith('packs/')) return 'assets/[name].js';
+  return 'assets/[name]-[hash].js';
 }
 
 export interface ManifestChunk {
@@ -92,8 +120,8 @@ export type PackIndex = Record<string, PackIndexEntry>;
 
 /**
  * 出力ファイルがパック自身のチャンクなら packId を返す（assets/packs/<packId>/…。共有データは除く）。
- * パックの入口のモジュールは codeSplitting のグループに入るため、manifest のキーはソースのパスではなく
- * チャンク名（例 `_g1-math-<hash>.js`）になる。そのため出力ファイルの場所で判定する。
+ * パックの入口（assets/packs/<packId>/index.js）の manifest のキーはソースのパスだが、グループの
+ * チャンクのキーはチャンク名（例 `_g1-math.js`）になる。そのため出力ファイルの場所で判定する。
  */
 export function packIdOfFile(file: string): string | null {
   const m = /^assets\/packs\/([^/]+)\//.exec(toPosix(file));
@@ -218,9 +246,16 @@ export interface PrecacheEntry {
 }
 
 export interface VersionInfo {
+  /** Service Worker の版ID（プリキャッシュの内容のハッシュ）。アプリの版の番号ではない */
   version: string;
   fileCount: number;
   totalBytes: number;
+  /**
+   * アプリの版の番号（package.json の version。例 "2.1.0"）。finalizeDist の options.appVersion を渡したときだけ出る。
+   * リリースの作成（scripts/package-release.ts）と配信（serve.py）の自己検査が、dist と版の番号の食い違いを見つけるために使う。
+   * 版IDの計算には入れない（version.json はプリキャッシュに入らない）。
+   */
+  appVersion?: string;
 }
 
 export const SW_FILE = 'sw.js';
@@ -302,6 +337,18 @@ export async function transpileServiceWorker(sourcePath: string = SW_SOURCE): Pr
 export interface FinalizeOptions {
   /** SW のソース（テスト用に差し替え可能） */
   swSourcePath?: string;
+  /** アプリの版の番号。あれば version.json の appVersion に書く（無ければ欄を出さない） */
+  appVersion?: string;
+}
+
+/** package.json の version（文字列）を読む。ビルドのとき dist/version.json の appVersion に入れる */
+export async function readAppVersion(root: string): Promise<string> {
+  const file = path.join(root, 'package.json');
+  const pkg = JSON.parse(await readFile(file, 'utf8')) as { version?: unknown };
+  if (typeof pkg.version !== 'string' || pkg.version === '') {
+    throw new Error(`${file} に version（文字列）がありません`);
+  }
+  return pkg.version;
 }
 
 /** dist の manifest を読む（無ければ null。Vite 以外で作った dist やテスト用の dist） */
@@ -368,6 +415,7 @@ export async function finalizeDist(
     'utf8',
   );
   const info: VersionInfo = { version, fileCount: entries.length, totalBytes };
+  if (options.appVersion !== undefined) info.appVersion = options.appVersion;
   await writeFile(path.join(distDir, VERSION_FILE), `${JSON.stringify(info, null, 2)}\n`, 'utf8');
   return info;
 }
@@ -418,9 +466,9 @@ function swPlugin(): Plugin {
       async handler() {
         if (!config || !written) return;
         const distDir = path.resolve(config.root, config.build.outDir);
-        const info = await finalizeDist(distDir);
+        const info = await finalizeDist(distDir, { appVersion: await readAppVersion(config.root) });
         config.logger.info(
-          `[mnw-precache] version ${info.version}: ${info.fileCount} files, ${(info.totalBytes / 1024).toFixed(1)} KiB`,
+          `[mnw-precache] version ${info.version} (app ${info.appVersion}): ${info.fileCount} files, ${(info.totalBytes / 1024).toFixed(1)} KiB`,
         );
         const manifest = await readManifest(distDir);
         if (manifest) {

@@ -57,7 +57,7 @@ export function buildRound(unit: UnitSpec, opt: RoundOptions): Item[] {
 }
 
 /** その段階の問題。無ければ近い下の段階、それも無ければ近い上の段階 */
-function poolFor(items: Item[], level: number): Item[] {
+export function poolFor(items: Item[], level: number): Item[] {
   for (let d = 0; d <= 20; d++) {
     const lower = items.filter((it) => it.level === level - d);
     if (lower.length > 0) return lower;

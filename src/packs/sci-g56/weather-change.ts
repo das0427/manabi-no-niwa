@@ -21,7 +21,7 @@ function cloudMap(x: number, label: string): Figure {
     '<polygon points="40,132 70,124 110,114 150,104 190,90 225,70 255,46 275,36 290,48 262,74 230,96 192,112 150,124 110,134 70,142 44,146" fill="var(--leaf)" stroke="var(--ink)" stroke-width="3.5" stroke-linejoin="round"/>';
   const cloud = `<g fill="var(--white)" stroke="var(--ink)" stroke-width="3"><ellipse cx="${x - 22}" cy="92" rx="26" ry="18"/><ellipse cx="${x + 18}" cy="88" rx="30" ry="22"/><ellipse cx="${x}" cy="74" rx="24" ry="18"/></g>`;
   return svg(
-    `<svg viewBox="0 0 320 170" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="316" height="166" rx="10" fill="var(--sky)" stroke="var(--ink)" stroke-width="3"/>${land}${cloud}</svg>`,
+    `<svg viewBox="0 30 320 120" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="32" width="316" height="116" rx="10" fill="var(--sky)" stroke="var(--ink)" stroke-width="3"/>${land}${cloud}</svg>`,
     label,
   );
 }
@@ -123,6 +123,7 @@ const cloud: Item[] = [
     ],
     explain:
       '雲《くも》の 量《りょう》・形《かたち》・動《うご》きを きろく すると、天気《てんき》の 変化《へんか》が わかるよ。',
+    layout: 'grid',
   }),
   choice({
     id: 'cl-rule',
@@ -142,6 +143,7 @@ const cloud: Item[] = [
     ],
     explain:
       '雨《あめ》が ふって いれば、雲《くも》の 量《りょう》に かかわらず 天気《てんき》は 雨《あめ》だよ。',
+    layout: 'grid',
   }),
   // 別例
   sort({
@@ -280,7 +282,6 @@ const move: Item[] = [
       '図《ず》は きのうの 雲《くも》の ようす（れい。左《ひだり》が 西《にし》、右《みぎ》が 東《ひがし》）。きょうは どう なって いる ことが 多《おお》い？',
     figure: W,
     right: '雲《くも》が まん中《なか》の あたりに 動《うご》いて いる',
-    rightFigure: M,
     wrongs: [
       ['雲《くも》が 西《にし》の まま 動《うご》かない', 'wc-same-time'],
       ['雲《くも》が もっと 西《にし》の 海《うみ》に 動《うご》いて いる', 'wc-east-west'],
@@ -340,14 +341,14 @@ const move: Item[] = [
     alt: true,
     prompt:
       '3まいの 雲《くも》の 図《ず》（れい。左《ひだり》が 西《にし》、右《みぎ》が 東《ひがし》）の うち、いちばん 早《はや》い 日《ひ》の ものは どれ？',
-    right: '雲《くも》が 西《にし》の ほうに ある 図《ず》',
+    right: '西《にし》の ほう',
     rightFigure: W,
     wrongs: [
-      ['雲《くも》が 東《ひがし》の ほうに ある 図《ず》', 'wc-east-west'],
-      ['雲《くも》が まん中《なか》の あたりに ある 図《ず》', 'wc-same-time'],
+      ['東《ひがし》の ほう', 'wc-east-west'],
+      ['まん中《なか》', 'wc-same-time'],
     ],
     wrongFigures: [E, M],
-    layout: 'column',
+    layout: 'row',
     hints: [
       '雲《くも》は 西《にし》から 東《ひがし》へ 動《うご》くね。',
       'はじめに 雲《くも》が あるのは どちらの はしかな。',
@@ -389,10 +390,10 @@ const move: Item[] = [
     obj: 'move',
     level: 2,
     alt: true,
-    prompt: 'ことばで まとめよう。正《ただ》しい のは どれ？',
-    figure: text('雲《くも》の 動《うご》きと 天気《てんき》'),
+    prompt:
+      'ことばで まとめよう。雲《くも》の 動《うご》きと 天気《てんき》で、正《ただ》しい のは どれ？',
     right:
-      '雲《くも》が 西《にし》から 東《ひがし》へ 動《うご》くので、天気《てんき》も 西《にし》から 東《ひがし》へ かわる ことが 多《おお》い',
+      '雲《くも》が 西《にし》から 東《ひがし》へ 動《うご》くので、天気《てんき》も 西《にし》から かわる ことが 多《おお》い',
     wrongs: [
       [
         '雲《くも》は 動《うご》かないので、天気《てんき》は その 場所《ばしょ》で きまる',
@@ -552,6 +553,7 @@ const predict: Item[] = [
     ],
     explain:
       '雲《くも》は 西《にし》から 東《ひがし》へ 動《うご》くので、明日《あした》は 東《ひがし》（右《みぎ》）の ほうが 雨《あめ》に なりそうだよ。',
+    layout: 'grid',
   }),
   order({
     id: 'pr-alt-order',

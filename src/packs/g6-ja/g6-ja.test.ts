@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
-import { parseRich, type Token } from '../../text/rich';
+import { parseRich, plainText, spacedLabel, type Token } from '../../text/rich';
 import pack from './index';
 
 const GRADE = 6;
@@ -38,6 +38,8 @@ const ALLOWED_OVER: Record<string, string> = {
   'g6.ja.classics-read': '翁枕鐘響暁眠及丈随々',
   // 根拠《こんきょ》（単元の用語。指導要領の語。よみ付き）
   'g6.ja.write-opinion': '拠',
+  // 6年より上の字は使わない設計（足りなければ字をかなに直す）
+  'g6.ja.language-change': '',
 };
 
 function extraChecks(unit: UnitSpec): string[] {
@@ -101,4 +103,30 @@ describe('g6-ja の教材検査（curriculum-matrix 1.8）', () => {
       );
     });
   }
+});
+
+/**
+ * 単元の題は文でなく、単元の地図・ホームの札の見出し（札の題の幅は 13u ほど）。文節で折る自動の折り方
+ * （auto-phrase）では、ふりがなの付く漢字の前後の 1 字が漢字と同じ nowrap にまとまり、「、」が行頭に来たり
+ * 「方／言」のように語の途中で折れたりした（text-layout-fixes 第7回 5.）。そういう題は「、」をやめて文節の切れ目に空白を入れ、
+ * 空白でだけ折る札にする（spacedLabel。AppLabel が data-spaced を付ける。g3-ja・g4-ja と同じ）。
+ * 空白を入れるなら空白の数 × 12 ≧ 字数（足りないと data-phrase のままで、空白は折る所にならない）。
+ * 空白で区切ったまとまりに「、」「。」を残すと、「、」が行末からはみ出す（札の内側は 2u の字で 6 字ほど）。
+ */
+function titleSpaceErrors(units: readonly UnitSpec[]): string[] {
+  const errs: string[] = [];
+  for (const u of units) {
+    if (u.status === 'planned') continue;
+    const t = plainText(u.title);
+    if (!/\p{Zs}/u.test(t)) continue;
+    if (!spacedLabel(u.title)) errs.push(`${u.id}: 空白が少ない（空白の数 × 12 < 字数）: ${t}`);
+    if (/[、。]/u.test(t)) errs.push(`${u.id}: 空白で区切った題に「、」「。」: ${t}`);
+  }
+  return errs;
+}
+
+describe('g6-ja の単元の題（text-layout-fixes 第7回 5.）', () => {
+  it('空白を入れた題は空白でだけ折る札になる（spacedLabel）', () => {
+    expect(titleSpaceErrors(pack.units)).toEqual([]);
+  });
 });

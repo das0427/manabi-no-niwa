@@ -102,7 +102,7 @@ function intdec(level: number, rng: Rng, alt: boolean): Item {
       explain: `${as} × ${bs} ＝ ${as} × ${b.v} ÷ 10 ＝ ${ans}。代金は ${ans}円です。`,
       identity: `intdec-ribbon:${as}x${bs}`,
       alt: true,
-      fields: [{ label: '円', answer: answers[0]! }],
+      fields: [{ unit: '円', answer: answers[0]! }],
       keys: ['decimal'],
       wrongAnswers: wrongs,
     };
@@ -322,7 +322,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${as} × ${bs} ＝ ${ans}。答えは ${ans}${sc.unit}です。`,
     identity: `story:${sc.id}:${as}x${bs}${alt ? ':tbl' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       ...wrongs.map((w): [string, string] => [w.value, w.misconception]),

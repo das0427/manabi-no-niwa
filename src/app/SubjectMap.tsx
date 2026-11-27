@@ -13,8 +13,11 @@ import { visibleUnits } from '../curriculum/unitIndex';
 import { Illust } from '../illust/Illust';
 import { Rt } from '../text/Rt';
 import { plainText } from '../text/rich';
+import { AppLabel } from '../ui/AppLabel';
 import { ModeHeader } from '../ui/ModeHeader';
+import { ScrollList } from '../ui/ScrollList';
 import { useApp } from './AppState';
+import { ownStage } from './Explore';
 import { navigate } from './router';
 import './subject-map.css';
 
@@ -94,10 +97,16 @@ export function SubjectMap({ subject, grade: gradeParam }: { subject: string; gr
     { id: 'other', name: 'そのほか', units: units.filter((u) => !known.has(u.domain)) },
   ].filter((c) => c.units.length > 0);
 
+  // 表示している学年の段階。題の折り方（AppLabel）と --text-min（app-label.css の data-stage）が使う
+  const stage = `g${grade}` as StageId;
+  // 見ている子供の区分。幼児が「ほかの がくねん」からのぞくときは ▲▼ の札が出る（ScrollList）
+  const viewer = ownStage(profileAudience(profile), profile.enrolledGrade ?? undefined);
+
   return (
     <div
       className="screen subject-map"
       data-testid={`subject-map-${subject}`}
+      data-stage={stage}
       style={{ ['--subj' as string]: def.color }}
     >
       <ModeHeader
@@ -129,7 +138,13 @@ export function SubjectMap({ subject, grade: gradeParam }: { subject: string; gr
           </button>
         ))}
       </div>
-      <div className="smap-columns">
+      <ScrollList
+        viewer={viewer}
+        className="smap-columns"
+        bodyClassName="smap-columns__body"
+        label="たんげん"
+        testId="smap-columns"
+      >
         {columns.length === 0 ? (
           <p className="label-text smap-empty" data-testid="smap-empty">
             この がくねんの たんげんは じゅんびちゅう だよ
@@ -150,17 +165,17 @@ export function SubjectMap({ subject, grade: gradeParam }: { subject: string; gr
                   data-testid={`unit-card-${u.id}`}
                   data-mark={mark}
                 >
-                  <Illust id={u.icon} className="smap-unit__illust" decorative />
-                  <span className="smap-unit__title">
-                    <Rt text={u.title} ctx={ctx} />
+                  <span className="smap-unit__icon">
+                    <Illust id={u.icon} className="smap-unit__illust" decorative />
+                    <MarkIcon mark={mark} />
                   </span>
-                  <MarkIcon mark={mark} />
+                  <AppLabel text={u.title} stage={stage} ctx={ctx} className="smap-unit__title" />
                 </button>
               );
             })}
           </section>
         ))}
-      </div>
+      </ScrollList>
     </div>
   );
 }

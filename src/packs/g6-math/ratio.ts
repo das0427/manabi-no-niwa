@@ -10,6 +10,7 @@ import type { ChoiceItem, Item, NumberItem, UnitSpec } from '../../curriculum/ty
 import {
   dec,
   expr,
+  exprPair,
   finishUnit,
   fr,
   fracAns,
@@ -287,7 +288,7 @@ function simplifyItem(level: number, rng: Rng, alt: boolean): NumberItem {
       objective: 'simplify',
       level,
       prompt: `${shown} を、いちばん 小さい 整数の 比に しよう。`,
-      figure: expr(`${shown} ＝ {{}} : {{}}`),
+      figure: exprPair(`${shown} ＝ {{}} : {{}}`),
       hints,
       explain,
       identity: `simplify:${key}`,
@@ -304,7 +305,7 @@ function simplifyItem(level: number, rng: Rng, alt: boolean): NumberItem {
     objective: 'simplify',
     level,
     prompt: `${shown} を、いちばん 小さい 整数の 比に しよう。`,
-    figure: expr(`${shown} ＝ {{}} : {{}}`),
+    figure: exprPair(`${shown} ＝ {{}} : {{}}`),
     hints,
     explain,
     identity: `simplify:${key}`,
@@ -450,7 +451,7 @@ function applyItem(level: number, rng: Rng, alt: boolean): NumberItem {
         : `${a} : ${b} ＝ □ : ${v}。${b} × ${m} ＝ ${v}なので、□ ＝ ${a} × ${m} ＝ ${ans}（${sc.unit}）。`,
     identity: `use:${sc.id}:${a}:${b}:${v}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer }],
+    fields: [{ unit: sc.unit, answer }],
     wrongAnswers: wrongList(
       [answer],
       sc.type === 'whole'

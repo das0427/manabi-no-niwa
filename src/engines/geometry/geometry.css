@@ -69,7 +69,7 @@
   stroke-dasharray: 8 7;
 }
 .geo-name {
-  font-size: 26px;
+  font-size: max(26px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
 }
@@ -94,13 +94,13 @@
   stroke-width: 1.2;
 }
 .geo-plabel {
-  font-size: 16px;
+  font-size: max(16px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .geo-plabel--in {
-  font-size: 13px;
+  font-size: max(13px, var(--svg-floor, 0px));
   fill: var(--ink-soft);
 }
 .geo-ray {
@@ -117,7 +117,7 @@
   fill: var(--ink);
 }
 .geo-deg {
-  font-size: 30px;
+  font-size: max(30px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;

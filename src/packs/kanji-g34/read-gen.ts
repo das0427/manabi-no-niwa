@@ -136,7 +136,10 @@ export function makeReadModel(cfg: ReadConfig): ReadModel {
       size: isWord ? FIGURE_SIZE.word : FIGURE_SIZE.sentence,
     },
     explain: explainOf(entry, occ, isWord),
-    explainFigure: { kind: 'text' as const, text: occ.shown, size: 'l' as const },
+    // 文は解説の本文の1行目に出して読み上げるので、図には重ねない（図と本文の2重で解説の板からはみ出していた。kanji-g12 と同じ）
+    ...(isWord
+      ? { explainFigure: { kind: 'text' as const, text: occ.shown, size: 'l' as const } }
+      : {}),
     identity: identityOf(entry, occ),
     ...(alt ? { alt: true as const } : {}),
   });

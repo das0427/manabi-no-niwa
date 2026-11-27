@@ -163,6 +163,16 @@ describe('書き出しと読み込み', () => {
     expect(ps[0]?.id).toBe(file.data.profiles[0]?.id);
     expect(await listAttempts(ps[0]!.id)).toHaveLength(1);
   });
+
+  it('おえかきで描く手（2.1.0〜の設定）が書き出し・読み込みで戻る', async () => {
+    const p = await seed('はな');
+    await saveSettings({ ...(await getSettings(p.id)), drawingHand: 'left' });
+    const file = parseOk(await exportBackup({ kind: 'all' }, '2.1.0'));
+    expect(file.data.settings[0]?.drawingHand).toBe('left');
+    const r = await importBackup(file, 'add');
+    const added = (await listProfiles()).find((x) => x.name === r.addedProfiles[0]);
+    expect((await getSettings(added!.id)).drawingHand).toBe('left');
+  });
 });
 
 describe('parseBackup', () => {
@@ -190,7 +200,7 @@ describe('parseBackup', () => {
     const newer = JSON.stringify({ ...j, schemaVersion: SCHEMA_VERSION + 1 });
     const res = parseBackup(newer, newer.length);
     expect(res.ok).toBe(false);
-    if (!res.ok) expect(res.reason).toContain('新しい版');
+    if (!res.ok) expect(res.reason).toContain('新しいバージョン');
   });
 
   it('型不正（名前が長すぎ・outcome 不正・孤立レコード・メモ長すぎ）を拒否', async () => {

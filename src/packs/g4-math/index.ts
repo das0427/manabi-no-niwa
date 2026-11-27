@@ -1,4 +1,5 @@
 import type { PackContent } from '../../curriculum/types';
+import { abacus } from './abacus';
 import { okuCho } from './oku-cho';
 import { rounding } from './rounding';
 import { div1digit } from './div-1digit';
@@ -39,6 +40,7 @@ const pack: PackContent = {
     ratioIntro,
     lineGraph,
     twoWayTable,
+    abacus,
   ],
 };
 

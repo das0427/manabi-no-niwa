@@ -91,7 +91,10 @@ test('E-08 プロフィール2つ: それぞれで遊び、記録が混ざらな
     (p) => p.name === 'はな',
   )!;
   expect(b.id).not.toBe(a.id);
+  // 2人になったので、「こどもの画面へ」は「だれが あそぶ？」を出す（FX09）。いままで遊んでいた A を選ぶ
   await page.getByTestId('parent-to-child').click();
+  await expect(page.getByTestId('profile-picker')).toBeVisible();
+  await page.getByRole('button', { name: a.name }).click();
   await expect(page.getByTestId('home')).toBeVisible();
 
   // A で おかいもの
@@ -102,7 +105,9 @@ test('E-08 プロフィール2つ: それぞれで遊び、記録が混ざらな
   await page.getByTestId('parent-profile-select').selectOption({ label: 'はな' });
   await expect(page.getByTestId('tab-records')).toBeVisible();
   await expect(page.getByText('まだ記録がありません')).toBeVisible();
+  // 見るだけでは遊ぶ人は替わらない。「だれが あそぶ？」で B（はな）を選ぶ
   await page.getByTestId('parent-to-child').click();
+  await page.getByRole('button', { name: 'はな' }).click();
   await expect(page.getByTestId('home')).toBeVisible();
   await expect(page.locator('.home-profile')).toContainText('はな');
   await playOnce(page, 'math', 'add');

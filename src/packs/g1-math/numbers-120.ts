@@ -1,5 +1,5 @@
 /**
- * g1.math.numbers-120 100までの かずと 120くらいまでの かず（2けたの かずの あらわしかた）（curriculum-matrix 3.4）。
+ * g1.math.numbers-120 100までの かず・120くらいの かず（2けたの かずの あらわしかた）（curriculum-matrix 3.4）。
  *
  * 同一性キー（1.4）: 数と表し方の組。
  *   10の たばと ばら: 21〜100（ブロック）／ことばで、
@@ -12,7 +12,7 @@ import type { Rng } from '../../core/util/rng';
 import type { Figure } from '../../engines/figure/types';
 import type { NumberlineItem } from '../../engines/numberline/numberline';
 import type { ChoiceItem, ChoiceOption, Item, NumberItem, UnitSpec } from '../../curriculum/types';
-import { REVISED, countUpHint, expr, pickFrom } from './util';
+import { REVISED, countUpHint, expr, pickFrom, tenBars } from './util';
 
 type Obj = 'tabane' | 'kurai' | 'nl' | 'over100' | 'daishou';
 
@@ -30,9 +30,7 @@ export function kanaOf(n: number): string {
 }
 
 function blk(n: number): Figure {
-  if (n >= 100)
-    return { kind: 'blocks', hundreds: 1, tens: Math.floor((n - 100) / 10), ones: n % 10 };
-  return { kind: 'blocks', tens: Math.floor(n / 10), ones: n % 10 };
+  return tenBars(n);
 }
 
 interface NumSpec {
@@ -117,7 +115,7 @@ function tabane(level: number, rng: Rng, alt: boolean): Item {
     obj: 'tabane',
     level,
     prompt: 'ブロックは いくつ？',
-    figure: { kind: 'blocks', tens: t, ones: o },
+    figure: tenBars(n),
     answer: n,
     wrongs: twoDigitWrongs(t, o),
     hints: [
@@ -195,7 +193,7 @@ function kurai(level: number, rng: Rng, alt: boolean): Item {
     objective: 'kurai',
     level,
     prompt: `${n}の じゅうの くらいと いちの くらいの すうじは？`,
-    figure: { kind: 'column', items: [expr(String(n)), blk(n)] },
+    figure: { kind: 'row', items: [expr(String(n)), blk(n)], gap: 4 },
     hints: [
       'ひだりの すうじが じゅうの くらい、みぎの すうじが いちの くらい だよ。',
       `ブロックで みると、10の ぼうが ${t}ほん あるね。`,
@@ -508,7 +506,7 @@ export function generateNumbers120(level: number, rng: Rng, index: number): Item
 
 export const numbers120: UnitSpec = {
   id: 'g1.math.numbers-120',
-  title: '100までの かず・120くらいまでの かず',
+  title: '100までの かず・120くらいの かず',
   stage: 'g1',
   subject: 'math',
   domain: 'A-number',
@@ -540,7 +538,7 @@ export const numbers120: UnitSpec = {
       id: 'ten-as-one',
       explain:
         '10の まとまりを 1こと かぞえたのかな。ぼう 1ぽんは 10 だよ。10、20、30 と かぞえよう。',
-      figure: { kind: 'blocks', tens: 1, ones: 0 },
+      figure: tenBars(10),
     },
     {
       id: 'zero-place',
@@ -595,7 +593,7 @@ export const numbers120: UnitSpec = {
       figure: {
         kind: 'column',
         items: [
-          { kind: 'blocks', tens: 4, ones: 7 },
+          tenBars(47),
           { kind: 'table', header: ['じゅうの くらい', 'いちの くらい'], rows: [['4', '7']] },
         ],
       },

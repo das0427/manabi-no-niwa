@@ -197,7 +197,7 @@ function item(level: number, e: Expr, sc: Scene | null): NumberItem {
     explain: `${text(e)} は、まず ${e.a} ${sym(o1)} ${e.b} ＝ ${m}、つぎに ${m} ${sym(o2)} ${e.c} ＝ ${r}。こたえは ${r}${sc ? sc.unit : ''} です。`,
     identity: key(e),
     alt,
-    fields: [{ answer: { kind: 'int', value: r }, label: sc?.unit }],
+    fields: [{ answer: { kind: 'int', value: r }, unit: sc?.unit }],
     wrongAnswers: wrongs(e),
   };
 }

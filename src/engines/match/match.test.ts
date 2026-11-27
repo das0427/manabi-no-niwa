@@ -166,6 +166,16 @@ describe('画面', () => {
     disabled: false,
     submit: vi.fn(),
   });
+  it('こたえあわせは下の帯の位置（band）。むすんだ組の番号の丸は札の中の左（字は丸の右）', () => {
+    const { container } = render(createElement(matchEngine.Component, props()));
+    expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+    const check = screen.getByTestId('check');
+    expect(check.classList.contains('tk-check--band')).toBe(true);
+    expect(check.classList.contains('eng-check')).toBe(true);
+    fireEvent.click(screen.getByTestId('left-0'));
+    fireEvent.click(screen.getByTestId('right-1'));
+    expect(screen.getByTestId('left-0').querySelector(':scope > .tk-badge')).not.toBeNull();
+  });
   it('上→下、下→上 のどちらでもむすべて、むすび直せる', () => {
     const p = props();
     render(createElement(matchEngine.Component, p));
@@ -210,5 +220,12 @@ describe('画面', () => {
       [0, 1],
       [1, 2],
     ]);
+  });
+});
+
+describe('「もう一度」の文（2.1.0 の文言の点検 A8）', () => {
+  it('むすび終えていないとき: 線でむすぶ問題なので「むすんで」と言う（「おいて」は order・sort の文）', () => {
+    const j = judgeMatch(item(), [[0, 1]]);
+    expect(j).toEqual({ result: 'retry', message: 'ぜんぶ むすんでから こたえあわせ しよう。' });
   });
 });

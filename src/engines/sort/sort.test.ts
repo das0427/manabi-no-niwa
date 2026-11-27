@@ -162,6 +162,55 @@ describe('画面', () => {
     fireEvent.click(screen.getByTestId('check'));
     expect(p.submit).toHaveBeenCalledWith([0, 1, 0, 1]);
   });
+  it('こたえあわせは下の帯の位置（band）。文の札は 5枚で2列・6枚以上で3列（札の列は作業領域の幅いっぱい）', () => {
+    const long = (n: number): SortItem => ({
+      ...item(),
+      cards: Array.from({ length: n }, (_, i) => ({
+        label: `とても ながい ぶんの カード ${i + 1}`,
+        box: i % 2,
+      })),
+    });
+    const poolOf = (n: number) => {
+      const { container, unmount } = render(
+        createElement(sortEngine.Component, { ...props(), item: long(n) }),
+      );
+      const pool = container.querySelector('.eng-sort__pool')!;
+      const out = [...pool.classList];
+      expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+      const check = screen.getByTestId('check');
+      // unit.css の :has(.eng-check) が吹き出しの右端を避けるための印
+      expect(check.classList.contains('tk-check--band')).toBe(true);
+      expect(check.classList.contains('eng-check')).toBe(true);
+      unmount();
+      return out;
+    };
+    expect(poolOf(4)).not.toContain('eng-sort__pool--cols');
+    expect(poolOf(5)).toContain('eng-sort__pool--cols');
+    expect(poolOf(5)).not.toContain('eng-sort__pool--cols3');
+    expect(poolOf(6)).toContain('eng-sort__pool--cols3');
+  });
+  it('解説（revealed）では、空の札置き場を出さない。問題の状態では、札を入れ終わっても高さを残す', () => {
+    const p = props();
+    const q = render(createElement(sortEngine.Component, p));
+    expect(q.container.querySelector('.eng-sort__pool')).not.toBeNull();
+    // 全部の札を箱に入れても、札置き場（高さの確保）は残る
+    for (const [c, b] of [
+      [0, 0],
+      [1, 1],
+      [2, 0],
+      [3, 1],
+    ] as const) {
+      fireEvent.click(screen.getByTestId(`card-${c}`));
+      fireEvent.click(screen.getByTestId(`box-${b}`));
+    }
+    expect(q.container.querySelector('.eng-sort__pool')).not.toBeNull();
+    expect(q.container.querySelectorAll('.eng-sort__pool .tk-card')).toHaveLength(0);
+    q.unmount();
+    // 解説: 札は全部、正しい箱の中。札置き場は描かない
+    const r = render(createElement(sortEngine.Component, { ...p, revealed: true }));
+    expect(r.container.querySelector('.eng-sort__pool')).toBeNull();
+    expect(r.container.querySelectorAll('.eng-sort__inside .tk-card')).toHaveLength(4);
+  });
   it('2〜3歳: 少ない枚数で、入れ終わると自動で答える', () => {
     const p = props(ctxFor('toddler2'));
     render(createElement(sortEngine.Component, p));

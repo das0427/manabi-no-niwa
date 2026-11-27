@@ -198,24 +198,29 @@ export interface SortSpec {
 }
 
 /**
- * 画面の作業領域（箱 13u ＋ カードの段 7u ずつ）に入るよう、カードは 少なく（2つの箱なら 2枚ずつ）・
- * 文字の少ないものを えらんで出す（書いた順は保つ）。
+ * 画面の作業領域（箱 13u ＋ カードの段 7u ずつ）に入る、箱ごとのカードの枚数。
+ * 4つの箱なら 1枚ずつ、2つの箱なら 2枚ずつ（3つの箱は 1枚ずつ）。
  */
-function fitSortCards(s: SortSpec): SortSpec['cards'] {
-  const per = Math.max(1, Math.floor(4 / s.boxes.length));
-  const keep = new Set<number>();
-  s.boxes.forEach((_, b) => {
-    s.cards
-      .map((c, i) => ({ i, c }))
-      .filter((x) => x.c[1] === b)
-      .sort((a, z) => lenOf(a.c[0]) - lenOf(z.c[0]) || a.i - z.i)
-      .slice(0, per)
-      .forEach((x) => keep.add(x.i));
+export const sortCardsPerBox = (boxCount: number): number => Math.max(1, Math.floor(4 / boxCount));
+
+/**
+ * 書いたカードが 画面に入る枚数を こえていたら 例外にする。
+ * 以前は 入らない分を 黙って減らしていたため、解説が 画面に出ていない札の名前を言う食い違いが出た
+ * （第8回）。減らさず、出す札だけを `cards` に書き、解説もその札だけで言う。
+ */
+function assertSortFits(s: SortSpec): void {
+  const per = sortCardsPerBox(s.boxes.length);
+  s.boxes.forEach((name, b) => {
+    const n = s.cards.filter((c) => c[1] === b).length;
+    if (n > per)
+      throw new Error(
+        `sort ${s.id}: 箱「${name}」のカードが ${n} 枚（${s.boxes.length} つの箱は ${per} 枚まで。画面に入らない）`,
+      );
   });
-  return s.cards.filter((_, i) => keep.has(i));
 }
 
 export function sortItem(s: SortSpec): SortItem {
+  assertSortFits(s);
   return {
     engine: 'sort',
     id: s.id,
@@ -223,7 +228,7 @@ export function sortItem(s: SortSpec): SortItem {
     level: s.level,
     prompt: s.prompt,
     boxes: s.boxes.map((label) => ({ label })),
-    cards: fitSortCards(s).map(([label, box, figure]) => ({
+    cards: s.cards.map(([label, box, figure]) => ({
       label,
       ...(figure ? { figure } : {}),
       box,

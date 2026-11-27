@@ -39,7 +39,7 @@ function boxFig(d: Dims): Figure {
       {
         kind: 'svg',
         label: 'はこ',
-        markup: `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${front}${top}${side}</svg>`,
+        markup: `<svg viewBox="0 0 ${W} ${H}" style="width:calc(var(--u) * ${((W / k) * 1.4).toFixed(2)})" xmlns="http://www.w3.org/2000/svg">${front}${top}${side}</svg>`,
       },
       {
         kind: 'column',
@@ -53,13 +53,18 @@ function boxFig(d: Dims): Figure {
   };
 }
 
-/** 面（長方形）の絵 */
+/**
+ * 面（長方形）の絵。幅は style で 1cm = 1.4u（6cm でも 9u 弱）に決める。
+ * 幅の無い図は 23u に広がる（下限）ので、2cm × 6cm の面は 23u × 69u になり、
+ * 選択肢4つの縦が 76u・作業領域が 13.6u 足りなかった（n=1）。
+ */
 function faceFig(w: number, h: number): Figure {
   const k = 12;
+  const wu = ((w * k + 8) / k) * 1.4;
   return {
     kind: 'svg',
     label: `${w}cmと ${h}cmの めん`,
-    markup: `<svg viewBox="0 0 ${w * k + 8} ${h * k + 8}" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="${w * k}" height="${h * k}" fill="var(--sky)" ${S}/></svg>`,
+    markup: `<svg viewBox="0 0 ${w * k + 8} ${h * k + 8}" style="width:calc(var(--u) * ${wu.toFixed(2)})" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="${w * k}" height="${h * k}" fill="var(--sky)" ${S}/></svg>`,
   };
 }
 

@@ -167,3 +167,60 @@ describe('g2-math レビューA: ヒントの最後の段が答えを言わな�
     }
   });
 });
+
+describe('g2-math 第8回: 単位は unit・まとまりの図', () => {
+  it('単位の語（こずつ・れつ・ばい・cm・mm・L・dL・mL・じ・ふん・じかん・こ）は label でなく unit に書く', () => {
+    const WORDS = new Set([
+      'こずつ',
+      'れつ',
+      'ばい',
+      'cm',
+      'mm',
+      'm',
+      'L',
+      'dL',
+      'mL',
+      'じ',
+      'ふん',
+      'じかん',
+      'こ',
+    ]);
+    for (const id of [
+      'sub-column',
+      'mult-meaning',
+      'mult-beyond',
+      'length',
+      'volume',
+      'time',
+      'fraction-simple',
+    ]) {
+      let units = 0;
+      for (const it of itemsOf(id, 60)) {
+        if (it.engine !== 'number') continue;
+        for (const f of it.fields) {
+          const label = typeof f.label === 'string' ? f.label.replace(/\s+/g, '') : '';
+          expect(WORDS.has(label), `${it.id}: label「${label}」は unit に`).toBe(false);
+          if (f.unit) units++;
+        }
+      }
+      // 単位の欄がある単元（mult-beyond・fraction-simple・sub-column は一部の問題だけ）
+      expect(units, id).toBeGreaterThan(0);
+    }
+  });
+
+  it('mult-meaning ikutsubun: まとまりの図は a こずつ b つ（● a×b 個・枠 b 個）で、答えの数と合う', () => {
+    let checked = 0;
+    for (const it of itemsOf('mult-meaning', 120)) {
+      if (it.engine !== 'number' || !it.id.startsWith('ikutsubun:') || it.alt) continue;
+      const [a, b] = numAnswer(it) as [number, number];
+      const fig = it.figure as { kind?: string; markup?: string } | undefined;
+      expect(fig?.kind, it.id).toBe('svg');
+      const circles = (fig!.markup!.match(/<circle /g) ?? []).length;
+      const rects = (fig!.markup!.match(/<rect /g) ?? []).length;
+      expect(circles, it.id).toBe(a * b);
+      expect(rects, it.id).toBe(b);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(10);
+  });
+});

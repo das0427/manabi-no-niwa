@@ -1,21 +1,22 @@
 /**
  * experiment エンジン: 実験のシミュレーション（理科。curriculum-matrix 2.6）。
  * 条件の値を札で選ぶ →「やってみる」で例示の結果（model.ts の単純な式・問題データの固定表）→ 結果の表に記録 → 設問。
- * 画面に「この アプリの せっていでは」と出し、実際の実験の代わりではないことを示す。
+ * 画面に「この アプリの せっていでは」（幼児の画面は「この あそびの せっていでは」）と出し、実際の実験の代わりではないことを示す。
  *
  * 設問（task）:
  *  consider … 考察の設問（choice と同じ判定）。minTrials 回やってみると「こたえる」が押せる
  *  reach    … 結果が target になる条件を作って答える（てこをつり合わせる・モーターを速く回す など）
  *  control  … 条件制御: factor だけを変えた2回の実験を記録して答える（2つ以上を同時に変えると誤り）
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { ChoiceOption, ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
-import { plainText } from '../../text/rich';
+import { plainText, spacedLabel } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { checkChoice } from '../choice/choice';
 import { Figure } from '../figure/Figure';
+import { observeResize, textMinPx, useFitWidth } from '../figure/svgText';
 import type { KitEngineDef, KitProps } from '../numberline/kit';
 import { kanjiErrors } from '../order/shared';
 import type { Judgement } from '../types';
@@ -87,6 +88,9 @@ export type ExperimentResponse = { pick: number[] } | { cond: Cond } | { trials:
 export const MIN_TRIALS_DEFAULT = 2;
 export const NOTE: RichText =
   'この アプリの せっていでは こう なるよ（じっけんの かわりでは ないよ）';
+/** 幼児の画面の注記（5歳の p5.env.predict）。DESINGN.md 4章でカタカナを使わないので「アプリ」を「あそび」にする（2.1.0 の文言の点検 A8） */
+export const NOTE_PRESCHOOL: RichText =
+  'この あそびの せっていでは こう なるよ（じっけんの かわりでは ないよ）';
 
 // ---- 判定 ----
 
@@ -393,12 +397,43 @@ function ResultTable({
   const fs = factorsOf(setup).filter((f) => f.values.length > 1);
   const shown = trials.slice(-3);
   const offset = trials.length - shown.length;
+  // 見出しは折らない（「水の／量」）。表が列に入らないときは表の文字を --text-min まで縮める（figure の表と同じ）。
+  // 最小まで縮めても入らない長い見出しだけは、空白のところで折る（折らないと列から切れて読めない）
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [wrap, setWrap] = useState(false);
+  const key = JSON.stringify([fs.map((f) => f.id), shown, output]);
+  useLayoutEffect(() => {
+    const t = tableRef.current;
+    const box = t?.parentElement;
+    if (!t || !box) return;
+    const check = () => {
+      const cs = getComputedStyle(box);
+      const avail =
+        box.clientWidth - parseFloat(cs.paddingLeft || '0') - parseFloat(cs.paddingRight || '0');
+      const keepFs = t.style.fontSize;
+      const keepWrap = t.dataset.wrap;
+      delete t.dataset.wrap;
+      t.style.fontSize = `${textMinPx(t)}px`;
+      const over = t.getBoundingClientRect().width > avail + 1;
+      t.style.fontSize = keepFs;
+      if (keepWrap !== undefined) t.dataset.wrap = keepWrap;
+      setWrap(over);
+    };
+    check();
+    return observeResize([box], check);
+  }, [key]);
+  useFitWidth(tableRef, `${key}${wrap}`, 'parent');
   return (
-    <table className="exp-table" data-testid="result-table">
+    <table
+      ref={tableRef}
+      className="exp-table"
+      data-wrap={wrap ? '' : undefined}
+      data-testid="result-table"
+    >
       <thead>
         <tr>
           {fs.map((f) => (
-            <th key={f.id} scope="col">
+            <th key={f.id} scope="col" className={shortHead(f.label) ? 'is-short' : undefined}>
               <Rt text={f.label} ctx={ctx} />
             </th>
           ))}
@@ -440,6 +475,11 @@ function ResultTable({
       </tbody>
     </table>
   );
+}
+
+/** 短い見出し（空白を除いて4字まで: 「水の 量」）。表が入らず折る方に回っても、これは折らない */
+function shortHead(label: RichText): boolean {
+  return plainText(label).replace(/\s/g, '').length <= 4;
 }
 
 function outputLabel(s: ExpSetup): RichText {
@@ -511,7 +551,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
       mode === 'setup' && !revealed ? (
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => setMode('answer')}
           disabled={locked || trials.length < minTrials}
           data-testid="to-answer"
@@ -534,7 +574,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
           {t.multi ? (
             <button
               type="button"
-              className="mk-btn mk-btn--ok"
+              className="mk-btn mk-btn--ok eng-check"
               onClick={() => submit({ pick: picked })}
               disabled={locked || picked.length === 0}
               data-testid="check"
@@ -548,7 +588,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
     mainButton = (
       <button
         type="button"
-        className="mk-btn mk-btn--ok"
+        className="mk-btn mk-btn--ok eng-check"
         onClick={() =>
           submit(t.kind === 'reach' ? { cond } : { trials: trials.map((x) => x.cond) })
         }
@@ -607,7 +647,10 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
               >
                 {o.figure ? <Figure fig={o.figure} ctx={ctx} /> : null}
                 {o.label !== undefined ? (
-                  <span className="exp-opt__label">
+                  <span
+                    className="exp-opt__label"
+                    data-spaced={spacedLabel(o.label) ? '' : undefined}
+                  >
                     <Rt text={o.label} ctx={ctx} />
                   </span>
                 ) : null}
@@ -647,7 +690,7 @@ function ExperimentView({ item, ctx, revealed, wrongMark, disabled, submit }: Vi
 
       <div className="exp__record">
         <p className="exp-note" data-testid="exp-note">
-          <Rt text={NOTE} ctx={ctx} />
+          <Rt text={ctx.preschool ? NOTE_PRESCHOOL : NOTE} ctx={ctx} />
         </p>
         <div className={`exp-tablewrap${wrongShown && t.kind === 'control' ? ' mk-wrong' : ''}`}>
           <ResultTable

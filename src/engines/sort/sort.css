@@ -1,16 +1,20 @@
-/* なかま分け: 上に箱、下に わけるもの。こたえあわせ は右 */
+/* なかま分け: 上に箱、下に わけるもの。こたえあわせ は下の帯（つぎへ の左） */
 .eng-sort__boxes {
   width: 100%;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
   gap: calc(var(--u) * 2);
 }
 .eng-sort__box {
   position: relative;
-  flex: 1 1 0;
-  max-width: calc(var(--u) * 34);
-  min-height: calc(var(--u) * 13);
+  flex: 1 1 calc(var(--u) * 20);
+  min-width: 0;
+  /* 作業領域が縮んだとき（--fit。解説は 0.6）は、舞台の --u0 で 29.5u まで広げて札の行数を減らす（3つの箱が幅 92u に入る） */
+  max-width: max(calc(var(--u) * 34), calc(var(--u0, var(--u)) * 29.5));
+  /* 札が入るまでは補助の寸法（5.5u）。入ると中身の分だけ伸びる */
+  min-height: calc(var(--u) * 5.5);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -51,11 +55,32 @@
   gap: calc(var(--u) * 0.8);
   font-weight: 700;
   font-size: var(--text-label);
+  /* 札と同じ行の高さ（既定の normal だと箱が 5.5u より高くなる） */
+  line-height: 1.25;
   color: var(--ink);
 }
 .eng-sort__name .tk-card__illust {
   width: calc(var(--u) * 4.4);
   height: calc(var(--u) * 4.4);
+}
+/* ふたの中の名前の図（色の丸など）: ふたの高さ（5.5u）から 1u 引いた高さまで。幅は比で決め、上下を切らない（p23.think.sort） */
+.eng-sort__name .tk-card__fig {
+  /* 図の枠の寸法（shared.css の --tk-fig-w・--tk-fig-h）。幅は縛らない（舞台の幅 100u） */
+  --tk-fig-w: calc(var(--u) * 100);
+  --tk-fig-h: calc(var(--u) * 4.5);
+  max-width: none;
+  max-height: calc(var(--u) * 4.5);
+  overflow: visible;
+}
+.eng-sort__name .tk-card__fig .fig-svg {
+  display: flex;
+  max-height: calc(var(--u) * 4.5);
+}
+.eng-sort__name .tk-card__fig .fig-svg svg:not([width]),
+.eng-sort__name .tk-card__fig svg {
+  width: auto;
+  height: calc(var(--u) * 4.5);
+  max-height: calc(var(--u) * 4.5);
 }
 .eng-sort__inside {
   position: relative;
@@ -77,9 +102,78 @@
   height: calc(var(--u) * 4.6);
 }
 .eng-sort__pool {
+  width: 100%;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: calc(var(--u) * 1.6);
   min-height: calc(var(--u) * 7);
+}
+/* 文の札が5枚以上: 複数列にして縦を詰める（sort.tsx。5枚は2列・6枚以上は3列。絵・短い札は横に折り返す） */
+.eng-sort__pool--cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  justify-content: stretch;
+  gap: calc(var(--u) * 1) calc(var(--u) * 1.2);
+}
+.eng-sort__pool--cols3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.eng-sort__pool--cols .tk-card {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.8);
+}
+/* 文の札は縮む --u の --text-small（作業領域の --fit で一緒に縮む。下限は --text-min） */
+.eng-sort__pool--cols .tk-card__label {
+  font-size: var(--text-small);
+}
+/* 箱の中の長い文の札（8字を超える札がある問題。sort.tsx の data-long）: 字は問題文の 0.85 倍（下限 --text-min）・行間 1.4。
+   箱の中身の段は内容の高さ（height: auto）で、ふたに重ねない。作業領域を越える分は作業領域のスクロールに任せる（g4.ja.write-report/1・g3.ja.proverbs/35 の解説） */
+.eng-sort__boxes[data-long] .eng-sort__inside {
+  height: auto;
+  align-content: flex-start;
+}
+.eng-sort__boxes[data-long] .eng-sort__inside .tk-card__label {
+  font-size: max(calc(var(--prompt-size, var(--text-label)) * 0.85), var(--text-min, 0px));
+  line-height: 1.4;
+}
+/* 箱の中の札は箱の幅を越えない（越えると隣の箱のふたに重なる。g4.ja.write-report/1 の解説）。箱の幅の中で札の字が折れる */
+.eng-sort__inside {
+  max-width: 100%;
+  min-width: 0;
+}
+.eng-sort__inside .tk-card {
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* 解説の状態（sort.tsx の data-explain）: 作業領域が低いので箱の中の札を詰める（g1.life.school-safety/9 の解説で札が箱の下に出た）。
+   札の字は --text-min・札の上下の余白とすき間は 0.6u・箱の見出しは 1 行。片方の箱に 3 枚以上あれば、札を横に並べて 2 列（入れば 3 枚）にする。
+   2 列は同じ幅の格子にしない（札が箱の半分に縮み、小3以上の札が語の途中で折れた: 「ぐっすりねむ／る」「トライアング／ル」。
+   g3.ja.modifiers/26・g4.ja.info-compare/14 の解説。レビュー）。札は字の幅（max-content）より縮めずに折り返し、行の残りに伸びる。
+   1 枚で箱の幅を超える札だけが、今までどおり箱の幅（max-width: 100%）で折れる */
+.eng-sort__boxes[data-explain] .eng-sort__inside {
+  gap: calc(var(--u) * 0.6);
+}
+/* 解説の箱は 44u まで広げる（箱が 2 つなら 88u ＋ すき間 2u = 90u ≤ 作業領域 92u。3 つ以上は幅いっぱいで 29.3u 以下なので変わらない）。
+   空の札置き場（9.4u）を出さなくなって作業領域が縮まず（--fit が 1 のまま）、箱が 34u 止まりのとき、20 字前後の札が
+   「とあい／さつした」「ふりそ／そぐ」と語の途中で折れた（g4.ja.plain-polite-style/13・g5.ja.figurative/13 の解説）。44u なら 1 行に入る */
+.eng-sort__boxes[data-explain] .eng-sort__box {
+  max-width: max(calc(var(--u) * 44), calc(var(--u0, var(--u)) * 29.5));
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside[data-cols2] > .tk-card {
+  flex: 1 0 auto;
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside .tk-card {
+  min-height: 0;
+  padding-top: calc(var(--u) * 0.6);
+  padding-bottom: calc(var(--u) * 0.6);
+}
+.eng-sort__boxes[data-explain] .eng-sort__inside .tk-card__label,
+.eng-sort__boxes[data-explain][data-long] .eng-sort__inside .tk-card__label {
+  font-size: var(--text-min);
+  line-height: 1.3;
+}
+.eng-sort__boxes[data-explain] .eng-sort__name {
+  white-space: nowrap;
 }

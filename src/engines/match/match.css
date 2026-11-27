@@ -7,12 +7,67 @@
   position: relative;
   z-index: 1;
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: center;
   gap: calc(var(--u) * 2.4);
 }
 .eng-match__cell {
   display: inline-flex;
+}
+/* 1段の並び（上の段・下の段とも折り返さない）。札は幅に合わせて縮み、ラベルは 2 行まで（分かち書きは空白のところで折れる）。
+   入らないときは match.tsx が --tight（字 --text-min・左右の余白 0.8u）→ --rows（左右2列）へ進める */
+.eng-match--one .eng-match__row,
+.eng-match--tight .eng-match__row {
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.2);
+}
+.eng-match--one .eng-match__cell,
+.eng-match--tight .eng-match__cell {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.eng-match--one .tk-card,
+.eng-match--tight .tk-card {
+  max-width: 100%;
+}
+.eng-match--tight .tk-card {
+  padding-inline: calc(var(--u) * 0.8);
+}
+.eng-match--tight .tk-card:has(> .tk-badge) {
+  padding-left: calc(var(--u) * 0.6 + var(--badge) + var(--u) * 0.8);
+}
+.eng-match--tight .tk-card__label {
+  font-size: var(--text-min);
+}
+/* 長い文の札があるとき: 左の札（上の段）と右の札（下の段）を左右の2列に縦に並べ、線は横に引く */
+.eng-match--rows .eng-match__main {
+  display: grid;
+  /* 左（ことば）は中身の幅（40% まで）、右（意味の文）に残りを全部。右の文が1行に入りやすくする */
+  grid-template-columns: fit-content(40%) minmax(0, 1fr);
+  align-items: stretch;
+  column-gap: calc(var(--u) * 6);
+}
+.eng-match--rows .eng-match__row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+}
+.eng-match--rows .eng-match__cell {
+  display: flex;
+}
+.eng-match--rows .eng-match__cell > .tk-card {
+  flex: 1;
+  max-width: none;
+  /* 右下の ○（札の中へ 1.4u）が 1 行の字（2.2u）にかからない高さ: (6.4 - 2.75) / 2 = 1.8u ≧ 1.4u */
+  min-height: calc(var(--u) * 6.4);
+  padding-block: calc(var(--u) * 0.4);
+}
+.eng-match--rows .tk-card__label {
+  /* 縮む --u の --text-small（作業領域の --fit で札と一緒に縮む。下限は --text-min） */
+  font-size: var(--text-small);
 }
 .eng-match__lines {
   position: absolute;
@@ -34,4 +89,24 @@
 .eng-match__line.is-correct {
   stroke: var(--correct);
   stroke-width: calc(var(--u) * 0.7);
+}
+/* 正解の ○: 大きな輪を札の字の上に重ねない（横長の札で輪が字を横切って読めなかった。g3.ja.proverbs/35 の解説）。
+   札の輪郭を太い緑にし、形でも分かるよう右下の角（右上はふりがなに重なる）に小さな ○ を足す（色だけにしない）。
+   位置は ui.css の字だけの札と同じ -1.8u（-1.4u だと小さい札で ○ が字に触れた。第6回 W1） */
+.eng-match .tk-card.is-correct {
+  border-color: var(--correct);
+  border-width: calc(var(--u) * 0.6);
+}
+.eng-match .tk-card > .mark--correct {
+  top: auto;
+  bottom: calc(var(--u) * -1.8);
+  right: calc(var(--u) * -1.8);
+  left: auto;
+  width: calc(var(--u) * 3.2);
+  height: calc(var(--u) * 3.2);
+  max-height: none;
+  transform: none;
+  border-width: calc(var(--u) * 0.6);
+  background: var(--white);
+  z-index: 2;
 }

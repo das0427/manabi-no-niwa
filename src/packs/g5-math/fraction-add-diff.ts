@@ -356,7 +356,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${explainOf(q)}答えは ${show(N, L)}${sc.unit}です。`,
     identity: `story:${sc.id}:${keyOf(q)}${alt ? ':tape' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['fraction'],
     wrongAnswers: wrongsOf(q, answers),
   };

@@ -6,6 +6,7 @@ import { Illust } from '../illust/Illust';
 import { MODE_BY_ID, type VariantDef } from '../modes/registry';
 import { ModeHeader } from '../ui/ModeHeader';
 import { Tap } from '../ui/Tap';
+import type { VoiceSeq } from '../voice/catalog/index';
 import { useApp } from './AppState';
 import { ModeRunner } from './ModeRunner';
 import { navigate } from './router';
@@ -28,8 +29,11 @@ export function ModeEntry({
   onlyVariants?: readonly string[];
   /** 新しい単元（legacy）から開いたとき: 使う段階の範囲（遊び方の範囲と重なる部分だけ） */
   levelRange?: readonly [number, number];
-  /** 遊び方を選んだとき（省略時は #/play/<mode>/<variant> へ移る） */
-  onPickVariant?: (variantId: string) => void;
+  /**
+   * 遊び方を選んだとき（省略時は #/play/<mode>/<variant> へ移る）。
+   * say: 遊び方の名前の声。遷移のあとに鳴らすので、遷移する側が navigate の say に渡す（ここで先に鳴らすと止まる。FX02）
+   */
+  onPickVariant?: (variantId: string, say: VoiceSeq) => void;
 }) {
   const app = useApp();
   const base = MODE_BY_ID[modeId];
@@ -92,10 +96,8 @@ export function ModeEntry({
         <VariantPicker
           variants={available}
           onPick={(v) => {
-            if (onPickVariant) {
-              void audio.play(v.titleVoice);
-              onPickVariant(v.id);
-            } else navigate({ name: 'mode', modeId, variantId: v.id }, { say: v.titleVoice });
+            if (onPickVariant) onPickVariant(v.id, v.titleVoice);
+            else navigate({ name: 'mode', modeId, variantId: v.id }, { say: v.titleVoice });
           }}
         />
       </div>

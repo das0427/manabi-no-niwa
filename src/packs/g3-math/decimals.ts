@@ -93,7 +93,7 @@ function meaning(level: number, rng: Rng, alt: boolean): NumberItem | MeasureIte
         explain: `${Math.floor(k / 10)}は 0.1が ${Math.floor(k / 10) * 10}こ、0.${k % 10}は 0.1が ${k % 10}こ。あわせて ${k}こです。`,
         identity: `from:${k}`,
         alt: false,
-        fields: [{ label: 'こ', answer: { kind: 'int', value: k } }],
+        fields: [{ unit: 'こ', answer: { kind: 'int', value: k } }],
         wrongAnswers: wrongList(String(k), 1, [
           [k % 10, 'tenth-count'],
           [Math.floor(k / 10) + (k % 10), 'tenth-count'],
@@ -268,7 +268,7 @@ function addSub(obj: 'add' | 'sub', level: number, rng: Rng, alt: boolean): Numb
     identity: key,
     alt,
     keys: ['decimal'],
-    fields: [{ ...(alt ? { label: obj === 'add' ? 'L' : 'm' } : {}), answer: dec(ans) }],
+    fields: [{ ...(alt ? { unit: obj === 'add' ? 'L' : 'm' } : {}), answer: dec(ans) }],
     wrongAnswers: wrongList(tenths(ans), 1, obj === 'add' ? addWrongs(a, b) : subWrongs(a, b)),
   };
 }

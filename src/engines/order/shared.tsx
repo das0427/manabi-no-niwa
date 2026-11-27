@@ -15,7 +15,7 @@ import { createRng, hashSeed } from '../../core/util/rng';
 import { registerRich } from '../../voice/dynamic';
 import { Illust } from '../../illust/Illust';
 import { Rt } from '../../text/Rt';
-import { findBareKanji, plainText } from '../../text/rich';
+import { findBareKanji, plainText, spacedLabel } from '../../text/rich';
 import { Figure } from '../figure/Figure';
 import type { Figure as FigureData } from '../figure/types';
 import type { EngineProps, Judgement, RenderCtx } from '../types';
@@ -183,7 +183,7 @@ export function CardFace({ card, ctx }: { card: Card; ctx: RenderCtx }) {
         </span>
       ) : null}
       {card.label !== undefined ? (
-        <span className="tk-card__label">
+        <span className="tk-card__label" data-spaced={spacedLabel(card.label) ? '' : undefined}>
           <Rt text={card.label} ctx={ctx} />
         </span>
       ) : null}
@@ -254,12 +254,26 @@ export function TapCard({
   );
 }
 
-/** 「こたえあわせ」（主操作）。作業領域の右に置く */
-export function CheckButton({ disabled, onPress }: { disabled: boolean; onPress: () => void }) {
+/**
+ * 「こたえあわせ」（主操作）。既定は下の帯の主操作の位置（つぎへ の左。DESINGN.md 5.1）。札の列が作業領域の幅いっぱいを使える。
+ * band: false にすると作業領域の右に置く（今は使うエンジンが無い）。
+ * 位置は choice の `.eng-check` と同じ（unit.css の `:has(.eng-check)` が吹き出しをその左までにする）
+ */
+export function CheckButton({
+  disabled,
+  onPress,
+  band = true,
+}: {
+  disabled: boolean;
+  onPress: () => void;
+  band?: boolean;
+}) {
   return (
     <button
       type="button"
-      className="tap tap--main tk-check"
+      className={
+        band ? 'tap tap--main tk-check tk-check--band eng-check' : 'tap tap--main tk-check'
+      }
       disabled={disabled}
       onClick={onPress}
       data-testid="check"

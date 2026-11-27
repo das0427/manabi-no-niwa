@@ -7,6 +7,8 @@ import { orthography } from './orthography';
 import { readStory } from './read-story';
 import { readInfo } from './read-info';
 import { writeStructure } from './write-structure';
+import { listenNotes } from './listen-notes';
+import { culture } from './culture';
 
 const pack: PackContent = {
   packId: 'g2-ja',
@@ -19,6 +21,8 @@ const pack: PackContent = {
     readStory,
     readInfo,
     writeStructure,
+    listenNotes,
+    culture,
   ],
 };
 

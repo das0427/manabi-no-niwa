@@ -40,7 +40,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'ashi-hippa',
     text: '足《あし》をひっぱる',
-    mean: '人《ひと》のじゃまをして、うまくいかないようにする。',
+    mean: '人《ひと》のじゃまをして、うまくいかなくする。',
     scene: 'わたしがボールを何度《なんど》も落《お》としたせいで、チームが負《ま》けそうになった。',
     conf: [
       ['te-kasu', 'id-polarity'],
@@ -64,7 +64,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'te-hanase',
     text: '手《て》がはなせない',
-    mean: 'いそがしくて、ほかのことをするひまがない。',
+    mean: 'いそがしくて、ほかのことができない。',
     scene:
       '父《ちち》は料理《りょうり》のとちゅうで、電話《でんわ》に出《で》ることができなかった。',
     conf: [
@@ -77,7 +77,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'me-nai',
     text: '目《め》がない',
-    mean: 'とても好《す》きで、それを見《み》るとがまんができない。',
+    mean: 'とても好《す》きで、見《み》るとたまらない。',
     scene:
       '姉《あね》はあまいものが大好《だいす》きで、ケーキを見《み》るとすぐに食《た》べたくなる。',
     conf: [
@@ -114,7 +114,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'mimi-itai',
     text: '耳《みみ》がいたい',
-    mean: '自分《じぶん》のよくないところを言《い》われて、聞《き》くのがつらい。',
+    mean: '自分《じぶん》のよくないところを言《い》われて、つらい。',
     scene:
       '先生《せんせい》が「わすれ物《もの》に気《き》をつけよう。」と話《はな》したとき、わすれ物《もの》が多《おお》いぼくはドキッとした。',
     conf: [
@@ -139,7 +139,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'kuchi-suberu',
     text: '口《くち》がすべる',
-    mean: '言《い》ってはいけないことを、うっかり言《い》ってしまう。',
+    mean: '言《い》ってはいけないことを、つい言《い》ってしまう。',
     scene: '弟《おとうと》は、母《はは》にないしょのプレゼントのことをつい話《はな》してしまった。',
     conf: [
       ['kuchi-katai', 'id-polarity'],
@@ -236,7 +236,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'ha-tatanai',
     text: '歯《は》が立《た》たない',
-    mean: '相手《あいて》が強《つよ》すぎて、まったくかなわない。',
+    mean: '相手《あいて》が強《つよ》すぎて、かなわない。',
     scene: 'しょうぎの名人《めいじん》と対《たい》せんしたが、どうがんばっても勝《か》てなかった。',
     conf: [
       ['atama-kakaeru', 'id-similar'],
@@ -260,7 +260,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'ashi-bou',
     text: '足《あし》がぼうになる',
-    mean: '長《なが》いあいだ歩《ある》いたり立《た》ったりして、足《あし》がとてもつかれる。',
+    mean: 'ずっと歩《ある》いたり立《た》ったりして、足《あし》がつかれる。',
     scene:
       '遠足《えんそく》で一日《いちにち》じゅう山道《やまみち》を歩《ある》き、もう一歩《いっぽ》も歩《ある》けない。',
     conf: [
@@ -335,7 +335,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'abura-uru',
     text: '油《あぶら》を売《う》る',
-    mean: 'しごとや用事《ようじ》のとちゅうで、むだ話《ばなし》をしてなまける。',
+    mean: '用事《ようじ》のとちゅうで、むだ話《ばなし》をしてなまける。',
     scene:
       'おつかいのとちゅうで、友《とも》だちと長《なが》いあいだおしゃべりして、なかなか帰《かえ》らなかった。',
     conf: [
@@ -347,7 +347,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'hane-nobasu',
     text: '羽《はね》をのばす',
-    mean: '気《き》をつかう人《ひと》がいなくて、のびのびとすごす。',
+    mean: '人《ひと》に気《き》をつかわず、のびのびとすごす。',
     scene: 'テストが終《お》わった週末《しゅうまつ》、ゆっくり好《す》きなことをしてすごした。',
     conf: [
       ['abura-uru', 'id-similar'],
@@ -382,7 +382,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'neko-te',
     text: 'ねこの手《て》もかりたい',
-    mean: 'とてもいそがしくて、だれでもよいから手《て》つだってほしい。',
+    mean: 'いそがしくて、だれでもよいから手《て》つだってほしい。',
     scene:
       '店《みせ》にお客《きゃく》さんがどっと来《き》て、店《みせ》の人《ひと》は休《やす》むひまもなく大《おお》いそがしだ。',
     conf: [
@@ -417,7 +417,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'mizu-nagasu',
     text: '水《みず》に流《なが》す',
-    mean: '前《まえ》にあったいやなことを、なかったことにする。',
+    mean: '前《まえ》のいやなことを、なかったことにする。',
     scene:
       'けんかをした二人《ふたり》は、「もう気《き》にしないでおこう。」とあく手《しゅ》をした。',
     conf: [
@@ -443,7 +443,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'gyofu',
     text: '漁夫《ぎょふ》の利《り》',
-    mean: '二人《ふたり》があらそっているあいだに、ほかの人《ひと》がとくをする。',
+    mean: '二人《ふたり》があらそううちに、ほかの人《ひと》がとくをする。',
     scene:
       '兄《あに》と姉《あね》が最後《さいご》のケーキをとりあっているすきに、妹《いもうと》が食《た》べてしまった。',
     conf: [
@@ -456,7 +456,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'mujun',
     text: 'むじゅん',
-    mean: '前《まえ》とあとで、言《い》うことやすることのつじつまが合《あ》わない。',
+    mean: '前《まえ》とあとで、言《い》うこととすることが合《あ》わない。',
     scene:
       '「夜《よる》はおかしを食《た》べない。」と言《い》った父《ちち》が、その夜《よる》におかしを食《た》べていた。',
     conf: [
@@ -480,7 +480,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'tazan',
     text: '他山《たざん》の石《いし》',
-    mean: '人《ひと》のよくない行《おこな》いも、自分《じぶん》をよくするための手《て》がかりになる。',
+    mean: '人《ひと》のよくない行《おこな》いから、自分《じぶん》も学《まな》ぶ。',
     scene:
       '友《とも》だちがろうかを走《はし》ってころんだのを見《み》て、自分《じぶん》も気《き》をつけようと思《おも》った。',
     conf: [
@@ -505,7 +505,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'kiyuu',
     text: 'きゆう',
-    mean: 'しんぱいしなくてもよいことを、あれこれしんぱいする。',
+    mean: 'いらないしんぱいを、あれこれする。',
     scene:
       'あしたの遠足《えんそく》が雨《あめ》になるかと夜《よる》までずっと気《き》にしていたが、朝《あさ》はよく晴《は》れた。',
     conf: [
@@ -517,7 +517,7 @@ const IDIOMS: Idiom[] = [
   {
     id: 'saiou',
     text: 'さいおうが馬《うま》',
-    mean: 'よいことと悪《わる》いことは、あとにならないとわからない。',
+    mean: 'よいか悪《わる》いかは、あとにならないとわからない。',
     scene:
       'けがで試合《しあい》に出《で》られなかったが、その間《あいだ》に本《ほん》をたくさん読《よ》み、作文《さくぶん》でしょうをもらった。',
     conf: [
@@ -541,12 +541,8 @@ function matchItems(): MatchItem[] {
   const out: MatchItem[] = [];
   for (let g = 0; g * 4 < IDIOMS.length; g++) {
     const four = IDIOMS.slice(g * 4, g * 4 + 4);
-    const lit = four.find((x) => x.literal);
-    const extra = lit
-      ? lit.literal!
-      : (IDIOMS.find((x) => !four.includes(x) && x.conf.some(([c]) => four.some((f) => f.id === c)))
-          ?.mean ?? IDIOMS[(g * 4 + 5) % IDIOMS.length]!.mean);
-    const litIdx = lit ? four.indexOf(lit) : -1;
+    // 左 4・右 4 の4行にする（右に1枚足すと5行になり、作業領域に入らない。text-layout-fixes 第4回）。
+    // 字のとおりの意味の誤り（id-literal）は、意味を選ぶ問題（imi-c）で見る。
     out.push({
       engine: 'match',
       id: `imi:${g + 1}`,
@@ -554,19 +550,15 @@ function matchItems(): MatchItem[] {
       level: 0,
       prompt: 'ことばと意味《いみ》を線《せん》でむすぼう。',
       left: four.map((x) => ({ label: x.text })),
-      right: [...four.map((x) => ({ label: x.mean })), { label: extra }],
+      right: four.map((x) => ({ label: x.mean })),
       pairs: four.map((_, i) => [i, i] as [number, number]),
-      ...(litIdx >= 0
-        ? { wrongPairs: [{ pair: [litIdx, 4] as [number, number], misconception: 'id-literal' }] }
-        : {}),
       hints: [
         'わかるものからむすんでいこう。のこったものが考《かんが》えやすくなるよ。',
         'ことばのとおりの意味《いみ》ではないことが多《おお》いよ。',
         'それぞれのことばを、どんなときに使《つか》うかな。人《ひと》のようすや気持《きも》ちを思《おも》いうかべて、のこりの一《ひと》つまでしぼろう。',
       ],
-      explain: four
-        .map((x) => `「${x.text}」は「${x.mean.replace(/。$/, '')}」という意味《いみ》です。`)
-        .join(''),
+      // 4つの文を 100字までにする（解説の板に入れる。text-layout-fixes 第4回）
+      explain: four.map((x) => `${x.text}＝${x.mean}`).join(''),
       identity: `idiom:match:${four.map((x) => x.id).join('+')}`,
     });
   }
@@ -720,20 +712,12 @@ const BODY_SORTS: { id: string; boxes: string[]; items: string[] }[] = [
   {
     id: 'me-mimi-kuchi',
     boxes: ['目《め》', '耳《みみ》', '口《くち》'],
-    items: [
-      'me-nai',
-      'me-maru',
-      'me-nusumu',
-      'mimi-utagau',
-      'mimi-itai',
-      'kuchi-katai',
-      'kuchi-suberu',
-    ],
+    items: ['me-nai', 'me-maru', 'mimi-utagau', 'mimi-itai', 'kuchi-katai', 'kuchi-suberu'],
   },
   {
     id: 'te-ashi-atama',
     boxes: ['手《て》', '足《あし》', '頭《あたま》'],
-    items: ['te-kasu', 'te-hanase', 'te-ase', 'ashi-hippa', 'ashi-bou', 'atama-kakaeru'],
+    items: ['te-kasu', 'te-hanase', 'ashi-hippa', 'atama-kakaeru'],
   },
   {
     id: 'hana-kao-kubi-ha',
@@ -766,7 +750,16 @@ function bodySortItem(s: (typeof BODY_SORTS)[number]): SortItem {
       'かんようくを思《おも》い出《だ》したら、その中《なか》の体《からだ》の部分《ぶぶん》を見《み》よう。',
       'ひみつや話《はなし》にかかわるものは口《くち》、聞《き》くことにかかわるものは耳《みみ》…のように考《かんが》えよう。',
     ],
-    explain: xs.map((x) => `「${x.mean.replace(/。$/, '')}」は「${x.text}」。`).join(''),
+    // 札の意味をくり返さず、箱ごとにかんようくの名前だけを並べる（解説の板に入れる）
+    explain: s.boxes
+      .map(
+        (b) =>
+          `${b}は${xs
+            .filter((x) => x.body![0] === b)
+            .map((x) => `「${x.text}」`)
+            .join('')}。`,
+      )
+      .join(''),
     identity: `idiom:body-sort:${s.id}`,
     alt: true,
   };

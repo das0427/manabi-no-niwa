@@ -282,13 +282,24 @@ describe('review-g6f g6.math.frequency', () => {
   /** 度数分布表の 図から [下限, 上限, 人数] の 並び */
   function rowsOf(it: Item): [number, number, number][] {
     const fig = it.engine === 'graph' ? null : it.figure;
-    if (fig?.kind === 'table')
-      return fig.rows
-        .filter((r) => plain(r[0] ?? '') !== '合計')
-        .map((r) => {
-          const [lo, hi] = r[0]!.split('〜').map(Number);
-          return [lo!, hi!, Number(r[1])];
-        });
+    if (fig?.kind === 'table') {
+      const cls = (t: string, n: string): [number, number, number] => {
+        const [lo, hi] = t.split('〜').map(Number);
+        return [lo!, hi!, Number(n)];
+      };
+      // 横に ならべた 表（選択肢の 問題）: 見出しの 行が 階級、下の 行が 人数
+      if (fig.rows.length === 1)
+        return fig.header
+          .map((h, i) => [h, fig.rows[0]![i]!] as const)
+          .filter(([h]) => h.includes('〜'))
+          .map(([h, n]) => cls(h, n));
+      // 左右に 折りたたんだ 表: 1行に [階級, 人数, 階級, 人数]。左の 列 → 右の 列の 順に 並べる
+      const cells = (col: number) =>
+        fig.rows
+          .filter((r) => plain(r[0] ?? '') !== '合計' && (r[col] ?? '') !== '')
+          .map((r) => cls(r[col]!, r[col + 1]!));
+      return [...cells(0), ...cells(2)];
+    }
     if (it.engine === 'graph' && it.data.kind === 'bar') {
       const d = it.data;
       return d.labels.map((l, i) => {

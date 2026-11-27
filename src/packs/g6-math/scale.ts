@@ -76,6 +76,21 @@ function triCoords(a: number, b: number, c: number): [Pt, Pt, Pt] {
   ];
 }
 
+/** 三角形の 図の 字の 大きさ（viewBox の 単位）。三角形を 小さめに 描いて、字は 大きく 保つ（text-layout-fixes 第4回） */
+const TRI_FS = 20;
+type Rect = { x0: number; y0: number; x1: number; y1: number };
+
+/** 点が 三角形の 中に あるか */
+function inTri(p: Pt, t: Pt[]): boolean {
+  const s = (a: Pt, b: Pt, c: Pt) => (a[0] - c[0]) * (b[1] - c[1]) - (b[0] - c[0]) * (a[1] - c[1]);
+  const d1 = s(p, t[0]!, t[1]!);
+  const d2 = s(p, t[1]!, t[2]!);
+  const d3 = s(p, t[2]!, t[0]!);
+  const neg = d1 < 0 || d2 < 0 || d3 < 0;
+  const pos = d1 > 0 || d2 > 0 || d3 > 0;
+  return !(neg && pos);
+}
+
 function twoTriFig(
   t: [Pt, Pt, Pt],
   k: number,
@@ -84,64 +99,178 @@ function twoTriFig(
 ): Figure {
   const xs = t.map((p) => p[0]);
   const ys = t.map((p) => p[1]);
-  const w = Math.max(...xs) - Math.min(...xs);
+  const minx = Math.min(...xs);
+  const w = Math.max(...xs) - minx;
   const h = Math.max(...ys) - Math.min(...ys);
   const big = Math.max(k, 1);
-  const U = Math.min(170 / (w * big), 120 / (h * big), 40);
+  const U = Math.min(150 / (w * big), 100 / (h * big), 36);
   const u1 = k >= 1 ? U : U / k;
   const u2 = k >= 1 ? U * k : U;
-  let body = '';
-  let ox = 30;
-  const tri = (
-    u: number,
+  const GAP = 100; // 左の 三角形の 右の 字と、右の 三角形の 左の 字が ぶつからない 間
+  const tw = (s: string) => s.length * TRI_FS * 0.6;
+  const place = (u: number, ox: number): [Pt, Pt, Pt] =>
+    t.map((p) => [r1(ox + (p[0] - minx) * u), r1(p[1] * u)] as Pt) as [Pt, Pt, Pt];
+  const T1 = place(u1, 0);
+  const T2 = place(u2, w * u1 + GAP);
+  const tris = [T1, T2];
+  // 三角形の 辺の 上の 点（字の 箱が かかるか 調べる）
+  const edgePts: Pt[] = [];
+  for (const T of tris)
+    for (let i = 0; i < 3; i++) {
+      const a = T[i]!;
+      const b = T[(i + 1) % 3]!;
+      const n = Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 2);
+      for (let j = 0; j <= n; j++)
+        edgePts.push([a[0] + ((b[0] - a[0]) * j) / n, a[1] + ((b[1] - a[1]) * j) / n]);
+    }
+  const rects: Rect[] = [];
+  const hits = (r: Rect, pad = 2) =>
+    edgePts.some(
+      (e) => e[0] > r.x0 - pad && e[0] < r.x1 + pad && e[1] > r.y0 - pad && e[1] < r.y1 + pad,
+    ) ||
+    rects.some((o) => r.x0 < o.x1 + 2 && r.x1 > o.x0 - 2 && r.y0 < o.y1 + 2 && r.y1 > o.y0 - 2);
+  const rectAt = (x: number, y: number, s: string): Rect => ({
+    x0: x - tw(s) / 2,
+    y0: y - TRI_FS * 0.6,
+    x1: x + tw(s) / 2,
+    y1: y + TRI_FS * 0.6,
+  });
+  let texts = '';
+  const put = (x: number, y: number, s: string) => {
+    texts += svgText(x, y, s, TRI_FS);
+    rects.push(rectAt(x, y, s));
+  };
+  // 外側へ 少しずつ 離して、三角形・ほかの 字に かからない 位置に 置く
+  const placeOut = (cx: number, cy: number, dx: number, dy: number, s: string, from: number) => {
+    for (let d = from; d < from + 120; d += 2) {
+      const r = rectAt(cx + dx * d, cy + dy * d, s);
+      if (!hits(r)) return put(cx + dx * d, cy + dy * d, s);
+    }
+    put(cx + dx * from, cy + dy * from, s);
+  };
+  const draw = (
+    T: [Pt, Pt, Pt],
     names: string[],
-    lab: (string | undefined)[],
-    ang: (string | undefined)[],
+    sides: (string | undefined)[],
+    angs: (string | undefined)[],
   ) => {
-    const P = (p: Pt) =>
-      [r1(ox + (p[0] - Math.min(...xs)) * u), r1(30 + (p[1] - Math.min(...ys)) * u)] as const;
-    const ps = t.map(P);
-    body += `<polygon points="${ps.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
-    const cx = (ps[0]![0] + ps[1]![0] + ps[2]![0]) / 3;
-    const cy = (ps[0]![1] + ps[1]![1] + ps[2]![1]) / 3;
-    ps.forEach((p, i) => {
+    const cx = (T[0][0] + T[1][0] + T[2][0]) / 3;
+    const cy = (T[0][1] + T[1][1] + T[2][1]) / 3;
+    // 字を 書く 角には 弧の しるしを かく（字が 三角形の 外に 出ても、どの 角の 大きさか 分かる ように）。
+    // 弧の 点は edgePts に 入れて、字が 弧に かからない ように する
+    T.forEach((p, i) => {
+      if (!angs[i]) return;
+      const a = T[(i + 1) % 3]!;
+      const b = T[(i + 2) % 3]!;
+      const RR = 10;
+      const t0 = Math.atan2(a[1] - p[1], a[0] - p[0]);
+      let t1 = Math.atan2(b[1] - p[1], b[0] - p[0]);
+      if (t1 - t0 > Math.PI) t1 -= 2 * Math.PI;
+      if (t0 - t1 > Math.PI) t1 += 2 * Math.PI;
+      const pts: Pt[] = [];
+      for (let j = 0; j <= 8; j++) {
+        const t = t0 + ((t1 - t0) * j) / 8;
+        pts.push([r1(p[0] + Math.cos(t) * RR), r1(p[1] + Math.sin(t) * RR)]);
+      }
+      edgePts.push(...pts);
+      arcs += `<polyline points="${pts.map((q) => q.join(',')).join(' ')}" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;
+    });
+    // 角の 字（三角形の 中。角の 二等分線の 上で、字の 箱が 全部 入る 所）。入らない 角は、頂点の 名前を 置いた あとで 外に 出す
+    const outside: [Pt, number, number, string][] = [];
+    T.forEach((p, i) => {
+      const s = angs[i];
+      if (!s) return;
+      const dx = cx - p[0];
+      const dy = cy - p[1];
+      const l = Math.hypot(dx, dy) || 1;
+      for (let d = 14; d < l * 1.6; d += 2) {
+        const x = p[0] + (dx / l) * d;
+        const y = p[1] + (dy / l) * d;
+        const r = rectAt(x, y, s);
+        const corners: Pt[] = [
+          [r.x0, r.y0],
+          [r.x1, r.y0],
+          [r.x0, r.y1],
+          [r.x1, r.y1],
+        ];
+        if (corners.every((c) => inTri(c, T)) && !hits(r, 1)) return put(x, y, s);
+      }
+      outside.push([p, -dx / l, -dy / l, s]);
+    });
+    // 頂点の 名前（頂点の 外側。頂点の すぐ そばに 置く ため、外に 出す 角の 字より 先に 置く。辺の 長さも 先）
+    T.forEach((p, i) => {
       const dx = p[0] - cx;
       const dy = p[1] - cy;
       const l = Math.hypot(dx, dy) || 1;
-      body += svgText(p[0] + (dx / l) * 16, p[1] + (dy / l) * 16, names[i]!, 16);
-      if (ang[i]) body += svgText(p[0] - (dx / l) * 26, p[1] - (dy / l) * 22, ang[i]!, 13);
+      placeOut(p[0], p[1], dx / l, dy / l, names[i]!, 16);
     });
-    // 辺の 長さ（AB・BC・CA の 順）
+    // 辺の 長さ（AB・BC・CA の 順。辺の 垂線の 外向き）
     [
       [0, 1],
       [1, 2],
       [2, 0],
-    ].forEach(([i, j], s) => {
-      if (!lab[s]) return;
-      const mx = (ps[i!]![0] + ps[j!]![0]) / 2;
-      const my = (ps[i!]![1] + ps[j!]![1]) / 2;
-      const dx = mx - cx;
-      const dy = my - cy;
-      const l = Math.hypot(dx, dy) || 1;
-      body += svgText(mx + (dx / l) * 18, my + (dy / l) * 16, lab[s]!, 14);
+    ].forEach(([i, j], si) => {
+      const s = sides[si];
+      if (!s) return;
+      const a = T[i!]!;
+      const b = T[j!]!;
+      const mx = (a[0] + b[0]) / 2;
+      const my = (a[1] + b[1]) / 2;
+      const ex = b[0] - a[0];
+      const ey = b[1] - a[1];
+      const el = Math.hypot(ex, ey) || 1;
+      let nx = -ey / el;
+      let ny = ex / el;
+      if ((mx - cx) * nx + (my - cy) * ny < 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      placeOut(mx, my, nx, ny, s, 12);
     });
-    ox += w * u + 50;
+    // 三角形の 中に 入らない 角の 字は 最後に、頂点の 名前・辺の 長さの 字の 外に 出す（弧の しるしで どの 角か 分かる。
+    // 先に 置くと、辺の 長さの 字が 辺から 遠くへ 押し出される）
+    for (const [p, ux, uy, s] of outside) placeOut(p[0], p[1], ux, uy, s, 20);
   };
-  tri(
-    u1,
+  let body = '';
+  let arcs = '';
+  for (const T of tris)
+    body += `<polygon points="${T.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
+  draw(
+    T1,
     ['A', 'B', 'C'],
     [labels1.ab, labels1.bc, labels1.ca],
     [undefined, labels1.angB, labels1.angC],
   );
-  tri(
-    u2,
+  draw(
+    T2,
     ['D', 'E', 'F'],
     [labels2.de, labels2.ef, labels2.fd],
     [undefined, labels2.angE, undefined],
   );
-  const W = r1(ox - 20);
-  const H = r1(h * Math.max(u1, u2) + 70);
-  return svg(W, H, body, `三角形ABCと、その ${k >= 1 ? '拡大図' : '縮図'}の 三角形DEF`);
+  // viewBox は 三角形と 字の 外接
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const T of tris)
+    for (const p of T) {
+      x0 = Math.min(x0, p[0] - 2);
+      y0 = Math.min(y0, p[1] - 2);
+      x1 = Math.max(x1, p[0] + 2);
+      y1 = Math.max(y1, p[1] + 2);
+    }
+  for (const r of rects) {
+    x0 = Math.min(x0, r.x0 - 2);
+    y0 = Math.min(y0, r.y0 - 2);
+    x1 = Math.max(x1, r.x1 + 2);
+    y1 = Math.max(y1, r.y1 + 2);
+  }
+  return svg(
+    Math.ceil(x1 - x0),
+    Math.ceil(y1 - y0),
+    `<g transform="translate(${r1(-x0)} ${r1(-y0)})">${body}${arcs}${texts}</g>`,
+    `三角形ABCと、その ${k >= 1 ? '拡大図' : '縮図'}の 三角形DEF`,
+  );
 }
 
 interface Tri {
@@ -190,7 +319,7 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `拡大図や 縮図では、対応する 角の 大きさは 等しく なります。角Eは 角Bと 同じ ${B}度です。`,
       identity: `side:angle:${t.a},${t.b},${t.c}:${k}`,
       alt: true,
-      fields: [{ label: '度', answer }],
+      fields: [{ unit: '度', answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -225,7 +354,7 @@ function sideItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `辺${which === 'ef' ? 'EF' : 'FD'}に 対応する 辺は 辺${which === 'ef' ? 'BC' : 'CA'}です。${kText(k)}なので、${known} × ${k >= 1 ? k : qText(q(1, 1 / k))} ＝ ${ans}（cm）です。`,
     identity: `side:${t.a},${t.b},${t.c}:${k}:${which}`,
     alt: false,
-    fields: [{ label: 'cm', answer }],
+    fields: [{ unit: 'cm', answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -351,7 +480,7 @@ function realItem(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${meters}m ＝ ${meters * 100}cm。${meters * 100} ÷ ${N} ＝ ${L}なので、地図の 上では ${L}cmです。`,
       identity: `real:map:${N}:${meters}:${asFrac ? 'f' : 'r'}`,
       alt: true,
-      fields: [{ label: 'cm', answer }],
+      fields: [{ unit: 'cm', answer }],
       keys: ['decimal'],
       wrongAnswers: wrongList(
         [answer],
@@ -377,7 +506,7 @@ function realItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${L} × ${N} ＝ ${L * N}（cm）。${L * N}cm ＝ ${meters}mです。`,
     identity: `real:${N}:${L}:${asFrac ? 'f' : 'r'}`,
     alt: false,
-    fields: [{ label: 'm', answer }],
+    fields: [{ unit: 'm', answer }],
     wrongAnswers: wrongList(
       [answer],
       [

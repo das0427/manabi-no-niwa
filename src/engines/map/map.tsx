@@ -11,13 +11,14 @@
  * 地図は Natural Earth（パブリックドメイン）を簡略化したもの（japan.ts）。色だけで地方を区別しない（模様と番号）。
  * タップだけで完結する（地図をタップ→札が選ばれる→こたえあわせ）。
  */
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
 import { plainText, spokenReading } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { answerTiling, checkBuild, judgeBuild, type BuildItem } from '../build/build';
+import { floorStyle, useSvgTextFloor, useWidenToText } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps, type ViewBox } from '../numberline/kit';
 import { TapCard, useMarks } from '../order/shared';
 import type { Judgement } from '../types';
@@ -244,7 +245,7 @@ function townDir(t: Extract<MapTask, { kind: 'town' }>, a: number, b: number, po
 export function judgeMap(item: MapItem, res: MapResponse): Judgement {
   const t = item.task;
   if (t.kind === 'spell') {
-    if (!('tiles' in res)) return { result: 'retry', message: 'タイルを ならべて こたえよう。' };
+    if (!('tiles' in res)) return { result: 'retry', message: 'もじを ならべて こたえよう。' };
     return judgeBuild(spellBuild(item, t), res.tiles);
   }
   if (t.kind === 'find') {
@@ -473,8 +474,18 @@ function Patterns({ uid, s }: { uid: string; s: number }) {
 function RegionSwatch({ id }: { id: RegionId }) {
   const uid = useId().replace(/:/g, '');
   const r = REGION_BY_ID[id];
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, 60);
+  useWidenToText(svgRef, floor);
+  const fs = Math.max(18, floor);
   return (
-    <svg viewBox="0 0 60 40" className="map-swatch" aria-hidden>
+    <svg
+      ref={svgRef}
+      style={floorStyle(floor)}
+      viewBox="0 0 60 40"
+      className="map-swatch"
+      aria-hidden
+    >
       <Patterns uid={uid} s={12} />
       <rect x={2} y={2} width={56} height={36} rx={6} className={`map-reg map-reg--${id}`} />
       <rect
@@ -486,8 +497,8 @@ function RegionSwatch({ id }: { id: RegionId }) {
         fill={`url(#${uid}-${id})`}
         className="map-patfill"
       />
-      <circle cx={30} cy={20} r={13} className="map-badge" />
-      <text x={30} y={26} className="map-badge__no">
+      <circle cx={30} cy={20} r={Math.max(13, fs * 0.62)} className="map-badge" />
+      <text x={30} y={20 + fs * 0.34} className="map-badge__no">
         {r.no}
       </text>
     </svg>
@@ -507,6 +518,88 @@ interface MapMarks {
   names?: number[];
 }
 
+/**
+ * 県の名前の札の位置。文字を最小まで大きくすると、近い県の名前どうしが重なるので、
+ * 重なるぶんだけ離す（縦か横の浅いほうへ）。範囲の外には出さない。
+ */
+function spreadLabels(items: { x: number; y: number; w: number; h: number }[], vb: ViewBox): void {
+  // 札の箱: x は中央、y は文字の基線（箱は基線の 0.85h 上〜0.15h 下）
+  for (let it = 0; it < 60; it++) {
+    let moved = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i]!;
+        const b = items[j]!;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const px = (a.w + b.w) / 2 - Math.abs(dx);
+        const py = (a.h + b.h) / 2 - Math.abs(dy);
+        if (px <= 0 || py <= 0) continue;
+        moved = true;
+        if (py <= px) {
+          const k = (py / 2 + 0.01) * (dy >= 0 ? 1 : -1);
+          a.y -= k;
+          b.y += k;
+        } else {
+          const k = (px / 2 + 0.01) * (dx >= 0 ? 1 : -1);
+          a.x -= k;
+          b.x += k;
+        }
+      }
+    }
+    for (const p of items) {
+      p.x = Math.min(vb.x + vb.w - p.w / 2, Math.max(vb.x + p.w / 2, p.x));
+      p.y = Math.min(vb.y + vb.h - p.h * 0.15, Math.max(vb.y + p.h * 0.85, p.y));
+    }
+    if (!moved) break;
+  }
+}
+
+/**
+ * 地方の番号の丸の位置。文字を最小まで大きくすると丸がとなりの丸に重なるので、
+ * 重なるぶんだけ少しずつ離す（基準は各地方の代表の県の位置。範囲の外には出さない）。
+ */
+function spreadBadges(
+  r: number,
+  vb: ViewBox,
+): { id: RegionId; no: number; x: number; y: number }[] {
+  const ps = REGIONS.map((reg) => {
+    const a = PREF_BY_CODE.get(reg.anchor)!;
+    return { id: reg.id, no: reg.no, x: a.label[0], y: a.label[1] };
+  });
+  const gap = r * 2 * 1.06;
+  for (let it = 0; it < 60; it++) {
+    let moved = false;
+    for (let i = 0; i < ps.length; i++) {
+      for (let j = i + 1; j < ps.length; j++) {
+        const a = ps[i]!;
+        const b = ps[j]!;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d = Math.hypot(dx, dy);
+        if (d >= gap) continue;
+        if (d < 1e-6) {
+          dx = 1;
+          dy = 0;
+          d = 1;
+        }
+        const push = (gap - d) / 2 + 0.01;
+        a.x -= (dx / d) * push;
+        a.y -= (dy / d) * push;
+        b.x += (dx / d) * push;
+        b.y += (dy / d) * push;
+        moved = true;
+      }
+    }
+    for (const p of ps) {
+      p.x = Math.min(vb.x + vb.w - r, Math.max(vb.x + r, p.x));
+      p.y = Math.min(vb.y + vb.h - r, Math.max(vb.y + r, p.y));
+    }
+    if (!moved) break;
+  }
+  return ps;
+}
+
 function JapanMap({
   view = 'japan',
   showRegions,
@@ -523,9 +616,30 @@ function JapanMap({
   const uid = useId().replace(/:/g, '');
   const vb = viewBoxOf(view);
   const vbx: ViewBox = vb;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, vb.w);
+  useWidenToText(svgRef, floor);
+  // 番号・名前・記号の文字は最小まで大きくする（丸もそれに合わせる）
+  const badgeFs = Math.max(vb.w * 0.044, floor);
+  const nameFs = Math.max(vb.w * 0.036, floor);
+  const markFs = Math.max(vb.w * 0.04, floor);
+  const badgeR = Math.max(vb.w * 0.034, badgeFs * 0.78);
+  const badges = showRegions ? spreadBadges(badgeR, vb) : [];
   const s = vb.w * 0.022;
   const has = (k: keyof MapMarks, c: number) => (marks[k] ?? []).includes(c);
   const pinR = vb.w * 0.011;
+  const nameLabels = PREFS.filter((p) => (marks.names ?? []).includes(p.code)).map((p) => {
+    const text = plainText(prefName(p.code, 'kana'));
+    return {
+      code: p.code,
+      text,
+      x: p.label[0],
+      y: p.label[1] - pinR * 2.2,
+      w: text.length * nameFs * 1.02,
+      h: nameFs * 1.15,
+    };
+  });
+  spreadLabels(nameLabels, vb);
   const tap = (e: React.MouseEvent<SVGSVGElement>) => {
     if (!onTap) return;
     const q = svgPoint(e, vbx);
@@ -535,6 +649,8 @@ function JapanMap({
   const regionFocus = view !== 'japan' ? view : null;
   return (
     <svg
+      ref={svgRef}
+      style={floorStyle(floor)}
       viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
       className={`mk-svg map-svg${onTap ? ' is-tappable' : ''}`}
       role="img"
@@ -579,24 +695,19 @@ function JapanMap({
           </g>
         );
       })}
-      {showRegions
-        ? REGIONS.map((r) => {
-            const a = PREF_BY_CODE.get(r.anchor)!;
-            return (
-              <g key={r.id} className="map-regno">
-                <circle cx={a.label[0]} cy={a.label[1]} r={vb.w * 0.034} className="map-badge" />
-                <text
-                  x={a.label[0]}
-                  y={a.label[1] + vb.w * 0.015}
-                  className="map-badge__no"
-                  style={{ fontSize: vb.w * 0.044 }}
-                >
-                  {r.no}
-                </text>
-              </g>
-            );
-          })
-        : null}
+      {badges.map((b) => (
+        <g key={b.id} className="map-regno">
+          <circle cx={b.x} cy={b.y} r={badgeR} className="map-badge" />
+          <text
+            x={b.x}
+            y={b.y + badgeFs * 0.34}
+            className="map-badge__no"
+            style={{ fontSize: badgeFs }}
+          >
+            {b.no}
+          </text>
+        </g>
+      ))}
       {PREFS.map((p) => {
         const [x, y] = p.label;
         const out = [];
@@ -614,40 +725,63 @@ function JapanMap({
             <text
               key="w"
               x={x}
-              y={y + vb.w * 0.014}
+              y={y + markFs * 0.35}
               className="map-wrongmark"
-              style={{ fontSize: vb.w * 0.04 }}
+              style={{ fontSize: markFs }}
             >
               ？
             </text>,
           );
-        if (has('names', p.code))
+        const nl = nameLabels.find((n) => n.code === p.code);
+        if (nl)
           out.push(
-            <text
-              key="n"
-              x={x}
-              y={y - pinR * 2.2}
-              className="map-name"
-              style={{ fontSize: vb.w * 0.036 }}
-            >
-              {plainText(prefName(p.code, 'kana'))}
+            <text key="n" x={nl.x} y={nl.y} className="map-name" style={{ fontSize: nameFs }}>
+              {nl.text}
             </text>,
           );
         return out.length ? <g key={p.code}>{out}</g> : null;
       })}
-      <NorthArrow x={vb.x + vb.w * 0.92} y={vb.y + vb.h * 0.82} s={vb.w * 0.05} />
+      <NorthArrow
+        x={vb.x + vb.w * 0.92}
+        y={vb.y + vb.h * 0.82}
+        s={vb.w * 0.05}
+        floor={floor}
+        box={vb}
+      />
     </svg>
   );
 }
 
 /** 方位記号（北の矢印） */
-function NorthArrow({ x, y, s }: { x: number; y: number; s: number }) {
+function NorthArrow({
+  x: x0,
+  y: y0,
+  s,
+  floor = 0,
+  box,
+}: {
+  x: number;
+  y: number;
+  s: number;
+  floor?: number;
+  /** 図の範囲。文字が最小まで大きくなっても「きた」が範囲の外に出ない位置にする */
+  box: ViewBox;
+}) {
+  const fs = Math.max(s * 0.8, floor);
+  const halfW = fs * 1.05;
+  const x = Math.min(box.x + box.w - halfW - 2, Math.max(box.x + halfW + 2, x0));
+  const y = Math.max(box.y + fs * 1.3 + s * 1.15, y0);
   return (
     <g className="map-north" aria-hidden>
       <path
         d={`M${x} ${y - s} L${x + s * 0.45} ${y + s * 0.6} L${x} ${y + s * 0.25} L${x - s * 0.45} ${y + s * 0.6} Z`}
       />
-      <text x={x} y={y - s * 1.15} style={{ fontSize: s * 0.8 }} className="map-north__label">
+      <text
+        x={x}
+        y={y - s * 1.15 - (fs - s * 0.8) * 0.5}
+        style={{ fontSize: fs }}
+        className="map-north__label"
+      >
         きた
       </text>
     </g>
@@ -893,6 +1027,9 @@ function PickView({ item, ctx, revealed, wrongMark, disabled, submit }: View) {
 
 /** 方位の矢印（ask:'name'） */
 function CompassRose({ dir }: { dir: Dir8 }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, 220);
+  useWidenToText(svgRef, floor);
   const a = (DIRS.indexOf(dir) * 45 * Math.PI) / 180;
   const R = 80;
   const tip = { x: Math.sin(a) * R, y: -Math.cos(a) * R };
@@ -900,6 +1037,8 @@ function CompassRose({ dir }: { dir: Dir8 }) {
   const side = { x: Math.cos(a) * 16, y: Math.sin(a) * 16 };
   return (
     <svg
+      ref={svgRef}
+      style={floorStyle(floor)}
       viewBox="-110 -110 220 220"
       className="mk-svg map-rose"
       role="img"
@@ -1058,7 +1197,7 @@ function FindView({ item, revealed, wrongMark, disabled, submit }: View) {
           </button>
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => submit({ prefs: picked })}
             disabled={locked || picked.length === 0}
             data-testid="check"
@@ -1147,7 +1286,7 @@ function SpellView({ item, ctx, revealed, wrongMark, disabled, submit }: View) {
         {!revealed ? (
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => submit({ tiles: placed })}
             disabled={locked || placed.length === 0}
             data-testid="check"
@@ -1172,6 +1311,10 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
   const W = w * CELL;
   const H = h * CELL;
   const pad = 40;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W + 2 * pad);
+  useWidenToText(svgRef, floor);
+  const markFs = Math.max(34, floor);
   const vb: ViewBox = { x: -pad, y: -pad, w: W + 2 * pad, h: H + 2 * pad };
   const C = (p: [number, number]) => ({ x: (p[0] + 0.5) * CELL, y: (p[1] + 0.5) * CELL });
   const line = (ps: [number, number][]) => ps.map((p) => `${C(p).x},${C(p).y}`).join(' ');
@@ -1192,6 +1335,8 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
     <div className="mk eng-map">
       <div className="mk__main">
         <svg
+          ref={svgRef}
+          style={floorStyle(floor)}
           viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
           className="mk-svg map-town"
           role="img"
@@ -1245,7 +1390,7 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
                     x={c.x + CELL * 0.34}
                     y={c.y - CELL * 0.2}
                     className="map-wrongmark"
-                    style={{ fontSize: 34 }}
+                    style={{ fontSize: markFs }}
                   >
                     ？
                   </text>
@@ -1253,7 +1398,7 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
               </g>
             );
           })}
-          <NorthArrow x={W + pad * 0.2} y={-pad * 0.1 + 50} s={26} />
+          <NorthArrow x={W + pad * 0.2} y={-pad * 0.1 + 50} s={26} floor={floor} box={vb} />
         </svg>
       </div>
       {!revealed ? (
@@ -1261,7 +1406,7 @@ function TownView({ item, revealed, wrongMark, disabled, submit }: View) {
           <p className="map-count">{picked !== null ? 'えらんだよ' : 'きごうを タップ'}</p>
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             onClick={() => picked !== null && submit({ value: picked })}
             disabled={locked || picked === null}
             data-testid="check"

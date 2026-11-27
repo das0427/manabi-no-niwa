@@ -69,31 +69,118 @@ export function initialFlow(items: Item[], showIntro: boolean): FlowState {
   };
 }
 
+/**
+ * 途中の問題の状態（見たヒント・誤答の数など）。再開で「自力」に戻らないように持つ
+ * （v1 の useQuestion.restore と同じ考え。FX08）
+ */
+export interface DraftCurrent {
+  /** 何問目か（終えた問題の数と同じときだけ使う） */
+  index: number;
+  q: QuestionState;
+  /** 見せたヒントの数 */
+  hintsShown: number;
+  /** 今の問題で最後に出た誤概念 */
+  lastMisconception?: string;
+}
+
 /** 中断データ（何問目まで終えたか・その結果）。問題は seed から作り直す */
 export interface FlowDraft {
   done: { outcome: Outcome; misconception?: string; q: QuestionState }[];
+  /** 途中の問題の状態。何も起きていない問題と、2.0 までの中断データには無い */
+  current?: DraftCurrent;
+}
+
+/** 今の問題でヒント・誤答などが1つでも起きたか（何も無ければ中断データに入れない） */
+function touched(q: QuestionState, hintsShown: number): boolean {
+  return (
+    hintsShown > 0 ||
+    q.hintLevel > 0 ||
+    q.hintsUsed > 0 ||
+    q.wrongTries > 0 ||
+    q.reviewsUsed > 0 ||
+    (q.nudges ?? 0) > 0 ||
+    q.operationIssue
+  );
 }
 
 export function draftOf(s: FlowState): FlowDraft {
-  return {
+  const d: FlowDraft = {
     done: s.results.map((r) => ({ outcome: r.outcome, misconception: r.misconception, q: r.q })),
+  };
+  // 問題の途中（解説に入る前）だけ、今の問題の状態を持つ。解説の間は、その問題はもう結果に入っている
+  if (s.phase === 'question' && s.index === s.results.length && touched(s.q, s.hintsShown)) {
+    d.current = {
+      index: s.index,
+      q: { ...s.q, tapTimes: [] },
+      hintsShown: s.hintsShown,
+      ...(s.lastMisconception ? { lastMisconception: s.lastMisconception } : {}),
+    };
+  }
+  return d;
+}
+
+const count = (v: unknown): number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 0 && v <= 99 ? v : 0;
+
+/** 中断データの途中の問題の状態を、いまの問題に合わせて読み直す（壊れた値・合わない問題は使わない） */
+function currentOf(
+  c: unknown,
+  index: number,
+  item: Item,
+): Pick<FlowState, 'q' | 'hintsShown' | 'lastMisconception'> | null {
+  if (typeof c !== 'object' || c === null) return null;
+  const cur = c as Partial<DraftCurrent>;
+  if (cur.index !== index || typeof cur.q !== 'object' || cur.q === null) return null;
+  const q = cur.q as Partial<QuestionState>;
+  const nudges = count(q.nudges);
+  return {
+    // 確定（done・outcome）と連打の時刻は引き継がない。回数は引き継ぐ
+    q: {
+      ...initialQuestion(),
+      wrongTries: count(q.wrongTries),
+      hintLevel: q.hintLevel === 1 || q.hintLevel === 2 ? q.hintLevel : 0,
+      hintsUsed: count(q.hintsUsed),
+      reviewsUsed: count(q.reviewsUsed),
+      operationIssue: q.operationIssue === true,
+      canSkip: q.canSkip === true,
+      ...(nudges > 0 ? { nudges } : {}),
+    },
+    hintsShown: Math.min(item.hints.length, count(cur.hintsShown)),
+    ...(typeof cur.lastMisconception === 'string'
+      ? { lastMisconception: cur.lastMisconception }
+      : {}),
   };
 }
 
-/** 中断データから再開（終えた問題の次から。導入は出さない） */
+/** 中断データから再開（終えた問題の次から。導入は出さない。途中の問題のヒント・誤答の数も戻す） */
 export function restoreFlow(items: Item[], d: FlowDraft): FlowState {
   const n = Math.min(d.done.length, items.length);
   const base = initialFlow(items, false);
+  const item = items[n];
   return {
     ...base,
     index: n,
     phase: n >= items.length ? 'done' : 'question',
     results: d.done.slice(0, n).map((r, i) => ({ item: items[i]!, ...r })),
+    ...(item ? currentOf(d.current, n, item) : null),
   };
 }
 
 export function currentItem(s: FlowState): Item | undefined {
   return s.items[s.index];
+}
+
+/**
+ * 解説の板が出てから「つぎへ」を受け付けない時間（ms）。ヒントを出しきったあとの「つぎへ」（＝こたえを みる）と
+ * 解説の「つぎへ」は同じ位置の同じ札なので、すばやい2回押しだと解説を見ずに次の問題へ行ってしまう（FX01。
+ * ux-by-age 3章「連打で二重遷移しない」）。見た目は変えず、この間は押しても何も起きない
+ */
+export const NEXT_LOCK_MS = 700;
+
+/** 解説の板が出た時刻 explainAt（ms）から NEXT_LOCK_MS のあいだは true（時計が戻ったときは受け付ける） */
+export function nextLocked(explainAt: number, now: number): boolean {
+  const dt = now - explainAt;
+  return dt >= 0 && dt < NEXT_LOCK_MS;
 }
 
 /** 「つぎへ」を出してよいか: 誤答2回、またはヒントを最後まで見た */
@@ -182,3 +269,27 @@ export function flowReducer(s: FlowState, a: FlowAction): FlowState {
     }
   }
 }
+
+/**
+ * 完了画面の文（2.1.0 の文言の点検 A8。点数に見える「Nもん おわったね。じぶんで できたのは Mもん」をやめた）。
+ * 正解の数は出さない。観測できた行動（その回を最後までやった）だけを言う（learning-design.md 0.5、DESINGN.md 18章）。
+ * - soft（2歳段階）: 遊んだことだけ
+ * - 正解した問題が 1つもない（全部「つぎへ」で見た）回: できたとは言わず、いっしょに見たことを言う
+ *   （v1 の `praise.watched` と同じ文・同じ条件〔src/modes/math/types.ts の praiseOf〕。数も出さない）。
+ *   ヒントや見直しのあとで正解した問題（after_hint・after_review）は、答えた問題として数える
+ * - そのほか: 問題の数と、最後までやったこと
+ * @param outcomes その回の問題ごとの結果（数がその回の問題の数）
+ */
+export function doneCaption(outcomes: readonly Outcome[], soft: boolean): string {
+  if (soft) return 'いっぱい あそんだね';
+  if (outcomes.every((o) => o === 'skipped' || o === 'abandoned'))
+    return 'いっしょに さいごまで みたね';
+  return `${outcomes.length}もん さいごまで やったね`;
+}
+
+/**
+ * 不正解の効果音を鳴らすか。2歳段階（softJudgement）と、穏やかな判定の単元（gentleJudgement。幼児の英語）では鳴らさない。
+ * ○／？の印・誤概念の説明・記録は変えない。
+ */
+export const playsWrongSfx = (softJudgement: boolean, gentleJudgement?: boolean): boolean =>
+  !softJudgement && gentleJudgement !== true;

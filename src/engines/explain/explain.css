@@ -24,10 +24,12 @@
 .eng-explain__side {
   flex: 0 1 calc(var(--u) * 34);
   min-height: 0;
-  overflow-y: auto;
+  /* スクロールさせない（「できた」等のボタンが下に隠れて押せなくなる）。収まらない分は作業領域の
+     fit（--fit）で全体を縮める（作業領域の scrollHeight に出るように、はみ出しを隠さない） */
+  overflow-y: visible;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: safe center;
   gap: calc(var(--u) * 1.6);
 }
 .eng-explain--nopad .eng-explain__side {
@@ -37,6 +39,15 @@
   display: flex;
   flex-direction: column;
   gap: calc(var(--u) * 1.6);
+}
+/* 描く盤が無く、絵つきの理由が3つ以上のときは2列にする。縦に並べると絵の札（12u 前後）が 4 枚で作業領域に約 12u 入らず、
+   枠でスクロールした（p5.ja.letter-play/6）。幅は作業領域の 80u まで */
+.eng-explain--nopad:has(.eng-explain__reason:nth-child(3)) .eng-explain__side {
+  flex-basis: calc(var(--u) * 80);
+}
+.eng-explain--nopad:has(.eng-explain__reason:nth-child(3)) .eng-explain__reasons {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .eng-explain__reason {
   min-width: 0;
@@ -49,7 +60,7 @@
   text-align: left;
 }
 .eng-explain__reason-label {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
   line-height: 1.4;
 }
@@ -88,8 +99,8 @@
 .eng-explain__color--leaf {
   background: var(--leaf-dark);
 }
+/* 「できた」は下の帯の主操作（.eng-check。位置・字は unit.css の .unit .eng-check と numpad.css）。
+   字を u で上書きすると fit 0.8 で 2.08u になっていたので、ここでは大きさを決めない（p5.ja.letter-play・p5.think.why） */
 .eng-explain__done {
   align-self: flex-start;
-  min-width: calc(var(--u) * 16);
-  font-size: calc(var(--u) * 2.6);
 }

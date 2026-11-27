@@ -198,7 +198,7 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `平行な 直線の はばは どこも 同じなので ${wcm}cmです。`,
       identity: `prop:width:${wcm}:${pos}`,
       alt: true,
-      fields: [{ label: 'cm', answer: answers[0]! }],
+      fields: [{ unit: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [wcm + 1, 'width-change'],
         [wcm * 2, 'width-change'],
@@ -245,7 +245,7 @@ function prop(level: number, rng: Rng, alt: boolean): NumberItem {
         : `下の 交わる 点で、角ウと 同じ 位置の 角は ${deg}°。一直線は 180°なので、角エは 180 − ${deg} ＝ ${ans}°です。`,
     identity: `prop:angle:${deg}:${ask}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [ask === 0 ? 180 - deg : deg, 'angle-pos'],
       [90, 'angle-pos'],

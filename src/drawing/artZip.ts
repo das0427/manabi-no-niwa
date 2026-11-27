@@ -148,7 +148,8 @@ export async function importArtworksZip(
     const res = await db.saveArtworkChecked({ ...a, id, profileId }, blobs, {
       expectUpdatedAt: null,
     });
-    if (res !== 'ok') return { ok: false, reason: `保存できませんでした（${added} 件まで追加）。` };
+    if (res !== 'ok')
+      return { ok: false, reason: `保存できませんでした。追加できたのは ${added} 件です。` };
     added++;
   }
   return { ok: true, added };

@@ -33,25 +33,26 @@ const TSUNAMI = '津波《つなみ》';
 /**
  * 架空の町の ハザードマップ（例示）。左に川、川ぞいの低い土地（しま模様＝水につかるおそれ）、
  * 右の高台（点の模様）に ①、川ぞいに ②、まん中の道に ③ の場所。文字は描かない（番号だけ）。
+ * viewBox は 320×150（横長に詰めた。縦に余白があると、高さで描く大きさが決まる画面で字が最小を割る）。
  */
 const HAZARD: Figure = svg(
-  '0 0 320 200',
+  '0 0 320 150',
   [
     '<defs>',
     '<pattern id="hz" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M0 10 L10 0" stroke="var(--sky-dark)" stroke-width="2"/></pattern>',
     '<pattern id="hd" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="1.8" fill="var(--wood-dark)"/></pattern>',
     '</defs>',
-    '<rect x="0" y="0" width="320" height="200" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>',
-    '<rect x="0" y="0" width="130" height="200" fill="url(#hz)"/>',
-    '<rect x="210" y="0" width="110" height="200" fill="url(#hd)"/>',
-    '<path d="M40 0 C70 60 20 130 55 200" fill="none" stroke="var(--sky-dark)" stroke-width="14"/>',
-    '<path d="M0 110 L320 110" stroke="var(--ink-soft)" stroke-width="6"/>',
-    '<circle cx="265" cy="55" r="16" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
-    '<text x="265" y="61" font-size="18" text-anchor="middle" fill="var(--ink)">1</text>',
-    '<circle cx="95" cy="160" r="16" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
-    '<text x="95" y="166" font-size="18" text-anchor="middle" fill="var(--ink)">2</text>',
-    '<circle cx="170" cy="150" r="16" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
-    '<text x="170" y="156" font-size="18" text-anchor="middle" fill="var(--ink)">3</text>',
+    '<rect x="0" y="0" width="320" height="150" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>',
+    '<rect x="0" y="0" width="130" height="150" fill="url(#hz)"/>',
+    '<rect x="210" y="0" width="110" height="150" fill="url(#hd)"/>',
+    '<path d="M40 0 C70 45 20 100 55 150" fill="none" stroke="var(--sky-dark)" stroke-width="14"/>',
+    '<path d="M0 82 L320 82" stroke="var(--ink-soft)" stroke-width="6"/>',
+    '<circle cx="265" cy="40" r="18" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
+    '<text x="265" y="47" font-size="20" text-anchor="middle" fill="var(--ink)">1</text>',
+    '<circle cx="95" cy="118" r="18" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
+    '<text x="95" y="125" font-size="20" text-anchor="middle" fill="var(--ink)">2</text>',
+    '<circle cx="170" cy="112" r="18" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>',
+    '<text x="170" y="119" font-size="20" text-anchor="middle" fill="var(--ink)">3</text>',
   ].join(''),
   'れいのハザードマップ。左《ひだり》に川《かわ》があり、川《かわ》ぞいのななめ線《せん》のところは大雨《おおあめ》のとき水《みず》につかるおそれがある。右《みぎ》の点《てん》のもようのところは高《たか》い土地《とち》。1は高《たか》い土地《とち》の学校《がっこう》、2は川《かわ》ぞいの公園《こうえん》、3はまん中《なか》の道《みち》ぞいの公民館《こうみんかん》',
 );

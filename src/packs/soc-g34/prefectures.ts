@@ -461,7 +461,7 @@ const capitalSame: Item[] = SAME_SETS.map(([right, wrongs], i) =>
 // ---- bearing ----
 const PAIRS: [number, number][] = [
   [20, 22],
-  [20, 19],
+  [21, 22],
   [20, 17],
   [13, 11],
   [13, 8],
@@ -605,7 +605,9 @@ const items: Item[] = [
 
 export const prefectures: UnitSpec = {
   ...baseSoc('g4.soc.prefectures', 'g4'),
-  title: '47都道府県《よんじゅうななとどうふけん》',
+  // 《》のよみは親字（都道府県）だけ。「47」の読みを入れると、ふりがなが親字より長くなって都道府県の字の間が空き、
+  // 読み上げも数の部品と重なって「よんじゅうなな よんじゅうななとどうふけん」になった（text-layout-fixes 第7回のレビュー）
+  title: '47都道府県《とどうふけん》',
   kind: 'knowledge',
   status: 'ready',
   review: 'item',

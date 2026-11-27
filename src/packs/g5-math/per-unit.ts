@@ -163,7 +163,7 @@ function per1(level: number, rng: Rng, alt: boolean): NumberItem {
     ),
     identity: `per1:${sc.id}:${a}:${b}${alt ? ':line' : ''}`,
     alt,
-    fields: [{ label: sc.bUnit, answer: answers[0]! }],
+    fields: [{ unit: sc.bUnit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [divText(a, b), 'div-swap'],
@@ -373,7 +373,7 @@ function density(level: number, rng: Rng, alt: boolean): Item {
     explain: `${pop} ÷ ${area} ＝ ${d}。人口密度は 1km²あたり ${d}人です。`,
     identity: `density:${area}:${d}`,
     alt: false,
-    fields: [{ label: '人', answer: answers[0]! }],
+    fields: [{ unit: '人', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [divText(area, pop), 'div-swap'],
       [pop * area, 'mul-instead'],
@@ -549,7 +549,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
         : `${total} ÷ ${r} ＝ ${n}。答えは ${n}${sc.unit}です。`,
     identity: `story:${sc.id}:${r}:${given}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(
       answers,
@@ -593,7 +593,7 @@ export function generatePerUnit(level: number, rng: Rng, index: number): Item {
 export const perUnit: UnitSpec = finishUnit(
   {
     id: 'g5.math.per-unit',
-    title: '単位量あたりの 大きさ',
+    title: '単位量 あたりの 大きさ',
     stage: 'g5',
     subject: 'math',
     domain: 'C-measure',

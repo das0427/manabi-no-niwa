@@ -29,7 +29,16 @@ const press = (...keys: string[]) => {
 describe('number の画面', () => {
   it('単位を欄の後ろに出す', () => {
     const submit = vi.fn();
-    render(<Comp item={sample('unit')} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={sample('unit')}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     expect(screen.getByTestId('unit-0').textContent).toBe('cm');
     const field = screen.getByTestId('field-0');
     expect(field.nextElementSibling).toBe(screen.getByTestId('unit-0'));
@@ -40,7 +49,16 @@ describe('number の画面', () => {
 
   it('兆の数（13けた）が入る。区切りは表示だけ', () => {
     const submit = vi.fn();
-    render(<Comp item={sample('big')} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={sample('big')}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     press('3', ...Array.from({ length: 12 }, () => '0'));
     expect(screen.getByTestId('field-0').textContent).toBe('3000000000000');
     expect(screen.getByTestId('field-0').querySelectorAll('.num-group__g--sep').length).toBe(3);
@@ -54,7 +72,16 @@ describe('number の画面', () => {
   it('筆算のたし算: 一の位から左へ入る。メモは答えに入らない', () => {
     const submit = vi.fn();
     const it1 = sample('col-add');
-    render(<Comp item={it1} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={it1}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     expect(screen.getByTestId('column')).toBeTruthy();
     // メモに 1 を入れる
     fireEvent.click(screen.getByTestId('memo-0'));
@@ -81,7 +108,14 @@ describe('number の画面', () => {
     const submit = vi.fn();
     const mul = sample('col-mul2');
     const { rerender } = render(
-      <Comp item={mul} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />,
+      <Comp
+        item={mul}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
     );
     // 1だんめ 115（3ます）・2だんめ 92（3ます: 一の位の列には無い）・答え 1035（4ます）
     expect(screen.queryByTestId('cell-0-3')).toBeNull();
@@ -100,7 +134,16 @@ describe('number の画面', () => {
 
     cleanup();
     const div = sample('col-div');
-    render(<Comp item={div} ctx={ctx} revealed={false} wrongMark={null} disabled={false} submit={submit} />);
+    render(
+      <Comp
+        item={div}
+        ctx={ctx}
+        revealed={false}
+        wrongMark={null}
+        disabled={false}
+        submit={submit}
+      />,
+    );
     // わり算は左から右へ。商は 一の位の上（2つめのます）
     fireEvent.click(screen.getByTestId('cell-0-1'));
     press('9');
@@ -119,7 +162,132 @@ describe('number の画面', () => {
         <Comp item={s} ctx={ctx} revealed wrongMark={true} disabled submit={vi.fn()} />,
       );
       unmount();
-      for (const t of [s.prompt, s.explain, ...s.hints]) expect(findBareKanji(t), `${s.id}: ${t}`).toEqual([]);
+      for (const t of [s.prompt, s.explain, ...s.hints])
+        expect(findBareKanji(t), `${s.id}: ${t}`).toEqual([]);
     }
+  });
+
+  describe('図の段の縮み（V4）', () => {
+    /** 作業領域の中に図の段を置き、図の高さを --num-k に比例させる（jsdom は寸法を持たないので差し替える） */
+    function mount(natural: number, avail: number, withBar = false) {
+      const host = document.createElement('div');
+      host.className = 'unit__work';
+      const fig = document.createElement('div');
+      fig.className = 'unit__figure';
+      if (withBar) fig.innerHTML = '<svg><rect class="blk blk--t"></rect></svg>';
+      host.appendChild(fig);
+      document.body.appendChild(host);
+      const k = () => Number(fig.style.getPropertyValue('--num-k') || 1);
+      Object.defineProperty(fig, 'scrollHeight', { get: () => natural * k(), configurable: true });
+      Object.defineProperty(fig, 'clientHeight', { value: avail, configurable: true });
+      const r = render(
+        <Comp
+          item={sample('unit')}
+          ctx={ctx}
+          revealed={false}
+          wrongMark={null}
+          disabled={false}
+          submit={() => {}}
+        />,
+        { container: host.appendChild(document.createElement('div')) },
+      );
+      return { fig, r, host };
+    }
+    afterEach(() => document.body.replaceChildren());
+
+    it('入る図は縮めない（--num-k なし・枠なし）', () => {
+      const { fig } = mount(100, 120);
+      expect(fig.style.getPropertyValue('--num-k')).toBe('');
+      expect(fig.hasAttribute('data-scroll-region')).toBe(false);
+    });
+    it('少し高い図は、図の中の --u を縮めて段に入れる（スクロールにしない）', () => {
+      const { fig } = mount(150, 100);
+      const k = Number(fig.style.getPropertyValue('--num-k'));
+      expect(k).toBeGreaterThanOrEqual(0.6);
+      expect(k).toBeLessThan(1);
+      expect(fig.hasAttribute('data-scroll-region')).toBe(false);
+    });
+    it('0.6 でも入らない図だけ、図の段のスクロール（印あり）を残す', () => {
+      const { fig } = mount(400, 100);
+      expect(fig.style.getPropertyValue('--num-k')).toBe('0.600');
+      expect(fig.getAttribute('data-scroll-region')).toBe('figure');
+      expect(fig.hasAttribute('data-scroll-cue')).toBe(true);
+    });
+  });
+
+  it('解説は回答欄の段に eng-number--revealed を付ける（1行に詰める）', () => {
+    const { container } = render(
+      <Comp
+        item={sample('unit')}
+        ctx={ctx}
+        revealed
+        wrongMark={null}
+        disabled={false}
+        submit={() => {}}
+      />,
+    );
+    expect(container.querySelector('.eng-number--revealed')).toBeTruthy();
+  });
+
+  describe('図の段の縮み（V4）', () => {
+    /** 作業領域の中に図の段を置き、図の高さを --num-k に比例させる（jsdom は寸法を持たないので差し替える） */
+    function mount(natural: number, avail: number, withBar = false) {
+      const host = document.createElement('div');
+      host.className = 'unit__work';
+      const fig = document.createElement('div');
+      fig.className = 'unit__figure';
+      if (withBar) fig.innerHTML = '<svg><rect class="blk blk--t"></rect></svg>';
+      host.appendChild(fig);
+      document.body.appendChild(host);
+      const k = () => Number(fig.style.getPropertyValue('--num-k') || 1);
+      Object.defineProperty(fig, 'scrollHeight', { get: () => natural * k(), configurable: true });
+      Object.defineProperty(fig, 'clientHeight', { value: avail, configurable: true });
+      const r = render(
+        <Comp
+          item={sample('unit')}
+          ctx={ctx}
+          revealed={false}
+          wrongMark={null}
+          disabled={false}
+          submit={() => {}}
+        />,
+        { container: host.appendChild(document.createElement('div')) },
+      );
+      return { fig, r, host };
+    }
+    afterEach(() => document.body.replaceChildren());
+
+    it('入る図は縮めない（--num-k なし・枠なし）', () => {
+      const { fig } = mount(100, 120);
+      expect(fig.style.getPropertyValue('--num-k')).toBe('');
+      expect(fig.hasAttribute('data-scroll-region')).toBe(false);
+    });
+    it('少し高い図は、図の中の --u を縮めて段に入れる（スクロールにしない）', () => {
+      const { fig } = mount(150, 100);
+      const k = Number(fig.style.getPropertyValue('--num-k'));
+      expect(k).toBeGreaterThanOrEqual(0.6);
+      expect(k).toBeLessThan(1);
+      expect(fig.hasAttribute('data-scroll-region')).toBe(false);
+    });
+    it('0.6 でも入らない図だけ、図の段のスクロール（印あり）を残す', () => {
+      const { fig } = mount(400, 100);
+      expect(fig.style.getPropertyValue('--num-k')).toBe('0.600');
+      expect(fig.getAttribute('data-scroll-region')).toBe('figure');
+      expect(fig.hasAttribute('data-scroll-cue')).toBe(true);
+    });
+  });
+
+  it('解説は回答欄の段に eng-number--revealed を付ける（1行に詰める）', () => {
+    const { container } = render(
+      <Comp
+        item={sample('unit')}
+        ctx={ctx}
+        revealed
+        wrongMark={null}
+        disabled={false}
+        submit={() => {}}
+      />,
+    );
+    expect(container.querySelector('.eng-number--revealed')).toBeTruthy();
   });
 });

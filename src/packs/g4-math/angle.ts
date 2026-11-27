@@ -71,7 +71,7 @@ function reflex(level: number, rng: Rng, alt: boolean): Item {
       explain: `360 − ${inner} ＝ ${deg}。あの 角は ${deg}°です。`,
       identity: `reflex-calc:${deg}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [inner, 'reflex-inner'],
         [180 + inner, 'reflex-180'],
@@ -142,7 +142,7 @@ function rotate(level: number, rng: Rng, alt: boolean): Item {
       explain: `5分で 30°なので、${min}分では 30 × ${min / 5} ＝ ${ans}°です。`,
       identity: `rotate-clock:${min}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [min, 'rotate-count'],
         [min * 30, 'rotate-count'],
@@ -187,7 +187,7 @@ function rotate(level: number, rng: Rng, alt: boolean): Item {
     explain: `直角は 90°、半回転は 180°、1回転は 360°。${k.t}は ${k.v}°です。`,
     identity: `rotate:${k.v}:${k.t}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [(k.v / 90) * 100, 'rotate-count'],
       [k.v + 90, 'rotate-count'],
@@ -268,7 +268,7 @@ function setsq(level: number, rng: Rng, alt: boolean): Item {
     explain: `${e} ＝ ${v}°です。`,
     identity: `setsq:${add ? 'add' : 'sub'}:${small}-${big}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [[add ? big - small : a + b, 'setsq-angle']]),
   };
   return item;
@@ -296,7 +296,7 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `180 − ${a} − ${b} ＝ ${ans}。あの 角は ${ans}°です。`,
       identity: `calc-line3:${Math.min(a, b)}+${Math.max(a, b)}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [360 - a - b, 'line-180'],
         [a + b, 'line-180'],
@@ -335,7 +335,7 @@ function calc(level: number, rng: Rng, alt: boolean): NumberItem {
         : `イ ＝ 180 − ${a}、ウ ＝ 180 − イ ＝ ${a}°。向かい合う 角は 等しく なります。`,
     identity: `calc:${a}:${ask}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [ask === 0 ? a : 180 - a, 'opposite-angle'],
       [360 - a, 'line-180'],

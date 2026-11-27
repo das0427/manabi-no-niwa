@@ -794,7 +794,7 @@ const ITEMS: Item[] = [
 
 export const wordStructure: UnitSpec = {
   id: 'g5.ja.word-structure',
-  title: '熟語《じゅくご》の組《く》み立《た》てと言葉《ことば》の種類《しゅるい》',
+  title: '熟語《じゅくご》の 組《く》み立《た》てと 言葉《ことば》の 種類《しゅるい》',
   stage: 'g5',
   subject: 'ja',
   domain: 'kotoba',

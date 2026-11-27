@@ -11,6 +11,7 @@
  */
 import type { ArtworkBlobKind, ArtworkRecord } from '../core/types';
 import type { CheckedSaveResult } from '../core/storage/repo-v2';
+import { trackPending } from '../core/pendingWrites';
 
 export const AUTOSAVE_DELAY_MS = 1500;
 
@@ -125,6 +126,8 @@ export class AutoSaver {
   private enqueue(run: () => Promise<void>): Promise<void> {
     const next = this.queue.then(run, run);
     this.queue = next.catch(() => {});
+    // 画面が引き下がるとき（二重起動の防止）に、終わるまで待てるようにする
+    trackPending(this.queue);
     return next;
   }
 
@@ -232,6 +235,7 @@ export class AutoSaver {
     this.knownUpdatedAt = updatedAt;
     const write = this.d.write(q.record(updatedAt, true), q.blobs, { expectUpdatedAt: expect });
     this.queue = this.queue.then(() => write).catch(() => {});
+    trackPending(this.queue);
     void write.then((res) => {
       if (res === 'conflict') this.stop();
       else if (res === 'ok' && !this.firstDone) {

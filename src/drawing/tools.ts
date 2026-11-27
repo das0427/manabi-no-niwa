@@ -4,7 +4,7 @@
  *   かんたん 2〜3歳: 色6・太さ2 ／ 4歳以上: 色8・太さ3 ／ くわしく: 色24・太さ5段
  * 作品の色は自由（DESINGN.md 3.1 X-CL-05）。真っ黒は使わない（くろ は こげ茶に近い黒）。
  */
-import type { ShapeKind } from './model';
+import { DOC_H, DOC_W, type ShapeKind } from './model';
 
 export interface DrawColor {
   id: string;
@@ -41,7 +41,7 @@ export const COLORS_24: DrawColor[] = [
   C('pink', 'ももいろ', '#F28DA8'),
   C('lightpink', 'うすもも', '#F9C9D4'),
   C('orange', 'だいだい', '#EE8A2A'),
-  C('skin', 'はだいろ', '#F5CBA0'),
+  C('skin', 'うすだいだい', '#F5CBA0'),
   C('yellow', 'きいろ', '#F2C230'),
   C('lemon', 'れもんいろ', '#F7E569'),
   C('yellowgreen', 'きみどり', '#9CCB4A'),
@@ -104,6 +104,45 @@ export const MAX_SIZE = 1400;
 export function scaled(v: number, up: boolean): number {
   return Math.round(Math.min(MAX_SIZE, Math.max(MIN_SIZE, up ? v * SCALE_STEP : v / SCALE_STEP)));
 }
+
+/**
+ * ドラッグで大きさを決めて置く図形（X-SH-03）。押した所 a から離した所 b までの枠に合わせる。
+ * - まる: 縦横の長い方の正方形（a の角から b の向きへ）
+ * - せん: a から b への線（長さ＝w、向き＝rotation）
+ * - ほか: a と b を対角にする枠
+ * 大きさは MIN_SIZE〜MAX_SIZE、中心はキャンバスの中に収める。h は せん では使わない（呼び出し側で線の太さから決める）
+ */
+export function shapeFromDrag(
+  shape: ShapeKind,
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+): { x: number; y: number; w: number; h: number; rotation: number } {
+  const clampSize = (v: number) => Math.min(MAX_SIZE, Math.max(MIN_SIZE, Math.round(v)));
+  const inDoc = (x: number, y: number) => ({
+    x: Math.round(Math.min(DOC_W, Math.max(0, x))),
+    y: Math.round(Math.min(DOC_H, Math.max(0, y))),
+  });
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  if (shape === 'line') {
+    const w = clampSize(Math.hypot(dx, dy));
+    const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+    const ux = Math.hypot(dx, dy) > 0 ? dx / Math.hypot(dx, dy) : 1;
+    const uy = Math.hypot(dx, dy) > 0 ? dy / Math.hypot(dx, dy) : 0;
+    const c = inDoc(a.x + (ux * w) / 2, a.y + (uy * w) / 2);
+    return { ...c, w, h: 0, rotation: Math.round((deg + 360) % 360) };
+  }
+  const sx = dx < 0 ? -1 : 1;
+  const sy = dy < 0 ? -1 : 1;
+  let w = clampSize(Math.abs(dx));
+  let h = clampSize(Math.abs(dy));
+  if (shape === 'circle') w = h = Math.max(w, h);
+  const c = inDoc(a.x + (sx * w) / 2, a.y + (sy * h) / 2);
+  return { ...c, w, h, rotation: 0 };
+}
+
+/** ドラッグとみなす動きの大きさ（u。これより小さい動きはタップとして既定の大きさで置く） */
+export const SHAPE_DRAG_U = 2.5;
 
 /** 矢印札で動かす量（論理 px。くわしく） */
 export const NUDGE = 40;

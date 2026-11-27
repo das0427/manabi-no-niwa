@@ -209,7 +209,7 @@ function ExplainView({ item, ctx, revealed, disabled, submit }: Props) {
             disabled={disabled || !ready}
             onPress={done}
             testId="done-button"
-            className="eng-explain__done"
+            className="eng-explain__done eng-check"
           />
         ) : null}
       </div>

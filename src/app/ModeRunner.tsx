@@ -5,6 +5,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { audio } from '../core/audio/index';
 import { addOutcome, emptyProgress, evaluate } from '../core/progress/rules';
+import { isSessionTimeUp } from '../core/session/sessionTime';
 import type { AttemptInput, ModeSession, RoundSummary, WorkInput } from '../core/session/types';
 import * as db from '../core/storage/index';
 import type { ModeId, RoundRecord, SkillProgress } from '../core/types';
@@ -25,12 +26,6 @@ interface Props {
   /** 中断データから再開する場合（保存した seed と、モードが保存した状態） */
   resume: { seed: number; data: unknown; level?: number; roundSize?: number } | null;
 }
-
-const DAY_START = () => {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
-};
 
 export function ModeRunner({ modeId, variant, resume }: Props) {
   const app = useApp();
@@ -200,10 +195,9 @@ export function ModeRunner({ modeId, variant, resume }: Props) {
             if (done.id !== undefined) await db.updateRound(done);
           }
           // 利用時間の目安（区切りでだけ知らせる。CX-04）
+          // （単元の完了と共通の判定: core/session/sessionTime.ts）
           if (settings.sessionMinutes > 0) {
-            const rounds = await db.listRounds(profile.id, { since: DAY_START() });
-            const ms = rounds.reduce((sum, r) => sum + Math.max(0, r.endedAt - r.startedAt), 0);
-            setTimeUp(ms >= settings.sessionMinutes * 60_000);
+            setTimeUp(await isSessionTimeUp(profile.id, settings.sessionMinutes));
           }
           audio.sfx('complete');
           setSummary(s);

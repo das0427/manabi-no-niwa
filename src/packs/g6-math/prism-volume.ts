@@ -24,6 +24,11 @@ type Obj = 'base' | 'tri' | 'quad' | 'cyl';
 
 const HID = 'stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4" fill="none"';
 
+/** 図の字の大きさ（viewBox の単位）。図の段の高さに入れるため、図を小さめに描いて字を大きくする（text-layout-fixes 第4回） */
+const FS = 20;
+/** 字の外接の幅（1字 ＝ 字の大きさの 0.62） */
+const tw = (t: string) => t.length * FS * 0.62;
+
 /** 角柱の見取図（底面の多角形を上下に描き、高さの辺でつなぐ）。base は 0〜1 の座標の底面 */
 function prismFig(
   base: [number, number][],
@@ -32,53 +37,106 @@ function prismFig(
   label: string,
   topLabel?: string,
 ): Figure {
-  const W = 150;
-  const D = 60; // 奥行きの つぶし
-  const H = 110;
+  const W = 130;
+  const D = 70; // 奥行きの つぶし（上の面に 底面積の 字が 入る 高さ）
+  const H = 80;
+  const X0 = 8;
+  const Y0 = 8;
   const P = (p: [number, number], top: boolean) =>
-    [20 + p[0] * W, (top ? 0 : H) + 20 + D - p[1] * D] as const;
+    [X0 + p[0] * W, (top ? 0 : H) + Y0 + D - p[1] * D] as const;
   const bot = base.map((p) => P(p, false));
   const top = base.map((p) => P(p, true));
-  let body = `<polygon points="${top.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
-  // 下の底面: 手前の辺は実線、奥の辺は点線（y が 小さい=奥）
-  bot.forEach((p, i) => {
-    const q = bot[(i + 1) % bot.length]!;
-    const back = base[i]![1] > 0.01 && base[(i + 1) % base.length]![1] > 0.01;
-    body += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" ${back ? HID : STROKE}/>`;
+  // 奥の（見えない）辺は 上の面の 下に かくす: 先に 辺を かき、上の面を 最後に かく
+  let body = '';
+  // 見えない 辺を 点線に する。側面（底面の 辺 i の 上の 面）は、外向きの 法線が 奥（base の y が 大きい 向き）を
+  // 向くと 見えない。下の底面の 辺は その 側面が 見えないとき、たての 辺は 両どなりの 側面が 見えないとき 点線。
+  // （以前は「両はしが 奥に ある 辺」だけを 点線に して いたので、三角柱・平行四辺形の 柱で 奥へ 向かう 底面の 辺が 実線に なって いた）
+  const n = base.length;
+  const area = base.reduce((s, p, i) => {
+    const q = base[(i + 1) % n]!;
+    return s + p[0] * q[1] - q[0] * p[1];
+  }, 0);
+  const hiddenFace = base.map((p, i) => {
+    const q = base[(i + 1) % n]!;
+    // 反時計回りの とき 外向きの 法線は (dy, -dx)。その y 成分 ＝ -dx
+    const ny = (area > 0 ? -1 : 1) * (q[0] - p[0]);
+    return ny > 1e-6;
   });
-  base.forEach((b, i) => {
-    const back = b[1] > 0.01 && base.some((o) => o[1] < b[1] - 0.01) && b[0] > 0.01 && b[0] < 0.99;
+  bot.forEach((p, i) => {
+    const q = bot[(i + 1) % n]!;
+    body += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" ${hiddenFace[i] ? HID : STROKE}/>`;
+  });
+  base.forEach((_, i) => {
+    const back = hiddenFace[i]! && hiddenFace[(i - 1 + n) % n]!;
     body += `<line x1="${top[i]![0]}" y1="${top[i]![1]}" x2="${bot[i]![0]}" y2="${bot[i]![1]}" ${back ? HID : STROKE}/>`;
   });
+  const topPoly = `<polygon points="${top.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" ${STROKE}/>`;
+  body += topPoly;
+  // 字の外接を集めて、viewBox を 形と 字の 外接に 合わせる（字は 辺の 外側に 置く）
+  let x0 = 0;
+  let y0 = 0;
+  let x1 = Math.max(...bot.map((p) => p[0])) + 4;
+  let y1 = Math.max(...bot.map((p) => p[1])) + 4;
+  const put = (x: number, y: number, t: string, anchor: 'start' | 'middle') => {
+    body += svgText(x, y, t, FS, anchor);
+    const l = anchor === 'start' ? x : x - tw(t) / 2;
+    x0 = Math.min(x0, l - 2);
+    x1 = Math.max(x1, l + tw(t) + 2);
+    y0 = Math.min(y0, y - FS * 0.6);
+    y1 = Math.max(y1, y + FS * 0.6);
+  };
+  const cx = bot.reduce((s, p) => s + p[0], 0) / bot.length;
+  const cy = bot.reduce((s, p) => s + p[1], 0) / bot.length;
   labels.forEach((l, i) => {
     if (!l) return;
     const a = bot[i]!;
     const b = bot[(i + 1) % bot.length]!;
-    body += svgText((a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 14, l, 14);
+    const mx = (a[0] + b[0]) / 2;
+    const my = (a[1] + b[1]) / 2;
+    // 辺の 垂線の 向きに、字の 箱が 辺に かからない だけ 離す
+    const ex = b[0] - a[0];
+    const ey = b[1] - a[1];
+    const el = Math.hypot(ex, ey) || 1;
+    let nx = -ey / el;
+    let ny = ex / el;
+    // 横の 辺は 下（外側）に、ななめの 辺は 底面の 中（内側）に 置く（外側に 置くと、手前の たての 辺に かかる）
+    const out = (mx - cx) * nx + (my - cy) * ny >= 0;
+    if (Math.abs(ny) > 0.7 ? !out : out) {
+      nx = -nx;
+      ny = -ny;
+    }
+    const dist = Math.abs(nx) * (tw(l) / 2) + Math.abs(ny) * FS * 0.55 + 5;
+    put(mx + nx * dist, my + ny * dist, l, 'middle');
   });
   if (topLabel)
-    body += svgText(
+    put(
       top.reduce((s, p) => s + p[0], 0) / top.length,
-      top.reduce((s, p) => s + p[1], 0) / top.length,
+      top.reduce((s, p) => s + p[1], 0) / top.length + D * 0.1,
       topLabel,
-      14,
+      'middle',
     );
-  const right = Math.max(...bot.map((p) => p[0]));
-  body += svgText(right + 26, 20 + D + H / 2, hLabel, 14);
-  return svg(230, 230, body, label);
+  put(Math.max(...bot.map((p) => p[0])) + 8, Y0 + D + H / 2, hLabel, 'start');
+  return svg(
+    Math.ceil(x1 - x0),
+    Math.ceil(y1 - y0),
+    `<g transform="translate(${-x0} ${-y0})">${body}</g>`,
+    label,
+  );
 }
 
 function cylFig(rLabel: string, hLabel: string, label: string, topLabel?: string): Figure {
+  // 上の楕円の中心 (80, 34)、横 62・縦 22、高さ 96。半径の字は 半径の線の右の端の外に置く
   const body =
-    `<path d="M30 50 L30 170 A70 22 0 0 0 170 170 L170 50" fill="var(--sky)" ${STROKE}/>` +
-    `<ellipse cx="100" cy="50" rx="70" ry="22" fill="var(--sky)" ${STROKE}/>` +
-    `<path d="M30 170 A70 22 0 0 1 170 170" ${HID}/>` +
+    `<path d="M18 34 L18 130 A62 22 0 0 0 142 130 L142 34" fill="var(--sky)" ${STROKE}/>` +
+    `<ellipse cx="80" cy="34" rx="62" ry="22" fill="var(--sky)" ${STROKE}/>` +
+    `<path d="M18 130 A62 22 0 0 1 142 130" ${HID}/>` +
     (rLabel
-      ? `<line x1="100" y1="50" x2="170" y2="50" ${STROKE}/>` + svgText(135, 38, rLabel, 14)
+      ? `<line x1="80" y1="34" x2="142" y2="34" ${STROKE}/>` + svgText(148, 34, rLabel, FS, 'start')
       : '') +
-    svgText(196, 110, hLabel, 14) +
-    (topLabel ? svgText(100, 50, topLabel, 14) : '');
-  return svg(230, 210, body, label);
+    svgText(150, 96, hLabel, FS, 'start') +
+    (topLabel ? svgText(80, 34, topLabel, FS) : '');
+  const w = 150 + Math.max(tw(hLabel), rLabel ? tw(rLabel) - 2 : 0) + 4;
+  return svg(Math.ceil(w), 160, body, label);
 }
 
 function numItem(
@@ -106,7 +164,7 @@ function numItem(
     explain,
     identity: `${obj}:${key}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label: 'cm³', answer }],
+    fields: [{ unit: 'cm³', answer }],
     keys: places > 0 ? ['decimal'] : undefined,
     wrongAnswers: wrongList(
       [answer],

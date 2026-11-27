@@ -4,7 +4,7 @@
  * 数字キーは作業領域の右側（DESINGN.md 18章、review-1 #21）。主操作の大きさ。
  * column があれば筆算の形（位ごとのます）で出す（column.ts）。判定は同じ（各欄の値）。
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import {
   judgeNumber,
   normalizeInput,
@@ -13,7 +13,7 @@ import {
   answerValue,
   type NumberAnswer,
 } from '../../core/answer/number';
-import type { NumberItem } from '../../curriculum/types';
+import type { NumberField, NumberItem } from '../../curriculum/types';
 import { plainText } from '../../text/rich';
 import { Rt } from '../../text/Rt';
 import type { EngineDef, EngineProps, Judgement } from '../types';
@@ -83,6 +83,83 @@ function answerLength(a: NumberAnswer): number {
   }
 }
 
+/**
+ * 単位の語の一覧（1 か所。第8回 Y4）。数の欄（NumberField）の label がこれだけなら、単位を label に書いている。
+ * label は回答欄の上（問題）・左（解説）の見出しで、単位は unit（回答欄の右）に書く。単位を label に書くと、
+ * 解説で「cm 7」と逆に読め、問題の状態でも回答欄の上に札の段（3u）が要る。
+ * 見出し（「じゅうの くらい」「あまり」「商」「約」「□が 4」など）は、ここに無いので通る。
+ */
+export const UNIT_WORDS: readonly string[] = [
+  'cm',
+  'm',
+  'km',
+  'mm',
+  'cm²',
+  'm²',
+  'km²',
+  'a',
+  'ha',
+  'cm³',
+  'm³',
+  'L',
+  'dL',
+  'mL',
+  'g',
+  'kg',
+  't',
+  '円',
+  '%',
+  '度',
+  'ど',
+  '人',
+  'にん',
+  'こ',
+  '個',
+  '本',
+  'ほん',
+  'ぽん',
+  'ぼん',
+  'まい',
+  '枚',
+  'かい',
+  '回',
+  'わ',
+  'ひき',
+  'びき',
+  'ぴき',
+  '冊',
+  '点',
+  '分',
+  'ふん',
+  '秒',
+  '時間',
+  '倍',
+  'つ',
+  'マス',
+  'そう',
+  'れつ',
+  'こずつ',
+  '角形',
+  '通り',
+  'ほ',
+  '台',
+];
+
+/** 比べる形: 《よみ》・強調・空白（全角も）を除き、全角の ％ や ㎠ の字形・上つきの ² ³ をそろえる（NFKC） */
+function unitKey(text: string): string {
+  return plainText(text).normalize('NFKC').replace(/\s+/g, '');
+}
+const UNIT_KEYS: ReadonlySet<string> = new Set(UNIT_WORDS.map(unitKey));
+
+/**
+ * 数の欄の label が単位だけなら誤りの文を返す（なければ null）。number の fields と graph の数の欄が同じ関数を使う。
+ */
+export function checkFieldLabel(f: Pick<NumberField, 'label'>): string | null {
+  if (f.label === undefined || !UNIT_KEYS.has(unitKey(f.label))) return null;
+  const shown = plainText(f.label).replace(/\s+/g, '');
+  return `単位「${shown}」は label でなく unit に書く（label は回答欄の上・左の見出し。解説で「${shown} 7」と逆に読める）`;
+}
+
 export function checkNumberItem(item: NumberItem): string[] {
   const errs: string[] = [];
   if (item.fields.length === 0) errs.push('入力欄が無い');
@@ -93,6 +170,8 @@ export function checkNumberItem(item: NumberItem): string[] {
   if (fnCount > 3) errs.push('記号のキーは3つまで（小数点・分数・マイナスを同時に使わない）');
   for (const f of item.fields) {
     const a = f.answer;
+    const labelErr = checkFieldLabel(f);
+    if (labelErr) errs.push(labelErr);
     if (a.kind === 'fraction' && a.den === 0) errs.push('分母が0');
     if (a.kind === 'fraction' && !item.keys?.includes('fraction'))
       errs.push('分数の答えなのに分数キーが無い');
@@ -142,7 +221,9 @@ function checkColumn(item: NumberItem): string[] {
   if (c.partials !== undefined && c.op !== 'mul') errs.push('partials は かけ算だけ');
   if (c.op === 'mul' && c.partials !== false && String(c.operands[1]).length >= 2) {
     if (String(c.operands[1]).includes('0'))
-      errs.push('かける数に 0 の位がある筆算は partials: false にする（部分積の書き方が教科書で違う）');
+      errs.push(
+        'かける数に 0 の位がある筆算は partials: false にする（部分積の書き方が教科書で違う）',
+      );
   }
   if (item.fields.length !== l.expected.length)
     errs.push(
@@ -209,7 +290,8 @@ function Shown({ s, group }: { s: string; group?: 3 | 4 }) {
     if (m && m[2]!.length > group) {
       const int = m[2]!;
       const parts: string[] = [];
-      for (let e = int.length; e > 0; e -= group) parts.unshift(int.slice(Math.max(0, e - group), e));
+      for (let e = int.length; e > 0; e -= group)
+        parts.unshift(int.slice(Math.max(0, e - group), e));
       return (
         <span className="num-group">
           {m[1]}
@@ -230,12 +312,15 @@ function Shown({ s, group }: { s: string; group?: 3 | 4 }) {
 function Pad({
   keys,
   locked,
+  revealed,
   ready,
   put,
   onSubmit,
 }: {
   keys: NonNullable<NumberItem['keys']>;
   locked: boolean;
+  /** 答えを見せている（解説）。キーは使えないので隠す（解説の板で作業領域が狭く、6u のキーが収まらない） */
+  revealed: boolean;
   ready: boolean;
   put(ch: string): void;
   onSubmit(): void;
@@ -262,7 +347,11 @@ function Pad({
     keys.includes('minus') ? key('-', '−', 'マイナス', 'key-minus') : null,
   ].filter((x) => x !== null);
   return (
-    <div className="eng-number__pad" role="group" aria-label="すうじの キー">
+    <div
+      className={revealed ? 'eng-number__pad eng-number__pad--done' : 'eng-number__pad'}
+      role="group"
+      aria-label="すうじの キー"
+    >
       {['7', '8', '9'].map(digit)}
       {key('back', 'けす', 'ひとつ けす', 'key-back', 'numkey--fn')}
       {['4', '5', '6'].map(digit)}
@@ -290,6 +379,88 @@ function NumberView(props: EngineProps<NumberItem, NumberResponse>) {
   return <FieldsView {...props} />;
 }
 
+/** 10の棒 1 本の幅の下限（--u0 の倍数。数えられる大きさ: text-layout-fixes.md V4） */
+const BAR_MIN_U = 1.2;
+/** 図の段の縮み --num-k の下限 */
+const FIG_K_MIN = 0.6;
+
+/**
+ * 図の段（作業領域の直下の .unit__figure。UnitRunner が描く）の高さを超える表・10の棒は、まず図の中の --u を
+ * 縮めて（--num-k = max(0.6, 段の高さ ÷ 図の高さ)。UnitRunner の --fig-k と同じ考え。number は NO_FIG_FIT で
+ * UnitRunner が --fig-k を測り直すたびに消すので、別の名前で持つ）段に入れる。10の棒は 1 本が 1.2u を割らない所まで。
+ * 下限でも入らないときだけ、図の段を枠にして縦にスクロールさせる（data-scroll-region="figure"・▼ の data-scroll-cue。
+ * キーと回答欄は枠の外。text-layout-fixes.md T7・V4）
+ */
+function useFigureScroll(ref: { current: HTMLElement | null }) {
+  useLayoutEffect(() => {
+    const work = ref.current?.closest<HTMLElement>('.unit__work') ?? null;
+    const fig = work?.querySelector<HTMLElement>(':scope > .unit__figure') ?? null;
+    if (!work || !fig) return;
+    const cue = () => {
+      if (!fig.hasAttribute('data-scroll-region')) return fig.removeAttribute('data-scroll-cue');
+      if (fig.scrollTop + fig.clientHeight >= fig.scrollHeight - 2)
+        fig.removeAttribute('data-scroll-cue');
+      else fig.setAttribute('data-scroll-cue', '');
+    };
+    const overflowing = () => fig.scrollHeight > fig.clientHeight + 2;
+    const measure = () => {
+      const keep = fig.scrollTop;
+      fig.removeAttribute('data-scroll-region');
+      fig.style.removeProperty('--num-k');
+      if (fig.clientHeight > 0 && overflowing()) {
+        // 10の棒 1 本の幅から、縮みの下限を決める
+        let floor = FIG_K_MIN;
+        const bar = fig.querySelector<SVGGraphicsElement>('.blk--t');
+        if (bar) {
+          const probe = document.createElement('div');
+          probe.style.cssText =
+            'position:absolute;visibility:hidden;pointer-events:none;width:calc(var(--u0, var(--u)) * 1)';
+          work.appendChild(probe);
+          const u0 = probe.getBoundingClientRect().width;
+          probe.remove();
+          const w = bar.getBoundingClientRect().width;
+          if (u0 > 0 && w > 0) floor = Math.min(1, Math.max(floor, (BAR_MIN_U * u0) / w));
+        }
+        let k = 1;
+        for (let i = 0; i < 4 && overflowing() && k > floor + 0.001; i++) {
+          k = Math.max(floor, k * (fig.clientHeight / fig.scrollHeight));
+          fig.style.setProperty('--num-k', k.toFixed(3));
+        }
+        if (overflowing()) {
+          fig.setAttribute('data-scroll-region', 'figure');
+          fig.scrollTop = keep;
+        }
+      }
+      cue();
+    };
+    measure();
+    fig.addEventListener('scroll', cue, { passive: true });
+    let raf = 0;
+    const ro =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(() => {
+            if (raf) return;
+            raf = requestAnimationFrame(() => {
+              raf = 0;
+              measure();
+            });
+          });
+    // 作業領域（解説の板で狭くなる）と、図の中身（UnitRunner の --fit で大きさが変わる）を見る
+    ro?.observe(work);
+    ro?.observe(fig);
+    for (const c of Array.from(fig.children)) ro?.observe(c);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      ro?.disconnect();
+      fig.removeEventListener('scroll', cue);
+      fig.removeAttribute('data-scroll-region');
+      fig.removeAttribute('data-scroll-cue');
+      fig.style.removeProperty('--num-k');
+    };
+  }, [ref]);
+}
+
 function FieldsView({
   item,
   ctx,
@@ -312,9 +483,17 @@ function FieldsView({
     });
   };
   const ready = vals.every((v) => v.trim() !== '');
+  const fieldsRef = useRef<HTMLDivElement>(null);
+  useFigureScroll(fieldsRef);
+  const manyLabels = item.fields.filter((f) => f.label).length >= 4;
   return (
-    <div className="eng-number">
-      <div className="eng-number__fields">
+    <div className={revealed ? 'eng-number eng-number--revealed' : 'eng-number'}>
+      <div
+        ref={fieldsRef}
+        className={
+          manyLabels ? 'eng-number__fields eng-number__fields--many' : 'eng-number__fields'
+        }
+      >
         {item.fields.map((f, i) => (
           <label key={i} className="eng-number__field">
             {f.label ? (
@@ -351,6 +530,7 @@ function FieldsView({
       <Pad
         keys={item.keys ?? []}
         locked={disabled || revealed}
+        revealed={revealed}
         ready={ready}
         put={put}
         onSubmit={() => submit(vals)}
@@ -509,7 +689,11 @@ function ColumnView({
                 aria-label={`${label} ${shown[i] || 'から'}`}
                 data-testid={r.kind === 'memo' ? `memo-${i}` : `cell-${r.field}-${i}`}
               >
-                {r.kind === 'memo' ? <span className="num-col__memobox">{shown[i]}</span> : shown[i]}
+                {r.kind === 'memo' ? (
+                  <span className="num-col__memobox">{shown[i]}</span>
+                ) : (
+                  shown[i]
+                )}
               </button>
             );
           });
@@ -533,7 +717,14 @@ function ColumnView({
           );
         })}
       </div>
-      <Pad keys={[]} locked={locked} ready={ready} put={put} onSubmit={() => submit(values)} />
+      <Pad
+        keys={[]}
+        locked={locked}
+        revealed={revealed}
+        ready={ready}
+        put={put}
+        onSubmit={() => submit(values)}
+      />
     </div>
   );
 }

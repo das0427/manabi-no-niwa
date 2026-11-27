@@ -109,7 +109,7 @@ export function AudienceFields({
         </select>
       </label>
       <label className="p-field">
-        年齢の目安（任意。子供の画面には出ません）
+        年齢の目安（任意）
         <select
           value={value.ageGuide ?? ''}
           onChange={(e) => onChange({ ...value, ageGuide: e.target.value || undefined })}
@@ -122,6 +122,7 @@ export function AudienceFields({
             </option>
           ))}
         </select>
+        <span className="p-muted">子供の画面には出ません。</span>
       </label>
     </div>
   );

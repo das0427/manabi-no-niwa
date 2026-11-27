@@ -315,15 +315,18 @@ function readItems(): Item[] {
   });
 }
 
-/** 線で むすぶ（読むだけ・別例）: 同じ なかまの 語を 4つずつ */
+/**
+ * 線で むすぶ（読むだけ・別例）: 同じ なかまの 語を 3つずつ。右の いみは ひとつ 多く（つかわない いみ）、絵は つけない。
+ * 4つ＋5つ（絵つき）だと 作業領域を 約 18u はみ出す（docs/expansion/text-layout-fixes.md 第4回）。
+ */
 function matchItems(): Item[] {
   const out: Item[] = [];
   const cats = [...new Set(WORDS.map((w) => w.cat))];
   for (const c of cats) {
     const list = WORDS.filter((w) => w.cat === c);
-    for (let s = 0; s + 4 <= list.length; s += 4) {
-      const set = list.slice(s, s + 4);
-      const extra = list[(s + 4) % list.length]!;
+    for (let s = 0; s + 3 <= list.length; s += 3) {
+      const set = list.slice(s, s + 3);
+      const extra = list[(s + 3) % list.length]!;
       const right = [...set, ...(set.includes(extra) ? [] : [extra])];
       const m: MatchItem = {
         engine: 'match',
@@ -332,21 +335,14 @@ function matchItems(): Item[] {
         level: 1,
         prompt: 'ことばと いみを 線《せん》で むすぼう。',
         left: set.map((x) => ({ label: x.w })),
-        right: right.map((x) =>
-          x.il ? { figure: { kind: 'illust', id: x.il }, label: x.ja } : { label: x.ja },
-        ),
+        right: right.map((x) => ({ label: x.ja })),
         pairs: set.map((_, i) => [i, i] as [number, number]),
         hints: [
           '読《よ》める ことばから むすぼう。',
           'はじめの 文字《もじ》の 音《おと》を おもいだそう。',
           'つかわない いみが 1つ あるよ。',
         ],
-        explain: 'はじめの 文字《もじ》の 音《おと》を 手《て》がかりに すると、いみが わかるね。',
-        explainFigure: {
-          kind: 'table',
-          header: ['ことば', 'いみ'],
-          rows: set.map((x) => [x.w, x.ja]),
-        },
+        explain: 'はじめの 音《おと》が 手《て》がかりに なるね。',
         identity: `match:${set.map((x) => x.w).join('+')}`,
         alt: true,
       };

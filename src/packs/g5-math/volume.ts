@@ -19,6 +19,7 @@ import {
   REVISED,
   STROKE,
   svg,
+  svgHaloText,
   svgText,
   wrongList,
 } from './util';
@@ -116,15 +117,20 @@ function lFig(W: number, H: number, w: number, h: number, d: number): Figure {
     body += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="var(--ink)" stroke-width="1.5"/>`;
   }
   body += `<polygon points="${poly(0)}" fill="var(--sky)" fill-opacity="0.45" ${STROKE}/>`;
-  const t = (x: number, y: number, z: number, s: string, dx = 0, dy = 0) => {
+  const t = (x: number, y: number, z: number, s: string, dx = 0, dy = 0, halo = false) => {
     const p = P(x, y, z);
-    return svgText(p[0] + dx, p[1] + dy, s, 13);
+    return (halo ? svgHaloText : svgText)(p[0] + dx, p[1] + dy, s, 13);
   };
   body += t(W / 2, 0, 0, `${W}cm`, 0, 16);
-  body += t(0, 0, H / 2, `${H}cm`, -24, 0);
-  body += t(W - w / 2, 0, H - h, `${w}cm`, 0, 14);
-  body += t(W, 0, (H - h) / 2, `${H - h}cm`, 26, 6);
-  body += t(W, d / 2, 0, `${d}cm`, 28, 4);
+  // 左の 高さは 右端を 辺から 8 はなす（中央 x0 − 24 だと「10cm」の 4 字が 左の辺に かかった）
+  const ph = P(0, 0, H / 2);
+  body += svgText(ph[0] - 8, ph[1], `${H}cm`, 13, 'end');
+  // 段の 横の 長さと 右の 辺の 長さは、うしろの 点線・おく行きの 線が 字を 横切るので 白い ふちを 付ける
+  body += t(W - w / 2, 0, H - h, `${w}cm`, 0, 14, true);
+  body += t(W, 0, (H - h) / 2, `${H - h}cm`, 26, 6, true);
+  // おく行きの 長さは 上の左の辺（見えている）の 外がわに 書く（右の辺の ラベル「高さの 差」と ならない）
+  const pd = P(0, d / 2, H);
+  body += svgText(pd[0] - 12, pd[1] - 6, `${d}cm`, 13, 'end');
   return svg(
     W * k + d * 0.5 * k + x0 + 70,
     H * k + d * 0.4 * k + 40,
@@ -173,7 +179,7 @@ function cuboid(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `1cm³の 立方体が ${b} × ${a} × ${c} ＝ ${V}こ 分なので、体積は ${V}cm³です。`,
     identity: `cuboid${form ? `-alt${form}` : ''}:${key}`,
     alt: form !== 0,
-    fields: [{ label: 'cm³', answer: answers[0]! }],
+    fields: [{ unit: 'cm³', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [a + b + c, 'add-dims'],
       [a * b, 'area-only'],
@@ -206,7 +212,7 @@ function cube(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} × ${a} × ${a} ＝ ${V}。体積は ${V}${unit}³です。`,
     identity: `cube${alt ? '-alt' : ''}:${a}${unit}`,
     alt,
-    fields: [{ label: `${unit}³`, answer: answers[0]! }],
+    fields: [{ unit: `${unit}³`, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [a * a, 'area-only'],
       [a * 3, 'add-dims'],
@@ -244,7 +250,7 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${B} × ${A} × ${C} − ${b} × ${a} × ${c} ＝ ${A * B * C} − ${a * b * c} ＝ ${V}。のこりの 体積は ${V}cm³です。`,
       identity: `compound-alt:${key}`,
       alt: true,
-      fields: [{ label: 'cm³', answer: answers[0]! }],
+      fields: [{ unit: 'cm³', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [A * B * C, 'compound-whole'],
         [A * B * C + a * b * c, 'compound-whole'],
@@ -274,7 +280,7 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${W} × ${d} × ${H} − ${w} × ${d} × ${h} ＝ ${W * d * H} − ${w * d * h} ＝ ${V}。（2つに 分けて ${(W - w) * d * H} ＋ ${w * d * (H - h)} と しても よい）体積は ${V}cm³です。`,
     identity: `compound:${key}`,
     alt: false,
-    fields: [{ label: 'cm³', answer: answers[0]! }],
+    fields: [{ unit: 'cm³', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [W * H * d, 'compound-whole'],
       [(W - w) * H * d + W * (H - h) * d, 'compound-overlap'],
@@ -313,7 +319,7 @@ function capacity(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `内のりは たて ${ib}cm、横 ${ia}cm、深さ ${ic}cm。${ib} × ${ia} × ${ic} ＝ ${V}。容積は ${V}cm³です。`,
       identity: `capacity-alt:${key}`,
       alt: true,
-      fields: [{ label: 'cm³', answer: answers[0]! }],
+      fields: [{ unit: 'cm³', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [a * b * c, 'inner-thick'],
         [(a - 1) * (b - 1) * (c - 1), 'inner-thick'],
@@ -344,7 +350,7 @@ function capacity(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${b} × ${a} × ${c} ＝ ${V}cm³。1L ＝ 1000cm³なので、${V} ÷ 1000 ＝ ${dec(V / 100, 1)}。容積は ${dec(V / 100, 1)}Lです。`,
       identity: `capacity:${key}`,
       alt: false,
-      fields: [{ label: 'L', answer: answers[0]! }],
+      fields: [{ unit: 'L', answer: answers[0]! }],
       keys: ['decimal'],
       wrongAnswers: wrongList(answers, [
         [V, 'unit-convert'],
@@ -389,7 +395,7 @@ function units(level: number, rng: Rng, alt: boolean): Item {
           explain: `${ccm}cm ＝ ${dec(ccm, 2)}m。${a} × ${b} × ${dec(ccm, 2)} ＝ ${dec(v10, 1)}。体積は ${dec(v10, 1)}m³です。`,
           identity: `units-mix:${key}`,
           alt: true,
-          fields: [{ label: 'm³', answer: answers[0]! }],
+          fields: [{ unit: 'm³', answer: answers[0]! }],
           keys: ['decimal'],
           wrongAnswers: wrongList(answers, [
             [a * b * ccm, 'unit-mix'],
@@ -462,7 +468,7 @@ function units(level: number, rng: Rng, alt: boolean): Item {
     explain: `1${c.from} ＝ ${c.f}${c.to}なので、${up ? `${n}${c.from} ＝ ${ans}${c.to}` : `${given}${c.to} ＝ ${ans}${c.from}`}です。`,
     identity: `units:${c.from}-${c.to}:${n}:${up ? 'd' : 'u'}`,
     alt: false,
-    fields: [{ label: up ? c.to : c.from, answer: answers[0]! }],
+    fields: [{ unit: up ? c.to : c.from, answer: answers[0]! }],
     wrongAnswers: wrongList(
       answers,
       c.wrong.map(

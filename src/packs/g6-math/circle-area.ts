@@ -30,25 +30,35 @@ const A = (h: number) => dec(h, 2);
 
 // ---- 図 ----
 const DASH = 'stroke="var(--ink)" stroke-width="2" stroke-dasharray="5 4"';
+/** 図の 字の 大きさ（viewBox の 単位）。図の 段の 高さに 入れる ため、図を 小さめに かいて 字を 大きく する（text-layout-fixes 第4回） */
+const FS = 20;
+/** 図を 上へ dy だけ ずらして、上の あきを 詰める */
+const up = (dy: number, body: string) => `<g transform="translate(0 ${-dy})">${body}</g>`;
+
 function circleFig(label: string, kind: 'r' | 'd'): Figure {
   let body = `<circle cx="110" cy="100" r="80" fill="var(--sky)" ${STROKE}/><circle cx="110" cy="100" r="3.5" fill="var(--ink)"/>`;
   if (kind === 'r')
-    body += `<line x1="110" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(150, 86, label, 16);
-  else body += `<line x1="30" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(110, 86, label, 16);
-  return svg(220, 200, body, kind === 'r' ? `半径が ${label}の 円` : `直径が ${label}の 円`);
+    body += `<line x1="110" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(150, 84, label, FS);
+  else body += `<line x1="30" y1="100" x2="190" y2="100" ${STROKE}/>` + svgText(110, 84, label, FS);
+  return svg(
+    220,
+    176,
+    up(12, body),
+    kind === 'r' ? `半径が ${label}の 円` : `直径が ${label}の 円`,
+  );
 }
 function halfFig(label: string): Figure {
   const body =
     `<path d="M30 140 A80 80 0 0 1 190 140 Z" fill="var(--sky)" ${STROKE}/>` +
     `<line x1="110" y1="140" x2="190" y2="140" ${STROKE}/>` +
-    svgText(150, 156, label, 16);
-  return svg(220, 170, body, `半径が ${label}の 半円`);
+    svgText(150, 160, label, FS);
+  return svg(220, 124, up(48, body), `半径が ${label}の 半円`);
 }
 function quarterFig(label: string): Figure {
   const body =
-    `<path d="M40 180 L40 30 A150 150 0 0 1 190 180 Z" fill="var(--sky)" ${STROKE}/>` +
-    svgText(115, 196, label, 16);
-  return svg(220, 210, body, `半径が ${label}の 円を 4等分した 形`);
+    `<path d="M40 160 L40 30 A130 130 0 0 1 170 160 Z" fill="var(--sky)" ${STROKE}/>` +
+    svgText(105, 180, label, FS);
+  return svg(220, 194, body, `半径が ${label}の 円を 4等分した 形`);
 }
 function ringFig(R: number, r: number): Figure {
   const k = 80 / R;
@@ -57,37 +67,49 @@ function ringFig(R: number, r: number): Figure {
     `<circle cx="110" cy="100" r="${(r * k).toFixed(1)}" fill="var(--white)" ${STROKE}/>` +
     `<line x1="110" y1="100" x2="190" y2="100" ${DASH}/>` +
     `<line x1="110" y1="100" x2="110" y2="${(100 - r * k).toFixed(1)}" ${DASH}/>` +
-    svgText(160, 112, `${R}cm`, 15) +
-    svgText(124, 100 - (r * k) / 2, `${r}cm`, 14, 'start');
-  return svg(220, 200, body, `半径 ${R}cmの 円から、同じ 中心の 半径 ${r}cmの 円を 切り取った 形`);
+    svgText(150, 118, `${R}cm`, FS) +
+    // 内側の 半径の 字: 字の 箱が 内側の 円の 線や 点線に かからない 所に 置く。
+    // 内側の 円が 小さい（半径 50 以下）ときは、たての 点線の 真上（色の ついた 部分）。大きい ときは、たての 点線の 中ほどの 右
+    // （横の 点線の すぐ 上に 置くと、外側の 半径の 字と まちがえやすい）
+    (r * k <= 50
+      ? svgText(110, 100 - r * k - 14, `${r}cm`, FS)
+      : svgText(114, 100 - (r * k) / 2, `${r}cm`, FS, 'start'));
+  return svg(
+    220,
+    176,
+    up(12, body),
+    `半径 ${R}cmの 円から、同じ 中心の 半径 ${r}cmの 円を 切り取った 形`,
+  );
 }
+/** 1辺 a の 正方形（左上 (40, 14)）。字は 下に 置く */
+const SQ = 140;
 function squareCircleFig(r: number): Figure {
   const body =
-    `<rect x="30" y="20" width="160" height="160" fill="var(--sky)" ${STROKE}/>` +
-    `<circle cx="110" cy="100" r="80" fill="var(--white)" ${STROKE}/>` +
-    svgText(110, 196, `${2 * r}cm`, 15);
-  return svg(220, 210, body, `1辺 ${2 * r}cmの 正方形から、中に ぴったり 入る 円を 切り取った 形`);
+    `<rect x="40" y="14" width="${SQ}" height="${SQ}" fill="var(--sky)" ${STROKE}/>` +
+    `<circle cx="110" cy="84" r="70" fill="var(--white)" ${STROKE}/>` +
+    svgText(110, 176, `${2 * r}cm`, FS);
+  return svg(220, 192, body, `1辺 ${2 * r}cmの 正方形から、中に ぴったり 入る 円を 切り取った 形`);
 }
 function squareQuarterFig(a: number): Figure {
   const body =
-    `<rect x="30" y="20" width="160" height="160" fill="var(--sky)" ${STROKE}/>` +
-    `<path d="M30 180 L30 20 A160 160 0 0 1 190 180 Z" fill="var(--white)" ${STROKE}/>` +
-    svgText(110, 196, `${a}cm`, 15);
+    `<rect x="40" y="14" width="${SQ}" height="${SQ}" fill="var(--sky)" ${STROKE}/>` +
+    `<path d="M40 154 L40 14 A140 140 0 0 1 180 154 Z" fill="var(--white)" ${STROKE}/>` +
+    svgText(110, 176, `${a}cm`, FS);
   return svg(
     220,
-    210,
+    192,
     body,
     `1辺 ${a}cmの 正方形から、半径 ${a}cmの 円を 4等分した 形を 切り取った 残り`,
   );
 }
 function leafFig(a: number): Figure {
   const body =
-    `<rect x="30" y="20" width="160" height="160" fill="var(--white)" ${STROKE}/>` +
-    `<path d="M30 180 A160 160 0 0 1 190 20 A160 160 0 0 1 30 180 Z" fill="var(--sky)" ${STROKE}/>` +
-    svgText(110, 196, `${a}cm`, 15);
+    `<rect x="40" y="14" width="${SQ}" height="${SQ}" fill="var(--white)" ${STROKE}/>` +
+    `<path d="M40 154 A140 140 0 0 1 180 14 A140 140 0 0 1 40 154 Z" fill="var(--sky)" ${STROKE}/>` +
+    svgText(110, 176, `${a}cm`, FS);
   return svg(
     220,
-    210,
+    192,
     body,
     `1辺 ${a}cmの 正方形の 中に、半径 ${a}cmの 円を 4等分した 形を 2つ 重ねて できた 葉の 形`,
   );
@@ -123,7 +145,7 @@ function numItem(
   hints: [string, string, string],
   explain: string,
   wrongs: [number | null, string][],
-  label = 'cm²',
+  unit = 'cm²',
 ): NumberItem {
   const answer = decAns(ans100, 2);
   return {
@@ -137,7 +159,7 @@ function numItem(
     explain,
     identity: `${obj}:${key}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label, answer }],
+    fields: [{ unit, answer }],
     keys: ['decimal'],
     wrongAnswers: wrongList(
       [answer],

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { checkUnit, isReady, sampleItems, textsOf } from '../../curriculum/qa';
 import type { UnitSpec } from '../../curriculum/types';
 import { kanjiGrade } from '../../text/kanji-grades';
-import { parseRich, type Token } from '../../text/rich';
+import { getIllust } from '../../illust/registry';
+import { parseRich, plainText, type Token } from '../../text/rich';
+import { KARUTA_YOMI } from './culture';
 import pack from './index';
 
 const GRADE = 2;
@@ -101,7 +103,9 @@ describe('内容レビューの修正（g2-ja）', () => {
   });
 
   it('read-story: 日記は お母さんと つり（家族の役わりに性別の決めつけがない）', () => {
-    const s = JSON.stringify(itemsOf('g2.ja.read-story').filter((i) => i.id.startsWith('g2s-nikki')));
+    const s = JSON.stringify(
+      itemsOf('g2.ja.read-story').filter((i) => i.id.startsWith('g2s-nikki')),
+    );
     expect(s).not.toContain('お父《とう》さんと 川');
   });
 });
@@ -124,4 +128,100 @@ describe('g2-ja の教材検査（curriculum-matrix 1.8）', () => {
       );
     });
   }
+});
+
+describe('P2 単元（listen-notes・culture）', () => {
+  const ids = ['g2.ja.listen-notes', 'g2.ja.culture'];
+  const allItems = (id: string) => {
+    const u = unitOf(id);
+    return u.source.kind === 'items' ? u.source.items : [];
+  };
+  const optItems = (id: string) =>
+    allItems(id).filter((it) => it.engine === 'choice' || it.engine === 'listen');
+  const toHira = (s: string) =>
+    s.replace(/[ァ-ヶ]/g, (ch) => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+  /** 《よみ》を読みに直した文 */
+  const yomiOnly = (s: string) => s.replace(/[^\s《》]*《([^》]*)》/g, '$1');
+
+  for (const id of ids) {
+    it(`${id}: 量と網羅（distinct 33 以上・各項目 8 と別例 3・汎用誤答 0）`, () => {
+      const r = checkUnit(unitOf(id));
+      expect(r.distinct).toBeGreaterThanOrEqual(33);
+      expect(r.genericWrongShare).toBe(0);
+      for (const o of r.objectives) {
+        expect(o.distinct, `${id}/${o.id}`).toBeGreaterThanOrEqual(8);
+        expect(o.alt, `${id}/${o.id}`).toBeGreaterThanOrEqual(3);
+      }
+    });
+
+    it(`${id}: 誤りの選択肢に誤概念・正解の数・長さ・絵・音声`, () => {
+      for (const it of optItems(id)) {
+        if (it.engine !== 'choice' && it.engine !== 'listen') continue;
+        const correct = it.options.filter((o) => o.correct);
+        expect(correct.length, it.id).toBe(it.multi ? 2 : 1);
+        if (it.multi) expect(it.id).toBe('pt-bring2');
+        for (const o of it.options) {
+          if (!o.correct) expect(o.misconception, `${it.id}/${o.label}`).toBeTruthy();
+          if (o.label)
+            expect(plainText(o.label).length, `${it.id}/${o.label}`).toBeLessThanOrEqual(16);
+          if (o.figure?.kind === 'illust') expect(getIllust(o.figure.id), o.figure.id).toBeTruthy();
+        }
+        expect(plainText(it.prompt).length, it.id).toBeLessThanOrEqual(32);
+        if (it.figure?.kind === 'illust')
+          expect(getIllust(it.figure.id), it.figure.id).toBeTruthy();
+        if (it.engine === 'listen') {
+          const sounds = Array.isArray(it.audio) ? it.audio : [it.audio];
+          for (const sd of sounds) {
+            expect(sd.key, it.id).toBeUndefined();
+            expect(sd.text, it.id).not.toMatch(/[A-Za-z]/);
+          }
+        }
+      }
+    });
+  }
+
+  it('culture: かるたの練習は、正解の札が よみふだの はじめの字・誤りは ちがう字', () => {
+    const dakuten: Record<string, string> = { か: 'が', が: 'か', ふ: 'ぶ', ぶ: 'ふ', と: 'ど' };
+    for (const it of optItems('g2.ja.culture')) {
+      if (it.engine !== 'listen' || !it.id.startsWith('karuta-')) continue;
+      const sound = Array.isArray(it.audio) ? it.audio[0] : it.audio;
+      const text = yomiOnly(sound?.text ?? '');
+      const head = toHira(text[0] ?? '');
+      const sentenceWords = text.split(' ').map((x) => x[0]);
+      for (const o of it.options) {
+        const l = plainText(o.label ?? '');
+        if (o.correct) expect(l, it.id).toBe(head);
+        else expect(l, it.id).not.toBe(head);
+        if (o.misconception === 'dakuten') expect(dakuten[l], it.id).toBe(head);
+        if (o.misconception === 'middle-word')
+          expect(sentenceWords.slice(1), `${it.id}/${l}`).toContain(l);
+      }
+    }
+  });
+
+  it('culture: かるたの別例の正解は よみふだの はじめの語', () => {
+    const alts = optItems('g2.ja.culture').filter((it) => it.id.startsWith('karuta-alt-'));
+    expect(alts.length).toBe(3);
+    for (const it of alts) {
+      if (it.engine !== 'choice') throw new Error(it.id);
+      const ok = it.options.find((o) => o.correct)!;
+      const yomi = Object.values(KARUTA_YOMI).find((y) => y.split(' ')[0] === ok.label);
+      expect(yomi, it.id).toBeTruthy();
+    }
+  });
+
+  it('listen-notes: ask の練習は、問いが「か。」で終わる/感想文は終わらない', () => {
+    for (const it of optItems('g2.ja.listen-notes')) {
+      if (it.engine !== 'listen' || !it.id.startsWith('ask-')) continue;
+      for (const o of it.options) {
+        const l = plainText(o.label ?? '');
+        if (o.misconception === 'not-question') expect(l.endsWith('か。'), it.id).toBe(false);
+        else expect(l.endsWith('か。'), `${it.id}/${l}`).toBe(true);
+      }
+    }
+  });
+
+  it('culture: 「ねずみの よめいり」を使わない（g1 read-story と重複させない）', () => {
+    expect(JSON.stringify(allItems('g2.ja.culture'))).not.toContain('よめいり');
+  });
 });

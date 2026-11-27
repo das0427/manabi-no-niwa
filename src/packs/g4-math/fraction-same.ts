@@ -280,7 +280,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${exprText(q)} ＝ ${show(v, q.d, 'mixed')}。答えは ${show(v, q.d, 'mixed')}${sc.unit}${v > q.d && v % q.d !== 0 ? `（${show(v, q.d, 'improper')}${sc.unit}）` : ''}です。`,
     identity: `story:${sc.id}:${keyOf(q)}`,
     alt,
-    fields: [{ label: sc.unit, answer: answerOf(v, q.d, form) }],
+    fields: [{ unit: sc.unit, answer: answerOf(v, q.d, form) }],
     keys: ['fraction'],
     wrongAnswers: wrongsOf(q, v, form),
   };

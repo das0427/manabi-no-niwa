@@ -6,12 +6,13 @@
  *  elapsed … 時間の経過（はじめと おわりの2つの時計と経過の帯。かかった時間／おわりの時刻を答える）
  * 短針は長針に連動する（実際の時計と同じ: 針の状態は 0:00 からの分 0〜719 の1つの値）。
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { parseNumberInput, RETRY_MESSAGE } from '../../core/answer/number';
 import type { ItemBase, RichText } from '../../curriculum/types';
 import { Rt } from '../../text/Rt';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
+import { floorStyle, useSvgTextFloor } from '../figure/svgText';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadField } from '../numberline/NumPad';
 import type { Judgement } from '../types';
@@ -351,6 +352,8 @@ export function clockAnswerText(item: ClockItem): RichText {
 
 // ---- 画面 ----
 const R = 100;
+/** 外側の分の数（5〜55）の半径の倍率 */
+const MNUM_R_K = 1.05;
 type Hand = 'minute' | 'hour';
 
 function polar(deg: number, len: number) {
@@ -384,7 +387,22 @@ export function ClockFace({
   onSelectHand?: (h: Hand) => void;
   className?: string;
 }) {
-  const vb = { x: -130, y: -130, w: 260, h: 260 };
+  // 文字を最小まで大きくしても、外の分の数字が図からはみ出さない広さ（数字が大きいほど広げる）
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [half, setHalf] = useState(136);
+  const floor = useSvgTextFloor(svgRef, half * 2);
+  const numSize = Math.max(21, floor);
+  const mnumSize = Math.max(15, floor);
+  // 外の分の数の半径は 1.05 倍（35 と 40 が 0.1u 重なっていた。字の大きさは変えない。text-layout-fixes.md 第6回 W9）
+  const mnumR = (R + 8 + mnumSize * 0.5) * MNUM_R_K;
+  const wantHalf = minuteNumbers ? Math.max(136, Math.ceil(mnumR + mnumSize * 0.8)) : 136;
+  useLayoutEffect(() => {
+    if (wantHalf !== half) setHalf(wantHalf);
+  }, [wantHalf, half]);
+  const vb = { x: -half, y: -half, w: half * 2, h: half * 2 };
+  // 数字が大きくなって12個が混み合うときは、12・3・6・9 だけ（ほかを小さくはしない）
+  const crowded = numSize > 28;
+  const numR = R - 14 - numSize * 0.55 - 5;
   const hands = (tot: number, cls: string, sel?: Hand | null) => {
     const hr = polar((tot / DIAL) * 360, 52);
     const mn = polar((tot % 60) * 6, 82);
@@ -417,8 +435,10 @@ export function ClockFace({
   };
   return (
     <svg
+      ref={svgRef}
       viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`}
       className={['mk-svg', 'clk2', wrong ? 'is-wrong' : '', className ?? ''].join(' ')}
+      style={floorStyle(floor)}
       role="img"
       aria-label={label}
       onClick={tap}
@@ -441,18 +461,19 @@ export function ClockFace({
         );
       })}
       {Array.from({ length: 12 }, (_, i) => {
-        const p = polar((i + 1) * 30, R - 30);
+        if (crowded && (i + 1) % 3 !== 0) return null;
+        const p = polar((i + 1) * 30, numR);
         return (
-          <text key={i} x={p.x} y={p.y + 7} className="clk2-num">
+          <text key={i} x={p.x} y={p.y + numSize * 0.35} className="clk2-num">
             {i + 1}
           </text>
         );
       })}
       {minuteNumbers
         ? Array.from({ length: 12 }, (_, i) => {
-            const p = polar(i * 30, R + 15);
+            const p = polar(i * 30, mnumR);
             return (
-              <text key={`m${i}`} x={p.x} y={p.y + 5} className="clk2-mnum">
+              <text key={`m${i}`} x={p.x} y={p.y + mnumSize * 0.35} className="clk2-mnum">
                 {i * 5}
               </text>
             );
@@ -575,7 +596,7 @@ function HandControls({
       </div>
       <button
         type="button"
-        className="mk-btn mk-btn--ok"
+        className="mk-btn mk-btn--ok eng-check"
         onClick={onSubmit}
         disabled={locked}
         data-testid="check"
@@ -658,7 +679,7 @@ function PickView({
                   total={dialOf(o)}
                   minuteNumbers={item.minuteNumbers}
                   label={`${i + 1}ばんの とけい`}
-                  className="eng-clock__mini"
+                  className={`eng-clock__mini${shown.length <= 3 ? ' eng-clock__mini--wide' : ''}`}
                 />
               ) : (
                 <span className="eng-clock__optlabel">
@@ -749,6 +770,8 @@ function SetView({
 
 /** 経過の帯: はじめ〜おわりを、時（ちょうど）の目盛りの上に */
 function ElapsedBand({ start, end, label }: { start: ClockTime; end: ClockTime; label: string }) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, 600);
   const s = start.h * 60 + start.m;
   const e = s + durationOf(start, end);
   const from = Math.floor(s / 60) * 60;
@@ -778,6 +801,8 @@ function ElapsedBand({ start, end, label }: { start: ClockTime; end: ClockTime; 
   }
   return (
     <svg
+      ref={svgRef}
+      style={floorStyle(floor)}
       viewBox={`0 0 ${W} 110`}
       className="mk-svg eng-clock__band"
       role="img"

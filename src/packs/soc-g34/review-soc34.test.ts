@@ -1,6 +1,7 @@
 /**
  * soc-g34 の内容レビュー（2026-10-24）で直した誤りの再発を防ぐ検査。
- * - 小3以上は分かち書きしない（文節の空白を残さない）
+ * - 小3以上は分かち書きしない（文節の空白を残さない。単元の題だけは例外。下の WAKACHI_EXEMPT）
+ * - 数字の直後の《よみ》に数の読みを重ねない（「47都道府県《とどうふけん》」）
  * - ヒントに正答の文字列を出さない（元号・県庁所在地など、短い語も含む）
  * - 県庁所在地・地図記号の名前・元号の始まりの年の事実
  * - 実在の企業名・店名を出さない、消防(119)・警察(110)の番号を取り違えない、性別役割の決めつけをしない
@@ -8,12 +9,13 @@
 import { describe, expect, it } from 'vitest';
 import { sampleItems, textsOf } from '../../curriculum/qa';
 import type { Item, UnitSpec } from '../../curriculum/types';
-import { plainText } from '../../text/rich';
+import { numberReading, plainText, spacedLabel } from '../../text/rich';
 import pack from './index';
 
 const units = pack.units.filter((u) => u.status !== 'planned');
 
-function allTexts(u: UnitSpec): { where: string; text: string }[] {
+/** 単元の文（《よみ》付きのまま） */
+function rawTexts(u: UnitSpec): { where: string; text: string }[] {
   const out: { where: string; text: string }[] = [
     { where: 'title', text: u.title },
     ...u.intro.map((s, i) => ({ where: `intro${i}`, text: s.text })),
@@ -23,12 +25,25 @@ function allTexts(u: UnitSpec): { where: string; text: string }[] {
   ];
   for (const it of sampleItems(u, 50))
     for (const t of textsOf(it)) out.push({ where: it.id, text: t });
-  return out.map((x) => ({ ...x, text: plainText(x.text) }));
+  return out;
+}
+
+function allTexts(u: UnitSpec): { where: string; text: string }[] {
+  return rawTexts(u).map((x) => ({ ...x, text: plainText(x.text) }));
 }
 
 const JP = 'ぁ-んァ-ヶー一-龯々';
 /** 日本語どうしの間の空白（「→」の前後の空白は図の書き方なので対象外） */
 const WAKACHI = new RegExp(`[${JP}」）、。][ \\u3000]+[${JP}「（]`);
+/**
+ * 分かち書きの検査から外す場所: 単元の題（title）。
+ * 題は地図・ホームの札（AppLabel）に出る。空白で区切って書くと、空白のところでだけ折る（data-spaced。spacedLabel の条件は
+ * 空白の数 × 12 ≧ 字数）。空白が無いと Chrome の文節折りが語の途中で折る（g3.soc.safety の「は／たらき」。
+ * text-layout-fixes 第7回）。本文（問題・ヒント・解説・つかみ）は今までどおり分かち書きしない。
+ * 題の空白は、spacedLabel になるときだけ認める（下の「題の空白は札で空白折りになるときだけ」。g3-ja・g4-ja の
+ * wakachiTitleErrors と同じ考え）。空白が足りず data-spaced にならない題は、空白が文の中に残るだけで折れも直らない。
+ */
+const WAKACHI_EXEMPT: ReadonlySet<string> = new Set(['title']);
 
 /** 正解の文字列（choice・reading・graph の choice・fill の答え） */
 function answersOf(it: Item): string[] {
@@ -44,8 +59,25 @@ describe('soc-g34 レビューの再発防止', () => {
   for (const u of units) {
     it(`${u.id}: 小3以上は分かち書きしない`, () => {
       const bad = allTexts(u)
-        .filter((x) => WAKACHI.test(x.text))
+        .filter((x) => !WAKACHI_EXEMPT.has(x.where) && WAKACHI.test(x.text))
         .map((x) => `${x.where}: ${x.text.slice(0, 40)}`);
+      expect([...new Set(bad)]).toEqual([]);
+    });
+
+    it(`${u.id}: 題の空白は札で空白折りになるときだけ（spacedLabel）`, () => {
+      if (WAKACHI.test(plainText(u.title)))
+        expect(spacedLabel(u.title), plainText(u.title)).toBe(true);
+    });
+
+    // 《》のよみは親字（直前の漢字の並び）だけに付く。前の数字の読みまで入れると、ふりがなが親字より長くなって字の間が空き（47都道府県）、
+    // 読み上げも数の部品と重なる（「よんじゅうなな よんじゅうななとどうふけん」。第7回のレビュー）
+    it(`${u.id}: 数字の直後の《よみ》に数の読みを重ねない`, () => {
+      const bad: string[] = [];
+      for (const { where, text } of rawTexts(u))
+        for (const m of text.matchAll(/(\d+)[一-龯々]+《!?([^》]*)》/gu)) {
+          const n = numberReading(Number(m[1]));
+          if (n !== m[1] && m[2]!.startsWith(n)) bad.push(`${where}: ${m[0]}`);
+        }
       expect([...new Set(bad)]).toEqual([]);
     });
 
@@ -181,5 +213,88 @@ describe('soc-g34 レビューの再発防止', () => {
     const u = units.find((x) => x.id === 'g4.soc.water-waste')!;
     for (const it of u.source.items ?? [])
       for (const h of it.hints) expect(plainText(h)).not.toMatch(/「じょう」がつく/);
+  });
+});
+
+describe('soc-g34 P2 単元（safety・tradition）', () => {
+  const safety = units.find((u) => u.id === 'g3.soc.safety')!;
+  const tradition = units.find((u) => u.id === 'g4.soc.tradition')!;
+  const byId = (u: UnitSpec, id: string) => (u.source.items ?? []).find((it) => it.id === id)!;
+
+  it('両単元が P2・ready', () => {
+    for (const u of [safety, tradition]) {
+      expect(u.priority).toBe('P2');
+      expect(u.status).toBe('ready');
+    }
+  });
+
+  it('safety: 119・110 と通信指令室の問題の答え', () => {
+    expect(answersOf(byId(safety, 'call-c1'))).toEqual(['119番']);
+    expect(answersOf(byId(safety, 'call-c2'))).toEqual(['110番']);
+    expect(answersOf(byId(safety, 'call-c3'))).toEqual(['通信指令室']);
+    expect(answersOf(byId(safety, 'call-a4'))).toEqual(['通信指令室']);
+    expect(answersOf(byId(safety, 'call-a2'))).toEqual(['119', '110']);
+  });
+
+  it('safety: 順序の問題に「聞く前に出動をつたえる」誤りの並びがある', () => {
+    for (const id of ['call-o1', 'call-o2']) {
+      const it = byId(safety, id);
+      expect(it.engine).toBe('order');
+      if (it.engine === 'order')
+        expect(it.wrongOrders?.map((w) => w.misconception)).toEqual(['skip-ask']);
+    }
+  });
+
+  it('safety: 通信指令室が答えの問題のヒントに「指令」を出さない', () => {
+    for (const id of ['call-c3', 'call-a4'])
+      for (const h of byId(safety, id).hints) expect(plainText(h), id).not.toMatch(/指令/);
+  });
+
+  it('safety・tradition: 誤りの選択肢の誤概念が場面に合う（今年から → 読みちがえ）', () => {
+    const r7 = byId(tradition, 'bun-r7');
+    if (r7.engine !== 'reading') throw new Error('形が違う');
+    const o = r7.options.find((x) => x.label && plainText(x.label) === '今年から');
+    expect(o?.misconception).toBe('misread');
+  });
+
+  it('tradition: 本文は6種類、文種は2種類以上', () => {
+    const ps = new Map<string, string>();
+    for (const it of tradition.source.items ?? [])
+      if (it.engine === 'reading') ps.set(it.passage.id, it.passage.genre);
+    expect([...ps.keys()].sort()).toEqual(
+      [
+        'tr-hashi',
+        'tr-matsubayashi',
+        'tr-matsuri',
+        'tr-shishi',
+        'tr-yousui',
+        'tr-yousui-now',
+      ].sort(),
+    );
+    expect(new Set(ps.values()).size).toBeGreaterThanOrEqual(2);
+  });
+
+  it('tradition: reading はすべて hintFocus 付き、sen-r9 以外は evidence 付き', () => {
+    for (const it of tradition.source.items ?? []) {
+      if (it.engine !== 'reading') continue;
+      if (it.id !== 'sen-r9') {
+        expect(it.hintFocus, it.id).toBeTruthy();
+        expect(it.evidence, it.id).toBeTruthy();
+      }
+    }
+  });
+
+  it('tradition: sen-r9 の答えは年表の（完成する年 − 始める年）', () => {
+    const it = byId(tradition, 'sen-r9');
+    if (it.engine !== 'reading' || it.passage.figure?.kind !== 'table') throw new Error('形が違う');
+    const rows = it.passage.figure.rows.map((r) => r.map((c) => plainText(c)));
+    const year = (kw: string) =>
+      Number(rows.find((r) => r[1]!.includes(kw))![0]!.match(/\d{4}/)![0]);
+    expect(answersOf(it)).toEqual([`${year('完成する') - year('始める')}年`]);
+  });
+
+  it('tradition: 架空の人名（新助・平六）以外の人名らしい語を出さない', () => {
+    const bad = allTexts(tradition).filter((x) => /衛門|兵衛|太郎|次郎|三郎/.test(x.text));
+    expect(bad).toEqual([]);
   });
 });

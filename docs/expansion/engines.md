@@ -56,7 +56,7 @@
 
 ## build（タイルで作る）
 - `tiles`（2〜12。同じ字が2回要るなら2枚）、`answer`: `{ kind:'text', values, ignoreCase? }` / `{ kind:'parts', parts }`（部品の組・順不同）/ `{ kind:'romaji', kana, capital? }`（令和7年告示。訓令式は「もう一度」）。
-- `joiner?`（英語の語順は `' '`）、`fixedOrder?`、`hideLength?`、`wrongAnswers?: { value, misconception }[]`（parts は タイルと同じ書き方を + でつなぐ: `'月《つき》+寺《てら》'`。よみの無い漢字は qa の検査で誤りになる）。
+- `joiner?`（英語の語順は `' '`）、`fixedOrder?`、`hideLength?`、`wrongAnswers?: { value, misconception }[]`（parts は タイルと同じ書き方の部品を + でつなぐ: `'月《つき》+寺《てら》'`。よみの無い漢字は qa の検査で誤りになる）。
 
 ## 年齢による違い（エンジンが自動で行う）
 - 2〜3歳: カードを `ux.maxChoices` に減らし、置き終わると自動で答える。2歳段階は誤答の「？」を出さない。
@@ -126,7 +126,7 @@
 - 道具: `prefName(code, style)`・`prefsOfRegion(region)`・`prefBearing(from, to)`・`neighborsOf(code)`（`japan.ts`）。
 
 ## experiment（実験のシミュレーション）
-- 条件の札を選ぶ →「やってみる」→ 結果の表に記録 → 設問。画面に「この アプリの せっていでは こう なるよ（じっけんの かわりでは ないよ）」を常に出す。結果は**例示**（単純な式か問題データの固定表）。火・薬品の手順は書かない。
+- 条件の札を選ぶ →「やってみる」→ 結果の表に記録 → 設問。画面に「この アプリの せっていでは こう なるよ（じっけんの かわりでは ないよ）」（幼児の画面は「この あそびの せっていでは こう なるよ（じっけんの かわりでは ないよ）」）を常に出す。結果は**例示**（単純な式か問題データの固定表）。火・薬品の手順は書かない。
 - `setup.kind`（候補の値が1つだけの条件は固定として1行にまとめて見せる）:
   - `pendulum`: `length`（cm）・`weight`（g）・`amplitude`（度 1〜45）。1往復の時間 = 2π√(長さ/980) を 0.1秒に丸める（重さ・振れ幅では変わらない）。結果の key は `'1.4'` など
   - `lever`: `leftPos`・`rightPos`（1〜6）・`leftWeight`・`rightWeight`（g。10g ごとにおもり1こを描く）。位置×重さを比べる。key は `'balance'|'left'|'right'`（下がる側）

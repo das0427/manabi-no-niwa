@@ -113,12 +113,15 @@ function towerItem(set: [number, number, number]): OrderItem {
     prompt: 'つみきを たかい じゅんに ならべよう。',
     cards: set.map((n) => ({ figure: tower(n), name: `つみき ${n}こ` })),
     ends: ['たかい', 'ひくい'],
-    reverseMisconception: 'order-reverse',
+    // 「ながい」から ならべる（order-reverse）の説明は、たかさの問題と食い違う
+    reverseMisconception: 'tower-reverse',
     hints: [
       'いちばん たかい ものから さがそう。',
       'したは そろって いるよ。うえの はしを くらべよう。',
     ],
-    explain: `つみき ${set.join('こ、')}この じゅんに たかいね。`,
+    // つみきの数は言わない（高さを比べる問題。数えると高さを見ずに答えられる）。ヒント②「したは そろって いるよ」に対応し、
+    // 解説では札が正しい順（たかい → ひくい）に左から並ぶ
+    explain: 'したを そろえて くらべると、ひだりから たかい じゅんだね。',
     identity: `tower:${set.join('-')}`,
   };
 }
@@ -171,7 +174,9 @@ function rulerItem(n: number): MeasureItem {
     explain: `めもり ${n}つぶん だね。`,
     identity: `ruler:${n}`,
     instrument: 'ruler',
-    scale: { unit: 'こ', min: 0, max: 10, minor: 1, major: 1 },
+    // ものさしの右はしに「こ」を書かない（labelUnit: ''）。いちばん右の「10」の真下に「こ」が来て、
+    // 数と単位が重なり、ものさしの枠の下の線も横切るため。「こ」は答えの欄（fields）に出る。
+    scale: { unit: 'こ', labelUnit: '', min: 0, max: 10, minor: 1, major: 1 },
     task: 'read',
     value: n,
     object: 'tape',
@@ -266,6 +271,7 @@ export const measureCompare: UnitSpec = {
   ],
   misconceptions: [
     { id: 'order-reverse', explain: 'じゅんばんが はんたいかな。「ながい」から ならべよう。' },
+    { id: 'tower-reverse', explain: 'じゅんばんが はんたいかな。「たかい」から ならべよう。' },
     {
       id: 'close-lengths',
       explain: 'ちかい ながさを とりちがえたかな。みぎの はしを よく くらべよう。',

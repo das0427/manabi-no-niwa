@@ -8,6 +8,10 @@ import type { ChoiceOption, Item, UnitSpec } from '../../curriculum/types';
 import { hon } from './compose';
 import pack from './index';
 import { SAME_SOUND } from './kana-read-all';
+import { SCENES } from './predict';
+import { plainText } from '../../text/rich';
+import type { ExperimentItem } from '../../engines/experiment/experiment';
+import type { ExplainItem } from '../../engines/explain/explain';
 
 const unit = (id: string): UnitSpec => pack.units.find((u) => u.id === id)!;
 const itemsOf = (u: UnitSpec): Item[] => {
@@ -174,6 +178,27 @@ describe('p5 レビュー: さんすう', () => {
     }
   });
 
+  it('10までの かず: 「まえから なんばんめ」の 選択肢は 絵だけの札（名前の行で絵が小さくならない）・解説が どうぶつの なまえを いう', () => {
+    const NAMES = ['いぬ', 'ねこ', 'うさぎ', 'くま', 'さる', 'かえる', 'きつね'];
+    const ords = itemsOf(unit('p5.math.numbers-10')).filter((it) => /^ord:\d+:\d+:/.test(it.id));
+    expect(ords.length).toBeGreaterThan(0);
+    for (const it of ords) {
+      const os = optionsOf(it);
+      for (const o of os) {
+        expect(o.label, it.id).toBeUndefined();
+        expect(o.figure?.kind, it.id).toBe('illust');
+      }
+      // 正解の絵は、主の図の まえから pos ばんめの どうぶつ（id は「ord:pos:len:どうぶつ-どうぶつ-…」）
+      const [, pos, , animals] = it.id.split(':');
+      const right = os.find((o) => o.correct)!.figure as { id: string };
+      expect(right.id, it.id).toBe(animals!.split('-')[Number(pos) - 1]);
+      expect(
+        NAMES.some((n) => it.explain.includes(n)),
+        it.id,
+      ).toBe(true);
+    }
+  });
+
   it('ながさくらべ: かぞえ わすれ（skip-unit）は すくない かず、すきまを かぞえた（gap-count）は おおい かず', () => {
     for (const it of itemsOf(unit('p5.math.measure-compare'))) {
       if (!it.id.startsWith('units:')) continue;
@@ -182,6 +207,21 @@ describe('p5 レビュー: さんすう', () => {
         if (o.misconception === 'skip-unit') expect(Number(o.label), it.id).toBeLessThan(n);
         if (o.misconception === 'gap-count') expect(Number(o.label), it.id).toBeGreaterThan(n);
       }
+    }
+  });
+
+  it('ながさくらべ: 塔（tower）の解説は つみきの数を いわない（高さを くらべる もんだい。ヒント②と おなじ「したを そろえる」）', () => {
+    const towers = itemsOf(unit('p5.math.measure-compare')).filter((it) =>
+      it.id.startsWith('tower:'),
+    );
+    expect(towers.length).toBe(3);
+    const mis = unit('p5.math.measure-compare').misconceptions;
+    for (const it of towers) {
+      expect(it.explain, it.id).not.toMatch(/[0-9０-９]|こ、|この/);
+      expect(it.explain, it.id).toContain('ひだりから');
+      // 順が はんたいの ときの説明も「たかい」から（「ながい」から は テープの問題の説明）
+      const rev = anyItem(it).reverseMisconception as string;
+      expect(mis.find((m) => m.id === rev)?.explain, it.id).toContain('「たかい」から');
     }
   });
 
@@ -196,6 +236,208 @@ describe('p5 レビュー: さんすう', () => {
     for (const it of itemsOf(unit('p5.math.add-sub'))) {
       expect(it.prompt, it.id).not.toMatch(/ヒントで えを/);
       for (const h of it.hints) expect(h, it.id).not.toMatch(/えで みると/);
+    }
+  });
+});
+
+describe('p5 レビュー: ちいさい じ・のばす おと', () => {
+  const items = itemsOf(unit('p5.ja.small-kana'));
+  const diffAt = (r: string, w: string): number[] =>
+    [...r].flatMap((c, i) => (c !== [...w][i] ? [i] : []));
+  const SMALL = 'ゃゅょ';
+  const BIG: Record<string, string> = { ゃ: 'や', ゅ: 'ゆ', ょ: 'よ' };
+  const SMALL_OF: Record<string, string> = { つ: 'っ', や: 'ゃ', ゆ: 'ゅ', よ: 'ょ' };
+  const PAIR: Record<string, string> = {
+    'ou-spelling': 'うお',
+    'ei-spelling': 'いえ',
+    'oo-word': 'おう',
+  };
+
+  it('41問・到達項目と段階が対応・hear は listen、pic は choice の別例・選択肢3つ', () => {
+    expect(items.length).toBe(41);
+    const lv: Record<string, number> = { sokuon: 0, youon: 1, chouon: 2 };
+    for (const it of items) {
+      expect(it.level, it.id).toBe(lv[it.objective]);
+      if (it.id.startsWith('hear:')) {
+        expect(it.engine, it.id).toBe('listen');
+        expect(it.alt, it.id).toBeUndefined();
+      } else {
+        expect(it.engine, it.id).toBe('choice');
+        expect(it.alt, it.id).toBe(true);
+      }
+      expect(optionsOf(it).length, it.id).toBe(3);
+    }
+  });
+
+  it('問題文・ヒントに正解の語を書かない', () => {
+    for (const it of items) {
+      const right = optionsOf(it).find((o) => o.correct)!.label!;
+      expect(it.prompt, it.id).not.toContain(right);
+      for (const h of it.hints) expect(h.includes(`「${right}」`), `${it.id}: ${h}`).toBe(false);
+    }
+  });
+
+  it('誤りの綴りが誤概念どおり', () => {
+    for (const it of items) {
+      const r = optionsOf(it).find((o) => o.correct)!.label!;
+      for (const o of optionsOf(it)) {
+        if (o.correct) continue;
+        const w = o.label!;
+        const msg = `${it.id}: ${r} → ${w} (${o.misconception})`;
+        const d = diffAt(r, w);
+        const rc = [...r];
+        const wc = [...w];
+        switch (o.misconception) {
+          case 'sokuon-drop':
+            expect(w, msg).toBe(r.replace('っ', ''));
+            break;
+          case 'sokuon-big':
+            expect(w, msg).toBe(r.replace('っ', 'つ'));
+            break;
+          case 'youon-big':
+            expect(w, msg).toBe(r.replace(/[ゃゅょ]/, (c) => BIG[c]!));
+            break;
+          case 'youon-vowel':
+            expect(wc.length, msg).toBe(rc.length);
+            expect(d.length, msg).toBe(1);
+            expect(SMALL.includes(rc[d[0]!]!) && SMALL.includes(wc[d[0]!]!), msg).toBe(true);
+            break;
+          case 'small-wrong':
+            expect(d.length, msg).toBe(1);
+            expect('つやゆよ'.includes(rc[d[0]!]!), msg).toBe(true);
+            expect(wc[d[0]!], msg).toBe(SMALL_OF[rc[d[0]!]!]);
+            break;
+          case 'chouon-drop':
+            expect(wc.length, msg).toBe(rc.length - 1);
+            expect(
+              rc.some((_, i) => rc.filter((__, j) => j !== i).join('') === w),
+              msg,
+            ).toBe(true);
+            break;
+          case 'chouon-bar':
+            expect(wc.filter((c) => c === 'ー').length, msg).toBe(1);
+            expect(d.length, msg).toBe(1);
+            expect(wc[d[0]!], msg).toBe('ー');
+            break;
+          case 'ou-spelling':
+          case 'ei-spelling':
+          case 'oo-word':
+            expect(d.length, msg).toBe(1);
+            expect(`${rc[d[0]!]}${wc[d[0]!]}`, msg).toBe(PAIR[o.misconception]);
+            break;
+          case 'one-char':
+            expect(wc.length, msg).toBe(rc.length);
+            expect(d.length, msg).toBe(1);
+            break;
+          default:
+            expect.fail(`${msg}: 誤概念が未定義`);
+        }
+      }
+    }
+  });
+});
+
+describe('p5 レビュー: どう なるかな', () => {
+  const items = itemsOf(unit('p5.env.predict'));
+  const exps = items.filter((i): i is ExperimentItem => i.engine === 'experiment');
+
+  it('場面ごとに predict=0・observe=1・apply=2 の3問。別例は3場面', () => {
+    expect(SCENES.length).toBe(11);
+    expect(SCENES.filter((s) => s.alt).length).toBe(3);
+    const lv: Record<string, number> = { predict: 0, observe: 1, apply: 2 };
+    for (const s of SCENES) {
+      for (const [k, level] of Object.entries(lv)) {
+        const it = items.find((i) => i.id === `${s.id}:${k}`)!;
+        expect(it, `${s.id}:${k}`).toBeDefined();
+        expect(it.level).toBe(level);
+        expect(it.objective).toBe(k);
+        expect(it.identity).toBe(it.id);
+        expect(!!it.alt).toBe(!!s.alt);
+      }
+    }
+  });
+
+  it('observe: 正解の値の行の key が聞いた結果で、誤りの値は違う。minTrials は値の数', () => {
+    for (const s of SCENES) {
+      const it = exps.find((e) => e.id === `${s.id}:observe`)!;
+      const fid = s.setup.factors[0]!.id;
+      const keyOf = (v: string) => s.setup.rows.find((r) => r.when[fid] === v)!.key;
+      expect(keyOf(s.q2.right), s.id).toBe(s.q2.askKey);
+      for (const [v] of s.q2.wrong) expect(keyOf(v), `${s.id}:${v}`).not.toBe(s.q2.askKey);
+      if (it.task.kind !== 'consider') throw new Error('consider のはず');
+      expect(it.task.minTrials, s.id).toBe(s.setup.factors[0]!.values.length);
+      expect(it.task.options.filter((o) => o.correct).length, s.id).toBe(1);
+      for (const o of it.task.options) if (!o.correct) expect(o.misconception, s.id).toBeTruthy();
+    }
+  });
+
+  it('predict: 予想の対象の値の行の key が正解の結果と一致', () => {
+    for (const s of SCENES) {
+      const fid = s.setup.factors[0]!.id;
+      const row = s.setup.rows.find((r) => r.when[fid] === s.q1.ask)!;
+      expect(row.key, s.id).toBe(s.q1.rightKey);
+    }
+  });
+
+  it('危ない語を使わない・選択肢の文は12字以内・選択肢は2つ以上', () => {
+    expect(JSON.stringify(items)).not.toMatch(
+      /ほのお|もやす|マッチ|ガス|くすり|ほうちょう|ナイフ|ライター/,
+    );
+    for (const it of items) {
+      const os =
+        it.engine === 'experiment' && it.task.kind === 'consider' ? it.task.options : optionsOf(it);
+      expect(os.length, it.id).toBeGreaterThanOrEqual(2);
+      for (const o of os) expect(plainText(o.label ?? '').length, it.id).toBeLessThanOrEqual(12);
+    }
+  });
+});
+
+describe('p5 レビュー: どうしてかな', () => {
+  const items = itemsOf(unit('p5.think.why'));
+  it('reason は choice（level 0 は2択、level 1 は3択）、tell は explain（4つまで）', () => {
+    expect(items.length).toBe(25);
+    for (const it of items) {
+      if (it.objective === 'reason') {
+        expect(it.engine, it.id).toBe('choice');
+        expect(optionsOf(it).length, it.id).toBe(it.level === 0 ? 2 : 3);
+        const right = optionsOf(it).find((o) => o.correct)!.label!;
+        expect(it.prompt, it.id).not.toContain(right);
+        for (const o of optionsOf(it)) if (!o.correct) expect(o.misconception, it.id).toBeTruthy();
+      } else {
+        expect(it.engine, it.id).toBe('explain');
+        expect((it as ExplainItem).reasons?.length ?? 0, it.id).toBeLessThanOrEqual(4);
+      }
+    }
+  });
+  it('描く問題（draw:）の解説は かけたことを前提にしない・「この あと」の例を 1 つ言い、おうちの ひとへの おはなしで終える', () => {
+    const draws = items.filter((it) => it.id.startsWith('draw:'));
+    expect(draws.length).toBe(6);
+    for (const it of draws) {
+      expect(it.explain, it.id).not.toMatch(/かけた|かいた/);
+      expect(it.explain, it.id).toMatch(/おうちの ひとに おはなし してね。$/);
+      // 文は 2 つだけ（例の 1 文 ＋ おはなしの誘い）
+      expect(it.explain.split('。').filter(Boolean).length, it.id).toBe(2);
+    }
+  });
+});
+
+describe('p5 レビュー: おてがみ ごっこ', () => {
+  const items = itemsOf(unit('p5.ja.letter-play')) as ExplainItem[];
+  it('全問 explain。plan は理由2〜4・盤なし、write は盤あり。aspect は 0.5〜3。「なまえ」を書かせない', () => {
+    expect(items.length).toBe(18);
+    for (const it of items) {
+      expect(it.engine, it.id).toBe('explain');
+      if (it.objective === 'plan') {
+        expect(it.reasons!.length, it.id).toBeGreaterThanOrEqual(2);
+        expect(it.reasons!.length, it.id).toBeLessThanOrEqual(4);
+        expect(it.canvas, it.id).toBeUndefined();
+      } else {
+        expect(it.canvas, it.id).toBeDefined();
+        const a = it.canvas!.aspect ?? 4 / 3;
+        expect(a).toBeGreaterThanOrEqual(0.5);
+        expect(a).toBeLessThanOrEqual(3);
+      }
+      expect(JSON.stringify(it), it.id).not.toContain('なまえ');
     }
   });
 });

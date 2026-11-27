@@ -34,6 +34,8 @@ interface Scene {
   end: (c: number) => string;
   /** 増加・求残の場面の動き（式に合う言葉を選ぶ問題）: [ふえる言葉, へる言葉] と b の助数詞 */
   verbs?: [plus: string, minus: string];
+  /** 2行に はいる みじかい おはなし（「おはなしと しきを むすぶ」の ひだりの カード・「しきを よむ」の 選択肢・「しきから おはなし」の 解説用。a・b・とい を ふくむ） */
+  short: (a: number, b: number) => string;
   unit: string;
 }
 
@@ -45,6 +47,7 @@ const SCENES: Scene[] = [
     s2: (b) => `みかんが ${b}こ あります。`,
     q: 'あわせて なんこ ですか。',
     end: (c) => `あわせて ${c}こ です。`,
+    short: (a, b) => `りんご ${a}こ、みかん ${b}こ。あわせて なんこ？`,
     unit: 'こ',
   },
   {
@@ -54,6 +57,7 @@ const SCENES: Scene[] = [
     s2: (b) => `ねこが ${b}ひき います。`,
     q: 'みんなで なんびき ですか。',
     end: (c) => `みんなで ${c}ひき です。`,
+    short: (a, b) => `いぬ ${a}ひき、ねこ ${b}ひき。みんなで なんびき？`,
     unit: 'ひき',
   },
   {
@@ -63,6 +67,7 @@ const SCENES: Scene[] = [
     s2: (b) => `ブランコで ${b}にん あそんで います。`,
     q: 'あわせて なんにん ですか。',
     end: (c) => `あわせて ${c}にん です。`,
+    short: (a, b) => `すなば ${a}にん、ブランコ ${b}にん。あわせて なんにん？`,
     unit: 'にん',
   },
   {
@@ -73,6 +78,7 @@ const SCENES: Scene[] = [
     q: 'ぜんぶで なんわ ですか。',
     end: (c) => `ぜんぶで ${c}わに なりました。`,
     verbs: ['とんで きました', 'とんで いきました'],
+    short: (a, b) => `とり ${a}わ。${b}わ きました。ぜんぶで なんわ？`,
     unit: 'わ',
   },
   {
@@ -83,6 +89,7 @@ const SCENES: Scene[] = [
     q: 'くるまは なんだいに なりましたか。',
     end: (c) => `くるまは ${c}だいに なりました。`,
     verbs: ['はいって きました', 'でて いきました'],
+    short: (a, b) => `くるま ${a}だい。${b}だい きました。ぜんぶで なんだい？`,
     unit: 'だい',
   },
   {
@@ -93,6 +100,7 @@ const SCENES: Scene[] = [
     q: 'のこりは なんまい ですか。',
     end: (c) => `のこりは ${c}まいに なりました。`,
     verbs: ['もらいました', 'たべました'],
+    short: (a, b) => `クッキー ${a}まい。${b}まい たべました。のこりは？`,
     unit: 'まい',
   },
   {
@@ -103,6 +111,7 @@ const SCENES: Scene[] = [
     q: 'のこりは なんこ ですか。',
     end: (c) => `のこりは ${c}こに なりました。`,
     verbs: ['ふくらませました', 'とんで いきました'],
+    short: (a, b) => `ふうせん ${a}こ。${b}こ とんで いきました。のこりは？`,
     unit: 'こ',
   },
   {
@@ -113,6 +122,7 @@ const SCENES: Scene[] = [
     q: 'いけの そとに いる かえるは なんびき ですか。',
     end: (c) => `いけの そとには ${c}ひきに なりました。`,
     verbs: ['いけから でて きました', 'いけに とびこみました'],
+    short: (a, b) => `かえる ${a}ひき。${b}ひき いけに はいりました。のこりは？`,
     unit: 'ひき',
   },
   {
@@ -122,6 +132,7 @@ const SCENES: Scene[] = [
     s2: (b) => `ねこが ${b}ひき います。`,
     q: 'いぬは ねこより なんびき おおい ですか。',
     end: (c) => `いぬが ${c}ひき おおい です。`,
+    short: (a, b) => `いぬ ${a}ひき、ねこ ${b}ひき。いぬは なんびき おおい？`,
     unit: 'ひき',
   },
   {
@@ -131,6 +142,7 @@ const SCENES: Scene[] = [
     s2: (b) => `しろい くるまが ${b}だい あります。`,
     q: 'ちがいは なんだい ですか。',
     end: (c) => `ちがいは ${c}だい です。`,
+    short: (a, b) => `あかい くるま ${a}だい、しろい くるま ${b}だい。ちがいは？`,
     unit: 'だい',
   },
   {
@@ -140,6 +152,7 @@ const SCENES: Scene[] = [
     s2: (b) => `あおい シールが ${b}まい あります。`,
     q: 'どちらが なんまい おおい ですか。',
     end: (c) => `あかい シールが ${c}まい おおい です。`,
+    short: (a, b) => `あかい シール ${a}まい、あおい シール ${b}まい。ちがいは？`,
     unit: 'まい',
   },
 ];
@@ -194,6 +207,56 @@ const tape = (op: Op, a: number, b: number): Figure =>
         ],
         total: String(a),
       };
+
+/**
+ * 「テープの ずと しきを むすぶ」の ひだりの カード用の テープの ず（SVG）。
+ * ざいりょうの tape は カードの 図の わく（16u × 9u。engines/order/shared.css の .tk-card__fig）より
+ * たかく、したの 合計と かずの うえが きれる（text-layout-fixes 第4回）ので、わくに はいる 15u × 8.1u で えがく。
+ */
+function tapeCard(op: Op, a: number, b: number): Figure {
+  const parts =
+    op === '+'
+      ? [
+          { len: a, text: String(a), fill: 'var(--sky)', dash: false },
+          { len: b, text: String(b), fill: 'var(--sun)', dash: true },
+        ]
+      : [
+          { len: a - b, text: '？', fill: 'var(--sky)', dash: false },
+          { len: b, text: String(b), fill: 'var(--sun)', dash: true },
+        ];
+  const total = op === '+' ? '？' : String(a);
+  const sum = parts[0]!.len + parts[1]!.len;
+  const w0 = Math.min(80, Math.max(20, (96 * parts[0]!.len) / sum));
+  const ws = [w0, 96 - w0];
+  const S = 'stroke="var(--ink)" stroke-width="2"';
+  let x = 2;
+  const segs = parts
+    .map((p, i) => {
+      const w = ws[i]!;
+      const g =
+        `<rect x="${x}" y="2" width="${w}" height="24" fill="${p.fill}" ${S}/>` +
+        (p.dash
+          ? `<rect x="${x + 3}" y="5" width="${w - 6}" height="18" fill="none" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>`
+          : '') +
+        `<text x="${x + w / 2}" y="20" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">${p.text}</text>`;
+      x += w;
+      return g;
+    })
+    .join('');
+  return {
+    kind: 'svg',
+    label:
+      op === '+'
+        ? `${a}と ${b}を あわせた ぜんぶが「？」の テープ`
+        : `ぜんぶ ${a}、${b}を とった のこりが「？」の テープ`,
+    markup:
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 54" style="width:calc(var(--u) * 15)">` +
+      segs +
+      `<path d="M2 31 v5 h96 v-5" fill="none" stroke="var(--ink)" stroke-width="2"/>` +
+      `<text x="50" y="52" text-anchor="middle" font-size="16" font-weight="700" fill="var(--ink)">${total}</text>` +
+      `</svg>`,
+  };
+}
 
 const KINDS: Kind[] = ['gappei', 'zouka', 'kyuzan', 'kyusa'];
 
@@ -254,8 +317,8 @@ function basho(level: number, rng: Rng, alt: boolean): MatchItem {
       ? 'テープの ずと、あう しきを せんで むすぼう。'
       : 'おはなしと、あう しきを せんで むすぼう。',
     left: alt
-      ? rows.map((r, i) => ({ figure: tape(r.op, r.a, r.b), name: names[i]! }))
-      : rows.map((r) => ({ label: story(r.scene, r.a, r.b) })),
+      ? rows.map((r, i) => ({ figure: tapeCard(r.op, r.a, r.b), name: names[i]! }))
+      : rows.map((r) => ({ label: r.scene.short(r.a, r.b) })),
     right,
     pairs: rows.map((_, i) => [i, i] as [number, number]),
     wrongPairs: [{ pair: [0, 3], misconception: distract.mis }],
@@ -264,7 +327,7 @@ function basho(level: number, rng: Rng, alt: boolean): MatchItem {
         ? 'テープの ぜんぶが「？」なら あわせる、ぶぶんが「？」なら のこりや ちがいを もとめるよ。'
         : '「あわせて」「ふえる」は たしざん、「のこり」「ちがい」は ひきざん だよ。',
       'おはなしに でて くる かずを しきの かずと くらべよう。',
-      `${alt ? names[0] : 'いちばん うえの おはなし'}は ${KIND_WORD[r0.k]} ばめん。しきの しるしは どちらかな。`,
+      `${alt ? names[0] : 'いちばん うえの おはなし'}は ${KIND_WORD[r0.k]} ばめん。しるしは どちらかな。`,
     ],
     explain: rows
       .map((r) => `${KIND_WORD[r.k]} ばめんは ${r.e}`)
@@ -365,19 +428,19 @@ function yomu(level: number, rng: Rng, alt: boolean): ChoiceItem | FillItem {
   const right = rng.pick(SCENES.filter((s) => opOf(s.kind) === op));
   const wrongOp = rng.pick(SCENES.filter((s) => opOf(s.kind) !== op));
   const sameOp = rng.pick(SCENES.filter((s) => opOf(s.kind) === op));
-  const options: ChoiceItem['options'] = [{ label: story(right, a, b), correct: true }];
+  const options: ChoiceItem['options'] = [{ label: right.short(a, b), correct: true }];
   const lo = Math.min(a, b);
   const hi = Math.max(a, b);
   if (op === '-' || hi > lo)
     options.push({
-      label: story(wrongOp, op === '-' ? a : hi, op === '-' ? b : lo),
+      label: wrongOp.short(op === '-' ? a : hi, op === '-' ? b : lo),
       misconception: 'op-swap',
     });
   // 数の違う お話（同じ演算）
   const nb = op === '-' && b + 1 >= a ? b - 1 : b + 1;
-  if (nb >= 1) options.push({ label: story(sameOp, a, nb), misconception: 'num-wrong' });
+  if (nb >= 1) options.push({ label: sameOp.short(a, nb), misconception: 'num-wrong' });
   if (options.length < 3)
-    options.push({ label: story(sameOp, a + 1, b), misconception: 'num-wrong' });
+    options.push({ label: sameOp.short(a + 1, b), misconception: 'num-wrong' });
   const dedup = options.filter((o, i) => options.findIndex((p) => p.label === o.label) === i);
   const key = `yomu:${op}${a},${b}:${right.id}`;
   return {
@@ -393,7 +456,7 @@ function yomu(level: number, rng: Rng, alt: boolean): ChoiceItem | FillItem {
       `おはなしに ${a}と ${b}が でて くるかも みよう。`,
       `${KIND_WORD[right.kind]} おはなしで、かずも あって いるのは…`,
     ],
-    explain: `${exprText(op, a, b)} は ${KIND_WORD[right.kind]} おはなし。「${story(right, a, b)}」が あうよ。`,
+    explain: `${exprText(op, a, b)} は ${KIND_WORD[right.kind]} おはなし。「${right.short(a, b)}」が あうよ。`,
     identity: key,
   };
 }
@@ -436,20 +499,20 @@ function ohanashi(level: number, rng: Rng, alt: boolean): ExplainItem | OrderIte
     id: key,
     objective: 'ohanashi',
     level,
-    prompt: `${exprText(op, a, b)} に なる おはなしを かんがえて、えに かこう。どんな おはなしかも えらんでね。`,
+    prompt: `${exprText(op, a, b)} の おはなしを えに かいて、しゅるいを えらぼう。`,
     canvas: { guide: 'none' },
     reasons:
       op === '+'
         ? [{ label: 'あわせる おはなし' }, { label: 'ふえる おはなし' }]
-        : [{ label: 'のこりを もとめる おはなし' }, { label: 'ちがいを もとめる おはなし' }],
+        : [{ label: 'のこりの おはなし' }, { label: 'ちがいの おはなし' }],
     hints: [
-      `${op === '+' ? '＋ は あわせる おはなしや ふえる' : '− は のこりを もとめる おはなしや ちがいを もとめる'} おはなしに なるよ。`,
+      `${op === '+' ? '＋ は あわせる おはなしや ふえる おはなし' : '− は のこりの おはなしや ちがいの おはなし'}に なるよ。`,
       `${a}こ の ものを かいて みよう。`,
       op === '+'
         ? `そこに ${b}こ ふえる ところを かこう。`
         : `そこから ${b}こ へる ところを かこう。`,
     ],
-    explain: `たとえば「${story(sample, a, b)}」のような おはなしが ${exprText(op, a, b)} だよ。`,
+    explain: `たとえば「${sample.short(a, b)}」のような おはなしが ${exprText(op, a, b)} だよ。`,
     identity: key,
   };
 }

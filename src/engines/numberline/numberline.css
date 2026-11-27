@@ -24,13 +24,13 @@
   fill: var(--ink);
 }
 .nl2-label {
-  font-size: 36px;
+  font-size: max(36px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .nl2-label--frac {
-  font-size: 28px;
+  font-size: max(28px, var(--svg-floor, 0px));
 }
 .nl2-fracbar {
   stroke: var(--ink);

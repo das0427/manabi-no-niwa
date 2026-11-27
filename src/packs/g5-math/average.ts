@@ -132,11 +132,12 @@ function meanWrongs(v: number[]): [string | number | null, string][] {
 
 const meanHints = (v: number[], u: string): string[] => [
   '平均 ＝ 合計 ÷ 個数',
-  `合計は ${v.join(' ＋ ')} ＝ ${sum(v)}${u}。個数は ${v.length}こ${v.includes(0) ? '（0も 数に 入れる）' : ''}。`,
+  // 個数（ふりがな付き）を先に言う。「…24こ。個数は」だと Rt が「こ。」を個数と同じ nowrap に取り込み、「24／こ」で折れる
+  `個数は ${v.length}こ${v.includes(0) ? '（0も 数に 入れる）' : ''}。合計は ${v.join(' ＋ ')} ＝ ${sum(v)}${u}。`,
   `${sum(v)} ÷ ${v.length}を 計算しよう。`,
 ];
 const meanExplain = (v: number[], u: string) =>
-  `合計は ${sum(v)}${u}、個数は ${v.length}。${sum(v)} ÷ ${v.length} ＝ ${meanText(v)}で、平均は ${meanText(v)}${u}です。`;
+  `個数は ${v.length}、合計は ${sum(v)}${u}。${sum(v)} ÷ ${v.length} ＝ ${meanText(v)}で、平均は ${meanText(v)}${u}です。`;
 
 /** ぼうグラフ（graph エンジン。figure は 付けない） */
 function barItem(
@@ -171,7 +172,7 @@ function barItem(
     },
     task: {
       kind: 'number',
-      fields: [{ label: sc.unit, answer }],
+      fields: [{ unit: sc.unit, answer }],
       keys: ['decimal'],
       wrongAnswers: wrongList([answer], meanWrongs(v)),
     },
@@ -249,7 +250,7 @@ function zero(level: number, rng: Rng, alt: boolean): Item {
     explain: `0の 日も 1日と 数えます。${meanExplain(v, sc.unit)}`,
     identity: `zero:${sc.id}:${keyOf(v)}`,
     alt: false,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, meanWrongs(v)),
   };
@@ -279,7 +280,7 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${ws} × ${steps} ＝ ${dec(t100, 2)}。およそ ${dec(t100, 2)}mです。平均を 使うと、全体の 量を 見積もる ことが できます。`,
       identity: `total-step:${w}:${steps}`,
       alt: true,
-      fields: [{ label: 'm', answer: answers[0]! }],
+      fields: [{ unit: 'm', answer: answers[0]! }],
       keys: ['decimal'],
       wrongAnswers: wrongList(answers, [[dec(w + steps * 100, 2), 'add-instead']]),
     };
@@ -306,7 +307,7 @@ function total(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `合計 ＝ 平均 × 個数 ＝ ${m} × ${n} ＝ ${T}。合計は ${T}${sc.unit}です。`,
       identity: `total:${sc.id}:${m}:${n}`,
       alt: false,
-      fields: [{ label: sc.unit, answer: answers[0]! }],
+      fields: [{ unit: sc.unit, answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [m10 % n === 0 ? dec(m10 / n, 1) : null, 'op-swap'],
         [dec(m10 + n * 10, 1), 'add-instead'],
@@ -344,7 +345,7 @@ function missing(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${n}回の 合計は ${m} × ${n} ＝ ${m * n}点。${n - 1}回めまでの 合計が ${sum(prev)}点なので、${m * n} − ${sum(prev)} ＝ ${last}点です。`,
       identity: `missing${alt ? '-alt' : ''}:${key}`,
       alt,
-      fields: [{ label: '点', answer: answers[0]! }],
+      fields: [{ unit: '点', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [m, 'mean-as-value'],
         [m * n, 'total-only'],
@@ -375,7 +376,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: meanExplain(v, sc.unit),
     identity: `story${alt ? '-alt' : ''}:${sc.id}:${keyOf(v)}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, meanWrongs(v)),
   };

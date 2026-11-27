@@ -54,6 +54,102 @@ function polyFromAngles(angles: number[], lens: number[]): P[] | null {
   return pts;
 }
 
+/** 角の字の大きさ（viewBox の単位）。図を小さく描いて、画面では最小（--text-min）以上になるようにする */
+const LABEL_FS = 16;
+
+/** 角の字の幅（数字 0.56em・° 0.42em・ほか 1em の見積もり） */
+const labelW = (s: string) =>
+  [...s].reduce((w, ch) => w + (/[0-9]/.test(ch) ? 0.56 : ch === '°' ? 0.42 : 1) * LABEL_FS, 0);
+
+type Box = [number, number, number, number]; // x0, y0, x1, y1
+
+/**
+ * 頂点 i の角の字を置く中心。角の二等分線の外側（図の外）に、字の枠が頂点に触れない距離で置く。
+ * 角の字が図の内側に入ると、細い角では字どうしや辺に重なる（text-layout-fixes.md 第4回）。
+ */
+function outsideLabel(pts: P[], i: number, text: string): P {
+  const n = pts.length;
+  const p = pts[i]!;
+  const prev = pts[(i + n - 1) % n]!;
+  const next = pts[(i + 1) % n]!;
+  const unit = (q: P): P => {
+    const d = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+    return [(q[0] - p[0]) / d, (q[1] - p[1]) / d];
+  };
+  const a = unit(prev);
+  const b = unit(next);
+  let dx = -(a[0] + b[0]);
+  let dy = -(a[1] + b[1]);
+  const d = Math.hypot(dx, dy);
+  if (d < 1e-6) {
+    // 180° に近い（まっすぐ）とき: 辺に垂直に外へ
+    dx = a[1];
+    dy = -a[0];
+  } else {
+    dx /= d;
+    dy /= d;
+  }
+  const r = 5 + (Math.abs(dx) * labelW(text)) / 2 + (Math.abs(dy) * LABEL_FS) / 2;
+  return [r1(p[0] + dx * r), r1(p[1] + dy * r)];
+}
+
+/**
+ * 多角形（頂点 pts・図の座標）と、頂点ごとの角の字 labels（'' は書かない）から、図を作る。
+ * 字は図の外側に置き、viewBox は多角形と字の枠の外接に（まわりに 4）合わせる。
+ * extra は、多角形のほかに描くもの（点線 lines と、図の座標で中心を決めた字 texts）。viewBox に入れる。
+ */
+function labeledFig(
+  pts: P[],
+  labels: string[],
+  title: string,
+  extra?: { lines: [P, P][]; texts: { x: number; y: number; s: string }[] },
+): Figure {
+  const boxes: Box[] = [
+    [
+      Math.min(...pts.map((p) => p[0])),
+      Math.min(...pts.map((p) => p[1])),
+      Math.max(...pts.map((p) => p[0])),
+      Math.max(...pts.map((p) => p[1])),
+    ],
+  ];
+  for (const [a, b] of extra?.lines ?? [])
+    boxes.push([
+      Math.min(a[0], b[0]),
+      Math.min(a[1], b[1]),
+      Math.max(a[0], b[0]),
+      Math.max(a[1], b[1]),
+    ]);
+  const texts: { x: number; y: number; s: string }[] = [...(extra?.texts ?? [])];
+  for (const t of texts) {
+    const w = labelW(t.s);
+    boxes.push([t.x - w / 2, t.y - LABEL_FS / 2, t.x + w / 2, t.y + LABEL_FS / 2]);
+  }
+  pts.forEach((_, i) => {
+    const lab = labels[i];
+    if (!lab) return;
+    const [x, y] = outsideLabel(pts, i, lab);
+    texts.push({ x, y, s: lab });
+    const w = labelW(lab);
+    boxes.push([x - w / 2, y - LABEL_FS / 2, x + w / 2, y + LABEL_FS / 2]);
+  });
+  const x0 = Math.min(...boxes.map((b) => b[0])) - 4;
+  const y0 = Math.min(...boxes.map((b) => b[1])) - 4;
+  const x1 = Math.max(...boxes.map((b) => b[2])) + 4;
+  const y1 = Math.max(...boxes.map((b) => b[3])) + 4;
+  const sh = (x: number, y: number): P => [r1(x - x0), r1(y - y0)];
+  let body = `<polygon points="${pts.map((p) => sh(p[0], p[1]).join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
+  for (const [a, b] of extra?.lines ?? []) {
+    const [ax, ay] = sh(a[0], a[1]);
+    const [bx, by] = sh(b[0], b[1]);
+    body += `<line x1="${ax}" y1="${ay}" x2="${bx}" y2="${by}" ${STROKE} stroke-dasharray="6 5"/>`;
+  }
+  for (const t of texts) {
+    const [x, y] = sh(t.x, t.y);
+    body += svgText(x, y, t.s, LABEL_FS);
+  }
+  return svg(r1(x1 - x0), r1(y1 - y0), body, title);
+}
+
 /** 角の しるし（文字）を 入れた 多角形の 図。labels[i] は 頂点 i の 角に 書く文字（'' なら 書かない） */
 function polyFig(angles: number[], labels: string[], title: string): Figure {
   const n = angles.length;
@@ -87,21 +183,10 @@ function polyFig(angles: number[], labels: string[], title: string): Figure {
   const maxY = Math.max(...ys);
   const w = Math.max(...xs) - minX;
   const h = maxY - Math.min(...ys);
-  const k = Math.min(220 / w, 150 / h);
-  const sp = pts.map(([x, y]) => [r1(40 + (x - minX) * k), r1(30 + (maxY - y) * k)] as P);
-  const cx = sp.reduce((s, p) => s + p[0], 0) / n;
-  const cy = sp.reduce((s, p) => s + p[1], 0) / n;
-  let body = `<polygon points="${sp.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
-  sp.forEach(([x, y], i) => {
-    const lab = labels[i];
-    if (!lab) return;
-    const dx = cx - x;
-    const dy = cy - y;
-    const d = Math.hypot(dx, dy) || 1;
-    const off = lab.length > 2 ? 34 : 26;
-    body += svgText(r1(x + (dx / d) * off), r1(y + (dy / d) * off), lab, 14);
-  });
-  return svg(r1(w * k + 80), r1(h * k + 60), body, title);
+  // 多角形は 110 × 66 の中に。角の字は外側に置くので、図の全体は およそ 180 × 100
+  const k = Math.min(110 / w, 66 / h);
+  const sp = pts.map(([x, y]) => [r1((x - minX) * k), r1((maxY - y) * k)] as P);
+  return labeledFig(sp, labels, title);
 }
 
 /** 5° きざみの 2つの 角（のこりの 角が min 以上）。定義域から 均等に（はずれは 引き直す） */
@@ -117,7 +202,7 @@ const sorted = (xs: number[]) => [...xs].sort((a, b) => a - b).join('-');
 
 /** 三角形の のこりの角（alt: 図で） */
 function tri(level: number, rng: Rng, alt: boolean): NumberItem {
-  const [a, b] = twoAngles(rng, 4, 26, 15);
+  const [a, b] = twoAngles(rng, 5, 26, 25);
   const c = 180 - a - b;
   const answers = [{ kind: 'int' as const, value: c }];
   return {
@@ -138,7 +223,7 @@ function tri(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: polyFig([a, b, c], [`${a}°`, `${b}°`, `${c}°`], '三角形'),
     identity: `tri${alt ? '-fig' : ''}:${sorted([a, b])}`,
     alt,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [360 - a - b, 'use-360'],
       [180 - a, 'one-angle'],
@@ -151,7 +236,7 @@ function tri(level: number, rng: Rng, alt: boolean): NumberItem {
 /** 二等辺三角形・直角三角形・外の角（alt: 外の角） */
 function special(level: number, rng: Rng, alt: boolean): NumberItem {
   if (alt) {
-    const [a, b] = twoAngles(rng, 5, 22, 20);
+    const [a, b] = twoAngles(rng, 5, 22, 25);
     const c = 180 - a - b;
     const answers = [{ kind: 'int' as const, value: a + b }];
     return {
@@ -169,7 +254,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `三角形の のこりの 角は ${c}°。外がわの 角は 180 − ${c} ＝ ${a + b}°です。（${a} ＋ ${b}と 同じに なります）`,
       identity: `ext:${sorted([a, b])}`,
       alt: true,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [c, 'ext-inner'],
         [360 - a - b, 'use-360'],
@@ -195,7 +280,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `のこりの 2つの 角の 和は 180 − ${x} ＝ ${180 - x}°。2つは 等しいので ${180 - x} ÷ 2 ＝ ${ans}°です。`,
       identity: `special:apex:${x}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [180 - x, 'isos-half'],
         [x, 'isos-pair'],
@@ -221,7 +306,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `底辺の 両はしの 角は どちらも ${y}°。180 − ${y} × 2 ＝ ${ans}°です。`,
       identity: `special:base:${y}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         // 底辺の 角を 1つだけ ひいた（180 − y）／ 与えられた 角を 等しい 2辺の 間の 角と 取りちがえた（(180 − y) ÷ 2）
         [180 - y, 'one-angle'],
@@ -247,7 +332,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `180 − （90 ＋ ${a}） ＝ ${ans}。もう1つの 角は ${ans}°です。`,
     identity: `special:right:${a}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [180 - a, 'right-90'],
       [270 - a, 'use-360'],
@@ -255,7 +340,7 @@ function special(level: number, rng: Rng, alt: boolean): NumberItem {
   };
 }
 
-/** 外の角の図（三角形の 底辺を 右へ のばす） */
+/** 外の角の図（三角形の 底辺を 右へ のばす）。角の字は 図の 外がわ、ア は 外がわの 角の 中 */
 function extFig(a: number, b: number): Figure {
   const c = 180 - a - b;
   // 頂点0（左下）の角 a、頂点1（右下）の角 c、頂点2（上）の角 b。外の角は 頂点1 の 右
@@ -268,17 +353,20 @@ function extFig(a: number, b: number): Figure {
   const ys = pts.map((p) => p[1]);
   const minX = Math.min(...xs);
   const maxY = Math.max(...ys);
-  const w = Math.max(...xs, pts[1]![0] + 0.5) - minX;
+  const w = Math.max(...xs) - minX;
   const h = maxY - Math.min(...ys);
-  const k = Math.min(220 / w, 140 / h);
-  const sp = pts.map(([x, y]) => [r1(30 + (x - minX) * k), r1(30 + (maxY - y) * k)] as P);
-  const ext: P = [r1(sp[1]![0] + 0.5 * k), sp[1]![1]];
-  let body = `<polygon points="${sp.map((p) => p.join(',')).join(' ')}" fill="var(--sky)" fill-opacity="0.35" ${STROKE}/>`;
-  body += `<line x1="${sp[1]![0]}" y1="${sp[1]![1]}" x2="${ext[0]}" y2="${ext[1]}" ${STROKE} stroke-dasharray="6 5"/>`;
-  body += svgText(sp[0]![0] + 28, sp[0]![1] - 12, `${a}°`, 14);
-  body += svgText(sp[2]![0], sp[2]![1] + 26, `${b}°`, 14);
-  body += svgText(sp[1]![0] + 22, sp[1]![1] - 14, 'ア', 15);
-  return svg(r1(ext[0] + 30), r1(h * k + 60), body, '三角形と 外がわの 角');
+  const k = Math.min(100 / w, 66 / h);
+  const sp = pts.map(([x, y]) => [r1((x - minX) * k), r1((maxY - y) * k)] as P);
+  const v1 = sp[1]!;
+  const ext: P = [r1(v1[0] + 44), v1[1]];
+  // ア は 外がわの 角（辺 v1→v2 と のばした 線の 間）の 二等分線の上。角が せまいほど 頂点から はなす
+  const half = ((180 - c) / 2) * (Math.PI / 180);
+  const r = Math.max(24, 13 / Math.sin(half));
+  const mark: P = [r1(v1[0] + Math.cos(half) * r), r1(v1[1] - Math.sin(half) * r)];
+  return labeledFig(sp, [`${a}°`, '', `${b}°`], '三角形と 外がわの 角', {
+    lines: [[v1, ext]],
+    texts: [{ x: mark[0], y: mark[1], s: 'ア' }],
+  });
 }
 
 /** 四角形の のこりの角（alt: 図で） */
@@ -314,7 +402,7 @@ function quad(level: number, rng: Rng, alt: boolean): NumberItem {
     explainFigure: polyFig([a, b, c, d], [`${a}°`, `${b}°`, `${c}°`, `${d}°`], '四角形'),
     identity: `quad${alt ? '-fig' : ''}:${sorted([a, b, c])}`,
     alt,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [180 - a - b - c > 0 ? 180 - a - b - c : null, 'use-180'],
       [a + b + c, 'add-only'],
@@ -387,7 +475,7 @@ function poly(level: number, rng: Rng, alt: boolean): Item {
       explain: `${NAME[n]}は 三角形 ${n - 2}こに 分けられるので、180 × ${n - 2} ＝ ${ans}°です。`,
       identity: `poly:sum:${n}`,
       alt: false,
-      fields: [{ label: '度', answer: answers[0]! }],
+      fields: [{ unit: '度', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [n * 180, 'n-times-180'],
         [(n - 1) * 180, 'tri-count'],
@@ -414,7 +502,7 @@ function poly(level: number, rng: Rng, alt: boolean): Item {
     explain: `${NAME[n]}の 角の 和は ${(n - 2) * 180}°。正${NAME[n]}は ${n}つの 角が 等しいので、${(n - 2) * 180} ÷ ${n} ＝ ${ans}°です。`,
     identity: `poly:regular:${n}`,
     alt: false,
-    fields: [{ label: '度', answer: answers[0]! }],
+    fields: [{ unit: '度', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [360 / n, 'center-angle'],
       [(n - 2) * 180, 'sum-no-divide'],

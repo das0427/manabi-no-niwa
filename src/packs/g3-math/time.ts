@@ -103,7 +103,7 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         explain: `1分《ぷん》 ＝ 60秒《びょう》なので ${FUN(m)} ＝ ${m * 60}秒《びょう》。${m * 60} ＋ ${s} ＝ ${v}で ${v}秒《びょう》です。`,
         identity: `ms-s:${m}:${s}`,
         alt: false,
-        fields: [{ label: '秒《びょう》', answer: { kind: 'int', value: v } }],
+        fields: [{ unit: '秒《びょう》', answer: { kind: 'int', value: v } }],
         wrongAnswers: wrongList(String(v), 1, [
           [m * 100 + s, 'base100'],
           [m + s, 'base100'],
@@ -129,8 +129,8 @@ function seconds(level: number, rng: Rng, alt: boolean): NumberItem | ChoiceItem
         identity: `s-ms:${v}`,
         alt: false,
         fields: [
-          { label: '分《ふん》', answer: { kind: 'int', value: m } },
-          { label: '秒《びょう》', answer: { kind: 'int', value: s } },
+          { unit: '分《ふん》', answer: { kind: 'int', value: m } },
+          { unit: '秒《びょう》', answer: { kind: 'int', value: s } },
         ],
         wrongAnswers: wrongList(`${m}|${s}`, 2, [
           [v >= 100 ? `${Math.floor(v / 100)}|${v % 100}` : null, 'base100'],
@@ -166,8 +166,8 @@ function endItem(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem 
       identity: `before:${h}:${m}-${back}`,
       alt: true,
       fields: [
-        { label: '時《じ》', answer: { kind: 'int', value: eh } },
-        { label: '分《ふん》', answer: { kind: 'int', value: e.m } },
+        { unit: '時《じ》', answer: { kind: 'int', value: eh } },
+        { unit: '分《ふん》', answer: { kind: 'int', value: e.m } },
       ],
       wrongAnswers: wrongList(`${eh}|${e.m}`, 2, [
         [back - m < 60 ? `${h}|${60 + m - back}` : null, 'no-borrow-hour'],
@@ -261,7 +261,7 @@ function noon(level: number, rng: Rng, alt: boolean): ClockItem | NumberItem {
       explain: `${12 - s}時間《じかん》と ${e}時間《じかん》で ${hours}時間《じかん》です。`,
       identity: `noon-h:${s}-${e}`,
       alt: true,
-      fields: [{ label: '時間《じかん》', answer: { kind: 'int', value: hours } }],
+      fields: [{ unit: '時間《じかん》', answer: { kind: 'int', value: hours } }],
       wrongAnswers: wrongList(String(hours), 1, [
         [Math.abs(s - e), 'ampm-ignore'],
         [s + e, 'ampm-ignore'],

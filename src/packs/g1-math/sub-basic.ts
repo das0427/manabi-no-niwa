@@ -363,7 +363,7 @@ export function generateSubBasic(level: number, rng: Rng, index: number): Item {
           `しきは ${a} − ${b} だね。`,
         ),
         id: `bunshou${alt ? '-alt' : ''}:${sc.id}:${key(a, b)}`,
-        fields: [{ answer: { kind: 'int', value: a - b }, label: sc.unit }],
+        fields: [{ answer: { kind: 'int', value: a - b }, unit: sc.unit }],
         explain: `しきは ${a} − ${b} ＝ ${a - b}。こたえは ${a - b}${sc.unit} です。`,
       };
     }

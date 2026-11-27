@@ -3,15 +3,28 @@
   font-weight: 700;
   color: var(--ink);
   text-align: center;
+  max-width: 100%;
+  /* 語の途中で折らない: 空白（全角・半角）のところで折り返す（DESINGN.md 17章） */
+  word-break: keep-all;
+  /* 空白の無い長い文でも、はみ出す前に どこでも折る */
+  overflow-wrap: anywhere;
+  hyphens: none;
+  /* 行が短くなりすぎないよう行末をそろえる（対応しない環境では無視される） */
+  text-wrap: pretty;
 }
 .fig-text--m {
-  font-size: calc(var(--u) * 3.6);
+  font-size: max(calc(var(--u) * 3.6), var(--text-min, 0px));
 }
+/* 大きな語（英単語など）は語の中で折らない。入らないときは Figure.tsx（useFitWidth）が文字を縮める */
 .fig-text--l {
   font-size: calc(var(--u) * 5.2);
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .fig-text--xl {
   font-size: calc(var(--u) * 7);
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .fig-row {
   display: flex;
@@ -23,6 +36,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+/* テープ図の列は親の幅いっぱい（内容の幅まで縮むと、割合の幅のテープが 10u になり「18ページ」が切れる） */
+.fig-column:has(> .fig-tape-wrap) {
+  width: 100%;
+}
+/* 10の棒のまとまりを並べた図（かけ算の配列）は横に並べ、入らないときだけ折り返す
+   （縦に積むと 30u を超えて回答欄が舞台の下に出る。g2.math.mult-beyond） */
+.fig-column--blocks {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
 }
 .fig-svgbox {
   display: block;
@@ -76,9 +101,12 @@
 /* テープ図 */
 .fig-tape-wrap {
   width: 100%;
-  max-width: calc(var(--u) * 70);
+  /* 括弧・合計がテープの下にそろうよう、テープと同じ 48u まで */
+  max-width: calc(var(--u) * 48);
 }
 .fig-tape {
+  width: min(100%, calc(var(--u) * 48));
+  min-width: min(100%, calc(var(--u) * 30));
   display: flex;
   height: calc(var(--u) * 6);
   border: calc(var(--u) * 0.3) solid var(--ink);
@@ -90,8 +118,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(var(--u) * 2.6);
+  font-size: max(calc(var(--u) * 2.6), var(--text-min, 0px));
   font-weight: 700;
+  /* ラベルは折らず、枠の取り分より長いときは枠のほうを広げる（「18ページ」が切れる） */
+  white-space: nowrap;
+  min-width: min-content;
+  padding-inline: calc(var(--u) * 1.2);
   border-right: calc(var(--u) * 0.3) solid var(--ink);
 }
 .fig-tape__part:last-child {
@@ -111,7 +143,7 @@
 }
 .fig-tape__total {
   text-align: center;
-  font-size: calc(var(--u) * 2.6);
+  font-size: max(calc(var(--u) * 2.6), var(--text-min, 0px));
   font-weight: 700;
   margin-top: calc(var(--u) * 0.6);
 }
@@ -127,8 +159,10 @@
 /* 数直線 */
 .fig-nl {
   position: relative;
-  width: 100%;
-  max-width: calc(var(--u) * 80);
+  /* 幅は決めて置く（親が中身の幅に縮む flex・grid の中で、svg の幅が 0 になり
+     文字が図の表示範囲の外に出ていた: g4.math.rounding の「3420」）。縮むのは親が狭いときだけ */
+  width: calc(var(--u) * 60);
+  max-width: min(100%, calc(var(--u) * 80));
 }
 .nl-axis,
 .nl-major {
@@ -143,7 +177,7 @@
   fill: var(--ink);
 }
 .nl-label {
-  font-size: 30px;
+  font-size: max(30px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
@@ -159,15 +193,30 @@
   stroke: var(--ink);
   stroke-width: 3;
 }
+/* 印（▼）のラベルは、▼ の真上（svg の上）に置く（第7回 X4。以前は svg の下の余白のさらに下で、線から約 8u 離れた）。
+   箱は svg の上の段で、ラベルは箱の下はしにそろえる（▼ は svg の上はしのすぐ下。ラベルの下と ▼ の間は約 1.4u）。
+   箱の高さは字の 1.7 倍（Rt の行の高さ。ふりがなの分を含む） */
 .fig-nl__labels {
   position: relative;
-  height: calc(var(--u) * 4);
+  height: calc(max(calc(var(--u) * 2.4), var(--text-min, 0px)) * 1.7);
 }
-.fig-nl__labels span {
+/* 直下の span だけ（子孫の span まで absolute にすると、分数の分子・分母が 0×0 で重なっていた。
+   g4.math.fraction-kinds/4 の解説）。分数のラベルは、箱の高さを字の 2.2 倍にして縦に並べる */
+.fig-nl__labels > span {
   position: absolute;
+  bottom: 0;
   transform: translateX(-50%);
-  font-size: calc(var(--u) * 2.4);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   font-weight: 700;
+}
+.fig-nl__labels:has(.rt-frac) {
+  height: calc(max(calc(var(--u) * 2.4), var(--text-min, 0px)) * 2.2);
+}
+.fig-nl__labels > span:has(.rt-frac) {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 2.2em;
 }
 
 /* 時計 */
@@ -188,13 +237,13 @@
   stroke-width: 3.5;
 }
 .clk-num {
-  font-size: 20px;
+  font-size: max(20px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .clk-mnum {
-  font-size: 11px;
+  font-size: max(11px, var(--svg-floor, 0px));
   fill: var(--ink-soft);
   text-anchor: middle;
 }
@@ -213,25 +262,39 @@
 }
 
 /* 表 */
+/* 余白は em: 表が入らないとき Figure.tsx（useFitWidth）が font-size を縮めると、余白も縮む。
+   作業領域の --fit（解説は 0.6）で縮んでも --text-min を割らない（useFitWidth の下限も --text-min） */
 .fig-table {
   border-collapse: collapse;
-  font-size: calc(var(--u) * 2.4);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   background: var(--white);
 }
 .fig-table th,
 .fig-table td {
   border: calc(var(--u) * 0.2) solid var(--ink);
-  padding: calc(var(--u) * 0.6) calc(var(--u) * 1.4);
+  padding: 0.25em 0.58em;
   text-align: center;
+}
+/* 見出しは1行のまま（「ひゃくの くらい」が1行1字にならない）。分かち書きの空白でも折らない */
+.fig-table td {
+  /* 語（カタカナの名前など）は途中で折らない。空白・句読点では折れる */
+  word-break: keep-all;
 }
 .fig-table th {
   font-weight: 700;
+  word-break: keep-all;
+  white-space: nowrap;
 }
 
 /* グラフ */
+/* グラフは縦 21u まで（作業領域の高さに入る）。選択肢の中の小さなグラフは 26u 幅まで */
 .fig-chart {
-  width: 100%;
-  max-width: calc(var(--u) * 70);
+  /* 幅は決めて置く（親が中身の幅に縮む flex の中でも、横軸の札の幅に左右されない） */
+  width: calc(var(--u) * 32);
+  max-width: min(100%, calc(var(--u) * 40));
+}
+button .fig-chart {
+  max-width: calc(var(--u) * 20);
 }
 .ch-grid {
   stroke: var(--ink-soft);
@@ -242,7 +305,7 @@
   stroke-width: 4;
 }
 .ch-ylabel {
-  font-size: 22px;
+  font-size: max(22px, var(--svg-floor, 0px));
   fill: var(--ink);
   text-anchor: end;
 }
@@ -264,11 +327,31 @@
 .fig-chart__labels {
   display: flex;
   justify-content: space-around;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   font-weight: 700;
 }
+/* 横軸の札は棒・点と同じ幅の枠に置き、語の途中で折らない（「みか／ん」）。入らないときは
+   Figure.tsx（useStaggerLabels）が --text-min まで縮め、なお入らなければ1つおきに下の段へずらす */
+.fig-chart__labels {
+  align-items: flex-start;
+}
+.fig-chart__labels > span {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
+  text-align: center;
+}
+.fig-chart__labels[data-stagger] > span {
+  margin-inline: var(--fig-slot-pad, 0px);
+}
+.fig-chart__labels[data-stagger] > span:nth-child(even) {
+  margin-top: var(--fig-stagger, 0px);
+}
+/* 単位の札は縦軸の上（図の左上。Figure.tsx は svg の前に置く）。横軸の下の左はしの「（℃）」は、横軸の単位に読める（第7回 X4） */
 .fig-chart__unit {
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   text-align: left;
 }
 
@@ -291,4 +374,51 @@
   display: block;
   max-width: 100%;
   height: auto;
+}
+/* width を書いていない図は、親が内容の幅になる（flex の中など）と幅が 0 になる。大きさは 23u（ブラウザの既定 300px 相当）を下限に、
+   一番小さい字が最小になる幅（最小 × --fig-k。liftSvgText の fitWidth が書く）まで広げる。上限は親の幅（max-width） */
+.fig-svg :where(svg:not([width])) {
+  width: max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)));
+}
+
+/* 縦横比が 4:1 を超え字を含む図（札の列。gridFloor.ts の wide）が入った選択肢は 1 列に並べる（W8）。横に並べると札の幅に縮められ、
+   札の中の番号の字が 0.54u になった（g6.prog.efficient/11）。1 列なら札の幅いっぱいに描ける */
+/* 単元の画面（.unit。v1 モード・幼児ホームの data-stage は D1 などで別）だけ。幼児の段階（p23・p4・p5）は除く: 3〜4 枚を 1 列に積むと作業領域に 2.3u 入らずスクロールした（p5.math.numbers-10。レビュー） */
+:where(.unit[data-stage]:not([data-stage^='p']))
+  :is(.eng-choice__options, .eng-opts__list):has(.fig-svg--wide) {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: min(100%, calc(var(--u) * 70));
+}
+/* 1 列にした札は、図の横に記号（A・B・C）を並べて低くする（縦に積むと作業領域に入らずスクロールした）。
+   札の列の図は高さを 4.6u に抑える（パックの指定は 6.5u。3 枚積むと作業領域の高さを超える）。
+   幅は 4.6u × 縦横比（約 27u）。字は横幅いっぱいの 1 列なので、横に並べたときより大きく描ける。
+   札の上下の余白（0.2u）とすき間（0.4u）は、choice.css の絵の札（.is-pics。余白 0.8u・すき間 0.4u）より詳しい指定で当てる
+   （クラスの重ね書きで詳しさを 1 つ上げる）。余白が 0.8u のままだと 3 枚で作業領域に入らず、--fit が 0.83 まで縮み、
+   札 1 枚が 4.6u × 24/42 × 0.83 ＝ 2.2u になった（g6.prog.efficient/11 の解説。第7回 X4。下限は 2.4u）。
+   列の高さは --fit では 4.4u0 より低くしない（第8回 Y3）。解説の板が 3 行だと --fit が 0.835 になり、4.6u が 3.84u に縮んで
+   札（viewBox 24×28）が 2.2u になった（g2.prog.repeat/3）。4.4 × --u0 なら札は 2.51u で、--fit がいくつでも 2.4u を割らない。
+   --u0 は舞台の寸法の u（--fit で縮まない。choice.css の --pic-floor と同じ書き方）。--fit が 0.956 以上のうちは 4.6u のまま（今までと同じ）。
+   列が縮まない分、--fit は下がり、同じ作業領域の主の図（問題の札の列）と列の幅が縮む（g2.prog.repeat/3 の解説: --fit 0.84 → 0.68）。
+   この規則は列の中の .fig-svg svg 全部に当たるので、縦横比が 4:1 以下の札の列（fig-svg--wide でない図。g2.prog.repeat/3 の A）も同じ高さになる */
+.eng-choice__options.eng-choice__options:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  ) {
+  gap: calc(var(--u) * 0.4);
+}
+.eng-choice__options.eng-choice__options:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  )
+  > .eng-choice__opt {
+  flex-direction: row;
+  min-height: 0;
+  padding-block: calc(var(--u) * 0.2);
+  gap: calc(var(--u) * 2);
+}
+.eng-choice__options:has(.fig-svg--wide):where(.unit[data-stage]:not([data-stage^='p']) *)
+  .fig-svg
+  svg {
+  height: max(calc(var(--u) * 4.6), calc(var(--u0, var(--u)) * 4.4)) !important;
 }

@@ -612,10 +612,17 @@ function linkItem(l: Link): FillItem {
 }
 
 /** 別例: 1文を2文に分ける・2文を1文にまとめる（choice） */
-const LINK_ALT: { id: string; q: string; s: string; ok: string; wrong: Wrong[]; e: string }[] = [
+const LINK_ALT: {
+  id: string;
+  kind: 'split' | 'merge';
+  s: string;
+  ok: string;
+  wrong: Wrong[];
+  e: string;
+}[] = [
   {
     id: 'kasa',
-    q: 'この文《ぶん》を、意味《いみ》を変《か》えずに二《ふた》つの文《ぶん》に分《わ》けると、どれですか。',
+    kind: 'split',
     s: '風《かぜ》が強《つよ》かったので、かさがこわれた。',
     ok: '風《かぜ》が強《つよ》かった。だから、かさがこわれた。',
     wrong: [
@@ -626,7 +633,7 @@ const LINK_ALT: { id: string; q: string; s: string; ok: string; wrong: Wrong[]; 
   },
   {
     id: 'umi',
-    q: 'この文《ぶん》を、意味《いみ》を変《か》えずに二《ふた》つの文《ぶん》に分《わ》けると、どれですか。',
+    kind: 'split',
     s: 'よく晴《は》れていたのに、海《うみ》はあれていた。',
     ok: 'よく晴《は》れていた。しかし、海《うみ》はあれていた。',
     wrong: [
@@ -637,7 +644,7 @@ const LINK_ALT: { id: string; q: string; s: string; ok: string; wrong: Wrong[]; 
   },
   {
     id: 'shukudai',
-    q: 'この文《ぶん》を、意味《いみ》を変《か》えずに二《ふた》つの文《ぶん》に分《わ》けると、どれですか。',
+    kind: 'split',
     s: '宿題《しゅくだい》を終《お》えたし、部屋《へや》のそうじもすませた。',
     ok: '宿題《しゅくだい》を終《お》えた。それに、部屋《へや》のそうじもすませた。',
     wrong: [
@@ -654,7 +661,7 @@ const LINK_ALT: { id: string; q: string; s: string; ok: string; wrong: Wrong[]; 
   },
   {
     id: 'eki',
-    q: 'この二《ふた》つの文《ぶん》を、意味《いみ》を変《か》えずに一《ひと》つの文《ぶん》にすると、どれですか。',
+    kind: 'merge',
     s: '駅《えき》に着《つ》いた。すると、電車《でんしゃ》が来《き》た。',
     ok: '駅《えき》に着《つ》くと、電車《でんしゃ》が来《き》た。',
     wrong: [
@@ -665,14 +672,20 @@ const LINK_ALT: { id: string; q: string; s: string; ok: string; wrong: Wrong[]; 
   },
 ];
 
+function linkAltPrompt(x: (typeof LINK_ALT)[number]): string {
+  return x.kind === 'split'
+    ? `「${x.s}」を、意味《いみ》を変《か》えずに二《ふた》つの文《ぶん》に分《わ》けると、どれですか。`
+    : `「${x.s}」を、意味《いみ》を変《か》えずに一《ひと》つの文《ぶん》にすると、どれですか。`;
+}
+
 function linkAltItem(x: (typeof LINK_ALT)[number]): ChoiceItem {
   return {
     engine: 'choice',
     id: `setsuzoku-alt:${x.id}`,
     objective: 'setsuzoku',
     level: 2,
-    prompt: x.q,
-    figure: { kind: 'text', text: x.s, size: 'm' },
+    // もとの文は問題文に入れる（図にすると、図 4.9u ＋ 長い選択肢 3 つで作業領域に入らない。text-layout-fixes 第7回）
+    prompt: linkAltPrompt(x),
     options: opts(x.ok, x.wrong),
     layout: 'column',
     hints: [
@@ -697,7 +710,7 @@ const ITEMS: Item[] = [
 
 export const sentenceRelations: UnitSpec = {
   id: 'g5.ja.sentence-relations',
-  title: '文《ぶん》の組《く》み立《た》てとつながり',
+  title: '文《ぶん》の 組《く》み立《た》てと つながり',
   stage: 'g5',
   subject: 'ja',
   domain: 'kotoba',

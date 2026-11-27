@@ -68,8 +68,10 @@
   --ink-soft-calm: #5c554d;
 
   /* 寸法の単位: 16:9 の舞台の幅の 1/100（実機で約 2.4〜2.76mm） */
-  --u: max(5px, min(1vw, 1.7778vh));
-  --u: max(5px, min(1vw, 1.7778dvh));
+  --u0: max(5px, min(1vw, 1.7778vh));
+  --u0: max(5px, min(1vw, 1.7778dvh));
+  /* 単元の作業領域の中だけ、収まらないときに縮む（unit.css の --fit。DESINGN.md 5.1） */
+  --u: var(--u0);
 
   --tap-main: calc(var(--u) * 6);
   --tap-aux: calc(var(--u) * 5.5);

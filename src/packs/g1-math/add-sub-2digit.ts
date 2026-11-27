@@ -198,9 +198,11 @@ function figureAlt(e: Expr): Figure {
       kind: 'row',
       items: [blk(e.a), { kind: 'text', text: '＋', size: 'l' }, blk(e.b)],
     };
+  // ブロックの右に「とる」数を置く（下に置くと、解説が出たときの図の段（高さ約 12u）に入らず、字が切れる）
   return {
-    kind: 'column',
+    kind: 'row',
     items: [blk(e.a), { kind: 'text', text: `${e.b}こ とる`, size: 'm' }],
+    gap: 3,
   };
 }
 
@@ -278,7 +280,7 @@ function item(obj: Obj, level: number, e: Expr, alt: boolean, sc?: Scene): Numbe
     explainFigure: blk(c),
     identity: key(e),
     alt,
-    fields: [{ answer: { kind: 'int', value: c }, label: sc?.unit }],
+    fields: [{ answer: { kind: 'int', value: c }, unit: sc?.unit }],
     wrongAnswers: wrongs(e),
   };
 }
@@ -299,7 +301,7 @@ export function generateAddSub2digit(level: number, rng: Rng): Item {
 
 export const addSub2digit: UnitSpec = {
   id: 'g1.math.add-sub-2digit',
-  title: '2けたの たしざん・ひきざん（かんたんな けいさん）',
+  title: '2けたの かんたんな たしざん・ひきざん',
   stage: 'g1',
   subject: 'math',
   domain: 'A-number',

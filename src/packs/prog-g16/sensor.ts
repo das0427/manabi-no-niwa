@@ -448,7 +448,7 @@ const SCENES = {
     action: 'かんきせんを まわす',
   },
 } as const;
-const HOURS = ['6じ', '8じ', '10じ', '12じ', '14じ', '16じ', '18じ', '20じ'];
+const HOURS = ['6', '8', '10', '12', '14', '16', '18', '20'];
 
 function makeTable(id: string): { c1: boolean[]; c2: boolean[] } {
   for (let t = 0; t < 500; t++) {
@@ -467,30 +467,36 @@ type Scene = (typeof SCENES)[keyof typeof SCENES];
 const kana = (s: string) => s.replace(/[\u4e00-\u9fff]+《([^》]+)》/g, '$1');
 /** 1日の じかんごとの センサーの こたえを ○（あてはまる）で ならべた図 */
 function timelineFig(sc: Scene, t: { c1: boolean[]; c2: boolean[] }): Figure {
-  const x0 = 190;
-  const step = 33;
-  let body = '';
-  HOURS.forEach((h, i) => {
-    const cx = x0 + i * step;
-    body += `<text x="${cx}" y="14" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink-soft)">${h}</text>`;
-    [t.c1[i]!, t.c2[i]!].forEach((on, r) => {
-      const cy = 34 + r * 24;
-      body += on
-        ? `<circle cx="${cx}" cy="${cy}" r="9" fill="var(--ink)"/>`
-        : `<circle cx="${cx}" cy="${cy}" r="9" fill="none" stroke="var(--ink-soft)" stroke-width="1.6" stroke-dasharray="3 3"/>`;
-    });
-  });
+  // 1 単位 = 0.1u（図の高さ 9.4u）。字は 2u（20 単位。小2〜小6 の最小以上）。
+  // 時刻は「6」「10」のように数だけにして、「じかん」の見出しに単位を預ける（「10じ」は 3 字で、字が最小になると隣の「8じ」に重なる）
   const rows = [
     `${kana(sc.c1.name)}：${kana(sc.c1.yes)}`,
     `${kana(sc.c2.name)}：${kana(sc.c2.yes)}`,
   ];
-  rows.forEach((r, i) => {
-    body += `<text x="${x0 - 22}" y="${39 + i * 24}" text-anchor="end" font-size="14" font-weight="700" fill="var(--ink)">${r}</text>`;
+  const FS = 20;
+  const labelW = Math.max(...rows.map((r) => r.length), 4) * FS;
+  const xe = 10 + labelW; // 行の見出しの右はし
+  const step = 34;
+  const x0 = xe + 30;
+  let body = `<text x="${xe}" y="24" text-anchor="end" font-size="${FS}" font-weight="700" fill="var(--ink-soft)">じかん</text>`;
+  HOURS.forEach((h, i) => {
+    const cx = x0 + i * step;
+    body += `<text x="${cx}" y="24" text-anchor="middle" font-size="${FS}" font-weight="700" fill="var(--ink-soft)">${h}</text>`;
+    [t.c1[i]!, t.c2[i]!].forEach((on, r) => {
+      const cy = 56 + r * 32;
+      body += on
+        ? `<circle cx="${cx}" cy="${cy}" r="12" fill="var(--ink)"/>`
+        : `<circle cx="${cx}" cy="${cy}" r="12" fill="none" stroke="var(--ink-soft)" stroke-width="1.8" stroke-dasharray="4 4"/>`;
+    });
   });
+  rows.forEach((r, i) => {
+    body += `<text x="${xe}" y="${63 + i * 32}" text-anchor="end" font-size="${FS}" font-weight="700" fill="var(--ink)">${r}</text>`;
+  });
+  const W = x0 + 7 * step + 18;
   return {
     kind: 'svg',
     label: `いちにちの ひょう。●は あてはまる じかん。うえの れつ ${rows[0]}、したの れつ ${rows[1]}`,
-    markup: `<svg viewBox="0 0 460 70" style="height:calc(var(--u) * 14)" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
+    markup: `<svg viewBox="0 0 ${W} 94" style="height:calc(var(--u) * 9.4)" xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
   };
 }
 const SAVES: [string, number, keyof typeof SCENES][] = [
@@ -549,7 +555,7 @@ const saveAlts: NumberItem[] = [
     alt: true,
     prompt: `きまり: ${condText(sc, q.rule)}\n${sc.action}のは、8つの じかんの うち なんかい？`,
     figure: timelineFig(sc, t),
-    fields: [{ label: 'かい', answer: { kind: 'int', value: answer } }],
+    fields: [{ answer: { kind: 'int', value: answer }, unit: 'かい' }],
     wrongAnswers: [...new Set([...others, HOURS.length])]
       .filter((v) => v !== answer)
       .map((v) => ({ value: String(v), misconception: 'count-cond' })),

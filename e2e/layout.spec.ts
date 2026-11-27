@@ -29,6 +29,8 @@ const MODES: { id: string; variant?: string }[] = [
   { id: 'compare' },
   { id: 'road', variant: 'puzzle' },
   { id: 'trace', variant: 'lines' },
+  { id: 'trace', variant: 'letters' },
+  { id: 'trace', variant: 'maze' },
   { id: 'math', variant: 'add' },
 ];
 

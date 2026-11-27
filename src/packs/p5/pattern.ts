@@ -90,6 +90,8 @@ type Task =
 
 const ONE_TYPES = ['ABC', 'ABB', 'AAB', 'AABB', 'ABCC', 'ABAC'];
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+const lcm = (a: number, b: number) => (a * b) / gcd(a, b);
 const LEVEL_T: Task[][] = [
   [
     ...ONE_TYPES.flatMap((type) =>
@@ -209,7 +211,10 @@ function make(t: Task, level: number, rng: Rng): Item {
           .map(sym)
           .join('・')}」の くりかえし だよ。`,
       ],
-      explain: `${range(0, t.len).map(sym).join('・')}。つぎは「${ans}」。`,
+      // ならびを ぜんぶは いわず、くりかえす まとまりと こたえだけを いう（解説の板を 3 行までに）
+      explain: `「${range(0, t.type.length - 1)
+        .map(sym)
+        .join('・')}」の くりかえし。つぎは「${ans}」。`,
       identity: key,
       options: mix(key, opts),
     };
@@ -221,6 +226,8 @@ function make(t: Task, level: number, rng: Rng): Item {
   let objective: string;
   let alt = false;
   let hint2: string;
+  /** 解説の「どんな きまりか」: くりかえす まとまり（ならびを ぜんぶは いわない） */
+  let howText: string;
   if (t.k === 'one') {
     cells = range(0, t.len).map((i) => ({
       s: els['ABC'.indexOf(t.type[i % t.type.length]!)]!,
@@ -229,9 +236,11 @@ function make(t: Task, level: number, rng: Rng): Item {
     }));
     key = `one:${t.type}:${t.len}`;
     objective = 'one';
-    hint2 = `「${range(0, t.type.length - 1)
+    const unit = range(0, t.type.length - 1)
       .map((i) => NAME[cells[i]!.s])
-      .join('・')}」の くりかえし だよ。`;
+      .join('・');
+    hint2 = `「${unit}」の くりかえし だよ。`;
+    howText = `${unit}の くりかえし`;
   } else {
     // かたちは sp ごと、おおきさ（もよう）は vp ごとに くりかえす（vp 3 は「おおきい・おおきい・ちいさい」）
     cells = range(0, t.len).map((i) => ({
@@ -246,6 +255,21 @@ function make(t: Task, level: number, rng: Rng): Item {
       t.mode === 'size'
         ? 'かたちと おおきさを べつべつに みよう。'
         : 'かたちと もようを べつべつに みよう。';
+    // かたちと おおきさ（もよう）を あわせた くりかえしが 3 つ いかなら、そのまま まとまりで いう。
+    // 6 つに なる（かたち 3 × 2 つ）ときは、かたちと おおきさ（もよう）を べつべつに いう
+    const period = lcm(t.sp, t.vp);
+    if (period <= 3) {
+      howText = `${range(0, period - 1)
+        .map((i) => cellName(cells[i]!))
+        .join('、')}の くりかえし`;
+    } else {
+      const attr = t.mode === 'size' ? 'おおきさ' : 'もよう';
+      const vals = t.mode === 'size' ? ['おおきい', 'ちいさい'] : ['ぬった', 'しま'];
+      howText = `かたちは ${els
+        .slice(0, t.sp)
+        .map((x) => NAME[x])
+        .join('・')}の じゅん、${attr}は ${vals.join('・')}の じゅん`;
+    }
   }
   const ans = cells[t.len]!;
   const shown = cells.slice(0, t.len);
@@ -274,7 +298,9 @@ function make(t: Task, level: number, rng: Rng): Item {
     prompt: 'きまりを みつけよう。？に はいるのは どれ？',
     figure: seqFig(shown),
     hints: ['はじめから ゆびで さしながら いって みよう。', hint2],
-    explain: `${[...shown, ans].map(cellName).join('、')}。？は ${cellName(ans)}。`,
+    // 「？は」と書くと、ブラウザは「？」の後ろで折れる（「…くりかえし。？／は まる。」）。
+    // 音の問題と同じ「つぎは」で言う（？は ならびの つぎ）
+    explain: `${howText}。つぎは ${cellName(ans)}。`,
     identity: key,
     options: mix(`${key}:${els.join('-')}`, opts),
   };

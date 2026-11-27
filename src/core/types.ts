@@ -3,6 +3,7 @@
  * 変更は Opus（統括）が行う。各担当はここを編集しない。
  */
 import {
+  audienceUx,
   defaultSupport,
   type AudienceId,
   type Grade,
@@ -87,7 +88,19 @@ export interface ChildSettings {
   support: SupportSettings;
   /** 保護者が開いた単元（既定で隠す単元 hiddenByDefault を子供画面に出す） */
   unitsOpened: string[];
+  /**
+   * おえかきで描く手（2.1.0〜）。'right' は道具欄を左に、'left' は右に置く。
+   * 無いときは右手（2.0 までの端末内の値 localStorage は drawing/hand.ts が移す）
+   */
+  drawingHand?: DrawingHand;
+  /**
+   * 幼児ホームに「えいご」の札を出す。省略時は true（データ移行なし。defaultSettings には書かない）。
+   * 2歳段階のホームには、この設定にかかわらず出さない
+   */
+  showPreschoolEnglish?: boolean;
 }
+
+export type DrawingHand = 'right' | 'left';
 
 export interface Profile {
   id: string;
@@ -279,5 +292,20 @@ export function defaultSettings(profileId: string, audience: AudienceId = 'p4'):
     traceTolerance: { touch: 'wide', pen: 'wide', mouse: 'wide' },
     memoryAutoHideSec: 0,
     levelLocks: {},
+  };
+}
+
+/**
+ * 新しいプロフィールの設定。defaultSettings に、区分の既定の利用時間 audienceUx().sessionMinutes
+ * （2歳段階 5分・3歳段階 8分・4〜5歳 10分・小1〜2 15分・小3〜6 20分。ux-by-age 1章）を入れる（FX10）。
+ * defaultSettings は保存された設定の欠けた項目を補うのにも使うので変えない（既存のプロフィールの値を黙って変えない）。
+ */
+export function settingsForNewProfile(
+  p: Pick<Profile, 'id' | 'audience' | 'toddlerStage'>,
+): ChildSettings {
+  const audience = profileAudience(p);
+  return {
+    ...defaultSettings(p.id, audience),
+    sessionMinutes: audienceUx(audience, p.toddlerStage ?? 3).sessionMinutes,
   };
 }

@@ -431,7 +431,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `式は ${shown} ＝ ${qBoth(ans)}。答えは ${qText(ans)}${sc.unit}です。`,
     identity: `story:${sc.id}:${shown}${alt ? ':alt' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer }],
+    fields: [{ unit: sc.unit, answer }],
     keys: ['fraction'],
     wrongAnswers: wrongList(
       [answer],

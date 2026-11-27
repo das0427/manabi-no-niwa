@@ -6,6 +6,8 @@ release/
 coverage/
 test-results/
 playwright-report/
+# アプリの画面の配置の検査（npm run check:app-layout）の報告書は commit しない（docs/test-plan.md 3.3）
+docs/screenshots/app-layout-report/
 scripts/voice/samples/
 *.tsbuildinfo
 __pycache__/
@@ -19,3 +21,8 @@ Thumbs.db
 public/audio/*/
 !public/audio/num/
 !public/audio/_sample-*/
+
+# 手元の作業の設定（AI の作業ツリーと起動の設定・ローカルの環境変数）は git に入れない（公開前の最後の確かめ P-02）
+.claude/
+.env
+.env.*

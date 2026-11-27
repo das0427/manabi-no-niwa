@@ -4,7 +4,6 @@
  * 同一性キー: 本文ID＋設問（1.4）。
  * 別例（alt）: 説明文以外の文種（ひょう・かんさつの きろく・おしらせ）と、手順のカードを並べる order の問題。
  */
-import type { Figure } from '../../engines/figure/types';
 import type { OrderItem } from '../../engines/order/order';
 import type {
   ReadingAspect,
@@ -814,16 +813,11 @@ const ALT_QS: [ReadingPassage, Q[]][] = [
   ],
 ];
 
-const passageFig = (p: ReadingPassage): Figure => ({
-  kind: 'column',
-  gap: 1,
-  items: p.paragraphs.map((para, i) => ({
-    kind: 'text',
-    text: `${CIRCLED[i] ?? ''}${para.join('')}`,
-    size: 'm',
-  })),
-});
-
+/**
+ * 並べる札は、本文の文を 1 行におさまる長さにした短い句（「まず」「やがて」などの つなぎの ことばは残す）。
+ * 本文の図を作業領域に置くと、札の列と合わせて 20〜50u 足りずスクロールになるため、図は置かない
+ * （docs/expansion/text-layout-fixes.md 第4回）。
+ */
 function orderItem(
   p: ReadingPassage,
   cards: string[],
@@ -835,8 +829,7 @@ function orderItem(
     id: `${p.id}:order-cards`,
     objective: 'order',
     level: 1,
-    prompt: plain(`「${p.title ?? ''}」を よんで、せつめいの じゅんに カードを ならべよう。`),
-    figure: passageFig(p),
+    prompt: plain(`「${p.title ?? ''}」の せつめいの じゅんに、ぶんの カードを ならべよう。`),
     cards: cards.map((label) => ({ label: plain(label) })),
     layout: 'column',
     ends: ['はじめ', 'おわり'],
@@ -851,21 +844,26 @@ function orderItem(
 const ORDER_ITEMS: OrderItem[] = [
   orderItem(
     ONIGIRI,
-    ['手《て》を あらう', '手《て》に しおを つける', 'うめぼしを 入《い》れる', 'のりを まく'],
+    [
+      'まず、手《て》を あらう',
+      'つぎに、しおを つける',
+      'それから、うめぼしを 入《い》れる',
+      'さいごに、のりを まく',
+    ],
     [
       '「まず」「つぎに」「それから」「さいごに」を さがそう。',
-      '「まず」の あとに かいて ある ことが はじめだよ。',
-      '「さいごに」の あとの ことが おわりだよ。',
+      '「まず」の ぶんが はじめだよ。',
+      '「さいごに」の ぶんが おわりだよ。',
     ],
     'まず 手《て》を あらう → つぎに しおを つける → それから うめぼしを 入《い》れる → さいごに のりを まく の じゅんだよ。',
   ),
   orderItem(
     OTAMA,
     [
-      'しっぽで およぐ',
-      'うしろ足《あし》が 出《で》る',
-      'まえ足《あし》が 出《で》る',
-      'しっぽが みじかく なる',
+      'はじめ、しっぽで およぐ',
+      'やがて、うしろ足《あし》が 出《で》る',
+      'つぎに、まえ足《あし》が 出《で》る',
+      'そして、しっぽが みじかく なる',
     ],
     [
       '「はじめ」「やがて」「つぎに」「そして」を さがそう。',
@@ -883,7 +881,7 @@ const ORDER_ITEMS: OrderItem[] = [
       'ひよこが ふわふわに なる',
     ],
     [
-      '②から ④の だんらくを じゅんに よもう。',
+      'ひよこが うまれるまでを、じゅんに かんがえよう。',
       'からを つつく まえに、めんどりが して いる ことは なにかな。',
       'ふわふわに なるのは、からから 出《で》た あとだね。',
     ],

@@ -13,4 +13,27 @@ describe('ハッシュの道すじ', () => {
       unitId: 'g1.math.add-basic',
     });
   });
+  it('おえかき: 新しい紙をかみ（テンプレート）つきで開く', () => {
+    const r = { name: 'draw', artId: 'new', template: 'sea' } as const;
+    expect(routeToHash(r)).toBe('#/draw/new/sea');
+    expect(parseHash('#/draw/new/sea')).toEqual(r);
+    // かみは 'new' のときだけ。不正な ID は無視して白い紙
+    expect(parseHash('#/draw/abc/sea')).toEqual({ name: 'draw', artId: 'abc' });
+    expect(parseHash('#/draw/new/Sea!')).toEqual({ name: 'draw', artId: 'new' });
+  });
+  it('開発用: 単元の見本の1問（番号と query）', () => {
+    const r = {
+      name: 'dev-unit',
+      unitId: 'g1.math.add-basic',
+      n: 3,
+      query: 'seeds=2&state=h2',
+    } as const;
+    expect(parseHash('#/dev/unit/g1.math.add-basic/3?seeds=2&state=h2')).toEqual(r);
+    expect(parseHash(routeToHash(r))).toEqual(r);
+    expect(parseHash('#/dev/unit/g1.math.add-basic')).toEqual({
+      name: 'dev-unit',
+      unitId: 'g1.math.add-basic',
+      query: '',
+    });
+  });
 });

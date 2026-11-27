@@ -247,6 +247,8 @@ function shelfFig(grid: Thing[][]): Figure {
   };
 }
 const posText = (r: number, c: number) => `うえから ${r}だんめ、ひだりから ${c}ばんめ`;
+/** 選択肢の短い言い方（問題文で「うえから」「ひだりから」と かぞえかたを きいて いる。3つ・4つが 1行ずつに はいる） */
+const posShort = (r: number, c: number) => `${r}だんめの ${c}ばんめ`;
 
 function jouge(level: number, rng: Rng, alt: boolean): ChoiceItem {
   const flat = rng.sample(THINGS, ROWS * COLS);
@@ -283,18 +285,18 @@ function jouge(level: number, rng: Rng, alt: boolean): ChoiceItem {
   }
   const key = `jouge-alt:${ids(flat)}:${r}-${c}`;
   const wrongs: Wrong[] = [];
-  if (c <= ROWS && r <= COLS && r !== c) wrongs.push([posText(c, r), 'row-col']);
-  if (ROWS + 1 - r !== r) wrongs.push([posText(ROWS + 1 - r, c), 'end-swap']);
-  if (COLS + 1 - c !== c) wrongs.push([posText(r, COLS + 1 - c), 'lr-swap']);
-  wrongs.push([posText(r, c === COLS ? c - 1 : c + 1), 'count-off']);
+  if (c <= ROWS && r <= COLS && r !== c) wrongs.push([posShort(c, r), 'row-col']);
+  if (ROWS + 1 - r !== r) wrongs.push([posShort(ROWS + 1 - r, c), 'end-swap']);
+  if (COLS + 1 - c !== c) wrongs.push([posShort(r, COLS + 1 - c), 'lr-swap']);
+  wrongs.push([posShort(r, c === COLS ? c - 1 : c + 1), 'count-off']);
   return choice(
     'jouge',
     level,
     key,
     true,
-    `${target.name}は どこに ある？`,
+    `${target.name}は うえから なんだんめの、ひだりから なんばんめ？`,
     fig,
-    opts(posText(r, c), wrongs),
+    opts(posShort(r, c), wrongs),
     [
       `まず ${target.name}を みつけよう。`,
       `${target.name}の だんは、うえから かぞえて なんだんめかな。`,

@@ -1,0 +1,65 @@
+/*
+ * アプリの画面（起動・プロフィール・ホーム・ほかの がくねん・選ぶ画面・単元の地図・ノート …）の札の名前・題（AppLabel）。
+ * text-layout-fixes「アプリの画面」A0。単元の画面（.unit。unit.css）には効かない
+ */
+
+/* ---- 補助の文字の最小（DESINGN.md 17章。単元の画面の unit.css と同じ値）----
+   --text-min-u は単位なしの数（AppLabel の fit が JS で読む。値の正本はここだけ）。--text-min はそれに u をかけた長さ。
+   分数（.rt-frac）とふりがなの下限（rt.css）も、アプリの画面でこの値を見る */
+.stage .screen[data-stage]:not(.unit) {
+  --text-min-u: 1.7;
+  --text-min: calc(var(--u) * var(--text-min-u));
+}
+.stage .screen[data-stage='p23']:not(.unit),
+.stage .screen[data-stage='p4']:not(.unit),
+.stage .screen[data-stage='p5']:not(.unit) {
+  --text-min-u: 2.2;
+}
+.stage .screen[data-stage='g1']:not(.unit),
+.stage .screen[data-stage='g2']:not(.unit) {
+  --text-min-u: 2;
+}
+.stage .screen[data-stage='g3']:not(.unit),
+.stage .screen[data-stage='g4']:not(.unit) {
+  --text-min-u: 1.8;
+}
+.stage .screen[data-stage='g5']:not(.unit),
+.stage .screen[data-stage='g6']:not(.unit) {
+  --text-min-u: 1.7;
+}
+
+/* ---- 札の名前 ---- */
+.app-label {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+/* fit を使う札: 字は --fit-fs（AppLabel が 0.1u ずつ下げて決める）。--text-min を割らない。
+   入るかどうかは、この要素と、親の札（[data-fit-box]。無ければ親要素）の内側で見る */
+.app-label--fit {
+  font-size: max(var(--fit-fs, 1em), var(--text-min, 0px));
+}
+
+/* 折り方（中身の段階。base.css の単元の画面の組み合わせと同じ）。
+   - 分かち書き（p23〜g2）: 空白のところだけで折る。空白の無い長い語は枠の手前で折る */
+.app-label[data-wakachi] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* - 小3以上で、空白で区切って書いた名前（rich.ts の spacedLabel）: 分かち書きと同じく空白のところでだけ折り、最後の行を 1 語だけにしない */
+.app-label[data-spaced] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+/* - 小3以上のふつうの名前: 文節で折る。
+   Chrome では auto-phrase と balance・pretty を同じ要素に付けると語の途中で折るので、text-wrap: wrap にする。
+   overflow-wrap: break-word は anywhere と違って最小幅を縮めないので、min-width: 0・max-width: 100% で枠の中に収める
+   （理由と確かめた単元は base.css の同じ組み合わせの注） */
+.app-label[data-phrase] {
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
+  text-wrap: wrap;
+}

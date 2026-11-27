@@ -3,6 +3,7 @@ import type { PackContent } from '../../curriculum/types';
 import { hiraganaClassic, lettersClassic, mathClassic } from './classic';
 import { compareUnit } from './compare';
 import { countPictures } from './count-pictures';
+import { dailyOrder } from './daily-order';
 import { firstSound } from './first-sound';
 import { kanaRead } from './kana-read';
 import { kanaTraceEarly } from './kana-trace-early';
@@ -12,7 +13,9 @@ import { patternUnit } from './pattern';
 import { roadUnit } from './road';
 import { shapesUnit } from './shapes';
 import { shopUnit } from './shop';
+import { seasons } from './seasons';
 import { sortUnit } from './sort';
+import { storyListen } from './story-listen';
 import { wordPlay } from './word-play';
 
 const pack: PackContent = {
@@ -30,6 +33,9 @@ const pack: PackContent = {
     memoryUnit,
     roadUnit,
     linesUnit,
+    storyListen,
+    seasons,
+    dailyOrder,
     kanaTraceEarly,
     hiraganaClassic,
     mathClassic,

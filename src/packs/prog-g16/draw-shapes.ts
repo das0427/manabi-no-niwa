@@ -55,7 +55,7 @@ const squareItems: Item[] = [
     prompt: `「すすむ 4、みぎに 90ど」を くりかえして ${SQN}を ちょうど 1しゅう かくよ。なんかい くりかえすかな。`,
     figure: turtleFigure(SQ(4).slice(0, 4), '2つの へんまで かいた 図《ず》', { grid: true }),
     answer: 4,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [3, 'count-wrong'],
       [2, 'count-wrong'],
@@ -75,7 +75,7 @@ const squareItems: Item[] = [
     prompt: `${SQN}の かどは、ぜんぶ なんどの ${ANGLE}かな。「みぎに ◯ど」の ◯に はいる 数《かず》を いれよう。`,
     figure: turtleFigure(SQ(3).slice(0, 3), 'かどで みぎに まがる ところ', { grid: true }),
     answer: 90,
-    label: 'ど',
+    unit: 'ど',
     wrongs: [
       [45, 'angle-wrong'],
       [180, 'angle-wrong'],
@@ -98,7 +98,7 @@ const squareItems: Item[] = [
       grid: true,
     }),
     answer: 1,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [4, 'count-wrong'],
       [2, 'count-wrong'],
@@ -155,7 +155,7 @@ const squareItems: Item[] = [
     prompt: `${SQN}を かくとき、「みぎに 90ど」を 4かい まわるね。ぜんぶで なんど まわったことに なるかな。`,
     figure: turtleFigure(SQ(3), 'かどで 4かい まがった 図形《ずけい》', { grid: true }),
     answer: 360,
-    label: 'ど',
+    unit: 'ど',
     wrongs: [
       [90, 'angle-wrong'],
       [180, 'angle-wrong'],
@@ -284,7 +284,7 @@ const rectItems: Item[] = [
     prompt: `「すすむ 4、みぎに 90ど、すすむ 2、みぎに 90ど」を くりかえして ${RCN}を 1しゅう かく。なんかい？`,
     figure: turtleFigure(RC(4, 2).slice(0, 4), '2つの へんまで かいた 図《ず》', { grid: true }),
     answer: 2,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [4, 'count-wrong'],
       [1, 'count-wrong'],
@@ -303,7 +303,7 @@ const rectItems: Item[] = [
     level: 0,
     prompt: `${RCN}の かどは、それぞれ なんどの ${ANGLE}かな。`,
     answer: 90,
-    label: 'ど',
+    unit: 'ど',
     wrongs: [
       [45, 'angle-wrong'],
       [180, 'angle-wrong'],
@@ -380,7 +380,7 @@ const rectItems: Item[] = [
     prompt: `${RCN}を かくとき、「みぎに 90ど」と まがるのは ぜんぶで なんかいかな。`,
     figure: turtleFigure(RC(4, 2), '長方形《ちょうほうけい》', { grid: true }),
     answer: 4,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [2, 'count-wrong'],
       [8, 'count-wrong'],
@@ -499,7 +499,7 @@ const shortItems: Item[] = [
     prompt: `${RCN}の 命令《めいれい》は、ふだが 8まい ならぶよ。\n「すすむ、まがる、すすむ、まがる」は なんかい？`,
     figure: turtleFigure(RC(4, 2), '長方形《ちょうほうけい》', { grid: true, hU: 7 }),
     answer: 2,
-    label: 'かい',
+    unit: 'かい',
     wrongs: [
       [4, 'count-wrong'],
       [8, 'count-wrong'],
@@ -518,7 +518,7 @@ const shortItems: Item[] = [
     level: 1,
     prompt: `${repText(4, FW(3), TR(90))}は\nふだ なんまい？（くりかえすも 1まい）`,
     answer: 3,
-    label: 'まい',
+    unit: 'まい',
     wrongs: [
       [2, 'count-card'],
       [4, 'count-card'],
@@ -537,7 +537,7 @@ const shortItems: Item[] = [
     level: 1,
     prompt: `${repText(4, FW(3), TR(90))}\nくりかえしを つかわずに ならべると、ふだは なんまい？`,
     answer: 8,
-    label: 'まい',
+    unit: 'まい',
     wrongs: [
       [4, 'count-card'],
       [3, 'count-card'],
@@ -556,7 +556,7 @@ const shortItems: Item[] = [
     level: 1,
     prompt: `${SQN}を くりかえし なしで 8まい、\nくりかえしで 3まい。なんまい へるかな。`,
     answer: 5,
-    label: 'まい',
+    unit: 'まい',
     wrongs: [
       [3, 'count-card'],
       [8, 'count-card'],
@@ -575,7 +575,7 @@ const shortItems: Item[] = [
     level: 2,
     prompt: `${repText(4, FW(2), TR(90))}\nくりかえし なしで 書《か》くと「すすむ 2」は なんこ？`,
     answer: 4,
-    label: 'こ',
+    unit: 'こ',
     wrongs: [
       [2, 'count-wrong'],
       [8, 'count-wrong'],
@@ -613,7 +613,7 @@ const shortItems: Item[] = [
     prompt: `くりかえし なしだと ふだは 8まい。\n「2かい くりかえす」だと なんまい？`,
     figure: turtleFigure(RC(4, 2), '長方形《ちょうほうけい》', { grid: true, hU: 6 }),
     answer: 5,
-    label: 'まい',
+    unit: 'まい',
     wrongs: [
       [4, 'count-card'],
       [3, 'count-card'],

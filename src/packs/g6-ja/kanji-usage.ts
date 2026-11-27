@@ -790,7 +790,7 @@ const ITEMS: Item[] = [
 
 export const kanjiUsage: UnitSpec = {
   id: 'g6.ja.kanji-usage',
-  title: '同《おな》じ読《よ》みの言葉《ことば》と、漢字《かんじ》とかなの使《つか》い分《わ》け',
+  title: '同《おな》じ読《よ》みの 言葉《ことば》と 漢字《かんじ》とかなの 使《つか》い分《わ》け',
   stage: 'g6',
   subject: 'ja',
   domain: 'kotoba',

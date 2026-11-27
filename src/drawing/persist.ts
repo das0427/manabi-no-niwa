@@ -108,6 +108,7 @@ export async function prepareSave(
 export async function renderPreview(
   engine: DrawingEngine,
 ): Promise<Partial<Record<ArtworkBlobKind, Blob>>> {
+  await engine.ensureTemplate();
   const full = engine.composeCanvas(DOC_W);
   const thumb = document.createElement('canvas');
   thumb.width = THUMB_W;

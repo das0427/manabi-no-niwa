@@ -144,7 +144,7 @@ function meanItem(level: number, rng: Rng, alt: boolean): Item {
       data: dotData(xs, c, c.what),
       task: {
         kind: 'number',
-        fields: [{ label: c.unit, answer }],
+        fields: [{ unit: c.unit, answer }],
         keys: ['decimal'],
         wrongAnswers: wrongList([answer], cands),
       },
@@ -157,7 +157,7 @@ function meanItem(level: number, rng: Rng, alt: boolean): Item {
     id: `mean:${c.id}:${dataKey(xs)}`,
     prompt: `${n}人の ${c.what}を 調べました。平均値を 求めよう。`,
     figure: listFig(xs, c),
-    fields: [{ label: c.unit, answer }],
+    fields: [{ unit: c.unit, answer }],
     keys: ['decimal'],
     wrongAnswers: wrongList([answer], cands),
   };
@@ -212,7 +212,7 @@ function medianItem(level: number, rng: Rng, alt: boolean): Item {
       data: dotData(xs, c, c.what),
       task: {
         kind: 'number',
-        fields: [{ label: c.unit, answer }],
+        fields: [{ unit: c.unit, answer }],
         keys: ['decimal'],
         wrongAnswers: wrongList(
           [answer],
@@ -233,7 +233,7 @@ function medianItem(level: number, rng: Rng, alt: boolean): Item {
     explain,
     identity: `median:${c.id}:${dataKey(xs)}`,
     alt: false,
-    fields: [{ label: c.unit, answer }],
+    fields: [{ unit: c.unit, answer }],
     keys: ['decimal'],
     wrongAnswers: wrongList([answer], cands),
   };
@@ -276,7 +276,7 @@ function modeItem(level: number, rng: Rng, alt: boolean): Item {
       data: dotData(xs, c, c.what),
       task: {
         kind: 'number',
-        fields: [{ label: c.unit, answer }],
+        fields: [{ unit: c.unit, answer }],
         wrongAnswers: wrongList([answer], cands),
       },
     };
@@ -293,7 +293,7 @@ function modeItem(level: number, rng: Rng, alt: boolean): Item {
     explain,
     identity: `mode:${c.id}:${dataKey(sorted(xs))}`,
     alt: false,
-    fields: [{ label: c.unit, answer }],
+    fields: [{ unit: c.unit, answer }],
     wrongAnswers: wrongList([answer], cands),
   };
   return it;
@@ -326,7 +326,7 @@ function dotItem(level: number, rng: Rng, alt: boolean): GraphItem {
       data,
       task: {
         kind: 'number',
-        fields: [{ label: '人', answer }],
+        fields: [{ unit: '人', answer }],
         wrongAnswers: wrongList([answer], [[v, 'dot-read']]),
       },
     };

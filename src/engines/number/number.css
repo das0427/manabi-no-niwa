@@ -17,12 +17,42 @@
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1);
+  max-width: 100%;
   font-size: calc(var(--u) * 3);
   font-weight: 700;
 }
+/* 札（「じゅうの くらい」等）は回答欄の上に置き、幅を回答欄に合わせる（舞台の外に出さない） */
+.eng-number__field:has(.eng-number__label) {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  row-gap: calc(var(--u) * 0.6);
+}
+.eng-number__field:has(.eng-number__label) .eng-number__label {
+  grid-column: 1;
+  grid-row: 1;
+  /* 札は回答欄の中の上の段（1行・--text-min）。段の高さは回答欄（field）の高さに含まれる
+     （札を2行に折ると回答欄が作業領域の下にはみ出した: text-layout-fixes.md R7） */
+  font-size: var(--text-min, calc(var(--u) * 2.2));
+  line-height: 1.2;
+  white-space: nowrap;
+  text-align: center;
+}
+.eng-number__field:has(.eng-number__label) .eng-number__box {
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: stretch;
+}
+.eng-number__field:has(.eng-number__label) .eng-number__unit {
+  grid-column: 2;
+  grid-row: 2;
+}
 .eng-number__box {
-  min-width: calc(var(--u) * 14);
-  min-height: calc(var(--u) * 8);
+  /* 下限 10u（札つきの回答欄が4〜5つ並ぶとき1段に入る: text-layout-fixes.md T7） */
+  min-width: calc(var(--u) * 10);
+  /* 8u → 7u（数字キーと同じ高さ。図の段が 1u 余計に使える。V4）。押す所は数字キー側で、ここは欄を選ぶ補助 */
+  min-height: calc(var(--u) * 7);
   padding: 0 calc(var(--u) * 1.2);
   font: inherit;
   font-size: calc(var(--u) * 4.4);
@@ -42,12 +72,26 @@
   border-style: dashed;
 }
 .eng-number__pad {
+  /* キーの高さ: min(7u, (作業領域の高さ − 間隔 3×0.6u − キーの影の分 0.4u) / 4)・下限 6u。
+     作業領域の高さは .unit__work--number を size コンテナにして cqh で得る（解説の板が開いて狭くなっても追従）。
+     キーは主操作なので --fit で縮めず、縮める前の --u0 を使う（6u 以上、DESINGN.md 18章） */
+  --u: var(--u0);
+  --key-h: max(calc(var(--u0) * 6), min(calc(var(--u0) * 7), calc((100cqh - var(--u0) * 2.2) / 4)));
   display: grid;
-  grid-template-columns: repeat(4, calc(var(--u) * 6));
-  gap: calc(var(--u) * 0.8);
+  grid-template-columns: repeat(4, calc(var(--u0) * 6));
+  grid-auto-rows: var(--key-h);
+  gap: calc(var(--u0) * 0.6);
+}
+.eng-number__pad--done {
+  /* 解説では答えを見せていてキーは使えない。解説の板が作業領域を狭くするため、横の場所（列の幅）はそのままにして
+     見えなくし、高さは 0 にする（6u×4 のキーの高さで図と回答欄が板の下へ押し出されないように） */
+  visibility: hidden;
+  pointer-events: none;
+  max-height: 0;
+  overflow: hidden;
 }
 .numkey {
-  height: calc(var(--u) * 5.6);
+  height: var(--key-h);
   white-space: nowrap;
   font: inherit;
   font-size: calc(var(--u) * 3.2);
@@ -62,13 +106,16 @@
   opacity: 0.5;
 }
 .numkey--fn {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
 }
 .numkey--ok {
   grid-column: span 2;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   padding: 0;
   background: var(--sun);
+  /* キーの列の中（2列ぶん）に収める */
+  min-width: 0;
+  overflow: visible;
 }
 /* 欄の後ろの単位（「□ cm」） */
 .eng-number__unit {
@@ -77,6 +124,132 @@
 /* 表示上だけの数字の区切り（digitGroup）。文字は入れず、すき間だけ */
 .num-group__g--sep {
   margin-left: 0.3em;
+}
+
+/* 作業領域の高さ（cqh）をキーの寸法に使う。位置は top/bottom で決まるので大きさは変わらない */
+.unit__work--number {
+  container-type: size;
+}
+/* 左の列（図と回答欄）が広くても、キーの区画を作業領域の外へ押し出さない。
+   図の段は縮み（minmax(0,1fr)）、回答欄の段は中身の高さ（auto）。上は問題文に、下は回答欄に重ねない（T7）。
+   unit.css の `.unit__work--number` を詳しさで上書きする */
+.unit__work.unit__work--number {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  /* 上そろえ: 図の段（1fr）が、中央そろえで余る分を残さず使う（V4。safe center だと余りが上下に割れる） */
+  align-content: start;
+  /* 図の段と回答欄の間: 2u → 1.2u（回答欄の外枠 0.8u は間に収まる）。図の段が 1〜2u 足りずに枠になるのを防ぐ（V4） */
+  row-gap: calc(var(--u) * 1.2);
+}
+/* 図の中の --u を --num-k（number.tsx。0.6〜1）で縮める。--fig-k は UnitRunner が測り直すたびに消すので別の名前 */
+.unit__work.unit__work--number > .unit__figure {
+  --u: calc(var(--u0) * var(--fit, 1) * var(--num-k, 1));
+}
+.unit__work.unit__work--number > .unit__figure {
+  align-self: stretch;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: center;
+}
+/* 入らない表・10の棒は、図の段だけを枠にして縦にスクロール（number.tsx が印を付ける）。キーと回答欄は枠の外 */
+.unit__work--number > .unit__figure[data-scroll-region='figure'] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  padding-right: calc(var(--u) * 3.6);
+  /* 1行目のふりがな（rt。字の上に出る）が枠の上端で切れない（g3.math.time/0 の「びょう」）。0.6em 以上 */
+  padding-top: max(0.6em, calc(var(--u) * 1.4));
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure']:has(.fig-text--xl) {
+  padding-top: calc(var(--u) * 4.4);
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure']:has(.fig-text--l) {
+  padding-top: calc(var(--u) * 3.2);
+}
+.unit__work--number > .unit__figure[data-scroll-region='figure'][data-scroll-cue]::after {
+  content: '▼';
+  position: sticky;
+  bottom: 0;
+  align-self: flex-end;
+  flex: none;
+  width: calc(var(--text-min) * 1.2);
+  height: calc(var(--text-min) * 1.2);
+  margin: calc(var(--text-min) * -1.2) calc(var(--u) * -3.4) 0 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  pointer-events: none;
+}
+/* 札つきの回答欄が4つ以上: 1段に並べる（最小 10u。5つまで） */
+.eng-number__fields--many {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--u) * 10), 1fr));
+  justify-items: center;
+  width: 100%;
+}
+.eng-number__fields--many .eng-number__field {
+  min-width: 0;
+}
+.unit__work--number .unit__figure,
+.unit__work--number .eng-number__fields {
+  min-width: 0;
+}
+/* キーの区画は作業領域の高さまで（grid-row: 1 / span 2 は unit.css）。ヒント②③で つぎへ に重ならない */
+.unit__work--number .eng-number__pad {
+  max-height: 100%;
+  min-height: 0;
+}
+/* 図は左の列の幅の中、回答欄（札つきで約 15u）を除いた高さの中に収める */
+.unit__work--number .unit__figure svg {
+  max-width: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+/* パックの SVG の箱（.fig-svg）は図の段の中で縮める。箱の高さが auto のままだと中の svg の max-height: 100% が効かず、
+   縮められる SVG まで図の段のスクロールになる（g6.math.scale/0 の三角形が 1280×720 で下が切れていた）。
+   スクロールは縮まない表・10の棒だけ（T7） */
+.unit__work--number > .unit__figure > .fig-svg {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* ただし、字を引き上げ（liftSvgText。元の 2 倍まで）で無理なく最小に戻せる大きさまでしか縮めない（字が最小の 1.05÷1.5 ＝ 0.7 倍まで。引き上げは約 1.4 倍。
+   ÷2 のちょうど 2 倍の境目では丸めで引き上げが外れ、small-text・overlap-text が出た）。
+   それより低い図の段では、図の段のスクロール（▼。検査は1件）にして、第4回で図の viewBox・字を直す
+   （g6.math.scale/0 の 1280×620 で、高さいっぱいに縮めると辺の長さの字が 0.72u になり重なった）。
+   設計（T2）の「縮めて引き上げる」のうち、引き上げで補えない分だけをスクロールに回す。
+   --fig-k・--fig-ar は liftSvgText の fitWidth が書く（無ければ下限なし）。
+   図の段に入らないときは、この下限も --num-k（number.tsx。0.6〜1）で縮める（第6回 W9。数の入力の図 geometry の頂点の字が、
+   下限の高さのまま図の段の外で切れた: g4.math.quadrilaterals/1・g5.math.congruence） */
+.unit__work--number > .unit__figure > .fig-svg > svg:not([width]) {
+  min-height: calc(
+    var(--text-min, 0px) * var(--fig-k, 0) * var(--fig-ar, 0) / 1.5 * var(--num-k, 1)
+  );
+}
+/* 図の表（筆算の見出し「じゅう」「ひゃく」等）は1語1行に折らず、文字は --text-min 以上
+   （fig-table の 2.4u は fit 0.8 で 1.9u になり、最小の 2.2u（幼児）を割る） */
+.unit__work--number .fig-table th {
+  white-space: nowrap;
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
+}
+.unit__work--number .fig-table td {
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
+}
+/* 表の行を詰める（行の高さ 4.4u → 約 3.4u。字 2.4u の行間 1.2 ＋ 上下 0.3u。V4）。表が図の段に入りやすく、
+   縮み（--num-k）の前に空きを作る。セルの字は数字・ひらがなの見出しで、ふりがなの行（.rt の 1.7）を取らなくてよい */
+.unit__work--number .fig-table th,
+.unit__work--number .fig-table td {
+  padding-block: calc(var(--u) * 0.3);
+  line-height: 1.2;
+}
+.unit__work--number .fig-table .rt {
+  line-height: 1.3;
 }
 
 /* ---- 筆算（column）: ますの幅 6u・答えのます 5.6u（キーと同じ）・式の数字の行 3.6u。寸法は column.ts と合わせる ---- */
@@ -153,7 +326,7 @@
 .num-col__memo {
   padding: 0;
   font: inherit;
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2.2), var(--text-min, 0px));
   color: var(--ink);
   background: transparent;
   border: none;
@@ -188,4 +361,23 @@
 .num-frac-show__f > span:first-child {
   border-bottom: 0.08em solid currentColor;
   padding: 0 0.15em;
+}
+
+/* ---- 解説（答えの入った回答欄）: 1行に詰める（V4）。解説の板で作業領域が狭く、図の段を 4 行以上残す ----
+   札つきの回答欄が3つまでは、札を回答欄の左に置く。4つ以上（1段に並べる）は札を上のまま、回答欄を低くする */
+.eng-number--revealed .eng-number__box {
+  min-height: calc(var(--u) * 5.4);
+  /* 答えは数字（ふりがなの行が要らない）。.rt の行の高さ 1.7 が箱を 8u に押し広げていた */
+  line-height: 1.2;
+}
+.eng-number--revealed .eng-number__box .rt {
+  line-height: 1.2;
+}
+.eng-number--revealed
+  .eng-number__fields:not(.eng-number__fields--many)
+  .eng-number__field:has(.eng-number__label) {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: calc(var(--u) * 1);
 }

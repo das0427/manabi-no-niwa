@@ -153,6 +153,11 @@ function SortView({
   const boxOf = (i: number): number | null =>
     revealed ? (boxesOf(item.cards[i]!)[0] ?? null) : (where[i] ?? null);
   const complete = visible.every((i) => where[i] !== null);
+  const pooled = order.filter((i) => boxOf(i) === null);
+  // 文の札（8字超）が5枚以上なら複数列で縦を詰める。絵・短い札は横に折り返すほうが低く収まる。
+  // 札の列は作業領域の幅いっぱい（92u）。6枚以上は3列（1列 29u 前後。札の幅 24u 以上）、5枚は2列
+  const sentences = visible.some((i) => [...plainText(item.cards[i]!.label ?? '')].length > 8);
+  const cols = sentences && visible.length >= 5 ? (visible.length >= 6 ? 3 : 2) : 0;
 
   const pressCard = (i: number) => {
     if (locked) return;
@@ -178,9 +183,13 @@ function SortView({
   };
 
   return (
-    <div className={['tk-frame', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
+    <div className={['tk-frame', 'tk-frame--band', 'eng-sort', auto ? 'tk--big' : ''].join(' ')}>
       <div className="tk-frame__main">
-        <div className="eng-sort__boxes">
+        <div
+          className="eng-sort__boxes"
+          data-long={sentences ? '' : undefined}
+          data-explain={revealed ? '' : undefined}
+        >
           {shownBoxes.map((b) => (
             <div
               key={b}
@@ -198,7 +207,12 @@ function SortView({
               <div className="eng-sort__name" aria-hidden>
                 <CardFace card={item.boxes[b]!} ctx={ctx} />
               </div>
-              <div className="eng-sort__inside">
+              <div
+                className="eng-sort__inside"
+                data-cols2={
+                  revealed && order.filter((i) => boxOf(i) === b).length >= 3 ? '' : undefined
+                }
+              >
                 {order
                   .filter((i) => boxOf(i) === b)
                   .map((i) => (
@@ -216,10 +230,19 @@ function SortView({
             </div>
           ))}
         </div>
-        <div className="eng-sort__pool" role="group" aria-label="わける もの">
-          {order
-            .filter((i) => boxOf(i) === null)
-            .map((i) => (
+        {/* 解説で札が全部箱に入っているときは、空の札置き場（min-height 7u）を出さない。
+            高さを取り、何も無いのに作業領域の ▼ が出た（p4.env.seasons/22・g6.sci.strata/17 の解説）。
+            問題の状態では、札を入れ終わっても札置き場の高さを残す（箱が動かないように） */}
+        {revealed && pooled.length === 0 ? null : (
+          <div
+            className={[
+              'eng-sort__pool',
+              cols ? `eng-sort__pool--cols eng-sort__pool--cols${cols}` : '',
+            ].join(' ')}
+            role="group"
+            aria-label="わける もの"
+          >
+            {pooled.map((i) => (
               <TapCard
                 key={i}
                 card={item.cards[i]!}
@@ -230,7 +253,8 @@ function SortView({
                 testId={`card-${i}`}
               />
             ))}
-        </div>
+          </div>
+        )}
       </div>
       {!auto && !revealed ? (
         <CheckButton disabled={disabled || !complete} onPress={() => submit(where)} />

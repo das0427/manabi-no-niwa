@@ -147,7 +147,7 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
     explain: `y ÷ x は いつも ${k}なので、x が ${ax}の とき y ＝ ${k} × ${ax} ＝ ${ans}です。`,
     identity: `table:${c.id}:${k}:${shown.join(',')}:${ax}`,
     alt: false,
-    fields: [{ label: c.yu, answer }],
+    fields: [{ unit: c.yu, answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -271,10 +271,13 @@ function graphItem(level: number, rng: Rng, alt: boolean): Item {
         '比例する 2つの 量の グラフは、0の 点（横の じくと 縦《たて》の じくが 交わる 点）を 通る 直線に なります。',
       identity: `graph:pick:${kk}:${d}`,
       alt: true,
-      layout: 'grid',
+      layout: 'row',
       options: [
         { figure: lineFig(lab.map((_, i) => i * kk)), correct: true },
-        { figure: lineFig(lab.map((_, i) => i * kk + d)), misconception: 'through-origin' },
+        // 0の 点を 通らない 直線。ずらす量は kk 倍（i × kk ＋ d だと kk ＝ 3・d ＝ 1 で 縦の じくの 1/16 しか ずれず、
+        // 1 段に 並べた グラフ〔16u×8.4u〕では 線の 始まりが 0の 点から 約 0.35u〔点 1 つ分〕しか 離れなかった。
+        // (i ＋ d) × kk なら いつも 縦の じくの 1/6 以上。kk ＝ 1 は 前と 同じ）
+        { figure: lineFig(lab.map((_, i) => (i + d) * kk)), misconception: 'through-origin' },
         { figure: lineFig(lab.map((_, i) => 10 - i * 2)), misconception: 'inverse-confuse' },
         {
           figure: lineFig([0, 0.5, 1.5, 3, 5, 7.5].map((v) => v + (d - 1) * 0.5 * (v > 0 ? 1 : 0))),
@@ -313,7 +316,7 @@ function graphItem(level: number, rng: Rng, alt: boolean): Item {
     },
     task: {
       kind: 'number',
-      fields: [{ label: c.yu, answer }],
+      fields: [{ unit: c.yu, answer }],
       wrongAnswers: wrongList(
         [answer],
         [
@@ -484,7 +487,7 @@ function applyItem(level: number, rng: Rng, alt: boolean): NumberItem {
       : `${N} ÷ ${n} ＝ ${N / n}（倍）。${w} × ${N / n} ＝ ${W}（${sc.unitW}）。${sc.yn}は ${sc.xn}に 比例します。`,
     identity: `use:${sc.id}:${n}:${w}:${N}${alt ? ':rev' : ''}`,
     alt,
-    fields: [{ label: unit, answer }],
+    fields: [{ unit, answer }],
     wrongAnswers: wrongList(
       [answer],
       alt

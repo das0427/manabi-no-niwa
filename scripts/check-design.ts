@@ -12,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { VOICE_CATALOG } from '../src/voice/catalog/index.ts';
 import { voiceText } from '../src/voice/types.ts';
 import { STAMP_LIST } from '../src/illust/stamps/catalog.ts';
+import { contrast, requiredRatio, uToPx } from './contrast.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const problems: string[] = [];
@@ -138,6 +139,143 @@ for (const file of walk(path.join(root, 'src/illust'), ['.tsx'])) {
     }
     if (/<text\b|Gradient|<filter\b/.test(x.svg))
       problems.push(`はんこ ${x.id}: 文字・グラデーション・filter がある`);
+  }
+}
+
+// ---- 色のコントラスト（DESINGN.md 3.1、review-1 #18）
+{
+  const tokenValue = new Map<string, string>();
+  for (const m of tokensCss.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\s*;/g)) {
+    tokenValue.set(m[1]!, m[2]!.toUpperCase());
+  }
+  const tv = (name: string): string => {
+    const v = tokenValue.get(name);
+    if (!v) problems.push(`コントラスト検査: トークン --${name} が tokens.css にない`);
+    return v ?? '#000000';
+  };
+
+  // 1) DESINGN.md 3.1 の表の値が tokens.css と一致する
+  const designMd = readFileSync(path.join(root, 'DESINGN.md'), 'utf8');
+  const section = designMd.slice(
+    designMd.indexOf('### 3.1'),
+    designMd.indexOf('- 教科は色だけで区別しない'),
+  );
+  let rows = 0;
+  for (const line of section.split('\n')) {
+    const cells = line.split('|').map((c) => c.trim());
+    if (cells.length < 4 || !cells[1]!.includes('`--')) continue;
+    const names = [...cells[1]!.matchAll(/`--([a-z0-9-]+)`/g)].map((m) => m[1]!);
+    const hexes = [...cells[2]!.matchAll(/#[0-9a-fA-F]{6}/g)].map((m) => m[0].toUpperCase());
+    if (!hexes.length) continue;
+    rows++;
+    hexes.forEach((h, i) => {
+      const name = names[i]!;
+      if (tokenValue.get(name) !== h) {
+        problems.push(
+          `DESINGN.md 3.1 の --${name} は ${h} だが tokens.css は ${tokenValue.get(name) ?? '(なし)'}`,
+        );
+      }
+    });
+  }
+  if (rows < 20) problems.push(`DESINGN.md 3.1 の色の表を読み取れない（${rows} 行）`);
+
+  // 1b) 表の「主な組み合わせとコントラスト」の数値が計算と一致する（表が古くならないように）
+  //     「ink 9.85」「surface 上の文字 5.39」の形は、その行のトークンと名前のトークン。
+  //     数値だけ（教科色の行）は surface との比。sun の行（不透明度をかけた面）は計算の対象外
+  let ratios = 0;
+  for (const line of section.split('\n')) {
+    const cells = line.split('|').map((c) => c.trim());
+    if (cells.length < 6 || !cells[1]!.includes('`--')) continue;
+    const self = /`--([a-z0-9-]+)`/.exec(cells[1]!)?.[1];
+    if (!self || self === 'sun' || !tokenValue.has(self)) continue;
+    const cell = cells[4]!;
+    const check = (other: string, stated: number) => {
+      if (!tokenValue.has(other)) return;
+      ratios++;
+      const got = contrast(tv(self), tv(other));
+      if (Math.abs(got - stated) > 0.011) {
+        problems.push(
+          `DESINGN.md 3.1 の --${self} / --${other} のコントラストは ${stated} と書いてあるが計算は ${got.toFixed(2)}`,
+        );
+      }
+    };
+    if (/^\d+\.\d{2}$/.test(cell)) {
+      check('surface', Number(cell));
+      continue;
+    }
+    for (const m of cell.matchAll(
+      /([a-z][a-z0-9-]*)(?:\s*(?:上の文字|上の境界|文字))?\s+(\d+\.\d{2})/g,
+    )) {
+      check(m[1]!, Number(m[2]));
+    }
+  }
+  if (ratios < 25)
+    problems.push(`DESINGN.md 3.1 のコントラストの数値を読み取れない（${ratios} 件）`);
+
+  // 2) 文字色×背景色の組み合わせ。大きな文字の条件は scripts/contrast.ts（3.1）
+  //    px は u の大きさ × 12.8（想定の最小 u）。alwaysNormal はふりがな・補助の文字（常に 4.5）
+  const paperBgs = ['paper', 'paper-2', 'surface'];
+  const textPairs: {
+    fg: string;
+    bg: string;
+    u: number;
+    weight: number;
+    always?: boolean;
+    what: string;
+  }[] = [];
+  for (const bg of paperBgs) {
+    textPairs.push({ fg: 'ink', bg, u: 2.6, weight: 700, what: '指示・ラベル' });
+    textPairs.push({ fg: 'ink-soft', bg, u: 1.7, weight: 700, always: true, what: '補助の文字' });
+    textPairs.push({ fg: 'ink-soft', bg, u: 1.1, weight: 700, always: true, what: 'ふりがな' });
+  }
+  textPairs.push({ fg: 'ink', bg: 'wood', u: 2.6, weight: 700, what: '木の札のラベル' });
+  textPairs.push({ fg: 'surface', bg: 'primary', u: 2.6, weight: 700, what: '主操作のラベル' });
+  for (const s of ['kokugo', 'sansu', 'seikatsu', 'rika', 'shakai', 'eigo', 'program', 'oekaki']) {
+    textPairs.push({
+      fg: `subj-${s}`,
+      bg: 'surface',
+      u: 1.7,
+      weight: 700,
+      always: true,
+      what: `教科色 ${s} の文字`,
+    });
+  }
+  textPairs.push({ fg: 'ink-calm', bg: 'paper-calm', u: 2.6, weight: 700, what: 'おちついた表現' });
+  textPairs.push({
+    fg: 'ink-soft-calm',
+    bg: 'paper-calm',
+    u: 1.7,
+    weight: 700,
+    always: true,
+    what: 'おちついた補助',
+  });
+  for (const p of textPairs) {
+    const need = requiredRatio({ px: uToPx(p.u), weight: p.weight, alwaysNormal: p.always });
+    const got = contrast(tv(p.fg), tv(p.bg));
+    if (got < need) {
+      problems.push(
+        `コントラスト不足: ${p.what} --${p.fg} / --${p.bg} は ${got.toFixed(2)}（${need} 以上。${p.u}u・太さ${p.weight}）`,
+      );
+    }
+  }
+  // 木・空色の面の上の ink
+  for (const bg of ['wood', 'sky']) {
+    const got = contrast(tv('ink'), tv(bg));
+    if (got < 4.5)
+      problems.push(`コントラスト不足: --ink / --${bg} は ${got.toFixed(2)}（4.5 以上）`);
+  }
+  // 3) 意味のある図形・UI 部品の境界は 3:1
+  const uiPairs: [string, string][] = [
+    ['primary-edge', 'paper'],
+    ['focus', 'paper'],
+    ['focus', 'surface'],
+    ['disabled', 'surface'],
+    ['correct', 'surface'],
+  ];
+  for (const [fg, bg] of uiPairs) {
+    const got = contrast(tv(fg), tv(bg));
+    if (got < 3)
+      problems.push(`図形のコントラスト不足: --${fg} / --${bg} は ${got.toFixed(2)}（3 以上）`);
   }
 }
 

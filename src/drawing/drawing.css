@@ -130,8 +130,9 @@
   cursor: pointer;
   touch-action: manipulation;
 }
+/* くわしく（小学生向け）の色の札は 4.5u（道具欄と図形の選択板。19章）。かんたん は図形の選択板でも 6u */
 .draw-side--detailed .draw-color,
-.draw-colors--panel .draw-color {
+.draw-screen--detailed .draw-colors--panel .draw-color {
   width: calc(var(--u) * 4.5);
   height: calc(var(--u) * 4.5);
 }
@@ -231,6 +232,8 @@
 
 /* ---- キャンバス ---- */
 .draw-canvas-wrap {
+  /* 虫めがねのときは紙を絶対位置で置き、はみ出しを切る（CanvasView が overflow を付ける） */
+  position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;
@@ -410,7 +413,14 @@
   align-items: center;
   gap: var(--gap-min);
 }
+/* 図形の選択板の色の札。かんたん（幼児。6〜8 色）は道具欄と同じ 6u・間 1.6u を 4 列（28.8u。板の右の列 30u に入る）。
+   くわしく（24 色）は 4.5u・間 0.8u を 6 列。かんたん でも 4.5u にしていて、幼児の主操作の 6u（2章）を割っていた
+   （check:app-layout の tap-size） */
 .draw-colors--panel {
+  grid-template-columns: repeat(4, var(--tap-main));
+  gap: var(--gap-min);
+}
+.draw-screen--detailed .draw-colors--panel {
   grid-template-columns: repeat(6, calc(var(--u) * 4.5));
   gap: calc(var(--u) * 0.8);
 }
@@ -440,15 +450,24 @@
 }
 
 /* ---- さくひん ---- */
-.gallery-grid {
-  flex: 1;
+/* 一覧は一つのスクロール（ScrollList。text-layout-fixes「アプリの画面」A7）。おえかきの作品・見出し・なぞりの作品を同じ枠に入れる。
+   .gallery-list は位置と大きさだけ。上の帯の下 0.6u から、左右は端、下は 2u の余白にする
+   （上の 0.6u は、幼児の ▲ の札が右上の「あたらしく かく」の影に近すぎないようにするため）。
+   スクロールする枠・右の余白（幼児 7u・小学生 3.6u）・▼ の印と ▲▼ の札は ui/scroll-list.css が持つ。
+   4 列の札の幅は、その右の余白の分だけ詰まる（幼児で約 20.8u。19章の 16u 以上）。
+   枠は overflow で切るので、札の影（--step）と押せる札の焦点の輪（0.4u＋間 0.3u）が切れないように、格子の四方に 0.8u の余白を取る。
+   左だけ枠を 0.8u 外へ出し、札の左端は今までどおり端（2u）にそろえる */
+.gallery-list {
+  flex: 1 1 0;
   min-height: 0;
-  overflow-y: auto;
+  margin: calc(var(--u) * 0.6) var(--edge) var(--edge) calc(var(--edge) - var(--u) * 0.8);
+}
+.gallery-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--gap-min);
   align-content: start;
-  padding: 0 var(--edge) var(--edge);
+  padding: calc(var(--u) * 0.8);
 }
 .gallery-card {
   display: flex;
@@ -494,4 +513,124 @@
   grid-column: 1 / -1;
   text-align: center;
   padding-top: calc(var(--u) * 10);
+}
+/* 1.0 の作品（なぞり・みち）: 見るだけ。おえかきの作品の下に見出しを付けて並べる */
+.gallery-heading {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  margin: calc(var(--u) * 2) 0 0;
+  font-size: var(--text-label);
+}
+.gallery-heading .tap__icon {
+  width: calc(var(--u) * 4);
+  height: calc(var(--u) * 4);
+}
+.gallery-old-big {
+  width: calc(var(--u) * 60);
+  max-width: 100%;
+  aspect-ratio: 16 / 10;
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  overflow: hidden;
+}
+
+/* ---- 保存できないときの ！（押すと保護者向けの案内） ---- */
+.draw-save__btn {
+  display: grid;
+  place-items: center;
+  width: var(--tap-aux);
+  height: var(--tap-aux);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.draw-help {
+  max-width: calc(var(--u) * 80);
+}
+/* 保護者向けの枠: 子供向けの文と分ける（細い輪郭・保護者画面の字体・小さめの文字） */
+.draw-help__parent {
+  width: 100%;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+  border: calc(var(--u) * 0.15) solid var(--ink);
+  border-radius: calc(var(--u) * 0.8);
+  background: var(--paper);
+  font-family: var(--font-parent);
+  font-weight: 400;
+  font-size: calc(var(--u) * 1.8);
+  line-height: 1.6;
+}
+.draw-help__parent p {
+  margin: 0;
+  font-weight: 700;
+}
+.draw-help__parent ul {
+  margin: calc(var(--u) * 0.6) 0 0;
+  padding-left: calc(var(--u) * 2.4);
+}
+
+/* ---- 選択枠・置く前の見本を、虫めがねのときに紙の見えている範囲で切る ---- */
+.draw-clip {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+}
+/* ドラッグで大きさを決めている図形（置く前の見本。PNG には入らない） */
+.draw-draft {
+  position: absolute;
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0.7;
+  transform: rotate(var(--rot));
+}
+
+/* ---- かみを えらぶ板（あたらしく） ---- */
+.draw-paper-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  /* 2段（6枚）が板に収まる幅（1札 20u） */
+  grid-template-columns: repeat(3, calc(var(--u) * 20));
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  align-content: start;
+  padding: calc(var(--u) * 1);
+}
+.draw-paper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  padding: calc(var(--u) * 0.8);
+  border: var(--outline) solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--ink);
+  font-family: var(--font-child);
+  font-weight: 700;
+  font-size: var(--text-small);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.draw-paper__thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: calc(var(--u) * 0.2) solid var(--ink);
+  background: var(--white);
+  overflow: hidden;
+}
+.draw-paper__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.draw-row--end {
+  justify-content: flex-end;
 }

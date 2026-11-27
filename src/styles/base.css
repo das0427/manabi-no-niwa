@@ -49,3 +49,56 @@ button {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* 改行の規則（DESINGN.md 17章）。小さい仮名・長音を行頭に置かず、最後の行が1字になるのを避ける */
+.stage {
+  line-break: strict;
+  text-wrap: pretty;
+}
+/* 分かち書きの段階は空白のところだけで折る。空白の無い長い語は枠の手前で折る */
+.stage [data-wakachi] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+/* ボタン・札・表の文字は行の長さをそろえる */
+.stage .choice,
+.stage .tk-card__label,
+.stage .eng-opts__label,
+.stage .eng-choice__label,
+.stage th,
+.stage td {
+  text-wrap: balance;
+}
+/* 小3以上は文節で折る（ボタン・札だけ。本文・解説は右端がそろわなくなるので付けない）。
+   単元の画面（.unit）だけ。幼児ホーム・v1 モードの data-stage（D1 等）には付けない。
+   Chrome では auto-phrase と balance/pretty を同じ要素に付けると字の途中で折る（「みんながそろ／うまで」「たい／へん」）。
+   anywhere も「できまし／た。」のように文節が入る幅でも途中で折る。
+   Chrome 156 で g3.soc.city-changes/17・g3.ja.write-reasons/19 を比べた結果、
+   overflow-wrap: break-word＋min-width: 0＋text-wrap: wrap の組み合わせだけが両方とも語の途中で折れなかった
+   （break-word だけ・text-wrap: wrap だけは片方が残る）。字が枠の外に出ないことは g3.ja.haiku/33・39 で確かめた。
+   break-word は anywhere と違って最小幅を縮めないので、文節が札の幅より長いと札からはみ出す（g3.ja.write-reasons/19）。
+   max-width: 100% で札の中に収め、入らない文節だけを最後に折る。
+   分かち書き（keep-all）と th・td は balance のまま */
+.stage
+  .unit[data-stage]:not([data-wakachi])
+  :is(.choice, .tk-card__label, .eng-opts__label, .eng-choice__label) {
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+  min-width: 0;
+  max-width: 100%;
+  text-wrap: wrap;
+}
+/* 小3以上でも空白で区切って書いた選択肢・札のラベル（rich.ts の spacedLabel。choice・listen・experiment・札が data-spaced を付ける。空白の数 × 12 ≧ 字数）は、
+   分かち書きと同じく空白のところでだけ折り、最後の行を 1 語だけにしない（pretty。keep-all なら Chrome でも語の途中で折らない）。
+   auto-phrase のままだと「南東より 南に よった／所」（g4.sci.moon-stars/1）・「西の 方／へ」・「どろと ならぶ／層」（g6.sci.strata/17）と折れた（text-layout-fixes 第6回のレビュー） */
+.stage .unit[data-stage]:not([data-wakachi]) [data-spaced] {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+/* 小3以上の図の文は文節で折る（空白の無い文を keep-all のまま anywhere で折ると、好きな所で折れる）。
+   全角の空白で句・札を区切った図の文（Figure.tsx が data-spaced を付ける）は、上の data-spaced の規則で空白のところでだけ折る
+   （文節で折ると「しずかなる／夜」と句の途中で折れ、最後の行が 1 字になった。g4.ja.tanka/47。text-layout-fixes 第8回のレビュー） */
+.stage .unit[data-stage]:not([data-wakachi]) .fig-text:not([data-spaced]) {
+  word-break: auto-phrase;
+}

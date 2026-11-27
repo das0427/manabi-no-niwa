@@ -108,6 +108,13 @@ describe('画面', () => {
     disabled: false,
     submit: vi.fn(),
   });
+  it('こたえあわせは下の帯の位置（band）', () => {
+    const { container } = render(createElement(fillEngine.Component, props()));
+    expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+    const check = screen.getByTestId('check');
+    expect(check.classList.contains('tk-check--band')).toBe(true);
+    expect(check.classList.contains('eng-check')).toBe(true);
+  });
   it('選択肢をタップすると えらんでいる空欄に入り、次の空欄へ進む', () => {
     const p = props();
     render(createElement(fillEngine.Component, p));

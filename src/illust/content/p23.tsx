@@ -2,11 +2,20 @@
  * p23（2〜3歳）の教材で使う絵。画風は DESINGN.md 6章（輪郭 INK・太さ 3.5・平塗り・palette の色だけ・文字なし）。
  * はんこ用に描いた絵（stamps/）は ILLUST に入っていないため、同じ絵を p23- の id で使えるようにする。
  */
+import type { ReactElement } from 'react';
 import { CHEEK, HIGHLIGHT, INK, line, type IllustDef, type IllustGroup } from '../types';
 import { P } from '../palette';
 import { book, hat, shoe, clock } from '../stamps/life';
 import { sun } from '../stamps/nature';
 import { star } from '../stamps/decor';
+import { apple } from '../food/apple';
+import { tomato } from '../food/tomato';
+import { carRed } from '../vehicle/car-red';
+import { busYellow } from '../vehicle/bus-yellow';
+import { ship } from '../vehicle/ship';
+import { umbrella } from '../thing/umbrella';
+import { elephant } from '../animal/elephant';
+import { turtle } from '../animal/turtle';
 
 const reuse = (def: IllustDef, id: string, label: string): IllustDef => ({ ...def, id, label });
 
@@ -176,7 +185,262 @@ const duck: IllustDef = {
   ),
 };
 
+// ---- p23.think.peekaboo: かくれ場所と、すこし みえて いる からだ（設計書 p23.md 2章）----
+type Place = 'cup' | 'box';
+const PLACE_NAME: Record<Place, string> = { cup: 'カップ', box: 'はこ' };
+
+const hideCup: IllustDef = {
+  id: 'p23-hide-cup',
+  label: 'カップ',
+  status: 'final',
+  draw: () => (
+    <g>
+      <path d="M30 42 L70 42 L80 92 L20 92 Z" fill={P.blue} {...line} />
+      <path d="M22 84 L78 84" fill="none" {...line} />
+      <rect x="36" y="52" width="5" height="26" rx="2.5" fill={HIGHLIGHT} opacity="0.8" />
+    </g>
+  ),
+};
+
+const hideBox: IllustDef = {
+  id: 'p23-hide-box',
+  label: 'はこ',
+  status: 'final',
+  draw: () => (
+    <g>
+      <rect x="20" y="50" width="60" height="42" rx="3" fill={P.tan} {...line} />
+      <path d="M20 50 L14 38 L36 42 L36 50 Z" fill={P.tan} {...line} />
+      <path d="M80 50 L86 38 L64 42 L64 50 Z" fill={P.tan} {...line} />
+      <path d="M42 50 L42 62 L58 62 L58 50" fill="none" stroke={P.brown} strokeWidth="3" />
+      <path d="M20 62 L80 62" fill="none" stroke={P.brown} strokeWidth="2.5" />
+    </g>
+  ),
+};
+
+/** かくれ場所の うしろから みえる ところ（色・形は全身の絵と同じ） */
+const PEEK_PART: Record<string, () => ReactElement> = {
+  rabbit: () => (
+    <g transform="translate(-7 14)">
+      <ellipse
+        cx="64"
+        cy="22"
+        rx="6"
+        ry="14"
+        transform="rotate(-8 64 22)"
+        fill={P.cream}
+        {...line}
+      />
+      <ellipse cx="64" cy="23" rx="2.6" ry="8" transform="rotate(-8 64 23)" fill={P.pink} />
+      <ellipse
+        cx="50"
+        cy="23"
+        rx="6"
+        ry="14"
+        transform="rotate(-16 50 23)"
+        fill={P.cream}
+        {...line}
+      />
+      <ellipse cx="50" cy="24" rx="2.6" ry="8" transform="rotate(-16 50 24)" fill={P.pink} />
+    </g>
+  ),
+  bear: () => (
+    <g>
+      <circle cx="38" cy="37" r="9" fill={P.brown} {...line} />
+      <circle cx="38" cy="37" r="4" fill={P.tan} />
+      <circle cx="62" cy="37" r="9" fill={P.brown} {...line} />
+      <circle cx="62" cy="37" r="4" fill={P.tan} />
+    </g>
+  ),
+  elephant: () => (
+    <g>
+      <path
+        d="M60 62 C84 52 96 62 92 82"
+        fill="none"
+        stroke={INK}
+        strokeWidth="14"
+        strokeLinecap="round"
+      />
+      <path
+        d="M60 62 C84 52 96 62 92 82"
+        fill="none"
+        stroke={P.gray}
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+    </g>
+  ),
+  fox: () => (
+    <g>
+      <path
+        d="M60 72 C80 76 92 64 90 46"
+        fill="none"
+        stroke={INK}
+        strokeWidth="24"
+        strokeLinecap="round"
+      />
+      <path
+        d="M60 72 C80 76 92 64 90 56"
+        fill="none"
+        stroke={P.orange}
+        strokeWidth="17"
+        strokeLinecap="round"
+      />
+      <path
+        d="M90 58 C91 54 90 50 90 46"
+        fill="none"
+        stroke={P.white}
+        strokeWidth="17"
+        strokeLinecap="round"
+      />
+    </g>
+  ),
+  turtle: () => (
+    <g>
+      <path d="M26 58 C26 20 74 20 74 58 Z" fill={P.brown} {...line} />
+      <path
+        d="M42 34 L58 34 L65 43 L58 52 L42 52 L35 43 Z"
+        fill="none"
+        stroke={INK}
+        strokeWidth="2.5"
+        strokeLinejoin="round"
+      />
+    </g>
+  ),
+  duck: () => (
+    <g>
+      <circle cx="46" cy="42" r="15" fill={P.white} {...line} />
+      <path d="M58 36 L76 41 L58 47 Z" fill={P.orange} {...line} />
+      <circle cx="50" cy="35" r="2.6" fill={INK} />
+    </g>
+  ),
+  pig: () => (
+    <g>
+      <path
+        d="M62 72 C78 72 90 68 90 60 C90 54 82 54 82 60"
+        fill="none"
+        stroke={INK}
+        strokeWidth="8"
+        strokeLinecap="round"
+      />
+      <path
+        d="M62 72 C78 72 90 68 90 60 C90 54 82 54 82 60"
+        fill="none"
+        stroke={P.pink}
+        strokeWidth="3.5"
+        strokeLinecap="round"
+      />
+    </g>
+  ),
+  cat: () => (
+    <g>
+      <path d="M32 52 L34 24 L50 44 Z" fill={P.orange} {...line} />
+      <path d="M36 42 L37 32 L44 39 Z" fill={P.pink} />
+      <path d="M68 52 L66 24 L50 44 Z" fill={P.orange} {...line} />
+    </g>
+  ),
+};
+const PEEK_NAME: Record<string, string> = {
+  rabbit: 'うさぎ',
+  bear: 'くま',
+  elephant: 'ぞう',
+  fox: 'きつね',
+  turtle: 'かめ',
+  duck: 'あひる',
+  pig: 'ぶた',
+  cat: 'ねこ',
+};
+const HIDER: Record<Place, IllustDef> = { cup: hideCup, box: hideBox };
+
+function peek(animal: string, place: Place): IllustDef {
+  return {
+    id: `p23-peek-${animal}-${place}`,
+    label: `${PLACE_NAME[place]}の ${PEEK_NAME[animal]}`,
+    status: 'final',
+    draw: () => (
+      <g>
+        {PEEK_PART[animal]!()}
+        {HIDER[place].draw()}
+      </g>
+    ),
+  };
+}
+
+const peekGroup: IllustGroup = { 'p23-hide-cup': hideCup, 'p23-hide-box': hideBox };
+for (const a of Object.keys(PEEK_PART))
+  for (const pl of ['cup', 'box'] as const) {
+    const d = peek(a, pl);
+    peekGroup[d.id] = d;
+  }
+
+// ---- p23.math.puzzle2: 絵を半分に切った札（設計書 p23.md 3章）----
+interface PuzSrc {
+  p: string;
+  name: string;
+  def: IllustDef;
+  /** 切る位置（x。元の絵の真ん中からずれる絵だけ変える） */
+  cut: number;
+}
+const PUZ: PuzSrc[] = [
+  { p: 'apple', name: 'りんご', def: apple, cut: 50 },
+  { p: 'tomato', name: 'トマト', def: tomato, cut: 50 },
+  { p: 'car', name: 'くるま', def: carRed, cut: 50 },
+  { p: 'bus', name: 'バス', def: busYellow, cut: 50 },
+  { p: 'elephant', name: 'ぞう', def: elephant, cut: 50 },
+  { p: 'turtle', name: 'かめ', def: turtle, cut: 50 },
+  { p: 'umbrella', name: 'かさ', def: umbrella, cut: 50 },
+  { p: 'ship', name: 'ふね', def: ship, cut: 50 },
+];
+
+const SLOT = {
+  fill: 'none',
+  stroke: INK,
+  strokeWidth: 3,
+  strokeDasharray: '6 6',
+  rx: 8,
+  y: 8,
+  height: 84,
+} as const;
+
+function halfPiece(s: PuzSrc, side: 'l' | 'r', moved: boolean): ReactElement {
+  const id = `p23puz-${s.p}-${side}`;
+  const x0 = side === 'l' ? 0 : s.cut;
+  const w = side === 'l' ? s.cut : 100 - s.cut;
+  const dx = moved ? 50 - (x0 + w / 2) : 0;
+  return (
+    <g transform={`translate(${dx} 0)`}>
+      <clipPath id={id}>
+        <rect x={x0} y="0" width={w} height="100" />
+      </clipPath>
+      <g clipPath={`url(#${id})`}>{s.def.draw()}</g>
+    </g>
+  );
+}
+
+const puzGroup: IllustGroup = {};
+for (const s of PUZ) {
+  const add = (suffix: string, label: string, draw: () => ReactElement) => {
+    const id = `p23-puz-${s.p}-${suffix}`;
+    puzGroup[id] = { id, label: `${s.name}の ${label}`, status: 'final', draw };
+  };
+  add('l', 'ひだり はんぶん', () => halfPiece(s, 'l', true));
+  add('r', 'みぎ はんぶん', () => halfPiece(s, 'r', true));
+  add('lslot', 'ひだり はんぶんと おきば', () => (
+    <g>
+      {halfPiece(s, 'l', false)}
+      <rect x="52" width="44" {...SLOT} />
+    </g>
+  ));
+  add('rslot', 'みぎ はんぶんと おきば', () => (
+    <g>
+      {halfPiece(s, 'r', false)}
+      <rect x="4" width="44" {...SLOT} />
+    </g>
+  ));
+}
+
 export const p23Illust: IllustGroup = {
+  ...peekGroup,
+  ...puzGroup,
   'p23-toothbrush': toothbrush,
   'p23-soap': soap,
   'p23-spoon': spoon,

@@ -99,6 +99,37 @@ export class DrawingEngine {
     this.baseUsed = doc.base !== null;
     this.stamps = new StampImages(() => this.emitPaint());
     for (const it of doc.items) if (it.kind === 'ink') this.layers.set(it.id, createLayerCanvas());
+    void this.ensureTemplate();
+  }
+
+  // ---------------------------------------------------------------- かみ（テンプレートの背景）
+  private templateImg: HTMLImageElement | null = null;
+  private templateLoad: { svg: string; p: Promise<void> } | null = null;
+
+  /** テンプレートの背景の画像を読む（読めたら描き直す）。読めなければ紙の色だけで描く */
+  ensureTemplate(): Promise<void> {
+    const bg = this.doc.background;
+    if (bg.kind !== 'template') return Promise.resolve();
+    if (this.templateLoad?.svg === bg.svg) return this.templateLoad.p;
+    this.templateImg = null;
+    const p = new Promise<void>((resolve) => {
+      if (typeof Image === 'undefined') return resolve();
+      const img = new Image();
+      const url = URL.createObjectURL(new Blob([bg.svg], { type: 'image/svg+xml' }));
+      const done = (ok: boolean) => {
+        URL.revokeObjectURL(url);
+        if (ok && this.doc.background.kind === 'template' && this.doc.background.svg === bg.svg) {
+          this.templateImg = img;
+          this.emitPaint();
+        }
+        resolve();
+      };
+      img.onload = () => done(true);
+      img.onerror = () => done(false);
+      img.src = url;
+    });
+    this.templateLoad = { svg: bg.svg, p };
+    return p;
   }
 
   // ---------------------------------------------------------------- 購読
@@ -132,7 +163,12 @@ export class DrawingEngine {
   }
 
   sources(): RenderSources {
-    return { layers: this.layers, base: this.baseUsed ? this.base : null, stamps: this.stamps };
+    return {
+      layers: this.layers,
+      base: this.baseUsed ? this.base : null,
+      stamps: this.stamps,
+      template: this.templateImg,
+    };
   }
 
   private pixelCtx = (layer: string): PixelCtx | null => {
@@ -547,7 +583,7 @@ export class DrawingEngine {
       const c = this.layers.get(it.id);
       if (c) await draw(it.raster, c);
     }
-    await this.stamps.ensure(this.doc.assets, 256);
+    await Promise.all([this.stamps.ensure(this.doc.assets, 256), this.ensureTemplate()]);
     this.emitChange();
   }
 
@@ -562,7 +598,7 @@ export class DrawingEngine {
   }
 
   async exportPng(): Promise<Blob> {
-    await this.stamps.ensure(this.doc.assets, 1024);
+    await Promise.all([this.stamps.ensure(this.doc.assets, 1024), this.ensureTemplate()]);
     return canvasToPng(this.composeCanvas(DOC_W));
   }
 

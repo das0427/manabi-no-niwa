@@ -8,6 +8,8 @@ import { StartScreen } from './app/StartScreen';
 import { SubjectMap } from './app/SubjectMap';
 import { CardChooser, LegacyEntry } from './app/UnitEntry';
 import { Explore } from './app/Explore';
+import { profileAudience } from './core/types';
+import { loadElementaryFont, needsElementaryFont } from './ui/elementaryFont';
 import './ui/ui.css';
 
 const ParentApp = lazy(() => import('./parent/index'));
@@ -18,9 +20,14 @@ const GalleryScreen = lazy(() =>
   import('./drawing/index').then((m) => ({ default: m.GalleryScreen })),
 );
 // 開発用（本番では読み込まれない: 経路が開発時だけ有効）
-const EngineGallery = lazy(() =>
-  import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })),
-);
+// （import.meta.env.DEV が false の本番ビルドでは import ごと消え、dist にも先読みにも入らない）
+const EngineGallery = import.meta.env.DEV
+  ? lazy(() => import('./dev/EngineGallery').then((m) => ({ default: m.EngineGallery })))
+  : null;
+// 開発用: 単元の見本の1問（import.meta.env.DEV が false の本番ビルドでは import ごと消える）
+const UnitSampleView = import.meta.env.DEV
+  ? lazy(() => import('./dev/UnitSampleView').then((m) => ({ default: m.UnitSampleView })))
+  : null;
 const UnitRunner = lazy(() =>
   import('./units/UnitRunner').then((m) => ({ default: m.UnitRunner })),
 );
@@ -35,6 +42,12 @@ function Routes() {
   useEffect(() => {
     if (needsStart || parentLocked) navigate({ name: 'start' }, { replace: true, force: true });
   }, [needsStart, parentLocked]);
+
+  // 小学生のプロフィールでは、漢字だけの小学生用フォントを読み込む（review-1 #22）
+  const audience = app.profile ? profileAudience(app.profile) : null;
+  useEffect(() => {
+    if (audience && needsElementaryFont(audience)) loadElementaryFont();
+  }, [audience]);
 
   // 保護者画面を（どの方法でも）離れたら、ゲートを閉じる。ブラウザの「進む」で戻れないように
   const { parentUnlocked, setParentUnlocked } = app;
@@ -71,10 +84,21 @@ function Routes() {
         variantId={route.variantId}
       />
     );
-  else if (route.name === 'dev-engines' && import.meta.env.DEV)
+  else if (route.name === 'dev-engines' && EngineGallery)
     screen = (
       <Suspense fallback={null}>
         <EngineGallery />
+      </Suspense>
+    );
+  else if (route.name === 'dev-unit' && UnitSampleView)
+    screen = (
+      <Suspense fallback={null}>
+        <UnitSampleView
+          key={`${route.unitId}/${route.n ?? ''}?${route.query}`}
+          unitId={route.unitId}
+          n={route.n}
+          query={route.query}
+        />
       </Suspense>
     );
   else if (route.name === 'card')
@@ -92,7 +116,11 @@ function Routes() {
   else if (route.name === 'draw')
     screen = (
       <Suspense fallback={null}>
-        <DrawingScreen key={route.artId ?? ''} artId={route.artId} />
+        <DrawingScreen
+          key={`${route.artId ?? ''}/${route.template ?? ''}`}
+          artId={route.artId}
+          template={route.template}
+        />
       </Suspense>
     );
   else if (route.name === 'gallery')
@@ -136,7 +164,8 @@ class AppErrorBoundary extends Component<{ children: ReactNode }, { failed: bool
             type="button"
             className="tap tap--main tap--big"
             onClick={() => {
-              location.hash = '#/';
+              // 履歴を増やさずに先頭へ戻して読み込み直す
+              history.replaceState(null, '', '#/');
               location.reload();
             }}
           >

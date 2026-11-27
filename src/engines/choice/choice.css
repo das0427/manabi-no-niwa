@@ -1,4 +1,5 @@
 .eng-choice {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -12,7 +13,8 @@
 }
 .eng-choice__options--grid {
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 90%;
 }
 .eng-choice__options--column {
   flex-direction: column;
@@ -27,11 +29,351 @@
   justify-content: center;
   gap: calc(var(--u) * 0.6);
 }
+/* 絵・図だけの選択肢の横一列（choice.tsx の picsProps が --pics-n・--pics-total を渡す）。
+   入らないときは絵を min(既定, (作業領域の幅 − 間隔) ÷ (数 × 1つの中の絵の数)) に縮める（g1.math.numbers-10/4）。
+   絵の既定の寸法は Figure のインライン指定なので max-width・max-height で抑える。
+   絵だけの図（data-fit）の列は、この式（--pic-w）は測る前の初めの値だけで、JS が札ごとの絵の数から決めた --pic-max に替わる
+   （下の「絵の札の幅と数える絵」。text-layout-fixes 第7回 X2） */
+.eng-choice__options.is-pics {
+  --pic-w: calc(
+    (
+        var(--u0, var(--u)) * 90 - var(--u) * 2.4 * (var(--pics-n) - 1) - var(--u) * 3.6 *
+          var(--pics-n) - var(--u) * 0.6 * var(--pics-total)
+      ) /
+      var(--pics-total)
+  );
+}
+.eng-choice__options.is-pics .eng-choice__opt {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.eng-choice__options.is-pics .fig-illust__group > * {
+  max-width: var(--pic-max);
+  max-height: var(--pic-max);
+}
+/* 文字だけの選択肢は低く（絵・図の選択肢は今のまま）。text-layout-fixes S3 */
+.choice.eng-choice__opt--text {
+  min-height: calc(var(--u) * 7);
+}
 .eng-choice__label {
-  font-size: calc(var(--u) * 3.2);
+  /* 下限は補助の文字の最小。解説の fit 0.6 で割らない（text-layout-fixes T3） */
+  font-size: max(calc(var(--u) * 3.2), var(--text-min, 0px));
   font-weight: 700;
 }
+/* 12字を超えるラベル（choice.tsx の optionTraits が data-long を付ける）は問題文と同じ大きさ・左そろえ・行間1.5 */
+.eng-choice__options[data-long] > .eng-choice__opt {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2);
+  align-items: stretch;
+}
+.eng-choice__options[data-long] .eng-choice__label {
+  font-size: max(calc(var(--prompt-size) * var(--ts, 1)), var(--text-min, 0px));
+  line-height: 1.5;
+  text-align: left;
+}
+/* 絵に5字以上の文が付く選択肢（4つ以下）は折り返さず、各 1/n の幅で並べる。文は札の中で折る */
+.eng-choice__options.is-caption {
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+.eng-choice__options.is-caption > .eng-choice__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-choice__options.is-caption > .eng-choice__opt svg,
+.eng-choice__options.is-caption > .eng-choice__opt .fig-illust__group > * {
+  max-width: 100%;
+}
+.eng-choice__options.is-caption .eng-choice__label {
+  text-align: center;
+  line-height: 1.3;
+}
+/* こたえあわせは選択肢の列の下でなく、下の帯の主操作の位置（つぎへ の左 3u。DESINGN.md 5.1） */
 .eng-check {
-  min-width: calc(var(--u) * 20);
-  font-size: calc(var(--u) * 2.8);
+  /* 舞台（.stage は transform を持つので fixed の基準になる）の右から 21.5u・下から 2u。
+     absolute（作業領域の下 -12u）だと作業領域の scrollHeight を押し上げ、fit を下限まで縮め、
+     収まらないときの作業領域のスクロール（data-scroll-region="work"）で こたえあわせ が枠の外に切れて押せなかった。
+     作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  min-width: calc(var(--u) * 14);
+  font-size: max(calc(var(--u) * 2.8), var(--text-min, 0px));
+  z-index: 4;
+}
+
+/* 文字だけの選択肢が4つで最長9字以下（choice.tsx の optionTraits が data-row4 を付ける）: 横1行。各札 flex: 1 1 0。
+   字は max(2.6u, --text-min)（V2 3。g6.soc.world/0） */
+.eng-choice__options[data-row4] {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-choice__options[data-row4] > .eng-choice__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-choice__options[data-row4] .eng-choice__label {
+  --w-font: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+}
+
+/* 語のラベル（V2 1。choice.tsx の wordTrait が data-word・--len を付け、札に .has-word）。語の途中で折らない。
+   札を container（inline-size）にし、字を max(--text-min, min(既定, 札の中の幅 ÷ (字数 × 1.05))) にする。
+   inline-size の container は中身の幅を持たないので、札の min-width を 字数 × 既定の字 × 1.05 ＋ 余白（下限 14u）にして
+   既定の字が入る幅にする（上限 30u。入らなければ字が下限まで縮み、句は空白で折る）。listen・reading の選択肢も同じ。
+   絵のある札（絵だけの列。data-fit）は、さらに中の絵が入る幅 --card-w（usePicsGeometry が札ごとに決める）以上にする
+   （中身の幅を持たないので、絵の列が 14u の札から出た。p5.en.picture-book/42。text-layout-fixes 第7回 X2） */
+.choice.has-word {
+  container-type: inline-size;
+  --w-font: max(calc(var(--u) * 3.2), var(--text-min, 0px));
+  --word-min-w: min(
+    calc(var(--u) * 30),
+    max(
+      calc(var(--u) * 14),
+      calc(var(--len) * var(--w-min-font, var(--w-font)) * 1.05 + var(--u) * 3.2)
+    )
+  );
+}
+.eng-choice__options .eng-choice__opt.has-word,
+.eng-opts__list .eng-opts__opt.has-word {
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
+  max-width: 100%;
+}
+/* 2列のグリッドは列の幅（約 43u）に任せる */
+.eng-choice__options--grid > .eng-choice__opt.has-word,
+.eng-opts__list--grid > .eng-opts__opt.has-word {
+  min-width: 0;
+}
+.eng-choice__options[data-row4] > .eng-choice__opt.has-word {
+  min-width: 0;
+}
+.has-word [data-word] {
+  display: block;
+  font-size: max(var(--text-min, 0px), min(var(--w-font), calc(100cqi / (var(--len) * 1.05))));
+  line-height: 1.25;
+  text-align: center;
+}
+.has-word [data-word='word'] {
+  white-space: nowrap;
+}
+/* 空白で区切った句は空白でだけ折る（語の途中では折らない） */
+.has-word [data-word='phrase'] {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  text-wrap: balance;
+}
+/* 「はな（くさばな）」は括弧の前でだけ折る（括弧の中は nowrap の span） */
+.has-word [data-word='paren'] {
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.opt-nobr {
+  white-space: nowrap;
+}
+
+/* 絵の札の高さの上限（V2 2。choice・listen・reading 共通）: 作業領域の高さ（--work-h。UnitRunner が書く）から、
+   列より上の段（--pics-above。tsx が測る）と、札のうち絵の下の分（--pics-below。ラベルの行・札の余白。tsx が測る。
+   測る前は 余白と輪郭 3.6u ＋ ラベルの1行 4.8u の見積り）と、輪郭の影（1u）を引いた分。
+   --pic-max は、これと幅の式（--pic-w）の小さいほう。下限は幼児の絵の 10u（--pic-floor。DESINGN 17章）。
+   下限でも入らないときだけ作業領域のスクロールが残る。
+   ただし絵だけの図の列（data-fit）は JS が --pic-max（と --pic-floor: 0）を決める（幅・高さに収まる最大。下限は並べ方の選び方で
+   見て、届かないときも s が最大の並べ方のまま。第7回 X2） */
+.eng-choice__options,
+.eng-opts__list {
+  --pic-h: calc(
+    var(--work-h, 9999px) - var(--pics-above, 0px) -
+      var(--pics-below, calc(var(--u) * (3.6 + var(--pics-label, 0) * 4.8))) - var(--u)
+  );
+}
+.eng-choice__options.is-pics,
+.eng-opts__list.is-pics {
+  --pic-max: max(var(--pic-floor, 0px), min(var(--pic-w), var(--pic-h)));
+}
+/* 絵に文が付く札（is-caption）の絵も、高さの上限に従う。幅は札の中（100%） */
+.eng-choice__options.is-caption,
+.eng-opts__list.is-caption {
+  --pic-max: max(var(--pic-floor, 0px), var(--pic-h));
+}
+.eng-choice__options.is-caption > .choice svg,
+.eng-choice__options.is-caption > .choice .fig-illust__group > *,
+.eng-opts__list.is-caption > .choice svg,
+.eng-opts__list.is-caption > .choice .fig-illust__group > * {
+  max-height: var(--pic-max);
+  max-width: min(100%, var(--pic-max));
+}
+/* 幼児の絵は、作業領域の縮み（--fit）でも 10u を割らない */
+.eng-choice__options.is-pics .fig-illust__group > *,
+.eng-opts__list.is-pics .fig-illust__group > *,
+.eng-choice__options.is-caption .fig-illust__group > *,
+.eng-opts__list.is-caption .fig-illust__group > * {
+  min-width: var(--pic-floor, 0px);
+  min-height: var(--pic-floor, 0px);
+}
+
+/* 札を折り返さず 1/n ずつ並べる列（caption・data-row4）は、札の幅の下限を「字が下限（--text-min）で入る幅」にして、
+   札の幅は列の分け前に任せる（字は分け前に合わせて縮む） */
+.eng-choice__options.is-caption,
+.eng-choice__options[data-row4],
+.eng-opts__list.is-caption,
+.eng-opts__list[data-row4] {
+  --w-min-font: var(--text-min, 0px);
+}
+
+/* 絵の下限: 幼児は 10u（上）、ほかの段階は 6u（絵が 1u にまで潰れて何の絵か分からなくならないように） */
+.unit {
+  --pic-floor: calc(var(--u0, var(--u)) * 6);
+}
+.unit[data-stage='p23'],
+.unit[data-stage='p4'],
+.unit[data-stage='p5'] {
+  --pic-floor: calc(var(--u0, var(--u)) * 10);
+}
+/* 絵の札は上下の余白と絵・ラベルの間隔を詰める（縦が足りない作業領域で、ラベルを枠の外に出さない） */
+.eng-choice__options.is-pics > .eng-choice__opt,
+.eng-choice__options.is-caption > .eng-choice__opt,
+.eng-opts__list.is-pics > .eng-opts__opt,
+.eng-opts__list.is-caption > .eng-opts__opt {
+  padding-block: calc(var(--u) * 0.8);
+  gap: calc(var(--u) * 0.4);
+}
+/* ふりがなの無い語のラベルは、Rt の行間 1.7 を詰める（ふりがなの高さを空けない。絵の札の縦を節約） */
+.has-word [data-word] .rt:not(:has(ruby)) {
+  line-height: 1.25;
+}
+
+/* 小3以上（data-wakachi が無い）の札・ラベルには base.css が min-width: 0・word-break: auto-phrase・
+   overflow-wrap: break-word・text-wrap: wrap を付ける（詳しさ 0,5,0）。語のラベルはそれより詳しい指定で、
+   札の幅（--word-min-w）と「語の途中で折らない」を保つ（g5.en.where・g6.en.future・g6.soc.world。V2 1） */
+.stage
+  .unit[data-stage]:not([data-wakachi])
+  :is(.eng-choice__options, .eng-opts__list):not(
+    .eng-choice__options--grid,
+    .eng-opts__list--grid,
+    [data-row4]
+  )
+  > .choice.has-word {
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word] {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word='phrase'] {
+  text-wrap: balance;
+}
+.stage .unit[data-stage]:not([data-wakachi]) .has-word [data-word='word'] {
+  text-wrap: nowrap;
+}
+
+/* ---- 絵の札の幅と数える絵（text-layout-fixes 第7回 X2。pics.ts・choice.tsx の usePicsGeometry）----
+   絵だけの札の列（data-fit。選択肢が全部、絵だけの図）は、JS が札ごとの 1 行の絵の数・行の数・余白・ラベルの高さを測り、
+   「札の幅の合計 ≦ 列の幅」「並べた高さ ≦ 作業領域の空き」を満たす最大の絵の大きさを --pic-max に、札の幅を札ごとに --card-w に、
+   並べ方（data-arr="grid" は 2×2）を書く。上の --pic-w の式は、測る前（描いた直後）の初めの値だけ。
+   --pics-col-w は札を並べられる幅（--pic-w の式と同じ 90u。聞く問題は options.css で 88u。左の「きく」の札の幅は JS が引く） */
+.eng-choice__options.is-pics {
+  --pics-col-w: calc(var(--u0, var(--u)) * 90);
+}
+.eng-choice__options.is-pics[data-arr='grid'],
+.eng-opts__list.is-pics[data-arr='grid'] {
+  display: grid;
+  /* 列の幅は札の幅の大きいほう（--card-w。語のラベルの札は min-width）。右の列は 2 つ目・4 つ目の札 */
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  width: auto;
+}
+
+/* 数える札（data-count: 選択肢のどれかに絵が 6 こ以上）は、札の中の絵を 5 こずつの行に並べる（6〜10 こは 5＋残り。
+   11 こ以上は今の 5 のまとまりを 1 行ずつ）。Figure.tsx は変えず、絵の包みの幅を「5 こぶん」にして折り返す。
+   5 こぶん = 5 × 絵 1 つの大きさ（札ごとの既定 --pic-cap と --pic-max の小さいほう）＋ すき間 4 つ。行の間は絵のすき間（0.6u）。
+   割合（100%）は混ぜない（札の中身の幅を決めるとき割合は無いものとして扱われ、5 こぶんで止まらず 1 行に並べた幅になる） */
+.eng-choice__options[data-count] > .choice .fig-illust,
+.eng-choice__options[data-count] > .choice .fig-illust__group,
+.eng-opts__list[data-count] > .choice .fig-illust,
+.eng-opts__list[data-count] > .choice .fig-illust__group {
+  max-width: calc(5 * min(var(--pic-cap), var(--pic-max)) + 4 * var(--u) * 0.6 + 1px);
+  row-gap: calc(var(--u) * 0.6);
+}
+.eng-choice__options[data-count] > .choice .fig-illust__group,
+.eng-opts__list[data-count] > .choice .fig-illust__group {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* 数える札では、絵を並べた図（りんご 3 こ＋バナナ 6 こ。2 しゅるいの かいもの）はまとまりを縦に積む（まとまりごとに 5 こずつの行。
+   pics.ts の picLines）。まとまりの間は 1.2u（Figure の行のすき間 2u は縦に積むと 3 行ぶんの高さを食い、絵が 4u を割る。
+   絵のすき間 0.6u の 2 倍で、種類の切れ目は分かる）。Figure のインラインの gap は !important で上書きする */
+.eng-choice__options[data-count] > .choice .fig-row,
+.eng-opts__list[data-count] > .choice .fig-row {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: center;
+  row-gap: calc(var(--u) * 1.2) !important;
+}
+
+/* 絵を 1 行に並べた図（色のボール＋物）も、札から折り返さず出さない（絵の列は絵の分だけの幅） */
+.eng-choice__options[data-fit] > .choice .fig-row,
+.eng-opts__list[data-fit] > .choice .fig-row {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+
+/* 安全網: 札の中の絵は札の内側に入れる。flex の子は min-width: auto なので、絵の列が札より広くても縮まず、はみ出していた
+   （p23.math.shop/12 の くだもの 3 こ。札の中 26.9u に 31.2u）。絵の包みは札の幅まで、絵は縦横比 1 のまま縮める
+   （下の絵の大きさの上限・下限は、これより詳しい指定で今までどおり） */
+.eng-choice__options .choice .fig-illust,
+.eng-choice__options .choice .fig-illust__group,
+.eng-opts__list .choice .fig-illust,
+.eng-opts__list .choice .fig-illust__group {
+  min-width: 0;
+  max-width: 100%;
+}
+.eng-choice__options .choice .fig-illust__group > *,
+.eng-opts__list .choice .fig-illust__group > * {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1;
+  /* Illust のインラインの height（width と同じ値）をやめて、縮んだ幅に高さを合わせる */
+  height: auto !important;
+}
+
+/* 安全網（パックの SVG の図）: 札の中のパックの SVG（.fig-svg）も札の内側に縮める。絵のほかの図（点の図など）の札は、語のラベルで 14u に
+   なり、図は上の絵の大きさの式（--pic-max）の幅のままだったので、札から出た（p4.ja.word-play の点の図。text-layout-fixes 第7回 C28）。
+   flex の子の min-width: auto で縮まなかったので 0 にし、図の幅の上限は札の中の幅（100%）にする。
+   絵の大きさ --pic-max は、図の高さの上限にする（絵の札の高さの予算。幅の上限にすると、横長の図〔札の列。gridFloor.ts の
+   aspect-ratio〕が札の中より細く描かれ、札 1 枚が 1.5u・番号の字が 0.76u になった: g2.prog.repeat/2・/4 の解説。第7回のレビュー）。
+   正方形に近い図（点の図）は、幅も高さも min(札の中, --pic-max) に収まる（今までと同じ） */
+.eng-choice__options .choice .fig-svg,
+.eng-opts__list .choice .fig-svg {
+  min-width: 0;
+  max-width: 100%;
+}
+.unit__work .eng-choice__options.is-pics .choice .fig-svg svg,
+.unit__work .eng-opts__list.is-pics .choice .fig-svg svg {
+  max-width: 100%;
+  max-height: var(--pic-max, none);
+}
+/* 札の中のパックの図は、箱（.fig-svg）の中央に置く。図の高さが --pic-max で止まると、幅は縦横比で箱（図の既定の幅 23u）より
+   細くなるが、図は block で margin が無く、箱の左に寄った（p5.think.pattern/2 の 4.3u・p5.math.shapes/17 の 6.5u。
+   第8回 Y1 の 7.）。listen の絵の札（ui.css の .eng-opts__pic > .fig-svg > svg）と同じ */
+.eng-choice__options .choice .fig-svg > svg,
+.eng-opts__list .choice .fig-svg > svg {
+  margin-inline: auto;
+}
+/* 1 列にした札の列（figure.css の fig-svg--wide。小1以上）は、上の --pic-max（1 段に並べる絵の高さの式）で高さを止めない
+   （図の高さは figure.css の 4.6u）。止めると札の列が細く描かれ、札 1 枚が 1.1u になった（g6.prog.efficient/11・g5.prog.debug-plan/8。
+   第7回のレビュー。X2 の安全網と X4 の札の列の組み合わせ） */
+.unit__work
+  :is(.eng-choice__options, .eng-opts__list).is-pics:has(.fig-svg--wide):where(
+    .unit[data-stage]:not([data-stage^='p']) *
+  )
+  .choice
+  .fig-svg
+  svg {
+  max-width: 100%;
+  max-height: none;
 }

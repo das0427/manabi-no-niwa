@@ -23,7 +23,7 @@ export interface NumSpec {
   prompt: string;
   figure?: ReturnType<typeof turtleFigure>;
   answer: number;
-  label?: string;
+  unit?: string;
   wrongs: [number, string][];
   hints: [string, string, string];
   explain: string;
@@ -37,7 +37,7 @@ export function num(s: NumSpec): NumberItem {
     level: s.level,
     prompt: s.prompt,
     ...(s.figure ? { figure: s.figure } : {}),
-    fields: [{ ...(s.label ? { label: s.label } : {}), answer: { kind: 'int', value: s.answer } }],
+    fields: [{ answer: { kind: 'int', value: s.answer }, ...(s.unit ? { unit: s.unit } : {}) }],
     wrongAnswers: s.wrongs
       .filter(([v]) => v !== s.answer)
       .map(([v, m]) => ({ value: String(v), misconception: m })),

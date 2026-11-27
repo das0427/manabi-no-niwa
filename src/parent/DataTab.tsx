@@ -239,7 +239,7 @@ export function DataTab() {
               </button>
             </div>
             <Note>
-              「追加」は今のデータを変えず、新しいプロフィールとして加えます。「置き換え」は今のデータをすべて消して入れ替えます（直前に今のデータを自動で書き出します）。置き換える前の記録は、この端末に1つ前の分だけ保存されます。ダウンロードもされます。
+              「追加」は今のデータを変えず、新しいプロフィールとして加えます。「置き換え」は今のデータをすべて消して入れ替えます。置き換える直前に、今のデータを自動で書き出してダウンロードし、この端末にも1つ前の分だけ保存します。
             </Note>
           </div>
         ) : null}
@@ -265,7 +265,7 @@ export function DataTab() {
           </button>
         </div>
         <label className="p-field">
-          おえかきの作品を読み込む（.zip。「{app.profile?.name}」の作品として追加します）
+          おえかきの作品を読み込む（.zip）。「{app.profile?.name}」の作品として追加します。
           <input
             type="file"
             accept=".zip,application/zip"
@@ -305,7 +305,7 @@ export function DataTab() {
                 {storage?.persisted === undefined
                   ? 'わかりません'
                   : storage.persisted
-                    ? '継続が認められています'
+                    ? '自動で消されないことが認められています'
                     : 'まだ認められていません（ブラウザが自動で消すことがあります）'}
               </td>
             </tr>
@@ -329,8 +329,8 @@ export function DataTab() {
               const ok = await db.requestPersist();
               setPersistMsg(
                 ok
-                  ? 'ブラウザが保存の継続を認めました。'
-                  : 'ブラウザが認めませんでした（ブラウザの判断です）。定期的な書き出しをおすすめします。',
+                  ? '保存したデータを自動で消さないことを、ブラウザが認めました。'
+                  : 'ブラウザの判断で、保存したデータを自動で消さないことは認められませんでした。定期的な書き出しをおすすめします。',
               );
               reloadStorage();
             })();
@@ -349,7 +349,7 @@ export function DataTab() {
         <ConfirmDialog
           title="すべて置き換えます"
           target={`現在のデータすべて → ${loaded.fileName} の内容（${loaded.summary.profiles.map((p) => p.name).join('、')}）`}
-          message="今のプロフィール・記録・作品・メモは消えます。実行の直前に、今のデータを自動で書き出します（ファイルが保存されたことをご確認ください）。"
+          message="今のプロフィール・記録・作品・メモは消えます。実行の直前に、今のデータを自動で書き出します。ファイルが保存されたことをご確認ください。"
           requireText="おきかえ"
           confirmLabel="置き換える"
           onCancel={() => setConfirmReplace(false)}

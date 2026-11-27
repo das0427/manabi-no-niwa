@@ -273,3 +273,13 @@ describe('見本', () => {
     }
   });
 });
+
+describe('「もう一度」の文（2.1.0 の文言の点検 A8）', () => {
+  it('並べる問題: 並べるのは「もじ」（札の名前 aria-label は「ならべる もじ」）。「タイル」と言わない', () => {
+    const s = mk({ kind: 'spell', pref: 21, tiles: ['ぎ', 'ふ', 'き', 'ぶ'] });
+    expect(judgeMap(s, { value: 1 })).toEqual({
+      result: 'retry',
+      message: 'もじを ならべて こたえよう。',
+    });
+  });
+});

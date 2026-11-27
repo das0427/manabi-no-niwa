@@ -2,14 +2,18 @@
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  CORE_PACK_IDS,
   CSP,
   computeVersion,
   finalizeDist,
+  isCorePack,
   isExcluded,
   listDistFiles,
   precachePlugin,
+  readAppVersion,
   transpileServiceWorker,
 } from './vite-plugin-precache.ts';
 
@@ -30,6 +34,17 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await rm(dir, { recursive: true, force: true });
+});
+
+describe('コアに同梱するパック', () => {
+  it('幼児のパック（p23・p4・p5）と幼児の英語（en-pre）はコア。小学生のパックは違う', () => {
+    for (const id of ['p23', 'p4', 'p5', 'en-pre']) {
+      expect(CORE_PACK_IDS).toContain(id);
+      expect(isCorePack(id)).toBe(true);
+    }
+    expect(isCorePack('en-g34')).toBe(false);
+    expect(isCorePack('g3-math')).toBe(false);
+  });
 });
 
 describe('listDistFiles', () => {
@@ -90,7 +105,14 @@ describe('finalizeDist', () => {
       await readFile(path.join(dir, 'version.json'), 'utf8'),
     ) as typeof info;
 
-    expect(version).toEqual(info);
+    // appVersion を渡していないので、version.json に appVersion の欄は出ない
+    expect(version).toEqual({
+      version: info.version,
+      fileCount: 3,
+      totalBytes: 'console.log(1)'.length + 'font'.length + '<html></html>'.length,
+    });
+    expect(Object.keys(version)).toEqual(['version', 'fileCount', 'totalBytes']);
+    expect(info).toEqual(version);
     expect(info.fileCount).toBe(3);
     expect(info.totalBytes).toBe('<html></html>'.length + 'console.log(1)'.length + 'font'.length);
     expect(sw).toContain(`const __MNW_VERSION__ = "${info.version}"`);
@@ -115,6 +137,48 @@ describe('finalizeDist', () => {
     expect(changed.version).not.toBe(first.version);
   });
 
+  it('appVersion を渡すと、version.json にだけ appVersion（アプリの版の番号）が入る', async () => {
+    const info = await finalizeDist(dir, { appVersion: '2.1.0' });
+    const version = JSON.parse(await readFile(path.join(dir, 'version.json'), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    expect(version).toEqual({
+      version: info.version,
+      fileCount: 3,
+      totalBytes: 'console.log(1)'.length + 'font'.length + '<html></html>'.length,
+      appVersion: '2.1.0',
+    });
+    expect(info.appVersion).toBe('2.1.0');
+    // 版IDの "version" は Service Worker の版ID（12 桁の16進）のまま。版の番号とは別
+    expect(info.version).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it('appVersion は SW の版ID・sw.js・プリキャッシュの一覧に影響しない（version.json はプリキャッシュに入らない）', async () => {
+    const without = await finalizeDist(dir);
+    const swWithout = await readFile(path.join(dir, 'sw.js'), 'utf8');
+    const withA = await finalizeDist(dir, { appVersion: '2.1.0' });
+    const swA = await readFile(path.join(dir, 'sw.js'), 'utf8');
+    const withB = await finalizeDist(dir, { appVersion: '9.9.9' });
+    const swB = await readFile(path.join(dir, 'sw.js'), 'utf8');
+    expect(withA.version).toBe(without.version);
+    expect(withB.version).toBe(without.version);
+    expect(swA).toBe(swWithout);
+    expect(swB).toBe(swWithout);
+    expect(withB.fileCount).toBe(without.fileCount);
+    expect(withB.totalBytes).toBe(without.totalBytes);
+  });
+
+  it('appVersion を付けずに作り直すと、前の appVersion は残らない', async () => {
+    await finalizeDist(dir, { appVersion: '2.1.0' });
+    await finalizeDist(dir);
+    const version = JSON.parse(await readFile(path.join(dir, 'version.json'), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    expect('appVersion' in version).toBe(false);
+  });
+
   it('SW ソースを変えると版ID が変わる', async () => {
     const first = await finalizeDist(dir);
     const alt = path.join(dir, '..', `alt-sw-${path.basename(dir)}.ts`);
@@ -129,6 +193,29 @@ describe('finalizeDist', () => {
     } finally {
       await rm(alt, { force: true });
     }
+  });
+});
+
+describe('readAppVersion', () => {
+  it('package.json の version（文字列）を返す', async () => {
+    await put('package.json', JSON.stringify({ name: 'x', version: '2.1.0' }));
+    expect(await readAppVersion(dir)).toBe('2.1.0');
+  });
+
+  it('version が無い・文字列でない・package.json が無いときは例外', async () => {
+    await put('package.json', JSON.stringify({ name: 'x' }));
+    await expect(readAppVersion(dir)).rejects.toThrow(/version/);
+    await put('package.json', JSON.stringify({ version: 2 }));
+    await expect(readAppVersion(dir)).rejects.toThrow(/version/);
+    await put('package.json', JSON.stringify({ version: '' }));
+    await expect(readAppVersion(dir)).rejects.toThrow(/version/);
+    await rm(path.join(dir, 'package.json'));
+    await expect(readAppVersion(dir)).rejects.toThrow();
+  });
+
+  it('このリポジトリの package.json の版は X.Y.Z の形', async () => {
+    const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+    expect(await readAppVersion(root)).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
 

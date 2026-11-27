@@ -180,9 +180,9 @@ test('作品50件・はんこ200個: 一覧と編集の時間（開発PC・Chrom
   const galleryMs = Number(await page.evaluate(() => document.documentElement.dataset.galleryMs));
   note('一覧: 表示まで（壁時計 ms）', galleryWall);
   note('一覧: 読み込み（IndexedDB の一覧＋縮小51枚, ms）', galleryMs);
-  // 一番下までスクロールできる
+  // 一番下までスクロールできる（一覧は ScrollList の枠 [data-scroll-region=list] がスクロールする。A7）
   const scrollMs = await page.evaluate(async () => {
-    const g = document.querySelector('[data-testid=gallery-grid]')!;
+    const g = document.querySelector('[data-testid=gallery] [data-scroll-region=list]')!;
     const t = performance.now();
     g.scrollTop = g.scrollHeight;
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));

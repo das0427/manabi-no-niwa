@@ -22,6 +22,7 @@ export {
   saveProgress,
   addAttempt,
   listAttempts,
+  MAX_ATTEMPTS_PER_PROFILE,
   addRound,
   updateRound,
   listRounds,
@@ -53,6 +54,7 @@ export {
   saveArtwork,
   saveArtworkChecked,
   listArtworkBlobKinds,
+  artworkBytes,
   deleteArtwork,
 } from './repo-v2';
 export type { CheckedSaveResult } from './repo-v2';

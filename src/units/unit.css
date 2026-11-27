@@ -1,3 +1,33 @@
+/*
+ * 段階ごとの文字の大きさ（DESINGN.md 17章）。--prompt-size は問題文、--text-min は補助の文字の最小。
+ * data-stage は UnitRunner が .screen.unit に付ける
+ */
+.unit {
+  --prompt-size: calc(var(--u) * 3);
+  --text-min: calc(var(--u) * 1.7);
+}
+.unit[data-stage='p23'],
+.unit[data-stage='p4'],
+.unit[data-stage='p5'] {
+  --prompt-size: calc(var(--u) * 3);
+  --text-min: calc(var(--u) * 2.2);
+}
+.unit[data-stage='g1'],
+.unit[data-stage='g2'] {
+  --prompt-size: calc(var(--u) * 2.8);
+  --text-min: calc(var(--u) * 2);
+}
+.unit[data-stage='g3'],
+.unit[data-stage='g4'] {
+  --prompt-size: calc(var(--u) * 2.4);
+  --text-min: calc(var(--u) * 1.8);
+}
+.unit[data-stage='g5'],
+.unit[data-stage='g6'] {
+  --prompt-size: calc(var(--u) * 2.2);
+  --text-min: calc(var(--u) * 1.7);
+}
+
 /* 単元の画面の区画（ux-by-age 2.4、DESINGN.md 5.1・18章）。位置は全単元で同じ */
 .unit__prompt {
   position: absolute;
@@ -10,7 +40,7 @@
   justify-content: center;
   text-align: center;
   /* 文字の大きさの設定（--ts: 1 / 1.15 / 1.3） */
-  font-size: calc(var(--u) * 3 * var(--ts, 1));
+  font-size: calc(var(--prompt-size) * var(--ts, 1));
   font-weight: 700;
   color: var(--ink);
   white-space: pre-line;
@@ -20,21 +50,41 @@
   /* 問題文が2行以上のときは問題文の下から（--prompt-bottom は UnitRunner が測る） */
   top: max(calc(var(--u) * 15), calc(var(--prompt-bottom, 0px) + var(--u)));
   /* 下の帯（14u）: ヒント・つぎへ・誤答の説明の吹き出し。作業領域と重ならない */
-  bottom: calc(var(--u) * 14);
+  bottom: max(calc(var(--u) * 14), calc(var(--bubble-h, 0px) + var(--u) * 2.4));
   left: calc(var(--u) * 4);
   right: calc(var(--u) * 4);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  /* 収まらないときに上へはみ出して問題文に重ならないよう safe（はみ出す分は下へ） */
+  align-items: safe center;
+  justify-content: safe center;
   gap: calc(var(--u) * 2);
+  /* 重なりの順をこの中に閉じる（札の z-index 等が、あとに描く吹き出し・解説の板より上に出ない）。
+     0.8 倍でも収まらずに下へはみ出したときは、板・吹き出しの文字が上に見える */
+  z-index: 0;
+}
+/* 子は --fit（0.8〜1。UnitRunner が中身の高さと空きを測って書く）の分だけ縮む。.unit__work 自身の位置は縮めない */
+.unit__work > * {
+  --u: calc(var(--u0) * var(--fit, 1));
+  /* tokens.css の寸法の変数は :root で解決されて縮まないので、文字と線だけここで縮む --u で定義し直す。
+     文字は --text-min を下限にする。押す所の最小（--tap-main・--tap-aux）と間隔の最小（--gap-min）は縮めない */
+  --text-label: max(calc(var(--u) * 2.6), var(--text-min));
+  --text-small: max(calc(var(--u) * 2.2), var(--text-min));
+  --radius: calc(var(--u) * 1.2);
+  --outline: calc(var(--u) * 0.35);
+  --step: calc(var(--u) * 0.6);
+}
+/* 解説の板が開いているときは、作業領域を板の上までにする（--panel-h は UnitRunner が測る） */
+.unit[data-phase='explain'] .unit__work {
+  bottom: calc(max(var(--panel-h, calc(var(--u) * 11.6)), var(--bubble-h, 0px)) + var(--u) * 2.4);
 }
 /* 数の入力: 左に図と回答欄、右に数字キー（DESINGN.md 18章、review-1 #21） */
 .unit__work--number {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto;
-  align-content: center;
+  /* 収まらないときに上へはみ出して問題文に重ならないよう safe（はみ出す分は下へ） */
+  align-content: safe center;
   align-items: center;
   column-gap: calc(var(--u) * 3);
   row-gap: calc(var(--u) * 2);
@@ -56,10 +106,110 @@
   grid-row: 1 / span 2;
   align-self: center;
 }
+/* --fit を測る間（UnitRunner の fitNow が data-measure を付け、同じ処理の中で外す。描かれない）は、数字キーの区画の高さを 0 にする
+   （幅は残す）。キーは --u0 で 1 つ 6u 以上・4 段で 25.8u あり（number.css）、問題文が 2 行の作業領域（23.75u）やヒントの状態
+   （22.66u）では区画の下へ 2〜3u はみ出す。それを scrollHeight に数えると、縮まないキーの代わりに左の列（図と回答欄）だけが
+   --fit の下限 0.8 まで縮んだ（g2.prog.repeat/28 の盤 10.6u → 8.48u。第8回 Y2）。はみ出しは今までどおり作業領域の下の余白
+   （板・帯との間 2.4u）に描かれ、位置・大きさは変わらない。左の列が入らないときは、今までどおり図を縮めて --fit を下げる。
+   number.css の `max-height: 100%` より詳しさを上げて上書きする。10の棒の図（UnitRunner が data-measure-pad を付ける）は除く:
+   棒には縮みの下限（1 本 1.2u。number.tsx）があり、図の段が足りない分は --fit でほかの中身（回答欄）を縮めて空けていた
+   （区画のはみ出しで --fit が下がるのがその手段だった。g2.math.mult-beyond/2 は、これを外すと図の段が 2u 足りずに枠になった） */
+.unit__work[data-measure]:not([data-measure-pad]) .eng-number__pad {
+  max-height: 0;
+  overflow: hidden;
+}
 .unit__figure {
   max-width: 100%;
   display: flex;
   justify-content: center;
+}
+/*
+ * 図が先に縮む（DESINGN.md 5.1）。--fig-max は UnitRunner が図の自然な高さと不足から書く（下限は 12u。
+ * --fit が下限でも入らないときだけ、絵のある図は 6u まで縮める）。
+ * 文字の図（.fig-text・.fig-table）には書かない（縮めず、横並びかスクロールに任せる）
+ */
+.unit__work > .unit__figure {
+  max-height: var(--fig-max, none);
+  min-height: 0;
+  /* 高さは --fig-max で決める（flex の縮みで 0 まで潰さない） */
+  flex-shrink: 0;
+}
+/* 絵を並べた図は、図の中の --u ごと縮める（--fig-k は UnitRunner が書く） */
+.unit__work > .unit__figure {
+  --u: calc(var(--u0) * var(--fit, 1) * var(--fig-k, 1));
+}
+.unit__work > .unit__figure svg:not(svg svg),
+.unit__work > .unit__figure img {
+  max-width: 100%;
+}
+/* 縮めるときだけ（data-fig-fit。UnitRunner が --fig-max と一緒に付ける）、中の SVG・画像の高さを上書きする。
+   収まる図は各エンジン・図の寸法の指定のまま（height: auto をいつも付けると、CSS で高さを決めた図の形が変わる） */
+.unit__work[data-fig-fit] > .unit__figure svg:not(svg svg),
+.unit__work[data-fig-fit] > .unit__figure img {
+  max-height: var(--fig-max);
+  height: auto;
+}
+/* 幅の属性がある図・画像は、縮めたとき縦横比を保って幅も縮む（幅の属性が無い SVG は 23u の幅のまま） */
+.unit__work[data-fig-fit] > .unit__figure svg[width]:not(svg svg),
+.unit__work[data-fig-fit] > .unit__figure img {
+  width: auto;
+}
+/* 横並び: 図が高く幅が狭いとき、左に図・右にエンジン（UnitRunner が data-layout を付ける） */
+.unit__work[data-layout='side'] {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  align-items: safe center;
+  align-content: safe center;
+  column-gap: calc(var(--u) * 3);
+}
+.unit__work[data-layout='side'] > .unit__figure {
+  grid-column: 1;
+}
+.unit__work[data-layout='side'] > .unit__engine {
+  grid-column: 2;
+}
+/* 下限まで縮めても収まらないとき: 重ねずに作業領域の中でスクロール（上そろえ。右下に ▼）。外へは描かない */
+.unit__work[data-scroll-region='work'] {
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  align-content: start;
+  padding-right: calc(var(--u) * 3.6);
+  /* 上端の札・選択肢のふりがな・影が枠の上で切れない（上へのはみ出しはスクロールしても見えない: g3.ja.proverbs/61。番号の丸は札の角から 1.2u 出る） */
+  padding-top: calc(var(--u) * 1.4);
+}
+.unit__work[data-layout='side'][data-scroll-region='work'] {
+  align-items: start;
+}
+.unit__work[data-scroll-region='work'][data-scroll-cue]::after {
+  content: '▼';
+  position: sticky;
+  grid-column: 1 / -1;
+  align-self: end;
+  justify-self: end;
+  bottom: 0;
+  /* 末尾の隙間（gap 2u）と ▼ の高さの分だけ引き上げて、中身の高さを増やさない。右の余白（padding）に置く */
+  width: calc(var(--text-min) * 1.2);
+  height: calc(var(--text-min) * 1.2);
+  margin: calc(var(--u) * -2 - var(--text-min) * 1.2) calc(var(--u) * -3.4) 0 0;
+  text-align: center;
+  white-space: nowrap;
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  pointer-events: none;
+}
+/*
+ * 絵の帯つきの聞く問題（えいごの えほん: 4ページの絵の帯＋きくの札＋選択肢）は、帯と選択肢の絵を小さくして、
+ * 作業領域（問題文の下から下の帯の上まで）に収める
+ */
+.unit__work--listen .unit__figure--row svg {
+  width: calc(var(--u) * 8) !important;
+  height: calc(var(--u) * 8) !important;
+}
+.unit__work--listen .unit__figure--row + .unit__engine .eng-opts__opt svg {
+  width: calc(var(--u) * 9) !important;
+  height: calc(var(--u) * 9) !important;
 }
 .unit__engine {
   width: 100%;
@@ -88,9 +238,39 @@
   background: var(--white);
   border: calc(var(--u) * 0.3) solid var(--ink);
   border-radius: calc(var(--u) * 1.4);
-  font-size: calc(var(--u) * 2 * var(--ts, 1));
+  font-size: max(calc(var(--u) * 2 * var(--ts, 1)), var(--text-min));
   line-height: 1.4;
   color: var(--ink);
+}
+/* 吹き出しが 11.6u に入らないとき（data-tall。UnitRunner が測って --bubble-h に高さを書く）: 字は最小・行間 1.3・16u まで。
+   それでも入らないときは下端に ▼（data-scroll-cue） */
+.unit__bubble[data-tall] {
+  max-height: calc(var(--u0, var(--u)) * 16);
+  font-size: var(--text-min);
+  line-height: 1.3;
+}
+.unit__bubble[data-tall] .unit__hint-mark {
+  font-size: var(--text-min);
+}
+.unit__bubble[data-scroll-cue]::after {
+  content: '▼';
+  display: block;
+  position: sticky;
+  bottom: 0;
+  width: fit-content;
+  height: 1.2em;
+  margin: -1.2em 0 0 auto;
+  padding: 0 calc(var(--u) * 0.6);
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--white);
+  pointer-events: none;
+}
+/* 「こたえあわせ」（複数を選ぶ問題。つぎへ の左 3u、右端から約 21.5〜38u）と数字キー（右の列 70〜96u）があるときは、
+   吹き出しをその左まで */
+.unit:has(.eng-check, .eng-opts__check, .numkey) .unit__bubble {
+  right: calc(var(--u) * 39);
 }
 .unit__msg {
   margin: 0;
@@ -113,37 +293,183 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  font-size: max(calc(var(--u) * 2 * var(--ts, 1)), var(--text-min));
 }
 .unit__explain {
   position: absolute;
-  left: calc(var(--u) * 12);
+  /* 解説ではヒントのボタンが無いので、左端は 4u（行が減る） */
+  left: calc(var(--u) * 4);
   right: calc(var(--u) * 24);
   bottom: calc(var(--u) * 1.6);
-  /* 下の帯に収める（作業領域の回答・正答を隠さない）。文と図を横に並べる */
-  max-height: calc(var(--u) * 11.6);
-  overflow: auto;
+  /* 22u まで（作業領域は板の上まで。収まらない長さは板の中で縦にスクロール）。上が切れないよう上そろえ */
+  max-height: calc(var(--u) * 22);
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: calc(var(--u) * 0.8) calc(var(--u) * 1.6);
   background: var(--paper);
   border: calc(var(--u) * 0.35) solid var(--ink);
   border-radius: calc(var(--u) * 1.4);
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: calc(var(--u) * 1.6);
-  font-size: calc(var(--u) * 2.1 * var(--ts, 1));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 0;
+  row-gap: calc(var(--u) * 0.8);
+  font-size: max(calc(var(--u) * 2.1 * var(--ts, 1)), var(--text-min));
   line-height: 1.4;
 }
-.unit__explain .fig-svgbox {
-  max-height: calc(var(--u) * 9);
-  width: auto;
-}
 .unit__explain-head {
-  margin: 0;
-  flex: none;
+  margin: 0 calc(var(--u) * 1.6) 0 0;
   white-space: nowrap;
   font-weight: 700;
-  font-size: calc(var(--u) * 2.4);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min));
 }
 .unit__explain-text {
+  grid-column: 2;
   margin: 0;
+}
+/* 解説の図は2段目（文の下）。横に並べて押しつぶさない */
+.unit__explain-figure {
+  grid-column: 2;
+  width: 100%;
+  /* 12u まで。板に入らないときは UnitRunner が --fig-h に残りの高さ（下限 6u）を書いて縮める。図は切らない */
+  max-height: var(--fig-h, calc(var(--u) * 12));
+  display: flex;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.unit__explain-figure > * {
+  max-width: 100%;
+  max-height: var(--fig-h, calc(var(--u) * 12));
+}
+.unit__explain-figure svg,
+.unit__explain .fig-svgbox {
+  max-width: 100%;
+  max-height: var(--fig-h, calc(var(--u) * 12));
+  width: auto;
+}
+/* 絵を並べた図（.fig-illust）は解説の図の中で折り返さない（flex-wrap: nowrap）。入らないときは UnitRunner が
+   絵の大きさ --illust-w（（図の幅 − すき間）÷ 絵の数。下限 4u）を書く。絵の幅・高さは Figure.tsx のインライン指定なので !important。
+   折り返すと下の段が overflow: hidden で消えた（p5.math.compose/1 のいちご 3 こ） */
+.unit__explain-figure .fig-row:has(.fig-illust),
+.unit__explain-figure .fig-illust {
+  flex-wrap: nowrap;
+}
+.unit__explain-figure[data-illust-fit] .fig-illust__group > * {
+  flex: none;
+  width: var(--illust-w) !important;
+  height: var(--illust-w) !important;
+}
+/* width の無いパックの SVG（.fig-svg）は、上の width: auto を当てない。flex の中で width: auto は内容の幅 0 に縮み、
+   T2（figure.css）の幅も消えて 0×0 になる。下の段は高さ 12u まで・縦横比（--fig-ar = 高さ ÷ 幅。UnitRunner が書く）で幅を決め、
+   自然な幅（T2）を超えない。箱は板の幅いっぱい。字の大きさは liftSvgText に任せる */
+.unit__explain-figure .fig-svg {
+  width: 100%;
+}
+.unit__explain-figure .fig-svg svg:not([width]) {
+  width: min(
+    calc(var(--fig-h, calc(var(--u) * 12)) / max(var(--fig-ar, 0.5), 0.05)),
+    max(calc(var(--u) * 23), calc(var(--text-min, calc(var(--u) * 1.8)) * var(--fig-k, 0)))
+  );
+  max-width: 100%;
+  /* 字の引き上げで viewBox が広がって比が少し変わっても、箱（12u）からはみ出さない */
+  max-height: var(--fig-h, calc(var(--u) * 12));
+  height: auto;
+}
+/* 表・文の図・縦に並べた図（数直線2本など）は切らない（SVG だけ 12u まで。長いときは板が 22u でスクロール） */
+.unit__explain-figure:has(.fig-table, .fig-text, .fig-column) {
+  max-height: none;
+  overflow: visible;
+}
+.unit__explain-figure:has(.fig-table, .fig-text, .fig-column) > * {
+  max-height: none;
+}
+/* 作業領域の図の題（棒グラフ・表の見出し）。--fit で縮めても --text-min を割らない（g3.soc.shop-work/14 の解説: 1.73u）。
+   エンジンの CSS（graph.css）は fit の下限を持たない */
+.unit__work .gr-title {
+  font-size: max(calc(var(--u) * 2.4), var(--text-min));
+}
+/* 図を文の右に置く（data-fig-side。UnitRunner が板の測りで付ける）: 見出し｜文｜図の3列。
+   図は幅 min(30%, 24u)・高さ 12u まで。表・文の図と、板の幅の 40% を超える図は付けない（下の段のまま） */
+.unit__explain[data-fig-side] {
+  grid-template-columns: auto minmax(0, 1fr) min(30%, calc(var(--u) * 24));
+  column-gap: calc(var(--u) * 1.6);
+}
+.unit__explain[data-fig-side] .unit__explain-head {
+  margin-right: 0;
+}
+.unit__explain[data-fig-side] .unit__explain-text {
+  grid-column: 2;
+  grid-row: 1;
+}
+.unit__explain[data-fig-side] .unit__explain-figure {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  justify-content: center;
+}
+/* 右置きは列の幅（min(30%, 24u)）に収め、中央に置く。高さは比から決まる（12u まで） */
+.unit__explain[data-fig-side] .unit__explain-figure .fig-svg svg:not([width]) {
+  margin-inline: auto;
+}
+/* 板が 22u を超えて縦にスクロールするとき、下端に ▼（UnitRunner が data-scroll-cue を付け外しする） */
+.unit__scroll-cue {
+  grid-column: 1 / -1;
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  display: none;
+  pointer-events: none;
+}
+.unit__explain[data-scroll-cue] .unit__scroll-cue {
+  display: block;
+}
+/* ▼ は右の余白に置く（文の字にかぶせない） */
+.unit__explain[data-scroll-cue] {
+  padding-right: calc(var(--u) * 3.6);
+}
+.unit__scroll-cue::before {
+  content: '▼';
+  position: absolute;
+  right: calc(var(--u) * -3.4);
+  bottom: 0;
+  padding: 0 calc(var(--u) * 0.6);
+  font-size: var(--text-min);
+  line-height: 1.2;
+  color: var(--ink);
+  background: var(--paper);
+  border-radius: calc(var(--u) * 0.6);
+}
+
+/* 下の帯の主操作（全エンジン共通。DESINGN.md 5.1）。つぎへ の左 3u（右端から 21.5u・下端から 2u）。
+   .stage は transform を持つので position: fixed の基準は舞台になる。fixed は作業領域のスクロールの範囲に入らず、
+   fit の測り・スクロールの要否を押し上げず、作業領域が枠で切れても隠れない。作業領域の中の --u は --fit で縮むので、
+   位置と最大幅は舞台の --u0 で置く。幅は吹き出しの右端（右から 39u。:has(.eng-check)）に入る 17.5u まで。
+   .unit を頭に付けて、エンジンごとの CSS（choice.css・order/shared.css）より詳しくする */
+.unit .eng-check {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  min-width: calc(var(--u0, var(--u)) * 14);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  /* 帯は作業領域の外なので、字も fit で縮めない（舞台の --u0。--text-min が下限） */
+  font-size: max(calc(var(--u0, var(--u)) * 2.4), var(--text-min, 0px));
+  z-index: 4;
+}
+/* 主操作が複数あるエンジン（program の もどす・けす・うごかす）は、同じ位置に横に並べる箱に入れる。
+   幅は吹き出しの右端までに入る 24u まで。ボタンは箱の中で並べるので position は付けない */
+.unit .eng-band {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  max-width: calc(var(--u0, var(--u)) * 24);
+  display: flex;
+  gap: calc(var(--u0, var(--u)) * 1.6);
+  align-items: center;
+  justify-content: flex-end;
+  z-index: 4;
+}
+.unit .eng-band .eng-check {
+  position: static;
+  min-width: 0;
+  max-width: none;
 }

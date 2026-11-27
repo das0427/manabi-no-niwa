@@ -57,6 +57,10 @@
   text-align: center;
   user-select: none;
 }
+/* 板を開いたらフォーカスは板に移る（キーボードの操作を受けるため）。板そのものには枠を出さない */
+.gate-panel:focus {
+  outline: none;
+}
 .gate-title {
   margin: 0 0 8px;
   font-weight: 700;

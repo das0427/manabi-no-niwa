@@ -27,7 +27,7 @@ export interface PreschoolHomeDef {
 }
 
 export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeDef>> = {
-  // 2〜3歳: 教科名を出さない。2歳段階は 4枚（かたちあわせ・わけてみよう・なまえあて・おかいもの）＋おえかき
+  // 2〜3歳: 教科名を出さない。2歳段階は 4枚（かたちあわせ・わけてみよう・なまえあて・おかいもの）。9枚めの find は3歳段階だけ
   p23: {
     stage: 'p23',
     cards: [
@@ -38,10 +38,20 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
         units: ['p23.math.shape-match'],
       },
       { id: 'sort', title: 'わけて みよう', icon: 'mode-sorting', units: ['p23.think.sort'] },
-      { id: 'word-listen', title: 'なまえ あて', icon: 'listen', units: ['p23.ja.word-listen'] },
+      {
+        id: 'word-listen',
+        title: 'なまえ あて',
+        icon: 'listen',
+        units: ['p23.ja.word-listen', 'p23.ja.picture-book'],
+      },
       { id: 'shop', title: 'おかいもの', icon: 'mode-shopping', units: ['p23.math.shop'] },
       { id: 'compare', title: 'くらべっこ', icon: 'mode-compare', units: ['p23.math.compare'] },
-      { id: 'sound-play', title: 'おと あそび', icon: 'p23-duck', units: ['p23.ja.sound-play'] },
+      {
+        id: 'sound-play',
+        title: 'おと あそび',
+        icon: 'p23-duck',
+        units: ['p23.ja.sound-play', 'p23.ja.first-sound'],
+      },
       {
         id: 'daily-life',
         title: 'くらしの どうぐ',
@@ -49,6 +59,13 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
         units: ['p23.env.daily-life'],
       },
       { id: 'lines', title: 'ゆびで せん', icon: 'trace-lines', units: ['p23.hand.lines'] },
+      // 3歳段階だけの考える遊び（2歳段階の札にしない）
+      {
+        id: 'find',
+        title: 'さがして あそぼう',
+        icon: 'p23-peek-rabbit-cup',
+        units: ['p23.think.peekaboo', 'p23.math.puzzle2', 'p23.think.road'],
+      },
     ],
     stage2Cards: ['shape-match', 'sort', 'word-listen', 'shop'],
   },
@@ -71,6 +88,7 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
           'p4.ja.first-sound',
           'p4.ja.kana-read',
           'p4.ja.word-play',
+          'p4.ja.story-listen',
           'p4.ja.hiragana-classic',
         ],
         titleVoice: 'title.hiragana',
@@ -79,7 +97,7 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
         id: 'sorting',
         title: 'なかまわけ',
         icon: 'mode-sorting',
-        units: ['p4.think.sort', 'p4.think.pattern'],
+        units: ['p4.think.sort', 'p4.think.pattern', 'p4.env.seasons', 'p4.env.daily-order'],
         titleVoice: 'title.sorting',
       },
       {
@@ -147,7 +165,7 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
         id: 'hiragana',
         title: 'ひらがな',
         icon: 'mode-hiragana',
-        units: ['p5.ja.kana-read-all', 'p5.ja.word-build'],
+        units: ['p5.ja.kana-read-all', 'p5.ja.word-build', 'p5.ja.small-kana'],
       },
       { id: 'katakana', title: 'かたかな', icon: 'bus-yellow', units: ['p5.ja.katakana-read'] },
       { id: 'ohanashi', title: 'おはなし', icon: 'p5-book', units: ['p5.ja.story-listen'] },
@@ -155,9 +173,14 @@ export const PRESCHOOL_HOMES: Partial<Record<'p23' | 'p4' | 'p5', PreschoolHomeD
         id: 'kaku',
         title: 'もじを かく',
         icon: 'trace-letters',
-        units: ['p5.hand.kana-trace', 'p5.hand.katakana-trace'],
+        units: ['p5.hand.kana-trace', 'p5.hand.katakana-trace', 'p5.ja.letter-play'],
       },
-      { id: 'kimari', title: 'きまり', icon: 'mode-sorting', units: ['p5.think.pattern'] },
+      {
+        id: 'kimari',
+        title: 'かんがえる',
+        icon: 'mode-sorting',
+        units: ['p5.think.pattern', 'p5.think.why', 'p5.env.predict'],
+      },
       { id: 'tejun', title: 'てじゅん', icon: 'subj-program', units: ['p5.prog.steps'] },
     ],
   },
@@ -222,23 +245,23 @@ export function recommendCards(input: CardRecInput): CardRec[] {
   const fav = candidates
     .filter((c) => input.favorites.includes(c.id))
     .sort((a, b) => (today.get(a.id) ?? 0) - (today.get(b.id) ?? 0) || tie(a.id) - tie(b.id));
-  if (fav[0]) take(fav[0], 'すきな あそびです');
+  if (fav[0]) take(fav[0], 'すきな遊びです');
   const stale = candidates
     .filter((c) => input.todayStart - (last.get(c.id) ?? 0) >= 3 * DAY)
     .sort((a, b) => (last.get(a.id) ?? 0) - (last.get(b.id) ?? 0) || tie(a.id) - tie(b.id));
   for (const c of stale) {
     if (picked.length >= 2) break;
-    take(c, last.has(c.id) ? '3日以上 あそんでいません' : 'まだ あそんでいません');
+    take(c, last.has(c.id) ? '3日以上遊んでいません' : 'まだ遊んでいません');
   }
   for (const c of [...candidates].sort((a, b) => tie(a.id) - tie(b.id))) {
     if (picked.length >= 2) break;
-    take(c, 'いろいろな あそびを ためせるように えらびました');
+    take(c, 'いろいろな遊びを試せるように選びました');
   }
   // 領域が足りないとき（札が少ない区分）は領域の重なりを許して2件にする
   for (const c of [...candidates].sort((a, b) => tie(a.id) - tie(b.id))) {
     if (picked.length >= 2) break;
     if (!picked.some((p) => p.cardId === c.id))
-      picked.push({ cardId: c.id, reason: 'いろいろな あそびを ためせるように えらびました' });
+      picked.push({ cardId: c.id, reason: 'いろいろな遊びを試せるように選びました' });
   }
   return picked;
 }

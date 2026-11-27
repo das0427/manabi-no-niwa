@@ -123,7 +123,17 @@ export function makeReadModel(grade: 1 | 2, entries: KanjiEntry[]): ReadModel {
       size: isWord ? FIGURE_SIZE.word : FIGURE_SIZE.sentence,
     },
     explain: explainOf(entry, occ, isWord),
-    explainFigure: { kind: 'text' as const, text: occ.shown, size: 'l' as const },
+    // 文は解説の本文の1行目に出して読み上げるので、図には重ねない（図と本文の2重で解説の板からはみ出していた）。
+    // 語は図に大きく出す。送りがなのある語は解説が1文長いので、図を1段小さくして板に収める
+    ...(isWord
+      ? {
+          explainFigure: {
+            kind: 'text' as const,
+            text: occ.shown,
+            size: (occ.okuri ? 'm' : 'l') as 'm' | 'l',
+          },
+        }
+      : {}),
     identity: identityOf(entry, occ),
     ...(alt ? { alt: true as const } : {}),
   });
@@ -256,7 +266,6 @@ export function makeReadModel(grade: 1 | 2, entries: KanjiEntry[]): ReadModel {
       ...base(entry, occ, level, 'compare', true, false),
       // 図は使わない（選択肢に語を出す）
       figure: undefined,
-      explainFigure: { kind: 'text', text: occ.shown, size: 'l' },
     };
   }
 
@@ -286,7 +295,8 @@ export function makeReadModel(grade: 1 | 2, entries: KanjiEntry[]): ReadModel {
       engine: 'fill',
       id: `pf:${identityOf(entry, occ)}`,
       prompt: 'おなじ じでも、ことばで よみが ちがうよ。',
-      text: 'うえの ことばは 「{{}}」、したの ことばは 「{{}}」と よむ。',
+      // 2つの節を1行ずつ（図の上下の語と対応。埋まった空欄の「の後ろで折れるのも防ぐ）
+      text: 'うえの ことばは 「{{}}」、\nしたの ことばは 「{{}}」と よむ。',
       options,
       blanks: [
         { answers: [first.part], wrong: wrongFor(first, second) },
@@ -300,21 +310,14 @@ export function makeReadModel(grade: 1 | 2, entries: KanjiEntry[]): ReadModel {
       figure: {
         kind: 'column',
         items: [
-          { kind: 'text', text: first.bold, size: 'xl' },
-          { kind: 'text', text: second.bold, size: 'xl' },
+          { kind: 'text', text: first.bold, size: 'l' },
+          { kind: 'text', text: second.bold, size: 'l' },
         ],
         gap: 8,
       },
       objective: 'compare',
       level,
       explain: `「${first.shown}」は 「${first.whole}」、「${second.shown}」は 「${second.whole}」。おなじ じでも、ことばで よみが かわるんだね。`,
-      explainFigure: {
-        kind: 'column',
-        items: [
-          { kind: 'text', text: first.shown, size: 'l' },
-          { kind: 'text', text: second.shown, size: 'l' },
-        ],
-      },
       identity: identityOf(entry, occ),
       alt: true,
     };

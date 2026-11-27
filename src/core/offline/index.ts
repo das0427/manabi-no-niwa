@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react';
 import { reconcilePacks } from './packs';
+import { startUpdater } from './updater';
 
 /**
  * Service Worker の登録とオフライン準備の状態（docs/architecture.md 7章）。
@@ -173,15 +174,14 @@ function watchWorker(worker: ServiceWorker): void {
         const stillUseful = reg !== null && (reg.active !== null || reg.waiting !== null);
         if (stillUseful) {
           setState({
-            error:
-              'あたらしい ばーじょんの じゅんびに しっぱいしました（いまの ばーじょんは そのまま つかえます）',
+            error: '新しいバージョンの準備に失敗しました。いまのバージョンはそのまま使えます。',
           });
         } else if (reg?.installing === null) {
           setState({
             status: 'error',
             progress: null,
             error:
-              'オフラインの じゅんびに しっぱいしました。ネットワークに つないで もういちど ひらいてください。',
+              'オフラインの準備に失敗しました。ネットワークにつないで、もう一度開いてください。',
           });
         }
       }
@@ -223,6 +223,17 @@ function checkForUpdate(force = false): void {
   reg.update().catch(() => undefined);
 }
 
+/**
+ * Service Worker の更新を、間隔の制限なしですぐに確かめる（配信の版が新しくなったあと。
+ * docs/expansion/updater-design.md 6.3）。前回の「新しい版の準備に失敗」の表示は消してから試す
+ * （今回の失敗だけを updater.ts が見分けられるように）。登録がまだなら何もしない。
+ */
+export function checkForUpdateNow(): void {
+  if (!registration) return;
+  if (state.status === 'ready' && state.error !== null) setState({ error: null });
+  checkForUpdate(true);
+}
+
 async function start(): Promise<void> {
   if (started) return;
   started = true;
@@ -252,8 +263,8 @@ async function start(): Promise<void> {
       progress: null,
       error:
         typeof name === 'string'
-          ? `オフラインの じゅんびを はじめられませんでした（${name}）`
-          : 'オフラインの じゅんびを はじめられませんでした',
+          ? `オフラインの準備を始められませんでした（${name}）`
+          : 'オフラインの準備を始められませんでした',
     });
   }
 }
@@ -261,10 +272,13 @@ async function start(): Promise<void> {
 /** main.tsx から 1 回呼ぶ。本番ビルドのみ Service Worker を登録する（開発サーバーでは登録しない） */
 export function startOffline(): void {
   if (!import.meta.env.PROD) return;
-  void start().then(() => {
+  const reconciled = start().then(() => {
     // 教材パックの版の照合と整理（packs.json に無いパックのキャッシュを消す等。R#4）
-    if (state.supported) void reconcilePacks().catch(() => undefined);
+    if (state.supported) return reconcilePacks().catch(() => undefined);
+    return undefined;
   });
+  // アプリの自動更新（窓口のある配信のときだけ動く。教材の取り直しは、整理が終わってから）
+  startUpdater(reconciled);
   // E2E 用のビルド（見本パック入り）だけ、テスト用の口（window.__mnwPacks）を起動時に用意する
   if (import.meta.env.VITE_MNW_SAMPLE_PACKS === '1') void import('../../packs/loader');
 }

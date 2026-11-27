@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { packChunkName, precachePlugin } from './scripts/vite-plugin-precache.ts';
+import {
+  packChunkFileName,
+  packChunkName,
+  precachePlugin,
+} from './scripts/vite-plugin-precache.ts';
 
 /** パックが値として import してよい本体のモジュール（check-packs でも検査） */
 const PACK_RUNTIME = [
@@ -13,8 +17,8 @@ const PACK_RUNTIME = [
 ];
 function packRuntimeName(id: string): string | null {
   const p = id.replace(/\\/g, '/').split('?')[0] ?? '';
-  // 既知の制約: rolldown の補助関数（動的 import の名前空間）は本体の hash 付きチャンクに入り、
-  // パックがそれを読み込む。本体を更新するとパックの版も変わる（更新時に配信から取り直す）
+  // rolldown の補助関数（動的 import の名前空間）をパックが読み込まないよう、パックの入口は
+  // 独立したチャンクにしている（packChunkName）。本体を更新してもパックの版は変わらない
   return PACK_RUNTIME.some((m) => p.endsWith(m)) ? 'pack-runtime' : null;
 }
 
@@ -54,11 +58,9 @@ export default defineConfig({
             { name: packRuntimeName, priority: 110 },
           ],
         },
-        // パックと pack-runtime はファイル名に hash を付けない（版は packs.json の内容 hash で管理する）
-        chunkFileNames: (chunk) =>
-          chunk.name === 'pack-runtime' || chunk.name.startsWith('packs/')
-            ? 'assets/[name].js'
-            : 'assets/[name]-[hash].js',
+        // パック（入口 index.js とグループ）と pack-runtime はファイル名に hash を付けない
+        // （版は packs.json の内容 hash で管理する。scripts/vite-plugin-precache.ts の packChunkFileName）
+        chunkFileNames: packChunkFileName,
       },
     },
   },
@@ -66,7 +68,13 @@ export default defineConfig({
     'import.meta.env.VITE_MNW_SAMPLE_PACKS': JSON.stringify(samplePacks ? '1' : ''),
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
-  server: { host: '127.0.0.1', port: 5173 },
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    // 文字の配置の検査（playwright.text-layout.config.ts）の開発サーバーは、ファイルの変更を見ない。
+    // 別の作業ツリー（.claude/worktrees）等の変更で検査中のページが読み直されないように
+    ...(process.env.MNW_DEV_NO_HMR === '1' ? { hmr: false, watch: null } : {}),
+  },
   preview: { host: '127.0.0.1', port: 4173 },
   test: {
     environment: 'jsdom',

@@ -5,6 +5,11 @@
   align-items: center;
   gap: calc(var(--u) * 2);
 }
+/* 2列のグリッドは 90% の幅を取る（札の隣の残り全部を使う） */
+.eng-opts:has(.eng-opts__list--grid) {
+  flex: 1 1 0;
+  min-width: 0;
+}
 .eng-opts__list {
   display: flex;
   gap: calc(var(--u) * 2.4);
@@ -13,7 +18,8 @@
 }
 .eng-opts__list--grid {
   display: grid;
-  grid-template-columns: repeat(2, auto);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 90%;
 }
 .eng-opts__list--column {
   flex-direction: column;
@@ -29,11 +35,143 @@
   justify-content: center;
   gap: calc(var(--u) * 0.6);
 }
+/* 文字だけの選択肢は低く（絵・図の選択肢は今のまま）。text-layout-fixes S3 */
+.choice.eng-opts__opt--text {
+  min-height: calc(var(--u) * 7);
+}
 .eng-opts__label {
-  font-size: calc(var(--u) * 3.2);
+  /* 下限は補助の文字の最小。解説の fit 0.6 で割らない（text-layout-fixes T3） */
+  font-size: max(calc(var(--u) * 3.2), var(--text-min, 0px));
   font-weight: 700;
 }
+/* 12字を超えるラベル（choice.tsx の optionTraits が data-long を付ける）は問題文と同じ大きさ・左そろえ・行間1.5 */
+.eng-opts__list[data-long] > .eng-opts__opt {
+  min-height: calc(var(--u) * 6);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2);
+  align-items: stretch;
+}
+.eng-opts__list[data-long] .eng-opts__label {
+  font-size: max(calc(var(--prompt-size) * var(--ts, 1)), var(--text-min, 0px));
+  line-height: 1.5;
+  text-align: left;
+}
+/* 絵に5字以上の文が付く選択肢（4つ以下）は折り返さず、各 1/n の幅で並べる。文は札の中で折る */
+.eng-opts__list.is-caption {
+  flex-wrap: nowrap;
+  width: 100%;
+  max-width: 100%;
+}
+.eng-opts__list.is-caption > .eng-opts__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-opts__list.is-caption > .eng-opts__opt svg,
+.eng-opts__list.is-caption > .eng-opts__opt .fig-illust__group > * {
+  max-width: 100%;
+}
+.eng-opts__list.is-caption .eng-opts__label {
+  text-align: center;
+  line-height: 1.3;
+}
+/* こたえあわせは下の帯の主操作の位置（つぎへ の左 3u） */
 .eng-opts__check {
-  min-width: calc(var(--u) * 20);
-  font-size: calc(var(--u) * 2.8);
+  /* 舞台（.stage は transform を持つので fixed の基準になる）の右から 21.5u・下から 2u。
+     absolute（作業領域の下 -12u）だと作業領域の scrollHeight を押し上げ、fit を下限まで縮め、
+     収まらないときの作業領域のスクロール（data-scroll-region="work"）で こたえあわせ が枠の外に切れて押せなかった。
+     作業領域の中は --u が --fit で縮むので、舞台の寸法の --u0 で置く */
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  min-width: calc(var(--u) * 14);
+  font-size: max(calc(var(--u) * 2.8), var(--text-min, 0px));
+  z-index: 4;
+}
+/* 図が横に並んだ選択肢（いろ: ボール＋代表の物）は、絵を小さくして4択でも1行に収める（幼児の英語）。
+   絵だけの図（data-fit）は、絵の大きさを JS が測って決める（choice.css の第7回 X2）ので、この固定の大きさは当てない */
+.eng-listen .eng-opts__list:not([data-fit]) .eng-opts__opt .fig-row svg {
+  width: calc(var(--u) * 6) !important;
+  height: calc(var(--u) * 6) !important;
+}
+
+.eng-listen .eng-opts {
+  min-width: 0;
+}
+/* 札が上の段（絵のあるとき・解説のとき）は、選択肢の列を段の幅いっぱいにする（2列のグリッドの幅の元） */
+.eng-listen--pics .eng-opts,
+.eng-listen--explain .eng-opts {
+  width: 100%;
+}
+/* 絵・時計の選択肢は折り返さず、1行に収める（text-layout-fixes R3）。幅が足りないときは各選択肢が縮む。
+   文字の選択肢は折り返しのまま（縮めると語の途中で折れる） */
+.eng-listen .eng-opts__list.is-pics {
+  flex-wrap: nowrap;
+  max-width: 100%;
+}
+.eng-listen .eng-opts__list.is-pics .eng-opts__opt {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* 絵・時計の選択肢は幅を min(既定, (作業領域の幅 − 札の幅 --pics-side − 間隔) ÷ 数) に縮める（札が上の段なら --pics-side は 0。
+   上の段に置くのは eng-listen--pics。choice.tsx の earOnTop）。g4.en.time-days/14。
+   絵だけの図（data-fit）の列は、この式は測る前の初めの値だけ（JS が --pic-max を決める。choice.css の第7回 X2） */
+.eng-listen .eng-opts__list.is-pics {
+  /* 高さの上限（--fit で縮む u）: 作業領域（27u）から 札の段（7.1u）・選択肢の余白と文字（約 7.5u）を引いた分に近い */
+  --pic-w: min(
+    calc(
+      (
+          var(--u0, var(--u)) * 88 - var(--u) * var(--pics-side, 0) - var(--u) * 2.4 *
+            (var(--pics-n) - 1) - var(--u) * 3.6 * var(--pics-n) - var(--u) * 0.6 *
+            var(--pics-total)
+        ) /
+        var(--pics-total)
+    ),
+    calc(var(--u) * (15 + var(--pics-side, 0) * 0.14))
+  );
+}
+.eng-listen .eng-opts__list.is-pics .eng-opts__opt svg,
+.eng-listen .eng-opts__list.is-pics .fig-illust__group > * {
+  max-width: var(--pic-max);
+  max-height: var(--pic-max);
+}
+
+/* 文字だけの選択肢が4つで最長9字以下: 横1行（choice.css の data-row4 と同じ。V2 3） */
+.eng-opts__list[data-row4] {
+  display: flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: calc(var(--u) * 1.6);
+}
+.eng-opts__list[data-row4] > .eng-opts__opt {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.eng-opts__list[data-row4] .eng-opts__label {
+  --w-font: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+}
+
+/* 語のラベルの札は、絵の札の縮み（is-pics の min-width: 0）より札の幅を優先する（V2 1）。幅は choice.css の --word-min-w と、
+   絵のある札の --card-w（絵の数から JS が決める。第7回 X2） */
+.eng-listen .eng-opts__list .eng-opts__opt.has-word {
+  min-width: max(var(--word-min-w), var(--card-w, 0px));
+  max-width: 100%;
+}
+.eng-listen .eng-opts__list--grid .eng-opts__opt.has-word,
+.eng-listen .eng-opts__list[data-row4] .eng-opts__opt.has-word {
+  min-width: 0;
+}
+
+/* 折り返さず 1/n ずつ並べる列（is-caption・data-row4）の札は container（inline-size）で中身の幅を持たないので、
+   列は親の幅いっぱいにする（横に並ぶ「きく」の札の隣では残りの幅を取る。choice.css の語のラベル） */
+.eng-opts:has(.eng-opts__list.is-caption, .eng-opts__list[data-row4]) {
+  flex: 1 1 0;
+}
+
+/* 絵の札の列の幅（第7回 X2）: 札を並べられる幅は 88u（choice の 90u より狭い。左の「きく」の札の幅は JS が引く）。
+   2×2（data-arr）は、「きく」の札の隣の残りの幅を取る（2 列のグリッドと同じ） */
+.eng-opts__list.is-pics {
+  --pics-col-w: calc(var(--u0, var(--u)) * 88);
+}
+.eng-opts:has(.eng-opts__list[data-arr='grid']) {
+  flex: 1 1 0;
+  min-width: 0;
 }

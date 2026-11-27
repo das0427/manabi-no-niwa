@@ -26,8 +26,10 @@ const table4 = (n: number): Figure => {
   const [a, b, c, d] = d4(n);
   return {
     kind: 'table',
-    header: ['せんの くらい', 'ひゃくの くらい', 'じゅうの くらい', 'いちの くらい'],
-    rows: [[String(a), String(b), String(c), String(d)]],
+    // 見出しは「せんの くらい」を4つ並べず、先頭の列に「くらい」を1つだけ書く（4列で約 70u になり、
+    // 解説の板の横にはみ出して「いちの くらい」の ふりがなが切れていた。約 45u に収まる）
+    header: ['くらい', 'せん', 'ひゃく', 'じゅう', 'いち'],
+    rows: [['かず', String(a), String(b), String(c), String(d)]],
   };
 };
 

@@ -20,6 +20,7 @@ import {
   landingItem,
   layout,
   mirrorH,
+  phrases,
   puzzle,
   R,
   rep,
@@ -374,7 +375,7 @@ function partCount(id: string, level: number, r: Route, upTo: number): NumberIte
     prompt:
       'みちを ふたつに わけたよ。はじめから ほしの ところまで、「すすむ」の ふだは ぜんぶで なんかい いるかな。',
     figure: gridFigure(l, { label: 'ますの ず。ほしが ゴール', hU: 9 }),
-    fields: [{ label: 'かい', answer: { kind: 'int', value: forwards } }],
+    fields: [{ answer: { kind: 'int', value: forwards }, unit: 'かい' }],
     wrongAnswers: [
       { value: String(sol.length), misconception: 'count-turn' },
       { value: String(forwards - 1), misconception: 'count-miss' },
@@ -406,6 +407,11 @@ const JOINS: { id: string; dir: Dir; rows: string[] }[] = [
   { id: 'j6', dir: 'right', rows: ['S....', '####.', '.....', '.####', '....G'] },
   { id: 'j7', dir: 'right', rows: ['S.###', '#..##', '##..G'] },
 ];
+/** 手順のはじめの 1 ぶぶん（まがる札までを、まとめた言い方で） */
+function firstPart(sol: readonly Cmd[]): string {
+  const i = sol.findIndex((c) => c.op === 'turnRight' || c.op === 'turnLeft');
+  return phrases(i < 0 ? sol : sol.slice(0, i + 1)).join('、');
+}
 const joinItems = JOINS.map((j) => {
   const l = layout(j.rows, j.dir);
   const raw = shortest(l)!;
@@ -429,6 +435,13 @@ const joinItems = JOINS.map((j) => {
       'ぶぶんの てじゅんを、はじめの ほうから じゅんに つなげて ならべよう。',
     ],
     why: 'ぶぶんごとに かんがえた てじゅんを つなげると、ながい みちも ひとつの てじゅんで いけるよ。',
+    // 手順が 7 つ以上の言い方になる長い道は、全部を並べると解説が板に入らない（g3.prog.decompose/28・29）。
+    // 全部は答えの札の列（図）に出ているので、ぶぶんの数とはじめの 1 つだけを言う（ヒント②③と同じ言い方）
+    ...(phrases(sol).length > 6
+      ? {
+          explain: `この みちは ${parts}つの ぶぶんに わけられるよ。はじめの ぶぶんは ${firstPart(sol)}。ぶぶんの てじゅんを じゅんに つなげると、ながい みちも ひとつの てじゅんで いけるよ。`,
+        }
+      : {}),
     mis: MIS,
   });
 });

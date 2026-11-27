@@ -2,6 +2,8 @@
 
 /* カード（押せるもの）。主操作の寸法（6u 以上） */
 .tk-card {
+  /* 番号の丸の寸法は 3u。--fit で縮んでも、中の字（--text-min が下限）が丸からはみ出さない大きさを下限にする */
+  --badge: max(calc(var(--u) * 3), calc(var(--text-min, 0px) * 1.6));
   position: relative;
   display: inline-flex;
   flex-direction: column;
@@ -10,6 +12,7 @@
   gap: calc(var(--u) * 0.4);
   min-width: calc(var(--u) * 7);
   min-height: calc(var(--u) * 7);
+  max-width: calc(var(--u) * 40);
   padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2);
   border: var(--outline) solid var(--ink);
   border-radius: var(--radius);
@@ -39,17 +42,49 @@
   box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
   transform: translateY(calc(var(--u) * -1));
 }
+/* block で包む（inline のままだと text-wrap: balance が効かない） */
 .tk-card__label {
+  display: block;
+  text-wrap: balance;
   font-size: var(--text-label);
   line-height: 1.25;
 }
 .tk-card__fig {
+  /* 札の図の枠（16u×9u）。枠の中の図はこの寸法に縮めて入れる（切らない）。
+     高さは枠の height が auto なので `max-height: 100%` が効かない（% は none になる）。
+     枠と同じ長さを変数で子に渡す（sort の箱の名前の図などは変数を上書きする） */
+  --tk-fig-w: calc(var(--u) * 16);
+  --tk-fig-h: calc(var(--u) * 9);
   display: flex;
   align-items: center;
   justify-content: center;
-  max-width: calc(var(--u) * 16);
-  max-height: calc(var(--u) * 9);
+  max-width: var(--tk-fig-w);
+  max-height: var(--tk-fig-h);
   overflow: hidden;
+}
+/* 枠の中の svg・img は枠に収まるまで縮める。縦横比は preserveAspectRatio（既定 meet）で保つので、
+   縦長の図（塔 viewBox 40×170）は高さ 9u で描かれ、Blocks のようにインラインで height を書く図（12.4u）も枠の高さで止まる
+   （図の枠で上下が切れ、1 枚が空の札に見えた: p5.math.measure-compare/8〜10・p5.math.numbers-10/2・3） */
+.tk-card__fig svg,
+.tk-card__fig img {
+  max-width: min(100%, var(--tk-fig-w));
+  max-height: var(--tk-fig-h);
+}
+/* 数える札（絵が count 個。Figure の .fig-illust__group）: 枠に縮めると 6 こで 2.2u・7 こで 1.8u になった（p5.math.numbers-10/3）。
+   絵は 4.1u（数える絵の下限 4u。text-layout C29）の正方形、5 こずつの行に折る（6〜10 こは 5＋残りの 2 行 = 8.8u で、枠の高さ 9u に入る）。
+   枠の幅は 5 こぶん（4.1u × 5 ＋ すき間 0.6u × 4 = 22.9u）まで広げる。絵のインラインの width・height（8u・12u）は max-* で抑える */
+.tk-card__fig:has(.fig-illust__group) {
+  --tk-fig-w: calc(var(--u) * 23);
+}
+.tk-card__fig .fig-illust__group {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(var(--u) * 22.9);
+}
+.tk-card__fig .fig-illust__group svg {
+  flex: 0 0 auto;
+  max-width: calc(var(--u) * 4.1);
+  max-height: calc(var(--u) * 4.1);
 }
 .tk-card__illust {
   width: calc(var(--u) * 5.6);
@@ -70,18 +105,36 @@
   position: absolute;
   top: calc(var(--u) * -1.2);
   left: calc(var(--u) * -1.2);
-  min-width: calc(var(--u) * 2.8);
-  height: calc(var(--u) * 2.8);
+  min-width: var(--badge);
+  height: var(--badge);
   padding: 0 calc(var(--u) * 0.4);
   border: calc(var(--u) * 0.3) solid var(--ink);
-  border-radius: calc(var(--u) * 1.4);
+  border-radius: calc(var(--badge) * 0.47);
   background: var(--sun);
   color: var(--ink);
-  font-size: calc(var(--u) * 1.8);
+  font-size: max(calc(var(--u) * 1.8), var(--text-min, 0px));
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  z-index: 3;
+}
+
+/* 番号の丸は札の左の余白に置く（角に突き出さない。作業領域・舞台の外に出ず、ふりがなにも重ならない）。
+   文字の開始位置は丸の幅の分だけ右へ。丸（--badge）の右に、ふりがなが左へはみ出す分の余白（1.6u） */
+.tk-card:has(> .tk-badge) {
+  padding-left: calc(var(--u) * 0.6 + var(--badge) + var(--u) * 1.6);
+}
+.tk-card > .tk-badge.tk-badge {
+  top: 50%;
+  left: calc(var(--u) * 0.6);
+  transform: translateY(-50%);
+  align-self: flex-start;
+}
+
+/* ui.css の `.tk-card > :not(.mark) { position: relative }`（字を ○ の前に出す）に負けない詳しさで、丸は絶対配置のまま */
+.tk-card > .tk-badge.tk-badge {
+  position: absolute;
   z-index: 3;
 }
 
@@ -96,7 +149,7 @@
   color: var(--ink-soft);
   font-family: var(--font-child);
   font-weight: 700;
-  font-size: calc(var(--u) * 2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, 0px));
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -107,10 +160,10 @@
   background: var(--white);
 }
 
-/* こたえあわせ（作業領域の右） */
+/* こたえあわせ（band=false のとき作業領域の右。既定は下の帯 .tk-check--band） */
 .tk-check {
   min-width: calc(var(--u) * 16);
-  font-size: calc(var(--u) * 2.6);
+  font-size: max(calc(var(--u) * 2.4), var(--text-min, 0px));
   white-space: nowrap;
 }
 
@@ -119,7 +172,8 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: center;
+  /* 作業領域より高いとき、上へはみ出さない（箱・先頭の札が上の帯に出ない） */
+  align-items: safe center;
   column-gap: calc(var(--u) * 3);
 }
 .tk-frame__main {
@@ -127,5 +181,27 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: safe center;
   gap: calc(var(--u) * 2.4);
+}
+/* 下の帯に置く こたえあわせ（sort。つぎへ の左 3u。右端から 21.5u・下端から 2u。DESINGN.md 5.1）。
+   .stage は transform を持つので、position: fixed の基準は舞台になる。fixed は作業領域のスクロールの範囲に入らないので、
+   作業領域の高さ（fit の測り・スクロールの要否）を押し上げず、作業領域が枠で切れても隠れない。
+   舞台の --u0 で置く（作業領域の中の --u は --fit で縮む） */
+/* .eng-check（choice.css。unit.css の :has が吹き出しを避けるための印）と同じ詳しさだと読み込み順で負けるので .tk-check も付ける */
+.tk-check.tk-check--band {
+  position: fixed;
+  right: calc(var(--u0, var(--u)) * 21.5);
+  bottom: calc(var(--u0, var(--u)) * 2);
+  /* 幅は 17.5u 以内（吹き出しの右端が右から 39u。unit.css）。「こたえあわせ」6字 + 余白 */
+  min-width: calc(var(--u) * 14);
+  max-width: calc(var(--u0, var(--u)) * 17.5);
+  padding-inline: calc(var(--u) * 0.8);
+  /* 「こたえあわせ」6字 = 14.4u。作業領域が縮んでも読める大きさ（舞台の --u0 で 2.4u・--text-min が下限） */
+  font-size: max(calc(var(--u0, var(--u)) * 2.4), var(--text-min, 0px));
+  z-index: 4;
+}
+/* 帯に置くときは、札の列が作業領域の幅いっぱい（こたえあわせ の列を取らない） */
+.tk-frame--band {
+  grid-template-columns: minmax(0, 1fr);
 }

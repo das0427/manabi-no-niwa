@@ -455,7 +455,7 @@ function countAlt(opt: {
         : 'キャラクターは ぜんぶで なんマス すすむ？',
     figure: stripFigure(opt.prog, { label: `てじゅんの ふだ: ${cmdTextOf(opt.prog)}`, hU: 6 }),
     fields: [
-      { label: opt.kind === 'cards' ? 'まい' : 'マス', answer: { kind: 'int', value: answer } },
+      { answer: { kind: 'int', value: answer }, unit: opt.kind === 'cards' ? 'まい' : 'マス' },
     ],
     wrongAnswers: opt.wrongs
       .filter(([v]) => v !== answer)

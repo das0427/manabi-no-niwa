@@ -36,20 +36,20 @@
   stroke-width: 1.8;
 }
 .ms-label {
-  font-size: 34px;
+  font-size: max(34px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: middle;
 }
 .ms-label--left {
   text-anchor: end;
-  font-size: 44px;
+  font-size: max(44px, var(--svg-floor, 0px));
 }
 .ms-label--dial {
-  font-size: 27px;
+  font-size: max(27px, var(--svg-floor, 0px));
 }
 .ms-unit {
-  font-size: 30px;
+  font-size: max(30px, var(--svg-floor, 0px));
   font-weight: 700;
   fill: var(--ink);
   text-anchor: end;

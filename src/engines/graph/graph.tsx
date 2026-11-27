@@ -5,7 +5,7 @@
  *                          （列をタップ → その高さへ。▲▼ で1目盛りずつ直せる。ドラッグ不要）
  * 目盛りの間隔（1目盛りの大きさ）は問題で指定する（2・5・10・20・50 など）。円・帯グラフは読むだけ。
  */
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { judgeNumber, normalizeInput, RETRY_MESSAGE } from '../../core/answer/number';
 import type { ChoiceOption, ItemBase, NumberField, RichText } from '../../curriculum/types';
 import { Illust } from '../../illust/Illust';
@@ -14,6 +14,16 @@ import { plainText } from '../../text/rich';
 import { Choice } from '../../ui/Choice';
 import type { TapState } from '../../ui/Tap';
 import { Figure } from '../figure/Figure';
+import {
+  floorStyle,
+  labelFitRatio,
+  observeResize,
+  slotGapPx,
+  textMinPx,
+  useSvgTextFloor,
+  useWidenToText,
+} from '../figure/svgText';
+import { checkFieldLabel } from '../number/number';
 import { svgPoint, type KitEngineDef, type KitProps } from '../numberline/kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from '../numberline/NumPad';
 import type { Judgement, RenderCtx } from '../types';
@@ -220,6 +230,9 @@ export function checkGraph(item: GraphItem): string[] {
   if (t.kind === 'number') {
     if (t.fields.length === 0) errs.push('入力欄が無い');
     for (const f of t.fields) {
+      // 単位だけの label は誤り（unit に書く。number の欄と同じ検査）
+      const labelErr = checkFieldLabel(f);
+      if (labelErr) errs.push(labelErr);
       if (f.answer.kind === 'fraction' && !t.keys?.includes('fraction'))
         errs.push('分数の答えなのに分数キーが無い');
       if (
@@ -297,8 +310,9 @@ export function graphAnswerText(item: GraphItem): RichText {
 // ---- 画面 ----
 const W = 720;
 const H = 360;
-const LEFT = 80;
-const TOP = 24;
+/** 左の余白は縦軸の数字の分（3けた・最小の文字でも入る広さ） */
+const LEFT = 104;
+const TOP = 28;
 const BOTTOM = 16;
 const RIGHT = 16;
 
@@ -326,9 +340,19 @@ function XYChart({
   const d = item.data;
   const ax = axisOf(d);
   const n = d.labels.length;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
+  const yFont = Math.max(30, floor);
+  // 縦軸の数字（最小まで大きくなる）が上下からはみ出さない余白
+  const top = Math.max(TOP, Math.ceil(yFont * 0.9) + 2);
+  const bottom = Math.max(BOTTOM, Math.ceil(yFont * 0.9) + 2);
   const slot = (W - LEFT - RIGHT) / n;
-  const Y = (v: number) => TOP + (1 - (v - ax.min) / (ax.max - ax.min)) * (H - TOP - BOTTOM);
+  const Y = (v: number) => top + (1 - (v - ax.min) / (ax.max - ax.min)) * (H - top - bottom);
   const every = d.labelEvery ?? 1;
+  // 縦軸の数字が最小まで大きくなって隣と重なるときは、目盛りの数字を間引く（2つおき・3つおき…）
+  const rowH = (H - top - bottom) / ax.n;
+  const labelStep = every * Math.max(1, Math.ceil((yFont * 1.1) / (rowH * every)));
   const snap = item.task.kind === 'make' ? (item.task.snap ?? ax.step) : ax.step;
   const grid = [];
   for (let k = 0; k <= ax.n; k++) {
@@ -342,8 +366,8 @@ function XYChart({
           y2={Y(v)}
           className={k % every === 0 ? 'gr-grid gr-grid--l' : 'gr-grid'}
         />
-        {k % every === 0 ? (
-          <text x={LEFT - 10} y={Y(v) + 8} className="gr-ylabel">
+        {k % labelStep === 0 ? (
+          <text x={LEFT - 10} y={Y(v) + yFont * 0.27} className="gr-ylabel">
             {fmt(v)}
           </text>
         ) : null}
@@ -357,7 +381,7 @@ function XYChart({
         const p = svgPoint(e, vb);
         const col = Math.floor((p.x - LEFT) / slot);
         if (col < 0 || col >= n) return;
-        const raw = ax.min + (1 - (p.y - TOP) / (H - TOP - BOTTOM)) * (ax.max - ax.min);
+        const raw = ax.min + (1 - (p.y - top) / (H - top - bottom)) * (ax.max - ax.min);
         const k = Math.round((raw - ax.min) / snap);
         const v = ax.min + Math.max(0, Math.min(Math.round((ax.max - ax.min) / snap), k)) * snap;
         onTap(col, Math.round(v * 1e9) / 1e9);
@@ -369,8 +393,10 @@ function XYChart({
     .filter((p): p is { v: number; i: number } => p.v !== null);
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
       className="mk-svg gr-svg"
+      style={floorStyle(floor)}
       role="img"
       aria-label="グラフ"
       onClick={tap}
@@ -380,15 +406,15 @@ function XYChart({
       {selected !== null ? (
         <rect
           x={LEFT + slot * selected + 4}
-          y={TOP - 14}
+          y={top - 14}
           width={slot - 8}
-          height={H - TOP - BOTTOM + 14}
+          height={H - top - bottom + 14}
           className="gr-sel"
         />
       ) : null}
       {grid}
-      <line x1={LEFT} y1={TOP} x2={LEFT} y2={H - BOTTOM} className="gr-axis" />
-      <line x1={LEFT} y1={H - BOTTOM} x2={W - RIGHT} y2={H - BOTTOM} className="gr-axis" />
+      <line x1={LEFT} y1={top} x2={LEFT} y2={H - bottom} className="gr-axis" />
+      <line x1={LEFT} y1={H - bottom} x2={W - RIGHT} y2={H - bottom} className="gr-axis" />
       {isBar ? (
         placed.map(({ v, i }) => (
           <rect
@@ -459,6 +485,74 @@ function XYChart({
   );
 }
 
+/**
+ * 横軸の札: 1行のまま（語の途中で折らない）。入らなければ --text-min まで縮め、
+ * なお入らなければ 1つおきに下へずらして2段にする（「みか／ん」「1960／年」）。
+ * 「入る」は、札の中身の幅に字の 0.4 倍（labelFitRatio。figure の横軸の札と同じ。第7回 X4）を足したものが枠の中の幅以下。
+ * 枠のあるボタンの札の枠線・余白（chrome）と、札の列のすき間（絵グラフの列は 1.2u）は、もともとあるとなりとの間なので、
+ * その分は 0.4 倍から引く（字どうしの実際のすき間が 0.4 倍あればよい。検査 C30 も実際のすき間を見る）。
+ */
+function useXLabelFit(ref: React.RefObject<HTMLElement | null>, key: unknown): void {
+  useLayoutEffect(() => {
+    const box = ref.current;
+    if (!box) return;
+    const fit = () => {
+      const items = Array.from(box.querySelectorAll<HTMLElement>('.gr-xlabel'));
+      box.removeAttribute('data-stagger');
+      box.style.removeProperty('--gr-stagger');
+      box.style.removeProperty('--gr-slot-pad');
+      for (const it of items) it.style.fontSize = '';
+      if (items.length === 0) return;
+      const need = () => {
+        const colGap = slotGapPx(items);
+        return Math.max(
+          ...items.map((it) => {
+            const t = it.querySelector<HTMLElement>('.gr-xlabel__t');
+            if (!t) return 0;
+            const cs = getComputedStyle(it);
+            const room = it.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            // 札の枠・余白（枠のあるボタンだけ。字の外側が、となりの札との間に入る）と、列のすき間
+            const chrome = Math.max(0, it.offsetWidth - room);
+            return labelFitRatio(
+              t.getBoundingClientRect().width,
+              parseFloat(cs.fontSize) || 0,
+              room,
+              chrome + colGap,
+            );
+          }),
+        );
+      };
+      let r = need();
+      if (r <= 1) return;
+      const min = textMinPx(box);
+      let size = parseFloat(getComputedStyle(items[0]!).fontSize);
+      const setAll = (px: number) => {
+        for (const it of items) it.style.fontSize = `${px}px`;
+      };
+      // 比で縮めて測り直す（すき間の一部を枠・列のすき間が受け持つときは比例しないので、数回くり返す）
+      for (let i = 0; i < 6 && r > 1; i++) {
+        size = Math.floor((size / r) * 100) / 100;
+        if (size < min) break;
+        setAll(size);
+        r = need();
+      }
+      if (r <= 1 && size >= min) return;
+      setAll(min);
+      // 2段: 1つおきに下へ。札は2つぶんの幅まで使える（となりの札と同じ段には並ばない）。
+      // 2つぶんでも入らない札（枠のあるボタンで、字が最小のまま長い: 「オートバイ」）は、3段にすると
+      // 作業領域をさらに 1行ぶん（6u）使い、図が舞台に入らなくなる（g3.math.bar-graph/7 で確かめた）。
+      // 札の文を短くする（content）。検査には text-outside-box として残る
+      const slotW = items[0]!.clientWidth;
+      box.style.setProperty('--gr-slot-pad', `${-Math.round(slotW * 0.48)}px`);
+      box.style.setProperty('--gr-stagger', `${Math.ceil(items[0]!.offsetHeight) + 2}px`);
+      box.setAttribute('data-stagger', '');
+    };
+    fit();
+    void document.fonts?.ready.then(fit);
+    return observeResize([box], fit);
+  }, [ref, key]);
+}
+
 function XLabels({
   labels,
   ctx,
@@ -470,8 +564,11 @@ function XLabels({
   selected?: number | null;
   onSelect?: (i: number) => void;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useXLabelFit(ref, labels.map((l) => plainText(l)).join('|'));
   return (
     <div
+      ref={ref}
       className="gr-xlabels"
       style={{ paddingLeft: `${(LEFT / W) * 100}%`, paddingRight: `${(RIGHT / W) * 100}%` }}
     >
@@ -484,11 +581,15 @@ function XLabels({
             onClick={() => onSelect(i)}
             data-testid={`col-${i}`}
           >
-            <Rt text={l} ctx={ctx} />
+            <span className="gr-xlabel__t">
+              <Rt text={l} ctx={ctx} />
+            </span>
           </button>
         ) : (
           <span key={i} className="gr-xlabel">
-            <Rt text={l} ctx={ctx} />
+            <span className="gr-xlabel__t">
+              <Rt text={l} ctx={ctx} />
+            </span>
           </span>
         ),
       )}
@@ -517,6 +618,8 @@ function PictureChart({
   const d = item.data;
   const ax = axisOf(d);
   const slots = ax.n;
+  const picRef = useRef<HTMLDivElement>(null);
+  useXLabelFit(picRef, d.labels.map((l) => plainText(l)).join('|'));
   const icon = (key: string, cls: string) =>
     d.illust ? (
       <Illust key={key} id={d.illust} decorative className={`gr-pic ${cls}`} />
@@ -524,7 +627,11 @@ function PictureChart({
       <span key={key} className={`gr-pic gr-pic--o ${cls}`} aria-hidden />
     );
   return (
-    <div className="gr-picture" style={{ gridTemplateColumns: `repeat(${d.labels.length}, 1fr)` }}>
+    <div
+      ref={picRef}
+      className="gr-picture"
+      style={{ gridTemplateColumns: `repeat(${d.labels.length}, 1fr)` }}
+    >
       {d.labels.map((l, i) => {
         const cnt = Math.round((values[i] ?? 0) / ax.step);
         const want = ghost ? Math.round(ghost[i]! / ax.step) : null;
@@ -563,7 +670,9 @@ function PictureChart({
               })}
             </div>
             <span className="gr-xlabel">
-              <Rt text={l} ctx={ctx} />
+              <span className="gr-xlabel__t">
+                <Rt text={l} ctx={ctx} />
+              </span>
             </span>
           </div>
         );
@@ -585,6 +694,9 @@ const CIRCLED = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', 
 /** 円グラフ・帯グラフ（読むだけ。割合の目盛り: 1%、5%、10% ごとに数字） */
 function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   const d = item.data;
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, d.kind === 'band' ? 900 : 392);
+  useWidenToText(svgRef, floor);
   let acc = 0;
   const parts = d.values.map((v, i) => {
     const from = acc;
@@ -605,7 +717,9 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   );
   if (d.kind === 'band') {
     const BW = 900;
-    const X = (p: number) => 20 + (p / 100) * (BW - 40);
+    // 目盛りの数字（最小まで大きくなる。「100」の半分）が両端からはみ出さない余白
+    const padX = Math.max(20, Math.ceil(Math.max(20, floor) * 1.1));
+    const X = (p: number) => padX + (p / 100) * (BW - 2 * padX);
     const ticks = [];
     for (let p = 0; p <= 100; p++) {
       const len = p % 10 === 0 ? 22 : p % 5 === 0 ? 14 : 7;
@@ -620,6 +734,8 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
     return (
       <div className="gr-ratio gr-ratio--band">
         <svg
+          ref={svgRef}
+          style={floorStyle(floor)}
           viewBox={`0 0 ${BW} 200`}
           className="mk-svg gr-band"
           role="img"
@@ -668,7 +784,14 @@ function RatioChart({ item, ctx }: { item: GraphItem; ctx: RenderCtx }) {
   }
   return (
     <div className="gr-ratio">
-      <svg viewBox="-170 -170 340 340" className="mk-svg gr-pie" role="img" aria-label="えんグラフ">
+      <svg
+        ref={svgRef}
+        style={floorStyle(floor)}
+        viewBox="-196 -196 392 392"
+        className="mk-svg gr-pie"
+        role="img"
+        aria-label="えんグラフ"
+      >
         {parts.map((p) => {
           const a = P(p.from, R);
           const b = P(p.to, R);
@@ -874,7 +997,7 @@ function ChoiceReadView({
         {t.multi && !revealed ? (
           <button
             type="button"
-            className="mk-btn mk-btn--ok"
+            className="mk-btn mk-btn--ok eng-check"
             disabled={disabled || picked.length === 0}
             onClick={() => submit({ pick: picked })}
             data-testid="check"
@@ -1016,7 +1139,7 @@ function MakeView({
         </div>
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => submit({ values })}
           disabled={locked || (d.kind === 'line' && values.some((v) => v === null))}
           data-testid="check"

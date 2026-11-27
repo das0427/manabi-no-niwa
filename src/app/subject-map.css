@@ -43,41 +43,59 @@
   outline-offset: calc(var(--u) * 0.3);
   box-shadow: 0 0 0 calc(var(--u) * 0.35) var(--sun);
 }
+/* 列の並び（ScrollList。一つのスクロール）。外側（.smap-columns）は位置と大きさ、中（__body）は列の並べ方。
+   右の余白（▼ の印 3.6u、幼児の ▲▼ の札 7u）は ui/scroll-list.css が取る。
+   列ごとのスクロールにすると、算数の小1・小3（1 列 11 枚）で見える札が 4 枚ほどになり、スクロールの印も出せなかった */
 .smap-columns {
   position: absolute;
   top: calc(var(--u) * 16);
   bottom: calc(var(--u) * 2);
   left: var(--edge);
   right: var(--edge);
+}
+.smap-columns__body {
   display: flex;
   gap: calc(var(--u) * 1.6);
-  overflow-x: auto;
+  min-height: 100%;
 }
 .smap-empty {
   margin: auto;
 }
+/* 列は自分ではスクロールしない（overflow: visible）。1〜2 列の教科は今の最大 30u のまま。
+   align-items: stretch（既定）で列の高さをそろえ、名前の sticky が全部の札の上で効くようにする。
+   札の間は 1.6u（DESINGN.md 2章の主操作どうしの間の最小。1.2u だと check:app-layout の tap-gap に出た） */
 .smap-col {
-  flex: 0 1 calc(var(--u) * 30);
-  min-width: calc(var(--u) * 21);
+  flex: 1 1 0;
+  max-width: calc(var(--u) * 30);
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: calc(var(--u) * 1.2);
-  overflow-y: auto;
+  gap: var(--gap-min);
+  overflow: visible;
   padding-bottom: calc(var(--u) * 1);
 }
+/* 領域の名前は、スクロールしても上に残す（paper の地で札を隠す）。名前と最初の札の間も列の間（1.6u）と同じ */
 .smap-col__name {
-  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 calc(var(--gap-min) * -1);
+  padding-bottom: var(--gap-min);
+  background: var(--paper);
   font-size: calc(var(--u) * 2.2);
   font-weight: 700;
   color: var(--ink-soft);
 }
+/* 札は縮めない。min-height: 8u が flex の自動の最小（中身の高さ）を置きかえて札が縮み、
+   2〜5 行の題が札の外にあふれて下の札に重なっていた（text-layout-fixes「アプリの画面」A2） */
 .smap-unit {
+  flex: none;
   position: relative;
   display: flex;
   align-items: center;
   gap: calc(var(--u) * 1);
   min-height: calc(var(--u) * 8);
-  padding: calc(var(--u) * 0.8) calc(var(--u) * 4.4) calc(var(--u) * 0.8) calc(var(--u) * 1);
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 0.8) calc(var(--u) * 0.8) calc(var(--u) * 1);
   font: inherit;
   text-align: left;
   color: var(--ink);
@@ -90,23 +108,56 @@
 .smap-unit:active {
   transform: translateY(calc(var(--u) * 0.4));
 }
-.smap-unit__illust {
+/* 絵は 4.4u。状態の印（.umark）は絵の右下の角に重ねる（題の幅を広げるため、右の余白に置かない） */
+.smap-unit__icon {
+  position: relative;
   flex: none;
-  width: calc(var(--u) * 5.4);
-  height: calc(var(--u) * 5.4);
+  width: calc(var(--u) * 4.4);
+  height: calc(var(--u) * 4.4);
 }
+.smap-unit__illust {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.smap-unit__icon .umark {
+  position: absolute;
+  right: calc(var(--u) * -0.9);
+  bottom: calc(var(--u) * -0.7);
+}
+/* 題の字: 小1・小2 は 2.2u、小3 以上は 2u（下限は --text-min。app-label.css が画面の data-stage ごとに置く）。
+   折り方は AppLabel（分かち書き・文節）。幅は札の中身の残り（約 13〜14u）全部 */
 .smap-unit__title {
-  font-size: calc(var(--u) * 2.2);
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: max(var(--text-min), calc(var(--u) * 2));
   font-weight: 700;
   line-height: 1.3;
 }
+/* 分かち書き・空白で区切った題（keep-all）は、行の長さをそろえて最後の行に 1 字だけ残さない（「□を つかった／式」）。
+   文節で折る題（data-phrase）に balance を付けると、Chrome は語の途中で折る（base.css の注）ので付けない */
+.smap-unit .smap-unit__title:is([data-wakachi], [data-spaced]) {
+  text-wrap: balance;
+}
+.subject-map[data-stage='g1'] .smap-unit__title,
+.subject-map[data-stage='g2'] .smap-unit__title {
+  font-size: max(var(--text-min), calc(var(--u) * 2.2));
+}
+/* 幼児が「ほかの がくねん」からのぞくとき（ScrollList の ▲▼ の札。右の余白 7u）は、題の幅が約 13.5u から約 12.6u に狭まる。
+   字を 0.2u 下げて（下限は --text-min のまま）、1 行に入る字の数を 4 列の小学生の画面と同じにする
+   （2.2u のままだと 6 字の語「ことばあそび」「なんじはん）」が入らず、語の途中や「）」の前で折れた） */
+.subject-map .scroll-list[data-buttons] .smap-unit__title {
+  font-size: max(var(--text-min), calc(var(--u) * 1.8));
+}
+.subject-map[data-stage='g1'] .scroll-list[data-buttons] .smap-unit__title,
+.subject-map[data-stage='g2'] .scroll-list[data-buttons] .smap-unit__title {
+  font-size: max(var(--text-min), calc(var(--u) * 2));
+}
+/* 状態の印（絵の右下の角。2.8u）。単元の地図とホームの「ふくしゅう」が使う */
 .umark {
-  position: absolute;
-  right: calc(var(--u) * 0.8);
-  top: 50%;
-  transform: translateY(-50%);
-  width: calc(var(--u) * 3);
-  height: calc(var(--u) * 3);
+  flex: none;
+  width: calc(var(--u) * 2.8);
+  height: calc(var(--u) * 2.8);
   overflow: visible;
 }
 .umark__ring {

@@ -29,7 +29,9 @@ export type DrawIconId =
   | 'trash'
   | 'outline'
   | 'filled'
-  | 'arrow';
+  | 'arrow'
+  | 'zoom'
+  | 'zoomOut';
 
 const ICONS: Record<DrawIconId, () => ReactElement> = {
   pen: () => (
@@ -229,6 +231,26 @@ const ICONS: Record<DrawIconId, () => ReactElement> = {
   filled: () => (
     <g>
       <circle cx="50" cy="50" r="34" fill={P.red} {...line} />
+    </g>
+  ),
+  zoom: () => (
+    <g>
+      <path d="M60 60 L86 86" fill="none" stroke={P.brown} strokeWidth="12" strokeLinecap="round" />
+      <circle cx="42" cy="42" r="28" fill={P.sky} {...line} />
+      <path
+        d="M42 28 L42 56 M28 42 L56 42"
+        fill="none"
+        stroke={INK}
+        strokeWidth="7"
+        strokeLinecap="round"
+      />
+    </g>
+  ),
+  zoomOut: () => (
+    <g>
+      <path d="M60 60 L86 86" fill="none" stroke={P.brown} strokeWidth="12" strokeLinecap="round" />
+      <circle cx="42" cy="42" r="28" fill={P.white} {...line} />
+      <path d="M28 42 L56 42" fill="none" stroke={INK} strokeWidth="7" strokeLinecap="round" />
     </g>
   ),
   arrow: () => (

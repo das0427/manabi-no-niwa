@@ -1,8 +1,8 @@
 {
   "name": "manabi-no-niwa",
   "private": true,
-  "version": "2.0.2",
-  "description": "4歳児向け 日本語のオフライン学習アプリ（ブラウザ / PWA）",
+  "version": "2.1.0",
+  "description": "2歳〜小6向け 日本語のオフライン学習アプリ（ブラウザ / PWA）",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -17,6 +17,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "e2e:update": "playwright test -c playwright.update.config.ts",
     "voice:script": "tsx scripts/export-voice-script.ts",
     "curriculum:report": "tsx --tsconfig tsconfig.app.json --import ./scripts/ignore-assets.mjs scripts/curriculum-report.ts",
     "voice:packs": "tsx --tsconfig tsconfig.app.json --import ./scripts/ignore-assets.mjs scripts/export-pack-voice.ts",
@@ -25,12 +26,20 @@
     "check:audio": "tsx scripts/check-audio.ts",
     "check:design": "tsx scripts/check-design.ts",
     "check:packs": "tsx scripts/check-packs.ts",
+    "check:text-layout": "playwright test -c playwright.text-layout.config.ts --project=units",
+    "check:text-layout:probe": "playwright test -c playwright.text-layout.config.ts --project=probe",
+    "check:text-layout:summary": "tsx e2e/helpers/text-layout-report.ts",
+    "check:app-layout": "playwright test -c playwright.app-layout.config.ts --project=screens",
+    "check:app-layout:probe": "playwright test -c playwright.app-layout.config.ts --project=probe",
+    "check:app-layout:summary": "tsx e2e/helpers/app-layout-report.ts",
     "build:unit-index": "tsx --tsconfig tsconfig.app.json scripts/build-unit-index.ts",
     "build-stamps": "tsx --tsconfig tsconfig.app.json scripts/build-stamps.ts",
     "chars": "tsx scripts/collect-chars.ts",
-    "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
-    "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt",
-    "package": "tsx scripts/package-release.ts"
+    "fonts": ".venv\\Scripts\\python.exe scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
+    "fonts:sh": ".venv/bin/python scripts/fonts/subset.py --chars scripts/fonts/used-chars.txt --elementary scripts/fonts/used-chars-elementary.txt",
+    "package": "tsx scripts/package-release.ts",
+    "test:py": "py -3 -B -m unittest discover -s deploy/tests -v",
+    "test:py:sh": "python3 -B -m unittest discover -s deploy/tests -v"
   },
   "dependencies": {
     "react": "19.3.1",

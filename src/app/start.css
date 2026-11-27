@@ -1,0 +1,105 @@
+/* 起動画面とプロフィール選択（DESINGN.md 24章。text-layout-fixes「アプリの画面」A5）
+   ui.css の .start-notes・.start-setup* はそのまま使い、この中で配置だけを決める。 */
+
+/* ---- 起動画面: 縦の 2 段の格子 ----
+   上の段（1fr）に真ん中の列、下の段（auto）に保護者向けの表示。
+   保護者向けの表示は流れの中にあるので、2 行になっても真ん中の列に重ならない（上の段が縮む） */
+.start-screen {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+}
+.start-main {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 3);
+}
+.start-main__illust {
+  flex: none;
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 18);
+}
+/* 教材の準備の表示が出ているとき（根に data-setup）は、絵を 14u に、間を 2u に詰める。
+   最も高い状態（失敗の 2 行＋「もういちど」、保護者向け 2 行）でも上の段に余白が残る */
+.start-screen[data-setup] .start-main {
+  gap: calc(var(--u) * 2);
+}
+.start-screen[data-setup] .start-main__illust {
+  width: calc(var(--u) * 14);
+  height: calc(var(--u) * 14);
+}
+
+/* 保護者向けの小さな表示: ui.css の絶対配置を流れの中に戻す。右寄せ・最大幅 60u・下の余白 2u */
+.start-screen .start-notes {
+  position: static;
+  box-sizing: border-box;
+  justify-self: end;
+  width: 100%;
+  max-width: calc(var(--u) * 60);
+  margin: 0 var(--edge) var(--edge) var(--edge);
+  min-width: 0;
+}
+/* 保護者向けの文は文節で折る（「いま／は」「画／面」のように語の途中で折らない）。
+   auto-phrase は pretty・balance と同じ要素に付けると語の途中で折る（base.css の注）ので、text-wrap: wrap にする。
+   overflow-wrap: anywhere も文節が入る幅で途中で折るので、break-word（最後の手段だけ） */
+.start-screen .start-notes p {
+  word-break: auto-phrase;
+  overflow-wrap: break-word;
+  text-wrap: wrap;
+}
+.start-screen .start-notes:empty {
+  display: none;
+}
+
+/* ---- プロフィール選択 ----
+   札は 18u × 22u の決まった高さ（名前の行数で高さが変わらない）。並びは stretch */
+.start-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+}
+.start-picker__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+  /* 5〜8 人で 2 段になっても（題 6u ＋ 2u ＋ 22u × 2 ＋ 1.6u ≒ 54u）舞台に収まる */
+  gap: var(--gap-min) calc(var(--u) * 3);
+  max-width: calc(var(--u) * 90);
+}
+/* ui.css の .choice（あとから読まれる。同じ強さだと負ける）より強くするため、.start-picker をつける */
+.start-picker .start-profile {
+  box-sizing: border-box;
+  width: calc(var(--u) * 18);
+  height: calc(var(--u) * 22);
+  min-width: 0;
+  min-height: 0;
+  padding: calc(var(--u) * 0.8) calc(var(--u) * 0.6);
+  grid-template-rows: auto minmax(0, 1fr);
+  place-items: center;
+  align-content: start;
+  gap: calc(var(--u) * 0.6);
+  /* 名前の字の大きさの出発点（AppLabel の fit が --fit-fs で 0.1u ずつ下げる。app-label.css） */
+  font-size: var(--text-label);
+}
+.start-picker .start-profile .choice__illust {
+  width: calc(var(--u) * 11);
+  height: calc(var(--u) * 11);
+}
+.start-profile__name {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+  line-height: 1.25;
+}
+/* 名前にふりがなは付けない（保護者の入力）ので、rt.css の .rt の行間 1.7（ふりがなの分）を詰める。
+   3 行で 2.2u の字が、札の高さ 22u（絵 11u の下の 8u 強）に入る。.rt は inline なので、箱（.start-profile__name）の行間も同じにする（箱の行間が行の高さの下限になる） */
+.start-profile__name .rt {
+  line-height: 1.25;
+}

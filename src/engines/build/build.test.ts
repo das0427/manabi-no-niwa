@@ -167,6 +167,22 @@ describe('見本', () => {
 });
 
 describe('画面', () => {
+  it('こたえあわせは下の帯の位置（band）', () => {
+    const { container } = render(
+      createElement(buildEngine.Component, {
+        item: item(),
+        ctx: ctxFor('g1'),
+        revealed: false,
+        wrongMark: null,
+        disabled: false,
+        submit: vi.fn(),
+      }),
+    );
+    expect(container.querySelector('.tk-frame--band')).not.toBeNull();
+    const check = screen.getByTestId('check');
+    expect(check.classList.contains('tk-check--band')).toBe(true);
+    expect(check.classList.contains('eng-check')).toBe(true);
+  });
   it('タップで並べ、上のタイルをタップで戻す（後ろはつめる）', () => {
     const p = {
       item: item(),

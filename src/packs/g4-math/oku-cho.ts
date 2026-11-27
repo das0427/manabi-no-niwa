@@ -107,12 +107,29 @@ function sparseNumber(rng: Rng, digits: number): number {
 const digitAt = (n: number, p: number) => Math.floor(n / 10 ** p) % 10;
 const okNum = (n: number) => Number.isInteger(n) && n >= 1 && n < 1e15;
 
-/** 位の表（4けたごとの区切りが見える）: 上の組から */
-function placeTable(n: number): Figure {
+/**
+ * 位の表（導入用）: 1けたごとに位の名前を出す。13 けたを超えると 作業領域の幅に入らないので、
+ * 解説の図には使わない（placeTable の 4けたごとの表を使う）。
+ */
+function placeTableFull(n: number): Figure {
   const s = String(n);
   const len = s.length;
   const header = s.split('').map((_, i) => PLACE_NAME[len - 1 - i]!);
   return { kind: 'table', header, rows: [s.split('')] };
+}
+
+/**
+ * 位の表（4けたごとの区切りが見える）: 上の組から。
+ * 位ごとの表は 15 けたで 横に 33u 以上はみ出す（解説の板に入らない）ので、兆・億・万・一の「組」ごとに 1 ますにする。
+ * 上の組以外は 4けた（0 も 書く）。
+ */
+function placeTable(n: number): Figure {
+  const s = String(n);
+  const names = ['一《いち》', '万《まん》', '億《おく》', '兆《ちょう》'];
+  const groups: string[] = [];
+  for (let end = s.length; end > 0; end -= 4) groups.unshift(s.slice(Math.max(0, end - 4), end));
+  const header = groups.map((_, i) => `${names[groups.length - 1 - i]}の 組《くみ》`);
+  return { kind: 'table', header, rows: [groups] };
 }
 
 /** 読む: 数字 → 漢数字を選ぶ（alt: 漢数字 → 数字を選ぶ） */
@@ -135,7 +152,11 @@ function read(level: number, rng: Rng, alt: boolean): ChoiceItem {
     prompt: alt
       ? 'この 数《かず》を 数字《すうじ》で 書《か》いた ものは どれ？'
       : 'この 数《かず》の 読《よ》み方《かた》は どれ？',
-    figure: alt ? { kind: 'text', text: kanjiNumber(n), size: 'l' } : expr(String(n)),
+    // 12 けたの 数字を 大（l）・特大（xl）に すると、図が 高く（作業領域の 空きの 45% 超）なって 解説の 板が 開いたとき 図の 右に 並ぶ
+    // 並び（data-layout=side）に なり、横 1 列の 漢数字の 選択肢（4つ）が 札に 入らず はみ出す。数字の 図は 中（m）に して 下の 段に 置く
+    figure: alt
+      ? { kind: 'text', text: kanjiNumber(n), size: 'l' }
+      : { kind: 'text', text: String(n), size: 'm' },
     hints: [
       alt
         ? '「兆《ちょう》」「億《おく》」「万《まん》」の ところで 4けたずつ 区切《くぎ》って 考《かんが》えよう。'
@@ -258,7 +279,8 @@ function place(level: number, rng: Rng, alt: boolean): Item {
           : '右《みぎ》から 5けた目《め》が 一万《いちまん》の 位《くらい》。',
       `右《みぎ》から ${p + 1}けた目《め》の 数字《すうじ》だよ。`,
     ],
-    explain: `${placeName(p)}は 右《みぎ》から ${p + 1}けた目《め》。数字《すうじ》は ${digitAt(n, p)} です。`,
+    // 解説の 表は 4けたの 組ごとなので、組の 中の 何けた目かも 言う（表と 文を つなぐ）
+    explain: `${placeName(p)}は 右《みぎ》から ${p + 1}けた目《め》（${['一《いち》', '万《まん》', '億《おく》', '兆《ちょう》'][Math.floor(p / 4)]}の 組《くみ》の 右《みぎ》から ${(p % 4) + 1}けた目《め》）。数字《すうじ》は ${digitAt(n, p)} です。`,
     explainFigure: placeTable(n),
     identity: `place:${n}:${p}`,
     alt: false,
@@ -467,7 +489,7 @@ export const okuCho: UnitSpec = {
   intro: [
     {
       text: '一万《いちまん》を 10000こ 集《あつ》めた 数《かず》を 一億《いちおく》と いい、100000000 と 書《か》きます。',
-      figure: placeTable(100000000),
+      figure: placeTableFull(100000000),
     },
     {
       text: '一億《いちおく》を 10000こ 集《あつ》めた 数《かず》が 一兆《いっちょう》です。0が 12こ つきます。',
@@ -475,7 +497,7 @@ export const okuCho: UnitSpec = {
     },
     {
       text: '大《おお》きな 数《かず》は、一《いち》の 位《くらい》から 4けたずつ 区切《くぎ》ると 読《よ》みやすく なります。',
-      figure: placeTable(350020000),
+      figure: placeTableFull(350020000),
     },
     {
       text: '10倍《ばい》すると 位《くらい》が 1つ 上《あ》がり、10で わると 位《くらい》が 1つ 下《さ》がります。',

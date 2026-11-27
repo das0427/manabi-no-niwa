@@ -6,32 +6,69 @@
 }
 .eng-reading {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   gap: calc(var(--u) * 2.4);
   width: 100%;
   height: 100%;
   min-height: 0;
 }
-.eng-reading__passage {
+.eng-reading__passage-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
   min-height: 0;
-  overflow-y: auto;
-  padding: calc(var(--u) * 1.2) calc(var(--u) * 2);
   background: var(--white);
   border: calc(var(--u) * 0.3) solid var(--ink);
   border-radius: calc(var(--u) * 1.2);
   color: var(--ink);
 }
+.eng-reading__passage {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-soft) transparent;
+  padding: max(calc(var(--u) * 0.6), 0.6em) calc(var(--u) * 2) 0;
+}
 .eng-reading__passage--l {
-  font-size: calc(var(--u) * 2.6);
-  line-height: 1.9;
+  font-size: max(calc(var(--u) * 2.6), var(--text-min, 0px));
+  line-height: 1.75;
 }
 .eng-reading__passage--m {
-  font-size: calc(var(--u) * 2.3);
+  font-size: max(calc(var(--u) * 2.3), var(--text-min, 0px));
   line-height: 1.8;
 }
 .eng-reading__passage--s {
-  font-size: calc(var(--u) * 2.1);
+  font-size: max(calc(var(--u) * 2.1), var(--text-min, 0px));
   line-height: 1.8;
+}
+/* 枠の見える高さを本文の4行＋0.3行以上にするため（g1.ja.folktales/29・g2.ja.read-story/9 の 3.9 行）、
+   上の余白 1.2u → 0.6u・印の段 3.4u → 2.9u（印の字 2.2u×行 1.2＋破線）・大の行の高さ 1.9 → 1.8 → 1.75（上の余白を max(0.6u, 0.6em) にしたぶん。g2.ja.read-info/10 の解説で4行を保つ）に詰めた */
+/* 下にまだ文があるときの印（読み切ると消える）。本文の字にかぶせない（かぶせると字が隠れる）よう、
+   枠の下に印だけの段を常に取っておく。DESINGN.md 14章はグラデーション禁止なので、平らな面の札＋上の破線 */
+.eng-reading__cue-slot {
+  /* 高さは max(2.9u, 1.3em) に固定（data-tight でも縮めない）。字は --text-min・行間 1.2 */
+  flex: none;
+  box-sizing: border-box;
+  font-size: var(--text-min, calc(var(--u) * 2.2));
+  height: max(calc(var(--u) * 2.9), 1.3em);
+  min-height: max(calc(var(--u) * 2.9), 1.3em);
+  display: flex;
+}
+.eng-reading__cue {
+  flex: 1;
+  padding: 0;
+  border: 0;
+  border-top: calc(var(--u) * 0.2) dashed var(--ink-soft);
+  background: var(--white);
+  color: var(--ink);
+  font: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
 }
 .eng-reading__title {
   margin: 0 0 calc(var(--u) * 0.6);
@@ -71,8 +108,11 @@
   background: var(--paper-2);
 }
 .eng-reading__side {
+  /* 下端は板・吹き出しの上まで。作業領域は max(--panel-h, --bubble-h) の上までなので 100% でよい。
+     はみ出す分は reading.tsx が data-tight → data-tighter で詰める（スクロールさせない） */
+  max-height: 100%;
   min-height: 0;
-  overflow-y: auto;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -96,11 +136,59 @@
 }
 .eng-reading__opts .eng-opts__opt {
   min-width: 0;
-  min-height: calc(var(--u) * 6);
+  min-height: calc(var(--u) * 5.5);
   align-items: flex-start;
   text-align: left;
 }
 .eng-reading__opts .eng-opts__label {
-  font-size: calc(var(--u) * 2.2);
+  font-size: max(calc(var(--u) * 2), var(--text-min, calc(var(--u) * 2.2)));
   line-height: 1.5;
+}
+
+/* 選択肢が右の列に収まらないとき（reading.tsx が data-tight を付ける）: 本文:右 を 1:1 に、選択肢の上下の余白を 1u → 0.6u に */
+.eng-reading[data-tight] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.eng-reading[data-tight] .eng-reading__side {
+  gap: calc(var(--u) * 0.6);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__list--column {
+  gap: calc(var(--u) * 0.6);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__opt {
+  padding-block: calc(var(--u) * 0.6);
+  min-height: calc(var(--u) * 4.4);
+}
+.eng-reading[data-tight] .eng-reading__opts .eng-opts__label {
+  line-height: 1.4;
+}
+
+/* data-tight でも右の列に入らないとき（data-tighter）: 選択肢の字を --text-min・行間 1.35、余白 0.5u（設計は 0.6u。g5.ja.read-gist/29 h3 で 2px 足りなかった）・間隔 0.8u、本文:右 を 1:1.3 に。
+   右の列はスクロールさせない（reading.tsx が、板・吹き出しの上端も下端の限りにして測る） */
+.eng-reading[data-tighter] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+}
+.eng-reading[data-tighter] .eng-reading__side,
+.eng-reading[data-tighter] .eng-reading__opts .eng-opts__list--column {
+  gap: calc(var(--u) * 0.8);
+}
+.eng-reading[data-tighter] .eng-reading__opts .eng-opts__opt {
+  padding-block: calc(var(--u) * 0.5);
+  min-height: 0;
+}
+.eng-reading[data-tighter] .eng-reading__opts .eng-opts__label {
+  font-size: var(--text-min, calc(var(--u) * 2.2));
+  line-height: 1.35;
+}
+
+/* 本文の中の表（g1.ja.read-info/24）: 枠より広げず中央に置き、列の幅は語の長さに合わせる。
+   狭いときの字の縮みは Figure.tsx（useFitWidth・下限 --text-min）。語の途中の改行は狭い列の逃げ（anywhere）のまま */
+.eng-reading__passage .fig-table {
+  max-width: 100%;
+  margin-inline: auto;
+  table-layout: auto;
+}
+.eng-reading__passage .fig-table :is(th, td) {
+  padding: calc(var(--u) * 0.4) calc(var(--u) * 0.6);
+  overflow-wrap: anywhere;
 }

@@ -23,14 +23,23 @@ export type Route =
   | { name: 'card'; stage: string; cardId: string }
   /** 開発用: エンジンの見本（開発時だけ） */
   | { name: 'dev-engines' }
-  /** おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く） */
-  | { name: 'draw'; artId?: string }
+  /**
+   * 開発用: 単元の見本の問題を1問だけ本物の画面で出す（開発時だけ。文字の配置の検査 e2e/text-layout.spec.ts が使う）。
+   * n: sampleItems の何番目か（省略時は一覧）。query: '?' の後ろ（state・seeds など）
+   */
+  | { name: 'dev-unit'; unitId: string; n?: number; query: string }
+  /**
+   * おえかき（artId: 開く作品。'new' は新しい紙。省略時は「つくりかけ」があればそれを開く）。
+   * template: 'new' のときのかみ（テンプレートの背景。drawing/templates.ts の ID）
+   */
+  | { name: 'draw'; artId?: string; template?: string }
   /** おえかきの作品一覧（さくひん） */
   | { name: 'gallery' }
   /** ほかの がくねん・きょうか（stage: 開いている区分。省略時は子供の区分） */
   | { name: 'explore'; stage?: string };
 
 const ART_ID = /^[A-Za-z0-9-]{1,100}$/;
+const TEMPLATE_ID = /^[a-z0-9-]{1,40}$/;
 
 const UNIT_ID = /^(p23|p4|p5|g[1-6])\.[a-z]+\.[a-z0-9-]+$/;
 
@@ -44,10 +53,28 @@ export function parseHash(hash: string): Route {
     return b && /^(p23|p4|p5|g[1-6])$/.test(b)
       ? { name: 'explore', stage: b }
       : { name: 'explore' };
-  if (a === 'draw') return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
+  if (a === 'draw') {
+    if (b === 'new' && c && TEMPLATE_ID.test(c)) return { name: 'draw', artId: b, template: c };
+    return b && ART_ID.test(b) ? { name: 'draw', artId: b } : { name: 'draw' };
+  }
   if (a === 'parent') return { name: 'parent', tab: b ?? 'records' };
   if (a === 'unit' && b && UNIT_ID.test(b)) return { name: 'unit', unitId: b };
   if (a === 'dev' && b === 'engines' && import.meta.env.DEV) return { name: 'dev-engines' };
+  if (a === 'dev' && b === 'unit' && import.meta.env.DEV) {
+    // #/dev/unit/<unitId>/<n>?state=h2&seeds=2（'?' 以降は開発用の画面が読む）
+    const q = hash.indexOf('?');
+    const [, , id, num] = (q >= 0 ? hash.slice(0, q) : hash)
+      .replace(/^#\/?/, '')
+      .split('/')
+      .filter(Boolean);
+    if (id && UNIT_ID.test(id))
+      return {
+        name: 'dev-unit',
+        unitId: id,
+        ...(num && /^\d+$/.test(num) ? { n: Number(num) } : {}),
+        query: q >= 0 ? hash.slice(q + 1) : '',
+      };
+  }
   if (a === 'legacy' && b && UNIT_ID.test(b))
     // v1 の遊び方の id は formula_add のように _ を含む
     return c && /^[a-z0-9_-]+$/.test(c)
@@ -89,7 +116,10 @@ export function routeToHash(r: Route): string {
       return `#/card/${r.stage}/${r.cardId}`;
     case 'dev-engines':
       return '#/dev/engines';
+    case 'dev-unit':
+      return `#/dev/unit/${r.unitId}${r.n !== undefined ? `/${r.n}` : ''}${r.query ? `?${r.query}` : ''}`;
     case 'draw':
+      if (r.artId === 'new' && r.template) return `#/draw/new/${r.template}`;
       return r.artId ? `#/draw/${r.artId}` : '#/draw';
     case 'gallery':
       return '#/gallery';

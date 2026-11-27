@@ -43,6 +43,8 @@ export interface ListenSpec {
   options: ChoiceOption[];
   hints: [RichText, RichText, RichText];
   explain: RichText;
+  /** 問題文の下に出す図（地図など） */
+  figure?: Figure;
   explainFigure?: Figure;
   identity: string;
   alt?: boolean;
@@ -59,6 +61,7 @@ export function listen(s: ListenSpec): ListenItem {
     prompt: s.prompt,
     audio: s.audio,
     ...(s.gapMs !== undefined ? { gapMs: s.gapMs } : {}),
+    ...(s.figure ? { figure: s.figure } : {}),
     options: s.options,
     hints: s.hints,
     explain: s.explain,

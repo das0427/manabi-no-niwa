@@ -269,7 +269,7 @@ function table(level: number, rng: Rng, alt: boolean): Item {
       },
       task: {
         kind: 'number',
-        fields: [{ label: sc.uy, answer: { kind: 'int', value: ys[i]! } }],
+        fields: [{ unit: sc.uy, answer: { kind: 'int', value: ys[i]! } }],
         wrongAnswers: wrongList(
           [{ kind: 'int', value: ys[i]! }],
           [
@@ -444,7 +444,7 @@ function apply(level: number, rng: Rng, alt: boolean): NumberItem {
       : `${sc.formula(k).replace('□', String(x)).replace('△', String(y))}。△は ${y}${sc.uy}です。`,
     identity: `apply${alt ? '-inv' : ''}:${sc.id}:${k}:${x}`,
     alt,
-    fields: [{ label: alt ? sc.ux : sc.uy, answer: answers[0]! }],
+    fields: [{ unit: alt ? sc.ux : sc.uy, answer: answers[0]! }],
     wrongAnswers: wrongList(
       answers,
       alt
@@ -482,7 +482,7 @@ export function generateChangeRelations(level: number, rng: Rng, index: number):
 
 export const changeRelations: UnitSpec = finishUnit({
   id: 'g4.math.change-relations',
-  title: '変わり方（ともなって 変わる 2つの 数）',
+  title: '変わり方 （ともなって 変わる 2つの 数）',
   stage: 'g4',
   subject: 'math',
   domain: 'C-measure',

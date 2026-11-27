@@ -64,6 +64,28 @@ export function columnFigure(a: number, b: number, op: '＋' | '−', ansLen: nu
   };
 }
 
+/**
+ * ●のアレイ図（●が a こずつ b れつ）。SVG の円で描く。
+ * 以前は「●●●」の文字を b 行の column に並べていたが、1行が約 5u の高さになり、7 れつ以上で 35〜46u になって
+ * 作業領域・解説の板（22u）に入らなかった（mult-meaning・times-tables の約 100 画面）。円なら 1 れつ 1.3〜2.4u で済む。
+ * 大きさは「1つ分の間隔 = 12u ÷ max(a, b, 5)」で、全体を 12u 四方に収める（解説の図の上限 12u と同じ）。
+ * width は箱の幅を style で書く（width の無い図は 23u に広がり、2 × 9 のような縦長が 100u を超えるため）。
+ */
+export function dotArrayFig(a: number, b: number): Figure {
+  const pitch = 12 / Math.max(a, b, 5);
+  const P = 10;
+  const circles = Array.from({ length: a * b }, (_, i) => {
+    const cx = (i % a) * P + P / 2;
+    const cy = Math.floor(i / a) * P + P / 2;
+    return `<circle cx="${cx}" cy="${cy}" r="3.8" fill="var(--ink)"/>`;
+  }).join('');
+  return {
+    kind: 'svg',
+    label: `●が ${a}こずつ ${b}れつ`,
+    markup: `<svg viewBox="0 0 ${a * P} ${b * P}" preserveAspectRatio="xMinYMin meet" style="width:calc(var(--u) * ${(a * pitch).toFixed(2)})" xmlns="http://www.w3.org/2000/svg">${circles}</svg>`,
+  };
+}
+
 /** 定義域の配列から均等に1つ */
 export function pickOne<T>(rng: Rng, arr: readonly T[]): T {
   return arr[rng.int(0, arr.length - 1)]!;

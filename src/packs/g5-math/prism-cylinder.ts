@@ -454,7 +454,7 @@ function net(level: number, rng: Rng, alt: boolean): Item {
           '円柱の 展開図は、側面の 長方形の 横の 長さが 底面の 円周と 等しく、2つの 円が 長方形の 上と 下に つきます。',
         identity: 'net-pick:cyl',
         alt: true,
-        layout: 'grid',
+        layout: 'row',
         options: [
           { figure: cylNet('ok'), correct: true },
           { figure: cylNet('short'), misconception: 'diam-width' },
@@ -477,7 +477,7 @@ function net(level: number, rng: Rng, alt: boolean): Item {
       explain: `${prismName(n)}の 展開図は、側面の 長方形が ${n}つ ならび、${polyName(n)}の 底面が 上と 下に 1つずつ つきます。`,
       identity: `net-pick:${n}`,
       alt: true,
-      layout: 'grid',
+      layout: 'row',
       options: [
         { figure: prismNet(n, 'ok'), correct: true },
         { figure: prismNet(n, 'same'), misconception: 'net-overlap' },
@@ -506,7 +506,7 @@ function net(level: number, rng: Rng, alt: boolean): Item {
     explain: `側面の 横の 長さは 底面の 円周と 等しいので、${d} × 3.14 ＝ ${dec(ans, 2)}cmです。（たての 長さは 高さの ${h}cm）`,
     identity: `net:${d}:${h}`,
     alt: false,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [d, 'diam-width'],

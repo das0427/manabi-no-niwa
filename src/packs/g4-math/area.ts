@@ -13,24 +13,78 @@ import { finishUnit, opts, pick, pickObj, REVISED, STROKE, svg, svgText, wrongLi
 type Obj = 'count' | 'formula' | 'inverse' | 'compound' | 'units' | 'large';
 
 const C = 24;
+/** 方がんの まわりの あき（viewBox の単位。線の太さ 1 の半分より 大きければ よい。8 だと 7 ます四方で 2% 損） */
+const PAD = 4;
 
 /** 方がんの 上の ます目（セルの集合）を ぬった 図 */
 function cellsFig(cells: [number, number][], w: number, h: number): Figure {
   let body = '';
   for (const [x, y] of cells)
-    body += `<rect x="${8 + x * C}" y="${8 + y * C}" width="${C}" height="${C}" fill="var(--sky)"/>`;
+    body += `<rect x="${PAD + x * C}" y="${PAD + y * C}" width="${C}" height="${C}" fill="var(--sky)"/>`;
   for (let x = 0; x <= w; x++)
-    body += `<line x1="${8 + x * C}" y1="8" x2="${8 + x * C}" y2="${8 + h * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
+    body += `<line x1="${PAD + x * C}" y1="${PAD}" x2="${PAD + x * C}" y2="${PAD + h * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
   for (let y = 0; y <= h; y++)
-    body += `<line x1="8" y1="${8 + y * C}" x2="${8 + w * C}" y2="${8 + y * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
-  return svg(w * C + 16, h * C + 16, body, '1ますが 1cm²の 方がん');
+    body += `<line x1="${PAD}" y1="${PAD + y * C}" x2="${PAD + w * C}" y2="${PAD + y * C}" stroke="var(--ink)" stroke-opacity="0.3" stroke-width="1"/>`;
+  return svg(w * C + 2 * PAD, h * C + 2 * PAD, body, '1ますが 1cm²の 方がん');
 }
+
+/** 形の 外接の 長方形（左上の ますと、横・たての ます数） */
+function extent(cells: [number, number][]): { x0: number; y0: number; w: number; h: number } {
+  const xs = cells.map(([x]) => x);
+  const ys = cells.map(([, y]) => y);
+  const x0 = Math.min(...xs);
+  const y0 = Math.min(...ys);
+  return { x0, y0, w: Math.max(...xs) - x0 + 1, h: Math.max(...ys) - y0 + 1 };
+}
+
+/**
+ * 形を 方がんに のせる（text-layout-fixes 第8回）。方がんは 形の 外接の 長方形に まわり 1ますを 足した 大きさ。
+ * もとは 形に かかわらず 7×7 で、形が 2×4 ほどでも 大半が 空き。単位を label に 書いて いた ときは ます 1.9u
+ * （第8回の 測り）、unit に 移しても 7×7 の ままでは 図の段（高さ 約 18u）で 2.35u に しか ならない。
+ * まわりを 1ます あけるのは、形の 縁の ますが 方がんの 枠と 見分けられるように（枠は 数えない）。
+ */
+function onGrid(cells: [number, number][]): { cells: [number, number][]; w: number; h: number } {
+  const e = extent(cells);
+  return {
+    cells: cells.map(([x, y]) => [x - e.x0 + 1, y - e.y0 + 1] as [number, number]),
+    w: e.w + 2,
+    h: e.h + 2,
+  };
+}
+
+/**
+ * 広さくらべの 方がん。左の 形（ア）と 右の 形（イ）を、上を そろえて 1 まいの 方がんに のせる。
+ * 2つの 形の あいだは 1 ます あける（それぞれの まわりの 1 ますを 重ねる。あきが 2 ますだと 図が 23u に 入らない）。
+ */
+function onGridPair(
+  s1: [number, number][],
+  s2: [number, number][],
+): { cells: [number, number][]; w: number; h: number } {
+  const e1 = extent(s1);
+  const e2 = extent(s2);
+  const shift2 = e1.w + 2;
+  return {
+    cells: [
+      ...s1.map(([x, y]) => [x - e1.x0 + 1, y - e1.y0 + 1] as [number, number]),
+      ...s2.map(([x, y]) => [x - e2.x0 + shift2, y - e2.y0 + 1] as [number, number]),
+    ],
+    w: e1.w + e2.w + 3,
+    h: Math.max(e1.h, e2.h) + 2,
+  };
+}
+
+/**
+ * 図の中の 寸法の 字（viewBox の単位）。字を 大きく、図を 小さく 描く（text-layout-fixes 第4回）。
+ * 図の幅は「字が 最小の 大きさに なる 幅」で 決まるので、字が 小さい（13）と 図が 40u 近くに なり、
+ * 数の入力の 図の段（高さ 約 16u）に 入らない。字 18 に して 図の 全体を 縮める。
+ */
+const F = 18;
 
 /** L字の 図形（外の 長方形 W×H から 右上の w×h を 切り取った 形） */
 function lFig(W: number, H: number, w: number, h: number, unit: string): Figure {
-  const k = Math.min(22, Math.floor(220 / Math.max(W, H)));
-  const X = (x: number) => 40 + x * k;
-  const Y = (y: number) => 20 + y * k;
+  const k = Math.max(6, Math.min(12, Math.floor(110 / Math.max(W, H))));
+  const X = (x: number) => 58 + x * k;
+  const Y = (y: number) => 26 + y * k;
   const pts = [
     [0, 0],
     [W - w, 0],
@@ -40,30 +94,49 @@ function lFig(W: number, H: number, w: number, h: number, unit: string): Figure 
     [0, H],
   ].map(([x, y]) => `${X(x!)},${Y(y!)}`);
   let body = `<polygon points="${pts.join(' ')}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
-  body += svgText(X(W / 2), Y(H) + 16, `${W}${unit}`, 13);
-  body += svgText(X(0) - 22, Y(H / 2), `${H}${unit}`, 13);
-  body += svgText(X((W - w) / 2), Y(0) - 8, `${W - w}${unit}`, 13);
-  body += svgText(X(W) + 24, Y(h + (H - h) / 2), `${H - h}${unit}`, 13);
-  return svg(X(W) + 50, Y(H) + 28, body, 'L字の 形');
+  body += svgText(X(W / 2), Y(H) + 18, `${W}${unit}`, F);
+  body += svgText(X(0) - 32, Y(H / 2), `${H}${unit}`, F);
+  body += svgText(X((W - w) / 2), Y(0) - 12, `${W - w}${unit}`, F);
+  body += svgText(X(W) + 30, Y(h + (H - h) / 2), `${H - h}${unit}`, F);
+  return svg(X(W) + 64, Y(H) + 34, body, 'L字の 形');
 }
 
 /** 長方形の 図（たて・横の 長さ つき） */
 function rectFig(a: number, b: number, unit: string): Figure {
-  const k = Math.min(24, Math.floor(200 / Math.max(a, b)));
-  let body = `<rect x="40" y="16" width="${b * k}" height="${a * k}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
-  body += svgText(40 + (b * k) / 2, 16 + a * k + 16, `${b}${unit}`, 13);
-  body += svgText(20, 16 + (a * k) / 2, `${a}${unit}`, 13);
-  return svg(b * k + 60, a * k + 36, body, '長方形');
+  const k = Math.max(8, Math.min(14, Math.floor(120 / Math.max(a, b))));
+  let body = `<rect x="46" y="12" width="${b * k}" height="${a * k}" fill="var(--sky)" fill-opacity="0.4" ${STROKE}/>`;
+  body += svgText(46 + (b * k) / 2, 12 + a * k + 18, `${b}${unit}`, F);
+  body += svgText(22, 12 + (a * k) / 2, `${a}${unit}`, F);
+  return svg(b * k + 62, a * k + 40, body, '長方形');
 }
 
 const sq = (u: string) => `${u}²`;
 
 /** 1cm² の いくつ分（alt: 2つの 形の 広さくらべ） */
 function count(level: number, rng: Rng, alt: boolean): Item {
-  const make = (): [number, number][] => {
-    // 長方形 2つを 組み合わせた 形
-    const a: [number, number, number, number] = [0, 0, rng.int(2, 5), rng.int(2, 4)];
-    const b: [number, number, number, number] = [rng.int(0, 2), a[3], rng.int(1, 4), rng.int(1, 2)];
+  /**
+   * 長方形 2つを 組み合わせた 形。たては 5 ます以内、横は maxW ます以内。
+   * 方がんは まわり 1 ますを 足すので、形ひとつの 数の入力は 7 ます四方まで（図の段 高さ 約 18u で ます 1 つ 2.46u）。
+   * 広さくらべは 形を 2つ 横に 並べ、図の 幅が 23u なので 9 ます（形 3 + 3 + あき 3）まで → 形の 横は 3 ます以内。
+   */
+  const make = (maxW: number): [number, number][] => {
+    const a: [number, number, number, number] = [
+      0,
+      0,
+      rng.int(2, Math.min(5, maxW)),
+      rng.int(2, 4),
+    ];
+    const bx = rng.int(0, 2);
+    const bw = rng.int(1, 4);
+    const bh = rng.int(1, 2);
+    // 下の 長方形は 上の 長方形の 横はばの 内がわから 始める（かどだけで つながる 形にしない）
+    const x0 = Math.min(bx, a[2] - 1);
+    const b: [number, number, number, number] = [
+      x0,
+      a[3],
+      Math.min(bw, maxW - x0),
+      Math.min(bh, 5 - a[3]),
+    ];
     const set = new Map<string, [number, number]>();
     for (const [x0, y0, w, h] of [a, b])
       for (let x = x0; x < x0 + w; x++)
@@ -71,12 +144,11 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     return [...set.values()];
   };
   if (alt) {
-    let s1 = make();
-    let s2 = make();
-    while (s1.length === s2.length) s2 = make();
+    let s1 = make(3);
+    let s2 = make(3);
+    while (s1.length === s2.length) s2 = make(3);
     if (rng.next() < 0.5) [s1, s2] = [s2, s1];
-    const shift = 7;
-    const both = [...s1, ...s2.map(([x, y]) => [x + shift, y] as [number, number])];
+    const both = onGridPair(s1, s2);
     const big = s1.length > s2.length ? 'ア' : 'イ';
     const item: ChoiceItem = {
       engine: 'choice',
@@ -84,7 +156,7 @@ function count(level: number, rng: Rng, alt: boolean): Item {
       objective: 'count',
       level,
       prompt: '左の 形が ア、右の 形が イです。広いのは どちら？（1ますは 1cm²）',
-      figure: cellsFig(both, 13, 7),
+      figure: cellsFig(both.cells, both.w, both.h),
       hints: [
         '形が ちがうと、見た目では くらべにくいね。',
         '1cm²の ますが いくつ分かを 数えよう。',
@@ -102,7 +174,8 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     };
     return item;
   }
-  const cells = make();
+  const cells = make(5);
+  const shown = onGrid(cells);
   const n = cells.length;
   const answers = [{ kind: 'int' as const, value: n }];
   // まわりの 長さ（ますの 辺の 数）
@@ -122,7 +195,7 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     objective: 'count',
     level,
     prompt: '1ますは 1辺が 1cmの 正方形（1cm²）です。色の ついた 形の 面積は 何cm²ですか。',
-    figure: cellsFig(cells, 7, 7),
+    figure: cellsFig(shown.cells, shown.w, shown.h),
     hints: [
       '面積は、1cm²の 正方形が いくつ分かで 表すよ。',
       '長方形の 部分に 分けて 数えると 数えやすいよ。',
@@ -131,7 +204,7 @@ function count(level: number, rng: Rng, alt: boolean): Item {
     explain: `1cm²の 正方形が ${n}こ 分なので、面積は ${n}cm²です。`,
     identity: `count:${JSON.stringify([...cells].sort())}`,
     alt: false,
-    fields: [{ label: 'cm²', answer: answers[0]! }],
+    fields: [{ unit: 'cm²', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [[per, 'perimeter']]),
   };
   return item;
@@ -167,7 +240,7 @@ function formula(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} × ${b} ＝ ${S}。面積は ${S}${sq(u)}です。`,
     identity: `formula:${Math.min(a, b)}x${Math.max(a, b)}${u}${alt ? ':fig' : ''}`,
     alt,
-    fields: [{ label: sq(u), answer: answers[0]! }],
+    fields: [{ unit: sq(u), answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [2 * (a + b), 'perimeter'],
       [a + b, 'add-sides'],
@@ -194,7 +267,7 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${a} × ${a} ＝ ${a * a}なので、1辺は ${a}cmです。`,
       identity: `inverse-sq:${a}`,
       alt: true,
-      fields: [{ label: 'cm', answer: answers[0]! }],
+      fields: [{ unit: 'cm', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [(a * a) / 2, 'half-area'],
         [(a * a) / 4, 'perimeter'],
@@ -215,7 +288,7 @@ function inverse(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} × □ ＝ ${S} なので、□ ＝ ${S} ÷ ${a} ＝ ${b}。横は ${b}cmです。`,
     identity: `inverse:${S}:${a}`,
     alt: false,
-    fields: [{ label: 'cm', answer: answers[0]! }],
+    fields: [{ unit: 'cm', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [S * a, 'mult-instead'],
       [S - a, 'mult-instead'],
@@ -232,12 +305,11 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
     const r = rng.int(1, 2);
     const S = W * H - (W - 2 * r) * (H - 2 * r);
     const answers = [{ kind: 'int' as const, value: S }];
-    const k = Math.min(18, Math.floor(220 / W));
-    let body = `<rect x="30" y="20" width="${W * k}" height="${H * k}" fill="var(--sky)" fill-opacity="0.5" ${STROKE}/>`;
-    body += `<rect x="${30 + r * k}" y="${20 + r * k}" width="${(W - 2 * r) * k}" height="${(H - 2 * r) * k}" fill="var(--white)" ${STROKE}/>`;
-    body += svgText(30 + (W * k) / 2, 20 + H * k + 16, `${W}m`, 13);
-    body += svgText(14, 20 + (H * k) / 2, `${H}m`, 13);
-    body += svgText(30 + r * k + 4, 20 + (r * k) / 2 + 2, `${r}m`, 11, 'start');
+    const k = Math.max(6, Math.min(10, Math.floor(120 / W)));
+    let body = `<rect x="34" y="14" width="${W * k}" height="${H * k}" fill="var(--sky)" fill-opacity="0.5" ${STROKE}/>`;
+    body += `<rect x="${34 + r * k}" y="${14 + r * k}" width="${(W - 2 * r) * k}" height="${(H - 2 * r) * k}" fill="var(--white)" ${STROKE}/>`;
+    body += svgText(34 + (W * k) / 2, 14 + H * k + 18, `${W}m`, F);
+    body += svgText(16, 14 + (H * k) / 2, `${H}m`, F);
     return {
       engine: 'number',
       id: `compound-alt:${W}x${H}:${r}`,
@@ -253,7 +325,7 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${W} × ${H} − ${W - 2 * r} × ${H - 2 * r} ＝ ${W * H} − ${(W - 2 * r) * (H - 2 * r)} ＝ ${S}。道の 面積は ${S}m²です。`,
       identity: `compound-frame:${W}x${H}:${r}`,
       alt: true,
-      fields: [{ label: 'm²', answer: answers[0]! }],
+      fields: [{ unit: 'm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [W * H - (W - r) * (H - r), 'frame-width'],
         [W * H, 'compound-whole'],
@@ -282,7 +354,7 @@ function compound(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${W} × ${H} − ${w} × ${h} ＝ ${W * H} − ${w * h} ＝ ${S}。（2つの 長方形に 分けて ${(W - w) * H} ＋ ${w * (H - h)} ＝ ${S}と しても よい）面積は ${S}cm²です。`,
     identity: `compound:${W}x${H}:${w}x${h}`,
     alt: false,
-    fields: [{ label: 'cm²', answer: answers[0]! }],
+    fields: [{ unit: 'cm²', answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [W * H, 'compound-whole'],
       [(W - w) * H + W * (H - h), 'compound-overlap'],
@@ -360,7 +432,7 @@ function units(level: number, rng: Rng, alt: boolean): Item {
     explain: `1${c.from} ＝ ${c.f}${c.to}なので、${big ? `${n}${c.from} ＝ ${ans}${c.to}` : `${given}${c.to} ＝ ${ans}${c.from}`}です。`,
     identity: `units:${c.from}-${c.to}:${n}:${big ? 'd' : 'u'}`,
     alt: false,
-    fields: [{ label: big ? c.to : c.from, answer: answers[0]! }],
+    fields: [{ unit: big ? c.to : c.from, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [big ? n * c.w[0] : given / c.w[0], c.w[1]],
       [big ? n * c.f * 10 : given / (c.f * 10), 'unit-100'],
@@ -389,7 +461,7 @@ function large(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${am}m ＝ ${am * 100}cm。${am * 100} × ${bcm} ＝ ${S}。面積は ${S}cm²です。`,
       identity: `large-mix:${am}m:${bcm}cm`,
       alt: true,
-      fields: [{ label: 'cm²', answer: answers[0]! }],
+      fields: [{ unit: 'cm²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [am * bcm, 'unit-mix'],
         [am * 10 * bcm, 'unit-mix'],
@@ -415,7 +487,7 @@ function large(level: number, rng: Rng, alt: boolean): NumberItem {
       explain: `${a} × ${b} ＝ ${a * b}。面積は ${a * b}km²です。`,
       identity: `large:km:${Math.min(a, b)}x${Math.max(a, b)}`,
       alt: false,
-      fields: [{ label: 'km²', answer: answers[0]! }],
+      fields: [{ unit: 'km²', answer: answers[0]! }],
       wrongAnswers: wrongList(answers, [
         [2 * (a + b), 'perimeter'],
         [a * b * 1000000, 'unit-convert'],
@@ -442,7 +514,7 @@ function large(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${a} × ${b} ＝ ${m2}m²。1${kind} ＝ ${kind === 'a' ? 100 : 10000}m²なので、${ans}${kind}です。`,
     identity: `large:${kind}:${Math.min(a, b)}x${Math.max(a, b)}`,
     alt: false,
-    fields: [{ label: kind, answer: answers[0]! }],
+    fields: [{ unit: kind, answer: answers[0]! }],
     wrongAnswers: wrongList(answers, [
       [m2, 'unit-convert'],
       [kind === 'a' ? m2 / 10 : m2 / 100, 'unit-100'],

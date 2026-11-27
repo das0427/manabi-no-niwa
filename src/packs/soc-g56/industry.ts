@@ -31,7 +31,7 @@ export const industryAllow: Allow = {
   畿: '近畿地方（地方の名前）',
 };
 
-const REI = '（れいのデータ。このアプリでつくった例《れい》だよ）';
+const REI = '（れいのデータ）';
 
 // ---- kinds ----
 const kinds: Item[] = [

@@ -104,7 +104,14 @@ export const graphSamples: GraphItem[] = [
     identity: 'line2:diff:7',
     data: {
       kind: 'line',
-      labels: ['4月《がつ》', '5月《がつ》', '6月《がつ》', '7月《がつ》', '8月《がつ》', '9月《がつ》'],
+      labels: [
+        '4月《がつ》',
+        '5月《がつ》',
+        '6月《がつ》',
+        '7月《がつ》',
+        '8月《がつ》',
+        '9月《がつ》',
+      ],
       values: [22, 25, 27, 29, 29, 28],
       name: 'なは',
       series2: { name: 'さっぽろ', values: [7, 13, 17, 21, 22, 18] },
@@ -126,11 +133,7 @@ export const graphSamples: GraphItem[] = [
     objective: 'read-pie',
     level: 1,
     prompt: 'あげパンは ぜんたいの なん%？',
-    hints: [
-      'あげパンは ②の ぶぶん',
-      'めもりは 1めもり 1%',
-      '40%の ところから 65%の ところまで',
-    ],
+    hints: ['あげパンは ②の ぶぶん', 'めもりは 1めもり 1%', '40%の ところから 65%の ところまで'],
     explain: '②は 40%から 65%まで。65 − 40 ＝ 25 で 25% だよ',
     identity: 'pie:read:25',
     data: {

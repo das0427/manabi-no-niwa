@@ -19,6 +19,8 @@ interface Scene {
   type: 'gappei' | 'zouka';
   unit: string;
   text: (a: number, b: number) => string;
+  /** 1行に はいる みじかい おはなし（「しきから おはなしを えらぶ」の 選択肢。3つの 札が 作業領域に はいるように） */
+  short: (a: number, b: number) => string;
 }
 
 const SCENES: Scene[] = [
@@ -27,18 +29,21 @@ const SCENES: Scene[] = [
     type: 'gappei',
     unit: 'こ',
     text: (a, b) => `くりを ${a}こ、どんぐりを ${b}こ ひろいました。あわせて なんこ ですか。`,
+    short: (a, b) => `くり ${a}こ、どんぐり ${b}こ。あわせて なんこ？`,
   },
   {
     id: 'origami',
     type: 'gappei',
     unit: 'まい',
     text: (a, b) => `おりがみが ${a}まい、シールが ${b}まい あります。あわせて なんまい ですか。`,
+    short: (a, b) => `おりがみ ${a}まい、シール ${b}まい。あわせて なんまい？`,
   },
   {
     id: 'kame-kaeru',
     type: 'gappei',
     unit: 'ひき',
     text: (a, b) => `いけに かめが ${a}ひき、かえるが ${b}ひき います。みんなで なんびき ですか。`,
+    short: (a, b) => `かめ ${a}ひき、かえる ${b}ひき。みんなで なんびき？`,
   },
   {
     id: 'cookie',
@@ -46,6 +51,7 @@ const SCENES: Scene[] = [
     unit: 'まい',
     text: (a, b) =>
       `おさらに クッキーが ${a}まい、せんべいが ${b}まい あります。ぜんぶで なんまい ですか。`,
+    short: (a, b) => `クッキー ${a}まい、せんべい ${b}まい。ぜんぶで なんまい？`,
   },
   {
     id: 'suzume',
@@ -53,6 +59,7 @@ const SCENES: Scene[] = [
     unit: 'わ',
     text: (a, b) =>
       `でんせんに すずめが ${a}わ います。${b}わ とんで きました。すずめは なんわに なりましたか。`,
+    short: (a, b) => `すずめ ${a}わ。${b}わ とんで きました。ぜんぶで なんわ？`,
   },
   {
     id: 'biidama',
@@ -60,6 +67,7 @@ const SCENES: Scene[] = [
     unit: 'こ',
     text: (a, b) =>
       `ビーだまを ${a}こ もって います。ともだちから ${b}こ もらいました。ぜんぶで なんこに なりましたか。`,
+    short: (a, b) => `ビーだま ${a}こ。${b}こ もらいました。ぜんぶで なんこ？`,
   },
   {
     id: 'kingyo',
@@ -67,6 +75,7 @@ const SCENES: Scene[] = [
     unit: 'ひき',
     text: (a, b) =>
       `すいそうに きんぎょが ${a}ひき います。${b}ひき いれました。きんぎょは なんびきに なりましたか。`,
+    short: (a, b) => `きんぎょ ${a}ひき。${b}ひき いれました。ぜんぶで なんびき？`,
   },
   {
     id: 'ame',
@@ -74,6 +83,7 @@ const SCENES: Scene[] = [
     unit: 'こ',
     text: (a, b) =>
       `あめを ${a}こ かいました。あとで また ${b}こ かいました。あめは ぜんぶで なんこ ですか。`,
+    short: (a, b) => `あめ ${a}こ。また ${b}こ かいました。ぜんぶで なんこ？`,
   },
 ];
 
@@ -297,12 +307,12 @@ function erabuItem(level: number, a: number, b: number, alt: boolean, rng: Rng):
     identity: key(a, b),
     alt: true,
     options: [
-      { label: sc.text(a, b), correct: true },
+      { label: sc.short(a, b), correct: true },
       {
-        label: `${s}こ ありました。${b}こ たべました。のこりは なんこ ですか。`,
+        label: `${s}こ ありました。${b}こ たべました。のこりは なんこ？`,
         misconception: 'sub-instead',
       },
-      { label: sc.text(a, wrongB), misconception: 'misread' },
+      { label: sc.short(a, wrongB), misconception: 'misread' },
     ],
   };
 }
@@ -453,7 +463,7 @@ export function generateAddCarry(level: number, rng: Rng, index: number): Item {
             : 'ふえると かずは おおきく なるね。たしざんだよ。',
         ),
         id: `${obj}${alt ? '-alt' : ''}:${sc.id}:${key(a, b)}`,
-        fields: [{ answer: { kind: 'int', value: a + b }, label: sc.unit }],
+        fields: [{ answer: { kind: 'int', value: a + b }, unit: sc.unit }],
         explain: `しきは ${a} ＋ ${b} ＝ ${a + b}。${stepsText(a, b)} こたえは ${a + b}${sc.unit} です。`,
       };
     }

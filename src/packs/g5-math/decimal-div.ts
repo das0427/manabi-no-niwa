@@ -58,6 +58,18 @@ function divFig(a: D, b: D): Figure {
   };
 }
 
+/**
+ * 解説の板の 図: どちらも 倍した あとの 形だけ。もとの 式は 画面の 式に あるので、行を 1 つ へらす。
+ * 3 行の 表（divFig）は 解説の 文と いっしょに 板に 入らず スクロールした（text-layout-fixes.md 第6回）
+ */
+function divFigMoved(a: D, b: D): Figure {
+  return {
+    kind: 'table',
+    header: ['', 'わる数', 'わられる数'],
+    rows: [[`どちらも ${10 ** b.p}倍`, String(b.v), S(shift(a, b.p))]],
+  };
+}
+
 /** a ÷ b（1/1000 の位までで わりきれるとき）の 表示。わりきれなければ null */
 function quot(a: D, b: D): string | null {
   const N = a.v * 10 ** (b.p + 4);
@@ -104,8 +116,8 @@ function exact(level: number, rng: Rng, alt: boolean): NumberItem {
       hintShift(b),
       `${as} ÷ ${bs}は ${a2} ÷ ${b.v}と 同じ 商に なるよ。${a2} ÷ ${b.v}を 計算しよう。`,
     ],
-    explain: `わる数と わられる数を どちらも ${10 ** b.p}倍して、${a2} ÷ ${b.v} ＝ ${S(q)}。${as} ÷ ${bs} ＝ ${S(q)}です。商の 小数点は、うつした あとの わられる数の 小数点に そろえます。`,
-    explainFigure: divFig(a, b),
+    explain: `わる数も わられる数も ${10 ** b.p}倍して、${a2} ÷ ${b.v} ＝ ${S(q)}。商の 小数点は、わられる数の うつした 小数点に そろえます。`,
+    explainFigure: divFigMoved(a, b),
     identity: `${as}÷${bs}${alt ? ':col' : ''}`,
     alt,
     fields: [{ answer: answers[0]! }],
@@ -143,7 +155,7 @@ function further(level: number, rng: Rng, alt: boolean): NumberItem {
         `${a2}を ${dec(a1.v * 10 ** (q.p - a1.p), 0)}の [[1/${10 ** q.p}]]と 考えると、${a1.v * 10 ** (q.p - a1.p)} ÷ ${b.v}。`,
       ],
       explain: `${as} ÷ ${bs}は ${a2} ÷ ${b.v}と 同じ。0を つけたして わり進むと ${S(q)}です。`,
-      explainFigure: divFig(a, b),
+      explainFigure: divFigMoved(a, b),
       identity: `${as}÷${bs}${alt ? ':col' : ''}`,
       alt,
       fields: [{ answer: answers[0]! }],
@@ -217,8 +229,8 @@ function rem(level: number, rng: Rng, alt: boolean): NumberItem {
         `${a2} ÷ ${b.v}を 一の位まで 計算すると、商は ${q}。`,
         `あまりの 小数点は、もとの わられる数 ${as}の 小数点に そろえるよ。${as} − ${bs} × ${q}で たしかめよう。`,
       ],
-      explain: `${as} ÷ ${bs} ＝ ${q} あまり ${r}。たしかめ: ${bs} × ${q} ＋ ${r} ＝ ${as}。あまりの 小数点は もとの わられる数の 小数点に そろえます（うつした 小数点では ありません）。`,
-      explainFigure: divFig(a, b),
+      explain: `商は ${q}、あまりは ${r}。たしかめ: ${bs} × ${q} ＋ ${r} ＝ ${as}。あまりの 小数点は、もとの わられる数の 小数点に そろえます。`,
+      explainFigure: divFigMoved(a, b),
       identity: `rem:${as}÷${bs}`,
       alt: false,
       fields: [
@@ -410,7 +422,7 @@ function story(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `${as} ÷ ${bs} ＝ ${S(q)}。答えは ${S(q)}${sc.unit}です。`,
     identity: `story:${sc.id}:${as}÷${bs}${alt ? ':tbl' : ''}`,
     alt,
-    fields: [{ label: sc.unit, answer: answers[0]! }],
+    fields: [{ unit: sc.unit, answer: answers[0]! }],
     keys: ['decimal'],
     wrongAnswers: wrongList(answers, [
       [quot(b, a), 'div-swap'],

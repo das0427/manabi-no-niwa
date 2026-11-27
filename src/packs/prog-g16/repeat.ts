@@ -117,6 +117,16 @@ const FINDS: Fd[] = [
     hint3: '「すすむ」を ひとつずつ かぞえて みよう。',
   },
 ];
+/**
+ * find の解説。正解は「くりかえす」1 つの手順。中の並びを 1 回だけ言う（解説の板で 2 行に入る長さ。
+ * 長い手順と正解の文を並べると 3〜4 行になり、--fit が下がって主の図の手順の札が 2.4u を割った＝第8回 Y3）。
+ */
+function findExplain(right: readonly Cmd[]): string {
+  const r = right[0];
+  if (right.length !== 1 || r === undefined || r.op !== 'repeat' || typeof r.times !== 'number')
+    throw new Error('find の正解は「くりかえす」1 つ（回数は数）');
+  return `「${cmdText(r.body)}」を ${r.times}かい くりかえすと、うえの てじゅんと おなじ うごきに なるよ。`;
+}
 const findItems: ChoiceItem[] = FINDS.map((q) => {
   const long = flat(q.long);
   if (flat(q.right).join() !== long.join()) throw new Error(`${q.id}: 正解が同じ動きでない`);
@@ -135,7 +145,7 @@ const findItems: ChoiceItem[] = FINDS.map((q) => {
       '「くりかえす」の ふだは、なかの ふだを なんかい うごかすかを きめる ふだだよ。',
       q.hint3,
     ],
-    explain: `「${cmdText(q.long)}」は「${cmdText(q.right)}」と おなじ うごきだよ。おなじ ならびは「くりかえす」で まとめられるよ。`,
+    explain: findExplain(q.right),
   });
 });
 
@@ -164,7 +174,7 @@ const countItems: NumberItem[] = COUNTS.map((c) => {
     alt: true,
     prompt: 'この てじゅんで「すすむ」は ぜんぶで なんかい うごくかな。',
     figure: stripFigure(c.prog, { label: `てじゅん: ${cmdText(c.prog)}`, hU: 6 }),
-    fields: [{ label: 'かい', answer: { kind: 'int', value: c.total } }],
+    fields: [{ answer: { kind: 'int', value: c.total }, unit: 'かい' }],
     wrongAnswers: [
       { value: String(c.inBody), misconception: 'forget-repeat' },
       { value: String(c.times), misconception: 'forget-body' },
@@ -241,7 +251,7 @@ function repeatHints(sol: Cmd[], maxCards: number): [string, string, string] {
     'おなじ ふだが つづく ところや、おなじ ならびが でてくる ところを さがそう。',
     `ふだは ${maxCards}まい いかだよ。「くりかえす」の ふだも ふだ 1まいと かぞえるよ。`,
     first && first.op === 'repeat'
-      ? `はじめの かたまりは「${cmdText(first.body)}」を くりかえすよ。なんかい くりかえすかは かぞえてみよう。`
+      ? `はじめは「${cmdText(first.body)}」を くりかえすよ。なんかい くりかえすか かぞえよう。`
       : 'ふだを ならべたら「うごかす」を おして たしかめよう。',
   ];
 }
@@ -416,8 +426,8 @@ const bodyItems: NumberItem[] = BODIES.map((q) => {
     level: q.level,
     alt: true,
     prompt: `かいだんの みちを いく てじゅんを つくるよ。「くりかえす ${q.n}かい」の なかには、ふだが なんまい はいるかな。`,
-    figure: gridFigure(l, { label: 'ますの ず。かいだんの ような みち。ほしが ゴール', hU: 10 }),
-    fields: [{ label: 'まい', answer: { kind: 'int', value: len } }],
+    figure: gridFigure(l, { label: 'ますの ず。かいだんの ような みち。ほしが ゴール', hU: 12 }),
+    fields: [{ answer: { kind: 'int', value: len }, unit: 'まい' }],
     wrongAnswers: uniq([
       { value: String(q.n), misconception: 'repeat-count' },
       { value: String(len - 1), misconception: 'repeat-body' },

@@ -4,7 +4,7 @@
  *  (b) place … 数を数直線の上に置く（目盛りをタップ。最小目盛りへ吸着。◀▶ で1目盛りずつ直せる）
  * 整数・小数・分数の目盛り。値は有理数で比べる（浮動小数点で比べない）。
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   answerValue,
   eq,
@@ -30,6 +30,7 @@ import {
   type Num,
 } from './kit';
 import { NumFields, NumKeys, useNumEntry, type PadKey } from './NumPad';
+import { floorStyle, useSvgTextFloor, useWidenToText } from '../figure/svgText';
 import './numberline.css';
 
 export interface NumberlineScale {
@@ -314,11 +315,14 @@ function SvgNum({
   x,
   y,
   as,
+  floor = 0,
 }: {
   v: Rational;
   x: number;
   y: number;
   as: NumberlineScale['labelAs'];
+  /** 文字の最小（viewBox の単位）。分数の上下の間隔を字の大きさに合わせて広げる */
+  floor?: number;
 }) {
   const t = ratText(v, as ?? 'auto');
   const m = /^(-?)\[\[(?:(\d+) )?(\d+)\/(\d+)\]\]$/.exec(t);
@@ -329,20 +333,29 @@ function SvgNum({
       </text>
     );
   const dx = m[2] ? 12 : 0;
+  // 分数の字は max(28, floor)。上下の位置・線は字の大きさに比例（28 のとき -14 / -6 / +22）
+  const ff = Math.max(28, floor);
+  const kk = ff / 28;
   return (
     <g>
       {m[2] ? (
-        <text x={x - 14} y={y + 2} className="nl2-label" textAnchor="end">
+        <text x={x - 14 * kk} y={y + 2} className="nl2-label" textAnchor="end">
           {m[1]}
           {m[2]}
         </text>
       ) : null}
-      <text x={x + dx} y={y - 14} className="nl2-label nl2-label--frac">
+      <text x={x + dx} y={y - 14 * kk} className="nl2-label nl2-label--frac">
         {m[2] ? '' : m[1]}
         {m[3]}
       </text>
-      <line x1={x + dx - 16} y1={y - 6} x2={x + dx + 16} y2={y - 6} className="nl2-fracbar" />
-      <text x={x + dx} y={y + 22} className="nl2-label nl2-label--frac">
+      <line
+        x1={x + dx - 16 * kk}
+        y1={y - 6 * kk}
+        x2={x + dx + 16 * kk}
+        y2={y - 6 * kk}
+        className="nl2-fracbar"
+      />
+      <text x={x + dx} y={y + 22 * kk} className="nl2-label nl2-label--frac">
         {m[4]}
       </text>
     </g>
@@ -372,12 +385,32 @@ export function NumberlineSvg({
   onTapTick?: (i: number) => void;
 }) {
   const X = (i: number) => PAD + (i / l.n) * (W - PAD * 2);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const floor = useSvgTextFloor(svgRef, W);
+  useWidenToText(svgRef, floor);
   const s = item.line;
   const labelSet = (s.labels ?? majorLabels(s, l))
     .map((x) => toRational(x))
     .filter((r): r is Rational => r !== null)
     .map((r) => tickOf(l, r))
-    .filter((k): k is number => k !== null);
+    .filter((k): k is number => k !== null)
+    .sort((a, b) => a - b);
+  // 最小まで大きくした数字が隣と重なるときは、1つおき（2つおき…）に間引く
+  const nlFs = Math.max(36, floor);
+  const labelWidth = (k: number) => {
+    const t = ratText(valueAt(l, k), labelMode(s));
+    const f = /\[\[(?:(\d+) )?(\d+)\/(\d+)\]\]/.exec(t);
+    return f
+      ? (String(f[2]).length + (f[1] ? String(f[1]).length : 0) + 1) * 0.62 * nlFs
+      : t.length * 0.62 * nlFs;
+  };
+  let minGap = Infinity;
+  for (let j = 1; j < labelSet.length; j++)
+    minGap = Math.min(minGap, X(labelSet[j]!) - X(labelSet[j - 1]!));
+  const widest = Math.max(...labelSet.map(labelWidth), 0);
+  const stride =
+    Number.isFinite(minGap) && minGap > 0 ? Math.max(1, Math.ceil((widest + 8) / minGap)) : 1;
+  const shownLabels = labelSet.filter((_, j) => j % stride === 0);
   const ticks = [];
   for (let i = 0; i <= l.n; i++) {
     const major = i % s.majorEvery === 0;
@@ -406,7 +439,9 @@ export function NumberlineSvg({
   );
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
+      style={floorStyle(floor)}
       className="mk-svg nl2-svg"
       role="img"
       aria-label="すうちょくせん"
@@ -417,8 +452,15 @@ export function NumberlineSvg({
       <line x1={PAD - 24} y1={AXIS_Y} x2={W - PAD + 30} y2={AXIS_Y} className="nl2-axis" />
       <path d={`M ${W - PAD + 30} ${AXIS_Y} l -18 -10 v 20 z`} className="nl2-arrow" />
       {ticks}
-      {labelSet.map((k) => (
-        <SvgNum key={`l${k}`} v={valueAt(l, k)} x={X(k)} y={AXIS_Y + 62} as={labelMode(s)} />
+      {shownLabels.map((k) => (
+        <SvgNum
+          key={`l${k}`}
+          v={valueAt(l, k)}
+          x={X(k)}
+          y={AXIS_Y + 62}
+          as={labelMode(s)}
+          floor={floor}
+        />
       ))}
       {(item.marks ?? []).map((m, i) => {
         const r = toRational(m.at);
@@ -428,12 +470,24 @@ export function NumberlineSvg({
       })}
       {pointer !== undefined ? marker(pointer, 'nl2-pointer', 'ptr') : null}
       {pointer !== undefined && showAnswerLabel ? (
-        <SvgNum v={valueAt(l, pointer)} x={X(pointer)} y={AXIS_Y - 94} as={labelMode(s)} />
+        <SvgNum
+          v={valueAt(l, pointer)}
+          x={X(pointer)}
+          y={AXIS_Y - 94}
+          as={labelMode(s)}
+          floor={floor}
+        />
       ) : null}
       {answerTick !== undefined && answerTick !== null ? (
         <>
           {marker(answerTick, 'nl2-answer', 'ans')}
-          <SvgNum v={valueAt(l, answerTick)} x={X(answerTick)} y={AXIS_Y - 94} as={labelMode(s)} />
+          <SvgNum
+            v={valueAt(l, answerTick)}
+            x={X(answerTick)}
+            y={AXIS_Y - 94}
+            as={labelMode(s)}
+            floor={floor}
+          />
         </>
       ) : null}
       {placed !== undefined && placed !== null
@@ -548,7 +602,7 @@ function PlaceView({
         </div>
         <button
           type="button"
-          className="mk-btn mk-btn--ok"
+          className="mk-btn mk-btn--ok eng-check"
           onClick={() => tick !== null && submit({ tick })}
           disabled={locked || tick === null}
           data-testid="check"

@@ -129,7 +129,7 @@ function tableItem(level: number, rng: Rng, alt: boolean): Item {
     explain: `x × y は いつも ${c}なので、y ＝ ${c} ÷ ${ax} ＝ ${ans}です。`,
     identity: `table:${t.id}:${c}:${picks.join(',')}:${ax}`,
     alt: false,
-    fields: [{ label: t.yu, answer }],
+    fields: [{ unit: t.yu, answer }],
     wrongAnswers: wrongList(
       [answer],
       [
@@ -419,7 +419,7 @@ function applyItem(level: number, rng: Rng, alt: boolean): NumberItem {
     explain: `x × y が いつも ${c}なので（反比例）、${c} ÷ ${x2} ＝ ${ans}（${unit}）です。`,
     identity: `use:${kind}:${x1}:${y1}:${x2}${alt ? ':table' : ''}`,
     alt,
-    fields: [{ label: unit, answer }],
+    fields: [{ unit, answer }],
     wrongAnswers: wrongList(
       [answer],
       [

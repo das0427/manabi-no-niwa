@@ -2,10 +2,12 @@
 
 2歳から小学生までの子供が日本語で使える、オフラインのブラウザ学習アプリです。
 
-- 対象（2.0。258単元）:
-  - 幼児: 2〜3歳（中で2歳段階・3歳段階に分かれる）、4歳、5歳
-  - 小学1〜6年: 算数・国語（漢字の読み書きを含む）、生活（1・2年）、理科・社会・英語（3〜6年）、プログラミング（1〜6年）
-  - 単元の一覧と学年の割り当ては docs/expansion/curriculum-matrix.md、作業の記録は docs/expansion/progress.md。優先度の低い単元（P2）は入っていません。
+- 対象（2.1.0。324単元）:
+  - 幼児（63単元）: 2〜3歳（中で2歳段階・3歳段階に分かれる）、4歳、5歳。ことば・かず・くらし・かんがえる・運筆・英語（聞いて選ぶ）など
+  - 小学1〜6年（261単元）: 算数・国語（漢字の読み書きを含む）、生活（1・2年）、理科・社会・英語（3〜6年）、プログラミング（1〜6年）
+  - 324単元のうち311単元は、自動検査の「実装済み」の条件を満たしています。残りの13単元は幼児の英語です。英語の音声を耳で全件は確かめていないので、状態を「一部」にしています。子供の画面には出ます。
+  - 324単元のうち4単元は、保護者が保護者画面「せってい」で開くまで、子供の画面に出ません。
+  - 単元の一覧と学年の割り当ては docs/expansion/curriculum-matrix.md、作業の記録は docs/expansion/progress.md です。
 - プロフィールごとに「年齢の目安」「在籍学年」「習熟」「支援の設定（ふりがな・読み上げ など）」を別々に持ちます。学年で教材を閉じ込めません（先取り・さかのぼりができます）。
 - 幼児は絵の札から遊びます。4歳のホームには初期版（1.0）の9つのあそびがそのまま入っています。小学生は教科 → 単元 → 問題の順に選びます。どのホームからも「ほかの がくねん」で、ほかの年齢・学年の遊びや教科を開けます。
 - 全年齢で「おえかき」（ペン・消しゴム・塗り・はんこ63種・図形・やり直し・自動保存・PNG 書き出し）が使えます。
@@ -13,9 +15,10 @@
 - 広告・アカウント登録はありません。記録はこのパソコンのブラウザの中にだけ保存します。
 - インターネットに接続するのは、**新しいバージョンがあるかを確かめるときと、新しいバージョンをダウンロードするときだけ**です（2.1.0 から）。接続先は GitHub だけで、送るのはアプリの名前だけです。自動の確認は保護者画面で止められます。
 - 罰・点数・ランキング・連続日数・ガチャはありません。1回は3〜5問の短い区切りです。
+- 開発の進め方と品質の確かめ方は、[docs/ai-roles.md](docs/ai-roles.md) と [docs/quality.md](docs/quality.md) を見てください。
 
 > この アプリの 記録は、遊んだ内容の記録です。能力の測定では ありません。
-> 学習効果は検証していません（子供での観察もまだです）。教材は自動検査と独立レビューを通していますが、学校の教科書・テストの代わりではありません。
+> 学習効果は検証していません（子供での観察もまだです）。教材は自動検査とレビューを通していますが、別のモデルによる独立したレビューを受けたのは小1〜小4の算数・国語だけです（くわしくは docs/quality.md）。学校の教科書・テストの代わりではありません。
 
 ## はじめての方へ: パソコンに入れる手順（Zorin OS）
 
@@ -28,7 +31,7 @@
 |---|---|
 | Zorin OS のパソコン | Lenovo Yoga 720 などで動かす想定です。ほかの Ubuntu 系でも同じ手順です |
 | インターネット | **ダウンロードのときと、新しいバージョンの確認・更新のときだけ**使います。入れたあとは、つながなくても使えます。つながっていなければ、確認もしません |
-| 空き容量 **10GB 以上** | ダウンロードしたファイル（約2.6GB）と、入れたアプリ（約5GB）のためです。入れ終わったら、ダウンロードしたファイルは消してかまいません |
+| 空き容量 **10GB 以上** | ダウンロードしたファイル（約{{QA:zip4つの合計の大きさ}}）と、入れたアプリ（約{{QA:入れたアプリの大きさ}}）のためです。入れ終わったら、ダウンロードしたファイルは消してかまいません |
 | ブラウザ | Zorin OS 17.3 以降を新しく入れたパソコンには、Brave が最初から入っています。それで使えます。17.2 以前から更新したパソコンには、Firefox が入っています。Chromium や Google Chrome も入れてあるときは、そちらで開きます |
 
 ### 手順1: ファイルを4つダウンロードする
@@ -38,10 +41,10 @@
 
    | ファイル名 | 大きさ | 中身 |
    |---|---|---|
-   | `manabi-no-niwa-2.0.2.zip` | 約170MB | アプリの本体（幼児の教材を含む） |
-   | `manabi-no-niwa-2.0.2-audio-g1-g2.zip` | 約330MB | 小学1・2年の教材の音声 |
-   | `manabi-no-niwa-2.0.2-audio-g3-g4.zip` | 約790MB | 小学3・4年の教材の音声 |
-   | `manabi-no-niwa-2.0.2-audio-g5-g6.zip` | 約1.3GB | 小学5・6年の教材の音声 |
+   | `manabi-no-niwa-2.1.0.zip` | 約{{QA:zip本体の大きさ}} | アプリの本体（幼児の教材を含む） |
+   | `manabi-no-niwa-2.1.0-audio-g1-g2.zip` | 約{{QA:zip音声g1-g2の大きさ}} | 小学1・2年の教材の音声 |
+   | `manabi-no-niwa-2.1.0-audio-g3-g4.zip` | 約{{QA:zip音声g3-g4の大きさ}} | 小学3・4年の教材の音声 |
+   | `manabi-no-niwa-2.1.0-audio-g5-g6.zip` | 約{{QA:zip音声g5-g6の大きさ}} | 小学5・6年の教材の音声 |
 
 3. 保存先は、ふつうは「ダウンロード」フォルダです。4つとも保存し終わるまで待ちます。
    - 小学生が使わない場合でも、**4つともダウンロードしてください**。入れるときに、全部そろっているかを確かめます。
@@ -58,7 +61,7 @@
 1. 下の枠の中の文字を**全部**コピーします。枠の右上にコピーのボタンがあれば、それを押します。無ければ、文字を最初から最後までなぞって選んでから、右クリック →「コピー」を選びます。
 
    ```bash
-   cd ~ && python3 -I -c 'import os,sys,shutil,zipfile as z;sys.excepthook=lambda t,e,b:print("エラー: 途中で止まりました:",e,file=sys.stderr);v="2.0.2";h=os.path.expanduser("~");n=["manabi-no-niwa-"+v+s+".zip" for s in ("","-audio-g1-g2","-audio-g3-g4","-audio-g5-g6")];p=[next((q for q in (os.path.join(h,d,f) for d in ("ダウンロード","Downloads")) if os.path.isfile(q)),None) for f in n];m=[f for f,q in zip(n,p) if q is None];m and sys.exit("エラー: 「ダウンロード」フォルダに、次のファイルがありません: "+" ".join(m)+"\n手順1の4つをすべて保存してから、もういちど行ってください。何も変更していません。");b=[f for f,q in zip(n,p) if not z.is_zipfile(q)];b and sys.exit("エラー: 次のファイルは zip として開けません（ダウンロードが途中で止まったか、壊れています）: "+" ".join(b)+"\nダウンロードし直してから、もういちど行ってください。何も変更していません。");x=[(f,i.filename) for f,q in zip(n,p) for i in z.ZipFile(q).infolist() if not i.filename.startswith("manabi-no-niwa/") or "\\" in i.filename or ".." in i.filename.split("/") or (i.external_attr>>16)&0o170000 not in (0,0o100000,0o40000)];x and sys.exit("エラー: "+x[0][0]+" の中に、manabi-no-niwa フォルダの外に書き込むおそれのある項目か、リンクがあります（"+ascii(x[0][1])+"）。\n開くとほかのファイルを書き換えるおそれがあるため、何も開かずに止めました。配布のページから、ダウンロードし直してください。");d=os.path.join(h,"manabi-no-niwa");os.path.lexists(d) and (shutil.rmtree(d) if os.path.isdir(d) and not os.path.islink(d) else os.remove(d));[print("ひらいています:",q,flush=True) or z.ZipFile(q).extractall(h) for q in p]' && bash ~/manabi-no-niwa/deploy/zorin/install.sh
+   cd ~ && python3 -I -c 'import os,sys,shutil,zipfile as z;sys.excepthook=lambda t,e,b:print("エラー: 途中で止まりました:",e,file=sys.stderr);v="2.1.0";h=os.path.expanduser("~");n=["manabi-no-niwa-"+v+s+".zip" for s in ("","-audio-g1-g2","-audio-g3-g4","-audio-g5-g6")];p=[next((q for q in (os.path.join(h,d,f) for d in ("ダウンロード","Downloads")) if os.path.isfile(q)),None) for f in n];m=[f for f,q in zip(n,p) if q is None];m and sys.exit("エラー: 「ダウンロード」フォルダに、次のファイルがありません: "+" ".join(m)+"\n手順1の4つをすべて保存してから、もういちど行ってください。何も変更していません。");b=[f for f,q in zip(n,p) if not z.is_zipfile(q)];b and sys.exit("エラー: 次のファイルは zip として開けません（ダウンロードが途中で止まったか、壊れています）: "+" ".join(b)+"\nダウンロードし直してから、もういちど行ってください。何も変更していません。");x=[(f,i.filename) for f,q in zip(n,p) for i in z.ZipFile(q).infolist() if not i.filename.startswith("manabi-no-niwa/") or "\\" in i.filename or ".." in i.filename.split("/") or (i.external_attr>>16)&0o170000 not in (0,0o100000,0o40000)];x and sys.exit("エラー: "+x[0][0]+" の中に、manabi-no-niwa フォルダの外に書き込むおそれのある項目か、リンクがあります（"+ascii(x[0][1])+"）。\n開くとほかのファイルを書き換えるおそれがあるため、何も開かずに止めました。配布のページから、ダウンロードし直してください。");d=os.path.join(h,"manabi-no-niwa");os.path.lexists(d) and (shutil.rmtree(d) if os.path.isdir(d) and not os.path.islink(d) else os.remove(d));[print("ひらいています:",q,flush=True) or z.ZipFile(q).extractall(h) for q in p]' && bash ~/manabi-no-niwa/deploy/zorin/install.sh
    ```
 
 2. 端末の窓の中で右クリック →「貼り付け」を選びます。キーボードなら **Ctrl + Shift + V** を押します。Ctrl + V だけでは貼り付けられません。
@@ -146,7 +149,7 @@
 
 1. 手順1と同じページから、2.1.0 の zip を4つダウンロードします。
 2. 手順2〜4と同じように、端末で1行を貼り付けて Enter を押し、「y」で進めます。
-   - **貼り付ける1行の中のバージョンの番号（いまは `2.0.2`）を、新しいバージョンの番号（例: `2.1.0`）に書きかえてください。** 番号は1行の中の `v="2.0.2"` の1か所だけです。
+   - **貼り付ける1行の中のバージョンの番号が、ダウンロードした zip の名前の番号と同じか確かめてください。** 違うときは、1行の中の番号を zip の名前の番号に書きかえます。番号は1行の中の `v="2.1.0"` の1か所だけです。2.1.0 の zip を入れるときは、手順3の1行のまま使えます。
 3. 次にアプリを開くと、新しいバージョンを裏で準備します。保護者画面「このアプリについて」に「あたらしい ばーじょんが あります」と出たら「更新する」を押します（この1回だけ）。押さなくても、窓を全部閉じて開き直せば切り替わります。
 4. 取得済みの小学生の教材は、2.1.0 のアプリが自動で取得し直します（「まとめて取得し直す」を押さなくてかまいません）。
 5. 学習の記録・作品・設定は**消えません**。
@@ -158,7 +161,7 @@
 | 「次のファイルがありません」と出る | 表示された名前の zip が、ホームフォルダの「ダウンロード」（または「Downloads」）フォルダにありません。手順1で4つとも保存できたか、名前が手順1の表と同じかを確かめます（名前の最後に「 (1)」が付いているときは、前のファイルを消してから保存し直します）。そろえてから、手順3をもう一度行います。何も変更していないので、そのままやり直せます |
 | 「次のファイルは zip として開けません」と出る | ダウンロードが途中で止まったか、ファイルが壊れています。表示された名前の zip をダウンロードし直して、手順3をもう一度行います。何も変更していません |
 | 「manabi-no-niwa フォルダの外に書き込むおそれのある項目か、リンクがあります」と出る | 手順1のページのファイルではないか、途中で書き換わったファイルです。何も開かずに止めています。表示された名前の zip を消して、手順1のページからダウンロードし直し、手順3をもう一度行います。それでも出るときは、開かないで、GitHub の Issues（https://github.com/das0427/manabi-no-niwa/issues）で知らせてください |
-| 「そのようなファイルやディレクトリはありません」「No such file or directory」と出る | 本体の zip（`manabi-no-niwa-2.0.2.zip`）が正しく開けていません。その zip をダウンロードし直して、手順3をもう一度行います |
+| 「そのようなファイルやディレクトリはありません」「No such file or directory」と出る | 本体の zip（`manabi-no-niwa-2.1.0.zip`）が正しく開けていません。その zip をダウンロードし直して、手順3をもう一度行います |
 | 「教材の音声が足りません」と出る | 4つの zip のどれかの中身が足りません（ダウンロードが途中で止まったときなど）。表示された名前の zip（例 `…-audio-g5-g6.zip`）をダウンロードし直して「ダウンロード」フォルダに置き、手順3をもう一度行います |
 | 「python3: コマンドが見つかりません」（または「python3: command not found」）、「python3 が見つかりません」と出る | ふつうの Zorin OS では起きません。出た場合は、端末で `sudo apt install python3` を実行してから（パソコンのパスワードを聞かれます）、手順3をもう一度行います |
 | 「エラー: 途中で止まりました:」のあとに英語の理由が出る | zip を開いている途中で止まっています。理由が「No space left on device」のときは、空き容量です（次の行）。そうでなければ、手順3をもう一度行います。ホームフォルダの `manabi-no-niwa` フォルダは作り直されます |
@@ -302,6 +305,14 @@ Wayland のセッションで Chromium 系のブラウザを新しく起動す�
 
 ## 開発
 
+### 開発について
+このアプリは、依頼者（人）が決めた方針のもとで、AI（Anthropic の Claude）が設計・実装・レビュー・検査を分担して作りました。コードと文書の大半は AI が書いています。実機（Zorin OS）と子供での確認は、まだしていません。
+
+- [docs/ai-roles.md](docs/ai-roles.md): AI との役割分担。人が決めたこと、AI の分担、人の判断の代わりに AI の判定役を使った所と、その限界
+- [docs/quality.md](docs/quality.md): 品質の確かめ方。検査の種類と数、確かめていないこと（実機・子供・人の耳と目）
+
+### 開発の手順
+
 ```bash
 npm install
 npm run dev          # http://127.0.0.1:5173
@@ -318,7 +329,7 @@ npm run package      # release/ に配布用 zip（元に git の外・変更・
 - 教材パックの音声（`public/audio/<パック名>/`）は git に入れていないので、作りかけがあっても止まりません。公開の前に `git status --ignored public/audio` で作りかけが無いかを見てください。
 - `release/` には、zip ごとに入れたファイルの一覧（`<zip の名前>.files.txt`）もできます。GitHub には上げません。詳しくは docs/expansion/updater-design.md の 3.6 節です。
 
-設計文書:
+### 設計文書
 - [docs/requirements.md](docs/requirements.md) 要件定義（要件IDと受入条件）
 - [docs/research.md](docs/research.md) 調査記録
 - [docs/architecture.md](docs/architecture.md) アーキテクチャ
@@ -332,6 +343,7 @@ npm run package      # release/ に配布用 zip（元に git の外・変更・
 - [docs/expansion/](docs/expansion/) 2.0（対象年齢の拡張）の調査・要件・設計・単元対応表・計画・レビュー・進捗（[progress.md](docs/expansion/progress.md)）
 - **[docs/expansion/handover.md](docs/expansion/handover.md) 引き継ぎ: 制約・未対応・要確認の一覧（次に作業する人はまずここ）**
 - [docs/expansion/final-report.md](docs/expansion/final-report.md) 2.0 の最終報告
+- [docs/expansion/release-2.1.0.md](docs/expansion/release-2.1.0.md) 2.1.0 のリリースノート（2.0.2 からの変更と、確認していないこと）
 
 ## 保護者が子供と試すときの観察チェックリスト
 

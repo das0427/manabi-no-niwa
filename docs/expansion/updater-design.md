@@ -1081,7 +1081,7 @@ high・medium は無かった。公開を止めるものは残っていない。
 
 16.5 のあとに、本体の作業ツリーで次を確かめた。
 
-- **serve.spec**: 音声を置かない作業ツリー（44749a6）で、一時の設定（127.0.0.1:5291・chromium・1 ワーカー）で `e2e/serve.spec.ts` を流し、11 件すべて合格した（34.5 秒）。MIME・Cache-Control・条件付き要求・`/__manabi/health`・ディレクトリ一覧を出さない・パスの外に出ない・127.0.0.1 と localhost 以外の Host に答えない・GET 以外を断る・127.0.0.1 だけで待ち受ける・ポート使用中はコード 3 で終了・index.html が無ければコード 2 で終了・静か。serve.spec も dist を写すので、音声入りのビルドでは流していない。
+- **serve.spec**: 音声を置かない作業ツリー（44749a6）で、一時の設定（127.0.0.1:5291・chromium・1 ワーカー）で `e2e/serve.spec.ts` を流し、11 件すべて合格した（34.5 秒）。MIME・Cache-Control・条件付き要求・`/__manabi/health`・ディレクトリ一覧を出さない・パスの外に出ない・127.0.0.1 と localhost 以外の Host に答えない・GET 以外を断る・127.0.0.1 だけで待ち受ける・ポート使用中はコード 3 で終了・index.html が無ければコード 2 で終了・標準出力と標準エラーに何も出さない（アクセスログなし）。serve.spec も dist を写すので、音声入りのビルドでは流していない。
 - **書式**: 2.0.2 から整っていなかった 7 ファイルのうち、手書きの 5 つ（`src/engines/number/column.ts`・`number.samples.ts`・`src/packs/g1-ja/read-story.ts`・`src/packs/g1-math/g1-math.test.ts`・`src/packs/g2-ja/read-info.ts`）を整形した（空白と折り返しだけ）。生成物の 2 つ（`src/curriculum/unit-index.json`・`voice/script-en.json`）は `.prettierignore` に入れた（`voice/script.json` と同じ扱い）。`.prettierrc.json` に `endOfLine: auto` を足した。`npm run check`（型・lint・書式）が Windows の作業ツリーでも通る。関係する単体試験 9 ファイル 158 件が合格した（commit ab46f33）。
 - **余りの mp3**: manifest に無い余りの mp3 が 802 本あり（g1-math 1・g2-math 15・g5-math 204・g6-math 347・kanji-g12 101・p23 12・p4 85・p5 37）、zip に入らないよう公開用の作業フォルダの外へ移した（消していない）。manifest にあるのに無いファイルは 0。
 - **音声の dry-run**: `npm run voice:packs` の内容の差は 0（改行だけ）。全 28 パック・本体の台本（624 文）・英語（937 文）で `generate.py`・`generate_en.py` の `--dry-run` が、すべて生成 0・削除 0（余りの mp3 を移したあとも同じ）。

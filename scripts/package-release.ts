@@ -7,7 +7,8 @@
  * 依存なし（zlib の deflate と自前の ZIP 書き出し）。.sh には実行権限を付ける。
  *
  * 入れるファイルは「入れてよいもの」で選ぶ（2.1.0 の点検 app-2。選び方は release-lib の「配布に入れるファイルの選び方」）:
- * - deploy/zorin・licenses・最上位の配布ファイルは git で追跡済みのものだけ。
+ * - deploy/zorin・licenses・最上位の配布ファイルは、HEAD のコミットで追跡済みのものだけを、作業ツリーではなく
+ *   git の blob から読む（Windows の作業ツリーで CRLF になっていても、zip にはタグと同じバイトが入る）。
  * - dist は、隠しファイル・隠しフォルダ（dist/.vite/ など）と、Thumbs.db・desktop.ini・~ 終わり・.swp を入れない。
  * - 最初に、配布に入る元（public・deploy/zorin・licenses・最上位の配布ファイル）に git の外のファイル・変更・
  *   無視されたファイルが無いかを確かめ、あれば一覧を出して止める（public は vite が dist にそのまま写すので、
@@ -22,6 +23,7 @@
  * わざとなら `npm run package -- --allow-jump`、まだ公開していないタグなら `-- --allow-existing-tag`）。
  * git のタグを読めない・タグが 1 つも無いときも止める（読めないまま比べずに出すと、版の番号の誤りを見のがす）。
  * わざと比べないなら `-- --no-tag-check`。
+ * --allow-existing-tag でも、そのタグが HEAD 以外のコミットを指していれば止める（zip の追跡済みファイルは HEAD から読むため）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -39,13 +41,14 @@ import {
   checkReleaseVersion,
   compareVersions,
   contentListText,
+  findTagsNotAtHead,
   findUnpackagedPrecache,
   isVersion,
-  listTrackedReleaseFiles,
   packPart,
   parsePrecacheLists,
   parseReleaseNotes,
   readReleaseTags,
+  readTrackedReleaseFiles,
   sha256FileText,
   sourceProblems,
   todayInJapan,
@@ -119,6 +122,22 @@ const versionProblem = checkReleaseVersion(pkg.version, releaseTags, {
   allowExistingTag: process.argv.includes('--allow-existing-tag'),
 });
 if (versionProblem) die(versionProblem);
+// zip は HEAD のコミットから作る。--allow-existing-tag で通したタグが別のコミットを指していると、zip とタグの中身が食い違う
+if (process.argv.includes('--allow-existing-tag') && releaseTags.length > 0) {
+  let notAtHead: string[];
+  try {
+    notAtHead = findTagsNotAtHead(root, pkg.version, releaseTags);
+  } catch (e) {
+    die(`既にあるタグが HEAD を指しているかを確かめられません: ${(e as Error).message}`);
+  }
+  if (notAtHead.length > 0) {
+    die(
+      `${notAtHead.join('\n')}\n` +
+        'zip の追跡済みファイルは HEAD のコミットから読むので、このまま作るとタグの中身と違う zip になります。' +
+        'タグを付けるコミットを取り出してから npm run package をやり直すか、まだ push していないタグなら付け直してください（--allow-existing-tag でも通しません）。',
+    );
+  }
+}
 
 const distVersion = (() => {
   try {
@@ -194,14 +213,21 @@ if (unpackaged.length > 0) {
 }
 const trackedFiles = (() => {
   try {
-    return listTrackedReleaseFiles(root);
+    return readTrackedReleaseFiles(root);
   } catch (e) {
-    return die(`配布に入れるファイルを git の追跡済みから選べません: ${(e as Error).message}`);
+    return die(`配布に入れるファイルを git の HEAD から読めません: ${(e as Error).message}`);
   }
 })();
-const files: [string, string][] = [
-  ...distFiles.files.map(([src, rel]): [string, string] => [src, `${TOP}/dist/${rel}`]),
-  ...trackedFiles.map((rel): [string, string] => [path.join(root, rel), `${TOP}/${rel}`]),
+interface PackFile {
+  name: string;
+  read: () => Buffer;
+}
+const files: PackFile[] = [
+  ...distFiles.files.map(([src, rel]): PackFile => ({
+    name: `${TOP}/dist/${rel}`,
+    read: () => readFileSync(src),
+  })),
+  ...trackedFiles.map((f): PackFile => ({ name: `${TOP}/${f.path}`, read: () => f.data })),
 ];
 
 /**
@@ -222,9 +248,9 @@ const packIds: string[] = (() => {
     return [];
   }
 })();
-const groups = new Map<string, [string, string][]>([[MAIN_KIND, []]]);
+const groups = new Map<string, PackFile[]>([[MAIN_KIND, []]]);
 for (const f of files) {
-  const g = audioGroupOf(f[1], packIds) ?? MAIN_KIND;
+  const g = audioGroupOf(f.name, packIds) ?? MAIN_KIND;
   if (!groups.has(g)) groups.set(g, []);
   groups.get(g)!.push(f);
 }
@@ -234,12 +260,12 @@ for (const f of files) {
 mkdirSync(releaseDir, { recursive: true });
 const parts: PackedPart[] = [];
 for (const [kind, list] of groups) {
-  const entries: ZipEntry[] = list.map(([src, name]) => ({ name, data: readFileSync(src) }));
+  const entries: ZipEntry[] = list.map((f) => ({ name: f.name, data: f.read() }));
   // 変わらない部品を今の版から写すときに、この下を全部写す（main は毎回取得するので []）
   const roots = [
     ...new Set(
-      list.flatMap(([, name]) => {
-        const id = audioPackIdOf(name, packIds);
+      list.flatMap((f) => {
+        const id = audioPackIdOf(f.name, packIds);
         return id === null ? [] : [`dist/audio/${id}`];
       }),
     ),

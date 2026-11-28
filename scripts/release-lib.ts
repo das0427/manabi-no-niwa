@@ -87,6 +87,27 @@ function compareTuples(a: VersionTuple, b: VersionTuple): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
+/** タグのうち `vX.Y.Z` の形のものを、前後の空白を除いて数にする（tags の順） */
+function parseVersionTags(tags: readonly string[]): { tag: string; n: VersionTuple }[] {
+  const released: { tag: string; n: VersionTuple }[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim();
+    const m = TAG_VERSION_RE.exec(tag);
+    if (m) released.push({ tag, n: [Number(m[1]), Number(m[2]), Number(m[3])] });
+  }
+  return released;
+}
+
+/** tags のうち、version と数で同じ版のタグ（v2.01.0 も 2.1.0 と同じとみなす。前後の空白は除く。tags の順） */
+export function findSameVersionTags(version: string, tags: readonly string[]): string[] {
+  if (!isVersion(version)) return [];
+  const [c0, c1, c2] = version.split('.').map(Number) as [number, number, number];
+  const cur: VersionTuple = [c0, c1, c2];
+  return parseVersionTags(tags)
+    .filter((r) => compareTuples(r.n, cur) === 0)
+    .map((r) => r.tag);
+}
+
 /**
  * 出す版の番号を、これまでのタグ（`git tag` の `vX.Y.Z`。先行版の印つきは見ない）と比べる。
  * 自動の更新は「今より新しい版」しか入れないので、版の番号を誤って出すと、あとから正しい番号の版を出しても
@@ -108,12 +129,7 @@ export function checkReleaseVersion(
     return `版の形が X.Y.Z ではありません（先頭に 0 は付けません）: ${version}`;
   const [c0, c1, c2] = version.split('.').map(Number) as [number, number, number];
   const cur: VersionTuple = [c0, c1, c2];
-  const released: { tag: string; n: VersionTuple }[] = [];
-  for (const raw of tags) {
-    const tag = raw.trim();
-    const m = TAG_VERSION_RE.exec(tag);
-    if (m) released.push({ tag, n: [Number(m[1]), Number(m[2]), Number(m[3])] });
-  }
+  const released = parseVersionTags(tags);
   const same = released.find((r) => compareTuples(r.n, cur) === 0);
   if (same !== undefined && !opts.allowExistingTag) {
     return `タグ ${same.tag} はもうあります。公開した版と同じ番号では、その版を入れた家に届きません。版の番号を上げてください（まだ公開していないタグなら --allow-existing-tag）。`;
@@ -630,7 +646,8 @@ export function parseReleaseNotes(markdown: string): string[] {
 
 /**
  * zip に入れるファイルは「除くもの」ではなく「入れてよいもの」で選ぶ（2.1.0 の点検 app-2）。
- * - deploy/zorin・licenses・最上位の配布ファイル: git ls-files の追跡済みのものだけ
+ * - deploy/zorin・licenses・最上位の配布ファイル: HEAD のコミットで追跡済みのものだけを、
+ *   作業ツリーではなく git の blob から読む（改行の変換に左右されない）
  * - dist: vite が作ったものから、隠しファイル・隠しフォルダ・OS やエディタの作業ファイルを除く
  * 入れる前に、元（public・deploy/zorin・licenses・最上位の配布ファイル）に git の外のファイル・変更・
  * 無視されたファイルが無いか、deploy/zorin・licenses の下にリンクが無いかを確かめる。
@@ -671,16 +688,37 @@ const GIT_LOCATION_ENV = [
   'GIT_NAMESPACE',
 ];
 
-/** 既定の GitRunner。--no-optional-locks で index を書き換えない */
-export const runGit: GitRunner = (root, args) => {
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
+
+/** git の置き場を変える環境変数を外した環境 */
+function gitEnv(): NodeJS.ProcessEnv {
   const env = { ...process.env };
   for (const k of GIT_LOCATION_ENV) delete env[k];
+  return env;
+}
+
+/** 既定の GitRunner。--no-optional-locks で index を書き換えない */
+export const runGit: GitRunner = (root, args) => {
   return execFileSync('git', ['--no-optional-locks', ...args], {
     cwd: root,
-    env,
+    env: gitEnv(),
     encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
+    maxBuffer: GIT_MAX_BUFFER,
     stdio: ['ignore', 'pipe', 'pipe'],
+  });
+};
+
+/** git を root で動かして標準出力をそのまま（バイト列で）返す。input は標準入力に渡す。失敗すれば例外 */
+export type GitBufferRunner = (root: string, args: readonly string[], input?: string) => Buffer;
+
+/** 既定の GitBufferRunner。runGit と同じく index を書き換えない */
+export const runGitBuffer: GitBufferRunner = (root, args, input) => {
+  return execFileSync('git', ['--no-optional-locks', ...args], {
+    cwd: root,
+    env: gitEnv(),
+    maxBuffer: GIT_MAX_BUFFER,
+    ...(input === undefined ? {} : { input }),
+    stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
   });
 };
 
@@ -842,9 +880,9 @@ export function sourceProblems(
     if (allowDirty) {
       warnings.push(
         `警告: --allow-dirty なので、配布に入る元の ${n} 件（下）を見のがして続けます。` +
-          '変更したままの中身は、そのまま zip に入ります。' +
-          'deploy/zorin・licenses・最上位のファイルは追跡済みのものだけが入りますが、' +
-          'public の下は dist にそのまま写されているので、追跡の有無によらず入ります。\n' +
+          'deploy/zorin・licenses・最上位のファイルは、作業ツリーではなく HEAD のコミットの中身' +
+          '（追跡済みのものだけ）が入り、コミットしていない変更は入りません。' +
+          'public の下は dist にそのまま写されているので、変更したままの中身も、追跡していないファイルも入ります。\n' +
           list,
       );
     } else {
@@ -852,7 +890,8 @@ export function sourceProblems(
         `配布に入る元（${RELEASE_SOURCES.join('・')}）に、git の外のファイル・変更・無視されたファイルがあります（${n} 件）:\n` +
           `${list}\n` +
           'コミットするか、消すか、.gitignore に入れてからやり直してください。' +
-          'わざと入れるなら npm run package -- --allow-dirty。',
+          'deploy/zorin・licenses・最上位のファイルの変更は、コミットしてからやり直してください（--allow-dirty を付けても zip に入りません）。' +
+          'public の下の変更だけは、わざとなら npm run package -- --allow-dirty で入ります。',
       );
     }
   }
@@ -867,35 +906,154 @@ export function sourceProblems(
   return { errors, warnings };
 }
 
+/**
+ * 同じ版のタグがあれば、それが HEAD のコミットを指しているか。指していないタグの説明の配列（全部 HEAD なら []）。
+ * zip の追跡済みファイルは HEAD のコミットから読む（readTrackedReleaseFiles）ので、--allow-existing-tag で通したタグが別のコミットを
+ * 指していると、zip とタグの中身が食い違う。注釈つきのタグはコミットまでたどる（`<タグ>^{commit}`）。
+ * git が失敗したら例外のまま投げる（呼ぶ側で止める）。
+ */
+export function findTagsNotAtHead(
+  root: string,
+  version: string,
+  tags: readonly string[],
+  git: GitRunner = runGit,
+): string[] {
+  const same = findSameVersionTags(version, tags);
+  if (same.length === 0) return [];
+  const head = git(root, ['rev-parse', '--verify', 'HEAD^{commit}']).trim();
+  const problems: string[] = [];
+  for (const tag of same) {
+    // refs/tags/ を付けて、同じ名前のブランチと取り違えない
+    const at = git(root, ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]).trim();
+    if (at !== head) {
+      problems.push(
+        `タグ ${tag} は HEAD（${head.slice(0, 7)}）ではなく ${at.slice(0, 7)} を指しています。`,
+      );
+    }
+  }
+  return problems;
+}
+
 // ---- 入れるファイル
 
+export interface TrackedReleaseBlob {
+  path: string;
+  mode: string;
+  oid: string;
+}
+
 /**
- * deploy/zorin・licenses・最上位の配布ファイルのうち、git で追跡済みのもの（root からの相対パス・"/" 区切り・
- * 名前の順）。最上位のファイルが追跡されていない・フォルダに追跡済みのファイルが 1 つも無い・
- * 追跡されているのに作業ツリーに無い（または通常のファイルでない）なら例外。
+ * deploy/zorin・licenses・最上位の配布ファイルのうち、HEAD のコミットで追跡されているもの
+ * （root からの相対パス・"/" 区切り・名前の順。mode と blob の oid つき）。
+ * 最上位のファイルが無い・フォルダに 1 つも無い・通常のファイル（mode 100644・100755）でない
+ * （リンク・サブモジュールなど）なら例外。
+ * 作業ツリーは見ない: 中身は blob から読むので、作業ツリーのファイルが無い・リンク・変更ありでも
+ * zip の中身は変わらない。作業ツリーのリンクは checkReleaseSources の findLinks、
+ * 無い・変更ありは findDirtySources が止める。
+ */
+export function listTrackedReleaseBlobs(
+  root: string,
+  git: GitRunner = runGit,
+): TrackedReleaseBlob[] {
+  const out = git(root, [
+    'ls-tree',
+    '-r',
+    '-z',
+    'HEAD',
+    '--',
+    ...RELEASE_TRACKED_DIRS,
+    ...RELEASE_TOP_FILES,
+  ]);
+  const byPath = new Map<string, TrackedReleaseBlob>();
+  for (const rec of out.split('\0')) {
+    if (rec === '') continue;
+    const m = /^(\d{6}) (\w+) ([0-9a-f]{40}|[0-9a-f]{64})\t(.+)$/s.exec(rec);
+    if (!m) return fail(`git ls-tree の出力を読めません: ${JSON.stringify(rec)}`);
+    const [, mode, type, oid, file] = m as unknown as [string, string, string, string, string];
+    if (type !== 'blob' || (mode !== '100644' && mode !== '100755')) {
+      const kind =
+        mode === '120000'
+          ? 'リンク'
+          : type === 'commit' || mode === '160000'
+            ? 'サブモジュール'
+            : `mode ${mode}`;
+      return fail(`HEAD のコミットでは通常のファイルではありません（${kind}）: ${file}`);
+    }
+    byPath.set(file, { path: file, mode, oid });
+  }
+  const blobs = [...byPath.values()].sort((a, b) => comparePath(a.path, b.path));
+  for (const f of RELEASE_TOP_FILES) {
+    if (!byPath.has(f)) {
+      fail(`配布に入れる ${f} が git で追跡されていません（HEAD のコミットにありません）`);
+    }
+  }
+  for (const d of RELEASE_TRACKED_DIRS) {
+    if (!blobs.some((b) => b.path.startsWith(`${d}/`))) {
+      fail(`HEAD のコミットの ${d}/ に git で追跡されたファイルがありません`);
+    }
+  }
+  return blobs;
+}
+
+/**
+ * deploy/zorin・licenses・最上位の配布ファイルのうち、HEAD のコミットで追跡されているもの
+ * （root からの相対パス・"/" 区切り・名前の順）。選び方は listTrackedReleaseBlobs。
  * zip の中の名前は `manabi-no-niwa/` + この相対パス。
  */
 export function listTrackedReleaseFiles(root: string, git: GitRunner = runGit): string[] {
-  const out = git(root, ['ls-files', '-z', '--', ...RELEASE_TRACKED_DIRS, ...RELEASE_TOP_FILES]);
-  const files = [...new Set(out.split('\0').filter((f) => f !== ''))].sort(comparePath);
-  for (const f of RELEASE_TOP_FILES) {
-    if (!files.includes(f)) fail(`配布に入れる ${f} が git で追跡されていません`);
+  return listTrackedReleaseBlobs(root, git).map((b) => b.path);
+}
+
+/**
+ * `git cat-file --batch` の出力を読む。oids の順に中身を返す。
+ * 各件は `<oid> blob <大きさ>` の行（LF まで）、中身、LF。中身はバイト列のまま扱う（LF や NUL があってもよい）。
+ * missing・blob でない・大きさが合わない・最後に余りがあれば例外。
+ */
+export function parseCatFileBatch(out: Buffer, oids: readonly string[]): Buffer[] {
+  const result: Buffer[] = [];
+  let pos = 0;
+  for (const oid of oids) {
+    const eol = out.indexOf(0x0a, pos);
+    if (eol < 0) return fail(`git cat-file の出力が途中で終わっています: ${oid}`);
+    const head = out.toString('latin1', pos, eol);
+    if (head === `${oid} missing`) return fail(`git に ${oid} の中身がありません`);
+    const m = /^([0-9a-f]+) (\w+) (\d+)$/.exec(head);
+    if (!m) return fail(`git cat-file の見出しを読めません: ${JSON.stringify(head)}`);
+    if (m[1] !== oid) return fail(`git cat-file の oid が違います（期待 ${oid}、実際 ${m[1]}）`);
+    if (m[2] !== 'blob') return fail(`blob ではありません（${m[2]}）: ${oid}`);
+    const size = Number(m[3]);
+    const start = eol + 1;
+    const end = start + size;
+    if (end + 1 > out.length)
+      return fail(`git cat-file の中身が、見出しの大きさより短いです: ${oid}`);
+    if (out[end] !== 0x0a) return fail(`git cat-file の中身のあとが改行ではありません: ${oid}`);
+    result.push(Buffer.from(out.subarray(start, end)));
+    pos = end + 1;
   }
-  for (const d of RELEASE_TRACKED_DIRS) {
-    if (!files.some((f) => f.startsWith(`${d}/`))) {
-      fail(`${d}/ に git で追跡されたファイルがありません`);
-    }
-  }
-  for (const f of files) {
-    let st;
-    try {
-      st = lstatSync(path.join(root, f));
-    } catch {
-      return fail(`git で追跡されているのに、作業ツリーにありません: ${f}`);
-    }
-    if (!st.isFile()) fail(`通常のファイルではありません（リンクなど）: ${f}`);
-  }
-  return files;
+  if (pos !== out.length) return fail('git cat-file の出力に余りがあります');
+  return result;
+}
+
+/**
+ * deploy/zorin・licenses・最上位の配布ファイルの中身を、作業ツリーではなく HEAD の git の blob から読む（path の順）。
+ * Windows の作業ツリーは `* text=auto` と core.eol の既定で文書が CRLF になる。改行だけの違いは
+ * git の正規化で git status に出ないので、元の確かめ（findDirtySources）では止まらず、作業ツリーから読むと
+ * タグの中身と違う zip ができてしまう。blob から読めば core.autocrlf・core.eol・エディタの保存に左右されず、
+ * zip の中身がタグの中身とバイト単位で同じになる（blob が CRLF のものは CRLF のまま）。
+ * index ではなく HEAD を読むのは、タグを付けるのがコミットだから。
+ */
+export function readTrackedReleaseFiles(
+  root: string,
+  git: GitRunner = runGit,
+  gitBuffer: GitBufferRunner = runGitBuffer,
+): { path: string; data: Buffer }[] {
+  const blobs = listTrackedReleaseBlobs(root, git);
+  const oids = blobs.map((b) => b.oid);
+  const datas = parseCatFileBatch(
+    gitBuffer(root, ['cat-file', '--batch'], `${oids.join('\n')}\n`),
+    oids,
+  );
+  return blobs.map((b, i) => ({ path: b.path, data: datas[i]! }));
 }
 
 /**

@@ -134,7 +134,7 @@ if (process.argv.includes('--allow-existing-tag') && releaseTags.length > 0) {
     die(
       `${notAtHead.join('\n')}\n` +
         'zip は HEAD のコミットから作るので、このまま作るとタグの中身と違う zip になります。' +
-        'タグを付けるコミットを取り出してから流すか、まだ push していないタグなら付け直してください（--allow-existing-tag でも通しません）。',
+        'タグを付けるコミットを取り出してから npm run package をやり直すか、まだ push していないタグなら付け直してください（--allow-existing-tag でも通しません）。',
     );
   }
 }

@@ -976,7 +976,7 @@ export function listTrackedReleaseBlobs(
           : type === 'commit' || mode === '160000'
             ? 'サブモジュール'
             : `mode ${mode}`;
-      return fail(`通常のファイルではありません（${kind}）: ${file}`);
+      return fail(`HEAD のコミットでは通常のファイルではありません（${kind}）: ${file}`);
     }
     byPath.set(file, { path: file, mode, oid });
   }
@@ -988,7 +988,7 @@ export function listTrackedReleaseBlobs(
   }
   for (const d of RELEASE_TRACKED_DIRS) {
     if (!blobs.some((b) => b.path.startsWith(`${d}/`))) {
-      fail(`${d}/ に git で追跡されたファイルがありません（HEAD のコミット）`);
+      fail(`HEAD のコミットの ${d}/ に git で追跡されたファイルがありません`);
     }
   }
   return blobs;
@@ -1023,7 +1023,8 @@ export function parseCatFileBatch(out: Buffer, oids: readonly string[]): Buffer[
     const size = Number(m[3]);
     const start = eol + 1;
     const end = start + size;
-    if (end + 1 > out.length) return fail(`git cat-file の中身が大きさより短いです: ${oid}`);
+    if (end + 1 > out.length)
+      return fail(`git cat-file の中身が、見出しの大きさより短いです: ${oid}`);
     if (out[end] !== 0x0a) return fail(`git cat-file の中身のあとが改行ではありません: ${oid}`);
     result.push(Buffer.from(out.subarray(start, end)));
     pos = end + 1;

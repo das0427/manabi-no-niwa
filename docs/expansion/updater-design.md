@@ -223,16 +223,16 @@
 ### 3.6 リリースの手順に足すこと（後の段で docs に書く）
 
 1. `docs/expansion/release-<版>.md` に `## 保護者画面に出す短い説明`（箇条書き 5 行まで）を書く。
-2. `npm run build` → `npm run package`（前提と止まる場合は下）。`npm run package` は、タグ `v<版>` を付ける前に流す。`deploy/zorin`・`licenses`・最上位のファイルは HEAD のコミットから読むので、タグを付けるコミット（main に取り込んだあとのコミット）を取り出した状態で流す。先にタグを付けた（まだ push していない）ときは `npm run package -- --allow-existing-tag` を付ける（2.1.0 はこれで作った）。そのタグが HEAD 以外のコミットを指していれば、`--allow-existing-tag` でも止まる。push したタグ（公開した版）と同じ番号では作らない。`release/` に zip 4つ・`.sha256` 4つ・`manabi-no-niwa-update.json` ができる。あわせて zip ごとに、入れたファイルの一覧 `<zip の名前>.files.txt`（パス・大きさ・sha256。部品の印は除く。この文字の sha256 が contentId になる）ができる。GitHub には上げない。前の版の `.files.txt` と `diff` を取ると、入ったものの差が見える（`npm run package` には、差の自動表示を付けていない）。
+2. `npm run build` → `npm run package`（前提と止まる場合は下）。`npm run package` は、タグ `v<版>` を付ける前に流す。`deploy/zorin`・`licenses`・最上位のファイルは HEAD のコミットから読むので、タグを付けるコミット（main に取り込んだあとのコミット）を取り出した状態で流す。先にタグを付けた（まだ push していない）ときは `npm run package -- --allow-existing-tag` で流す（2.1.0 はこれで作った）。そのタグが HEAD 以外のコミットを指していれば、`--allow-existing-tag` でも止まる。push したタグ（公開した版）と同じ番号では作らない。`release/` に zip 4つ・`.sha256` 4つ・`manabi-no-niwa-update.json` ができる。あわせて zip ごとに、入れたファイルの一覧 `<zip の名前>.files.txt`（パス・大きさ・sha256。部品の印は除く。この文字の sha256 が contentId になる）ができる。GitHub には上げない。前の版の `.files.txt` と `diff` を取ると、入ったものの差が見える（`npm run package` には、差の自動表示を付けていない）。
 3. GitHub でタグ `v<版>` の下書きのリリースを作り、zip と `.sha256` を上げ、**最後に** `manabi-no-niwa-update.json` を上げる。先行版にしない。「Set as latest」にして公開する。
 4. （任意）開発機で `py -3 deploy/zorin/serve.py --check-update` を実行し、版の情報が取れることを確かめる（5.1 節）。
 
 - **配布に入る元は、git で追跡済みでクリーンでないと止まる**（16.2 app-2）。`public`・`deploy/zorin`・`licenses`・`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md` に、git の外のファイル・変更したままのファイル・無視されたファイルがあると、`npm run package` は一覧を出して、zip を作る前に止まる。以前は「除くもの」の一覧で選んでいたので、`.env`・`.venv`・リンクの先・作りかけのファイルが、気づかないまま公開され、全部の家に配られうる（公開した asset は差し替えられない）。
   - 止まらないもの（想定内）: `public/audio/<名前>/`（教材パックの音声。`.gitignore` の決まりで git に入れず、zip にだけ入れる）、Python のキャッシュ（`__pycache__`・`*.pyc`）・`.DS_Store`・`Thumbs.db`（`public` の下のものは `dist` に写る。`dist` から除いたあと、`sw.js` の一覧か `packs.json` が参照していれば、下の突き合わせで止まる）。`public/audio/num` のように git で追跡しているフォルダは、git の外の mp3 や、変更した `manifest.json` があれば止まる。この「想定内」は `.gitignore` の `public/audio/*/` の決まりに頼っているので、決まりを変えるときは `scripts/release-lib.ts` の `isExpectedStatus` も直す。
-  - **`--allow-dirty`**: 上の一覧を警告にして続ける。`deploy/zorin`・`licenses`・最上位のファイルは、HEAD のコミットの中身を読むので、コミットしていない変更は zip に入らない。`public` の下は vite が dist にそのまま写すので、変更したままの中身も、追跡していないファイルも入る。わざとのときだけ使い、**公開する版では使わない**。リンクの止め（下）は `--allow-dirty` でも外れない。
+  - **`--allow-dirty`**: 上の一覧を警告にして続ける。`deploy/zorin`・`licenses`・最上位のファイルは HEAD のコミットから読むので、コミットしていない変更は zip に入らない。`public` の下は vite が dist にそのまま写すので、変更したままの中身も、追跡していないファイルも入る。わざとのときだけ使い、**公開する版では使わない**。リンクの止め（下）は `--allow-dirty` でも外れない。
   - **公開の前に、`public/audio` に作りかけ・試しの音声が無いか、`git status --ignored public/audio` で見る。** 教材パックの音声のフォルダは想定内として止めないので、`npm run package` では作りかけを見つけられない。中身がそろっているかは `npm run check:audio`・`npm run check:packs` で確かめる（17.3）。
-- **zip に入る中身**: `deploy/zorin`・`licenses`・最上位のファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md`）は、HEAD のコミットで git が追跡しているものだけを、作業ツリーではなく git の blob から読む。HEAD の木でリンク・サブモジュールになっていれば止まる。`dist` は、隠しファイル・隠しフォルダ（`dist/.vite/` を含む）、`Thumbs.db`・`desktop.ini`・`~` で終わるもの・`.swp`・Python のキャッシュを入れない（入れなかったものは `npm run package` が一覧に出す）。**入れなかったファイルを、`dist/sw.js` の事前保存の一覧（`__MNW_FILES__`）か `dist/packs.json` の各パックの `files` が参照していたら、zip を作る前に止まる**（`--allow-dirty` でも通さない。16.3）。vite の事前保存（`vite-plugin-precache.ts` の `isExcluded`）は隠しファイルしか除かないので、`public` の下の `Thumbs.db` などが `dist` に写って `sw.js` の一覧に入ると、zip に無いファイルを `sw.js` が取りに行き、家の Service Worker の install が 404 で失敗する（前の版の Service Worker が古い画面を出し続け、パックの `content-check` も止まる）。止まったら、`public` の下から消して `npm run build` をやり直す。`dist/sw.js` に一覧が無い・`dist/packs.json` が壊れているときも止まる。`deploy/zorin`・`licenses`・最上位のファイルの下にリンク（シンボリックリンク・Windows のジャンクション）があると、`--allow-dirty` でも止まる。`dist` と `public` には、リンクの確かめを掛けない（`public/audio` を別の場所へのジャンクションにしている作業場所があるため）。
-- **改行**: Windows の作業ツリーでは文書が CRLF になるが、改行だけの違いは `git status` に出ないので、元の確かめでは止まらない。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、zip にはタグと同じバイトが入る。blob が CRLF のファイル（`licenses/OFL-KleeOne.txt` など）は CRLF のまま入る。`public` の下は、作業ツリーのまま dist に写る。経緯と採らなかった案は 16.7 節。
+- **zip に入る中身**: `deploy/zorin`・`licenses`・最上位のファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md`）は、HEAD のコミットで git が追跡しているものだけを、作業ツリーではなく git の blob から読む。HEAD のツリーでリンク・サブモジュールになっていれば止まる。`dist` は、隠しファイル・隠しフォルダ（`dist/.vite/` を含む）、`Thumbs.db`・`desktop.ini`・`~` で終わるもの・`.swp`・Python のキャッシュを入れない（入れなかったものは `npm run package` が一覧に出す）。**入れなかったファイルを、`dist/sw.js` の事前保存の一覧（`__MNW_FILES__`）か `dist/packs.json` の各パックの `files` が参照していたら、zip を作る前に止まる**（`--allow-dirty` でも通さない。16.3）。vite の事前保存（`vite-plugin-precache.ts` の `isExcluded`）は隠しファイルしか除かないので、`public` の下の `Thumbs.db` などが `dist` に写って `sw.js` の一覧に入ると、zip に無いファイルを `sw.js` が取りに行き、家の Service Worker の install が 404 で失敗する（前の版の Service Worker が古い画面を出し続け、パックの `content-check` も止まる）。止まったら、`public` の下から消して `npm run build` をやり直す。`dist/sw.js` に一覧が無い・`dist/packs.json` が壊れているときも止まる。`deploy/zorin`・`licenses`・最上位のファイルの下にリンク（シンボリックリンク・Windows のジャンクション）があると、`--allow-dirty` でも止まる。`dist` と `public` には、リンクの確かめを掛けない（`public/audio` を別の場所へのジャンクションにしている作業場所があるため）。
+- **改行**: Windows の作業ツリーでは文書が CRLF になるが、改行だけの違いは `git status` に出ないので、配布に入る元の確かめ（上）では止まらない。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、zip にはタグと同じバイトが入る。blob が CRLF のファイル（`licenses/OFL-KleeOne.txt` など）は CRLF のまま入る。`public` の下は、作業ツリーのまま dist に写る。経緯と採らなかった案は 16.7 節。
 - **版の番号の誤りは自動の更新では取り返せない**（家は「今より新しい版」しか入れない。一度 21.0.0 と出すと、あとの 2.2.0 は届かない）。そのため `npm run package` は git のタグ（`vX.Y.Z`）と比べ、次のときは zip を作る前に止める（`scripts/release-lib.ts` の `checkReleaseVersion`。16 章 S8・16.2 app-4）:
   - これまでのいちばん新しい版より古い
   - 同じ版のタグがもうある（公開した版と同じ番号の直しは、その版を入れた家に届かない。まだ公開していないタグなら `npm run package -- --allow-existing-tag`）。公開済みかは、文字ではなく数で比べる（タグが `v2.01.0` でも、2.1.0 は公開済みとして止める）。`--allow-existing-tag` で通したタグが HEAD 以外のコミットを指していれば止める（`findTagsNotAtHead`）。zip は HEAD から作るので、そのまま作るとタグの中身と違う zip になるため
@@ -1095,26 +1095,26 @@ high・medium は無かった。公開を止めるものは残っていない。
 2.1.0 の公開のとき、本番の zip を走査して分かったことと、次の版での直し。
 
 - **起きたこと**: 本体の zip の `README.md`・`DESINGN.md`・`docs/device-checklist.md`・`licenses/MIT-React.txt` が CRLF だった。タグの中身（git の blob）は LF なので、zip とタグの中身が違っていた。統括が作業ツリーの 4 つを LF にして作り直してから公開した。
-- **原因**: `npm run package` が、これらを作業ツリーから読んでいた。Windows の作業ツリーは、`.gitattributes` の `* text=auto` と `core.eol` の既定（Windows では CRLF）で、文書が CRLF になる。改行だけの違いは git の正規化で `git status` に出ないので、package の最初の「元の確かめ」でも止まらなかった。新しく取り出した Windows の作業ツリーでは、この 4 つだけでなく、blob が LF の文書（`LICENSE`・`licenses` の大半など）がすべて CRLF になる。
-- **直し**: `deploy/zorin`・`licenses`・最上位のファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md`）を、作業ツリーではなく、HEAD のコミットの git の blob から読んで zip に入れる（`scripts/release-lib.ts` の `readTrackedReleaseFiles`。一覧は `git ls-tree -r HEAD`、中身は `git cat-file --batch`）。zip の中身はタグの中身とバイト単位で同じになる。
+- **原因**: `npm run package` が、これらを作業ツリーから読んでいた。Windows の作業ツリーは、`.gitattributes` の `* text=auto` と `core.eol` の既定（Windows では CRLF）で、文書が CRLF になる。改行だけの違いは git の正規化で `git status` に出ないので、package が最初に行う、配布に入る元の確かめでも止まらなかった。新しく取り出した Windows の作業ツリーでは、この 4 つだけでなく、blob が LF の文書（`LICENSE`・`licenses` の大半など）がすべて CRLF になる。
+- **直し**: `deploy/zorin`・`licenses`・最上位のファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md`）を、作業ツリーではなく、HEAD のコミットにある git の blob から読んで zip に入れる（`scripts/release-lib.ts` の `readTrackedReleaseFiles`。一覧は `git ls-tree -r HEAD`、中身は `git cat-file --batch`）。これらのファイルは、zip の中でもタグの中身とバイト単位で同じになる。
   - blob 自体が CRLF のファイル（`licenses/OFL-KleeOne.txt`・`licenses/mei-voice-COPYRIGHT.txt`）は、CRLF のまま入る（タグと同じ）。
 - **採らなかった案**: `.gitattributes` に `eol=lf` を足す案。`.gitattributes` は変えていない。理由は次の 3 つ。
   - 属性を変えても、今ある作業ツリーは取り出し直すまで CRLF のまま。改行だけの違いは `git status` に出ないので、同じことが気づかれずに起きうる。
   - 作業ツリーから読む限り、エディタの保存や `core.autocrlf`・`core.eol` の設定で、zip の中身が変わりうる。
-  - blob から読めば、こうした設定によらず「zip の中身＝タグの中身」が作りの上で成り立つ。CRLF の blob も、そのまま守れる。
-- **index ではなく HEAD を読む理由**: タグを付けるのはコミットだから。そのため `--allow-dirty` でも、この 3 か所のコミットしていない変更は zip に入らない（前は作業ツリーの中身が入った）。
-- **リンク・サブモジュールの止め方の変化**: HEAD の木でリンク（mode 120000）・サブモジュール（mode 160000）になっているものがあれば止まる。前は作業ツリーの `lstat` で見ていた。Windows で `core.symlinks=false` のとき、git はリンクを、リンク先のパスを中身にしたふつうのファイルとして取り出すので、見のがしていた。作業ツリーのリンクは、今までどおり `findLinks` が止める。
+  - blob から読めば、こうした設定によらず、仕組みとして「zip の中身＝タグの中身」が成り立つ。blob が CRLF のファイルも、CRLF のまま入れられる。
+- **index ではなく HEAD を読む理由**: タグを付けるのはコミットだから。HEAD から読むので、`--allow-dirty` でも、`deploy/zorin`・`licenses`・最上位のファイルのコミットしていない変更は zip に入らない（前は作業ツリーの中身が入った）。
+- **リンク・サブモジュールの止め方の変化**: HEAD のツリーでリンク（mode 120000）・サブモジュール（mode 160000）になっているものがあれば止まる。前は作業ツリーの `lstat` で見ていた。Windows で `core.symlinks=false` のとき、git はリンクを、リンク先のパスを中身にしたふつうのファイルとして取り出すので、見のがしていた。作業ツリーのリンクは、今までどおり `findLinks` が止める。
 - **既にあるタグと HEAD**: `--allow-existing-tag` のとき、同じ版の既にあるタグ（先頭が 0 の `v2.01.0` も同じ版として扱う）が HEAD 以外のコミットを指していれば止まる。zip は HEAD のコミットから作るので、タグが別のコミットを指していると、zip とタグの中身が違ってしまうため。`--allow-existing-tag` でも通さない。関数は `findTagsNotAtHead`。タグは `refs/tags/<タグ>^{commit}` で読むので、同じ名前のブランチなどと取り違えず、注釈つきのタグもコミットまでたどる。
 - **範囲の外**: `public` の下は、vite が作業ツリーから dist にそのまま写すので、今回は変えていない。Windows の作業ツリーでは `public/manifest.webmanifest`・`public/audio/num/manifest.json` も CRLF で、そのまま dist と zip に入る。JSON として読むので動きには影響しない。作る人の環境で dist のバイトが変わるだけ。
 - **試験**（`scripts/release-lib.test.ts`）: 使い捨ての git リポジトリを、本物と同じ `* text=auto` と、Windows の既定と同じ `core.eol=crlf` で取り出し直して、作業ツリーを CRLF にする（`git status` はきれいなまま）。`readTrackedReleaseFiles` と `package-release.ts` の通しの両方で、zip の中身が `git cat-file blob` の中身とバイト単位で同じことを確かめる。
   - blob が CRLF のファイルが、CRLF のまま入ること。
   - 作業ツリーで消した・変えた・ステージだけしたファイルが、zip に効かないこと。
-  - HEAD の木のリンク・サブモジュールで止まること。
+  - HEAD のツリーのリンク・サブモジュールで止まること。
   - `--allow-existing-tag` で通したタグが HEAD 以外を指していれば止まること（先頭が 0 のタグ・注釈つきのタグ・同じ名前のほかの参照も含む）。
 - **確かめ**:
   - `scripts/release-lib.test.ts` は 111 件（110 件合格・1 件 skip）。skip は前からある、Windows でファイルのリンクを作れないときに飛ばす試験。前は 99 件で、作業ツリーを見る試験を 2 件消し、14 件足した。
-  - 直しを 7 通り外すと、足した試験が落ちることを確かめてから戻した。`package-release.ts` が作業ツリーから読む形に戻すと 2 件、`readTrackedReleaseFiles` が作業ツリーから読む形にすると 4 件、HEAD の木の mode を見ない形にすると 3 件、タグを `refs/tags/` を付けずに読む形にすると 1 件、タグの確かめがいつも空を返す形にすると 3 件、package がタグの確かめを呼ばない形にすると 1 件、`^{commit}` でたどらない形にすると 1 件が落ちた。
-  - main（f8dbd42）から新しく取り出した Windows の作業ツリーで `readTrackedReleaseFiles` を動かすと、30 ファイルすべてが `git cat-file blob` と同じだった。同じ作業ツリーから読むと、14 ファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md` と `licenses` の 10）が blob と違った。
+  - 直しを 7 通り外すと、足した試験が落ちることを確かめてから戻した。`package-release.ts` が作業ツリーから読む形に戻すと 2 件、`readTrackedReleaseFiles` が作業ツリーから読む形にすると 4 件、HEAD のツリーの mode を見ない形にすると 3 件、タグを `refs/tags/` を付けずに読む形にすると 1 件、タグの確かめがいつも空を返す形にすると 3 件、package がタグの確かめを呼ばない形にすると 1 件、`^{commit}` でたどらない形にすると 1 件が落ちた。
+  - main（f8dbd42）から新しく取り出した Windows の作業ツリーで `readTrackedReleaseFiles` を動かすと、30 ファイルすべてが `git cat-file blob` と同じだった。同じ作業ツリーのファイルを直接読むと、14 ファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md` と `licenses` の 10）が blob と違った。
   - `npm run check` は通った。本物の作業ツリーでの `npm run build` と `npm run package` の通しは流していない。
 
 ---
@@ -1160,7 +1160,7 @@ docs/device-checklist.md の「自動更新」の項目に、実機で確かめ�
 | 自己検査の失敗の説明で、Zorin 実機の Python が出す traceback の形のパスの置き換え | Linux の単純なパスの形は試験で確かめた。実機の出力は未確認 |
 | 実際のディスクが満杯になったときの、取得物の削除 | `ENOSPC` は `open` の差し替えで起こした |
 | 本物の作業ツリーでの `npm run build` と `npm run package` の通し（3.6 節の新しい確かめを含む） | 使い捨ての git リポジトリでの実行と、関数の試験と、再点検で作った使い捨ての複製（本物の `vite build` つき）での実行だけ。本物の作業ツリーでは、`git status` を読む確かめだけを行い、package は流していない。複製には git に入っていない教材パックの音声が無く、zip は main だけだった |
-| `package` の確かめの穴: POSIX のファイルのシンボリックリンクの検出（この Windows では作れず 1 件 skip。ジャンクションと、リンクに化けた名前の試験は通った）、`git update-index` の `assume-unchanged`・`skip-worktree` で隠された変更、`core.autocrlf=true` の環境で CRLF の作業ツリーが「変更あり」に見えないか | 使い捨てのリポジトリ（`autocrlf=false`）と、LF の作業ツリーでしか見ていない。CRLF は次の版で直した。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、作業ツリーの改行に左右されない（16.7 節）。`public` の下は作業ツリーのまま dist に写る |
+| `package` の確かめの穴: POSIX のファイルのシンボリックリンクの検出（この Windows では作れず 1 件 skip。ジャンクションと、リンクに化けた名前の試験は通った）、`git update-index` の `assume-unchanged`・`skip-worktree` で隠された変更、`core.autocrlf=true` の環境で CRLF の作業ツリーが「変更あり」に見えないか | 使い捨てのリポジトリ（`autocrlf=false`）と、LF の作業ツリーでしか見ていない。CRLF の作業ツリーの件は直した（次の版から）。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、作業ツリーの改行に左右されない（16.7 節）。`public` の下は作業ツリーのまま dist に写る |
 | 教材パックの音声の作りかけ（`public/audio/<名前>/`）の検出 | `package` では見つけられない（想定内として止めない）。公開の前に人が見る（3.6 節・17.3） |
 | Chrome のアドレス欄の先読み（prerender）で `127.0.0.1:8765` が先に読み込まれたとき、Web Locks の要求が待たされるか（single-instance-design.md 8.2） | ブラウザの動き。仕様では待たされるはず |
 

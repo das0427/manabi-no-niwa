@@ -84,13 +84,13 @@
 | E-22 | 二重起動の防止（`e2e/single-instance.spec.ts`。chromium・firefox。15 件ずつ）: 2つ目を開くと1つ目が閉じ、2つ目は起動画面から始まる／画面を移した窓は「べつの まどで ひらいています」になり、記録を書かない／［この まどで ひらく］で引き継ぎ直せる／おえかきの保存を待ってから引き継ぐ（PNG づくりが遅くても）／3つ続けて開いても残るのは1つ／引き下がった窓は、使っている窓が閉じられたら起動画面に戻る／「戻る」で使っている窓を追い出さない／引き継いだ画面だけ、「はじめる」で全画面にする（1回）／Web Locks が無い・試験の旗があるときは守りなし／`page.reload()` を5回続けても毎回ふつうに始まる／`?retired=1` は音・記録・Service Worker・教材に触れない／新しい2つの画面の見た目（4つの大きさ）／外部通信なし | OP-07, IN-14, IN-15, BC-03 |
 
 **オフライン・教材パック・配信の E2E の dist の用意**（`e2e/offline.spec.ts`・`e2e/packs.spec.ts`・`e2e/serve.spec.ts`。`e2e/helpers/dist.ts`）:
-- dist の写しでは、音声入りの `audio/<名前>/`（見本パックを除く）を写さず、元の dist へつなぐ（Windows はジャンクション、Linux はシンボリックリンク）。ほかのファイルは写す。
+- dist の写しでは、音声入りの `audio/<名前>/`（見本パックを除く）を写さず、元の dist へつなぐ（Windows はジャンクション、Linux はシンボリックリンク）。ほかのファイルは写す。precache の walk がリンクをたどるのは、E2E が `followLinks` を渡したときだけで、本番のビルドは渡さない。準備の上限（`PREPARE_TIMEOUT`）は 180秒で、各テストの制限ではない。
 - つないだ音声の size と sha256 は、一時フォルダの `mnw-e2e-hash-cache` に覚える。ワーカーと実行をまたいで使い、ファイルの size と更新時刻が同じなら読み直さない。dist の置き場所ごとに約13MBで、消してもよい（次の実行で作り直す）。
-- 見本パック入りの組み立ては、`test.beforeAll` で一度だけ行う。public は写さず（`copyPublicDir: false`）、音声はつないで入れ、`finalizeDist` で作り直す。
-- 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は今までの待ち: offline 30秒・packs 60秒。音声を置かないビルドでは下限のまま）。テストの制限には、全件の保存の回数ぶんを足す（`precacheExtra`）。
-- つないだフォルダの中を消す・書く操作はエラーになる（つなぎ先の dist が変わるため）。後始末は、リンクを外してから消す。
-- 流し方: 音声入りの dist を Windows で流すときは、全件の保存を何度も行う試験が、一時ポートの不足で落ちることがある。spec ごとに間を空けて（TIME_WAIT が引いてから）流す。
-- 音声入りの Firefox は、Service Worker の寿命で offline・packs が落ちる。アプリの問題で、handover.md B に残した。
+- 見本パック入りの組み立ては、`test.beforeAll` でワーカーごとに一度だけ行う。vite には public を写させず（`copyPublicDir: false`）、組み立てたあとで public の音声以外を写し、音声はつないで入れ、`finalizeDist` で作り直す。
+- 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は直す前の待ち: offline 30秒・packs 60秒。音声を置かないビルドでは下限のまま）。テストの制限には、延びた待ち（待ち − 下限）を全件の事前保存の回数だけ足す（`precacheExtra`）。
+- 写しを変える補助（`prepareDist` の addFiles・removeFiles・breakFiles、packs.spec の breakA）は、つないだフォルダの中のパスを渡されるとエラーになる（消す・書くとリンク先の元の dist が変わるため）。音声をつなぐ補助は、リンク先が dist の外を指すときも止める。後始末は、リンクを外してから消す。
+- 流し方: 音声入りの dist を Windows で流すときは、全件の事前保存を何度も行う試験が、一時ポートの不足で落ちることがある。spec ごとに間を空けて（TIME_WAIT の接続が消えてから）流す案があるが、効くかは確かめていない。
+- 音声入りの Firefox は、Service Worker の寿命で offline・packs が落ちる。アプリの問題だが、依頼者の判断（2026-11-28）で対応しない（handover.md B）。
 
 **更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:
 - Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストとパス・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。

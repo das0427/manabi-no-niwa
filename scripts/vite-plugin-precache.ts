@@ -287,7 +287,8 @@ export interface FollowLinks {
 /** target が root と同じ場所か、その中か（Windows では大文字小文字を区別しない） */
 export function isInsideDir(root: string, target: string): boolean {
   const rel = path.relative(root, target);
-  return rel === '' || (!rel.startsWith('..') && !path.isAbsolute(rel));
+  const outside = rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel);
+  return !outside;
 }
 
 interface FollowState {

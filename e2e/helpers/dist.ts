@@ -28,7 +28,7 @@ import type { PrecacheEntry } from '../../scripts/vite-plugin-precache.ts';
  * ほかのファイル（約3千）は今までどおり写す。つないだ音声の size と hash は、一時フォルダ（mnw-e2e-hash-cache）に覚えて
  * ワーカーと実行をまたいで使い、finalizeDist に渡して読み直さない。
  *
- * 気をつけること: つないだフォルダの中を消す・書くと、つなぎ先（元の dist・本体の音声）が変わってしまう。
+ * 気をつけること: つないだフォルダの中を消す・書くと、つなぎ先（元の dist の audio/<名前>）が変わってしまう。
  * 写しの中のパスを変えるときは、assertOutsideLinks を通す。
  */
 
@@ -39,6 +39,7 @@ export const DIST = path.join(ROOT, 'dist');
  * 準備だけの時間の上限（test.beforeAll 用）。各テストの制限ではない。
  * 実測（1ワーカー）: 音声の hash は初回 28.9 秒・全件の読み直しの最悪 138 秒、写しは 3〜4 秒、
  * 見本パック入りの組み立ては 8.2 秒。最悪の読み直しに写しを足して余裕を見て 180 秒にした。
+ * 1ワーカーで流す前提（音声入りの E2E は --workers=1）。複数のワーカーが hash の覚えの無いまま同時に全件を読むときの時間は測っていない。
  */
 export const PREPARE_TIMEOUT = 180_000;
 
@@ -328,7 +329,7 @@ export async function copyIntoLinkingAudio(
     for (const name of names) {
       const target = await realpath(path.join(linkFrom, AUDIO_DIR, name));
       // つなぎ先が linkFrom の外（本体の public/audio など）なら、つながずに止める
-      if (!target.startsWith(`${linkFromReal}${path.sep}`)) {
+      if (target === linkFromReal || !isInsideDir(linkFromReal, target)) {
         throw new Error(`つなぎ先が ${linkFrom} の外です: ${AUDIO_DIR}/${name} -> ${target}`);
       }
       await symlink(target, path.join(dir, AUDIO_DIR, name), 'junction');

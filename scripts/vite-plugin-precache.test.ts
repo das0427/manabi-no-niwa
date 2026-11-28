@@ -124,6 +124,28 @@ describe('listDistFiles', () => {
     await expect(listDistFiles(dir, undefined, {})).rejects.toThrow('dist の外を指すリンク');
   });
 
+  it('followLinks: allow があっても、その外を指すリンクはエラーにする', async () => {
+    await linkAudio();
+    await expect(
+      listDistFiles(dir, undefined, { allow: [path.join(dir, 'fonts')] }),
+    ).rejects.toThrow('dist の外を指すリンク');
+  });
+
+  it('followLinks: 同じ実体を指す別名のリンクが2つあっても、両方のパスが入る', async () => {
+    const real = await linkAudio();
+    const second = path.join(dir, 'audio', 'p2');
+    await symlink(real, second, 'junction');
+    links.push(second);
+    const list = await listDistFiles(dir, undefined, { allow: [real] });
+    expect(list.map((e) => e.path)).toEqual([
+      'assets/app-abc.js',
+      'audio/p1/a.mp3',
+      'audio/p2/a.mp3',
+      'fonts/a.woff2',
+      'index.html',
+    ]);
+  });
+
   it('known にあるファイルは読まずにその値を使い、無いファイルは今までどおり読む', async () => {
     const known = new Map([
       ['fonts/a.woff2', { path: 'fonts/a.woff2', size: 999, hash: 'わざと違う hash' }],

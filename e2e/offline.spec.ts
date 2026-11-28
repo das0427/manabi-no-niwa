@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { chromium, expect, firefox, test } from '@playwright/test';
 import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { CSP } from '../scripts/vite-plugin-precache.ts';
@@ -120,6 +121,8 @@ const idbGet = (page: Page, key: string): Promise<string | null> =>
  * 更新の確認を促し、条件が満たされるまで繰り返す。
  * ブラウザが読み込み直後に行う更新確認と重なると、reg.update() が先の確認にまとめられて新しい sw.js を見ないことがあるため、
  * 何度か呼ぶ（実運用でも更新確認は繰り返し行われる）。
+ * 各回はまず状態を読み、条件を満たしていれば update() を呼ばずに返す。
+ * 失敗を見つけた回の update() が、失敗した版の install をやり直させないため。
  */
 async function updateUntil<T>(
   page: Page,
@@ -130,6 +133,8 @@ async function updateUntil<T>(
   await expect
     .poll(
       async () => {
+        const first = await safeState(page);
+        if (first !== null && isDeepStrictEqual(read(first), expected)) return read(first);
         await page
           .evaluate(async () => {
             const reg = await navigator.serviceWorker.getRegistration();

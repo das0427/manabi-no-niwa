@@ -166,7 +166,7 @@ describe('listDistFiles', () => {
 });
 
 describe('isInsideDir', () => {
-  it('同じ場所と、「..x」という名前の子は中。親と、兄弟は外', () => {
+  it('同じ場所と「..x」という名前の子は中、親と兄弟は外', () => {
     const root = path.resolve('mnw-root');
     expect(isInsideDir(root, root)).toBe(true);
     expect(isInsideDir(root, path.join(root, '..x'))).toBe(true);

@@ -77,6 +77,26 @@ export function buildHarness(): Promise<string> {
   return harnessPromise;
 }
 
+/**
+ * 全件の事前保存の待ちの見積もり（1ファイルあたりのミリ秒）。
+ * 待つのは写しの時間ではなく、アプリ（Service Worker）が実データで行う事前保存の時間。
+ * 実測（2026-11-28・1ワーカー・この開発機）: 音声入りのコア 10,577 ファイルの事前保存に Chromium 40.4 秒・Firefox 57.7 秒。
+ * Firefox の値は SW の寿命（dom.serviceWorkers.idle_extended_timeout）を延ばして測ったもの。既定の設定（30 秒）では、
+ * install の途中の SW が約60秒で止められ、終わらないことがある（テストでは延ばさない。アプリの問題として別に扱う）。
+ * Firefox の約 5.5 ミリ秒/ファイルに余裕を見て 10 ミリ秒にした。音声を置かないビルド（約2,300ファイル）では floor のまま。
+ */
+export const PRECACHE_MS_PER_FILE = 10;
+
+/** 全件の事前保存を待つ時間（ミリ秒）。小さな dist では floor（今までの待ち）のまま */
+export function precacheWait(fileCount: number, floor: number): number {
+  return Math.max(floor, fileCount * PRECACHE_MS_PER_FILE);
+}
+
+/** 全件の事前保存を times 回行うテストの制限に足す時間（ミリ秒）。小さな dist では 0 */
+export function precacheExtra(fileCount: number, times: number, floor: number): number {
+  return times * (precacheWait(fileCount, floor) - floor);
+}
+
 /** 写さずにつなぐ音声のフォルダ（<root>/audio/<名前>/）の名前を、名前順で返す。見本パック（_sample-*）は入れない */
 export function linkableAudioDirs(root: string): string[] {
   const audio = path.join(root, AUDIO_DIR);

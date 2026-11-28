@@ -15,6 +15,8 @@ import {
   copyIntoLinkingAudio,
   copyLinkingAudio,
   linkedAudioEntries,
+  precacheExtra,
+  precacheWait,
   removeLinkedSync,
 } from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
@@ -100,6 +102,7 @@ function buildSampleDist(): Promise<string> {
 interface Dist {
   dir: string;
   version: string;
+  fileCount: number;
   index: PackIndex;
 }
 
@@ -140,7 +143,7 @@ async function makeDist(
     await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
   }
   const index = JSON.parse(await readFile(path.join(dir, 'packs.json'), 'utf8')) as PackIndex;
-  return { dir, version: info.version, index };
+  return { dir, version: info.version, fileCount: info.fileCount, index };
 }
 
 async function serve(d: Dist, port?: number): Promise<ServeHandle> {
@@ -155,7 +158,7 @@ const isControlled = (page: Page): Promise<boolean> =>
   page.evaluate(() => navigator.serviceWorker.controller !== null);
 
 /** 初回: SW の install（コアの準備）を待ち、再読み込みで制御下に入れる */
-async function openPrepared(page: Page, url: string): Promise<void> {
+async function openPrepared(page: Page, url: string, fileCount: number): Promise<void> {
   await page.goto(url);
   await expect
     .poll(
@@ -166,7 +169,7 @@ async function openPrepared(page: Page, url: string): Promise<void> {
             return reg?.active?.state === 'activated';
           })
           .catch(() => false),
-      { timeout: 60_000 },
+      { timeout: precacheWait(fileCount, 60_000) },
     )
     .toBe(true);
   await page.reload();
@@ -275,7 +278,7 @@ function idbPut(page: Page, store: string, value: Record<string, unknown>): Prom
 }
 
 /** 新しい版の SW を待って適用し、再読み込みする（AboutTab の「更新する」と同じ手順） */
-async function updateAndReload(page: Page, version: string): Promise<void> {
+async function updateAndReload(page: Page, version: string, fileCount: number): Promise<void> {
   await expect
     .poll(
       async () =>
@@ -286,7 +289,7 @@ async function updateAndReload(page: Page, version: string): Promise<void> {
             return reg?.waiting?.state === 'installed';
           })
           .catch(() => false),
-      { timeout: 60_000, intervals: [500, 1000] },
+      { timeout: precacheWait(fileCount, 60_000), intervals: [500, 1000] },
     )
     .toBe(true);
   await page.evaluate(
@@ -322,6 +325,7 @@ test.describe('教材パック（見本パック）', () => {
     page,
   }) => {
     const d = await makeDist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 60_000));
     expect(Object.keys(d.index)).toEqual(expect.arrayContaining([A, B]));
     // コア同梱のパックは packs.json に載らない
     expect(d.index[CORE]).toBeUndefined();
@@ -336,7 +340,7 @@ test.describe('教材パック（見本パック）', () => {
     );
 
     const server = await serve(d);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, d.fileCount);
     expect(await packCaches(page)).toEqual([]);
     expect(await stateOf(page, A)).toBe('not-downloaded');
     expect(await stateOf(page, CORE)).toBe('core');
@@ -393,6 +397,7 @@ test.describe('教材パック（見本パック）', () => {
     const v2broken = await makeDist({ tag: 'v2', changeA: true, breakA: true });
     const v3 = await makeDist({ tag: 'v3', changeA: true });
     expect(v2.version).toBe(v2broken.version);
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 3, 60_000));
     expect(new Set([v1.version, v2.version, v3.version]).size).toBe(3);
     // パックの内容: A だけ変わる。B は同じ
     expect(v2.index[A]!.hash).not.toBe(v1.index[A]!.hash);
@@ -400,7 +405,7 @@ test.describe('教材パック（見本パック）', () => {
     expect(v3.index).toEqual(v2.index);
 
     let server = await serve(v1, port);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, v1.fileCount);
     expect((await download(page, A)).ok).toBe(true);
     expect((await download(page, B)).ok).toBe(true);
     const aV1 = `mnw-pack/${A}@${v1.index[A]!.hash}`;
@@ -410,7 +415,7 @@ test.describe('教材パック（見本パック）', () => {
     // ---- コアの更新（v2: A の内容が変わった）。まずは A の音声が取れない配信 ----
     await server.stop();
     server = await serve(v2broken, port);
-    await updateAndReload(page, v2.version);
+    await updateAndReload(page, v2.version, v2.fileCount);
     // (5) 新しいコアの activate（cleanupCaches）でパックのキャッシュは消えない
     expect(await packCaches(page)).toEqual([aV1, bCache].sort());
     expect(await coreCaches(page)).toEqual([`mnw-${v1.version}`, `mnw-${v2.version}`].sort());
@@ -448,7 +453,7 @@ test.describe('教材パック（見本パック）', () => {
     // ---- さらに v3（パックは同じ）へ: コアの v1 は消え、パックは残る（5）----
     await server.stop();
     server = await serve(v3, port);
-    await updateAndReload(page, v3.version);
+    await updateAndReload(page, v3.version, v3.fileCount);
     await expect
       .poll(() => coreCaches(page))
       .toEqual([`mnw-${v2.version}`, `mnw-${v3.version}`].sort());
@@ -467,8 +472,9 @@ test.describe('教材パック（見本パック）', () => {
   test('packs.json に無いパックのキャッシュは起動時に消し、記録も消す', async ({ page }) => {
     const port = await getFreePort();
     const v1 = await makeDist({ tag: 'v1' });
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 2, 60_000));
     const server = await serve(v1, port);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, v1.fileCount);
     expect((await download(page, B)).ok).toBe(true);
     // packs.json から B を除いた版（コアの更新で B が無くなった）
     const v2 = await makeDist({ tag: 'v2-no-b', dropPack: B });
@@ -476,15 +482,16 @@ test.describe('教材パック（見本パック）', () => {
     expect(v2.index[A]).toBeDefined();
     await server.stop();
     await serve(v2, port);
-    await updateAndReload(page, v2.version);
+    await updateAndReload(page, v2.version, v2.fileCount);
     await expect.poll(() => packCaches(page)).toEqual([]);
     expect(await idb(page, 'packsMeta')).toEqual([]);
   });
 
   test('(4) 保護者画面「きょうざい」: 取得 → 削除で教材だけ消え、記録は残る', async ({ page }) => {
     const d = await makeDist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 60_000));
     const server = await serve(d);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, d.fileCount);
     await expect(page.getByTestId('start-button')).toBeEnabled();
     await start(page);
     // 学習の記録（単元の進度）を入れておく

@@ -6,7 +6,13 @@ import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { CSP } from '../scripts/vite-plugin-precache.ts';
 import type { OfflineState } from '../src/core/offline/index';
 import { allowMultiWindow } from './helpers/app';
-import { PREPARE_TIMEOUT, prepareDist, warmDist } from './helpers/dist';
+import {
+  PREPARE_TIMEOUT,
+  precacheExtra,
+  precacheWait,
+  prepareDist,
+  warmDist,
+} from './helpers/dist';
 import type { PreparedDist } from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
 import type { ServeHandle } from './helpers/serve';
@@ -51,11 +57,11 @@ const safeState = async (page: Page): Promise<OfflineState | null> => {
   }
 };
 
-const waitReady = async (page: Page): Promise<void> => {
+const waitReady = async (page: Page, timeout = 30_000): Promise<void> => {
   await page.waitForFunction(
     () => (window as unknown as HarnessWindow).__mnwOffline?.getOfflineState().status === 'ready',
     null,
-    { timeout: 30_000 },
+    { timeout },
   );
 };
 
@@ -198,11 +204,12 @@ test.describe('オフライン再起動（E-10 / E-13 / OF-03）', () => {
     await allowMultiWindow(context);
     const external = watchExternal(context);
     const d = await dist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 30_000));
     const server = await serve(d);
 
     await page.goto(server.url);
     await expectAppOpens(page);
-    await waitReady(page);
+    await waitReady(page, precacheWait(d.fileCount, 30_000));
 
     // 準備の内容: この版のキャッシュに全ファイルと完成の記録が入っている
     const state = await getState(page);
@@ -266,6 +273,7 @@ test.describe('オフライン再起動（E-10 / E-13 / OF-03）', () => {
     browserName,
   }) => {
     const d = await dist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 30_000));
     const server = await serve(d);
     const userDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-profile-'));
     cleanups.push(() => rm(userDir, { recursive: true, force: true }));
@@ -279,7 +287,7 @@ test.describe('オフライン再起動（E-10 / E-13 / OF-03）', () => {
     let ctx = await type.launchPersistentContext(userDir, launchOptions);
     let page = ctx.pages()[0] ?? (await ctx.newPage());
     await page.goto(server.url);
-    await waitReady(page);
+    await waitReady(page, precacheWait(d.fileCount, 30_000));
     await page.reload();
     await expect.poll(() => isControlled(page)).toBe(true);
     await idbPut(page, 'child', 'さくひん');
@@ -339,9 +347,10 @@ test.describe('オフラインで全 9 モード（BC-04 / OF-03）', () => {
     page.on('pageerror', (e) => pageErrors.push(e.message));
 
     const d = await dist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 30_000));
     const server = await serve(d);
     await page.goto(server.url);
-    await waitReady(page);
+    await waitReady(page, precacheWait(d.fileCount, 30_000));
     await page.reload();
     await expect.poll(() => isControlled(page)).toBe(true);
 
@@ -389,13 +398,14 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
     const v2 = await dist({ addFiles: { 'only-v2.js': 'window.__only = "v2";' }, tag: 'v2' });
     const v3 = await dist({ addFiles: { 'only-v3.js': 'window.__only = "v3";' }, tag: 'v3' });
     expect(new Set([v1.version, v2.version, v3.version]).size).toBe(3);
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 3, 30_000));
 
     let server = await serve(v1, port);
 
     // ---- 旧タブ A（v1）----
     const tabA = await context.newPage();
     await tabA.goto(server.url);
-    await waitReady(tabA);
+    await waitReady(tabA, precacheWait(v1.fileCount, 30_000));
     await tabA.reload();
     await expect.poll(() => isControlled(tabA)).toBe(true);
     await waitReady(tabA);
@@ -406,7 +416,7 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
     // ---- 新版 v2 を配信 → 裏で準備される（学習中の画面は動いたまま）----
     await server.stop();
     server = await serve(v2, port);
-    await updateUntil(tabA, (s) => s.updateReady, true);
+    await updateUntil(tabA, (s) => s.updateReady, true, precacheWait(v2.fileCount, 30_000));
 
     const prepared = await getState(tabA);
     expect(prepared).toMatchObject({
@@ -454,7 +464,7 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
     // ---- さらに v3 へ: v1 は消え、v2 と v3 が残る ----
     await server.stop();
     server = await serve(v3, port);
-    await updateUntil(tabB, (s) => s.updateReady, true);
+    await updateUntil(tabB, (s) => s.updateReady, true, precacheWait(v3.fileCount, 30_000));
     await applyAndWaitReload(tabB);
 
     await expect
@@ -485,17 +495,18 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
     // 一覧には fonts/klee-one-400.woff2 があるのに配信できない版
     const broken = await dist({ tag: 'broken', breakFiles: ['fonts/klee-one-400.woff2'] });
     expect(broken.version).not.toBe(v1.version);
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 2, 30_000));
 
     let server = await serve(v1, port);
     const page = await context.newPage();
     await page.goto(server.url);
-    await waitReady(page);
+    await waitReady(page, precacheWait(v1.fileCount, 30_000));
     await page.reload();
     await expect.poll(() => isControlled(page)).toBe(true);
 
     await server.stop();
     server = await serve(broken, port);
-    await updateUntil(page, (s) => s.error !== null, true);
+    await updateUntil(page, (s) => s.error !== null, true, precacheWait(broken.fileCount, 30_000));
 
     const state = await getState(page);
     expect(state).toMatchObject({ status: 'ready', updateReady: false, version: v1.version });

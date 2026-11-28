@@ -89,9 +89,9 @@
 - dist を用意する `test.beforeAll` の制限（`PREPARE_TIMEOUT`）は 180秒。各テストの制限ではない。
 - つないだ音声の size と sha256 は、一時フォルダの `mnw-e2e-hash-cache` に覚える。ワーカーと実行をまたいで使い、ファイルの size と更新時刻が同じなら読み直さない。dist の置き場所ごとに約13MBで、消してもよい（次の実行で作り直す）。
 - 見本パック入りの組み立ては、`test.beforeAll` でワーカーごとに一度だけ行う。vite には public を写させず（`copyPublicDir: false`）、組み立てたあとで public の音声以外を写し、音声はつないで入れ、`finalizeDist` で作り直す。
-- 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は直す前の待ち: offline 30秒・packs 60秒。音声を置かないビルドでは下限のまま。コアが offline で 3,000、packs で 6,000 ファイルまでのあいだ）。テストの制限には、延びた待ち（待ち − 下限）を全件の事前保存の回数だけ足す（`precacheExtra`）。
-- 写しを変える補助（`prepareDist` の addFiles・removeFiles・breakFiles、packs.spec の breakA）は、つないだフォルダの中のパスを渡されるとエラーになる（消す・書くとリンク先の元の dist が変わるため）。音声をつなぐ補助も、リンク先が dist の外にあれば、つながずにエラーにする。後始末は、リンクを外してから消す。
-- 流し方: 音声入りの dist は --workers=1 で流す（PREPARE_TIMEOUT の 180秒はこの前提）。音声入りの dist を Windows で流すときは、全件の事前保存を何度も行う試験が、一時ポートの不足で落ちることがある。spec ごとに間を空けて（TIME_WAIT の接続が消えてから）流す案があるが、効くかは確かめていない。
+- 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は直す前の待ち: offline 30秒・packs 60秒。音声を置かないビルドはコアが 2,375 ファイルで、offline の 3,000・packs の 6,000 より少ないので下限のまま）。テストの制限には、延びた待ち（待ち − 下限）を全件の事前保存の回数だけ足す（`precacheExtra`）。
+- 写しを変える補助（`prepareDist` の addFiles・removeFiles・breakFiles、packs.spec の breakA）は、つないだフォルダの中のパスを渡されるとエラーになる（消す・書くとリンク先の元の dist が変わるため）。音声をつなぐ補助も、リンク先が元の dist の外にあれば、つながずにエラーにする。後始末は、リンクを外してから消す。
+- 流し方: 音声入りの dist は --workers=1 で流す（PREPARE_TIMEOUT の 180秒はこの前提）。音声入りの dist を Windows で流すときは、3つの spec を続けて流すと、全件の事前保存を行う試験が、一時ポートの不足で落ちることがある（0d9bedb のあとに、21件のうち3件が落ちた）。TIME_WAIT の接続が 300 を下回るまで待ってから1件ずつ流すと、その3件は通った。ただし (1)(2)(6) は、単独でも5回に1回、最初の準備の待ちで落ちた（原因は確かめていない）。
 - 音声入りの Firefox は、Service Worker の寿命で offline・packs が落ちる。アプリの問題だが、依頼者の判断（2026-11-28）で対応しない（handover.md B）。
 
 **更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:

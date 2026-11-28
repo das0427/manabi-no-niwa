@@ -23,7 +23,7 @@
  * わざとなら `npm run package -- --allow-jump`、まだ公開していないタグなら `-- --allow-existing-tag`）。
  * git のタグを読めない・タグが 1 つも無いときも止める（読めないまま比べずに出すと、版の番号の誤りを見のがす）。
  * わざと比べないなら `-- --no-tag-check`。
- * --allow-existing-tag でも、そのタグが HEAD 以外のコミットを指していれば止める（zip は HEAD から作るため）。
+ * --allow-existing-tag でも、そのタグが HEAD 以外のコミットを指していれば止める（zip の追跡済みファイルは HEAD から読むため）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -133,7 +133,7 @@ if (process.argv.includes('--allow-existing-tag') && releaseTags.length > 0) {
   if (notAtHead.length > 0) {
     die(
       `${notAtHead.join('\n')}\n` +
-        'zip は HEAD のコミットから作るので、このまま作るとタグの中身と違う zip になります。' +
+        'zip の追跡済みファイルは HEAD のコミットから読むので、このまま作るとタグの中身と違う zip になります。' +
         'タグを付けるコミットを取り出してから npm run package をやり直すか、まだ push していないタグなら付け直してください（--allow-existing-tag でも通しません）。',
     );
   }

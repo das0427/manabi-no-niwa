@@ -223,7 +223,7 @@
 ### 3.6 リリースの手順に足すこと（後の段で docs に書く）
 
 1. `docs/expansion/release-<版>.md` に `## 保護者画面に出す短い説明`（箇条書き 5 行まで）を書く。
-2. `npm run build` → `npm run package`（前提と止まる場合は下）。`npm run package` は、タグ `v<版>` を付ける前に流す。`deploy/zorin`・`licenses`・最上位のファイルは HEAD のコミットから読むので、タグを付けるコミット（main に取り込んだあとのコミット）を取り出した状態で流す。先にタグを付けた（まだ push していない）ときは `npm run package -- --allow-existing-tag` で流す（2.1.0 はこれで作った）。そのタグが HEAD 以外のコミットを指していれば、`--allow-existing-tag` でも止まる。push したタグ（公開した版）と同じ番号では作らない。`release/` に zip 4つ・`.sha256` 4つ・`manabi-no-niwa-update.json` ができる。あわせて zip ごとに、入れたファイルの一覧 `<zip の名前>.files.txt`（パス・大きさ・sha256。部品の印は除く。この文字の sha256 が contentId になる）ができる。GitHub には上げない。前の版の `.files.txt` と `diff` を取ると、入ったものの差が見える（`npm run package` には、差の自動表示を付けていない）。
+2. `npm run build` → `npm run package`（前提と止まる場合は下）。`npm run package` は、タグ `v<版>` を付ける前に流す。`deploy/zorin`・`licenses`・最上位のファイルは HEAD のコミットから読むので、タグを付けるコミット（main に取り込んだあとのコミット）を取り出した状態で流す。先にタグを付けた（まだ push していない）ときは `npm run package -- --allow-existing-tag` で流す（2.1.0 はこれで作った）。そのタグが HEAD 以外のコミットを指していれば、`--allow-existing-tag` でも止まる（`--no-tag-check` を一緒に付けるとタグの一覧が空になり、この確かめも飛ぶ）。push したタグ（公開した版）と同じ番号では作らない。`release/` に zip 4つ・`.sha256` 4つ・`manabi-no-niwa-update.json` ができる。あわせて zip ごとに、入れたファイルの一覧 `<zip の名前>.files.txt`（パス・大きさ・sha256。部品の印は除く。この文字の sha256 が contentId になる）ができる。GitHub には上げない。前の版の `.files.txt` と `diff` を取ると、入ったものの差が見える（`npm run package` には、差の自動表示を付けていない）。
 3. GitHub でタグ `v<版>` の下書きのリリースを作り、zip と `.sha256` を上げ、**最後に** `manabi-no-niwa-update.json` を上げる。先行版にしない。「Set as latest」にして公開する。
 4. （任意）開発機で `py -3 deploy/zorin/serve.py --check-update` を実行し、版の情報が取れることを確かめる（5.1 節）。
 
@@ -235,7 +235,7 @@
 - **改行**: Windows の作業ツリーでは文書が CRLF になるが、改行だけの違いは `git status` に出ないので、配布に入る元の確かめ（上）では止まらない。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、zip にはタグと同じバイトが入る。blob が CRLF のファイル（`licenses/OFL-KleeOne.txt` など）は CRLF のまま入る。`public` の下は、作業ツリーのまま dist に写る。経緯と採らなかった案は 16.7 節。
 - **版の番号の誤りは自動の更新では取り返せない**（家は「今より新しい版」しか入れない。一度 21.0.0 と出すと、あとの 2.2.0 は届かない）。そのため `npm run package` は git のタグ（`vX.Y.Z`）と比べ、次のときは zip を作る前に止める（`scripts/release-lib.ts` の `checkReleaseVersion`。16 章 S8・16.2 app-4）:
   - これまでのいちばん新しい版より古い
-  - 同じ版のタグがもうある（公開した版と同じ番号の直しは、その版を入れた家に届かない。まだ公開していないタグなら `npm run package -- --allow-existing-tag`）。公開済みかは、文字ではなく数で比べる（タグが `v2.01.0` でも、2.1.0 は公開済みとして止める）。`--allow-existing-tag` で通したタグが HEAD 以外のコミットを指していれば止める（`findTagsNotAtHead`）。zip は HEAD から作るので、そのまま作るとタグの中身と違う zip になるため
+  - 同じ版のタグがもうある（公開した版と同じ番号の直しは、その版を入れた家に届かない。まだ公開していないタグなら `npm run package -- --allow-existing-tag`）。公開済みかは、文字ではなく数で比べる（タグが `v2.01.0` でも、2.1.0 は公開済みとして止める）。`--allow-existing-tag` で通したタグが HEAD 以外のコミットを指していれば止める（`findTagsNotAtHead`。`--no-tag-check` を一緒に付けるとタグの一覧が空になり、この確かめも飛ぶ）。zip の追跡済みファイルは HEAD から読むので、そのまま作るとタグの中身と違う zip になるため
   - メジャーが 2 以上、またはマイナーが 2 以上飛ぶ・メジャーを上げるのにマイナーが 0 でない（打ち間違いの疑い。わざとなら `-- --allow-jump`）
   - 版の形が `X.Y.Z` でない。先頭に 0 は付けない（`2.01.0` は拒む。別の版に見えるのに、数では 2.1.0 と同じになるため）
   - git のタグを読めない、または `vX.Y.Z` の形のタグが 1 つも無い（読めないまま比べずに出すと、この確かめが働かない。`git fetch --tags` で取り込む。わざと比べないなら `npm run package -- --no-tag-check`）
@@ -1104,16 +1104,16 @@ high・medium は無かった。公開を止めるものは残っていない。
   - blob から読めば、こうした設定によらず、仕組みとして「zip の中身＝タグの中身」が成り立つ。blob が CRLF のファイルも、CRLF のまま入れられる。
 - **index ではなく HEAD を読む理由**: タグを付けるのはコミットだから。HEAD から読むので、`--allow-dirty` でも、`deploy/zorin`・`licenses`・最上位のファイルのコミットしていない変更は zip に入らない（前は作業ツリーの中身が入った）。
 - **リンク・サブモジュールの止め方の変化**: HEAD のツリーでリンク（mode 120000）・サブモジュール（mode 160000）になっているものがあれば止まる。前は作業ツリーの `lstat` で見ていた。Windows で `core.symlinks=false` のとき、git はリンクを、リンク先のパスを中身にしたふつうのファイルとして取り出すので、見のがしていた。作業ツリーのリンクは、今までどおり `findLinks` が止める。
-- **既にあるタグと HEAD**: `--allow-existing-tag` のとき、同じ版の既にあるタグ（先頭が 0 の `v2.01.0` も同じ版として扱う）が HEAD 以外のコミットを指していれば止まる。zip は HEAD のコミットから作るので、タグが別のコミットを指していると、zip とタグの中身が違ってしまうため。`--allow-existing-tag` でも通さない。関数は `findTagsNotAtHead`。タグは `refs/tags/<タグ>^{commit}` で読むので、同じ名前のブランチなどと取り違えず、注釈つきのタグもコミットまでたどる。
+- **既にあるタグと HEAD**: `--allow-existing-tag` のとき、同じ版の既にあるタグ（先頭が 0 の `v2.01.0` も同じ版として扱う）が HEAD 以外のコミットを指していれば止まる。zip の追跡済みファイルは HEAD のコミットから読む（`dist` は作業ツリーで build したもの）ので、タグが別のコミットを指していると、zip とタグの中身が違ってしまうため。`--allow-existing-tag` でも通さない。`--no-tag-check` を一緒に付けるとタグの一覧が空になり、この確かめも飛ぶ。関数は `findTagsNotAtHead`。タグは `refs/tags/<タグ>^{commit}` で読むので、同じ名前のブランチなどと取り違えず、注釈つきのタグもコミットまでたどる。
 - **範囲の外**: `public` の下は、vite が作業ツリーから dist にそのまま写すので、今回は変えていない。Windows の作業ツリーでは `public/manifest.webmanifest`・`public/audio/num/manifest.json` も CRLF で、そのまま dist と zip に入る。JSON として読むので動きには影響しない。作る人の環境で dist のバイトが変わるだけ。
 - **試験**（`scripts/release-lib.test.ts`）: 使い捨ての git リポジトリを、本物と同じ `* text=auto` と、Windows の既定と同じ `core.eol=crlf` で取り出し直して、作業ツリーを CRLF にする（`git status` はきれいなまま）。`readTrackedReleaseFiles` と `package-release.ts` の通しの両方で、zip の中身が `git cat-file blob` の中身とバイト単位で同じことを確かめる。
   - blob が CRLF のファイルが、CRLF のまま入ること。
   - 作業ツリーで消した・変えた・ステージだけしたファイルが、zip に効かないこと。
   - HEAD のツリーのリンク・サブモジュールで止まること。
-  - `--allow-existing-tag` で通したタグが HEAD 以外を指していれば止まること（先頭が 0 のタグ・注釈つきのタグ・同じ名前のほかの参照も含む）。
+  - `--allow-existing-tag` で通したタグが HEAD 以外を指していれば止まること（先頭が 0 のタグ・注釈つきのタグ・同じ名前のほかの参照も含む）。`package-release.ts` の通しでは、軽量タグに加えて注釈つきのタグ（HEAD を指せば通り、HEAD~1 を指せば止まる）も確かめる。
 - **確かめ**:
-  - `scripts/release-lib.test.ts` は 111 件（110 件合格・1 件 skip）。skip は前からある、Windows でファイルのリンクを作れないときに飛ばす試験。前は 99 件で、作業ツリーを見る試験を 2 件消し、14 件足した。
-  - 直しを 7 通り外すと、足した試験が落ちることを確かめてから戻した。`package-release.ts` が作業ツリーから読む形に戻すと 2 件、`readTrackedReleaseFiles` が作業ツリーから読む形にすると 4 件、HEAD のツリーの mode を見ない形にすると 3 件、タグを `refs/tags/` を付けずに読む形にすると 1 件、タグの確かめがいつも空を返す形にすると 3 件、package がタグの確かめを呼ばない形にすると 1 件、`^{commit}` でたどらない形にすると 1 件が落ちた。
+  - `scripts/release-lib.test.ts` は 113 件（112 件合格・1 件 skip）。skip は前からある、Windows でファイルのリンクを作れないときに飛ばす試験。前は 99 件で、作業ツリーを見る試験を 2 件消し、16 件足した。
+  - 直しを 7 通り外すと、足した試験が落ちることを確かめてから戻した。`package-release.ts` が作業ツリーから読む形に戻すと 2 件、`readTrackedReleaseFiles` が作業ツリーから読む形にすると 4 件、HEAD のツリーの mode を見ない形にすると 3 件、タグを `refs/tags/` を付けずに読む形にすると 1 件、タグの確かめがいつも空を返す形にすると 3 件、package がタグの確かめを呼ばない形にすると 1 件、`^{commit}` でたどらない形にすると、元からの 1 件に加えて、足した注釈つきタグの「HEAD を指せば通る」試験も落ちた（「HEAD~1 を指せば止まる」は、外しても止まるので落ちない）。
   - main（f8dbd42）から新しく取り出した Windows の作業ツリーで `readTrackedReleaseFiles` を動かすと、30 ファイルすべてが `git cat-file blob` と同じだった。同じ作業ツリーのファイルを直接読むと、14 ファイル（`README.md`・`LICENSE`・`DESINGN.md`・`docs/device-checklist.md` と `licenses` の 10）が blob と違った。
   - `npm run check` は通った。本物の作業ツリーでの `npm run build` と `npm run package` の通しは流していない。
 
@@ -1160,7 +1160,7 @@ docs/device-checklist.md の「自動更新」の項目に、実機で確かめ�
 | 自己検査の失敗の説明で、Zorin 実機の Python が出す traceback の形のパスの置き換え | Linux の単純なパスの形は試験で確かめた。実機の出力は未確認 |
 | 実際のディスクが満杯になったときの、取得物の削除 | `ENOSPC` は `open` の差し替えで起こした |
 | 本物の作業ツリーでの `npm run build` と `npm run package` の通し（3.6 節の新しい確かめを含む） | 使い捨ての git リポジトリでの実行と、関数の試験と、再点検で作った使い捨ての複製（本物の `vite build` つき）での実行だけ。本物の作業ツリーでは、`git status` を読む確かめだけを行い、package は流していない。複製には git に入っていない教材パックの音声が無く、zip は main だけだった |
-| `package` の確かめの穴: POSIX のファイルのシンボリックリンクの検出（この Windows では作れず 1 件 skip。ジャンクションと、リンクに化けた名前の試験は通った）、`git update-index` の `assume-unchanged`・`skip-worktree` で隠された変更、`core.autocrlf=true` の環境で CRLF の作業ツリーが「変更あり」に見えないか | 使い捨てのリポジトリ（`autocrlf=false`）と、LF の作業ツリーでしか見ていない。CRLF の作業ツリーの件は直した（次の版から）。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、作業ツリーの改行に左右されない（16.7 節）。`public` の下は作業ツリーのまま dist に写る |
+| `package` の確かめの穴: POSIX のファイルのシンボリックリンクの検出（この Windows では作れず 1 件 skip。ジャンクションと、リンクに化けた名前の試験は通った）、`git update-index` の `assume-unchanged`・`skip-worktree` で隠された変更、`core.autocrlf=true` の環境で CRLF の作業ツリーが「変更あり」に見えないか | 使い捨てのリポジトリ（`autocrlf=false`）でしか見ていない。CRLF の作業ツリーは、`core.eol=crlf` で取り出し直して確かめた（16.7 節）。`deploy/zorin`・`licenses`・最上位のファイルは blob から読むので、作業ツリーの改行に左右されない（16.7 節）。`public` の下は作業ツリーのまま dist に写る |
 | 教材パックの音声の作りかけ（`public/audio/<名前>/`）の検出 | `package` では見つけられない（想定内として止めない）。公開の前に人が見る（3.6 節・17.3） |
 | Chrome のアドレス欄の先読み（prerender）で `127.0.0.1:8765` が先に読み込まれたとき、Web Locks の要求が待たされるか（single-instance-design.md 8.2） | ブラウザの動き。仕様では待たされるはず |
 

@@ -1851,6 +1851,27 @@ describe('package-release.ts（使い捨てのリポジトリで動かす）', {
     expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
   });
 
+  it('注釈つきのタグ: HEAD を指していれば --allow-existing-tag で通る', () => {
+    const repo = newPackageProject();
+    runGit(repo, ['tag', '-a', 'v2.1.0', '-m', 'release']);
+    const r = runPackage(repo, ['--allow-existing-tag']);
+    expect(r.code, r.err).toBe(0);
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(true);
+  });
+
+  it('注釈つきのタグ: HEAD~1 を指していれば --allow-existing-tag でも止める', () => {
+    const repo = newPackageProject();
+    runGit(repo, ['tag', '-a', 'v2.1.0', '-m', 'release']);
+    writeFiles(repo, { 'notes/x.txt': 'x' });
+    runGit(repo, ['add', 'notes/x.txt']);
+    runGit(repo, ['commit', '-q', '-m', 'next']);
+    const r = runPackage(repo, ['--allow-existing-tag']);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('タグ v2.1.0 は HEAD');
+    expect(r.err).toContain('--allow-existing-tag でも通しません');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+  });
+
   it('作業ツリーが CRLF（Windows の取り出し）でも、zip の追跡済みファイルは HEAD の blob とバイト単位で同じ', () => {
     const repo = newPackageProject();
     crlfCheckout(repo);

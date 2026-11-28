@@ -890,7 +890,8 @@ export function sourceProblems(
         `配布に入る元（${RELEASE_SOURCES.join('・')}）に、git の外のファイル・変更・無視されたファイルがあります（${n} 件）:\n` +
           `${list}\n` +
           'コミットするか、消すか、.gitignore に入れてからやり直してください。' +
-          'わざと入れるなら npm run package -- --allow-dirty。',
+          'deploy/zorin・licenses・最上位のファイルの変更は、コミットしてからやり直してください（--allow-dirty を付けても zip に入りません）。' +
+          'public の下の変更だけは、わざとなら npm run package -- --allow-dirty で入ります。',
       );
     }
   }
@@ -907,7 +908,7 @@ export function sourceProblems(
 
 /**
  * 同じ版のタグがあれば、それが HEAD のコミットを指しているか。指していないタグの説明の配列（全部 HEAD なら []）。
- * zip は HEAD のコミットから作る（readTrackedReleaseFiles）ので、--allow-existing-tag で通したタグが別のコミットを
+ * zip の追跡済みファイルは HEAD のコミットから読む（readTrackedReleaseFiles）ので、--allow-existing-tag で通したタグが別のコミットを
  * 指していると、zip とタグの中身が食い違う。注釈つきのタグはコミットまでたどる（`<タグ>^{commit}`）。
  * git が失敗したら例外のまま投げる（呼ぶ側で止める）。
  */

@@ -6,7 +6,7 @@ import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { CSP } from '../scripts/vite-plugin-precache.ts';
 import type { OfflineState } from '../src/core/offline/index';
 import { allowMultiWindow } from './helpers/app';
-import { prepareDist } from './helpers/dist';
+import { PREPARE_TIMEOUT, prepareDist, warmDist } from './helpers/dist';
 import type { PreparedDist } from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
 import type { ServeHandle } from './helpers/serve';
@@ -26,6 +26,12 @@ type Harness = {
 type HarnessWindow = Window & { __mnwOffline: Harness };
 
 const APP_TITLE = 'まなびのにわ';
+
+test.beforeAll(async () => {
+  // 音声入りの dist（約12万ファイル）の音声の hash を、テストの時間の外で一度だけ求める（helpers/dist.ts）
+  test.setTimeout(PREPARE_TIMEOUT);
+  await warmDist();
+});
 
 /** アプリが開いた: index.html（タイトル）が読み込まれ、React の画面が #root に描かれている（画面の文言には依存しない） */
 async function expectAppOpens(page: Page): Promise<void> {

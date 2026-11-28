@@ -1,5 +1,6 @@
 // @vitest-environment node
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, readFile, rm, symlink, unlink, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +19,10 @@ import {
 } from './vite-plugin-precache.ts';
 
 let dir: string;
+/** テストの中で作ったジャンクション。後片づけでリンクを外してから、一時フォルダを消す */
+const links: string[] = [];
+/** ジャンクションのつなぎ先に使う別の一時フォルダ */
+let targetDir: string | null = null;
 
 async function put(rel: string, content: string): Promise<void> {
   const file = path.join(dir, rel);
@@ -33,8 +38,13 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  for (const link of links.splice(0)) await unlink(link).catch(() => undefined);
   await rm(dir, { recursive: true, force: true });
+  if (targetDir) await rm(targetDir, { recursive: true, force: true });
+  targetDir = null;
 });
+
+const sha256 = (text: string): string => createHash('sha256').update(text).digest('hex');
 
 describe('コアに同梱するパック', () => {
   it('幼児のパック（p23・p4・p5）と幼児の英語（en-pre）はコア。小学生のパックは違う', () => {
@@ -58,6 +68,46 @@ describe('listDistFiles', () => {
     expect(isExcluded('sw.js')).toBe(true);
     expect(isExcluded('assets/x.js.map')).toBe(true);
     expect(isExcluded('assets/sw.js')).toBe(false);
+  });
+
+  it('ジャンクションでつないだフォルダの中のファイルも、リンクの先の内容の hash で入る', async () => {
+    targetDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-precache-target-'));
+    await mkdir(path.join(targetDir, 'p1'), { recursive: true });
+    await writeFile(path.join(targetDir, 'p1', 'a.mp3'), 'audio-a', 'utf8');
+    await mkdir(path.join(dir, 'audio'), { recursive: true });
+    const link = path.join(dir, 'audio', 'p1');
+    await symlink(path.join(targetDir, 'p1'), link, 'junction');
+    links.push(link);
+
+    const list = await listDistFiles(dir);
+    expect(list.map((e) => e.path)).toEqual([
+      'assets/app-abc.js',
+      'audio/p1/a.mp3',
+      'fonts/a.woff2',
+      'index.html',
+    ]);
+    expect(list.find((e) => e.path === 'audio/p1/a.mp3')).toEqual({
+      path: 'audio/p1/a.mp3',
+      size: 'audio-a'.length,
+      hash: sha256('audio-a'),
+    });
+  });
+
+  it('known にあるファイルは読まずにその値を使い、無いファイルは今までどおり読む', async () => {
+    const known = new Map([
+      ['fonts/a.woff2', { path: 'fonts/a.woff2', size: 999, hash: 'わざと違う hash' }],
+    ]);
+    const list = await listDistFiles(dir, known);
+    expect(list.find((e) => e.path === 'fonts/a.woff2')).toEqual({
+      path: 'fonts/a.woff2',
+      size: 999,
+      hash: 'わざと違う hash',
+    });
+    expect(list.find((e) => e.path === 'index.html')).toEqual({
+      path: 'index.html',
+      size: '<html></html>'.length,
+      hash: sha256('<html></html>'),
+    });
   });
 });
 
@@ -135,6 +185,18 @@ describe('finalizeDist', () => {
     await put('assets/app-abc.js', 'changed');
     const changed = await finalizeDist(dir);
     expect(changed.version).not.toBe(first.version);
+  });
+
+  it('正しい knownEntries を渡しても、渡さないときと同じ版ID・同じ sw.js になる', async () => {
+    const plain = await finalizeDist(dir);
+    const swPlain = await readFile(path.join(dir, 'sw.js'), 'utf8');
+    const knownEntries = new Map(
+      (await listDistFiles(dir)).filter((e) => e.path !== 'index.html').map((e) => [e.path, e]),
+    );
+    const withKnown = await finalizeDist(dir, { knownEntries });
+    const swKnown = await readFile(path.join(dir, 'sw.js'), 'utf8');
+    expect(withKnown).toEqual(plain);
+    expect(swKnown).toBe(swPlain);
   });
 
   it('appVersion を渡すと、version.json にだけ appVersion（アプリの版の番号）が入る', async () => {

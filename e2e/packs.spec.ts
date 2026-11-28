@@ -1,13 +1,22 @@
-import { rmSync } from 'node:fs';
-import { appendFile, cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from 'vite';
-import { finalizeDist } from '../scripts/vite-plugin-precache.ts';
-import type { PackIndex } from '../scripts/vite-plugin-precache.ts';
+import { finalizeDist, packIdOfFile, readAppVersion } from '../scripts/vite-plugin-precache.ts';
+import type { PackIndex, ViteManifest } from '../scripts/vite-plugin-precache.ts';
 import { openParent, start } from './helpers/app';
+import {
+  DIST,
+  PREPARE_TIMEOUT,
+  assertOutsideLinks,
+  copyIntoLinkingAudio,
+  copyLinkingAudio,
+  linkedAudioEntries,
+  removeLinkedSync,
+} from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
 import type { ServeHandle } from './helpers/serve';
 
@@ -50,10 +59,19 @@ type PacksWindow = Window & { __mnwPacks?: PacksApi };
 
 let builtPromise: Promise<string> | null = null;
 
-/** 見本パック入りのビルド（ワーカーごとに 1 回） */
+/**
+ * 見本パック入りのビルド（ワーカーごとに 1 回）。
+ * public（約12万ファイル）は vite に写させず（copyPublicDir: false）、音声はつないで入れ、finalizeDist で作り直す
+ */
 function buildSampleDist(): Promise<string> {
   builtPromise ??= (async () => {
-    const outDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-packs-build-'));
+    if (!existsSync(path.join(DIST, 'index.html'))) {
+      throw new Error('dist がありません。先に npm run build を実行してください。');
+    }
+    const outDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-e2e-linked-build-'));
+    let linked: string[] = [];
+    // 終了時は、つないだ音声のリンクを外してから消す
+    process.once('exit', () => removeLinkedSync(outDir, linked));
     const prev = process.env.VITE_MNW_SAMPLE_PACKS;
     process.env.VITE_MNW_SAMPLE_PACKS = '1';
     try {
@@ -61,13 +79,19 @@ function buildSampleDist(): Promise<string> {
         root: ROOT,
         configFile: path.join(ROOT, 'vite.config.ts'),
         logLevel: 'silent',
-        build: { outDir, emptyOutDir: true },
+        build: { outDir, emptyOutDir: true, copyPublicDir: false },
       });
     } finally {
       if (prev === undefined) delete process.env.VITE_MNW_SAMPLE_PACKS;
       else process.env.VITE_MNW_SAMPLE_PACKS = prev;
     }
-    process.once('exit', () => rmSync(outDir, { recursive: true, force: true }));
+    const publicDir = path.join(ROOT, 'public');
+    // 音声のつなぎ先は dist/audio（public/audio の実体は本体の音声なので、リンクを残さない）
+    linked = await copyIntoLinkingAudio(publicDir, outDir, DIST);
+    await finalizeDist(outDir, {
+      appVersion: await readAppVersion(ROOT),
+      knownEntries: await linkedAudioEntries(DIST),
+    });
     return outDir;
   })();
   return builtPromise;
@@ -85,24 +109,36 @@ test.afterEach(async () => {
 });
 
 /**
- * ビルドのコピーを作る。tag で index.html を変え（コアの版を変える）、changeA で見本パック A の
- * チャンクの内容を変える（パックの版を変える）。breakA は sw.js などを作った後に A の音声を消す（取得の失敗の再現）。
+ * ビルドのコピーを作る（音声は写さずにつなぐ。helpers/dist.ts）。tag で index.html を変え（コアの版を変える）、
+ * changeA で見本パック A のチャンクの内容を変える（パックの版を変える）。breakA は sw.js などを作った後に A の音声を消す
+ * （取得の失敗の再現）。dropPack は manifest からそのパックのチャンクを外す（コアの更新でパックが無くなった版の再現）。
  */
 async function makeDist(
-  opts: { tag?: string; changeA?: boolean; breakA?: boolean } = {},
+  opts: { tag?: string; changeA?: boolean; breakA?: boolean; dropPack?: string } = {},
 ): Promise<Dist> {
   const src = await buildSampleDist();
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'mnw-packs-dist-'));
-  cleanups.push(() => rm(dir, { recursive: true, force: true }));
-  await cp(src, dir, { recursive: true });
+  const copy = await copyLinkingAudio(src, 'mnw-e2e-linked-');
+  const dir = copy.dir;
+  cleanups.push(() => copy.remove());
   if (opts.tag) await appendFile(path.join(dir, 'index.html'), `<!-- ${opts.tag} -->\n`);
   const before = JSON.parse(await readFile(path.join(src, 'packs.json'), 'utf8')) as PackIndex;
   if (opts.changeA) {
     const chunk = before[A]!.files.find((f) => f.startsWith(`assets/packs/${A}/`))!;
     await appendFile(path.join(dir, chunk), '\n/* mnw-e2e-v2 */\n');
   }
-  const info = await finalizeDist(dir);
-  if (opts.breakA) await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
+  if (opts.dropPack) {
+    const file = path.join(dir, '.vite', 'manifest.json');
+    const manifest = JSON.parse(await readFile(file, 'utf8')) as ViteManifest;
+    for (const [key, chunk] of Object.entries(manifest)) {
+      if (packIdOfFile(chunk.file) === opts.dropPack) delete manifest[key];
+    }
+    await writeFile(file, JSON.stringify(manifest));
+  }
+  const info = await finalizeDist(dir, { knownEntries: await linkedAudioEntries(src) });
+  if (opts.breakA) {
+    assertOutsideLinks(copy, `audio/${A}/hello.mp3`);
+    await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
+  }
   const index = JSON.parse(await readFile(path.join(dir, 'packs.json'), 'utf8')) as PackIndex;
   return { dir, version: info.version, index };
 }
@@ -276,6 +312,12 @@ async function updateAndReload(page: Page, version: string): Promise<void> {
 test.describe('教材パック（見本パック）', () => {
   test.describe.configure({ timeout: 180_000 });
 
+  test.beforeAll(async () => {
+    // 見本パック入りの組み立てを、テストの時間の外で一度だけ行う
+    test.setTimeout(PREPARE_TIMEOUT);
+    await buildSampleDist();
+  });
+
   test('(1)(2)(6) 取得したパックはオフラインで読める。未取得は not-downloaded、コア同梱はそのまま読める', async ({
     page,
   }) => {
@@ -429,16 +471,12 @@ test.describe('教材パック（見本パック）', () => {
     await openPrepared(page, server.url);
     expect((await download(page, B)).ok).toBe(true);
     // packs.json から B を除いた版（コアの更新で B が無くなった）
-    const v2 = await makeDist({ tag: 'v2-no-b' });
-    const index = JSON.parse(await readFile(path.join(v2.dir, 'packs.json'), 'utf8')) as PackIndex;
-    delete index[B];
-    await writeFile(path.join(v2.dir, 'packs.json'), JSON.stringify(index));
-    // packs.json を書き換えたので sw.js を作り直す（manifest はそのままなので finalizeDist では戻ってしまう）
-    await rm(path.join(v2.dir, '.vite'), { recursive: true });
-    const info = await finalizeDist(v2.dir);
+    const v2 = await makeDist({ tag: 'v2-no-b', dropPack: B });
+    expect(v2.index[B]).toBeUndefined();
+    expect(v2.index[A]).toBeDefined();
     await server.stop();
-    await serve({ ...v2, version: info.version }, port);
-    await updateAndReload(page, info.version);
+    await serve(v2, port);
+    await updateAndReload(page, v2.version);
     await expect.poll(() => packCaches(page)).toEqual([]);
     expect(await idb(page, 'packsMeta')).toEqual([]);
   });

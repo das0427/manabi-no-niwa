@@ -91,7 +91,7 @@
 - 見本パック入りの組み立ては、`test.beforeAll` でワーカーごとに一度だけ行う。vite には public を写させず（`copyPublicDir: false`）、組み立てたあとで public の音声以外を写し、音声はつないで入れ、`finalizeDist` で作り直す。
 - 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は直す前の待ち: offline 30秒・packs 60秒。音声を置かないビルドでは下限のまま。コアが offline で 3,000、packs で 6,000 ファイルまでのあいだ）。テストの制限には、延びた待ち（待ち − 下限）を全件の事前保存の回数だけ足す（`precacheExtra`）。
 - 写しを変える補助（`prepareDist` の addFiles・removeFiles・breakFiles、packs.spec の breakA）は、つないだフォルダの中のパスを渡されるとエラーになる（消す・書くとリンク先の元の dist が変わるため）。音声をつなぐ補助も、リンク先が dist の外にあれば、つながずにエラーにする。後始末は、リンクを外してから消す。
-- 流し方: 音声入りの dist を Windows で流すときは、全件の事前保存を何度も行う試験が、一時ポートの不足で落ちることがある。spec ごとに間を空けて（TIME_WAIT の接続が消えてから）流す案があるが、効くかは確かめていない。
+- 流し方: 音声入りの dist は --workers=1 で流す（PREPARE_TIMEOUT の 180秒はこの前提）。音声入りの dist を Windows で流すときは、全件の事前保存を何度も行う試験が、一時ポートの不足で落ちることがある。spec ごとに間を空けて（TIME_WAIT の接続が消えてから）流す案があるが、効くかは確かめていない。
 - 音声入りの Firefox は、Service Worker の寿命で offline・packs が落ちる。アプリの問題だが、依頼者の判断（2026-11-28）で対応しない（handover.md B）。
 
 **更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:

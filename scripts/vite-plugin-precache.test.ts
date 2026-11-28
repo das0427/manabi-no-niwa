@@ -12,6 +12,7 @@ import {
   finalizeDist,
   isCorePack,
   isExcluded,
+  isInsideDir,
   listDistFiles,
   precachePlugin,
   readAppVersion,
@@ -161,6 +162,16 @@ describe('listDistFiles', () => {
       size: '<html></html>'.length,
       hash: sha256('<html></html>'),
     });
+  });
+});
+
+describe('isInsideDir', () => {
+  it('同じ場所と、「..x」という名前の子は中。親と、兄弟は外', () => {
+    const root = path.resolve('mnw-root');
+    expect(isInsideDir(root, root)).toBe(true);
+    expect(isInsideDir(root, path.join(root, '..x'))).toBe(true);
+    expect(isInsideDir(root, path.dirname(root))).toBe(false);
+    expect(isInsideDir(root, path.join(root, '..', 'sib'))).toBe(false);
   });
 });
 

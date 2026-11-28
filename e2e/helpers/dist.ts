@@ -373,7 +373,7 @@ export async function copyLinkingAudio(
   };
 }
 
-/** 相対パスがつないだフォルダの下なら投げる（消す・書くと、つなぎ先＝元の dist・本体の音声が変わるため） */
+/** 相対パスがつないだフォルダの下なら投げる（消す・書くと、つなぎ先（元の dist の audio/<名前>）が変わるため） */
 export function assertOutsideLinks(copy: LinkedCopy, rel: string): void {
   let norm = path.posix.normalize(rel.split('\\').join('/'));
   // 写しの外を指すパス（.. で始まる・絶対パス）も変えさせない

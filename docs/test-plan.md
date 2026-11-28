@@ -95,7 +95,7 @@
 **2.1.0 の公開前の点検（3回目。updater-design.md 16.2・single-instance-design.md 8.6）で足した試験**。どれも、直しを1つずつ外すと落ちることを確かめてから戻した。
 - Python（`deploy/tests/`）: `test_serve.py`（NUL などを含むパスは 404 で記録が出ない・予期しない例外は型名 1 行・全応答に `Cross-Origin-Resource-Policy`・自己検査の失敗の説明にパスが出ない・`--check-update` が Traceback で落ちない）、`test_fetch.py`（満杯のあと取得物が残らない・深い入れ子の版の情報・形の壊れた `Location`）、`test_service.py`（組み立ての途中の満杯でも取得物が空・満杯で捨てたあとの `needBytes` が全部を取り直す見積もりと同じ・深い入れ子の状態は `idle`）、`test_install.py`（壊れた deflate は `unsafe-zip`・失敗の説明のパスの置き換え・リンクの先に `chmod` しない）、`test_manifest.py`（深い入れ子は `bad-manifest`）、`test_mnwwindow.py`（`--browser`・時間切れの終了コード 1）。
 - シェル（bash が無ければ skip）: `test_manabi_sh.py`（使うブラウザの種類が `focus`・`wait` に渡る・`MANABI_BROWSER` を評価しない）、`test_install_sh.py`（偽の `sync`・`mv`・`rm` で入れ替えの前後の `sync` の順・`switch-broken` を先に戻す・戻せないとき止まる）。
-- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比較・タグの読み取り。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 9 件）。
+- リリースの道具（vitest）: `scripts/release-lib.test.ts`（使い捨ての git リポジトリで、配布に入れるファイルの選び方・元がクリーンでないと止まること・リンク・`dist` の除外・`sw.js` の一覧と `packs.json` が zip に入るファイルにそろっていること・一覧の contentId・版の形と数での比較・タグの読み取り・作業ツリーが CRLF でも、追跡済みの配布ファイルが HEAD の blob と同じバイトで入ること。`package-release.ts` を使い捨てのリポジトリの中で本当に動かす通し 10 件）。
 
 **使いやすさの直し（FX。2.1.0）で足した試験**（記録は docs/expansion/ab-evaluations.md・handover.md B4）。どれも、直しを外すと落ちることを確かめた（FX03・FX04・FX06 は配置の作業で直っていたので、外して落ちるかは試していない）。
 - E2E（chromium・firefox）:

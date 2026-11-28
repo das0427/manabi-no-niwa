@@ -7,7 +7,8 @@
  * 依存なし（zlib の deflate と自前の ZIP 書き出し）。.sh には実行権限を付ける。
  *
  * 入れるファイルは「入れてよいもの」で選ぶ（2.1.0 の点検 app-2。選び方は release-lib の「配布に入れるファイルの選び方」）:
- * - deploy/zorin・licenses・最上位の配布ファイルは git で追跡済みのものだけ。
+ * - deploy/zorin・licenses・最上位の配布ファイルは、HEAD のコミットで追跡済みのものだけを、作業ツリーではなく
+ *   git の blob から読む（Windows の作業ツリーで CRLF になっていても、zip にはタグと同じバイトが入る）。
  * - dist は、隠しファイル・隠しフォルダ（dist/.vite/ など）と、Thumbs.db・desktop.ini・~ 終わり・.swp を入れない。
  * - 最初に、配布に入る元（public・deploy/zorin・licenses・最上位の配布ファイル）に git の外のファイル・変更・
  *   無視されたファイルが無いかを確かめ、あれば一覧を出して止める（public は vite が dist にそのまま写すので、
@@ -41,11 +42,11 @@ import {
   contentListText,
   findUnpackagedPrecache,
   isVersion,
-  listTrackedReleaseFiles,
   packPart,
   parsePrecacheLists,
   parseReleaseNotes,
   readReleaseTags,
+  readTrackedReleaseFiles,
   sha256FileText,
   sourceProblems,
   todayInJapan,
@@ -194,14 +195,21 @@ if (unpackaged.length > 0) {
 }
 const trackedFiles = (() => {
   try {
-    return listTrackedReleaseFiles(root);
+    return readTrackedReleaseFiles(root);
   } catch (e) {
-    return die(`配布に入れるファイルを git の追跡済みから選べません: ${(e as Error).message}`);
+    return die(`配布に入れるファイルを git の HEAD から読めません: ${(e as Error).message}`);
   }
 })();
-const files: [string, string][] = [
-  ...distFiles.files.map(([src, rel]): [string, string] => [src, `${TOP}/dist/${rel}`]),
-  ...trackedFiles.map((rel): [string, string] => [path.join(root, rel), `${TOP}/${rel}`]),
+interface PackFile {
+  name: string;
+  read: () => Buffer;
+}
+const files: PackFile[] = [
+  ...distFiles.files.map(([src, rel]): PackFile => ({
+    name: `${TOP}/dist/${rel}`,
+    read: () => readFileSync(src),
+  })),
+  ...trackedFiles.map((f): PackFile => ({ name: `${TOP}/${f.path}`, read: () => f.data })),
 ];
 
 /**
@@ -222,9 +230,9 @@ const packIds: string[] = (() => {
     return [];
   }
 })();
-const groups = new Map<string, [string, string][]>([[MAIN_KIND, []]]);
+const groups = new Map<string, PackFile[]>([[MAIN_KIND, []]]);
 for (const f of files) {
-  const g = audioGroupOf(f[1], packIds) ?? MAIN_KIND;
+  const g = audioGroupOf(f.name, packIds) ?? MAIN_KIND;
   if (!groups.has(g)) groups.set(g, []);
   groups.get(g)!.push(f);
 }
@@ -234,12 +242,12 @@ for (const f of files) {
 mkdirSync(releaseDir, { recursive: true });
 const parts: PackedPart[] = [];
 for (const [kind, list] of groups) {
-  const entries: ZipEntry[] = list.map(([src, name]) => ({ name, data: readFileSync(src) }));
+  const entries: ZipEntry[] = list.map((f) => ({ name: f.name, data: f.read() }));
   // 変わらない部品を今の版から写すときに、この下を全部写す（main は毎回取得するので []）
   const roots = [
     ...new Set(
-      list.flatMap(([, name]) => {
-        const id = audioPackIdOf(name, packIds);
+      list.flatMap((f) => {
+        const id = audioPackIdOf(f.name, packIds);
         return id === null ? [] : [`dist/audio/${id}`];
       }),
     ),

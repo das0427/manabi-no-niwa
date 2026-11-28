@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import {
   cpSync,
   existsSync,
@@ -43,14 +43,17 @@ import {
   isDistJunk,
   isExpectedStatus,
   isVersion,
+  listTrackedReleaseBlobs,
   listTrackedReleaseFiles,
   makeMarker,
   markerEntryName,
   packPart,
+  parseCatFileBatch,
   parsePrecacheLists,
   parseReleaseNotes,
   parseStatusZ,
   readReleaseTags,
+  readTrackedReleaseFiles,
   runGit,
   sha256FileText,
   sha256Hex,
@@ -1113,6 +1116,43 @@ function newRepo(): string {
   return d;
 }
 
+/**
+ * Windows の取り出しを、どの OS でも同じに再現する（2.1.0 の公開で起きた不具合の再現）。
+ * `* text=auto` と core.eol=crlf（Windows の既定 native と同じ）で、配布の文書が作業ツリーでは CRLF になる。
+ * blob が CRLF のファイル（licenses/crlf.txt）も 1 つ入れる。
+ */
+function crlfCheckout(repo: string): void {
+  // 1. blob 自体が CRLF のファイル（雛形は core.autocrlf=false で .gitattributes が無いので、そのまま入る）
+  writeFiles(repo, { 'licenses/crlf.txt': 'a\r\nb\r\n' });
+  runGit(repo, ['add', 'licenses/crlf.txt']);
+  runGit(repo, ['commit', '-q', '-m', 'crlf blob']);
+  // 2. 本物と同じ .gitattributes
+  writeFiles(repo, {
+    '.gitattributes': '* text=auto\n*.sh text eol=lf\n*.py text eol=lf\n',
+  });
+  runGit(repo, ['add', '.gitattributes']);
+  runGit(repo, ['commit', '-q', '-m', 'gitattributes']);
+  // 3. Windows の既定（native）と同じ。Linux でも同じ結果にする
+  runGit(repo, ['config', 'core.eol', 'crlf']);
+  // 4. 配布に入る追跡済みのファイルを消して取り出し直す（git checkout は変わっていないファイルを書き直さない）
+  for (const f of listTrackedReleaseFiles(repo)) rmSync(path.join(repo, f));
+  runGit(repo, ['checkout', '--', '.']);
+  // 前提の確かめ
+  const wt = (f: string) => readFileSync(path.join(repo, f), 'utf8');
+  expect(wt('README.md')).toBe('readme\r\n');
+  expect(wt('licenses/a.txt')).toBe('a\r\n');
+  expect(wt('licenses/crlf.txt')).toBe('a\r\nb\r\n');
+  expect(wt('deploy/zorin/serve.py')).toBe('print(1)\n'); // eol=lf
+  // 改行だけの違いは git の正規化で git status に出ない。だから元の確かめ（findDirtySources）では止まらない。
+  // これがこの不具合の原因（作業ツリーから読むと、タグと違う CRLF の zip ができる）
+  expect(findDirtySources(repo)).toEqual([]);
+}
+
+/** HEAD の blob を、本体とは別の方法（git cat-file blob）で取る */
+function headBlob(repo: string, rel: string): Buffer {
+  return execFileSync('git', ['cat-file', 'blob', `HEAD:${rel}`], { cwd: repo });
+}
+
 function codes(entries: readonly StatusEntry[]): string[] {
   return entries.map((e) => `${e.code} ${e.path}`).sort();
 }
@@ -1348,7 +1388,8 @@ describe('findLinks（deploy/zorin・licenses・最上位の配布ファイル�
       'deploy/zorin/lnk.txt',
       'README.md',
     ]);
-    expect(() => listTrackedReleaseFiles(repo)).toThrow(/通常のファイルではありません.*README\.md/);
+    // 中身は HEAD の blob から読むので、一覧は変わらない（作業ツリーのリンクは findLinks で止める）
+    expect(listTrackedReleaseFiles(repo)).toContain('README.md');
   });
 
   it('無いフォルダは見ない。ふつうのファイルだけなら空', () => {
@@ -1385,38 +1426,124 @@ describe('listTrackedReleaseFiles（git で追跡済みのものだけ）', () =
   it('最上位の配布ファイルが追跡されていなければ例外', () => {
     const repo = newRepo();
     runGit(repo, ['rm', '-q', '--cached', 'README.md']);
+    runGit(repo, ['commit', '-q', '-m', 'rm']);
     expect(() => listTrackedReleaseFiles(repo)).toThrow(/README\.md が git で追跡されていません/);
   });
 
   it('フォルダに追跡済みのファイルが 1 つも無ければ例外', () => {
     const repo = newRepo();
     runGit(repo, ['rm', '-rq', '--cached', 'licenses']);
+    runGit(repo, ['commit', '-q', '-m', 'rm']);
     expect(() => listTrackedReleaseFiles(repo)).toThrow(/licenses\/ に git で追跡された/);
   });
 
-  it('追跡済みの名前でも、作業ツリーでリンク・フォルダになっていれば例外（git を使わず確かめる）', () => {
-    const root = tempDir('notfile');
-    const target = tempDir('target');
-    writeFiles(root, Object.fromEntries(Object.keys(BASE_FILES).map((f) => [f, 'x'])));
-    const names = [...RELEASE_TOP_FILES, 'licenses/a.txt', 'deploy/zorin/serve.py'];
-    const fake: GitRunner = () => `${names.join('\0')}\0`;
-    expect(listTrackedReleaseFiles(root, fake)).toHaveLength(names.length);
-    rmSync(path.join(root, 'deploy/zorin/serve.py'));
-    linkDir(target, path.join(root, 'deploy/zorin/serve.py'));
-    expect(() => listTrackedReleaseFiles(root, fake)).toThrow(
-      /通常のファイルではありません.*deploy\/zorin\/serve\.py/,
+  it('HEAD の木でリンク（mode 120000）なら例外（本物の git で作る）', () => {
+    const repo = newRepo();
+    writeFiles(repo, { 'tmp-target.txt': 'target\n' });
+    const oid = runGit(repo, ['hash-object', '-w', 'tmp-target.txt']).trim();
+    runGit(repo, ['update-index', '--add', '--cacheinfo', `120000,${oid},licenses/link.txt`]);
+    runGit(repo, ['commit', '-q', '-m', 'link']);
+    expect(() => listTrackedReleaseFiles(repo)).toThrow(
+      /通常のファイルではありません（リンク）.*licenses\/link\.txt/,
     );
-    rmSync(path.join(root, 'deploy/zorin/serve.py'), { recursive: true });
-    mkdirSync(path.join(root, 'deploy/zorin/serve.py'));
-    expect(() => listTrackedReleaseFiles(root, fake)).toThrow(/通常のファイルではありません/);
   });
 
-  it('追跡されているのに作業ツリーに無ければ例外', () => {
+  it('HEAD の木でサブモジュール（mode 160000）なら例外（本物の git で作る）', () => {
     const repo = newRepo();
-    rmSync(path.join(repo, 'deploy/zorin/serve.py'));
+    const head = runGit(repo, ['rev-parse', 'HEAD']).trim();
+    runGit(repo, ['update-index', '--add', '--cacheinfo', `160000,${head},deploy/zorin/sub`]);
+    runGit(repo, ['commit', '-q', '-m', 'submodule']);
     expect(() => listTrackedReleaseFiles(repo)).toThrow(
-      /作業ツリーにありません: deploy\/zorin\/serve\.py/,
+      /通常のファイルではありません（サブモジュール）.*deploy\/zorin\/sub/,
     );
+  });
+
+  it('作業ツリーに無い・変えた・ステージだけしたファイルは、一覧と中身に効かない', () => {
+    const repo = newRepo();
+    const before = listTrackedReleaseFiles(repo);
+    expect(before).toHaveLength(8);
+    rmSync(path.join(repo, 'deploy/zorin/serve.py'));
+    writeFiles(repo, { 'README.md': 'changed\n', 'licenses/b.txt': 'b\n' });
+    runGit(repo, ['add', 'licenses/b.txt']);
+    expect(listTrackedReleaseFiles(repo)).toEqual(before);
+    const files = readTrackedReleaseFiles(repo);
+    const get = (p: string) => files.find((f) => f.path === p)!.data.toString('utf8');
+    expect(get('README.md')).toBe('readme\n');
+    expect(get('deploy/zorin/serve.py')).toBe('print(1)\n');
+  });
+
+  it('偽の GitRunner: 100755 の blob を受け、形が壊れた出力・tree は例外', () => {
+    const oid = 'a'.repeat(40);
+    const rec = (mode: string, type: string, p: string) => `${mode} ${type} ${oid}\t${p}`;
+    const names = [...RELEASE_TOP_FILES, 'licenses/a.txt', 'deploy/zorin/serve.py'];
+    const base = names.map((n) => rec('100644', 'blob', n));
+    const ok: GitRunner = () =>
+      `${[...base, rec('100755', 'blob', 'deploy/zorin/install.sh')].join('\0')}\0`;
+    const blobs = listTrackedReleaseBlobs('x', ok);
+    expect(blobs.find((b) => b.path === 'deploy/zorin/install.sh')).toEqual({
+      path: 'deploy/zorin/install.sh',
+      mode: '100755',
+      oid,
+    });
+    expect(blobs).toHaveLength(names.length + 1);
+    const broken: GitRunner = () => 'garbage\0';
+    expect(() => listTrackedReleaseFiles('x', broken)).toThrow(/読めません/);
+    const shortOid: GitRunner = () => `100644 blob abc123\tREADME.md\0`;
+    expect(() => listTrackedReleaseFiles('x', shortOid)).toThrow(/読めません/);
+    const tree: GitRunner = () =>
+      `${[...base, rec('040000', 'tree', 'deploy/zorin/sub')].join('\0')}\0`;
+    expect(() => listTrackedReleaseFiles('x', tree)).toThrow(
+      /通常のファイルではありません（mode 040000）.*deploy\/zorin\/sub/,
+    );
+  });
+});
+
+describe('readTrackedReleaseFiles（作業ツリーではなく HEAD の blob から読む）', () => {
+  it('作業ツリーが CRLF でも、中身は git cat-file blob とバイト単位で同じ', () => {
+    const repo = newRepo();
+    crlfCheckout(repo);
+    const files = readTrackedReleaseFiles(repo);
+    expect(files.map((f) => f.path)).toEqual(listTrackedReleaseFiles(repo));
+    for (const f of files) {
+      expect(f.data.equals(headBlob(repo, f.path)), f.path).toBe(true);
+    }
+    const get = (p: string) => files.find((f) => f.path === p)!.data.toString('utf8');
+    expect(get('README.md')).toBe('readme\n'); // LF（作業ツリーの CRLF ではない）
+    expect(get('licenses/crlf.txt')).toBe('a\r\nb\r\n'); // blob が CRLF のものは CRLF のまま
+  });
+});
+
+describe('parseCatFileBatch', () => {
+  const oidA = 'a'.repeat(40);
+  const oidB = 'b'.repeat(40);
+  const item = (oid: string, body: Buffer, type = 'blob') =>
+    Buffer.concat([Buffer.from(`${oid} ${type} ${body.length}\n`), body, Buffer.from('\n')]);
+
+  it('中身に LF・NUL・CR があっても 2 件読める', () => {
+    const a = Buffer.from([0x61, 0x0a, 0x00, 0x0d, 0x0a, 0x62]);
+    const b = Buffer.alloc(0);
+    const out = Buffer.concat([item(oidA, a), item(oidB, b)]);
+    const r = parseCatFileBatch(out, [oidA, oidB]);
+    expect(r).toHaveLength(2);
+    expect(r[0]!.equals(a)).toBe(true);
+    expect(r[1]!.length).toBe(0);
+  });
+
+  it('missing・blob でない・途中で切れた・中身のあとが LF でない・余り・oid の順違いは例外', () => {
+    const body = Buffer.from('hello');
+    expect(() => parseCatFileBatch(Buffer.from(`${oidA} missing\n`), [oidA])).toThrow(/ありません/);
+    expect(() => parseCatFileBatch(item(oidA, body, 'tree'), [oidA])).toThrow(
+      /blob ではありません/,
+    );
+    const cut = item(oidA, body).subarray(0, item(oidA, body).length - 4);
+    expect(() => parseCatFileBatch(cut, [oidA])).toThrow(/短い/);
+    const noLf = Buffer.concat([Buffer.from(`${oidA} blob 5\n`), body, Buffer.from('X')]);
+    expect(() => parseCatFileBatch(noLf, [oidA])).toThrow(/改行ではありません/);
+    const extra = Buffer.concat([item(oidA, body), Buffer.from('x')]);
+    expect(() => parseCatFileBatch(extra, [oidA])).toThrow(/余り/);
+    const two = Buffer.concat([item(oidA, body), item(oidB, body)]);
+    expect(() => parseCatFileBatch(two, [oidB, oidA])).toThrow(/oid が違います/);
+    expect(() => parseCatFileBatch(Buffer.alloc(0), [oidA])).toThrow(/途中で終わっています/);
   });
 });
 
@@ -1649,7 +1776,34 @@ function zipNames(repo: string): string[] {
   return readZip(zip).entries.map((e) => e.name);
 }
 
+function zipEntryText(repo: string, name: string): string {
+  const zip = readFileSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'));
+  return readZip(zip)
+    .entries.find((e) => e.name === name)!
+    .data.toString('utf8');
+}
+
 describe('package-release.ts（使い捨てのリポジトリで動かす）', { timeout: 90_000 }, () => {
+  it('作業ツリーが CRLF（Windows の取り出し）でも、zip の追跡済みファイルは HEAD の blob とバイト単位で同じ', () => {
+    const repo = newPackageProject();
+    crlfCheckout(repo);
+    const r = runPackage(repo); // フラグなし。git status がきれいなので止まらない
+    expect(r.code, r.err).toBe(0);
+    const zip = readZip(readFileSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip')));
+    for (const rel of listTrackedReleaseFiles(repo)) {
+      const e = zip.entries.find((x) => x.name === `${TOP}/${rel}`);
+      expect(e, rel).toBeDefined();
+      expect(e!.data.equals(headBlob(repo, rel)), rel).toBe(true);
+    }
+    expect(zipEntryText(repo, `${TOP}/README.md`)).toBe('readme\n');
+    expect(zipEntryText(repo, `${TOP}/licenses/crlf.txt`)).toBe('a\r\nb\r\n');
+    const list = readFileSync(
+      path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip.files.txt'),
+      'utf8',
+    );
+    expect(list.split('\n')).toContain(`README.md\t7\t${sha256Hex('readme\n')}`);
+  });
+
   it('きれいなら通り、zip に入るのは追跡済みの配布物と、隠しファイルなどを除いた dist だけ。一覧も書く', () => {
     const repo = newPackageProject();
     const r = runPackage(repo);
@@ -1715,6 +1869,7 @@ describe('package-release.ts（使い捨てのリポジトリで動かす）', {
       'deploy/zorin/notes.txt': 'x',
       'deploy/zorin/serve.py~': 'x',
       'licenses/b.txt': 'x',
+      'README.md': 'changed\n',
     });
     const r = runPackage(repo, ['--allow-dirty']);
     expect(r.code, r.err).toBe(0);
@@ -1723,6 +1878,8 @@ describe('package-release.ts（使い捨てのリポジトリで動かす）', {
     const names = zipNames(repo);
     expect(names).toContain(`${TOP}/deploy/zorin/serve.py`);
     expect(names.filter((n) => /\.env|notes|~|licenses\/b/.test(n))).toEqual([]);
+    // 変更したままの README.md ではなく、HEAD の中身が入る
+    expect(zipEntryText(repo, `${TOP}/README.md`)).toBe('readme\n');
     expect(names.filter((n) => /\.vite|desktop\.ini|Thumbs|\.hidden/.test(n))).toEqual([]);
   });
 

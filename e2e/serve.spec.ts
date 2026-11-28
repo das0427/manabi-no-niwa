@@ -4,7 +4,7 @@ import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
-import { prepareDist } from './helpers/dist';
+import { PREPARE_TIMEOUT, prepareDist, warmDist } from './helpers/dist';
 import type { PreparedDist } from './helpers/dist';
 import { getFreePort, httpRequest, spawnServe, startServe } from './helpers/serve';
 import type { ServeHandle } from './helpers/serve';
@@ -19,6 +19,8 @@ let assetCss: string;
 let mp3: string | undefined;
 
 test.beforeAll(async () => {
+  test.setTimeout(PREPARE_TIMEOUT);
+  await warmDist({ harness: false });
   dist = await prepareDist({ harness: false });
   server = await startServe(dist.dir);
   const assets = readdirSync(path.join(dist.dir, 'assets'));

@@ -83,6 +83,17 @@
 | E-21 | 自動更新（`e2e/update.spec.ts`。chromium だけ。`npm run e2e:update`。本物のビルド 2 つ・本物の serve.py・偽の GitHub。12 件）: 2.1.0 → 自動の確認 →「更新する」1 回 → 2.2.0（記録・教材パックが残る、変わらない音声の zip は取らない、書いたのは決めた場所だけ、ブラウザは配信以外へ通信しない）。音声の部品も変わる版・途中で切れたら続きから・sha256 違い・電源断のあと続きから・新しい serve.py が動かない・空き容量不足・ほかのオリジンのページ・ほかのページの枠（iframe）・許可外のホストへの転送・自動の確認のオフ・窓口の無い配信 | IN-06〜13, BC-03 |
 | E-22 | 二重起動の防止（`e2e/single-instance.spec.ts`。chromium・firefox。15 件ずつ）: 2つ目を開くと1つ目が閉じ、2つ目は起動画面から始まる／画面を移した窓は「べつの まどで ひらいています」になり、記録を書かない／［この まどで ひらく］で引き継ぎ直せる／おえかきの保存を待ってから引き継ぐ（PNG づくりが遅くても）／3つ続けて開いても残るのは1つ／引き下がった窓は、使っている窓が閉じられたら起動画面に戻る／「戻る」で使っている窓を追い出さない／引き継いだ画面だけ、「はじめる」で全画面にする（1回）／Web Locks が無い・試験の旗があるときは守りなし／`page.reload()` を5回続けても毎回ふつうに始まる／`?retired=1` は音・記録・Service Worker・教材に触れない／新しい2つの画面の見た目（4つの大きさ）／外部通信なし | OP-07, IN-14, IN-15, BC-03 |
 
+**オフライン・教材パック・配信の E2E の dist の用意**（`e2e/offline.spec.ts`・`e2e/packs.spec.ts`・`e2e/serve.spec.ts`。`e2e/helpers/dist.ts`）:
+- dist の写しでは、音声入りの `audio/<名前>/`（見本パックを除く）を写さず、元の dist へつなぐ（Windows はジャンクション、Linux はシンボリックリンク）。ほかのファイルは写す。
+- `scripts/vite-plugin-precache.ts` の `listDistFiles` がリンクをたどるのは、E2E が `followLinks` を渡したときだけ。本番のビルドは渡さない。
+- dist を用意する `test.beforeAll` の制限（`PREPARE_TIMEOUT`）は 180秒。各テストの制限ではない。
+- つないだ音声の size と sha256 は、一時フォルダの `mnw-e2e-hash-cache` に覚える。ワーカーと実行をまたいで使い、ファイルの size と更新時刻が同じなら読み直さない。dist の置き場所ごとに約13MBで、消してもよい（次の実行で作り直す）。
+- 見本パック入りの組み立ては、`test.beforeAll` でワーカーごとに一度だけ行う。vite には public を写させず（`copyPublicDir: false`）、組み立てたあとで public の音声以外を写し、音声はつないで入れ、`finalizeDist` で作り直す。
+- 全件の事前保存の待ちは、保存するファイルの数から決める（`precacheWait`。1ファイル10ミリ秒で、下限は直す前の待ち: offline 30秒・packs 60秒。音声を置かないビルドはコアが 2,375 ファイルで、offline の 3,000・packs の 6,000 より少ないので下限のまま）。テストの制限には、延びた待ち（待ち − 下限）を全件の事前保存の回数だけ足す（`precacheExtra`）。
+- 写しを変える補助（`prepareDist` の addFiles・removeFiles・breakFiles、packs.spec の breakA）は、つないだフォルダの中のパスを渡されるとエラーになる（消す・書くとリンク先の元の dist が変わるため）。音声をつなぐ補助も、リンク先が元の dist の外にあれば、つながずにエラーにする。後始末は、リンクを外してから消す。
+- 流し方: 音声入りの dist は --workers=1 で流す（PREPARE_TIMEOUT の 180秒はこの前提）。Windows では、3つの spec を続けて流すと、全件の事前保存を行う試験が一時ポートの不足で落ちることがある（0d9bedb のあとに、21件のうち3件が落ちた）。TIME_WAIT の接続が 300 を下回るまで待ってから1件ずつ流すと、その3件は通った。ただし (1)(2)(6) は、単独でも5回のうち1回、最初の準備の待ちで落ちた（原因は確かめていない）。
+- 音声入りの Firefox は、Service Worker の寿命で offline・packs が落ちる。アプリの問題だが、依頼者の判断（2026-11-28）で対応しない（handover.md B）。
+
 **更新の仕組みの単体・結合の試験**（docs/expansion/updater-design.md 11 章・16 章）:
 - Python の unittest（`npm run test:py`。Linux は `npm run test:py:sh`）: `deploy/tests/` の test_manifest・test_fetch（転送先のホストとパス・リポジトリの番号・308・転送の本文・版の情報のタグ・遅すぎる取得・中止・空き不足・おかしな応答）・test_install（zip の検査・入れ替え・元に戻せないとき）・test_service（状態・予定・各段・中止の競り合い・配信のプロセスの鍵・パスを出さない）・test_api（窓口の守り）・test_serve（自己検査・枠の見出し・本番のポートでの試験用の取得先・2 つ目の配信）・test_integration（本物の serve.py の通し）・test_install_sh（install.sh・uninstall.sh）。
 - vitest: `scripts/release-lib.test.ts`（版の情報・zip・版の番号の確認）・`src/core/offline/updater.test.ts`・`src/parent/UpdateSection.test.tsx`・`src/app/ParentGate.test.tsx`・`src/core/framed.test.ts`。

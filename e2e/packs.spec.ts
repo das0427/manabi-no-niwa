@@ -1,13 +1,25 @@
-import { rmSync } from 'node:fs';
-import { appendFile, cp, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { build } from 'vite';
-import { finalizeDist } from '../scripts/vite-plugin-precache.ts';
-import type { PackIndex } from '../scripts/vite-plugin-precache.ts';
+import { finalizeDist, packIdOfFile, readAppVersion } from '../scripts/vite-plugin-precache.ts';
+import type { PackIndex, ViteManifest } from '../scripts/vite-plugin-precache.ts';
 import { openParent, start } from './helpers/app';
+import {
+  DIST,
+  PREPARE_TIMEOUT,
+  assertOutsideLinks,
+  copyIntoLinkingAudio,
+  copyLinkingAudio,
+  linkedAudioEntries,
+  linkedTargets,
+  precacheExtra,
+  precacheWait,
+  removeLinkedSync,
+} from './helpers/dist';
 import { getFreePort, startServe } from './helpers/serve';
 import type { ServeHandle } from './helpers/serve';
 
@@ -50,10 +62,19 @@ type PacksWindow = Window & { __mnwPacks?: PacksApi };
 
 let builtPromise: Promise<string> | null = null;
 
-/** 見本パック入りのビルド（ワーカーごとに 1 回） */
+/**
+ * 見本パック入りのビルド（ワーカーごとに 1 回）。
+ * public（約12万ファイル）は vite に写させず（copyPublicDir: false）、音声はつないで入れ、finalizeDist で作り直す
+ */
 function buildSampleDist(): Promise<string> {
   builtPromise ??= (async () => {
-    const outDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-packs-build-'));
+    if (!existsSync(path.join(DIST, 'index.html'))) {
+      throw new Error('dist がありません。先に npm run build を実行してください。');
+    }
+    const outDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-e2e-linked-build-'));
+    let linked: string[] = [];
+    // 終了時は、つないだ音声のリンクを外してから消す
+    process.once('exit', () => removeLinkedSync(outDir, linked));
     const prev = process.env.VITE_MNW_SAMPLE_PACKS;
     process.env.VITE_MNW_SAMPLE_PACKS = '1';
     try {
@@ -61,13 +82,20 @@ function buildSampleDist(): Promise<string> {
         root: ROOT,
         configFile: path.join(ROOT, 'vite.config.ts'),
         logLevel: 'silent',
-        build: { outDir, emptyOutDir: true },
+        build: { outDir, emptyOutDir: true, copyPublicDir: false },
       });
     } finally {
       if (prev === undefined) delete process.env.VITE_MNW_SAMPLE_PACKS;
       else process.env.VITE_MNW_SAMPLE_PACKS = prev;
     }
-    process.once('exit', () => rmSync(outDir, { recursive: true, force: true }));
+    const publicDir = path.join(ROOT, 'public');
+    // 音声のつなぎ先は dist/audio（public/audio の実体は本体の音声なので、リンクを残さない）
+    linked = await copyIntoLinkingAudio(publicDir, outDir, DIST);
+    await finalizeDist(outDir, {
+      appVersion: await readAppVersion(ROOT),
+      knownEntries: await linkedAudioEntries(DIST),
+      followLinks: { allow: await linkedTargets(outDir, linked) },
+    });
     return outDir;
   })();
   return builtPromise;
@@ -76,6 +104,7 @@ function buildSampleDist(): Promise<string> {
 interface Dist {
   dir: string;
   version: string;
+  fileCount: number;
   index: PackIndex;
 }
 
@@ -85,26 +114,42 @@ test.afterEach(async () => {
 });
 
 /**
- * ビルドのコピーを作る。tag で index.html を変え（コアの版を変える）、changeA で見本パック A の
- * チャンクの内容を変える（パックの版を変える）。breakA は sw.js などを作った後に A の音声を消す（取得の失敗の再現）。
+ * ビルドのコピーを作る（音声は写さずにつなぐ。helpers/dist.ts）。tag で index.html を変え（コアの版を変える）、
+ * changeA で見本パック A のチャンクの内容を変える（パックの版を変える）。breakA は sw.js などを作った後に A の音声を消す
+ * （取得の失敗の再現）。dropPack は manifest からそのパックのチャンクを外す（コアの更新でパックが無くなった版の再現）。
  */
 async function makeDist(
-  opts: { tag?: string; changeA?: boolean; breakA?: boolean } = {},
+  opts: { tag?: string; changeA?: boolean; breakA?: boolean; dropPack?: string } = {},
 ): Promise<Dist> {
   const src = await buildSampleDist();
-  const dir = await mkdtemp(path.join(os.tmpdir(), 'mnw-packs-dist-'));
-  cleanups.push(() => rm(dir, { recursive: true, force: true }));
-  await cp(src, dir, { recursive: true });
+  // src の audio/ のリンクは dist/audio への先送りなので、つなぎ先は DIST から求める
+  const copy = await copyLinkingAudio(src, 'mnw-e2e-linked-', DIST);
+  const dir = copy.dir;
+  cleanups.push(() => copy.remove());
   if (opts.tag) await appendFile(path.join(dir, 'index.html'), `<!-- ${opts.tag} -->\n`);
   const before = JSON.parse(await readFile(path.join(src, 'packs.json'), 'utf8')) as PackIndex;
   if (opts.changeA) {
     const chunk = before[A]!.files.find((f) => f.startsWith(`assets/packs/${A}/`))!;
     await appendFile(path.join(dir, chunk), '\n/* mnw-e2e-v2 */\n');
   }
-  const info = await finalizeDist(dir);
-  if (opts.breakA) await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
+  if (opts.dropPack) {
+    const file = path.join(dir, '.vite', 'manifest.json');
+    const manifest = JSON.parse(await readFile(file, 'utf8')) as ViteManifest;
+    for (const [key, chunk] of Object.entries(manifest)) {
+      if (packIdOfFile(chunk.file) === opts.dropPack) delete manifest[key];
+    }
+    await writeFile(file, JSON.stringify(manifest));
+  }
+  const info = await finalizeDist(dir, {
+    knownEntries: await linkedAudioEntries(src),
+    followLinks: { allow: await linkedTargets(dir, copy.linked) },
+  });
+  if (opts.breakA) {
+    assertOutsideLinks(copy, `audio/${A}/hello.mp3`);
+    await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
+  }
   const index = JSON.parse(await readFile(path.join(dir, 'packs.json'), 'utf8')) as PackIndex;
-  return { dir, version: info.version, index };
+  return { dir, version: info.version, fileCount: info.fileCount, index };
 }
 
 async function serve(d: Dist, port?: number): Promise<ServeHandle> {
@@ -119,7 +164,7 @@ const isControlled = (page: Page): Promise<boolean> =>
   page.evaluate(() => navigator.serviceWorker.controller !== null);
 
 /** 初回: SW の install（コアの準備）を待ち、再読み込みで制御下に入れる */
-async function openPrepared(page: Page, url: string): Promise<void> {
+async function openPrepared(page: Page, url: string, fileCount: number): Promise<void> {
   await page.goto(url);
   await expect
     .poll(
@@ -130,7 +175,7 @@ async function openPrepared(page: Page, url: string): Promise<void> {
             return reg?.active?.state === 'activated';
           })
           .catch(() => false),
-      { timeout: 60_000 },
+      { timeout: precacheWait(fileCount, 60_000) },
     )
     .toBe(true);
   await page.reload();
@@ -239,7 +284,7 @@ function idbPut(page: Page, store: string, value: Record<string, unknown>): Prom
 }
 
 /** 新しい版の SW を待って適用し、再読み込みする（AboutTab の「更新する」と同じ手順） */
-async function updateAndReload(page: Page, version: string): Promise<void> {
+async function updateAndReload(page: Page, version: string, fileCount: number): Promise<void> {
   await expect
     .poll(
       async () =>
@@ -250,7 +295,7 @@ async function updateAndReload(page: Page, version: string): Promise<void> {
             return reg?.waiting?.state === 'installed';
           })
           .catch(() => false),
-      { timeout: 60_000, intervals: [500, 1000] },
+      { timeout: precacheWait(fileCount, 60_000), intervals: [500, 1000] },
     )
     .toBe(true);
   await page.evaluate(
@@ -276,10 +321,17 @@ async function updateAndReload(page: Page, version: string): Promise<void> {
 test.describe('教材パック（見本パック）', () => {
   test.describe.configure({ timeout: 180_000 });
 
+  test.beforeAll(async () => {
+    // 見本パック入りの組み立てを、テストの時間の外で一度だけ行う
+    test.setTimeout(PREPARE_TIMEOUT);
+    await buildSampleDist();
+  });
+
   test('(1)(2)(6) 取得したパックはオフラインで読める。未取得は not-downloaded、コア同梱はそのまま読める', async ({
     page,
   }) => {
     const d = await makeDist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 60_000));
     expect(Object.keys(d.index)).toEqual(expect.arrayContaining([A, B]));
     // コア同梱のパックは packs.json に載らない
     expect(d.index[CORE]).toBeUndefined();
@@ -294,7 +346,7 @@ test.describe('教材パック（見本パック）', () => {
     );
 
     const server = await serve(d);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, d.fileCount);
     expect(await packCaches(page)).toEqual([]);
     expect(await stateOf(page, A)).toBe('not-downloaded');
     expect(await stateOf(page, CORE)).toBe('core');
@@ -351,6 +403,7 @@ test.describe('教材パック（見本パック）', () => {
     const v2broken = await makeDist({ tag: 'v2', changeA: true, breakA: true });
     const v3 = await makeDist({ tag: 'v3', changeA: true });
     expect(v2.version).toBe(v2broken.version);
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 3, 60_000));
     expect(new Set([v1.version, v2.version, v3.version]).size).toBe(3);
     // パックの内容: A だけ変わる。B は同じ
     expect(v2.index[A]!.hash).not.toBe(v1.index[A]!.hash);
@@ -358,7 +411,7 @@ test.describe('教材パック（見本パック）', () => {
     expect(v3.index).toEqual(v2.index);
 
     let server = await serve(v1, port);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, v1.fileCount);
     expect((await download(page, A)).ok).toBe(true);
     expect((await download(page, B)).ok).toBe(true);
     const aV1 = `mnw-pack/${A}@${v1.index[A]!.hash}`;
@@ -368,7 +421,7 @@ test.describe('教材パック（見本パック）', () => {
     // ---- コアの更新（v2: A の内容が変わった）。まずは A の音声が取れない配信 ----
     await server.stop();
     server = await serve(v2broken, port);
-    await updateAndReload(page, v2.version);
+    await updateAndReload(page, v2.version, v2.fileCount);
     // (5) 新しいコアの activate（cleanupCaches）でパックのキャッシュは消えない
     expect(await packCaches(page)).toEqual([aV1, bCache].sort());
     expect(await coreCaches(page)).toEqual([`mnw-${v1.version}`, `mnw-${v2.version}`].sort());
@@ -406,7 +459,7 @@ test.describe('教材パック（見本パック）', () => {
     // ---- さらに v3（パックは同じ）へ: コアの v1 は消え、パックは残る（5）----
     await server.stop();
     server = await serve(v3, port);
-    await updateAndReload(page, v3.version);
+    await updateAndReload(page, v3.version, v3.fileCount);
     await expect
       .poll(() => coreCaches(page))
       .toEqual([`mnw-${v2.version}`, `mnw-${v3.version}`].sort());
@@ -425,28 +478,31 @@ test.describe('教材パック（見本パック）', () => {
   test('packs.json に無いパックのキャッシュは起動時に消し、記録も消す', async ({ page }) => {
     const port = await getFreePort();
     const v1 = await makeDist({ tag: 'v1' });
+    test.setTimeout(test.info().timeout + precacheExtra(v1.fileCount, 2, 60_000));
     const server = await serve(v1, port);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, v1.fileCount);
     expect((await download(page, B)).ok).toBe(true);
+    // 更新の前に、B のキャッシュと記録があること（更新後の「空」が、取得が何も残さなかった場合に成り立たないように）
+    expect(await packCaches(page)).toEqual([`mnw-pack/${B}@${v1.index[B]!.hash}`]);
+    expect(await idb<{ packId: string }>(page, 'packsMeta')).toEqual([
+      expect.objectContaining({ packId: B }),
+    ]);
     // packs.json から B を除いた版（コアの更新で B が無くなった）
-    const v2 = await makeDist({ tag: 'v2-no-b' });
-    const index = JSON.parse(await readFile(path.join(v2.dir, 'packs.json'), 'utf8')) as PackIndex;
-    delete index[B];
-    await writeFile(path.join(v2.dir, 'packs.json'), JSON.stringify(index));
-    // packs.json を書き換えたので sw.js を作り直す（manifest はそのままなので finalizeDist では戻ってしまう）
-    await rm(path.join(v2.dir, '.vite'), { recursive: true });
-    const info = await finalizeDist(v2.dir);
+    const v2 = await makeDist({ tag: 'v2-no-b', dropPack: B });
+    expect(v2.index[B]).toBeUndefined();
+    expect(v2.index[A]).toBeDefined();
     await server.stop();
-    await serve({ ...v2, version: info.version }, port);
-    await updateAndReload(page, info.version);
+    await serve(v2, port);
+    await updateAndReload(page, v2.version, v2.fileCount);
     await expect.poll(() => packCaches(page)).toEqual([]);
     expect(await idb(page, 'packsMeta')).toEqual([]);
   });
 
   test('(4) 保護者画面「きょうざい」: 取得 → 削除で教材だけ消え、記録は残る', async ({ page }) => {
     const d = await makeDist();
+    test.setTimeout(test.info().timeout + precacheExtra(d.fileCount, 1, 60_000));
     const server = await serve(d);
-    await openPrepared(page, server.url);
+    await openPrepared(page, server.url, d.fileCount);
     await expect(page.getByTestId('start-button')).toBeEnabled();
     await start(page);
     // 学習の記録（単元の進度）を入れておく

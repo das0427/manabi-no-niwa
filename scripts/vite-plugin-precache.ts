@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { readdir, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { transformWithOxc } from 'vite';
@@ -272,13 +272,79 @@ export function isExcluded(relPath: string): boolean {
   );
 }
 
-async function walk(dir: string, rel: string, out: PrecacheEntry[]): Promise<void> {
+/**
+ * リンク（ジャンクション・シンボリックリンク）の先をたどるときの設定。E2E の dist の写しだけが渡す。
+ * 本番のビルドは渡さず、リンクはたどらない（無いものとして扱う）。
+ */
+export interface FollowLinks {
+  /**
+   * たどってよいリンクの先（dist の中に加えて許す場所）。E2E の写しがつないだ音声の実体のフォルダを渡す。
+   * dist の中でも、ここにある場所の中でもない先を指すリンクは、エラーにする。
+   */
+  allow?: readonly string[];
+}
+
+/** target が root と同じ場所か、その中か（Windows では大文字小文字を区別しない） */
+export function isInsideDir(root: string, target: string): boolean {
+  const rel = path.relative(root, target);
+  const outside = rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel);
+  return !outside;
+}
+
+interface FollowState {
+  /** たどってよい場所（realpath）: dist 自身と、follow.allow */
+  roots: readonly string[];
+  /** いま歩いている道すじのフォルダ（realpath）。リンクがここへ戻ってきたらループ */
+  chain: readonly string[];
+}
+
+/**
+ * リンクの先を確かめる。dist の外（許した場所の外）を指していれば投げる。
+ * 道すじの上のフォルダへ戻るループなら loop を true にして返す（呼び出し側が飛ばす）。
+ */
+async function resolveLink(
+  linkPath: string,
+  state: FollowState,
+): Promise<{ real: string; loop: boolean }> {
+  const real = await realpath(linkPath);
+  if (!state.roots.some((r) => isInsideDir(r, real))) {
+    throw new Error(`dist の外を指すリンクはたどれません: ${linkPath} -> ${real}`);
+  }
+  return { real, loop: state.chain.some((c) => path.relative(c, real) === '') };
+}
+
+async function walk(
+  dir: string,
+  rel: string,
+  out: PrecacheEntry[],
+  known?: ReadonlyMap<string, PrecacheEntry>,
+  follow?: FollowState,
+): Promise<void> {
   const items = await readdir(path.join(dir, rel), { withFileTypes: true });
+  const here = follow
+    ? { ...follow, chain: [...follow.chain, await realpath(path.join(dir, rel))] }
+    : undefined;
   for (const item of items) {
     const relPath = rel === '' ? item.name : `${rel}/${item.name}`;
-    if (item.isDirectory()) {
-      await walk(dir, relPath, out);
-    } else if (item.isFile() && !isExcluded(relPath)) {
+    // E2E の dist の写しは、音声のフォルダをジャンクション（リンク）でつなぐ。
+    // follow を渡されたときだけ、リンクの先も dist の一部として数える（本番のビルドは渡さず、リンクは無いものとして扱う）
+    let isDir = item.isDirectory();
+    let isFile = item.isFile();
+    if (item.isSymbolicLink() && here) {
+      const { loop } = await resolveLink(path.join(dir, relPath), here);
+      if (loop) continue;
+      const target = await stat(path.join(dir, relPath));
+      isDir = target.isDirectory();
+      isFile = target.isFile();
+    }
+    if (isDir) {
+      await walk(dir, relPath, out, known, here);
+    } else if (isFile && !isExcluded(relPath)) {
+      const knownEntry = known?.get(relPath);
+      if (knownEntry) {
+        out.push({ ...knownEntry, path: relPath });
+        continue;
+      }
       const buf = await readFile(path.join(dir, relPath));
       out.push({
         path: relPath,
@@ -289,10 +355,25 @@ async function walk(dir: string, rel: string, out: PrecacheEntry[]): Promise<voi
   }
 }
 
-/** dist のプリキャッシュ対象を、パス順で返す */
-export async function listDistFiles(distDir: string): Promise<PrecacheEntry[]> {
+/**
+ * dist のプリキャッシュ対象を、パス順で返す。
+ * known にある相対パスのファイルは、読まずに（stat もせずに）その値を使う。
+ * リンクは、followLinks を渡したときだけたどる（渡さなければ無いものとして扱う）。
+ * たどるときは、同じ道すじへ戻るリンク（ループ）は飛ばし、dist の外（followLinks.allow の外）を指すリンクはエラーにする。
+ */
+export async function listDistFiles(
+  distDir: string,
+  known?: ReadonlyMap<string, PrecacheEntry>,
+  followLinks?: FollowLinks,
+): Promise<PrecacheEntry[]> {
   const out: PrecacheEntry[] = [];
-  await walk(distDir, '', out);
+  let follow: FollowState | undefined;
+  if (followLinks) {
+    const roots = [await realpath(distDir)];
+    for (const a of followLinks.allow ?? []) roots.push(await realpath(a));
+    follow = { roots, chain: [] };
+  }
+  await walk(distDir, '', out, known, follow);
   return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
 }
 
@@ -339,6 +420,13 @@ export interface FinalizeOptions {
   swSourcePath?: string;
   /** アプリの版の番号。あれば version.json の appVersion に書く（無ければ欄を出さない） */
   appVersion?: string;
+  /**
+   * 内容が変わらないと分かっているファイル（E2E の写しがつないだ音声）の size と hash（キーは dist からの相対パス）。
+   * ここにあるファイルは読み直さない。ビルドでは使わない。
+   */
+  knownEntries?: ReadonlyMap<string, PrecacheEntry>;
+  /** リンクの先をたどる（E2E の写しがつないだ音声用）。渡さなければリンクはたどらない。ビルドでは渡さない */
+  followLinks?: FollowLinks;
 }
 
 /** package.json の version（文字列）を読む。ビルドのとき dist/version.json の appVersion に入れる */
@@ -392,7 +480,7 @@ export async function finalizeDist(
     const builtPacks = new Set(packChunkKeys(manifest).keys());
     await removeUnbuiltSampleAudio(distDir, builtPacks);
     await rm(path.join(distDir, PACKS_FILE), { force: true });
-    const all = await listDistFiles(distDir);
+    const all = await listDistFiles(distDir, options.knownEntries, options.followLinks);
     const partition = partitionPacks(
       manifest,
       all.map((e) => e.path),
@@ -401,7 +489,9 @@ export async function finalizeDist(
     packFiles = new Set(Object.values(index).flatMap((p) => p.files));
     await writeFile(path.join(distDir, PACKS_FILE), `${JSON.stringify(index, null, 2)}\n`, 'utf8');
   }
-  const entries = (await listDistFiles(distDir)).filter((e) => !packFiles.has(e.path));
+  const entries = (await listDistFiles(distDir, options.knownEntries, options.followLinks)).filter(
+    (e) => !packFiles.has(e.path),
+  );
   if (entries.length === 0) throw new Error('プリキャッシュ対象のファイルがありません');
   const version = computeVersion(entries, swTemplate);
   const totalBytes = entries.reduce((sum, e) => sum + e.size, 0);

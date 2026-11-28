@@ -39,6 +39,8 @@ import {
   describeStatusEntries,
   findDirtySources,
   findLinks,
+  findSameVersionTags,
+  findTagsNotAtHead,
   findUnpackagedPrecache,
   isDistJunk,
   isExpectedStatus,
@@ -1547,6 +1549,55 @@ describe('parseCatFileBatch', () => {
   });
 });
 
+describe('findSameVersionTags・findTagsNotAtHead（既にあるタグが HEAD を指しているか）', () => {
+  const commit = (repo: string, name: string) => {
+    writeFiles(repo, { [`notes/${name}.txt`]: name });
+    runGit(repo, ['add', '-A', 'notes']);
+    runGit(repo, ['commit', '-q', '-m', name]);
+  };
+
+  it('findSameVersionTags は数で同じ版のタグを tags の順に返す', () => {
+    expect(
+      findSameVersionTags('2.1.0', ['v2.0.2', ' v2.1.0 ', 'v2.01.0', 'v2.1.0-rc.1', 'x']),
+    ).toEqual(['v2.1.0', 'v2.01.0']);
+  });
+
+  it('HEAD を指していれば []、コミットを進めると説明が 1 件', () => {
+    const repo = newRepo();
+    expect(findTagsNotAtHead(repo, '2.0.2', ['v2.0.2'])).toEqual([]);
+    commit(repo, 'one');
+    const r = findTagsNotAtHead(repo, '2.0.2', ['v2.0.2']);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatch(/タグ v2\.0\.2 は HEAD/);
+  });
+
+  it('注釈つきのタグもコミットまでたどる', () => {
+    const repo = newRepo();
+    runGit(repo, ['tag', '-a', 'v2.0.3', '-m', 'x']);
+    expect(findTagsNotAtHead(repo, '2.0.3', ['v2.0.3'])).toEqual([]);
+  });
+
+  it('先頭が 0 のタグも同じ版として見る', () => {
+    const repo = newRepo();
+    runGit(repo, ['tag', 'v2.01.0']);
+    commit(repo, 'one');
+    runGit(repo, ['tag', 'v2.1.0']);
+    const r = findTagsNotAtHead(repo, '2.1.0', ['v2.01.0', 'v2.1.0']);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toContain('タグ v2.01.0 は HEAD');
+  });
+
+  it('同じ名前のほかの参照（ブランチ・refs/<名前>）と取り違えない', () => {
+    const repo = newRepo();
+    commit(repo, 'one');
+    runGit(repo, ['tag', 'v2.0.4']);
+    runGit(repo, ['branch', 'v2.0.4', 'HEAD~1']);
+    // git は名前だけだと refs/<名前> を refs/tags/<名前> より先にたどる。refs/tags/ を付けて読んでいれば、こちらには行かない
+    runGit(repo, ['update-ref', 'refs/v2.0.4', 'HEAD~1']);
+    expect(findTagsNotAtHead(repo, '2.0.4', ['v2.0.4'])).toEqual([]);
+  });
+});
+
 describe('walkDist・isDistJunk（dist から入れないもの）', () => {
   it('名前の決まり: 隠し・Thumbs.db・desktop.ini・~・.swp・Python のキャッシュ', () => {
     for (const bad of [
@@ -1784,6 +1835,22 @@ function zipEntryText(repo: string, name: string): string {
 }
 
 describe('package-release.ts（使い捨てのリポジトリで動かす）', { timeout: 90_000 }, () => {
+  it('--allow-existing-tag でも、既にあるタグが HEAD 以外を指していれば止める（HEAD を指していれば通る）', () => {
+    const repo = newPackageProject();
+    runGit(repo, ['tag', 'v2.1.0']);
+    const ok = runPackage(repo, ['--allow-existing-tag']);
+    expect(ok.code, ok.err).toBe(0);
+    rmSync(path.join(repo, 'release'), { recursive: true, force: true });
+    writeFiles(repo, { 'notes/x.txt': 'x' });
+    runGit(repo, ['add', 'notes/x.txt']);
+    runGit(repo, ['commit', '-q', '-m', 'next']);
+    const r = runPackage(repo, ['--allow-existing-tag']);
+    expect(r.code).toBe(1);
+    expect(r.err).toContain('タグ v2.1.0 は HEAD');
+    expect(r.err).toContain('--allow-existing-tag でも通しません');
+    expect(existsSync(path.join(repo, 'release', 'manabi-no-niwa-2.1.0.zip'))).toBe(false);
+  });
+
   it('作業ツリーが CRLF（Windows の取り出し）でも、zip の追跡済みファイルは HEAD の blob とバイト単位で同じ', () => {
     const repo = newPackageProject();
     crlfCheckout(repo);

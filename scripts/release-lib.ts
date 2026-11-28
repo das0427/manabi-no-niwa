@@ -87,6 +87,27 @@ function compareTuples(a: VersionTuple, b: VersionTuple): number {
   return a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
 }
 
+/** タグのうち `vX.Y.Z` の形のものを、前後の空白を除いて数にする（tags の順） */
+function parseVersionTags(tags: readonly string[]): { tag: string; n: VersionTuple }[] {
+  const released: { tag: string; n: VersionTuple }[] = [];
+  for (const raw of tags) {
+    const tag = raw.trim();
+    const m = TAG_VERSION_RE.exec(tag);
+    if (m) released.push({ tag, n: [Number(m[1]), Number(m[2]), Number(m[3])] });
+  }
+  return released;
+}
+
+/** tags のうち、version と数で同じ版のタグ（v2.01.0 も 2.1.0 と同じとみなす。前後の空白は除く。tags の順） */
+export function findSameVersionTags(version: string, tags: readonly string[]): string[] {
+  if (!isVersion(version)) return [];
+  const [c0, c1, c2] = version.split('.').map(Number) as [number, number, number];
+  const cur: VersionTuple = [c0, c1, c2];
+  return parseVersionTags(tags)
+    .filter((r) => compareTuples(r.n, cur) === 0)
+    .map((r) => r.tag);
+}
+
 /**
  * 出す版の番号を、これまでのタグ（`git tag` の `vX.Y.Z`。先行版の印つきは見ない）と比べる。
  * 自動の更新は「今より新しい版」しか入れないので、版の番号を誤って出すと、あとから正しい番号の版を出しても
@@ -108,12 +129,7 @@ export function checkReleaseVersion(
     return `版の形が X.Y.Z ではありません（先頭に 0 は付けません）: ${version}`;
   const [c0, c1, c2] = version.split('.').map(Number) as [number, number, number];
   const cur: VersionTuple = [c0, c1, c2];
-  const released: { tag: string; n: VersionTuple }[] = [];
-  for (const raw of tags) {
-    const tag = raw.trim();
-    const m = TAG_VERSION_RE.exec(tag);
-    if (m) released.push({ tag, n: [Number(m[1]), Number(m[2]), Number(m[3])] });
-  }
+  const released = parseVersionTags(tags);
   const same = released.find((r) => compareTuples(r.n, cur) === 0);
   if (same !== undefined && !opts.allowExistingTag) {
     return `タグ ${same.tag} はもうあります。公開した版と同じ番号では、その版を入れた家に届きません。版の番号を上げてください（まだ公開していないタグなら --allow-existing-tag）。`;
@@ -887,6 +903,34 @@ export function sourceProblems(
     );
   }
   return { errors, warnings };
+}
+
+/**
+ * 同じ版のタグがあれば、それが HEAD のコミットを指しているか。指していないタグの説明の配列（全部 HEAD なら []）。
+ * zip は HEAD のコミットから作る（readTrackedReleaseFiles）ので、--allow-existing-tag で通したタグが別のコミットを
+ * 指していると、zip とタグの中身が食い違う。注釈つきのタグはコミットまでたどる（`<タグ>^{commit}`）。
+ * git が失敗したら例外のまま投げる（呼ぶ側で止める）。
+ */
+export function findTagsNotAtHead(
+  root: string,
+  version: string,
+  tags: readonly string[],
+  git: GitRunner = runGit,
+): string[] {
+  const same = findSameVersionTags(version, tags);
+  if (same.length === 0) return [];
+  const head = git(root, ['rev-parse', '--verify', 'HEAD^{commit}']).trim();
+  const problems: string[] = [];
+  for (const tag of same) {
+    // refs/tags/ を付けて、同じ名前のブランチと取り違えない
+    const at = git(root, ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]).trim();
+    if (at !== head) {
+      problems.push(
+        `タグ ${tag} は HEAD（${head.slice(0, 7)}）ではなく ${at.slice(0, 7)} を指しています。`,
+      );
+    }
+  }
+  return problems;
 }
 
 // ---- 入れるファイル

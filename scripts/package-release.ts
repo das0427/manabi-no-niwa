@@ -23,6 +23,7 @@
  * わざとなら `npm run package -- --allow-jump`、まだ公開していないタグなら `-- --allow-existing-tag`）。
  * git のタグを読めない・タグが 1 つも無いときも止める（読めないまま比べずに出すと、版の番号の誤りを見のがす）。
  * わざと比べないなら `-- --no-tag-check`。
+ * --allow-existing-tag でも、そのタグが HEAD 以外のコミットを指していれば止める（zip は HEAD から作るため）。
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -40,6 +41,7 @@ import {
   checkReleaseVersion,
   compareVersions,
   contentListText,
+  findTagsNotAtHead,
   findUnpackagedPrecache,
   isVersion,
   packPart,
@@ -120,6 +122,22 @@ const versionProblem = checkReleaseVersion(pkg.version, releaseTags, {
   allowExistingTag: process.argv.includes('--allow-existing-tag'),
 });
 if (versionProblem) die(versionProblem);
+// zip は HEAD のコミットから作る。--allow-existing-tag で通したタグが別のコミットを指していると、zip とタグの中身が食い違う
+if (process.argv.includes('--allow-existing-tag') && releaseTags.length > 0) {
+  let notAtHead: string[];
+  try {
+    notAtHead = findTagsNotAtHead(root, pkg.version, releaseTags);
+  } catch (e) {
+    die(`既にあるタグが HEAD を指しているかを確かめられません: ${(e as Error).message}`);
+  }
+  if (notAtHead.length > 0) {
+    die(
+      `${notAtHead.join('\n')}\n` +
+        'zip は HEAD のコミットから作るので、このまま作るとタグの中身と違う zip になります。' +
+        'タグを付けるコミットを取り出してから流すか、まだ push していないタグなら付け直してください（--allow-existing-tag でも通しません）。',
+    );
+  }
+}
 
 const distVersion = (() => {
   try {

@@ -70,7 +70,8 @@ describe('listDistFiles', () => {
     expect(isExcluded('assets/sw.js')).toBe(false);
   });
 
-  it('ジャンクションでつないだフォルダの中のファイルも、リンクの先の内容の hash で入る', async () => {
+  /** dist の外に audio/p1/a.mp3 を作り、dist/audio/p1 からジャンクションでつなぐ */
+  async function linkAudio(): Promise<string> {
     targetDir = await mkdtemp(path.join(os.tmpdir(), 'mnw-precache-target-'));
     await mkdir(path.join(targetDir, 'p1'), { recursive: true });
     await writeFile(path.join(targetDir, 'p1', 'a.mp3'), 'audio-a', 'utf8');
@@ -78,8 +79,18 @@ describe('listDistFiles', () => {
     const link = path.join(dir, 'audio', 'p1');
     await symlink(path.join(targetDir, 'p1'), link, 'junction');
     links.push(link);
+    return path.join(targetDir, 'p1');
+  }
 
+  it('followLinks を渡さなければ、リンクの先は数えない（ビルドと同じ）', async () => {
+    await linkAudio();
     const list = await listDistFiles(dir);
+    expect(list.map((e) => e.path)).toEqual(['assets/app-abc.js', 'fonts/a.woff2', 'index.html']);
+  });
+
+  it('followLinks を渡すと、ジャンクションでつないだフォルダの中のファイルも、リンクの先の内容の hash で入る', async () => {
+    const real = await linkAudio();
+    const list = await listDistFiles(dir, undefined, { allow: [real] });
     expect(list.map((e) => e.path)).toEqual([
       'assets/app-abc.js',
       'audio/p1/a.mp3',
@@ -91,6 +102,26 @@ describe('listDistFiles', () => {
       size: 'audio-a'.length,
       hash: sha256('audio-a'),
     });
+  });
+
+  it('followLinks: dist の中へ戻るループのリンクがあっても止まる', async () => {
+    await mkdir(path.join(dir, 'sub'), { recursive: true });
+    await put('sub/b.txt', 'b');
+    const loop = path.join(dir, 'sub', 'loop');
+    await symlink(dir, loop, 'junction');
+    links.push(loop);
+    const list = await listDistFiles(dir, undefined, {});
+    expect(list.map((e) => e.path)).toEqual([
+      'assets/app-abc.js',
+      'fonts/a.woff2',
+      'index.html',
+      'sub/b.txt',
+    ]);
+  });
+
+  it('followLinks: dist の外を指すリンクは（allow に無ければ）エラーにする', async () => {
+    await linkAudio();
+    await expect(listDistFiles(dir, undefined, {})).rejects.toThrow('dist の外を指すリンク');
   });
 
   it('known にあるファイルは読まずにその値を使い、無いファイルは今までどおり読む', async () => {

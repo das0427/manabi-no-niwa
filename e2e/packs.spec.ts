@@ -15,6 +15,7 @@ import {
   copyIntoLinkingAudio,
   copyLinkingAudio,
   linkedAudioEntries,
+  linkedTargets,
   precacheExtra,
   precacheWait,
   removeLinkedSync,
@@ -93,6 +94,7 @@ function buildSampleDist(): Promise<string> {
     await finalizeDist(outDir, {
       appVersion: await readAppVersion(ROOT),
       knownEntries: await linkedAudioEntries(DIST),
+      followLinks: { allow: await linkedTargets(outDir, linked) },
     });
     return outDir;
   })();
@@ -120,7 +122,8 @@ async function makeDist(
   opts: { tag?: string; changeA?: boolean; breakA?: boolean; dropPack?: string } = {},
 ): Promise<Dist> {
   const src = await buildSampleDist();
-  const copy = await copyLinkingAudio(src, 'mnw-e2e-linked-');
+  // src の audio/ のリンクは dist/audio への先送りなので、つなぎ先は DIST から求める
+  const copy = await copyLinkingAudio(src, 'mnw-e2e-linked-', DIST);
   const dir = copy.dir;
   cleanups.push(() => copy.remove());
   if (opts.tag) await appendFile(path.join(dir, 'index.html'), `<!-- ${opts.tag} -->\n`);
@@ -137,7 +140,10 @@ async function makeDist(
     }
     await writeFile(file, JSON.stringify(manifest));
   }
-  const info = await finalizeDist(dir, { knownEntries: await linkedAudioEntries(src) });
+  const info = await finalizeDist(dir, {
+    knownEntries: await linkedAudioEntries(src),
+    followLinks: { allow: await linkedTargets(dir, copy.linked) },
+  });
   if (opts.breakA) {
     assertOutsideLinks(copy, `audio/${A}/hello.mp3`);
     await rm(path.join(dir, 'audio', A, 'hello.mp3'), { force: true });
@@ -476,6 +482,11 @@ test.describe('教材パック（見本パック）', () => {
     const server = await serve(v1, port);
     await openPrepared(page, server.url, v1.fileCount);
     expect((await download(page, B)).ok).toBe(true);
+    // 更新の前に、B のキャッシュと記録があること（更新後の「空」が、取得が何も残さなかった場合に成り立たないように）
+    expect(await packCaches(page)).toEqual([`mnw-pack/${B}@${v1.index[B]!.hash}`]);
+    expect(await idb<{ packId: string }>(page, 'packsMeta')).toEqual([
+      expect.objectContaining({ packId: B }),
+    ]);
     // packs.json から B を除いた版（コアの更新で B が無くなった）
     const v2 = await makeDist({ tag: 'v2-no-b', dropPack: B });
     expect(v2.index[B]).toBeUndefined();

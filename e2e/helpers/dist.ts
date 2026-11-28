@@ -17,16 +17,16 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { build } from 'vite';
-import { finalizeDist, isExcluded } from '../../scripts/vite-plugin-precache.ts';
+import { finalizeDist, isExcluded, isInsideDir } from '../../scripts/vite-plugin-precache.ts';
 import type { PrecacheEntry } from '../../scripts/vite-plugin-precache.ts';
 
 /**
  * E2E 用の dist の写し（音声は写さずにつなぐ）。
  *
- * 音声入りの dist は約12万ファイルあり、まるごと写すと1回に約131秒かかる。
+ * 音声入りの dist は約12万ファイルあり、まるごと写すと1回に約131〜324秒かかる（2.1.0 の記録と 2026-11-28 の測定）。
  * そこで音声のフォルダ（audio/<名前>/）は写さず、元の実体へジャンクション（Linux ではシンボリックリンク）でつなぐ。
- * ほかのファイル（約3千）は今までどおり写す。つないだ音声の size と hash は、ワーカーの中で一度だけ求めて覚え、
- * finalizeDist に渡して読み直さない。
+ * ほかのファイル（約3千）は今までどおり写す。つないだ音声の size と hash は、一時フォルダ（mnw-e2e-hash-cache）に覚えて
+ * ワーカーと実行をまたいで使い、finalizeDist に渡して読み直さない。
  *
  * 気をつけること: つないだフォルダの中を消す・書くと、つなぎ先（元の dist・本体の音声）が変わってしまう。
  * 写しの中のパスを変えるときは、assertOutsideLinks を通す。
@@ -35,8 +35,12 @@ import type { PrecacheEntry } from '../../scripts/vite-plugin-precache.ts';
 const ROOT = path.resolve(import.meta.dirname, '../..');
 export const DIST = path.join(ROOT, 'dist');
 
-/** 準備だけの時間の上限（test.beforeAll 用。テストの時間の制限ではない） */
-export const PREPARE_TIMEOUT = 600_000;
+/**
+ * 準備だけの時間の上限（test.beforeAll 用）。各テストの制限ではない。
+ * 実測（1ワーカー）: 音声の hash は初回 28.9 秒・全件の読み直しの最悪 138 秒、写しは 3〜4 秒、
+ * 見本パック入りの組み立ては 8.2 秒。最悪の読み直しに写しを足して余裕を見て 180 秒にした。
+ */
+export const PREPARE_TIMEOUT = 180_000;
 
 const AUDIO_DIR = 'audio';
 /** 見本パックの音声はテストが中身を消す・変えるので、写す（つながない） */
@@ -82,8 +86,8 @@ export function buildHarness(): Promise<string> {
  * 待つのは写しの時間ではなく、アプリ（Service Worker）が実データで行う事前保存の時間。
  * 実測（2026-11-28・1ワーカー・この開発機）: 音声入りのコア 10,577 ファイルの事前保存に Chromium 40.4 秒・Firefox 57.7 秒。
  * Firefox の値は SW の寿命（dom.serviceWorkers.idle_extended_timeout）を延ばして測ったもの。既定の設定（30 秒）では、
- * install の途中の SW が約60秒で止められ、終わらないことがある（テストでは延ばさない。アプリの問題として別に扱う）。
- * Firefox の約 5.5 ミリ秒/ファイルに余裕を見て 10 ミリ秒にした。音声を置かないビルド（約2,300ファイル）では floor のまま。
+ * install の途中の SW が約60秒で止められ、終わらないことがある（テストでは延ばさない。依頼者の判断（2026-11-28）で対応しない）。
+ * 実際に効くのは Chromium の 40.4 秒 ÷ 10,577 ファイル ≒ 3.8 ミリ秒/ファイルで、約2.6倍の余裕を見て 10 ミリ秒にした。音声を置かないビルド（約2,300ファイル）では floor のまま。
  */
 export const PRECACHE_MS_PER_FILE = 10;
 
@@ -118,18 +122,35 @@ const HASH_CACHE_DIR = path.join(os.tmpdir(), 'mnw-e2e-hash-cache');
 
 type CacheFiles = Record<string, [number, number, string]>;
 
-/** フォルダの中のファイルを（リンクのフォルダにも入って）集める。相対パスは '/' 区切り */
-async function walkFiles(dir: string, rel: string, out: string[]): Promise<void> {
+/**
+ * フォルダの中のファイルを（リンクのフォルダにも入って）集める。相対パスは '/' 区切り。
+ * リンクの先は realpath を道すじに覚え、戻ってくるループは飛ばす。root の外を指すリンクは投げる。
+ */
+async function walkFiles(
+  root: string,
+  dir: string,
+  rel: string,
+  out: string[],
+  chain: readonly string[] = [],
+): Promise<void> {
+  const here = [...chain, await realpath(path.join(dir, rel))];
   for (const item of await readdir(path.join(dir, rel), { withFileTypes: true })) {
     const relPath = rel === '' ? item.name : `${rel}/${item.name}`;
     let isDir = item.isDirectory();
     let isFile = item.isFile();
     if (item.isSymbolicLink()) {
+      const real = await realpath(path.join(dir, relPath));
+      if (!isInsideDir(root, real)) {
+        throw new Error(
+          `音声のフォルダの外を指すリンクはたどれません: ${path.join(dir, relPath)} -> ${real}`,
+        );
+      }
+      if (here.some((c) => path.relative(c, real) === '')) continue;
       const target = await stat(path.join(dir, relPath));
       isDir = target.isDirectory();
       isFile = target.isFile();
     }
-    if (isDir) await walkFiles(dir, relPath, out);
+    if (isDir) await walkFiles(root, dir, relPath, out, here);
     else if (isFile && !isExcluded(relPath)) out.push(relPath);
   }
 }
@@ -154,7 +175,7 @@ async function hashFolder(real: string): Promise<PrecacheEntry[]> {
     // 無い・壊れている: 全部読む
   }
   const rels: string[] = [];
-  await walkFiles(real, '', rels);
+  await walkFiles(real, real, '', rels);
   const files: CacheFiles = {};
   const entries: PrecacheEntry[] = [];
   let changed = rels.length !== Object.keys(old).length;
@@ -162,7 +183,14 @@ async function hashFolder(real: string): Promise<PrecacheEntry[]> {
     const st = await stat(path.join(real, rel));
     const prev = old[rel];
     let hash: string;
-    if (Array.isArray(prev) && prev[0] === st.size && prev[1] === st.mtimeMs) {
+    // 覚えの hash が64桁の16進でなければ使わず、読み直す
+    if (
+      Array.isArray(prev) &&
+      prev[0] === st.size &&
+      prev[1] === st.mtimeMs &&
+      typeof prev[2] === 'string' &&
+      /^[0-9a-f]{64}$/.test(prev[2])
+    ) {
       hash = prev[2];
     } else {
       hash = createHash('sha256')
@@ -293,11 +321,16 @@ export async function copyIntoLinkingAudio(
   }
   const skip = new Set(names.map((n) => path.resolve(src, AUDIO_DIR, n)));
   const made: string[] = [];
+  const linkFromReal = await realpath(linkFrom);
   try {
     await cp(src, dir, { recursive: true, filter: (from) => !skip.has(path.resolve(from)) });
     if (names.length > 0) await mkdir(path.join(dir, AUDIO_DIR), { recursive: true });
     for (const name of names) {
       const target = await realpath(path.join(linkFrom, AUDIO_DIR, name));
+      // つなぎ先が linkFrom の外（本体の public/audio など）なら、つながずに止める
+      if (!target.startsWith(`${linkFromReal}${path.sep}`)) {
+        throw new Error(`つなぎ先が ${linkFrom} の外です: ${AUDIO_DIR}/${name} -> ${target}`);
+      }
       await symlink(target, path.join(dir, AUDIO_DIR, name), 'junction');
       made.push(name);
     }
@@ -308,13 +341,25 @@ export async function copyIntoLinkingAudio(
   return names;
 }
 
+/**
+ * 写しの中のつないだ音声のつなぎ先（realpath）。finalizeDist の followLinks.allow に渡す
+ * （リンクをたどるのは、写しの dist の中とこの場所だけ）。
+ */
+export async function linkedTargets(dir: string, linked: readonly string[]): Promise<string[]> {
+  return Promise.all(linked.map((name) => realpath(path.join(dir, AUDIO_DIR, name))));
+}
+
 /** src を新しい一時フォルダへ写す。音声はつなぐ（copyIntoLinkingAudio） */
-export async function copyLinkingAudio(src: string, prefix = LINKED_PREFIX): Promise<LinkedCopy> {
+export async function copyLinkingAudio(
+  src: string,
+  prefix = LINKED_PREFIX,
+  linkFrom: string = src,
+): Promise<LinkedCopy> {
   sweepStaleCopies();
   const dir = await mkdtemp(path.join(os.tmpdir(), prefix));
   let linked: string[];
   try {
-    linked = await copyIntoLinkingAudio(src, dir);
+    linked = await copyIntoLinkingAudio(src, dir, linkFrom);
   } catch (e) {
     await rm(dir, { recursive: true, force: true });
     throw e;
@@ -411,7 +456,10 @@ export async function prepareDist(options: PrepareOptions = {}): Promise<Prepare
       await rm(path.join(dir, rel), { force: true });
     }
 
-    const info = await finalizeDist(dir, { knownEntries: await linkedAudioEntries(DIST) });
+    const info = await finalizeDist(dir, {
+      knownEntries: await linkedAudioEntries(DIST),
+      followLinks: { allow: await linkedTargets(dir, copy.linked) },
+    });
     for (const rel of options.breakFiles ?? []) {
       assertOutsideLinks(copy, rel);
       await rm(path.join(dir, rel), { force: true });

@@ -135,10 +135,13 @@ async function updateUntil<T>(
       async () => {
         const first = await safeState(page);
         if (first !== null && isDeepStrictEqual(read(first), expected)) return read(first);
+        // install が進んでいない（installing も waiting も無い）ときだけ update() を呼ぶ。
+        // Firefox は install の最中の update() を1つにまとめず順に積むので、失敗のあとも積まれた分の install が続き、
+        // 作りかけの新しい版のキャッシュが長く残ってしまう
         await page
           .evaluate(async () => {
             const reg = await navigator.serviceWorker.getRegistration();
-            await reg?.update();
+            if (reg && !reg.installing && !reg.waiting) await reg.update();
           })
           .catch(() => undefined);
         const s = await safeState(page);
@@ -509,6 +512,8 @@ test.describe('更新（E-11 / E-19 / OF-04〜06）', () => {
     await page.reload();
     await expect.poll(() => isControlled(page)).toBe(true);
 
+    // 壊れた版を試す前は、まだ失敗していないこと（updateUntil が壊れた版を一度も試さずに通るのを防ぐ）
+    expect((await getState(page)).error).toBeNull();
     await server.stop();
     server = await serve(broken, port);
     await updateUntil(page, (s) => s.error !== null, true, precacheWait(broken.fileCount, 30_000));
